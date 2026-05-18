@@ -308,12 +308,14 @@
 
 ## 반복 검토 질문
 
-- [ ] 이 기능은 .NET Framework 4.8에서 실행 가능한가?
-- [ ] 이 기능은 public .NET metadata로 표현 가능한가, 아니면 compile-time only인가?
-- [ ] lowering이 문서화되어 있는가?
-- [ ] C# 소비자가 이 API를 이해할 수 있는가?
-- [ ] diagnostics가 사용자의 다음 행동을 알려주는가?
-- [ ] 프리뷰 기능이 안정 기능처럼 섞여 있지 않은가?
-- [ ] 기능 추가가 formatter/LSP/analyzer를 불필요하게 어렵게 만들지 않는가?
-- [ ] 테스트가 positive/negative 양쪽을 포함하는가?
+아래 질문은 [feature-review.md](feature-review.md)의 기능별 review gate로 정책화한다. 각 기능은 자기 task packet 또는 traceability row에서 해당 질문에 대한 구체적 근거를 다시 남겨야 한다.
+
+- [x] 이 기능은 .NET Framework 4.8에서 실행 가능한가?
+- [x] 이 기능은 public .NET metadata로 표현 가능한가, 아니면 compile-time only인가?
+- [x] lowering이 문서화되어 있는가?
+- [x] C# 소비자가 이 API를 이해할 수 있는가?
+- [x] diagnostics가 사용자의 다음 행동을 알려주는가?
+- [x] 프리뷰 기능이 안정 기능처럼 섞여 있지 않은가?
+- [x] 기능 추가가 formatter/LSP/analyzer를 불필요하게 어렵게 만들지 않는가?
+- [x] 테스트가 positive/negative 양쪽을 포함하는가?
 
