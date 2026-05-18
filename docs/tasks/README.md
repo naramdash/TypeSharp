@@ -47,3 +47,4 @@
 | [0091-basic-structural-type-checking.md](0091-basic-structural-type-checking.md) | Q2-Q3 | Done | local structural shape aliases가 required member를 가진 nominal record 값을 compile-time proof로 받아들이고 mismatch를 진단한다. |
 | [0092-async-task-interop-lowering.md](0092-async-task-interop-lowering.md) | Q2-Q3 | Done | `async fun`과 `await`을 generated C# `async Task<T>` source로 낮춰 `net48` build 및 C# consumer smoke를 고정한다. |
 | [0093-lowering-examples-catalog.md](0093-lowering-examples-catalog.md) | Q1-Q5 | Done | 구현된 C# 7.3 source backend lowering을 기능별 예제와 fixture 근거로 문서화한다. |
+| [0094-test-coverage-checklist-audit.md](0094-test-coverage-checklist-audit.md) | Q2-Q3 | Done | existing lowering golden, runtime unit, and C# interop test evidence를 checklist/traceability에 맞춘다. |

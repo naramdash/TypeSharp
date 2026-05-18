@@ -287,9 +287,9 @@
 - [x] CLI run generated `net48` executable smoke tests
 - [x] CLI run `main(args: string[])` argument forwarding smoke tests
 - [x] CLI run unsupported main signature diagnostic smoke tests
-- [ ] lowering golden tests
-- [ ] runtime unit tests
-- [ ] C# interop tests
+- [x] lowering golden tests
+- [x] runtime unit tests
+- [x] C# interop tests
 - [x] C# library consumption smoke tests
 - [ ] public ABI snapshot tests
 - [ ] performance smoke benchmark
