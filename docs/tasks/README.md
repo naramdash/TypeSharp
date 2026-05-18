@@ -28,3 +28,4 @@
 | [0045-csharp-ambiguous-overload-diagnostic.md](0045-csharp-ambiguous-overload-diagnostic.md) | Q3 | Done | local C# metadata의 같은 arity overload ambiguity를 `TS2402`로 진단한다. |
 | [0046-csharp-exact-overload-ranking.md](0046-csharp-exact-overload-ranking.md) | Q3 | Done | local C# metadata overload set에서 literal/primitive exact match 후보를 선택한다. |
 | [0047-csharp-params-metadata-flag.md](0047-csharp-params-metadata-flag.md) | Q3 | Done | local C# metadata index에서 `params` parameter flag를 보존한다. |
+| [0048-csharp-params-overload-validation.md](0048-csharp-params-overload-validation.md) | Q3 | Done | local C# metadata validator가 expanded `params` overload 후보를 검증한다. |

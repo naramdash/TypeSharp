@@ -40,6 +40,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports missing reference diagnostics", CheckerReportsMissingReferenceDiagnostics),
     ("checker reports invalid byref interop diagnostics", CheckerReportsInvalidByRefInteropDiagnostics),
     ("checker reports ambiguous C# overload diagnostics", CheckerReportsAmbiguousCSharpOverloadDiagnostics),
+    ("checker reports ambiguous expanded params overload diagnostics", CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
@@ -72,6 +73,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported in call", CliBuildCompilesImportedInCall),
     ("CLI build compiles imported ref call", CliBuildCompilesImportedRefCall),
     ("CLI build compiles exact overload match", CliBuildCompilesExactOverloadMatch),
+    ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -538,7 +540,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -712,6 +714,40 @@ static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
         var result = TypeSharpChecker.Check(manifestPath);
 
         AssertTrue(result.HasErrors, "Ambiguous C# overload interop should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("matches 2 overload candidates", diagnostic.Message);
+        AssertContains("make the call unambiguous", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousExpandedParamsOverload"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousExpandedParamsOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousExpandedParamsOverload
+
+            import { LegacyParamsOverloads } from "Legacy.Tools"
+
+            export fun choose(): string = LegacyParamsOverloads.Pick(",", null, null)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Ambiguous expanded params overload interop should produce diagnostics.");
         var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertContains("matches 2 overload candidates", diagnostic.Message);
@@ -1787,6 +1823,47 @@ static void CliBuildCompilesExactOverloadMatch()
     });
 }
 
+static void CliBuildCompilesExactExpandedParamsOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ExactExpandedParamsOverloadMatch"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ExactExpandedParamsOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ExactExpandedParamsOverloadMatch
+
+            import { LegacyParamsOverloads } from "Legacy.Tools"
+
+            export fun choose(): string = LegacyParamsOverloads.Pick(",", "a", "b")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ExactExpandedParamsOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyParamsOverloads.Pick(\",\", \"a\", \"b\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ExactExpandedParamsOverloadMatch.dll")),
+            "Generated project build should compile an exact expanded params overload match.");
+    });
+}
+
 static void CliBuildEmitsGeneratedNet481Assembly()
 {
     WithWorkspace(root =>
@@ -2105,6 +2182,19 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Pick(object value)
                 {
                     return value == null ? string.Empty : value.ToString();
+                }
+            }
+
+            public static class LegacyParamsOverloads
+            {
+                public static string Pick(string separator, params string[] values)
+                {
+                    return string.Join(separator, values);
+                }
+
+                public static string Pick(string separator, params object[] values)
+                {
+                    return string.Join(separator, values);
                 }
             }
 

@@ -131,6 +131,7 @@
 - [x] C# invalid byref interop diagnostic smoke
 - [x] C# ambiguous overload diagnostic smoke
 - [x] C# exact overload match smoke
+- [x] C# expanded params overload validation smoke
 - [ ] reference resolver for framework assembly and local DLL
 - [ ] semantic model
 - [ ] type checker
@@ -248,6 +249,7 @@
 - [x] C# invalid byref interop diagnostic smoke tests
 - [x] C# ambiguous overload diagnostic smoke tests
 - [x] C# exact overload match smoke tests
+- [x] C# expanded params overload validation smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests
 - [x] C# framework static member call smoke tests

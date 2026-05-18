@@ -49,7 +49,7 @@ public static class TypeSharpInteropValidator
             .Where(type => string.Equals(type.Name, typeName, StringComparison.Ordinal) || string.Equals(type.FullName, typeName, StringComparison.Ordinal))
             .SelectMany(type => type.Methods.Select(method => (Type: type, Method: method)))
             .Where(candidate => string.Equals(candidate.Method.Name, methodName, StringComparison.Ordinal) &&
-                candidate.Method.Parameters.Count == arguments.Length)
+                IsApplicableArity(candidate.Method, arguments.Length))
             .ToArray();
 
         var selectedCandidates = SelectBestCandidates(candidates, arguments);
@@ -73,7 +73,12 @@ public static class TypeSharpInteropValidator
         for (var index = 0; index < arguments.Length; index++)
         {
             var argument = arguments[index];
-            var parameter = metadataMethod.Parameters[index];
+            var parameter = GetParameterForArgument(metadataMethod, index);
+            if (parameter is null)
+            {
+                continue;
+            }
+
             var actual = GetArgumentByRefKind(argument);
             if (actual == parameter.ByRefKind)
             {
@@ -109,7 +114,7 @@ public static class TypeSharpInteropValidator
 
     private static bool IsExactMatch(MetadataMethodSymbol method, IReadOnlyList<SyntaxNode> arguments)
     {
-        if (method.Parameters.Count != arguments.Count)
+        if (!IsApplicableArity(method, arguments.Count))
         {
             return false;
         }
@@ -117,16 +122,75 @@ public static class TypeSharpInteropValidator
         for (var index = 0; index < arguments.Count; index++)
         {
             var argument = arguments[index];
-            var parameter = method.Parameters[index];
+            var parameter = GetParameterForArgument(method, index);
+            if (parameter is null)
+            {
+                return false;
+            }
+
+            var expectedType = GetExpectedArgumentType(method, parameter, index, arguments.Count);
             if (GetArgumentByRefKind(argument) != parameter.ByRefKind ||
                 !TryInferArgumentType(argument, out var argumentType) ||
-                !string.Equals(argumentType, parameter.Type, StringComparison.Ordinal))
+                !string.Equals(argumentType, expectedType, StringComparison.Ordinal))
             {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private static bool IsApplicableArity(MetadataMethodSymbol method, int argumentCount)
+    {
+        if (!HasParamsParameter(method))
+        {
+            return method.Parameters.Count == argumentCount;
+        }
+
+        var fixedParameterCount = method.Parameters.Count - 1;
+        return argumentCount >= fixedParameterCount;
+    }
+
+    private static bool HasParamsParameter(MetadataMethodSymbol method) =>
+        method.Parameters.Count > 0 && method.Parameters[method.Parameters.Count - 1].IsParams;
+
+    private static MetadataParameterSymbol? GetParameterForArgument(MetadataMethodSymbol method, int argumentIndex)
+    {
+        if (argumentIndex < method.Parameters.Count)
+        {
+            return method.Parameters[argumentIndex];
+        }
+
+        return HasParamsParameter(method)
+            ? method.Parameters[method.Parameters.Count - 1]
+            : null;
+    }
+
+    private static string GetExpectedArgumentType(
+        MetadataMethodSymbol method,
+        MetadataParameterSymbol parameter,
+        int argumentIndex,
+        int argumentCount)
+    {
+        if (!IsExpandedParamsArgument(method, argumentIndex, argumentCount))
+        {
+            return parameter.Type;
+        }
+
+        return parameter.Type.EndsWith("[]", StringComparison.Ordinal)
+            ? parameter.Type.Substring(0, parameter.Type.Length - 2)
+            : parameter.Type;
+    }
+
+    private static bool IsExpandedParamsArgument(MetadataMethodSymbol method, int argumentIndex, int argumentCount)
+    {
+        if (!HasParamsParameter(method))
+        {
+            return false;
+        }
+
+        var fixedParameterCount = method.Parameters.Count - 1;
+        return argumentCount >= fixedParameterCount && argumentIndex >= fixedParameterCount;
     }
 
     private static bool TryGetStaticMemberCall(SyntaxNode call, out string typeName, out string methodName)
