@@ -38,6 +38,7 @@ var tests = new (string Name, Action Body)[]
     ("runtime union helper exposes case metadata", RuntimeUnionHelperExposesCaseMetadata),
     ("runtime pattern helper matches union cases", RuntimePatternHelperMatchesUnionCases),
     ("runtime equality helper combines values", RuntimeEqualityHelperCombinesValues),
+    ("runtime async helper creates tasks", RuntimeAsyncHelperCreatesTasks),
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
@@ -465,6 +466,24 @@ static void RuntimeEqualityHelperCombinesValues()
     AssertEqual(hash, TypeSharpEquality.CombineHash("alpha", 42, true));
     AssertFalse(hash == TypeSharpEquality.CombineHash("alpha", 43, true), "Different values should produce a different combined smoke hash.");
     AssertEqual(TypeSharpEquality.CombineHash(17, TypeSharpEquality.GetHash("alpha")), TypeSharpEquality.CombineHash(17, "alpha".GetHashCode()));
+}
+
+static void RuntimeAsyncHelperCreatesTasks()
+{
+    var completed = TypeSharpAsync.Completed();
+    completed.Wait();
+    AssertTrue(completed.IsCompletedSuccessfully, "Completed helper should return a completed task.");
+
+    var value = TypeSharpAsync.FromResult("value").GetAwaiter().GetResult();
+    AssertEqual("value", value);
+
+    var failed = TypeSharpAsync.FromException<string>(new InvalidOperationException("boom"));
+    AssertTrue(failed.IsFaulted, "Failed helper should return a faulted task.");
+    AssertThrows<InvalidOperationException>(() => failed.GetAwaiter().GetResult());
+
+    var failedUnit = TypeSharpAsync.FromException(new InvalidOperationException("unit boom"));
+    AssertTrue(failedUnit.IsFaulted, "Non-generic failed helper should return a faulted task.");
+    AssertThrows<InvalidOperationException>(() => failedUnit.GetAwaiter().GetResult());
 }
 
 static void ReferenceResolverNormalizesFrameworkAssemblies()

@@ -38,3 +38,4 @@
 | [0070-nominal-union-runtime-helper.md](0070-nominal-union-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated nominal union case class용 tag/value helper를 추가한다. |
 | [0071-pattern-runtime-helper.md](0071-pattern-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated pattern matching lowering용 case/payload helper를 추가한다. |
 | [0072-equality-hash-runtime-helper.md](0072-equality-hash-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated record/union lowering용 equality/hash helper를 추가한다. |
+| [0073-async-runtime-helper.md](0073-async-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated async lowering용 `Task` helper를 추가한다. |

@@ -8,3 +8,4 @@ Current helpers:
 - `ITypeSharpUnionCase` and `TypeSharpUnion` expose tag, case name, payload, equality, and hash helpers for generated nominal union case classes.
 - `TypeSharpPattern` exposes small case and payload checks for generated pattern matching lowering.
 - `TypeSharpEquality` exposes equality, sequence equality, and hash composition helpers for generated records and union cases.
+- `TypeSharpAsync` exposes package-free `Task` creation helpers for generated async lowering.

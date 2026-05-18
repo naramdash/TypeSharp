@@ -162,6 +162,7 @@ Current runtime helper:
 - `TypeSharp.Runtime.TypeSharpUnion` provides C# 7.3-compatible helper methods for tag checks, payload access, case equality, payload equality, and deterministic hash composition.
 - `TypeSharp.Runtime.TypeSharpPattern` provides C# 7.3-compatible case and payload checks for generated pattern matching lowering.
 - `TypeSharp.Runtime.TypeSharpEquality` provides C# 7.3-compatible equality, sequence equality, and hash composition helpers for generated records and union cases.
+- `TypeSharp.Runtime.TypeSharpAsync` provides package-free `Task` creation helpers for generated async lowering.
 
 ## .NET Interop Layer
 

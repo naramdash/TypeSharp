@@ -189,7 +189,7 @@
 - [x] nominal union helper
 - [x] pattern helper
 - [x] equality/hash helper
-- [ ] async helper
+- [x] async helper
 - [ ] public ABI versioning 정책
 
 ## 도구
