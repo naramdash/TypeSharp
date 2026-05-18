@@ -137,6 +137,15 @@ public static class DiagnosticDescriptors
         "A C# interop call uses a ref, out, or in argument modifier that does not match the referenced method metadata.",
         "Change the call-site modifier to match the imported C# method signature.");
 
+    public static readonly DiagnosticDescriptor UnknownCSharpNullability = new(
+        "TS2404",
+        "Unknown C# nullability",
+        DiagnosticSeverity.Warning,
+        DiagnosticCategory.Interop,
+        "Unknown C# nullability.",
+        "A C# interop call returns a reference type from metadata that does not contain nullable annotations.",
+        "Add a null guard, use nullable-annotated metadata, or loosen nullable checking for this interop boundary.");
+
     public static readonly DiagnosticDescriptor GeneratedProjectBuildFailed = new(
         "TS3501",
         "Generated C# project build failed",
@@ -163,6 +172,7 @@ public static class DiagnosticDescriptors
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,
+        UnknownCSharpNullability,
         GeneratedProjectBuildFailed
     ];
 }

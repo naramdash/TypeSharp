@@ -38,6 +38,7 @@ Current allocated descriptors:
 | `TS2401` | Interop | Error | Missing referenced assembly or namespace |
 | `TS2402` | Interop | Error | Ambiguous C# overload |
 | `TS2403` | Interop | Error | Invalid byref interop use |
+| `TS2404` | Interop | Warning | Unknown C# nullability |
 | `TS3501` | Backend | Error | Generated C# project build failed |
 
 Reserved semantic examples:

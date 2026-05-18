@@ -42,6 +42,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports ambiguous C# overload diagnostics", CheckerReportsAmbiguousCSharpOverloadDiagnostics),
     ("checker reports ambiguous expanded params overload diagnostics", CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics),
     ("checker reports ambiguous optional overload diagnostics", CheckerReportsAmbiguousOptionalOverloadDiagnostics),
+    ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
@@ -129,6 +130,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2401",
             "TS2402",
             "TS2403",
+            "TS2404",
             "TS3501"
         ],
         descriptors.Select(descriptor => descriptor.Code).ToArray());
@@ -550,6 +552,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(["Echo"], legacyApi.Methods.Select(method => method.Name).ToArray());
         AssertSequence(["value"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertEqual(MetadataNullabilityKind.Unknown, legacyApi.Methods.Single().ReturnNullability);
         AssertSequence([MetadataByRefKind.None], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.ByRefKind).ToArray());
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsParams).ToArray());
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsOptional).ToArray());
@@ -574,6 +577,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var legacyByRef = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByRef"), "LegacyByRef metadata should be present.");
         var tryParse = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "TryParseCount"), "TryParseCount metadata should be present.");
         AssertSequence(["text", "value"], tryParse.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertEqual(MetadataNullabilityKind.NotApplicable, tryParse.ReturnNullability);
         AssertSequence([MetadataByRefKind.None, MetadataByRefKind.Out], tryParse.Parameters.Select(parameter => parameter.ByRefKind).ToArray());
 
         var addOne = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "AddOne"), "AddOne metadata should be present.");
@@ -797,6 +801,43 @@ static void CheckerReportsAmbiguousOptionalOverloadDiagnostics()
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertContains("matches 2 overload candidates", diagnostic.Message);
         AssertContains("make the call unambiguous", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsUnknownCSharpNullabilityDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnknownNullability"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.UnknownNullability"
+            generatedOutputRoot = "generated"
+
+            [language]
+            nullable = "strict"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnknownNullability
+
+            import { LegacyApi } from "Legacy.Tools"
+
+            export fun echo(): string = LegacyApi.Echo("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.HasErrors, "Unknown C# nullability should be a warning, not a build-blocking error.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2404");
+        AssertEqual(DiagnosticSeverity.Warning, diagnostic.Severity);
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("returns reference type 'string' from metadata without nullable annotations", diagnostic.Message);
     });
 }
 

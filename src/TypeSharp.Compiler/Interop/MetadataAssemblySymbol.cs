@@ -26,6 +26,7 @@ public sealed record MetadataTypeSymbol(
 public sealed record MetadataMethodSymbol(
     string Name,
     string ReturnType,
+    MetadataNullabilityKind ReturnNullability,
     IReadOnlyList<MetadataParameterSymbol> Parameters);
 
 public sealed record MetadataPropertySymbol(
@@ -44,4 +45,11 @@ public enum MetadataByRefKind
     Ref,
     Out,
     In
+}
+
+public enum MetadataNullabilityKind
+{
+    NotApplicable,
+    Unknown,
+    Annotated
 }

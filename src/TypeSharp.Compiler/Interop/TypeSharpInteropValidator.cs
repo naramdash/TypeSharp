@@ -8,10 +8,11 @@ public static class TypeSharpInteropValidator
     public static IReadOnlyList<Diagnostic> Validate(
         SyntaxNode root,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
-        string file)
+        string file,
+        string nullableMode = "strict")
     {
         var diagnostics = new List<Diagnostic>();
-        ValidateNode(root, assemblies, file, diagnostics);
+        ValidateNode(root, assemblies, file, nullableMode, diagnostics);
         return diagnostics;
     }
 
@@ -19,16 +20,17 @@ public static class TypeSharpInteropValidator
         SyntaxNode node,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         string file,
+        string nullableMode,
         List<Diagnostic> diagnostics)
     {
         if (node.Kind == SyntaxKind.CallExpression)
         {
-            ValidateCall(node, assemblies, file, diagnostics);
+            ValidateCall(node, assemblies, file, nullableMode, diagnostics);
         }
 
         foreach (var child in node.Children.Where(child => !child.IsToken))
         {
-            ValidateNode(child, assemblies, file, diagnostics);
+            ValidateNode(child, assemblies, file, nullableMode, diagnostics);
         }
     }
 
@@ -36,6 +38,7 @@ public static class TypeSharpInteropValidator
         SyntaxNode node,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         string file,
+        string nullableMode,
         List<Diagnostic> diagnostics)
     {
         if (!TryGetStaticMemberCall(node, out var typeName, out var methodName))
@@ -70,6 +73,17 @@ public static class TypeSharpInteropValidator
         }
 
         var (metadataType, metadataMethod) = selectedCandidates[0];
+        if (IsStrictNullableMode(nullableMode) &&
+            metadataMethod.ReturnNullability == MetadataNullabilityKind.Unknown)
+        {
+            diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnknownCSharpNullability.Code,
+                DiagnosticDescriptors.UnknownCSharpNullability.DefaultSeverity,
+                $"Call to C# method '{metadataType.FullName}.{metadataMethod.Name}' returns reference type '{metadataMethod.ReturnType}' from metadata without nullable annotations.",
+                file,
+                node.Span));
+        }
+
         for (var index = 0; index < arguments.Length; index++)
         {
             var argument = arguments[index];
@@ -380,6 +394,9 @@ public static class TypeSharpInteropValidator
         name = argument.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
         return name.Length > 0;
     }
+
+    private static bool IsStrictNullableMode(string nullableMode) =>
+        string.Equals(nullableMode, "strict", StringComparison.OrdinalIgnoreCase);
 
     private static string FormatExpected(MetadataByRefKind kind) =>
         kind switch

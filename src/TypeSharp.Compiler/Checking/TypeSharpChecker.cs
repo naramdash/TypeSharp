@@ -32,7 +32,11 @@ public static class TypeSharpChecker
             diagnostics.AddRange(parseResult.Diagnostics);
             if (!parseResult.HasErrors && parseResult.Root is not null)
             {
-                diagnostics.AddRange(TypeSharpInteropValidator.Validate(parseResult.Root, metadataResult.Assemblies, sourceFile.RelativePath));
+                diagnostics.AddRange(TypeSharpInteropValidator.Validate(
+                    parseResult.Root,
+                    metadataResult.Assemblies,
+                    sourceFile.RelativePath,
+                    manifestResult.Manifest.Language.Nullable));
                 var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath);
                 diagnostics.AddRange(bindingResult.Diagnostics);
                 if (!bindingResult.HasErrors)

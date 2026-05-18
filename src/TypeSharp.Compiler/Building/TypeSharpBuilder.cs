@@ -47,7 +47,11 @@ public static class TypeSharpBuilder
                 continue;
             }
 
-            diagnostics.AddRange(TypeSharpInteropValidator.Validate(parseResult.Root, metadataResult.Assemblies, sourceFile.RelativePath));
+            diagnostics.AddRange(TypeSharpInteropValidator.Validate(
+                parseResult.Root,
+                metadataResult.Assemblies,
+                sourceFile.RelativePath,
+                manifestResult.Manifest.Language.Nullable));
             var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath);
             diagnostics.AddRange(bindingResult.Diagnostics);
             if (!bindingResult.HasErrors)

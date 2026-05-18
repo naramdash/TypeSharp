@@ -76,6 +76,7 @@ public static class TypeSharpMetadataReader
             }
 
             var reader = peReader.GetMetadataReader();
+            var assemblyHasNullableMetadata = HasNullableMetadata(reader, reader.GetAssemblyDefinition().GetCustomAttributes());
             foreach (var handle in reader.TypeDefinitions)
             {
                 var type = reader.GetTypeDefinition(handle);
@@ -87,7 +88,7 @@ public static class TypeSharpMetadataReader
                 types.Add(new MetadataTypeSymbol(
                     reader.GetString(type.Namespace),
                     reader.GetString(type.Name),
-                    ReadPublicMethods(reader, type),
+                    ReadPublicMethods(reader, type, assemblyHasNullableMetadata),
                     ReadPublicProperties(reader, type)));
             }
         }
@@ -102,7 +103,10 @@ public static class TypeSharpMetadataReader
         return types;
     }
 
-    private static IReadOnlyList<MetadataMethodSymbol> ReadPublicMethods(MetadataReader reader, TypeDefinition type)
+    private static IReadOnlyList<MetadataMethodSymbol> ReadPublicMethods(
+        MetadataReader reader,
+        TypeDefinition type,
+        bool assemblyHasNullableMetadata)
     {
         var methods = new List<MetadataMethodSymbol>();
         foreach (var handle in type.GetMethods())
@@ -114,19 +118,22 @@ public static class TypeSharpMetadataReader
                 continue;
             }
 
-            methods.Add(ReadMethod(reader, method));
+            methods.Add(ReadMethod(reader, type, method, assemblyHasNullableMetadata));
         }
 
         return methods;
     }
 
-    private static MetadataMethodSymbol ReadMethod(MetadataReader reader, MethodDefinition method)
+    private static MetadataMethodSymbol ReadMethod(
+        MetadataReader reader,
+        TypeDefinition declaringType,
+        MethodDefinition method,
+        bool assemblyHasNullableMetadata)
     {
         var provider = new SimpleSignatureTypeProvider();
         var signature = method.DecodeSignature(provider, genericContext: null);
         var parameterDefinitions = method.GetParameters()
             .Select(handle => reader.GetParameter(handle))
-            .Where(parameter => parameter.SequenceNumber > 0)
             .ToDictionary(parameter => parameter.SequenceNumber);
 
         var parameters = new List<MetadataParameterSymbol>();
@@ -146,6 +153,7 @@ public static class TypeSharpMetadataReader
         return new MetadataMethodSymbol(
             reader.GetString(method.Name),
             signature.ReturnType.Name,
+            GetReturnNullability(reader, declaringType, method, signature.ReturnType, parameterDefinitions, assemblyHasNullableMetadata),
             parameters);
     }
 
@@ -193,6 +201,46 @@ public static class TypeSharpMetadataReader
         }
 
         return false;
+    }
+
+    private static bool HasNullableMetadata(MetadataReader reader, CustomAttributeHandleCollection attributes) =>
+        HasCustomAttribute(reader, attributes, "System.Runtime.CompilerServices.NullableAttribute") ||
+        HasCustomAttribute(reader, attributes, "System.Runtime.CompilerServices.NullableContextAttribute");
+
+    private static MetadataNullabilityKind GetReturnNullability(
+        MetadataReader reader,
+        TypeDefinition type,
+        MethodDefinition method,
+        DecodedType returnType,
+        IReadOnlyDictionary<int, Parameter> parameters,
+        bool assemblyHasNullableMetadata)
+    {
+        if (!IsReferenceType(returnType.Name))
+        {
+            return MetadataNullabilityKind.NotApplicable;
+        }
+
+        var hasNullableMetadata = assemblyHasNullableMetadata ||
+            HasNullableMetadata(reader, type.GetCustomAttributes()) ||
+            HasNullableMetadata(reader, method.GetCustomAttributes()) ||
+            parameters.TryGetValue(0, out var returnParameter) &&
+            HasNullableMetadata(reader, returnParameter.GetCustomAttributes());
+
+        return hasNullableMetadata
+            ? MetadataNullabilityKind.Annotated
+            : MetadataNullabilityKind.Unknown;
+    }
+
+    private static bool IsReferenceType(string typeName)
+    {
+        if (typeName.EndsWith("[]", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return typeName is "string" or "object" ||
+            typeName.Contains('.', StringComparison.Ordinal) ||
+            typeName.Contains('<', StringComparison.Ordinal);
     }
 
     private static string GetAttributeTypeName(MetadataReader reader, EntityHandle constructor)
