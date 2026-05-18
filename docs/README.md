@@ -15,67 +15,73 @@
 3. [agentic-execution.md](agentic-execution.md)
    - Ralph mode, Goal mode, `/goal` 같은 장기 실행 모드에서 작업을 고르고 검증하고 인계하는 실행 계약이다.
 
-4. [requirements.md](requirements.md)
+4. [progress.md](progress.md)
+   - 장기 실행 작업의 task packet, rollup, commit, 인계 기록 정책을 정의한다.
+
+5. [adr/README.md](adr/README.md)
+   - 장기 설계 결정을 남기는 Architecture Decision Record 형식과 사용 기준을 정의한다.
+
+6. [requirements.md](requirements.md)
    - 플랫폼, 언어 핵심, 컴파일러, 상호 운용, 표준 라이브러리, 도구, 품질, 보안 필수사항을 정의한다.
 
-5. [grammar/README.md](grammar/README.md)
+7. [grammar/README.md](grammar/README.md)
    - TypeSharp가 가져야 할 문법을 lexical, module, declaration, type, expression, pattern, interop, name resolution 단위로 정의한다.
 
-6. [grammar/coverage.md](grammar/coverage.md)
+8. [grammar/coverage.md](grammar/coverage.md)
    - TypeScript, F#, C# 기능을 TypeSharp 문법이 직접 포괄하거나 TypeSharp식 기능으로 대체하는지 추적한다.
 
-7. [examples/README.md](examples/README.md)
+9. [examples/README.md](examples/README.md)
    - 현재 문법을 기준으로 TypeSharp `.tysh` 코드가 실제로 어떻게 보일지 대표 예제를 보여준다.
 
-8. [standard-library.md](standard-library.md)
+10. [standard-library.md](standard-library.md)
    - `TypeSharp.Core`, `TypeSharp.Collections`, `TypeSharp.Runtime`의 초기 namespace 정책과 핵심 타입을 정의한다.
 
-9. [csharp-interop.md](csharp-interop.md)
+11. [csharp-interop.md](csharp-interop.md)
    - 기존 C#/.NET Framework 라이브러리 참조, 호출, public ABI 노출 계약을 정의한다.
 
-10. [cli.md](cli.md)
+12. [cli.md](cli.md)
    - `typesharp` command surface, project manifest, diagnostics format, exit code, source discovery 규칙을 정의한다.
 
-11. [formatting.md](formatting.md)
+13. [formatting.md](formatting.md)
    - `.tysh` source의 공식 formatter convention과 `typesharp format --check`의 기준 layout을 정의한다.
 
-12. [diagnostics.md](diagnostics.md)
+14. [diagnostics.md](diagnostics.md)
    - diagnostic code range, descriptor metadata, explanation surface, golden diagnostic fixture 정책을 정의한다.
 
-13. [lowering.md](lowering.md)
+15. [lowering.md](lowering.md)
    - 현재 구현된 TypeSharp 기능이 C# 7.3-compatible `net48` source로 어떻게 낮아지는지 기능별 예제와 fixture 근거를 정리한다.
 
-14. [feasibility.md](feasibility.md)
+16. [feasibility.md](feasibility.md)
    - 현재 설계의 실현 가능성, MVP로 낮춘 범위, backend/host/ABI 결정을 기록한다.
 
-15. [feature-map.md](feature-map.md)
+17. [feature-map.md](feature-map.md)
    - 최신 C#, F#, TypeScript 기능을 TypeSharp에서 MVP, Stable Backlog, Preview Watch, Experimental, Rejected로 분류한다.
 
-16. [architecture.md](architecture.md)
+18. [architecture.md](architecture.md)
    - compiler pipeline, backend 전략, runtime library, tooling, test strategy의 권장 구조를 제안한다.
 
-17. [checklist.md](checklist.md)
+19. [checklist.md](checklist.md)
    - 설계와 구현을 반복할 때 완료 여부를 확인하는 실행 체크리스트다.
 
-18. [parser-fixtures.md](parser-fixtures.md)
+20. [parser-fixtures.md](parser-fixtures.md)
    - compiler skeleton 전에 parser positive/negative fixture, diagnostics snapshot, syntax tree snapshot 형식을 고정한다.
 
-19. [tasks/README.md](tasks/README.md)
+21. [tasks/README.md](tasks/README.md)
    - 장기 실행 에이전트가 바로 집어 들 수 있는 작업 패킷 목록이다.
 
-20. [traceability.md](traceability.md)
+22. [traceability.md](traceability.md)
    - 목표, 요구사항, 기능, 체크리스트가 서로 어떻게 연결되는지 검증한다.
 
-21. [references.md](references.md)
+23. [references.md](references.md)
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
-22. [dependencies.md](dependencies.md)
+24. [dependencies.md](dependencies.md)
    - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
 
-23. [framework-targeting.md](framework-targeting.md)
+25. [framework-targeting.md](framework-targeting.md)
    - Windows 10/11 장비 벤더 환경에서 `net48`과 `net481` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
-24. [runtime-abi.md](runtime-abi.md)
+26. [runtime-abi.md](runtime-abi.md)
    - `TypeSharp.Core`, `TypeSharp.Runtime`, generated `net48` assembly의 public ABI versioning 정책을 정의한다.
 
 ## 문서 원칙
@@ -83,6 +89,8 @@
 - `goal.md`는 프로젝트의 북극성이다. 다른 문서가 goal과 충돌하면 goal을 먼저 수정하거나 충돌을 명시한다.
 - `agent.md`는 `/goal` 기반 장기 실행 지침이다. 새 세션의 Codex는 루트 [agent.md](../agent.md)를 통해 목표, 반복 루프, 금지선을 복원한다.
 - `agentic-execution.md`는 Ralph/Goal mode가 작업을 선택하고 검증하고 인계하는 구체적 실행 계약이다.
+- `progress.md`는 task packet, rollup, commit, 인계 기록 정책을 정한다.
+- `adr/`는 큰 설계 결정을 반복 논쟁 없이 이어받을 수 있게 하는 Architecture Decision Record 형식을 제공한다.
 - `requirements.md`는 "반드시 지켜야 할 것"을 다룬다. 구현 편의나 선호는 `architecture.md`에 둔다.
 - `grammar/`는 TypeSharp 문법의 실제 설계 표면이다. 새 문법은 [grammar/coverage.md](grammar/coverage.md)에서 TypeScript, F#, C# 기능과 연결되어야 한다.
 - [grammar/consistency.md](grammar/consistency.md)는 새 문법을 추가하기 전에 먼저 확인해야 하는 공통 표기 규칙이다.

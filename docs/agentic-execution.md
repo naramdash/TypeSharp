@@ -30,11 +30,12 @@
 1. [../agent.md](../agent.md)
 2. [goal.md](goal.md)
 3. [agentic-execution.md](agentic-execution.md)
-4. [checklist.md](checklist.md)
-5. [traceability.md](traceability.md)
-6. [feasibility.md](feasibility.md)
-7. [architecture.md](architecture.md)
-8. 현재 작업과 직접 관련된 문서
+4. [progress.md](progress.md)
+5. [checklist.md](checklist.md)
+6. [traceability.md](traceability.md)
+7. [feasibility.md](feasibility.md)
+8. [architecture.md](architecture.md)
+9. 현재 작업과 직접 관련된 문서
 
 이 순서는 세 가지 질문에 답하기 위한 것이다.
 
@@ -110,6 +111,7 @@
 6. Record
    - 완료한 항목을 체크한다.
    - 남은 항목, 막힌 결정, 검증하지 못한 내용을 남긴다.
+   - 진행 기록은 [progress.md](progress.md)의 task packet, rollup, commit, 인계 정책을 따른다.
 
 ## Task Packet Template
 
@@ -176,6 +178,7 @@ End Time: <current computer time, yyyy-MM-dd HH:mm:ss zzz, or TBD>
 - MVP, Stable Backlog, Preview Watch, Experimental, Rejected 중 하나로 분류한다.
 - lowering, runtime cost, public ABI 영향이 기록된다.
 - 다음 구현 작업이 checklist나 task packet으로 남는다.
+- public ABI, backend, runtime, compiler API, CLI/LSP 계약에 영향을 주는 큰 결정은 [adr/README.md](adr/README.md)의 ADR 형식으로 남긴다.
 
 Task packet 압축 기준:
 - 큰 주제의 연속 작업이 완료되면 관련 `docs/tasks` 문서를 하나의 rollup task packet으로 압축할 수 있다.

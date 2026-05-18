@@ -12,6 +12,7 @@
 - 완료된 task packet은 rollup 전까지 검증 결과와 남은 후속 작업을 남긴다.
 - 큰 주제의 작업 묶음이 완료되면 관련 task packet을 하나의 rollup 문서로 압축할 수 있다.
 - task packet이 실제 checklist 항목을 줄이지 않으면 만들지 않는다.
+- 진행 기록 세부 정책은 [../progress.md](../progress.md)를 따른다.
 
 ## 현재 작업 큐
 
@@ -48,3 +49,4 @@
 | [0092-async-task-interop-lowering.md](0092-async-task-interop-lowering.md) | Q2-Q3 | Done | `async fun`과 `await`을 generated C# `async Task<T>` source로 낮춰 `net48` build 및 C# consumer smoke를 고정한다. |
 | [0093-lowering-examples-catalog.md](0093-lowering-examples-catalog.md) | Q1-Q5 | Done | 구현된 C# 7.3 source backend lowering을 기능별 예제와 fixture 근거로 문서화한다. |
 | [0094-test-coverage-checklist-audit.md](0094-test-coverage-checklist-audit.md) | Q2-Q3 | Done | existing lowering golden, runtime unit, and C# interop test evidence를 checklist/traceability에 맞춘다. |
+| [0095-progress-and-adr-policy.md](0095-progress-and-adr-policy.md) | Q1 | Done | long-running progress log policy와 architecture decision record 형식을 고정한다. |

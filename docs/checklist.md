@@ -46,8 +46,8 @@
 - [x] 실제 `docs/tasks/` 작업 패킷이 있다.
 - [x] 다음 구현 작업의 첫 task packet이 작성되어 있다.
 - [x] parser fixture format 정책이 있다.
-- [ ] 반복 실행 결과를 기록할 progress log 정책이 있다.
-- [ ] 장기 실행 중 decision record를 남기는 ADR 형식이 있다.
+- [x] 반복 실행 결과를 기록할 progress log 정책이 있다.
+- [x] 장기 실행 중 decision record를 남기는 ADR 형식이 있다.
 
 ## 플랫폼
 
