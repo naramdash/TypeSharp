@@ -190,7 +190,7 @@
 - [x] pattern helper
 - [x] equality/hash helper
 - [x] async helper
-- [ ] public ABI versioning 정책
+- [x] public ABI versioning 정책
 
 ## 도구
 

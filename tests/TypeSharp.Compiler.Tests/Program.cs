@@ -33,6 +33,7 @@ var tests = new (string Name, Action Body)[]
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
     ("runtime project targets net48", RuntimeProjectTargetsNet48),
     ("core project targets net48", CoreProjectTargetsNet48),
+    ("runtime ABI constants are aligned", RuntimeAbiConstantsAreAligned),
     ("net48 runtime artifacts avoid external package dependencies", Net48RuntimeArtifactsAvoidExternalPackageDependencies),
     ("core option and result expose basic states", CoreOptionAndResultExposeBasicStates),
     ("runtime union helper exposes case metadata", RuntimeUnionHelperExposesCaseMetadata),
@@ -371,6 +372,12 @@ static void CoreProjectTargetsNet48()
     AssertContains("abstract class Result<T, E>", result);
     AssertContains("namespace TypeSharp.Core", unit);
     AssertContains("struct Unit", unit);
+}
+
+static void RuntimeAbiConstantsAreAligned()
+{
+    AssertEqual(TypeSharpCompilerInfo.RuntimeAbiVersion, TypeSharpRuntimeInfo.RuntimeAbiVersion);
+    AssertEqual(0, TypeSharpRuntimeInfo.RuntimeAbiVersion);
 }
 
 static void Net48RuntimeArtifactsAvoidExternalPackageDependencies()

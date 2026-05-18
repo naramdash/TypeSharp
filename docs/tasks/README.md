@@ -36,3 +36,4 @@
 | [0064-formatter-convention.md](0064-formatter-convention.md) | Q4 | Done | `typesharp format`과 VS Code formatter가 공유할 `.tysh` canonical layout을 문서화한다. |
 | [0065-0069-vscode-lsp-tooling.md](0065-0069-vscode-lsp-tooling.md) | Q4 | Done | VS Code `.tysh` language scaffold와 LSP diagnostics, hover, go-to-definition, basic completion을 묶는다. |
 | [0070-0073-runtime-helper-surface.md](0070-0073-runtime-helper-surface.md) | Q3 | Done | `TypeSharp.Runtime`의 union, pattern, equality/hash, async generated-code helper surface를 묶는다. |
+| [0074-runtime-abi-versioning-policy.md](0074-runtime-abi-versioning-policy.md) | Q3 | Done | runtime/core/generated assembly public ABI versioning 정책과 ABI constant alignment smoke를 고정한다. |

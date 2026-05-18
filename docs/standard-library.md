@@ -65,6 +65,7 @@ import { Option, Some, None } from "TypeSharp.Core"
 - generated pattern matching lowering은 `TypeSharp.Runtime.TypeSharpPattern`으로 case predicate와 payload extraction helper를 공유할 수 있다.
 - generated record와 union case equality/hash lowering은 `TypeSharp.Runtime.TypeSharpEquality`로 값 비교, sequence 비교, hash composition helper를 공유할 수 있다.
 - generated async lowering은 `TypeSharp.Runtime.TypeSharpAsync`로 completed/faulted `Task` helper를 공유할 수 있다.
+- public ABI versioning과 runtime helper compatibility gate는 [runtime-abi.md](runtime-abi.md)를 따른다.
 
 ## Collections
 
