@@ -137,8 +137,9 @@ typesharp run --configuration Debug -- Alice
 - 실행 전 build가 실패하면 프로그램을 실행하지 않는다.
 
 현재 구현 메모:
-- 초기 smoke path는 `main(): string` 또는 `main(): int` 형태를 generated C# entry point로 감싸 실행한다.
-- `main(args: string[])` argument 전달과 richer return/async handling은 후속 구현 범위다.
+- 초기 smoke path는 `main(): string`, `main(): int`, `main(args: string[]): string`, `main(args: string[]): int` 형태를 generated C# entry point로 감싸 실행한다.
+- `int` return은 process exit code가 되고, non-null non-`int` return은 stdout에 출력된다.
+- async main과 richer return handling은 후속 구현 범위다.
 
 ## Stable Backlog Command
 

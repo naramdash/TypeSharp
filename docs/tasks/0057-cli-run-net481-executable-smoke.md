@@ -76,8 +76,10 @@ Done:
 - Added smoke test that builds and runs a generated `net481` executable.
 - Updated CLI docs, checklist, and traceability.
 
+Completed later:
+- `main(args: string[])` lowering and `--` argument forwarding are completed by [0059-cli-run-main-args-forwarding.md](0059-cli-run-main-args-forwarding.md).
+
 Remaining:
-- Lower `main(args: string[])` and pass `--` arguments into TypeSharp main.
 - Expand generated entry point return handling beyond the current `string`/`int` smoke path.
 - Bring the richer `docs/examples/cli-console` source into backend-supported executable coverage after records/arrays/if/for/pipeline lowering mature.
 

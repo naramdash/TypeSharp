@@ -117,11 +117,12 @@ public static class CSharpSourceBackend
         {
             var visibility = node.Children.Any(child => child.Kind == SyntaxKind.ExportModifier) ? "public" : "internal";
             var name = GetDeclarationName(node);
+            var parameters = GetParameterList(node);
             var returnType = GetReturnType(node);
             var body = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.FunctionBody);
             var expression = body?.Children.LastOrDefault(child => !child.IsToken);
 
-            _builder.AppendLine($"        {visibility} static {returnType} {name}()");
+            _builder.AppendLine($"        {visibility} static {returnType} {name}({parameters})");
             _builder.AppendLine("        {");
             if (expression?.Kind == SyntaxKind.BlockExpression)
             {
@@ -133,6 +134,28 @@ public static class CSharpSourceBackend
             }
 
             _builder.AppendLine("        }");
+        }
+
+        private static string GetParameterList(SyntaxNode function)
+        {
+            var parameterList = function.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return string.Empty;
+            }
+
+            var parameters = parameterList.Children
+                .Where(child => child.Kind == SyntaxKind.Parameter)
+                .Select(EmitParameter);
+            return string.Join(", ", parameters);
+        }
+
+        private static string EmitParameter(SyntaxNode parameter)
+        {
+            var name = parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
+            var annotation = parameter.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
+            return $"{MapType(typeNode)} {(!string.IsNullOrWhiteSpace(name) ? name : "_")}";
         }
 
         private void EmitBlock(SyntaxNode node)
@@ -336,6 +359,12 @@ public static class CSharpSourceBackend
                     "void" or "unit" => "void",
                     _ => name
                 };
+            }
+
+            if (node.Kind == SyntaxKind.ArrayType)
+            {
+                var elementType = node.Children.FirstOrDefault(child => !child.IsToken);
+                return $"{MapType(elementType)}[]";
             }
 
             return "object";

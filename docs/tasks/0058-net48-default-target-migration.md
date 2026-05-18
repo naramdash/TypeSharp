@@ -75,9 +75,11 @@ Done:
 - Updated current docs to treat `.NET Framework 4.8`/`net48` as the baseline.
 - Left `net481` references only where they describe official latest Framework status, comparison, optional profile, or historical task packet filenames.
 
+Completed later:
+- CLI run `main(args: string[])` forwarding is completed by [0059-cli-run-main-args-forwarding.md](0059-cli-run-main-args-forwarding.md).
+
 Remaining:
 - Add an explicit optional `net481` latest Framework profile only if the project decides to keep dual-profile smoke coverage.
-- Continue the CLI run follow-up for `main(args: string[])` forwarding after the target migration commit.
 
 Blocked:
 - None.

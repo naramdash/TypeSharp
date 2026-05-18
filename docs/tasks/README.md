@@ -31,3 +31,4 @@
 | [0056-net481-dependency-compatibility-audit.md](0056-net481-dependency-compatibility-audit.md) | Q3 | Done | Core/Runtime/generated artifact dependency inventory와 `net481` API drift audit를 고정한다. |
 | [0057-cli-run-net481-executable-smoke.md](0057-cli-run-net481-executable-smoke.md) | Q4 | Done | `typesharp run`이 generated `net481` executable을 빌드하고 실행하는 smoke path를 만든다. |
 | [0058-net48-default-target-migration.md](0058-net48-default-target-migration.md) | Q0 | Done | 기본 산출물 타깃을 `net48`로 낮추고 compiler/runtime/tests/current docs 기준을 정렬한다. |
+| [0059-cli-run-main-args-forwarding.md](0059-cli-run-main-args-forwarding.md) | Q4 | Done | `typesharp run -- ...` program arguments를 generated `main(args: string[])`로 전달한다. |

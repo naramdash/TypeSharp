@@ -209,6 +209,7 @@
 - [x] CLI `build` generated project reference propagation path
 - [ ] CLI `run`
 - [x] CLI `run` generated `net48` executable smoke path
+- [x] CLI `run` forwards `--` arguments to `main(args: string[])`
 - [ ] formatter convention 문서
 - [ ] VS Code extension scaffold
 - [ ] VS Code syntax highlighting
@@ -279,6 +280,7 @@
 - [x] ASP.NET/WCF/worker-style `net48` host compatibility smoke tests
 - [x] `net48` runtime dependency compatibility audit smoke tests
 - [x] CLI run generated `net48` executable smoke tests
+- [x] CLI run `main(args: string[])` argument forwarding smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests
 - [ ] C# interop tests

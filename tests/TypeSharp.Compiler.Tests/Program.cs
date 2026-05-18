@@ -51,6 +51,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
+    ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
     ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
@@ -1054,6 +1055,40 @@ static void CliRunBuildsAndRunsGeneratedNet48Executable()
         AssertEqual(string.Empty, error.ToString());
         AssertTrue(File.Exists(Path.Combine(root, "generated", "Program.g.cs")), "Run should emit a generated entry point.");
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RunSmoke.exe")), "Run should build a generated net48 executable.");
+    });
+}
+
+static void CliRunPassesArgumentsToGeneratedMain()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RunArgs"
+            targetFramework = "net48"
+            outputType = "exe"
+            rootNamespace = "Samples.RunArgs"
+            generatedOutputRoot = "generated"
+            main = "Samples.RunArgs.main"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RunArgs
+
+            export fun main(args: string[]): string = args.Length.ToString()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["run", manifestPath, "--", "alpha", "beta"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual($"2{Environment.NewLine}", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        var generatedProgram = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
+        AssertContains("public static string main(string[] args)", generatedSource);
+        AssertContains("Module.main(args)", generatedProgram);
     });
 }
 
