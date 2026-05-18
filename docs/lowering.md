@@ -15,8 +15,21 @@
 - TypeSharp compile-time-only type-level union과 structural shape는 public CLR metadata로 직접 노출하지 않는다.
 - runtime helper가 필요한 lowering은 `TypeSharp.Runtime`의 package-free `net48` API에만 의존한다.
 
+## Lowering Pipeline
+
+현재 compiler는 backend emit 직전에 `TypeSharp.Compiler.Lowering.TypeSharpLoweringPipeline.Default`를 실행한다.
+
+Pipeline contract:
+- pass는 순서가 명시된 `ITypeSharpLoweringPass`로 구성한다.
+- pass는 같은 syntax tree에 반복 적용해도 duplicate helper/import를 만들지 않는 idempotent 동작이어야 한다.
+- pass 결과는 deterministic해야 하며 C# source backend output stability를 깨면 안 된다.
+
+Implemented pass:
+- `csharp-runtime-import`: union declaration or match expression이 runtime helper를 필요로 할 때 synthetic `TypeSharp.Runtime` import를 추가한다.
+
 주요 검증:
 - `C# backend fixture snapshots match`
+- `lowering pipeline injects runtime helper imports`
 - `generated C# compiles in net48 project`
 - `CLI build emits generated net48 assembly`
 - `C# net48 project consumes generated TypeSharp assembly`

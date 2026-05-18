@@ -10,6 +10,7 @@ using TypeSharp.Compiler.Binding;
 using TypeSharp.Compiler.Checking;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Interop;
+using TypeSharp.Compiler.Lowering;
 using TypeSharp.Compiler.Parsing;
 using TypeSharp.Compiler.Projects;
 using TypeSharp.Compiler.Semantics;
@@ -30,6 +31,7 @@ var tests = new (string Name, Action Body)[]
     ("type checker fixture convention paths are stable", TypeCheckerFixtureConventionPathsAreStable),
     ("C# backend fixture convention paths are stable", CSharpBackendFixtureConventionPathsAreStable),
     ("backend abstraction exposes C# source backend", BackendAbstractionExposesCSharpSourceBackend),
+    ("lowering pipeline injects runtime helper imports", LoweringPipelineInjectsRuntimeHelperImports),
     ("manifest loader reads explicit manifest path", ManifestLoaderReadsExplicitManifestPath),
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
@@ -136,19 +138,37 @@ var tests = new (string Name, Action Body)[]
 };
 
 var failures = 0;
+var filter = args.Length == 0 ? null : args[0];
+var executed = 0;
 
 foreach (var (name, body) in tests)
 {
+    if (!string.IsNullOrWhiteSpace(filter) &&
+        !name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+    {
+        continue;
+    }
+
+    executed++;
     try
     {
         body();
         Console.WriteLine($"PASS {name}");
+        Console.Out.Flush();
     }
     catch (Exception ex)
     {
         failures++;
         Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
+        Console.Error.Flush();
     }
+}
+
+if (executed == 0)
+{
+    failures++;
+    Console.Error.WriteLine($"No tests matched filter '{filter}'.");
+    Console.Error.Flush();
 }
 
 return failures == 0 ? 0 : 1;
@@ -283,6 +303,36 @@ static void BackendAbstractionExposesCSharpSourceBackend()
     AssertEqual("csharp", backend.Name);
     AssertEqual(".g.cs", backend.GeneratedSourceExtension);
     AssertEqual(CSharpSourceBackend.Emit(root), backend.Emit(root));
+}
+
+static void LoweringPipelineInjectsRuntimeHelperImports()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.Lowering
+
+        union Message {
+            Empty
+            Text(value: string)
+        }
+
+        export fun describe(message: Message): string =
+            match message {
+                Empty => "empty"
+                Text(value) => value
+            }
+        """);
+
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var pipeline = TypeSharpLoweringPipeline.Default;
+
+    AssertSequence(["csharp-runtime-import"], pipeline.Passes.Select(pass => pass.Name).ToArray());
+
+    var lowered = pipeline.Lower(root);
+    AssertEqual(1, CountRuntimeImports(lowered));
+
+    var loweredAgain = pipeline.Lower(lowered);
+    AssertEqual(1, CountRuntimeImports(loweredAgain));
+    AssertTextEquals(CSharpSourceBackend.Emit(root), CSharpSourceBackend.Emit(lowered));
 }
 
 static void ManifestLoaderReadsExplicitManifestPath()
@@ -4960,6 +5010,14 @@ static SyntaxNode? FindFirstNode(SyntaxNode node, SyntaxKind kind)
 
     return null;
 }
+
+static int CountRuntimeImports(SyntaxNode root) =>
+    root.Children.Count(child =>
+        (child.Kind is SyntaxKind.ImportNamedDeclaration or SyntaxKind.ImportTypeDeclaration)
+        && child.Children.Any(grandchild =>
+            grandchild.IsToken
+            && grandchild.Kind == SyntaxKind.StringLiteralToken
+            && string.Equals(grandchild.Text, "\"TypeSharp.Runtime\"", StringComparison.Ordinal)));
 
 static ProcessResult RunProcess(string fileName, string arguments, string workingDirectory)
 {

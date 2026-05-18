@@ -1,4 +1,5 @@
 using System.Text;
+using TypeSharp.Compiler.Lowering;
 using TypeSharp.Compiler.Parsing;
 
 namespace TypeSharp.Compiler.Backend;
@@ -7,8 +8,9 @@ public static class CSharpSourceBackend
 {
     public static string Emit(SyntaxNode root)
     {
+        var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
         var emitter = new Emitter();
-        return emitter.Emit(root);
+        return emitter.Emit(loweredRoot);
     }
 
     private sealed class Emitter

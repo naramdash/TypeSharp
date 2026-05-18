@@ -127,6 +127,7 @@
 | 필수/권장 분리 | 통과 | [requirements.md](requirements.md)가 영역별 필수/권장을 분리한다. |
 | 최신 기능 분류 | 통과 | [feature-map.md](feature-map.md)가 MVP, Stable Backlog, Preview Watch, Experimental, Rejected를 사용한다. |
 | Feature specification index | 통과 | [feature-specs.md](feature-specs.md)가 현재 구현 또는 안정 문법으로 분류된 core language, interop/ABI, tooling/build features를 primary spec 문서와 implementation/evidence에 연결한다. Planned/Preview/Experimental/Stable Backlog 기능은 완료된 구현 사양으로 보지 않는 scope rule을 둔다. |
+| Lowering passes | 통과 | `TypeSharp.Compiler.Lowering.TypeSharpLoweringPipeline`과 `ITypeSharpLoweringPass`가 backend emit 직전 ordered pass seam을 제공하고, `csharp-runtime-import` pass가 union/match runtime helper import lowering을 idempotent하게 수행한다. Smoke test `lowering pipeline injects runtime helper imports`가 pass order, duplicate prevention, and backend output stability를 검증한다. |
 | .NET Framework 제약 반영 | 통과 | 모든 핵심 문서가 `net48`과 .NET Framework 4.8을 기준으로 둔다. |
 | 실행 체크리스트 | 통과 | [checklist.md](checklist.md)가 문서, 플랫폼, 언어, 컴파일러, 런타임, 테스트, 릴리스 항목을 가진다. |
 | 공식 근거 | 통과 | [references.md](references.md)에 공식 링크와 기준선이 있다. |

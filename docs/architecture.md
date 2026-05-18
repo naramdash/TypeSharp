@@ -103,6 +103,11 @@ docs/
 - preview 기능은 feature gate를 거쳐 lowering된다.
 - lowering 결과는 deterministic해야 한다.
 
+현재 구현:
+- `TypeSharp.Compiler.Lowering.TypeSharpLoweringPipeline`은 backend emit 직전에 ordered lowering passes를 실행한다.
+- 첫 pass는 runtime helper가 필요한 union/match surface에 synthetic `TypeSharp.Runtime` import를 주입하는 C# source backend prelude다.
+- pass는 idempotent해야 하며 smoke test가 pass order, duplicate prevention, and C# backend output stability를 검증한다.
+
 ## Backend 전략
 
 ### 선택지 A: C# 7.3 호환 Source Generation

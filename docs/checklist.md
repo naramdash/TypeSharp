@@ -148,7 +148,7 @@
 - [ ] inference engine
 - [x] C# overload resolution
 - [x] public ABI checker
-- [ ] lowering passes
+- [x] lowering passes
 - [x] backend abstraction
 - [x] C# 7.3 source backend
 - [x] C# source backend first golden fixture
