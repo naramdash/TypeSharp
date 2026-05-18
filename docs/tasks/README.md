@@ -24,3 +24,4 @@
 | [0033-0037-generated-net481-build-pipeline.md](0033-0037-generated-net481-build-pipeline.md) | Q3 | Done | generated C# source를 CLI-visible `net481` assembly build, C# consumer smoke, manifest reference propagation까지 연결한다. |
 | [0038-0042-csharp-member-byref-interop-smokes.md](0038-0042-csharp-member-byref-interop-smokes.md) | Q3 | Done | referenced `net481` C# local DLL의 property, `params`, `out`, `in`, `ref` call-site compile smokes를 묶는다. |
 | [0043-csharp-local-metadata-symbol-index.md](0043-csharp-local-metadata-symbol-index.md) | Q3 | Done | local `net481` C# DLL의 public type/member metadata index를 추가한다. |
+| [0044-csharp-invalid-byref-diagnostic.md](0044-csharp-invalid-byref-diagnostic.md) | Q3 | Done | local C# metadata와 call-site `ref`/`out`/`in` modifier mismatch를 `TS2403`으로 진단한다. |

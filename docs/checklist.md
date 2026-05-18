@@ -127,6 +127,7 @@
 - [x] C# metadata reader local public symbol index
 - [x] C# reference resolver skeleton
 - [x] C# metadata diagnostics pipeline integration
+- [x] C# invalid byref interop diagnostic smoke
 - [ ] reference resolver for framework assembly and local DLL
 - [ ] semantic model
 - [ ] type checker
@@ -240,6 +241,7 @@
 - [x] C# metadata reader smoke tests
 - [x] C# metadata reader local public symbol index smoke tests
 - [x] C# metadata pipeline diagnostics smoke tests
+- [x] C# invalid byref interop diagnostic smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests
 - [x] C# framework static member call smoke tests

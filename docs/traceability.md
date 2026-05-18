@@ -163,6 +163,7 @@
 | C# metadata reader skeleton | 통과 | `TypeSharpMetadataReader`가 `ReferenceResolutionResult`를 소비해 framework/local references를 deterministic `MetadataAssemblySymbol` placeholders로 변환하고 reference diagnostics와 missing local metadata input diagnostics를 보존하거나 보고하는 smoke tests가 검증한다. |
 | C# metadata local public symbol index | 통과 | `TypeSharpMetadataReader`가 local `net481` DLL의 public top-level type, method, property, parameter, byref modifier metadata를 `MetadataAssemblySymbol.Types`로 index하고 smoke test가 `Legacy.Tools` fixture의 `params`/`out`/`in`/`ref` metadata를 검증한다. |
 | C# metadata pipeline integration | 통과 | `TypeSharpChecker`와 `TypeSharpBuilder`가 reference resolver와 metadata reader diagnostics를 source parse 전에 diagnostics pipeline에 포함하고, missing local DLL의 `TS2401`이 CLI check/build JSON diagnostics와 build emission stop smoke tests로 검증된다. |
+| C# invalid byref interop diagnostic | 통과 | `TypeSharpInteropValidator`가 local metadata index와 parsed call-site를 비교해 `ref`/`out`/`in` modifier mismatch를 `TS2403`으로 보고하고 `typesharp build`가 generated C# emission 전에 중단하는 smoke tests가 검증한다. |
 | CLI check parse diagnostics | 통과 | `TypeSharpChecker`와 `typesharp check`가 manifest/source discovery/parser diagnostics를 실행하고 text/JSON diagnostics와 exit code를 smoke tests로 검증한다. |
 | 실현 가능성 검토 | 통과 | [feasibility.md](feasibility.md)가 compiler host, C# source backend, union representation, public ABI boundary를 현실적인 MVP로 낮춘다. |
 | 문법 커버리지 | 통과 | [grammar/coverage.md](grammar/coverage.md)가 TypeScript, F#, C# 기능의 직접 지원/대체/계획/거절 상태를 추적한다. |

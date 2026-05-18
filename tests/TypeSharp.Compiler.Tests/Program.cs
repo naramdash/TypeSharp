@@ -38,8 +38,10 @@ var tests = new (string Name, Action Body)[]
     ("metadata reader preserves reference resolution diagnostics", MetadataReaderPreservesReferenceResolutionDiagnostics),
     ("metadata reader reports missing local metadata inputs", MetadataReaderReportsMissingLocalMetadataInputs),
     ("checker reports missing reference diagnostics", CheckerReportsMissingReferenceDiagnostics),
+    ("checker reports invalid byref interop diagnostics", CheckerReportsInvalidByRefInteropDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
+    ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run command locates manifest for future commands", CliRunCommandLocatesManifestForFutureCommands),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
@@ -117,6 +119,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2001",
             "TS2201",
             "TS2401",
+            "TS2403",
             "TS3501"
         ],
         descriptors.Select(descriptor => descriptor.Code).ToArray());
@@ -633,6 +636,44 @@ static void CheckerReportsMissingReferenceDiagnostics()
     });
 }
 
+static void CheckerReportsInvalidByRefInteropDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidByRef"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidByRef"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidByRef
+
+            import { LegacyByRef } from "Legacy.Tools"
+
+            export fun broken(): int {
+              let mut value: int = 0
+              LegacyByRef.Increment(out value)
+              value
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Invalid C# byref interop should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2403");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("expects parameter 'value' to be passed with 'ref'", diagnostic.Message);
+        AssertContains("but the argument uses 'out'", diagnostic.Message);
+    });
+}
+
 static void CliCheckEmitsJsonReferenceDiagnostics()
 {
     WithWorkspace(root =>
@@ -693,6 +734,48 @@ static void CliBuildStopsBeforeEmissionOnReferenceDiagnostics()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildReferences.Generated.csproj")), "Build should not emit generated project when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "BuildReferences.dll")), "Build should not emit generated assembly when reference diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnInvalidByRefInterop()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidByRefBuild"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidByRefBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidByRefBuild
+
+            import { LegacyByRef } from "Legacy.Tools"
+
+            export fun broken(): int {
+              let mut value: int = 0
+              LegacyByRef.Increment(out value)
+              value
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2403\"", error.ToString());
+        AssertContains("expects parameter 'value' to be passed with 'ref'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when invalid byref diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "InvalidByRefBuild.Generated.csproj")), "Build should not emit generated project when invalid byref diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "InvalidByRefBuild.dll")), "Build should not emit generated assembly when invalid byref diagnostics contain errors.");
     });
 }
 

@@ -119,6 +119,15 @@ public static class DiagnosticDescriptors
         "The project references an external assembly or path that the compiler cannot resolve.",
         "Fix the reference path or add the referenced assembly to the project environment.");
 
+    public static readonly DiagnosticDescriptor InvalidByRefInterop = new(
+        "TS2403",
+        "Invalid byref interop use",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Interop,
+        "Invalid byref interop use.",
+        "A C# interop call uses a ref, out, or in argument modifier that does not match the referenced method metadata.",
+        "Change the call-site modifier to match the imported C# method signature.");
+
     public static readonly DiagnosticDescriptor GeneratedProjectBuildFailed = new(
         "TS3501",
         "Generated C# project build failed",
@@ -143,6 +152,7 @@ public static class DiagnosticDescriptors
         UnresolvedName,
         TypeMismatch,
         MissingReference,
+        InvalidByRefInterop,
         GeneratedProjectBuildFailed
     ];
 }
