@@ -35,7 +35,4 @@
 | [0063-net48-repository-consistency-sweep.md](0063-net48-repository-consistency-sweep.md) | Q0-Q3 | Done | `net481`에서 `net48`로 내려온 기본 build target 결정을 repo-wide 문서 색인과 task rollup에 일관되게 반영한다. |
 | [0064-formatter-convention.md](0064-formatter-convention.md) | Q4 | Done | `typesharp format`과 VS Code formatter가 공유할 `.tysh` canonical layout을 문서화한다. |
 | [0065-0069-vscode-lsp-tooling.md](0065-0069-vscode-lsp-tooling.md) | Q4 | Done | VS Code `.tysh` language scaffold와 LSP diagnostics, hover, go-to-definition, basic completion을 묶는다. |
-| [0070-nominal-union-runtime-helper.md](0070-nominal-union-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated nominal union case class용 tag/value helper를 추가한다. |
-| [0071-pattern-runtime-helper.md](0071-pattern-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated pattern matching lowering용 case/payload helper를 추가한다. |
-| [0072-equality-hash-runtime-helper.md](0072-equality-hash-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated record/union lowering용 equality/hash helper를 추가한다. |
-| [0073-async-runtime-helper.md](0073-async-runtime-helper.md) | Q3 | Done | `TypeSharp.Runtime`에 generated async lowering용 `Task` helper를 추가한다. |
+| [0070-0073-runtime-helper-surface.md](0070-0073-runtime-helper-surface.md) | Q3 | Done | `TypeSharp.Runtime`의 union, pattern, equality/hash, async generated-code helper surface를 묶는다. |
