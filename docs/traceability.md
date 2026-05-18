@@ -39,6 +39,7 @@
 - 아키텍처: Backend 전략, CLI
 - 체크리스트: 플랫폼, 컴파일러, 테스트
 - 완료 기준: `typesharp build`가 `net481` 실행 파일 또는 라이브러리를 만들고 Windows .NET Framework 4.8.1 환경에서 실행된다.
+- 현재 검증: `tests/TypeSharp.Compiler.Tests`의 `CLI run builds and runs generated net481 executable` smoke가 `typesharp run`으로 generated `RunSmoke.exe`를 빌드하고 현재 Windows .NET Framework 환경에서 실행해 `Hello from TypeSharp run` 출력을 확인한다.
 
 ### .NET Framework Application Model Compatibility
 
@@ -157,6 +158,7 @@
 | Generated C# net481 compile smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 backend-generated C# source를 temporary SDK-style `net481` C# project에 쓰고 offline `dotnet build`로 컴파일해 generated source가 C# compiler에 수용되는지 검증한다. |
 | Runtime net481 skeleton | 통과 | `src/TypeSharp.Runtime`가 `net481` SDK-style class library로 추가되고 `TypeSharp.Runtime.TypeSharpRuntimeInfo`가 ABI 0 placeholder를 제공하며 `dotnet build src/TypeSharp.Runtime/TypeSharp.Runtime.csproj`가 통과한다. |
 | Dependency inventory and net481 API audit | 통과 | [dependencies.md](dependencies.md)가 generated project, `TypeSharp.Core`, `TypeSharp.Runtime`, compiler, CLI, test host dependency inventory를 기록하고, `tests/TypeSharp.Compiler.Tests`가 Core/Runtime artifacts의 `net481`, package-free, obvious .NET 5+ or package-backed API drift를 smoke test로 검증한다. |
+| CLI run generated net481 executable | 통과 | `TypeSharpBuilder`가 executable project에 generated C# entry point를 추가하고 `.exe` output path를 보고하며, `typesharp run`이 build 후 generated `net481` executable을 실행하는 smoke test가 검증한다. 현재 entry point는 `main(): string`/`main(): int`에 한정한다. |
 | CLI build generated C# emission | 통과 | `TypeSharpBuilder`와 `typesharp build`가 clean 프로젝트를 검사한 뒤 manifest의 generated output root 아래 deterministic `.g.cs` 파일을 쓰고, diagnostics가 있으면 emission 전에 중단하는 smoke tests가 검증한다. |
 | CLI build net481 project scaffold | 통과 | `TypeSharpBuilder`와 `typesharp build`가 generated output root 아래 deterministic SDK-style `net481` C# project scaffold를 `.g.cs` source와 함께 쓰고 CLI output으로 project scaffold path를 보고하는 smoke tests가 검증한다. |
 | CLI build generated net481 assembly | 통과 | `TypeSharpBuilder`와 `typesharp build`가 generated SDK-style `net481` C# project를 offline-friendly `dotnet build`로 컴파일하고 CLI output으로 generated assembly path를 보고하며, `TS3501` build-failure descriptor와 generated DLL existence smoke tests가 검증한다. |

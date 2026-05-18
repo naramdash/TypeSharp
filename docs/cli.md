@@ -136,6 +136,10 @@ typesharp run --configuration Debug -- Alice
 - `--` 뒤의 값은 TypeSharp 프로그램의 `main(args: string[])`로 전달한다.
 - 실행 전 build가 실패하면 프로그램을 실행하지 않는다.
 
+현재 구현 메모:
+- 초기 smoke path는 `main(): string` 또는 `main(): int` 형태를 generated C# entry point로 감싸 실행한다.
+- `main(args: string[])` argument 전달과 richer return/async handling은 후속 구현 범위다.
+
 ## Stable Backlog Command
 
 ```text

@@ -51,7 +51,7 @@
 
 ## 플랫폼
 
-- [ ] .NET Framework 4.8.1 설치 환경에서 smoke test가 실행된다.
+- [x] .NET Framework 4.8.1 설치 환경에서 smoke test가 실행된다.
 - [x] 생성 assembly가 `net481` 프로젝트에서 참조된다.
 - [x] compiler host 요구사항이 확정되어 있다.
 - [x] runtime library가 `net481`로 빌드된다.
@@ -208,6 +208,7 @@
 - [x] CLI `build` generated `net481` assembly path
 - [x] CLI `build` generated project reference propagation path
 - [ ] CLI `run`
+- [x] CLI `run` generated `net481` executable smoke path
 - [ ] formatter convention 문서
 - [ ] VS Code extension scaffold
 - [ ] VS Code syntax highlighting
@@ -277,6 +278,7 @@
 - [x] C# event add/remove call smoke tests
 - [x] ASP.NET/WCF/worker-style `net481` host compatibility smoke tests
 - [x] `net481` runtime dependency compatibility audit smoke tests
+- [x] CLI run generated `net481` executable smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests
 - [ ] C# interop tests

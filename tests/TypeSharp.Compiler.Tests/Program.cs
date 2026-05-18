@@ -50,7 +50,8 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
-    ("CLI run command locates manifest for future commands", CliRunCommandLocatesManifestForFutureCommands),
+    ("CLI run builds and runs generated net481 executable", CliRunBuildsAndRunsGeneratedNet481Executable),
+    ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
     ("parser fixture snapshots match", ParserFixtureSnapshotsMatch),
@@ -1025,20 +1026,55 @@ static void ManifestLoaderReportsInvalidManifestShape()
     });
 }
 
-static void CliRunCommandLocatesManifestForFutureCommands()
+static void CliRunBuildsAndRunsGeneratedNet481Executable()
 {
     WithWorkspace(root =>
     {
-        var manifestPath = WriteManifest(root, MinimalManifest("CliLocate"));
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RunSmoke"
+            targetFramework = "net481"
+            outputType = "exe"
+            rootNamespace = "Samples.RunSmoke"
+            generatedOutputRoot = "generated"
+            main = "Samples.RunSmoke.main"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RunSmoke
+
+            export fun main(): string = "Hello from TypeSharp run"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["run", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual($"Hello from TypeSharp run{Environment.NewLine}", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "Program.g.cs")), "Run should emit a generated entry point.");
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "RunSmoke.exe")), "Run should build a generated net481 executable.");
+    });
+}
+
+static void CliRunRejectsLibraryProjects()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("RunLibrary"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RunLibrary
+
+            export fun greeting(): string = "library"
+            """);
         using var output = new StringWriter();
         using var error = new StringWriter();
 
         var exitCode = TypeSharpCli.Run(["run", manifestPath], output, error);
 
         AssertEqual(5, exitCode);
-        AssertContains(Path.GetFullPath(manifestPath), output.ToString());
-        AssertContains("TypeSharp run is not implemented yet.", output.ToString());
-        AssertEqual(string.Empty, error.ToString());
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("typesharp run requires project outputType = \"exe\".", error.ToString());
     });
 }
 

@@ -3,6 +3,7 @@ using TypeSharp.Compiler.Building;
 using TypeSharp.Compiler.Checking;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Projects;
+using System.Diagnostics;
 
 namespace TypeSharp.Cli;
 
@@ -21,7 +22,7 @@ public static class TypeSharpCli
             "version" => RunVersion(args, output, error),
             "check" => RunCheck(args, output, error),
             "build" => RunBuild(args, output, error),
-            "run" => RunProjectCommandPlaceholder(args[0], args, output, error),
+            "run" => RunRun(args, output, error),
             "--help" or "-h" or "help" => RunHelp(output),
             _ => RunUnknownCommand(args[0], error)
         };
@@ -65,27 +66,6 @@ public static class TypeSharpCli
         output.WriteLine("  build [project] [options]");
         output.WriteLine("  run [project] [-- args...]");
         return 0;
-    }
-
-    private static int RunProjectCommandPlaceholder(string command, string[] args, TextWriter output, TextWriter error)
-    {
-        var parseResult = ParseProjectCommand(args);
-        if (parseResult.ExitCode is not null)
-        {
-            error.WriteLine(parseResult.Message);
-            return parseResult.ExitCode.Value;
-        }
-
-        var manifestPath = TypeSharpManifestLocator.Locate(parseResult.ProjectArgument, Directory.GetCurrentDirectory());
-        if (manifestPath.HasErrors)
-        {
-            WriteDiagnostics(error, manifestPath.Diagnostics, parseResult.DiagnosticFormat);
-            return 1;
-        }
-
-        output.WriteLine($"TypeSharp {command} manifest: {manifestPath.ManifestPath}");
-        output.WriteLine($"TypeSharp {command} is not implemented yet.");
-        return 5;
     }
 
     private static int RunCheck(string[] args, TextWriter output, TextWriter error)
@@ -157,11 +137,66 @@ public static class TypeSharpCli
         return 0;
     }
 
+    private static int RunRun(string[] args, TextWriter output, TextWriter error)
+    {
+        var parseResult = ParseProjectCommand(args);
+        if (parseResult.ExitCode is not null)
+        {
+            error.WriteLine(parseResult.Message);
+            return parseResult.ExitCode.Value;
+        }
+
+        if (parseResult.Emit != "csharp")
+        {
+            error.WriteLine("Only '--emit csharp' is supported by the current run skeleton.");
+            return 2;
+        }
+
+        var manifestPath = TypeSharpManifestLocator.Locate(parseResult.ProjectArgument, Directory.GetCurrentDirectory());
+        if (manifestPath.HasErrors || manifestPath.ManifestPath is null)
+        {
+            WriteDiagnostics(error, manifestPath.Diagnostics, parseResult.DiagnosticFormat);
+            return 1;
+        }
+
+        var manifestResult = TypeSharpManifestLoader.Load(manifestPath.ManifestPath);
+        if (manifestResult.HasErrors || manifestResult.Manifest is null)
+        {
+            WriteDiagnostics(error, manifestResult.Diagnostics, parseResult.DiagnosticFormat);
+            return 1;
+        }
+
+        if (!string.Equals(manifestResult.Manifest.Project.OutputType, "exe", StringComparison.OrdinalIgnoreCase))
+        {
+            error.WriteLine("typesharp run requires project outputType = \"exe\".");
+            return 5;
+        }
+
+        var buildResult = TypeSharpBuilder.Build(manifestPath.ManifestPath);
+        if (buildResult.HasErrors)
+        {
+            WriteDiagnostics(error, buildResult.Diagnostics, parseResult.DiagnosticFormat);
+            return 1;
+        }
+
+        if (buildResult.GeneratedAssembly is null)
+        {
+            error.WriteLine("typesharp run could not find a generated executable.");
+            return 1;
+        }
+
+        var runResult = RunGeneratedExecutable(buildResult.GeneratedAssembly.Path, parseResult.ProgramArguments);
+        output.Write(runResult.StandardOutput);
+        error.Write(runResult.StandardError);
+        return runResult.ExitCode;
+    }
+
     private static ProjectCommandParseResult ParseProjectCommand(string[] args)
     {
         string? projectArgument = null;
         var diagnosticFormat = "text";
         var emit = "csharp";
+        var programArguments = new List<string>();
 
         for (var index = 1; index < args.Length; index++)
         {
@@ -169,6 +204,11 @@ public static class TypeSharpCli
 
             if (arg == "--")
             {
+                for (var programArgIndex = index + 1; programArgIndex < args.Length; programArgIndex++)
+                {
+                    programArguments.Add(args[programArgIndex]);
+                }
+
                 break;
             }
 
@@ -236,7 +276,7 @@ public static class TypeSharpCli
             projectArgument = arg;
         }
 
-        return new ProjectCommandParseResult(projectArgument, diagnosticFormat, emit, null, null);
+        return new ProjectCommandParseResult(projectArgument, diagnosticFormat, emit, programArguments, null, null);
     }
 
     private static bool OptionConsumesValue(string option) =>
@@ -256,6 +296,46 @@ public static class TypeSharpCli
         }
     }
 
+    private static GeneratedProgramRunResult RunGeneratedExecutable(
+        string executablePath,
+        IReadOnlyList<string> programArguments)
+    {
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo
+        {
+            FileName = executablePath,
+            WorkingDirectory = Path.GetDirectoryName(executablePath) ?? Directory.GetCurrentDirectory(),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        foreach (var argument in programArguments)
+        {
+            process.StartInfo.ArgumentList.Add(argument);
+        }
+
+        try
+        {
+            process.Start();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            return new GeneratedProgramRunResult(4, string.Empty, $"Could not run generated executable: {ex.Message}{Environment.NewLine}");
+        }
+
+        var standardOutput = process.StandardOutput.ReadToEnd();
+        var standardError = process.StandardError.ReadToEnd();
+        if (!process.WaitForExit(milliseconds: 120_000))
+        {
+            process.Kill(entireProcessTree: true);
+            return new GeneratedProgramRunResult(4, standardOutput, standardError + "Generated executable timed out." + Environment.NewLine);
+        }
+
+        return new GeneratedProgramRunResult(process.ExitCode, standardOutput, standardError);
+    }
+
     private static int RunUnknownCommand(string command, TextWriter error)
     {
         error.WriteLine($"Unknown command '{command}'.");
@@ -272,9 +352,12 @@ public static class TypeSharpCli
         string? ProjectArgument,
         string DiagnosticFormat,
         string Emit,
+        IReadOnlyList<string> ProgramArguments,
         int? ExitCode,
         string? Message)
     {
-        public static ProjectCommandParseResult Usage(string message) => new(null, "text", "csharp", 2, message);
+        public static ProjectCommandParseResult Usage(string message) => new(null, "text", "csharp", [], 2, message);
     }
+
+    private sealed record GeneratedProgramRunResult(int ExitCode, string StandardOutput, string StandardError);
 }
