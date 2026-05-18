@@ -23,9 +23,4 @@
 | [0023-0032-runtime-cli-interop-backend-skeleton.md](0023-0032-runtime-cli-interop-backend-skeleton.md) | Q2-Q3 | Done | runtime/core, CLI build emission, C# interop metadata, C# backend skeleton을 묶는다. |
 | [0033-0037-generated-net481-build-pipeline.md](0033-0037-generated-net481-build-pipeline.md) | Q3 | Done | generated C# source를 CLI-visible `net481` assembly build, C# consumer smoke, manifest reference propagation까지 연결한다. |
 | [0038-0042-csharp-member-byref-interop-smokes.md](0038-0042-csharp-member-byref-interop-smokes.md) | Q3 | Done | referenced `net481` C# local DLL의 property, `params`, `out`, `in`, `ref` call-site compile smokes를 묶는다. |
-| [0043-csharp-local-metadata-symbol-index.md](0043-csharp-local-metadata-symbol-index.md) | Q3 | Done | local `net481` C# DLL의 public type/member metadata index를 추가한다. |
-| [0044-csharp-invalid-byref-diagnostic.md](0044-csharp-invalid-byref-diagnostic.md) | Q3 | Done | local C# metadata와 call-site `ref`/`out`/`in` modifier mismatch를 `TS2403`으로 진단한다. |
-| [0045-csharp-ambiguous-overload-diagnostic.md](0045-csharp-ambiguous-overload-diagnostic.md) | Q3 | Done | local C# metadata의 같은 arity overload ambiguity를 `TS2402`로 진단한다. |
-| [0046-csharp-exact-overload-ranking.md](0046-csharp-exact-overload-ranking.md) | Q3 | Done | local C# metadata overload set에서 literal/primitive exact match 후보를 선택한다. |
-| [0047-csharp-params-metadata-flag.md](0047-csharp-params-metadata-flag.md) | Q3 | Done | local C# metadata index에서 `params` parameter flag를 보존한다. |
-| [0048-csharp-params-overload-validation.md](0048-csharp-params-overload-validation.md) | Q3 | Done | local C# metadata validator가 expanded `params` overload 후보를 검증한다. |
+| [0043-0048-csharp-metadata-backed-interop-validation.md](0043-0048-csharp-metadata-backed-interop-validation.md) | Q3 | Done | local C# metadata index, byref diagnostics, overload ambiguity, exact narrowing, and expanded `params` validation을 묶는다. |
