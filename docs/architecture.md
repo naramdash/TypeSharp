@@ -302,9 +302,9 @@ assemblies = [
 ]
 ```
 
-결정 필요:
-- MSBuild와 직접 통합할지, 독립 manifest를 먼저 둘지 결정해야 한다.
-- NuGet restore와 reference resolution을 어느 레이어에서 처리할지 결정해야 한다.
+현재 결정:
+- 독립 `TypeSharp.toml` manifest를 현재 기준으로 둔다. MSBuild 1급 통합은 후속 tooling 확장이다.
+- framework assembly/local DLL reference resolution은 compiler project layer에서 처리한다. NuGet restore, lock file, and transitive package resolution은 Stable Backlog다.
 
 ## 테스트 전략
 

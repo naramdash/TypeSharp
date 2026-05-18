@@ -332,9 +332,9 @@ JSON 형식:
 9. `typesharp explain`
 10. `typesharp lsp`
 
-## 열린 결정
+## 후속 확장 결정
 
-- 직접 IL emit backend를 언제 `--emit il`로 공개할지 결정해야 한다.
-- `TypeSharp.toml`을 장기 manifest로 유지할지, MSBuild project와 1급 통합할지 결정해야 한다.
-- `typesharp test`가 별도 test framework를 실행할지, 외부 .NET test runner로 위임할지 결정해야 한다.
-- `typesharp lsp`를 공개 command로 둘지, VS Code extension 내부 command로 숨길지 결정해야 한다.
+- 직접 IL emit backend 구현과 `--emit il` 공개는 Stable Backlog다.
+- `TypeSharp.toml`은 현재 manifest 기준이다. MSBuild 1급 통합은 후속 확장이다.
+- `typesharp test`가 별도 test framework를 실행할지, 외부 .NET test runner로 위임할지는 후속 tooling 확장이다.
+- `typesharp lsp` 공개 command와 VS Code extension 내부 command packaging은 후속 배포 정책에서 결정한다.
