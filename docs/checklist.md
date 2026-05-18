@@ -143,7 +143,7 @@
 - [x] C# unknown nullability diagnostic smoke
 - [x] reference resolver for framework assembly and local DLL
 - [ ] semantic model
-- [ ] type checker
+- [x] type checker
 - [x] type checker basic mismatch skeleton
 - [ ] inference engine
 - [ ] C# overload resolution
