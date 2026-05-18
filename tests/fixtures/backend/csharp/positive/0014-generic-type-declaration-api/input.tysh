@@ -1,0 +1,5 @@
+namespace Samples.GenericTypes
+
+public class Box<T> {
+  public fun Keep(value: T): T = value
+}

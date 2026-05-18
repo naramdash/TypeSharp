@@ -155,6 +155,9 @@ public static class TypeSharpBinder
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
                 case SyntaxKind.DelegateDeclaration:
+                    BindTypeDeclaration(node, scope);
+                    break;
+
                 case SyntaxKind.ValueDeclaration:
                 case SyntaxKind.LiteralDeclaration:
                     BindTypeAnnotations(node, scope);
@@ -172,6 +175,14 @@ public static class TypeSharpBinder
             {
                 BindTopLevelDeclaration(child, scope);
             }
+        }
+
+        private void BindTypeDeclaration(SyntaxNode node, BindingScope parentScope)
+        {
+            var scope = new BindingScope(parentScope);
+            DeclareTypeParameters(node, scope);
+            BindTypeAnnotations(node, scope);
+            BindInitializers(node, scope);
         }
 
         private void BindFunctionDeclaration(SyntaxNode node, BindingScope parentScope)

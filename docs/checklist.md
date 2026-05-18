@@ -93,7 +93,7 @@
 - [x] function declaration/call
 - [x] class/interface declaration
 - [x] property/method/constructor
-- [ ] generic type/function
+- [x] generic type/function
 - [x] module/namespace
 - [ ] immutable record
 - [x] `Option<T>`
