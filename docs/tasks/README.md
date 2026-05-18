@@ -60,3 +60,4 @@
 | [0103-binder-audit.md](0103-binder-audit.md) | Q2 | Done | binder 구현 범위와 symbol/name-resolution smoke evidence를 체크리스트에 맞춘다. |
 | [0104-type-checker-audit.md](0104-type-checker-audit.md) | Q2-Q3 | Done | type checker 구현 범위와 diagnostics/build-stop/LSP smoke evidence를 체크리스트에 맞춘다. |
 | [0105-diagnostics-system-audit.md](0105-diagnostics-system-audit.md) | Q1-Q2 | Done | diagnostics system 구현 범위와 descriptor/fixture/CLI/LSP smoke evidence를 체크리스트에 맞춘다. |
+| [0106-csharp-source-backend-audit.md](0106-csharp-source-backend-audit.md) | Q3 | Done | C# 7.3 source backend 구현 범위와 snapshot/build/consumer/host smoke evidence를 체크리스트에 맞춘다. |
