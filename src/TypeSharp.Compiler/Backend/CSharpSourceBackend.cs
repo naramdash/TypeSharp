@@ -62,6 +62,10 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.ModuleDeclaration)
                 .ToArray();
 
+            var classes = root.Children
+                .Where(child => child.Kind == SyntaxKind.ClassDeclaration)
+                .ToArray();
+
             foreach (var literal in literals)
             {
                 EmitLiteralDeclaration(literal);
@@ -79,7 +83,7 @@ public static class CSharpSourceBackend
                     _builder.AppendLine();
                 }
 
-                EmitFunction(functions[index]);
+                EmitFunction(functions[index], isStatic: true);
             }
 
             _builder.AppendLine("    }");
@@ -88,6 +92,12 @@ public static class CSharpSourceBackend
             {
                 _builder.AppendLine();
                 EmitModuleDeclaration(module);
+            }
+
+            foreach (var classDeclaration in classes)
+            {
+                _builder.AppendLine();
+                EmitClassDeclaration(classDeclaration);
             }
 
             _builder.AppendLine("}");
@@ -171,7 +181,33 @@ public static class CSharpSourceBackend
                     _builder.AppendLine();
                 }
 
-                EmitFunction(functions[index]);
+                EmitFunction(functions[index], isStatic: true);
+            }
+
+            _builder.AppendLine("    }");
+        }
+
+        private void EmitClassDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetClassDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+
+            _builder.AppendLine($"    {visibility} class {name}{typeParameters}");
+            _builder.AppendLine("    {");
+
+            var functions = node.Children
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .ToArray();
+
+            for (var index = 0; index < functions.Length; index++)
+            {
+                if (index > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                EmitFunction(functions[index], isStatic: false);
             }
 
             _builder.AppendLine("    }");
@@ -188,9 +224,10 @@ public static class CSharpSourceBackend
             _builder.AppendLine($"        {visibility} {storage} {type} {name} = {EmitExpression(initializer)};");
         }
 
-        private void EmitFunction(SyntaxNode node)
+        private void EmitFunction(SyntaxNode node, bool isStatic)
         {
             var visibility = GetVisibility(node);
+            var staticModifier = isStatic ? " static" : string.Empty;
             var name = GetDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
             var parameters = GetParameterList(node);
@@ -198,7 +235,7 @@ public static class CSharpSourceBackend
             var body = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.FunctionBody);
             var expression = body?.Children.LastOrDefault(child => !child.IsToken);
 
-            _builder.AppendLine($"        {visibility} static {returnType} {name}{typeParameters}({parameters})");
+            _builder.AppendLine($"        {visibility}{staticModifier} {returnType} {name}{typeParameters}({parameters})");
             _builder.AppendLine("        {");
             if (expression?.Kind == SyntaxKind.BlockExpression)
             {
@@ -644,6 +681,26 @@ public static class CSharpSourceBackend
             }
 
             return "Module";
+        }
+
+        private static string GetClassDeclarationName(SyntaxNode node)
+        {
+            var seenClassKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.ClassKeyword)
+                {
+                    seenClassKeyword = true;
+                    continue;
+                }
+
+                if (seenClassKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Generated";
+                }
+            }
+
+            return "Generated";
         }
 
         private static string GetLocalDeclarationName(SyntaxNode node)

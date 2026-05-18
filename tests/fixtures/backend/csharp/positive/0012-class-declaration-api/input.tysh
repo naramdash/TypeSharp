@@ -1,0 +1,5 @@
+namespace Samples.Classes
+
+public class Greeter {
+  public fun Echo(value: string): string = value
+}
