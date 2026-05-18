@@ -41,6 +41,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports invalid byref interop diagnostics", CheckerReportsInvalidByRefInteropDiagnostics),
     ("checker reports ambiguous C# overload diagnostics", CheckerReportsAmbiguousCSharpOverloadDiagnostics),
     ("checker reports ambiguous expanded params overload diagnostics", CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics),
+    ("checker reports ambiguous optional overload diagnostics", CheckerReportsAmbiguousOptionalOverloadDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
@@ -74,6 +75,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported ref call", CliBuildCompilesImportedRefCall),
     ("CLI build compiles exact overload match", CliBuildCompilesExactOverloadMatch),
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
+    ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -540,7 +542,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -549,12 +551,20 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(["string"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Type).ToArray());
         AssertSequence([MetadataByRefKind.None], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.ByRefKind).ToArray());
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsParams).ToArray());
+        AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsOptional).ToArray());
 
         var legacyParams = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyParams"), "LegacyParams metadata should be present.");
         var join = Require(legacyParams.Methods.SingleOrDefault(method => method.Name == "Join"), "Join metadata should be present.");
         AssertSequence(["separator", "values"], join.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string", "string[]"], join.Parameters.Select(parameter => parameter.Type).ToArray());
         AssertSequence([false, true], join.Parameters.Select(parameter => parameter.IsParams).ToArray());
+        AssertSequence([false, false], join.Parameters.Select(parameter => parameter.IsOptional).ToArray());
+
+        var legacyOptional = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyOptional"), "LegacyOptional metadata should be present.");
+        var format = Require(legacyOptional.Methods.SingleOrDefault(method => method.Name == "Format"), "Format metadata should be present.");
+        AssertSequence(["value", "suffix"], format.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "string"], format.Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertSequence([false, true], format.Parameters.Select(parameter => parameter.IsOptional).ToArray());
 
         var legacyFormatter = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFormatter"), "LegacyFormatter metadata should be present.");
         AssertSequence(["Prefix"], legacyFormatter.Properties.Select(property => property.Name).ToArray());
@@ -748,6 +758,40 @@ static void CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics()
         var result = TypeSharpChecker.Check(manifestPath);
 
         AssertTrue(result.HasErrors, "Ambiguous expanded params overload interop should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("matches 2 overload candidates", diagnostic.Message);
+        AssertContains("make the call unambiguous", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsAmbiguousOptionalOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousOptionalOverload"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousOptionalOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousOptionalOverload
+
+            import { LegacyOptionalOverloads } from "Legacy.Tools"
+
+            export fun choose(): string = LegacyOptionalOverloads.Pick("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Ambiguous optional overload interop should produce diagnostics.");
         var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertContains("matches 2 overload candidates", diagnostic.Message);
@@ -1864,6 +1908,47 @@ static void CliBuildCompilesExactExpandedParamsOverloadMatch()
     });
 }
 
+static void CliBuildCompilesImportedOptionalCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedOptionalCall"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedOptionalCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedOptionalCall
+
+            import { LegacyOptional } from "Legacy.Tools"
+
+            export fun format(): string = LegacyOptional.Format("hello")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ImportedOptionalCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyOptional.Format(\"hello\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedOptionalCall.dll")),
+            "Generated project build should compile an imported optional call.");
+    });
+}
+
 static void CliBuildEmitsGeneratedNet481Assembly()
 {
     WithWorkspace(root =>
@@ -2195,6 +2280,27 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Pick(string separator, params object[] values)
                 {
                     return string.Join(separator, values);
+                }
+            }
+
+            public static class LegacyOptional
+            {
+                public static string Format(string value, string suffix = "!")
+                {
+                    return value + suffix;
+                }
+            }
+
+            public static class LegacyOptionalOverloads
+            {
+                public static string Pick(string value, string suffix = "!")
+                {
+                    return value + suffix;
+                }
+
+                public static string Pick(string value, int count = 1)
+                {
+                    return value + count.ToString();
                 }
             }
 

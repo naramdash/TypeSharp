@@ -139,7 +139,8 @@ public static class TypeSharpMetadataReader
                 parameter.Name.IsNil ? string.Empty : reader.GetString(parameter.Name),
                 type.Name,
                 GetByRefKind(type, parameter.Attributes),
-                HasCustomAttribute(reader, parameter.GetCustomAttributes(), "System.ParamArrayAttribute")));
+                HasCustomAttribute(reader, parameter.GetCustomAttributes(), "System.ParamArrayAttribute"),
+                IsOptionalWithDefault(parameter)));
         }
 
         return new MetadataMethodSymbol(
@@ -249,6 +250,10 @@ public static class TypeSharpMetadataReader
             ? MetadataByRefKind.In
             : MetadataByRefKind.Ref;
     }
+
+    private static bool IsOptionalWithDefault(Parameter parameter) =>
+        parameter.Attributes.HasFlag(System.Reflection.ParameterAttributes.Optional) &&
+        !parameter.GetDefaultValue().IsNil;
 
     private static bool CanReadLocalReference(ResolvedReference reference, List<Diagnostic> diagnostics)
     {

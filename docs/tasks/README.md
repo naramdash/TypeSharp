@@ -25,3 +25,4 @@
 | [0038-0042-csharp-member-byref-interop-smokes.md](0038-0042-csharp-member-byref-interop-smokes.md) | Q3 | Done | referenced `net481` C# local DLL의 property, `params`, `out`, `in`, `ref` call-site compile smokes를 묶는다. |
 | [0043-0048-csharp-metadata-backed-interop-validation.md](0043-0048-csharp-metadata-backed-interop-validation.md) | Q3 | Done | local C# metadata index, byref diagnostics, overload ambiguity, exact narrowing, and expanded `params` validation을 묶는다. |
 | [0049-netfx-application-model-compatibility-contract.md](0049-netfx-application-model-compatibility-contract.md) | Q1 | Done | .NET Framework ASP.NET, WCF, and worker compatibility goal을 requirements/checklist/traceability로 연결한다. |
+| [0050-csharp-optional-parameter-overload-validation.md](0050-csharp-optional-parameter-overload-validation.md) | Q3 | Done | local C# metadata validator가 optional parameter omitted argument 후보를 검증한다. |

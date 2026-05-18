@@ -142,13 +142,13 @@ public static class TypeSharpInteropValidator
 
     private static bool IsApplicableArity(MetadataMethodSymbol method, int argumentCount)
     {
-        if (!HasParamsParameter(method))
+        var requiredParameterCount = method.Parameters.Count(parameter => !parameter.IsOptional && !parameter.IsParams);
+        if (argumentCount < requiredParameterCount)
         {
-            return method.Parameters.Count == argumentCount;
+            return false;
         }
 
-        var fixedParameterCount = method.Parameters.Count - 1;
-        return argumentCount >= fixedParameterCount;
+        return HasParamsParameter(method) || argumentCount <= method.Parameters.Count;
     }
 
     private static bool HasParamsParameter(MetadataMethodSymbol method) =>

@@ -35,7 +35,8 @@ public sealed record MetadataParameterSymbol(
     string Name,
     string Type,
     MetadataByRefKind ByRefKind,
-    bool IsParams);
+    bool IsParams,
+    bool IsOptional);
 
 public enum MetadataByRefKind
 {
