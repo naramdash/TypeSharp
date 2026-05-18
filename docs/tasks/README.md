@@ -61,13 +61,4 @@
 | [0104-type-checker-audit.md](0104-type-checker-audit.md) | Q2-Q3 | Done | type checker 구현 범위와 diagnostics/build-stop/LSP smoke evidence를 체크리스트에 맞춘다. |
 | [0105-diagnostics-system-audit.md](0105-diagnostics-system-audit.md) | Q1-Q2 | Done | diagnostics system 구현 범위와 descriptor/fixture/CLI/LSP smoke evidence를 체크리스트에 맞춘다. |
 | [0106-csharp-source-backend-audit.md](0106-csharp-source-backend-audit.md) | Q3 | Done | C# 7.3 source backend 구현 범위와 snapshot/build/consumer/host smoke evidence를 체크리스트에 맞춘다. |
-| [0107-release-readiness-policy.md](0107-release-readiness-policy.md) | Q5 | Done | 릴리스 versioning, breaking change, preview gate, checksum/signing, security, release notes, compatibility matrix 정책을 묶는다. |
-| [0108-semantic-model-lsp-sharing.md](0108-semantic-model-lsp-sharing.md) | Q2-Q4 | Done | compiler semantic model API를 만들고 LSP diagnostics/hover/definition/completion이 공유하게 한다. |
-| [0109-feature-review-gate.md](0109-feature-review-gate.md) | Q1-Q5 | Done | 반복 검토 질문을 기능별 Done gate 정책으로 고정한다. |
-| [0110-backend-abstraction-seam.md](0110-backend-abstraction-seam.md) | Q3 | Done | C# source backend를 compiler backend abstraction 뒤로 연결한다. |
-| [0111-public-abi-checker.md](0111-public-abi-checker.md) | Q3-Q5 | Done | generated assembly public metadata를 deterministic ABI snapshot checker로 검증한다. |
-| [0112-csharp-overload-resolver.md](0112-csharp-overload-resolver.md) | Q3 | Done | C# interop overload 후보 선택을 독립 resolver API로 분리하고 현재 범위를 문서화한다. |
-| [0113-feature-specification-index.md](0113-feature-specification-index.md) | Q1-Q5 | Done | 현재 구현/안정 기능의 세부 사양 문서와 검증 근거를 기능별 색인으로 묶는다. |
-| [0114-lowering-pass-pipeline.md](0114-lowering-pass-pipeline.md) | Q2-Q3 | Done | backend emit 전 ordered lowering pass pipeline과 runtime helper import lowering pass를 추가한다. |
-| [0115-il-backend-artifact-seam.md](0115-il-backend-artifact-seam.md) | Q3 | Done | backend artifact contract를 source text와 future direct assembly output으로 분리한다. |
-| [0116-local-expression-inference-engine.md](0116-local-expression-inference-engine.md) | Q2 | Done | type checker 내부의 literal/identifier/call/binary 추론을 local expression inference engine으로 분리한다. |
+| [0107-0116-release-and-compiler-readiness.md](0107-0116-release-and-compiler-readiness.md) | Q1-Q5 | Done | release readiness, feature review/spec index, semantic model/LSP sharing, backend/IL seams, ABI/overload checks, lowering pipeline, and local inference engine을 묶는다. |
