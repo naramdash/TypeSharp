@@ -192,6 +192,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.OutArgument => EmitOutArgument(node),
                 SyntaxKind.InArgument => EmitInArgument(node),
                 SyntaxKind.RefArgument => EmitRefArgument(node),
+                SyntaxKind.LambdaExpression => EmitLambda(node),
                 _ => "default(object)"
             };
         }
@@ -262,6 +263,13 @@ public static class CSharpSourceBackend
         {
             var expression = node.Children.FirstOrDefault(child => !child.IsToken);
             return $"ref {EmitExpression(expression)}";
+        }
+
+        private string EmitLambda(SyntaxNode node)
+        {
+            var parameter = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "_";
+            var body = node.Children.LastOrDefault(child => !child.IsToken);
+            return $"{parameter} => {EmitExpression(body)}";
         }
 
         private static string EmitLiteral(SyntaxNode node)

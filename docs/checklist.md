@@ -113,7 +113,8 @@
 - [x] C# `out` interop compile smoke
 - [x] C# `in` interop compile smoke
 - [x] C# `ref` interop compile smoke
-- [ ] C# delegate/event interop
+- [x] C# delegate parameter interop compile smoke
+- [ ] C# event interop
 - [x] nullable metadata/unknown nullability diagnostics
 - [x] TypeSharp assembly consumed from C#
 
@@ -167,6 +168,7 @@
 - [x] generated C# imported `out` call build smoke
 - [x] generated C# imported `in` call build smoke
 - [x] generated C# imported `ref` call build smoke
+- [x] generated C# imported delegate lambda call build smoke
 - [ ] IL backend abstraction seam
 - [ ] diagnostics system
 - [x] initial diagnostic/span model

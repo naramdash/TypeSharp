@@ -1,0 +1,5 @@
+namespace Samples.BackendLambdas
+
+import { LegacyDelegates } from "Legacy.Tools"
+
+export fun apply(): string = LegacyDelegates.Apply("value", text => text)

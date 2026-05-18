@@ -78,6 +78,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
+    ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -545,7 +546,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -585,6 +586,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
 
         var increment = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "Increment"), "Increment metadata should be present.");
         AssertSequence([MetadataByRefKind.Ref], increment.Parameters.Select(parameter => parameter.ByRefKind).ToArray());
+
+        var legacyDelegates = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyDelegates"), "LegacyDelegates metadata should be present.");
+        var apply = Require(legacyDelegates.Methods.SingleOrDefault(method => method.Name == "Apply"), "Apply metadata should be present.");
+        AssertSequence(["value", "transform"], apply.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "System.Func`2<string, string>"], apply.Parameters.Select(parameter => parameter.Type).ToArray());
     });
 }
 
@@ -2032,6 +2038,47 @@ static void CliBuildCompilesImportedNamedArgumentCall()
     });
 }
 
+static void CliBuildCompilesImportedDelegateLambdaCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaCall"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaCall
+
+            import { LegacyDelegates } from "Legacy.Tools"
+
+            export fun apply(): string = LegacyDelegates.Apply("value", text => text)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ImportedDelegateLambdaCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegates.Apply(\"value\", text => text);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedDelegateLambdaCall.dll")),
+            "Generated project build should compile an imported delegate lambda call.");
+    });
+}
+
 static void CliBuildEmitsGeneratedNet481Assembly()
 {
     WithWorkspace(root =>
@@ -2397,6 +2444,14 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Route(string path, int statusCode = 200)
                 {
                     return statusCode.ToString() + ":" + path;
+                }
+            }
+
+            public static class LegacyDelegates
+            {
+                public static string Apply(string value, System.Func<string, string> transform)
+                {
+                    return transform(value);
                 }
             }
 
