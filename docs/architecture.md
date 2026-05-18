@@ -157,6 +157,10 @@ MVP 결정:
 - public API와 compiler internal API를 분리한다.
 - MVP nominal union representation은 abstract base class + sealed case class 계열로 시작한다. tagged struct representation은 Stable Backlog다.
 
+Current runtime helper:
+- `TypeSharp.Runtime.ITypeSharpUnionCase` defines the tag, case name, payload presence, and payload shape that generated nominal union case classes can expose.
+- `TypeSharp.Runtime.TypeSharpUnion` provides C# 7.3-compatible helper methods for tag checks, payload access, case equality, payload equality, and deterministic hash composition.
+
 ## .NET Interop Layer
 
 필수 구성:

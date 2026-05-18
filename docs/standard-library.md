@@ -60,6 +60,8 @@ import { Option, Some, None } from "TypeSharp.Core"
 - public API에서 `Option<T>`와 `Result<T, E>`는 `TypeSharp.Core`의 nominal union으로 노출한다.
 - type-level union, structural shape, anonymous object는 public API에 직접 노출하지 않는다.
 - C# 소비자를 위해 union lowering representation과 helper API를 안정화해야 한다.
+- generated nominal union case class는 `TypeSharp.Runtime.ITypeSharpUnionCase`를 구현해 tag, case name, payload metadata를 노출할 수 있다.
+- generated code와 C# interop helper는 `TypeSharp.Runtime.TypeSharpUnion`으로 case tag 검사, payload 접근, equality/hash helper를 공유한다.
 
 ## Collections
 

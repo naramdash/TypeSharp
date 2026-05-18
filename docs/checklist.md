@@ -186,7 +186,7 @@
 - [x] `Option<T>`
 - [x] `Result<T, E>`
 - [x] `Unit`
-- [ ] nominal union helper
+- [x] nominal union helper
 - [ ] pattern helper
 - [ ] equality/hash helper
 - [ ] async helper

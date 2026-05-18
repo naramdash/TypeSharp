@@ -15,6 +15,7 @@ using TypeSharp.Compiler.Testing;
 using TypeSharp.Compiler.TypeChecking;
 using TypeSharp.Core;
 using TypeSharp.LanguageServer;
+using TypeSharp.Runtime;
 
 var tests = new (string Name, Action Body)[]
 {
@@ -34,6 +35,7 @@ var tests = new (string Name, Action Body)[]
     ("core project targets net48", CoreProjectTargetsNet48),
     ("net48 runtime artifacts avoid external package dependencies", Net48RuntimeArtifactsAvoidExternalPackageDependencies),
     ("core option and result expose basic states", CoreOptionAndResultExposeBasicStates),
+    ("runtime union helper exposes case metadata", RuntimeUnionHelperExposesCaseMetadata),
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
@@ -403,6 +405,31 @@ static void CoreOptionAndResultExposeBasicStates()
 
     AssertEqual(Unit.Value, new Unit());
     AssertEqual("()", Unit.Value.ToString());
+}
+
+static void RuntimeUnionHelperExposesCaseMetadata()
+{
+    var message = new RuntimeUnionSmoke.MessageCase("hello");
+    var samePayload = new RuntimeUnionSmoke.MessageCase("hello");
+    var differentPayload = new RuntimeUnionSmoke.MessageCase("bye");
+    var empty = RuntimeUnionSmoke.EmptyCase.Instance;
+
+    AssertTrue(TypeSharpUnion.IsCase(message, 1), "Union helper should match a case tag.");
+    AssertFalse(TypeSharpUnion.IsCase(message, 2), "Union helper should reject a different case tag.");
+    AssertEqual(1, TypeSharpUnion.GetTag(message));
+    AssertEqual("Message", TypeSharpUnion.GetCaseName(message));
+    AssertTrue(TypeSharpUnion.HasPayload(message), "Payload case should report payload availability.");
+    AssertEqual("hello", TypeSharpUnion.GetPayload<string>(message));
+    AssertTrue(TypeSharpUnion.SameCase(message, samePayload), "Same case tag and name should match.");
+    AssertTrue(TypeSharpUnion.PayloadEquals(message, samePayload), "Same payload should compare equal.");
+    AssertFalse(TypeSharpUnion.PayloadEquals(message, differentPayload), "Different payload should not compare equal.");
+    AssertEqual(TypeSharpUnion.CombineHash(1, "hello"), message.GetHashCode());
+
+    AssertTrue(TypeSharpUnion.IsCase(empty, 0), "Payload-free case should expose its tag.");
+    AssertFalse(TypeSharpUnion.HasPayload(empty), "Payload-free case should report no payload.");
+    AssertTrue(TypeSharpUnion.PayloadEquals(empty, RuntimeUnionSmoke.EmptyCase.Instance), "Payload-free cases should compare payload equality.");
+    AssertThrows<InvalidOperationException>(() => TypeSharpUnion.GetPayload(empty));
+    AssertThrows<ArgumentException>(() => TypeSharpUnion.GetTag("not-a-union"));
 }
 
 static void ReferenceResolverNormalizesFrameworkAssemblies()
@@ -3224,6 +3251,80 @@ static ProcessResult RunProcess(string fileName, string arguments, string workin
     }
 
     return new ProcessResult(process.ExitCode, standardOutput, standardError);
+}
+
+internal abstract class RuntimeUnionSmoke
+{
+    public sealed class MessageCase : RuntimeUnionSmoke, ITypeSharpUnionCase
+    {
+        public MessageCase(string value)
+        {
+            Value = value;
+        }
+
+        public string Value { get; }
+
+        public int Tag
+        {
+            get { return 1; }
+        }
+
+        public string CaseName
+        {
+            get { return "Message"; }
+        }
+
+        public bool HasPayload
+        {
+            get { return true; }
+        }
+
+        public object Payload
+        {
+            get { return Value; }
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is MessageCase other
+                && TypeSharpUnion.SameCase(this, other)
+                && TypeSharpUnion.PayloadEquals(this, other);
+        }
+
+        public override int GetHashCode()
+        {
+            return TypeSharpUnion.CombineHash(Tag, Value);
+        }
+    }
+
+    public sealed class EmptyCase : RuntimeUnionSmoke, ITypeSharpUnionCase
+    {
+        public static readonly EmptyCase Instance = new EmptyCase();
+
+        private EmptyCase()
+        {
+        }
+
+        public int Tag
+        {
+            get { return 0; }
+        }
+
+        public string CaseName
+        {
+            get { return "Empty"; }
+        }
+
+        public bool HasPayload
+        {
+            get { return false; }
+        }
+
+        public object Payload
+        {
+            get { return null!; }
+        }
+    }
 }
 
 internal sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError);
