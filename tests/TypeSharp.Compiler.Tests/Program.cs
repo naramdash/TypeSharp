@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 using System.Xml.Linq;
 using TypeSharp.Compiler;
 using TypeSharp.Cli;
@@ -12,6 +14,7 @@ using TypeSharp.Compiler.Projects;
 using TypeSharp.Compiler.Testing;
 using TypeSharp.Compiler.TypeChecking;
 using TypeSharp.Core;
+using TypeSharp.LanguageServer;
 
 var tests = new (string Name, Action Body)[]
 {
@@ -70,6 +73,8 @@ var tests = new (string Name, Action Body)[]
     ("CLI check succeeds on parse-clean project", CliCheckSucceedsOnParseCleanProject),
     ("CLI check emits JSON parser diagnostics", CliCheckEmitsJsonParserDiagnostics),
     ("CLI check emits JSON type checker diagnostics", CliCheckEmitsJsonTypeCheckerDiagnostics),
+    ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
+    ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
@@ -1533,6 +1538,65 @@ static void CliCheckEmitsJsonTypeCheckerDiagnostics()
     });
 }
 
+static void LspDiagnosticMapperUsesZeroBasedRanges()
+{
+    var diagnostic = new Diagnostic(
+        "TS2201",
+        DiagnosticSeverity.Error,
+        "Cannot return expression of type 'int' from function returning 'string'.",
+        "src/Main.tysh",
+        new SourceSpan(new SourcePosition(3, 31), new SourcePosition(3, 33)));
+
+    var lspDiagnostic = LspDiagnosticMapper.ToLspDiagnostic(diagnostic);
+
+    AssertEqual(2, lspDiagnostic.Range.Start.Line);
+    AssertEqual(30, lspDiagnostic.Range.Start.Character);
+    AssertEqual(2, lspDiagnostic.Range.End.Line);
+    AssertEqual(32, lspDiagnostic.Range.End.Character);
+    AssertEqual(1, lspDiagnostic.Severity);
+    AssertEqual("typesharp", lspDiagnostic.Source);
+    AssertEqual("TS2201", lspDiagnostic.Code);
+}
+
+static void LanguageServerPublishesDiagnosticsOnDidOpen()
+{
+    WithWorkspace(root =>
+    {
+        var sourcePath = Path.Combine(root, "src", "Main.tysh");
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath) ?? root);
+        var uri = new Uri(sourcePath).AbsoluteUri;
+        var source = """
+            namespace Samples.Lsp
+
+            export fun broken(): string = 42
+            """;
+
+        using var input = new MemoryStream();
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(uri)
+                + ",\"languageId\":\"typesharp\",\"version\":1,\"text\":"
+                + JsonSerializer.Serialize(source)
+                + "}}}");
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"method\":\"exit\"}");
+        input.Position = 0;
+
+        using var output = new MemoryStream();
+        TypeSharpLanguageServer.Run(input, output, root);
+
+        var response = Encoding.UTF8.GetString(output.ToArray());
+        AssertContains("\"textDocumentSync\":1", response);
+        AssertContains("\"method\":\"textDocument/publishDiagnostics\"", response);
+        AssertContains("\"uri\":\"" + uri + "\"", response);
+        AssertContains("\"severity\":1", response);
+        AssertContains("\"source\":\"typesharp\"", response);
+        AssertContains("\"code\":\"TS2201\"", response);
+        AssertContains("Cannot return expression of type", response);
+    });
+}
+
 static void CliBuildEmitsGeneratedCSharpSource()
 {
     WithWorkspace(root =>
@@ -2720,6 +2784,14 @@ static void WriteFile(string root, string relativePath, string content)
     var path = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
     Directory.CreateDirectory(Path.GetDirectoryName(path) ?? root);
     File.WriteAllText(path, content);
+}
+
+static void WriteLspFrame(Stream stream, string json)
+{
+    var payload = Encoding.UTF8.GetBytes(json);
+    var header = Encoding.ASCII.GetBytes($"Content-Length: {payload.Length}\r\n\r\n");
+    stream.Write(header, 0, header.Length);
+    stream.Write(payload, 0, payload.Length);
 }
 
 static void BuildLegacyReferenceDll(string root, string assemblyName)

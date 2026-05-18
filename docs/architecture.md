@@ -48,7 +48,7 @@ samples/
 docs/
 ```
 
-현재 저장소에는 초기 `TypeSharp.Compiler`, `TypeSharp.Cli`, `TypeSharp.Core`, `TypeSharp.Runtime`, `TypeSharp.Compiler.Tests`, `vscode/typesharp` skeleton이 있다. language server, interop tests, golden tests는 후속 작업으로 추가한다.
+현재 저장소에는 초기 `TypeSharp.Compiler`, `TypeSharp.Cli`, `TypeSharp.Core`, `TypeSharp.Runtime`, `TypeSharp.LanguageServer`, `TypeSharp.Compiler.Tests`, `vscode/typesharp` skeleton이 있다. interop tests, golden tests는 후속 작업으로 추가한다.
 
 ## Compiler Core
 
@@ -227,6 +227,13 @@ Experimental 또는 Stable Backlog:
 6. code action
 
 Language server는 compiler semantic model을 별도 구현하지 않고 공유해야 한다.
+
+현재 language server skeleton:
+- `src/TypeSharp.LanguageServer`는 modern .NET host로 실행되고 `TypeSharp.Compiler`를 참조한다.
+- 최소 stdio JSON-RPC framing으로 `initialize`, `shutdown`, `exit`, `textDocument/didOpen`, `textDocument/didChange`를 처리한다.
+- open document diagnostics는 compiler parser, binder, type checker를 재사용한다.
+- compiler diagnostics는 LSP zero-based range, severity, source, code, message로 변환되어 `textDocument/publishDiagnostics` notification으로 전송된다.
+- workspace manifest discovery, project reference-aware diagnostics, hover, go-to-definition, completion은 후속 LSP 작업으로 남긴다.
 
 ### VS Code Extension
 

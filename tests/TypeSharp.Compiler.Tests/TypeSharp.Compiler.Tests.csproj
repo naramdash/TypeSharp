@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
     <ProjectReference Include="..\..\src\TypeSharp.Cli\TypeSharp.Cli.csproj" />
+    <ProjectReference Include="..\..\src\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
     <Compile Include="..\..\src\TypeSharp.Core\Option.cs" Link="TypeSharpCore\Option.cs" />
     <Compile Include="..\..\src\TypeSharp.Core\Result.cs" Link="TypeSharpCore\Result.cs" />
     <Compile Include="..\..\src\TypeSharp.Core\Unit.cs" Link="TypeSharpCore\Unit.cs" />

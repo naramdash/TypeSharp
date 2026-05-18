@@ -35,3 +35,4 @@
 | [0063-net48-repository-consistency-sweep.md](0063-net48-repository-consistency-sweep.md) | Q0-Q3 | Done | `net481`에서 `net48`로 내려온 기본 build target 결정을 repo-wide 문서 색인과 task rollup에 일관되게 반영한다. |
 | [0064-formatter-convention.md](0064-formatter-convention.md) | Q4 | Done | `typesharp format`과 VS Code formatter가 공유할 `.tysh` canonical layout을 문서화한다. |
 | [0065-vscode-extension-scaffold.md](0065-vscode-extension-scaffold.md) | Q4 | Done | VS Code가 `.tysh` 파일을 `typesharp` 언어로 인식하고 lexical grammar 기반 syntax highlighting을 제공하는 extension scaffold를 추가한다. |
+| [0066-lsp-diagnostics-publish.md](0066-lsp-diagnostics-publish.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document를 compiler diagnostics로 검사하고 LSP `publishDiagnostics`를 내보낸다. |

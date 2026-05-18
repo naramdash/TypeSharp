@@ -216,7 +216,7 @@
 - [x] formatter convention 문서
 - [x] VS Code extension scaffold
 - [x] VS Code syntax highlighting
-- [ ] LSP diagnostics
+- [x] LSP diagnostics
 - [ ] LSP hover
 - [ ] LSP go-to-definition
 - [ ] LSP basic completion
