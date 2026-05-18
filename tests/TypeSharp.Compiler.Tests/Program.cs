@@ -54,6 +54,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports missing reference diagnostics", CheckerReportsMissingReferenceDiagnostics),
     ("checker reports invalid byref interop diagnostics", CheckerReportsInvalidByRefInteropDiagnostics),
     ("checker reports ambiguous C# overload diagnostics", CheckerReportsAmbiguousCSharpOverloadDiagnostics),
+    ("C# overload resolver selects exact literal match", CSharpOverloadResolverSelectsExactLiteralMatch),
     ("checker reports ambiguous expanded params overload diagnostics", CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics),
     ("checker reports ambiguous optional overload diagnostics", CheckerReportsAmbiguousOptionalOverloadDiagnostics),
     ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
@@ -904,6 +905,43 @@ static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
         AssertContains("matches 2 overload candidates", diagnostic.Message);
         AssertContains("make the call unambiguous", diagnostic.Message);
     });
+}
+
+static void CSharpOverloadResolverSelectsExactLiteralMatch()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyOverloads.Pick("value")
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(2, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Exact literal type match should narrow overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select one overload candidate.");
+    AssertEqual("string", selected.Method.Parameters[0].Type);
 }
 
 static void CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics()
@@ -4903,6 +4941,25 @@ static string MinimalManifest(string name) => $$"""
     targetFramework = "net48"
     outputType = "library"
     """;
+
+static SyntaxNode? FindFirstNode(SyntaxNode node, SyntaxKind kind)
+{
+    if (node.Kind == kind)
+    {
+        return node;
+    }
+
+    foreach (var child in node.Children.Where(child => !child.IsToken))
+    {
+        var match = FindFirstNode(child, kind);
+        if (match is not null)
+        {
+            return match;
+        }
+    }
+
+    return null;
+}
 
 static ProcessResult RunProcess(string fileName, string arguments, string workingDirectory)
 {

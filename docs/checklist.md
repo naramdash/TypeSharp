@@ -146,7 +146,7 @@
 - [x] type checker
 - [x] type checker basic mismatch skeleton
 - [ ] inference engine
-- [ ] C# overload resolution
+- [x] C# overload resolution
 - [x] public ABI checker
 - [ ] lowering passes
 - [x] backend abstraction
