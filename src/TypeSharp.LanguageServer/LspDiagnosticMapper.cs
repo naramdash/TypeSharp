@@ -6,9 +6,7 @@ public static class LspDiagnosticMapper
 {
     public static LspDiagnostic ToLspDiagnostic(Diagnostic diagnostic) =>
         new(
-            new LspRange(
-                ToPosition(diagnostic.Span.Start),
-                ToPosition(diagnostic.Span.End)),
+            ToLspRange(diagnostic.Span),
             ToLspSeverity(diagnostic.Severity),
             "typesharp",
             diagnostic.Code,
@@ -17,7 +15,10 @@ public static class LspDiagnosticMapper
     public static IReadOnlyList<LspDiagnostic> ToLspDiagnostics(IReadOnlyList<Diagnostic> diagnostics) =>
         diagnostics.Select(ToLspDiagnostic).ToArray();
 
-    private static LspPosition ToPosition(SourcePosition position) =>
+    public static LspRange ToLspRange(SourceSpan span) =>
+        new(ToLspPosition(span.Start), ToLspPosition(span.End));
+
+    public static LspPosition ToLspPosition(SourcePosition position) =>
         new(
             Math.Max(position.Line - 1, 0),
             Math.Max(position.Column - 1, 0));

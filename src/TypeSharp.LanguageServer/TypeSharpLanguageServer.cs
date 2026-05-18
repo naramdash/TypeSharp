@@ -49,6 +49,13 @@ public static class TypeSharpLanguageServer
                     PublishDidChangeDiagnostics(root, output, openDocuments, workspaceRoot);
                     break;
 
+                case "textDocument/hover":
+                    if (hasId)
+                    {
+                        WriteHoverResponse(root, output, idElement, openDocuments, workspaceRoot);
+                    }
+                    break;
+
                 default:
                     if (hasId)
                     {
@@ -138,7 +145,84 @@ public static class TypeSharpLanguageServer
             writer.WritePropertyName("capabilities");
             writer.WriteStartObject();
             writer.WriteNumber("textDocumentSync", 1);
+            writer.WriteBoolean("hoverProvider", true);
             writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+
+        WriteFramedJson(output, payload.ToArray());
+    }
+
+    private static void WriteHoverResponse(
+        JsonElement root,
+        Stream output,
+        JsonElement id,
+        IReadOnlyDictionary<string, string> openDocuments,
+        string workspaceRoot)
+    {
+        if (!TryGetTextDocumentPosition(root, out var uri, out var position)
+            || !openDocuments.TryGetValue(uri, out var text))
+        {
+            WriteNullResponse(output, id);
+            return;
+        }
+
+        var fileName = ToFileName(uri, workspaceRoot);
+        var hover = TypeSharpDocumentHover.GetHover(text, fileName, position);
+        if (hover is null)
+        {
+            WriteNullResponse(output, id);
+            return;
+        }
+
+        WriteHoverResult(output, id, hover);
+    }
+
+    private static bool TryGetTextDocumentPosition(JsonElement root, out string uri, out LspPosition position)
+    {
+        uri = string.Empty;
+        position = new LspPosition(0, 0);
+
+        if (!root.TryGetProperty("params", out var parameters)
+            || !parameters.TryGetProperty("textDocument", out var textDocument)
+            || !textDocument.TryGetProperty("uri", out var uriElement)
+            || uriElement.GetString() is not { Length: > 0 } documentUri
+            || !parameters.TryGetProperty("position", out var positionElement)
+            || !positionElement.TryGetProperty("line", out var lineElement)
+            || !positionElement.TryGetProperty("character", out var characterElement)
+            || !lineElement.TryGetInt32(out var line)
+            || !characterElement.TryGetInt32(out var character))
+        {
+            return false;
+        }
+
+        uri = documentUri;
+        position = new LspPosition(line, character);
+        return true;
+    }
+
+    private static void WriteHoverResult(Stream output, JsonElement id, LspHover hover)
+    {
+        using var payload = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(payload))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("jsonrpc", "2.0");
+            writer.WritePropertyName("id");
+            id.WriteTo(writer);
+            writer.WritePropertyName("result");
+            writer.WriteStartObject();
+            writer.WritePropertyName("contents");
+            writer.WriteStartObject();
+            writer.WriteString("kind", hover.Contents.Kind);
+            writer.WriteString("value", hover.Contents.Value);
+            writer.WriteEndObject();
+            if (hover.Range is not null)
+            {
+                writer.WritePropertyName("range");
+                WriteRange(writer, hover.Range);
+            }
             writer.WriteEndObject();
             writer.WriteEndObject();
         }
@@ -179,18 +263,7 @@ public static class TypeSharpLanguageServer
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("range");
-                writer.WriteStartObject();
-                writer.WritePropertyName("start");
-                writer.WriteStartObject();
-                writer.WriteNumber("line", diagnostic.Range.Start.Line);
-                writer.WriteNumber("character", diagnostic.Range.Start.Character);
-                writer.WriteEndObject();
-                writer.WritePropertyName("end");
-                writer.WriteStartObject();
-                writer.WriteNumber("line", diagnostic.Range.End.Line);
-                writer.WriteNumber("character", diagnostic.Range.End.Character);
-                writer.WriteEndObject();
-                writer.WriteEndObject();
+                WriteRange(writer, diagnostic.Range);
                 writer.WriteNumber("severity", diagnostic.Severity);
                 writer.WriteString("source", diagnostic.Source);
                 writer.WriteString("code", diagnostic.Code);
@@ -203,6 +276,22 @@ public static class TypeSharpLanguageServer
         }
 
         WriteFramedJson(output, payload.ToArray());
+    }
+
+    private static void WriteRange(Utf8JsonWriter writer, LspRange range)
+    {
+        writer.WriteStartObject();
+        writer.WritePropertyName("start");
+        writer.WriteStartObject();
+        writer.WriteNumber("line", range.Start.Line);
+        writer.WriteNumber("character", range.Start.Character);
+        writer.WriteEndObject();
+        writer.WritePropertyName("end");
+        writer.WriteStartObject();
+        writer.WriteNumber("line", range.End.Line);
+        writer.WriteNumber("character", range.End.Character);
+        writer.WriteEndObject();
+        writer.WriteEndObject();
     }
 
     private static bool TryReadMessage(Stream input, out string message)

@@ -217,7 +217,7 @@
 - [x] VS Code extension scaffold
 - [x] VS Code syntax highlighting
 - [x] LSP diagnostics
-- [ ] LSP hover
+- [x] LSP hover
 - [ ] LSP go-to-definition
 - [ ] LSP basic completion
 - [x] diagnostic explanation 문서
