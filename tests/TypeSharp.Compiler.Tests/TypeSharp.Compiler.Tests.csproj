@@ -13,6 +13,7 @@
     <Compile Include="..\..\src\TypeSharp.Core\Result.cs" Link="TypeSharpCore\Result.cs" />
     <Compile Include="..\..\src\TypeSharp.Core\Unit.cs" Link="TypeSharpCore\Unit.cs" />
     <Compile Include="..\..\src\TypeSharp.Runtime\TypeSharpRuntimeInfo.cs" Link="TypeSharpRuntime\TypeSharpRuntimeInfo.cs" />
+    <Compile Include="..\..\src\TypeSharp.Runtime\TypeSharpEquality.cs" Link="TypeSharpRuntime\TypeSharpEquality.cs" />
     <Compile Include="..\..\src\TypeSharp.Runtime\TypeSharpPattern.cs" Link="TypeSharpRuntime\TypeSharpPattern.cs" />
     <Compile Include="..\..\src\TypeSharp.Runtime\TypeSharpUnion.cs" Link="TypeSharpRuntime\TypeSharpUnion.cs" />
   </ItemGroup>

@@ -188,7 +188,7 @@
 - [x] `Unit`
 - [x] nominal union helper
 - [x] pattern helper
-- [ ] equality/hash helper
+- [x] equality/hash helper
 - [ ] async helper
 - [ ] public ABI versioning 정책
 

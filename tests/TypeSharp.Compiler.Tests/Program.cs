@@ -37,6 +37,7 @@ var tests = new (string Name, Action Body)[]
     ("core option and result expose basic states", CoreOptionAndResultExposeBasicStates),
     ("runtime union helper exposes case metadata", RuntimeUnionHelperExposesCaseMetadata),
     ("runtime pattern helper matches union cases", RuntimePatternHelperMatchesUnionCases),
+    ("runtime equality helper combines values", RuntimeEqualityHelperCombinesValues),
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
@@ -451,6 +452,19 @@ static void RuntimePatternHelperMatchesUnionCases()
     AssertContains("No pattern matched union case 'Message' with tag 1.", noMatch.Message);
     AssertThrows<InvalidOperationException>(() => TypeSharpPattern.RequirePayload(message, 2));
     AssertThrows<InvalidOperationException>(() => throw TypeSharpPattern.NoMatch("not-a-union"));
+}
+
+static void RuntimeEqualityHelperCombinesValues()
+{
+    AssertTrue(TypeSharpEquality.AreEqual("value", "value"), "Equal values should compare equal.");
+    AssertFalse(TypeSharpEquality.AreEqual("value", "other"), "Different values should not compare equal.");
+    AssertTrue(TypeSharpEquality.SequenceEqual(new[] { 1, 2, 3 }, new[] { 1, 2, 3 }), "Equal sequences should compare equal.");
+    AssertFalse(TypeSharpEquality.SequenceEqual(new[] { 1, 2, 3 }, new[] { 1, 3, 2 }), "Different sequence order should not compare equal.");
+
+    var hash = TypeSharpEquality.CombineHash("alpha", 42, true);
+    AssertEqual(hash, TypeSharpEquality.CombineHash("alpha", 42, true));
+    AssertFalse(hash == TypeSharpEquality.CombineHash("alpha", 43, true), "Different values should produce a different combined smoke hash.");
+    AssertEqual(TypeSharpEquality.CombineHash(17, TypeSharpEquality.GetHash("alpha")), TypeSharpEquality.CombineHash(17, "alpha".GetHashCode()));
 }
 
 static void ReferenceResolverNormalizesFrameworkAssemblies()

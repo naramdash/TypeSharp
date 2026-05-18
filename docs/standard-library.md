@@ -63,6 +63,7 @@ import { Option, Some, None } from "TypeSharp.Core"
 - generated nominal union case class는 `TypeSharp.Runtime.ITypeSharpUnionCase`를 구현해 tag, case name, payload metadata를 노출할 수 있다.
 - generated code와 C# interop helper는 `TypeSharp.Runtime.TypeSharpUnion`으로 case tag 검사, payload 접근, equality/hash helper를 공유한다.
 - generated pattern matching lowering은 `TypeSharp.Runtime.TypeSharpPattern`으로 case predicate와 payload extraction helper를 공유할 수 있다.
+- generated record와 union case equality/hash lowering은 `TypeSharp.Runtime.TypeSharpEquality`로 값 비교, sequence 비교, hash composition helper를 공유할 수 있다.
 
 ## Collections
 
