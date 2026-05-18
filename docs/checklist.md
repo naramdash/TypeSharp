@@ -55,9 +55,9 @@
 - [x] 생성 assembly가 `net481` 프로젝트에서 참조된다.
 - [x] compiler host 요구사항이 확정되어 있다.
 - [x] runtime library가 `net481`로 빌드된다.
-- [ ] generated assembly/runtime library가 ASP.NET Web Forms/MVC/Web API 프로젝트에서 참조되는 smoke test가 있다.
-- [ ] generated assembly/runtime library가 WCF service/client 또는 contract 프로젝트에서 참조되는 smoke test가 있다.
-- [ ] generated assembly/runtime library가 Windows Service 또는 worker-style `net481` 프로젝트에서 참조되는 smoke test가 있다.
+- [x] generated assembly/runtime library가 ASP.NET Web Forms/MVC/Web API 프로젝트에서 참조되는 smoke test가 있다.
+- [x] generated assembly/runtime library가 WCF service/client 또는 contract 프로젝트에서 참조되는 smoke test가 있다.
+- [x] generated assembly/runtime library가 Windows Service 또는 worker-style `net481` 프로젝트에서 참조되는 smoke test가 있다.
 - [ ] .NET 5+ 전용 API 사용 여부를 검사한다.
 - [ ] NuGet dependency의 `net481` 호환성과 라이선스를 기록한다.
 
@@ -273,6 +273,7 @@
 - [x] C# `out` call smoke tests
 - [x] C# `in` call smoke tests
 - [x] C# `ref` call smoke tests
+- [x] ASP.NET/WCF/worker-style `net481` host compatibility smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests
 - [ ] C# interop tests

@@ -28,3 +28,4 @@
 | [0050-0051-csharp-optional-named-overload-validation.md](0050-0051-csharp-optional-named-overload-validation.md) | Q3 | Done | optional parameter omission과 named argument overload validation을 묶는다. |
 | [0052-csharp-unknown-nullability-diagnostic.md](0052-csharp-unknown-nullability-diagnostic.md) | Q3 | Done | nullable annotation 없는 imported C# reference return을 strict mode warning으로 보고한다. |
 | [0053-csharp-delegate-lambda-interop-smoke.md](0053-csharp-delegate-lambda-interop-smoke.md) | Q3 | Done | C# delegate parameter에 TypeSharp lambda를 전달하는 generated `net481` build smoke를 검증한다. |
+| [0054-netfx-application-model-host-smokes.md](0054-netfx-application-model-host-smokes.md) | Q3 | Done | generated assembly와 Core/Runtime DLL이 ASP.NET/WCF/worker-style `net481` host project에서 참조되는지 검증한다. |

@@ -81,6 +81,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
+    ("net481 application model hosts reference generated assembly and runtime", Net481ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
 };
 
@@ -2186,6 +2187,124 @@ static void CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly()
     });
 }
 
+static void Net481ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "HostInteropSource"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.HostInterop"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.HostInterop
+
+            export fun greeting(): string = "Hello from TypeSharp"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+        AssertContains("Generated assembly: bin/Debug/net481/HostInteropSource.dll", output.ToString());
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net481", "HostInteropSource.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "TypeSharp build should produce a generated assembly for host compatibility smokes.");
+
+        var coreAssemblyPath = BuildRepositoryAssembly(
+            "src/TypeSharp.Core/TypeSharp.Core.csproj",
+            "src/TypeSharp.Core/bin/Debug/net481/TypeSharp.Core.dll");
+        var runtimeAssemblyPath = BuildRepositoryAssembly(
+            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "src/TypeSharp.Runtime/bin/Debug/net481/TypeSharp.Runtime.dll");
+
+        BuildApplicationModelHostProject(
+            root,
+            "AspNetWebFormsHostSmoke",
+            ["System.Web"],
+            generatedAssemblyPath,
+            coreAssemblyPath,
+            runtimeAssemblyPath,
+            """
+            using System.Web.UI;
+
+            namespace AspNetWebFormsHostSmoke
+            {
+                public sealed class HomePage : Page
+                {
+                    public string RenderGreeting()
+                    {
+                        var unit = TypeSharp.Core.Unit.Value;
+                        return Samples.HostInterop.Module.greeting()
+                            + ":"
+                            + TypeSharp.Runtime.TypeSharpRuntimeInfo.TargetFramework
+                            + ":"
+                            + unit.ToString();
+                    }
+                }
+            }
+            """);
+
+        BuildApplicationModelHostProject(
+            root,
+            "WcfContractHostSmoke",
+            ["System.ServiceModel"],
+            generatedAssemblyPath,
+            coreAssemblyPath,
+            runtimeAssemblyPath,
+            """
+            using System.ServiceModel;
+
+            namespace WcfContractHostSmoke
+            {
+                [ServiceContract]
+                public interface IGreetingService
+                {
+                    [OperationContract]
+                    string GetGreeting();
+                }
+
+                public sealed class GreetingService : IGreetingService
+                {
+                    public string GetGreeting()
+                    {
+                        var option = TypeSharp.Core.Option<string>.Some(Samples.HostInterop.Module.greeting());
+                        return option.Value + ":" + TypeSharp.Runtime.TypeSharpRuntimeInfo.TargetFramework;
+                    }
+                }
+            }
+            """);
+
+        BuildApplicationModelHostProject(
+            root,
+            "WorkerServiceHostSmoke",
+            ["System.ServiceProcess"],
+            generatedAssemblyPath,
+            coreAssemblyPath,
+            runtimeAssemblyPath,
+            """
+            using System.ServiceProcess;
+
+            namespace WorkerServiceHostSmoke
+            {
+                public sealed class GreetingWorker : ServiceBase
+                {
+                    public string RunOnce()
+                    {
+                        var result = TypeSharp.Core.Result<string, string>.Ok(Samples.HostInterop.Module.greeting());
+                        return result.Value + ":" + TypeSharp.Runtime.TypeSharpRuntimeInfo.RuntimeAbiVersion.ToString();
+                    }
+                }
+            }
+            """);
+    });
+}
+
 static void CliBuildStopsBeforeEmissionOnDiagnostics()
 {
     WithWorkspace(root =>
@@ -2487,6 +2606,79 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
     Directory.CreateDirectory(Path.GetDirectoryName(targetDll) ?? root);
     File.Copy(builtDll, targetDll, overwrite: true);
 }
+
+static string BuildRepositoryAssembly(string projectRelativePath, string assemblyRelativePath)
+{
+    var repositoryRoot = Directory.GetCurrentDirectory();
+    var build = RunProcess(
+        "dotnet",
+        $"build {projectRelativePath} --nologo --verbosity quiet --ignore-failed-sources",
+        repositoryRoot);
+
+    AssertTrue(
+        build.ExitCode == 0,
+        $"Repository project '{projectRelativePath}' should compile for host compatibility smoke.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+
+    var assemblyPath = Path.Combine(repositoryRoot, assemblyRelativePath.Replace('/', Path.DirectorySeparatorChar));
+    AssertTrue(File.Exists(assemblyPath), $"Expected repository assembly '{assemblyRelativePath}' to exist after build.");
+    return assemblyPath;
+}
+
+static void BuildApplicationModelHostProject(
+    string root,
+    string projectName,
+    IReadOnlyList<string> frameworkReferences,
+    string generatedAssemblyPath,
+    string coreAssemblyPath,
+    string runtimeAssemblyPath,
+    string source)
+{
+    var projectRoot = Path.Combine(root, projectName);
+    Directory.CreateDirectory(projectRoot);
+    var referenceLines = string.Join(Environment.NewLine, frameworkReferences.Select(reference => $"    <Reference Include=\"{reference}\" />"));
+
+    WriteFile(projectRoot, $"{projectName}.csproj", $$"""
+        <Project Sdk="Microsoft.NET.Sdk">
+          <PropertyGroup>
+            <TargetFramework>net481</TargetFramework>
+            <LangVersion>7.3</LangVersion>
+            <ImplicitUsings>false</ImplicitUsings>
+            <Nullable>disable</Nullable>
+            <AssemblyName>{{projectName}}</AssemblyName>
+          </PropertyGroup>
+          <ItemGroup>
+        {{referenceLines}}
+            <Reference Include="HostInteropSource">
+              <HintPath>{{ToProjectHintPath(projectRoot, generatedAssemblyPath)}}</HintPath>
+            </Reference>
+            <Reference Include="TypeSharp.Core">
+              <HintPath>{{ToProjectHintPath(projectRoot, coreAssemblyPath)}}</HintPath>
+            </Reference>
+            <Reference Include="TypeSharp.Runtime">
+              <HintPath>{{ToProjectHintPath(projectRoot, runtimeAssemblyPath)}}</HintPath>
+            </Reference>
+          </ItemGroup>
+        </Project>
+        """);
+    WriteFile(projectRoot, "NuGet.config", """
+        <?xml version="1.0" encoding="utf-8"?>
+        <configuration>
+          <packageSources>
+            <clear />
+          </packageSources>
+        </configuration>
+        """);
+    WriteFile(projectRoot, "HostSmoke.cs", source);
+
+    var build = RunProcess("dotnet", $"build {projectName}.csproj --nologo --verbosity quiet --ignore-failed-sources", projectRoot);
+
+    AssertTrue(
+        build.ExitCode == 0,
+        $"Application model host project '{projectName}' should compile against generated TypeSharp and runtime assemblies.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+}
+
+static string ToProjectHintPath(string projectRoot, string assemblyPath) =>
+    Path.GetRelativePath(projectRoot, assemblyPath).Replace('\\', '/');
 
 static string MinimalManifest(string name) => $$"""
     [project]
