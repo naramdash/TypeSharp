@@ -54,20 +54,27 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
    - 에디터 없이도 CLI만으로 CI와 로컬 개발이 가능해야 하며, CLI 없이도 VS Code가 diagnostics와 navigation을 제공해야 한다.
    - 이 개발 경험은 부가 도구가 아니라 TypeSharp 채택의 1순위에 가까운 핵심 산출물이다.
 
-1. `unknown` 중심의 안전한 gradual typing
+1. .NET Framework ASP.NET, WCF, worker 호환성
+   - TypeSharp 산출물은 ASP.NET Web Forms, ASP.NET MVC/Web API, WCF service/client, Windows Service, scheduled job, queue/background worker처럼 .NET Framework에 남아 장기 운영되는 애플리케이션 모델에서 기존 C# assembly와 같은 방식으로 참조, 배포, 로드될 수 있어야 한다.
+   - ASP.NET 계열 프로젝트의 `web.config`, `bin` deployment, IIS/AppDomain lifecycle, MSBuild packaging, 기존 NuGet/package reference 관례를 깨지 않는 generated assembly와 runtime library shape를 목표로 한다.
+   - WCF의 service contract, data contract, message contract, configuration 기반 endpoint/binding/behavior, generated proxy/client interop를 TypeSharp public API와 C# interop 규칙 안에서 다룰 수 있어야 한다.
+   - worker/service 계열에서는 Windows Service, IIS-hosted background task, console/daemon-style worker, scheduler 기반 batch job의 .NET Framework runtime, configuration, logging, diagnostics 제약을 명시적으로 고려한다.
+   - 이 목표는 ASP.NET Core나 최신 .NET worker로의 전환을 전제로 하지 않는다. .NET Framework ASP.NET/WCF/worker 환경에 남아 있는 전용 hosting, configuration, deployment, diagnostics 연동 지점을 TypeSharp 호환성 범위로 둔다.
+
+2. `unknown` 중심의 안전한 gradual typing
    - TypeScript식 유연성을 가져오되 `any`를 기본 탈출구로 두지 않는다.
    - 타입 계층은 `inferred`, `unknown`, `dynamic`을 분리한다.
    - `unknown`은 shape 검사나 union narrowing 이후에만 사용할 수 있게 한다.
    - `dynamic`은 .NET `dynamic`, reflection, COM interop 같은 명시적 escape hatch로 격리한다.
    - 무제한 `any` 타입은 만들지 않거나 compatibility mode로만 허용한다.
 
-2. 명시적 module graph와 ambient 격리
+3. 명시적 module graph와 ambient 격리
    - 모든 TypeSharp source file은 기본적으로 module graph의 일부다.
    - import/export가 없는 파일도 암묵적 global script가 되지 않는다.
    - ambient declaration은 `ambient` 문법, 별도 파일 확장자, 또는 manifest 설정으로만 가능하게 한다.
    - source root와 generated output root는 project manifest에 명시한다.
 
-3. F# 중심의 nominal closed union과 TS식 type-level union
+4. F# 중심의 nominal closed union과 TS식 type-level union
    - TypeSharp의 공식 런타임/도메인 union 모델은 F#의 discriminated union에 가까운 nominal closed union이다.
    - `union` 선언은 tag, case payload, exhaustiveness, runtime representation, public .NET API 노출 규칙을 가진다.
    - TypeScript식 `A | B` union은 compile-time 타입 표현, inference, narrowing, structural shape 검사에 사용한다.
@@ -76,13 +83,13 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
    - nominal closed union의 case 누락은 exhaustiveness diagnostic으로 보고한다.
    - C# public API 노출 방식은 M1 전에 확정한다.
 
-4. record-first immutable data
+5. record-first immutable data
    - record는 immutable이 기본이다.
    - copy/update 문법을 제공한다.
    - value equality와 hash semantics를 명확히 한다.
    - C# 소비자가 예측 가능한 generated class shape를 제공한다.
 
-5. pipeline, composition, partial application
+6. pipeline, composition, partial application
    - pipeline operator는 MVP 또는 M2에서 다룬다.
    - function composition을 표준 스타일로 문서화한다.
    - placeholder 기반 partial application은 syntax 충돌을 검토한 뒤 Stable Backlog로 둔다.
@@ -90,30 +97,30 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
 
 ### 설계 채택 목표
 
-6. row-polymorphic record 방향의 structural typing
+7. row-polymorphic record 방향의 structural typing
    - MVP는 width subtyping 기반 shape check로 시작한다.
    - 장기적으로 row variable이 있는 record constraint를 검토한다.
    - MVP public .NET boundary에서는 diagnostic으로 막고, nominal interface 또는 wrapper를 명시적으로 작성하게 한다. generated adapter는 Stable Backlog로 둔다.
 
-7. 타입 레벨 계산 complexity budget
+8. 타입 레벨 계산 complexity budget
    - literal type과 union narrowing은 적극 지원한다.
    - mapped type, conditional type, template-literal-like type 계산은 제한된 형태로만 검토한다.
    - compiler는 type calculation depth, instantiation count, diagnostic simplification budget을 가져야 한다.
 
-8. `Result<T, E>` 중심 오류 모델과 .NET exception interop
+9. `Result<T, E>` 중심 오류 모델과 .NET exception interop
    - `Result<T, E>`는 runtime library 핵심 타입이다.
    - 새 TypeSharp API는 실패 가능성을 타입으로 표현할 수 있어야 한다.
    - .NET exception model은 interop를 위해 유지한다.
    - 함수 시그니처의 `throws` 또는 `raises` annotation은 실험 기능으로 둔다.
    - C# 호출자를 위한 exception 변환 helper를 제공한다.
 
-9. capability-based unsafe/interop boundary
+10. capability-based unsafe/interop boundary
    - reflection, dynamic, COM, unsafe pointer, P/Invoke는 명시적 capability 경계 안에 둔다.
    - `unsafe`, `dynamic`, `reflect`, `interop` 같은 marker를 검토한다.
    - 해당 marker가 있는 함수는 호출자에게 효과가 전파되거나 warning을 만든다.
    - strict mode에서는 암묵적 interop escape를 금지한다.
 
-10. compiler API와 language server를 1급 산출물로 설계
+11. compiler API와 language server를 1급 산출물로 설계
     - syntax tree, semantic model, diagnostics는 공개 가능한 internal API로 설계한다.
     - language server는 compiler semantic model을 공유한다.
     - incremental build와 deterministic output을 초기부터 설계 제약으로 둔다.
@@ -121,22 +128,22 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
 
 ### 실험 및 제한 목표
 
-11. effect annotation 또는 typed effect
+12. effect annotation 또는 typed effect
     - 완전한 algebraic effects와 effect handler는 MVP에서 제외한다.
     - `async`, `throws`, `io`, `unsafe`, `dynamic` 같은 작은 effect annotation을 장기 실험으로 둔다.
     - effect는 runtime 기능보다 compiler diagnostics와 API 문서화에 먼저 활용한다.
 
-12. type provider-like 기능
+13. type provider-like 기능
     - F# type provider 수준의 빌드 중 외부 코드 실행은 초기 목표가 아니다.
     - 장기적으로 source-generated schema import 정도로 제한해 검토한다.
     - 네트워크, DB, 파일 시스템 접근은 명시 permission과 cache policy를 요구한다.
 
-13. macro system 제한
+14. macro system 제한
     - macro system은 MVP에서 제외한다.
     - macro가 parser, formatter, LSP, diagnostics, security를 복잡하게 만들기 때문이다.
     - 반복되는 코드 생성은 attribute-based generator나 external build step으로 대체한다.
 
-14. decorator 중심 메타프로그래밍 제한
+15. decorator 중심 메타프로그래밍 제한
     - TypeScript decorator식 모델은 MVP에서 제외한다.
     - .NET attribute interop를 먼저 안정화한다.
     - decorator syntax는 .NET attribute, analyzer, generator 모델과의 관계가 정리된 뒤 장기 실험으로만 둔다.
