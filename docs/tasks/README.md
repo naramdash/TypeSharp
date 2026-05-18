@@ -33,3 +33,4 @@
 | [0061-cli-check-type-diagnostic-coverage.md](0061-cli-check-type-diagnostic-coverage.md) | Q4 | Done | `typesharp check`가 `TS2201` type checker diagnostics를 CLI JSON output으로 보고하는지 고정한다. |
 | [0062-cli-build-type-diagnostic-stop.md](0062-cli-build-type-diagnostic-stop.md) | Q4 | Done | `typesharp build`가 `TS2201` type checker diagnostics에서 generated emission 전에 멈추는지 고정한다. |
 | [0063-net48-repository-consistency-sweep.md](0063-net48-repository-consistency-sweep.md) | Q0-Q3 | Done | `net481`에서 `net48`로 내려온 기본 build target 결정을 repo-wide 문서 색인과 task rollup에 일관되게 반영한다. |
+| [0064-formatter-convention.md](0064-formatter-convention.md) | Q4 | Done | `typesharp format`과 VS Code formatter가 공유할 `.tysh` canonical layout을 문서화한다. |

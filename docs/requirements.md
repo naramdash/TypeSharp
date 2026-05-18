@@ -153,7 +153,7 @@
 - VS Code extension은 Language Server Protocol 기반이어야 하며 compiler semantic model을 재사용해야 한다.
 - 프로젝트 파일 또는 manifest 형식을 정의해야 한다.
 - compiler option은 재현 가능해야 하며 CLI와 project file에서 같은 의미여야 한다.
-- formatter가 없더라도 공식 formatting convention은 문서화해야 한다.
+- formatter가 없더라도 공식 formatting convention은 [formatting.md](formatting.md)에 문서화해야 한다.
 - VS Code syntax highlighting은 [grammar/lexical.md](grammar/lexical.md)와 [grammar/README.md](grammar/README.md)의 stable grammar를 기준으로 구현해야 한다.
 
 ### 권장

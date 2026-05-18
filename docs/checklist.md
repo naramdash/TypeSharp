@@ -213,7 +213,7 @@
 - [x] CLI `run` generated `net48` executable smoke path
 - [x] CLI `run` forwards `--` arguments to `main(args: string[])`
 - [x] CLI `run` unsupported main signature diagnostics
-- [ ] formatter convention 문서
+- [x] formatter convention 문서
 - [ ] VS Code extension scaffold
 - [ ] VS Code syntax highlighting
 - [ ] LSP diagnostics

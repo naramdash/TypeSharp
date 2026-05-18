@@ -1,6 +1,6 @@
 # TypeSharp CLI
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 TypeSharp CLI의 초기 command surface와 동작 계약을 정의한다. CLI는 부가 도구가 아니라 TypeSharp 개발 루프의 1급 산출물이며, VS Code extension과 같은 compiler core, project manifest, diagnostics model을 공유해야 한다.
 
@@ -162,9 +162,12 @@ typesharp format --check
 ```
 
 규칙:
+- formatter convention은 [formatting.md](formatting.md)를 따른다.
 - formatter는 semicolon을 출력하지 않는다.
 - `namespace`, `import`/`open`, declaration 순서를 유지한다.
 - pipeline과 match expression은 multiline 가독성을 우선한다.
+- parse diagnostics가 있는 파일은 rewrite하지 않는다.
+- `--check`는 파일을 쓰지 않고 format diff가 있으면 non-zero exit code를 반환한다.
 
 ### `typesharp explain`
 

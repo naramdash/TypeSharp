@@ -36,37 +36,40 @@
 10. [cli.md](cli.md)
    - `typesharp` command surface, project manifest, diagnostics format, exit code, source discovery 규칙을 정의한다.
 
-11. [diagnostics.md](diagnostics.md)
+11. [formatting.md](formatting.md)
+   - `.tysh` source의 공식 formatter convention과 `typesharp format --check`의 기준 layout을 정의한다.
+
+12. [diagnostics.md](diagnostics.md)
    - diagnostic code range, descriptor metadata, explanation surface, golden diagnostic fixture 정책을 정의한다.
 
-12. [feasibility.md](feasibility.md)
+13. [feasibility.md](feasibility.md)
    - 현재 설계의 실현 가능성, MVP로 낮춘 범위, backend/host/ABI 결정을 기록한다.
 
-13. [feature-map.md](feature-map.md)
+14. [feature-map.md](feature-map.md)
    - 최신 C#, F#, TypeScript 기능을 TypeSharp에서 MVP, Stable Backlog, Preview Watch, Experimental, Rejected로 분류한다.
 
-14. [architecture.md](architecture.md)
+15. [architecture.md](architecture.md)
    - compiler pipeline, backend 전략, runtime library, tooling, test strategy의 권장 구조를 제안한다.
 
-15. [checklist.md](checklist.md)
+16. [checklist.md](checklist.md)
    - 설계와 구현을 반복할 때 완료 여부를 확인하는 실행 체크리스트다.
 
-16. [parser-fixtures.md](parser-fixtures.md)
+17. [parser-fixtures.md](parser-fixtures.md)
    - compiler skeleton 전에 parser positive/negative fixture, diagnostics snapshot, syntax tree snapshot 형식을 고정한다.
 
-17. [tasks/README.md](tasks/README.md)
+18. [tasks/README.md](tasks/README.md)
    - 장기 실행 에이전트가 바로 집어 들 수 있는 작업 패킷 목록이다.
 
-18. [traceability.md](traceability.md)
+19. [traceability.md](traceability.md)
    - 목표, 요구사항, 기능, 체크리스트가 서로 어떻게 연결되는지 검증한다.
 
-19. [references.md](references.md)
+20. [references.md](references.md)
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
-20. [dependencies.md](dependencies.md)
+21. [dependencies.md](dependencies.md)
    - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
 
-21. [framework-targeting.md](framework-targeting.md)
+22. [framework-targeting.md](framework-targeting.md)
    - Windows 10/11 장비 벤더 환경에서 `net48`과 `net481` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
 ## 문서 원칙
@@ -81,6 +84,7 @@
 - `standard-library.md`는 예제와 compiler-generated code가 공유해야 할 runtime namespace와 core type 이름을 정한다.
 - `csharp-interop.md`는 C# library reference, metadata symbol, nullable, overload, public ABI 경계를 정한다.
 - `cli.md`는 VS Code/CI/사용자가 공유하는 CLI command, manifest, diagnostics 계약을 정한다.
+- `formatting.md`는 parser, formatter, LSP, 예제 파일이 공유하는 canonical layout을 정한다.
 - `diagnostics.md`는 CLI, VS Code, test fixtures가 공유하는 diagnostic code와 explanation metadata를 정한다.
 - `feasibility.md`는 과도한 약속을 MVP, Stable Backlog, Preview Watch, Experimental, Rejected 중 적절한 범위로 낮추고 실제 구현 순서를 정리한다.
 - `feature-map.md`는 외부 언어의 최신 기능을 TypeSharp 의미론으로 번역하는 곳이다.

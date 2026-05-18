@@ -74,7 +74,7 @@ Done:
 
 Remaining:
 - Add binder-specific CLI diagnostic smoke if the project wants every semantic phase pinned at the CLI boundary.
-- Continue toward formatter convention and VS Code/LSP scaffolding after CLI command basics.
+- Formatter convention is tracked by [0064-formatter-convention.md](0064-formatter-convention.md); continue toward VS Code/LSP scaffolding after CLI command basics.
 
 Blocked:
 - None.

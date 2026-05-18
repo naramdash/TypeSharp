@@ -76,7 +76,7 @@ Done:
 - Marked CLI `build` complete in the current checklist with explicit type-checker diagnostic stop path.
 
 Remaining:
-- Continue toward formatter convention and VS Code/LSP scaffolding after CLI command basics.
+- Formatter convention is tracked by [0064-formatter-convention.md](0064-formatter-convention.md); continue toward VS Code/LSP scaffolding after CLI command basics.
 - Add binder-specific CLI build diagnostic stop smoke if the project wants every semantic phase pinned separately.
 
 Blocked:
