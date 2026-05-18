@@ -179,6 +179,39 @@ SourceFile TextSpan=3:1-3:40 FullSpan=1:1-3:40
 
 이 순서는 [feasibility.md](feasibility.md)의 구현 우선순위와 [grammar/README.md](grammar/README.md)의 문법 구현 순서를 따른다.
 
+## Current Stable Grammar Coverage
+
+현재 compiler test harness는 positive/negative parser fixture를 byte-for-byte snapshot으로 검증한다. `ParserFixtureSnapshotsMatch`는 각 `input.tysh`를 parse하고 `expected.diagnostics.json` 및 `expected.tree`와 비교한다.
+
+Positive fixture coverage:
+
+| Fixture | Source | Stable grammar coverage |
+| --- | --- | --- |
+| `tests/fixtures/parser/positive/0001-hello-cli` | `docs/examples/01-hello-cli.tysh` | namespace, static import, exported function, nullable type, block expression, `if`, member/indexer access, null coalescing, call expression, interpolated string |
+| `tests/fixtures/parser/positive/0002-modules-records` | `docs/examples/02-modules-records.tysh` | type alias, record declaration, named call arguments, nullable/array types, record update |
+| `tests/fixtures/parser/positive/0003-unions-patterns` | `docs/examples/03-unions-patterns.tysh` | named imports, nominal union declarations, generic type parameter/type argument lists, `match`, union case patterns |
+| `tests/fixtures/parser/positive/0004-structural-narrowing` | `docs/examples/04-structural-narrowing.tysh` | structural shape types, type-level union aliases, `unknown`, type patterns, record patterns, local narrowing-oriented match |
+| `tests/fixtures/parser/positive/0005-async-result-interop` | `docs/examples/05-async-result-interop.tysh` | type-only imports, exported async functions, `Task` generic return types, `try`/typed `catch`, `using`, `await`, block-bodied match arms |
+| `tests/fixtures/parser/positive/0006-public-api` | `docs/examples/06-public-api.tysh` | attribute lists, public/private modifiers, record/union/delegate/class declarations, class members, accessors, events, `elif`, assignment, decimal suffix literals |
+| `tests/fixtures/parser/positive/0007-pipeline-collections` | `docs/examples/07-pipeline-collections.tysh` | pipeline expressions, array types, collection literals, exported value declarations, `for`, function type annotations, lambdas, named arguments, fractional decimal literals |
+| `tests/fixtures/parser/positive/0008-csharp-library-interop` | `docs/examples/08-csharp-library-interop.tysh` | literal declarations, framework member call chains, named arguments, call-site `out`, indexers, interop-oriented `Result`/`Option` wrapper syntax |
+| `tests/fixtures/parser/positive/0009-literals-attributes` | `docs/examples/09-literals-attributes.tysh` | public literal declarations, attribute lists, attribute constructor arguments, expression-bodied calls with named arguments |
+| `tests/fixtures/parser/positive/0010-public-boundary-contract` | `docs/examples/10-public-boundary-contract.tysh` | public-boundary shape aliases, type-level union aliases, nominal public records/unions, record shorthand expressions, `Result` calls, public factory functions |
+| `tests/fixtures/parser/positive/0011-capability-boundaries` | `docs/examples/11-capability-boundaries.tysh` | explicit `dynamic`, `reflect`, `interop`, `extern` markers, attribute-prefixed native interop declarations, exported capability-marked functions |
+| `tests/fixtures/parser/positive/0012-interface-declaration` | parser-only fixture | interface declarations with function signatures |
+
+Negative fixture coverage:
+
+| Fixture | Coverage |
+| --- | --- |
+| `tests/fixtures/parser/negative/0001-missing-function-body` | parser recovery and `TS1001` diagnostic for function declarations without a body |
+
+Coverage boundary:
+- These fixtures prove syntax recognition and parser recovery, not binder/type checker semantics.
+- Semantic coverage lives under `tests/fixtures/diagnostics`.
+- Backend lowering coverage lives under `tests/fixtures/backend/csharp`.
+- New stable grammar must add or extend a parser fixture before the checklist can remain complete.
+
 ## 완료 기준
 
 Parser fixture 정책은 다음 조건을 만족할 때 구현 준비가 된 것으로 본다.

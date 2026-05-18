@@ -80,7 +80,7 @@
 - [x] async/task 문법 초안이 있다.
 - [x] .NET interop 문법 초안이 있다.
 - [x] managed C# library import/reference 규칙 초안이 있다.
-- [ ] stable grammar별 parser fixture가 있다.
+- [x] stable grammar별 parser fixture가 있다.
 - [x] parser fixture directory와 diagnostic snapshot 형식이 정해져 있다.
 - [x] 문법 ambiguity 검토표가 있다.
 - [x] parser precedence table이 있다.
