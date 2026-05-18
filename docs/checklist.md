@@ -125,6 +125,7 @@
 - [ ] metadata reader
 - [x] C# metadata reader skeleton
 - [x] C# metadata reader local public symbol index
+- [x] C# metadata reader params parameter flag
 - [x] C# reference resolver skeleton
 - [x] C# metadata diagnostics pipeline integration
 - [x] C# invalid byref interop diagnostic smoke
@@ -242,6 +243,7 @@
 - [x] C# reference resolver smoke tests
 - [x] C# metadata reader smoke tests
 - [x] C# metadata reader local public symbol index smoke tests
+- [x] C# metadata reader params parameter flag smoke tests
 - [x] C# metadata pipeline diagnostics smoke tests
 - [x] C# invalid byref interop diagnostic smoke tests
 - [x] C# ambiguous overload diagnostic smoke tests

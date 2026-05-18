@@ -546,6 +546,13 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(["value"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Type).ToArray());
         AssertSequence([MetadataByRefKind.None], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.ByRefKind).ToArray());
+        AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsParams).ToArray());
+
+        var legacyParams = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyParams"), "LegacyParams metadata should be present.");
+        var join = Require(legacyParams.Methods.SingleOrDefault(method => method.Name == "Join"), "Join metadata should be present.");
+        AssertSequence(["separator", "values"], join.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "string[]"], join.Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertSequence([false, true], join.Parameters.Select(parameter => parameter.IsParams).ToArray());
 
         var legacyFormatter = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFormatter"), "LegacyFormatter metadata should be present.");
         AssertSequence(["Prefix"], legacyFormatter.Properties.Select(property => property.Name).ToArray());

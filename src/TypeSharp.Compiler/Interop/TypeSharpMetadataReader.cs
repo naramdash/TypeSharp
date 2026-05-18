@@ -138,7 +138,8 @@ public static class TypeSharpMetadataReader
             parameters.Add(new MetadataParameterSymbol(
                 parameter.Name.IsNil ? string.Empty : reader.GetString(parameter.Name),
                 type.Name,
-                GetByRefKind(type, parameter.Attributes)));
+                GetByRefKind(type, parameter.Attributes),
+                HasCustomAttribute(reader, parameter.GetCustomAttributes(), "System.ParamArrayAttribute")));
         }
 
         return new MetadataMethodSymbol(
@@ -175,6 +176,62 @@ public static class TypeSharpMetadataReader
 
     private static bool IsPublicTopLevelType(System.Reflection.TypeAttributes attributes) =>
         attributes.HasFlag(System.Reflection.TypeAttributes.Public);
+
+    private static bool HasCustomAttribute(
+        MetadataReader reader,
+        CustomAttributeHandleCollection attributes,
+        string fullName)
+    {
+        foreach (var handle in attributes)
+        {
+            var attribute = reader.GetCustomAttribute(handle);
+            if (string.Equals(GetAttributeTypeName(reader, attribute.Constructor), fullName, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string GetAttributeTypeName(MetadataReader reader, EntityHandle constructor)
+    {
+        return constructor.Kind switch
+        {
+            HandleKind.MethodDefinition => GetTypeDefinitionName(reader, reader.GetMethodDefinition((MethodDefinitionHandle)constructor).GetDeclaringType()),
+            HandleKind.MemberReference => GetMemberReferenceParentName(reader, reader.GetMemberReference((MemberReferenceHandle)constructor).Parent),
+            _ => string.Empty
+        };
+    }
+
+    private static string GetMemberReferenceParentName(MetadataReader reader, EntityHandle parent)
+    {
+        return parent.Kind switch
+        {
+            HandleKind.TypeReference => GetTypeReferenceName(reader, (TypeReferenceHandle)parent),
+            HandleKind.TypeDefinition => GetTypeDefinitionName(reader, (TypeDefinitionHandle)parent),
+            _ => string.Empty
+        };
+    }
+
+    private static string GetTypeDefinitionName(MetadataReader reader, TypeDefinitionHandle handle)
+    {
+        var type = reader.GetTypeDefinition(handle);
+        return QualifiedName(reader, type.Namespace, type.Name);
+    }
+
+    private static string GetTypeReferenceName(MetadataReader reader, TypeReferenceHandle handle)
+    {
+        var type = reader.GetTypeReference(handle);
+        return QualifiedName(reader, type.Namespace, type.Name);
+    }
+
+    private static string QualifiedName(MetadataReader reader, StringHandle namespaceHandle, StringHandle nameHandle)
+    {
+        var namespaceName = namespaceHandle.IsNil ? string.Empty : reader.GetString(namespaceHandle);
+        var name = reader.GetString(nameHandle);
+        return namespaceName.Length == 0 ? name : $"{namespaceName}.{name}";
+    }
 
     private static MetadataByRefKind GetByRefKind(DecodedType type, System.Reflection.ParameterAttributes attributes)
     {
