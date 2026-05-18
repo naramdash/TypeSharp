@@ -18,6 +18,8 @@
 - [x] 기능 목표가 goal에 통합되어 있다.
 - [x] Union 설계 결정이 goal에 명시되어 있다.
 - [x] VS Code와 CLI 개발 경험이 1급 목표로 명시되어 있다.
+- [x] .NET Framework ASP.NET/WCF/worker 호환성 목표가 명시되어 있다.
+- [x] .NET Framework application model compatibility 계약이 요구사항과 기능 매핑에 반영되어 있다.
 - [x] grammar 폴더가 있고 TypeSharp 문법 목표를 설명한다.
 - [x] syntax consistency 규칙이 문서화되어 있다.
 - [x] TypeScript/F#/C# 기능을 문법으로 포괄하거나 대체하는 coverage matrix가 있다.
@@ -53,6 +55,9 @@
 - [x] 생성 assembly가 `net481` 프로젝트에서 참조된다.
 - [x] compiler host 요구사항이 확정되어 있다.
 - [x] runtime library가 `net481`로 빌드된다.
+- [ ] generated assembly/runtime library가 ASP.NET Web Forms/MVC/Web API 프로젝트에서 참조되는 smoke test가 있다.
+- [ ] generated assembly/runtime library가 WCF service/client 또는 contract 프로젝트에서 참조되는 smoke test가 있다.
+- [ ] generated assembly/runtime library가 Windows Service 또는 worker-style `net481` 프로젝트에서 참조되는 smoke test가 있다.
 - [ ] .NET 5+ 전용 API 사용 여부를 검사한다.
 - [ ] NuGet dependency의 `net481` 호환성과 라이선스를 기록한다.
 

@@ -324,6 +324,31 @@ Lowering:
 - 모든 immutable `let`을 constant로 오해하면 binary compatibility가 나빠진다.
 - 따라서 `literal`은 명시 선언으로만 허용하고, 일반 `let`과 의미를 섞지 않는다.
 
+## 16. .NET Framework Application Model Compatibility
+
+상태: MVP contract for assembly/runtime compatibility, Stable Backlog for project templates and host-specific smoke suites
+
+출처:
+- .NET Framework ASP.NET Web Forms, ASP.NET MVC/Web API hosting model
+- WCF service/client contract and configuration model
+- Windows Service, scheduled job, queue/background worker deployment patterns
+
+TypeSharp 결정:
+- TypeSharp generated assembly와 `TypeSharp.Core`/`TypeSharp.Runtime`는 기존 .NET Framework host가 일반 C# class library처럼 참조하고 `bin`에 배포할 수 있는 shape를 유지한다.
+- ASP.NET Core나 최신 .NET worker로 migration하지 않아도 ASP.NET Web Forms/MVC/Web API, WCF, Windows Service, scheduler/worker 프로젝트에서 TypeSharp public API를 사용할 수 있어야 한다.
+- ASP.NET의 `web.config`, IIS/AppDomain lifecycle, shadow copy/bin deployment, MSBuild packaging 관례를 깨는 runtime initialization이나 loader hook을 기본 요구사항으로 두지 않는다.
+- WCF의 service contract, data contract, message contract, endpoint/binding/behavior configuration, generated proxy/client interop는 C# metadata-compatible public API 규칙을 통해 다룬다.
+- worker/service 환경에서는 configuration, logging, diagnostics, long-running process lifecycle과 .NET Framework BCL 제약을 고려하되, host-specific framework dependency를 TypeSharp runtime의 필수 dependency로 넣지 않는다.
+
+Lowering:
+- MVP backend는 host-specific code generation을 하지 않고, host가 참조 가능한 `net481` library assembly와 C# metadata-compatible public surface를 생성한다.
+- ASP.NET/WCF/worker project template, IIS packaging, WCF config generation, Windows Service scaffolding은 Stable Backlog로 분리한다.
+
+위험:
+- host-specific helper를 runtime에 섞으면 ASP.NET/WCF/worker가 필요 없는 library에도 deployment 부담이 생긴다.
+- WCF attribute/configuration 모델은 public ABI와 generated metadata에 민감하므로 nullable, delegate/event, attribute interop 안정화 이후 host smoke를 추가해야 한다.
+- IIS/AppDomain lifecycle과 shadow copy는 static initialization, file IO, reflection cache 설계에 제약을 만든다.
+
 ## 지연 또는 거절 후보
 
 | 기능 | 상태 | 이유 |

@@ -9,10 +9,11 @@
 | 목표 | 요구사항 | 기능 문서 | 검증 체크리스트 |
 | --- | --- | --- | --- |
 | .NET Framework 4.8.1에서 실행 | [requirements.md](requirements.md) 1, 4, 5, 8 | [feature-map.md](feature-map.md) 전체 lowering 기준 | [checklist.md](checklist.md) 플랫폼, 컴파일러, 테스트 |
-| TypeScript식 암묵적이고 유연한 타입 | [requirements.md](requirements.md) 2, 3, 4 | [feature-map.md](feature-map.md) 1, 2, 4, 5 | [goal.md](goal.md) 기능 목표 1, 6, 7 |
-| TypeScript식 모듈 기반 파일 구조 | [requirements.md](requirements.md) 2, 7 | [feature-map.md](feature-map.md) 10, 13 | [goal.md](goal.md) 기능 목표 2, 10 |
-| F#식 함수형 기능과 일관성 | [requirements.md](requirements.md) 2, 6 | [feature-map.md](feature-map.md) 1, 2, 3, 7, 9, 11 | [goal.md](goal.md) 기능 목표 3, 4, 5, 8 |
-| C#식 다양하고 유연한 편의 기능 | [requirements.md](requirements.md) 3, 5 | [feature-map.md](feature-map.md) 6, 7, 8, 12, 14, 15 | [goal.md](goal.md) 기능 목표 5, 9, 14 |
+| .NET Framework ASP.NET/WCF/worker 호환성 | [requirements.md](requirements.md) 1, 5 | [feature-map.md](feature-map.md) 16, [csharp-interop.md](csharp-interop.md) Application Model Compatibility | [checklist.md](checklist.md) 플랫폼 |
+| TypeScript식 암묵적이고 유연한 타입 | [requirements.md](requirements.md) 2, 3, 4 | [feature-map.md](feature-map.md) 1, 2, 4, 5 | [goal.md](goal.md) 기능 목표 2, 7, 8 |
+| TypeScript식 모듈 기반 파일 구조 | [requirements.md](requirements.md) 2, 7 | [feature-map.md](feature-map.md) 10, 13 | [goal.md](goal.md) 기능 목표 3, 11 |
+| F#식 함수형 기능과 일관성 | [requirements.md](requirements.md) 2, 6 | [feature-map.md](feature-map.md) 1, 2, 3, 7, 9, 11 | [goal.md](goal.md) 기능 목표 4, 5, 6, 9 |
+| C#식 다양하고 유연한 편의 기능 | [requirements.md](requirements.md) 3, 5 | [feature-map.md](feature-map.md) 6, 7, 8, 12, 14, 15 | [goal.md](goal.md) 기능 목표 6, 10, 15 |
 | TypeScript/F#/C# 문법 포괄 또는 대체 | [requirements.md](requirements.md) 2, 3, 4 | [grammar/README.md](grammar/README.md), [grammar/coverage.md](grammar/coverage.md) | [checklist.md](checklist.md) 문서 완성도, 언어 사양 |
 | 문법 표면 최소화와 일관성 | [requirements.md](requirements.md) 2, 4, 7 | [grammar/consistency.md](grammar/consistency.md) | [checklist.md](checklist.md) 문서 완성도 |
 | 표준 라이브러리 핵심 타입 | [requirements.md](requirements.md) 6 | [standard-library.md](standard-library.md) | [checklist.md](checklist.md) 런타임 라이브러리 |
@@ -22,7 +23,7 @@
 | 최신 C# 기능 반영 | [requirements.md](requirements.md) 3 | [feature-map.md](feature-map.md) 6, 8, 12, 14, 15 | [checklist.md](checklist.md) 언어 사양, MVP 기능 |
 | 최신 F# 기능 반영 | [requirements.md](requirements.md) 3, 6 | [feature-map.md](feature-map.md) 1, 2, 3, 7, 11 | [checklist.md](checklist.md) MVP 기능, 런타임 라이브러리 |
 | 최신 TypeScript 기능 반영 | [requirements.md](requirements.md) 3, 4 | [feature-map.md](feature-map.md) 4, 5, 13 | [checklist.md](checklist.md) 언어 사양, 도구 |
-| C#/.NET 상호 운용 | [requirements.md](requirements.md) 5 | [feature-map.md](feature-map.md) 2, 4, 7, 10, 14, 15, [csharp-interop.md](csharp-interop.md) | [checklist.md](checklist.md) MVP 기능, 테스트 |
+| C#/.NET 상호 운용 | [requirements.md](requirements.md) 5 | [feature-map.md](feature-map.md) 2, 4, 7, 10, 14, 15, 16, [csharp-interop.md](csharp-interop.md) | [checklist.md](checklist.md) MVP 기능, 테스트 |
 | 컴파일 타임 상수 | [requirements.md](requirements.md) 2, 5 | [feature-map.md](feature-map.md) 15, [grammar/consistency.md](grammar/consistency.md), [grammar/declarations.md](grammar/declarations.md) | [checklist.md](checklist.md) 언어 사양, MVP 기능 |
 | 타입 안전성 기본값 | [requirements.md](requirements.md) 2, 3, 8 | [feature-map.md](feature-map.md) 1, 2, 3, 5, 11 | [checklist.md](checklist.md) 언어 사양, 테스트 |
 | 설명 가능한 lowering | [requirements.md](requirements.md) 3, 4 | [architecture.md](architecture.md) Lowering과 IR, Backend 전략 | [checklist.md](checklist.md) 반복 검토 질문 |
@@ -38,6 +39,16 @@
 - 아키텍처: Backend 전략, CLI
 - 체크리스트: 플랫폼, 컴파일러, 테스트
 - 완료 기준: `typesharp build`가 `net481` 실행 파일 또는 라이브러리를 만들고 Windows .NET Framework 4.8.1 환경에서 실행된다.
+
+### .NET Framework Application Model Compatibility
+
+- 요구사항: 플랫폼 요구사항, .NET 상호 운용 요구사항
+- 기능 매핑: .NET Framework Application Model Compatibility, C# Library Interop
+- 문서: [csharp-interop.md](csharp-interop.md)
+- 체크리스트: 플랫폼
+- 완료 기준: TypeSharp generated library와 runtime dependency가 ASP.NET Web Forms/MVC/Web API 프로젝트에서 일반 `net481` class library처럼 참조된다.
+- 완료 기준: WCF service/client 또는 contract project가 TypeSharp public API를 CLR-visible metadata로 소비한다.
+- 완료 기준: Windows Service 또는 worker-style `net481` project가 TypeSharp generated assembly를 참조하고 long-running host lifecycle에서 loader/runtime dependency 문제가 없다.
 
 ### VS Code와 CLI 개발 루프
 

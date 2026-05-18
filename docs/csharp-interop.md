@@ -8,6 +8,7 @@
 
 - 기존 `net481` C# assembly를 TypeSharp 프로젝트에서 참조하고 사용할 수 있어야 한다.
 - TypeSharp가 만든 library assembly를 C# .NET Framework 프로젝트가 참조하고 호출할 수 있어야 한다.
+- TypeSharp generated assembly와 runtime library는 ASP.NET Web Forms/MVC/Web API, WCF, Windows Service, scheduled job, worker-style host에서 기존 C# class library처럼 참조, 배포, 로드될 수 있어야 한다.
 - C# class, interface, struct, enum, delegate, event, attribute, generic type, async `Task` API를 TypeSharp 타입 시스템 안에서 다룰 수 있어야 한다.
 - TypeScript식 structural/type-level 기능은 local type checking에 쓰되, C# public metadata boundary에는 그대로 새지 않게 한다.
 - unsafe, dynamic, reflection, COM, P/Invoke 같은 불안정한 경계는 명시 capability marker를 요구한다.
@@ -25,6 +26,7 @@
 | C# extension method instance syntax | Stable Backlog | MVP에서는 static call 또는 명시 helper를 우선한다. |
 | `dynamic`/reflection/COM/P/Invoke | MVP opt-in | `dynamic`, `reflect`, `interop`, `unsafe` marker 없이는 strict mode에서 diagnostic이다. |
 | F# specific ABI | Stable Backlog | F# option/record/union compatibility layer는 별도 검토한다. |
+| ASP.NET/WCF/worker host compatibility | MVP contract, Stable Backlog smokes | generated `net481` library와 runtime은 host-specific migration 없이 기존 .NET Framework application model에서 로드 가능해야 하며, templates and host smokes는 별도 단계로 둔다. |
 
 ## Project Reference Model
 
@@ -53,6 +55,17 @@ packages = [
 - `packages`는 장기 manifest 표면으로 예약하되, MVP compiler는 NuGet restore를 직접 수행하지 않아도 된다.
 - package를 허용할 때는 `net481` compatible asset 선택, transitive dependency, license, checksum 또는 lock file 정책을 함께 구현해야 한다.
 - 같은 simple name의 assembly가 여러 경로에서 발견되면 manifest가 우선순위를 명시하거나 diagnostic을 낸다.
+
+## .NET Framework Application Model Compatibility
+
+TypeSharp는 기존 .NET Framework host를 대체하지 않고, 그 안에 들어가는 managed library 산출물을 만든다.
+
+규칙:
+- ASP.NET Web Forms, ASP.NET MVC/Web API, WCF, Windows Service, scheduled job, queue/background worker 프로젝트는 TypeSharp generated assembly를 일반 `net481` C# class library처럼 참조할 수 있어야 한다.
+- TypeSharp runtime library는 ASP.NET `web.config`, `bin` deployment, IIS/AppDomain lifecycle, shadow copy, MSBuild packaging 관례를 깨는 host-specific loader나 startup hook을 기본으로 요구하지 않는다.
+- WCF interop는 CLR-visible interface/class/attribute metadata를 통해 service contract, data contract, message contract, proxy/client consumption을 표현하는 방향으로 둔다.
+- worker/service interop는 long-running process lifecycle, configuration file, logging/diagnostics integration을 고려하되, host-specific framework package를 TypeSharp runtime의 필수 dependency로 추가하지 않는다.
+- Host-specific templates, WCF config generation, IIS packaging, Windows Service scaffolding은 generated assembly ABI가 안정된 뒤 Stable Backlog에서 다룬다.
 
 ## Import Model
 

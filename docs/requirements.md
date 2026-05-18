@@ -17,6 +17,8 @@
 - 기본 런타임 라이브러리는 .NET Framework 4.8.1에서 로드되어야 한다.
 - .NET 5 이상에만 존재하는 BCL API를 기본 lowering 대상으로 삼지 않아야 한다.
 - .NET Framework가 Windows 전용 기술이라는 사실을 전제로 호환성 문서를 작성해야 한다.
+- 생성 assembly와 표준 런타임은 ASP.NET Web Forms, ASP.NET MVC/Web API, WCF service/client, Windows Service, scheduled job, queue/background worker 같은 .NET Framework application model에서 기존 C# library와 같은 방식으로 참조, 배포, 로드될 수 있어야 한다.
+- ASP.NET/WCF/worker 호환성은 ASP.NET Core 또는 최신 .NET worker로의 migration을 요구하지 않아야 하며, `web.config`, `bin` deployment, IIS/AppDomain lifecycle, configuration-based service model, MSBuild packaging 관례를 깨지 않아야 한다.
 - 외부 NuGet dependency는 `net481` 호환 여부, 라이선스, 배포 방식이 문서화되어야 한다.
 - compiler, CLI, language server host는 현대 .NET LTS 기반으로 실행될 수 있다. 단, 생성 산출물과 표준 런타임의 `net481` 호환성 테스트를 반드시 통과해야 한다.
 
@@ -107,6 +109,7 @@
 - overload resolution은 C# interop에서 예측 가능해야 한다.
 - C# named argument, optional parameter, `params`, `ref`, `out`, `in` parameter를 metadata 기반으로 처리해야 한다.
 - attribute 사용과 생성은 .NET metadata 규칙을 따라야 한다.
+- WCF service contract, data contract, message contract, generated proxy/client interop는 TypeSharp public API와 C# metadata interop 규칙 안에서 표현 가능해야 한다.
 - exception 모델은 .NET exception과 호환되어야 한다.
 - async 모델은 `Task`와 `Task<T>`를 기본 interop 타입으로 사용해야 한다.
 - nullable annotation이 없는 C# assembly는 unknown nullability로 다루고 strict mode에서 진단 또는 guard를 요구해야 한다.

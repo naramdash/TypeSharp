@@ -16,6 +16,7 @@ TypeSharp의 방향은 실현 가능하다. 다만 실현 가능하려면 다음
 6. nominal closed union의 MVP lowering은 reference-type class hierarchy로 시작한다.
 7. TypeScript의 고급 type-level programming은 MVP에서 제외하고 complexity budget 아래 Planned/Experimental로 둔다.
 8. C# library interop는 managed `net481` assembly 참조와 metadata 기반 호출을 MVP로 두고, NuGet restore와 extension-method instance sugar는 Stable Backlog로 둔다.
+9. ASP.NET/WCF/worker 호환성은 host-specific framework를 TypeSharp runtime에 끌어들이지 않고, generated `net481` library assembly와 C# metadata-compatible public API 계약으로 시작한다.
 
 ## 조정한 결정
 
@@ -29,6 +30,7 @@ TypeSharp의 방향은 실현 가능하다. 다만 실현 가능하려면 다음
 | Type operators | `typeof`, `keyof`, indexed access까지 MVP로 보이면 범위가 너무 넓다. | MVP는 literal union과 local shape/narrowing 중심, type operators는 Planned. |
 | Type provider | 빌드 중 외부 코드 실행 모델은 보안/캐시/재현성 비용이 크다. | Type provider는 Experimental이며, schema import/generator도 sandbox 정책 이후. |
 | C# library interop | NuGet restore, source generator, extension method sugar까지 한 번에 넣으면 compiler와 build system 범위가 커진다. | MVP는 framework assembly/local DLL reference, metadata reader, nominal-first overload resolution, C# call lowering으로 제한한다. |
+| ASP.NET/WCF/worker compatibility | host template, IIS packaging, WCF config generation, Windows Service scaffolding까지 MVP로 넣으면 build/deployment 범위가 커진다. | MVP는 기존 .NET Framework host가 참조할 수 있는 `net481` library ABI와 runtime dependency shape를 보장하고, host-specific templates and smokes는 Stable Backlog로 둔다. |
 
 ## MVP 가능 범위
 
@@ -47,6 +49,7 @@ MVP에서 실제로 구현 가능한 언어 범위:
 - framework assembly and local C# DLL reference
 - C# constructor/static/instance member/property/delegate/event call
 - C# `ref`/`out`/`in`/`params` interop
+- generated `net481` library assembly consumption from existing ASP.NET/WCF/worker-style .NET Framework hosts
 - array literal and basic collection helper
 - `Task`/`Task<T>` async interop through C# source backend
 - `typesharp version/check/build/run`
@@ -66,6 +69,7 @@ MVP에서 실제로 구현 가능한 언어 범위:
 | F# computation expression builder | Planned | 기본 `async fun`/`Task` interop 이후가 적절하다. |
 | NuGet restore in compiler | Stable Backlog | lock file, transitive dependency, license, checksum 정책이 필요하다. |
 | C# extension method instance sugar | Stable Backlog | overload ranking과 name conflict 규칙이 안정화되어야 한다. |
+| ASP.NET/WCF/Windows Service templates | Stable Backlog | generated assembly ABI and runtime dependency shape가 안정된 뒤 host-specific packaging/smoke를 추가하는 편이 안전하다. |
 
 ## 구현 우선순위
 
@@ -86,6 +90,7 @@ MVP에서 실제로 구현 가능한 언어 범위:
 - [examples/cli-console](examples/cli-console/README.md)이 `typesharp check/build/run` smoke sample이 된다.
 - generated C# source는 C# 7.3 compiler로 컴파일 가능해야 한다.
 - generated assembly는 `net481` project에서 참조 가능해야 한다.
+- generated assembly와 runtime dependency는 ASP.NET/WCF/Windows Service/worker-style .NET Framework project에서 일반 class library처럼 참조 가능해야 한다.
 - TypeSharp가 framework assembly와 local `net481` C# DLL을 참조하고 constructor, member, delegate, event, generic API를 호출해야 한다.
 - C# `net481` project가 TypeSharp library assembly를 참조하고 public API를 호출해야 한다.
 - TypeSharp public API에 type-level union 또는 structural shape가 직접 나타나면 diagnostic을 낸다.
