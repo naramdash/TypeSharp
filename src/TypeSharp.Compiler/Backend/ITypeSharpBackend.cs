@@ -6,7 +6,9 @@ public interface ITypeSharpBackend
 {
     string Name { get; }
 
-    string GeneratedSourceExtension { get; }
+    TypeSharpBackendArtifactKind ArtifactKind { get; }
 
-    string Emit(SyntaxNode root);
+    string GeneratedArtifactExtension { get; }
+
+    TypeSharpBackendArtifact Emit(SyntaxNode root);
 }

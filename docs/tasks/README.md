@@ -69,3 +69,4 @@
 | [0112-csharp-overload-resolver.md](0112-csharp-overload-resolver.md) | Q3 | Done | C# interop overload 후보 선택을 독립 resolver API로 분리하고 현재 범위를 문서화한다. |
 | [0113-feature-specification-index.md](0113-feature-specification-index.md) | Q1-Q5 | Done | 현재 구현/안정 기능의 세부 사양 문서와 검증 근거를 기능별 색인으로 묶는다. |
 | [0114-lowering-pass-pipeline.md](0114-lowering-pass-pipeline.md) | Q2-Q3 | Done | backend emit 전 ordered lowering pass pipeline과 runtime helper import lowering pass를 추가한다. |
+| [0115-il-backend-artifact-seam.md](0115-il-backend-artifact-seam.md) | Q3 | Done | backend artifact contract를 source text와 future direct assembly output으로 분리한다. |

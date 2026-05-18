@@ -82,8 +82,14 @@ public static class TypeSharpBuilder
         {
             var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath, backend);
             var outputPath = Path.Combine(outputRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            var artifact = backend.Emit(root);
+            if (artifact.Kind != TypeSharpBackendArtifactKind.SourceText)
+            {
+                throw new NotSupportedException($"Backend '{backend.Name}' emits '{artifact.Kind}' artifacts, but the current project builder expects generated source text.");
+            }
+
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? outputRoot);
-            File.WriteAllText(outputPath, backend.Emit(root));
+            File.WriteAllText(outputPath, artifact.RequireText());
             generatedFiles.Add(new GeneratedCSharpFile(outputPath, relativePath));
         }
 
@@ -129,7 +135,7 @@ public static class TypeSharpBuilder
             ? normalized[..^".tysh".Length]
             : normalized;
 
-        return $"{withoutExtension}{backend.GeneratedSourceExtension}";
+        return $"{withoutExtension}{backend.GeneratedArtifactExtension}";
     }
 
     private static string EmitGeneratedProject(

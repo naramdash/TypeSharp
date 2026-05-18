@@ -12,7 +12,10 @@ public sealed class CSharpSourceBackendAdapter : ITypeSharpBackend
 
     public string Name => "csharp";
 
-    public string GeneratedSourceExtension => ".g.cs";
+    public TypeSharpBackendArtifactKind ArtifactKind => TypeSharpBackendArtifactKind.SourceText;
 
-    public string Emit(SyntaxNode root) => CSharpSourceBackend.Emit(root);
+    public string GeneratedArtifactExtension => ".g.cs";
+
+    public TypeSharpBackendArtifact Emit(SyntaxNode root) =>
+        TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root));
 }

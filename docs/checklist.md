@@ -170,7 +170,7 @@
 - [x] generated C# imported `ref` call build smoke
 - [x] generated C# imported delegate lambda call build smoke
 - [x] generated C# imported event add/remove build smoke
-- [ ] IL backend abstraction seam
+- [x] IL backend abstraction seam
 - [x] diagnostics system
 - [x] initial diagnostic/span model
 - [x] diagnostics code taxonomy and descriptor metadata

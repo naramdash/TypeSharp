@@ -144,6 +144,12 @@ MVP 결정:
 - MVP는 C# 7.3 source backend로 시작하고, IR과 테스트를 직접 IL backend로 확장 가능하게 둔다.
 - public API와 metadata fidelity가 중요한 기능부터 IL backend를 도입한다.
 
+현재 구현:
+- `ITypeSharpBackend`는 backend name, artifact kind, generated artifact extension, and syntax-root emission을 노출한다.
+- `TypeSharpBackendArtifactKind.SourceText`는 현재 C# source backend가 쓰는 generated source artifact다.
+- `TypeSharpBackendArtifactKind.Assembly`는 future direct IL backend가 source file을 우회해 binary assembly artifact를 돌려줄 수 있는 seam이다.
+- 현재 project builder는 source-text artifact만 build pipeline에 연결하며, direct assembly emission은 별도 Stable Backlog implementation으로 남긴다.
+
 ## Runtime Library
 
 필수 구성:

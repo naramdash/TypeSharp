@@ -31,6 +31,7 @@ var tests = new (string Name, Action Body)[]
     ("type checker fixture convention paths are stable", TypeCheckerFixtureConventionPathsAreStable),
     ("C# backend fixture convention paths are stable", CSharpBackendFixtureConventionPathsAreStable),
     ("backend abstraction exposes C# source backend", BackendAbstractionExposesCSharpSourceBackend),
+    ("backend artifact contract supports direct assembly output", BackendArtifactContractSupportsDirectAssemblyOutput),
     ("lowering pipeline injects runtime helper imports", LoweringPipelineInjectsRuntimeHelperImports),
     ("manifest loader reads explicit manifest path", ManifestLoaderReadsExplicitManifestPath),
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
@@ -301,8 +302,28 @@ static void BackendAbstractionExposesCSharpSourceBackend()
     var backend = CSharpSourceBackendAdapter.Instance;
 
     AssertEqual("csharp", backend.Name);
-    AssertEqual(".g.cs", backend.GeneratedSourceExtension);
-    AssertEqual(CSharpSourceBackend.Emit(root), backend.Emit(root));
+    AssertEqual(TypeSharpBackendArtifactKind.SourceText, backend.ArtifactKind);
+    AssertEqual(".g.cs", backend.GeneratedArtifactExtension);
+
+    var artifact = backend.Emit(root);
+    AssertEqual(TypeSharpBackendArtifactKind.SourceText, artifact.Kind);
+    AssertEqual(".g.cs", artifact.Extension);
+    AssertEqual(CSharpSourceBackend.Emit(root), artifact.RequireText());
+}
+
+static void BackendArtifactContractSupportsDirectAssemblyOutput()
+{
+    var sourceArtifact = TypeSharpBackendArtifact.SourceText(".g.cs", "namespace Generated {}");
+    AssertEqual(TypeSharpBackendArtifactKind.SourceText, sourceArtifact.Kind);
+    AssertEqual(".g.cs", sourceArtifact.Extension);
+    AssertEqual("namespace Generated {}", sourceArtifact.RequireText());
+    AssertThrows<InvalidOperationException>(() => sourceArtifact.RequireBytes());
+
+    var assemblyArtifact = TypeSharpBackendArtifact.Assembly(".dll", [0x4D, 0x5A]);
+    AssertEqual(TypeSharpBackendArtifactKind.Assembly, assemblyArtifact.Kind);
+    AssertEqual(".dll", assemblyArtifact.Extension);
+    AssertSequence<byte>([0x4D, 0x5A], assemblyArtifact.RequireBytes());
+    AssertThrows<InvalidOperationException>(() => assemblyArtifact.RequireText());
 }
 
 static void LoweringPipelineInjectsRuntimeHelperImports()
