@@ -23,3 +23,4 @@
 | [0023-0032-runtime-cli-interop-backend-skeleton.md](0023-0032-runtime-cli-interop-backend-skeleton.md) | Q2-Q3 | Done | runtime/core, CLI build emission, C# interop metadata, C# backend skeleton을 묶는다. |
 | [0033-0037-generated-net481-build-pipeline.md](0033-0037-generated-net481-build-pipeline.md) | Q3 | Done | generated C# source를 CLI-visible `net481` assembly build, C# consumer smoke, manifest reference propagation까지 연결한다. |
 | [0038-csharp-property-access-smoke.md](0038-csharp-property-access-smoke.md) | Q3 | Done | referenced `net481` C# local DLL의 public property access compile smoke를 추가한다. |
+| [0039-csharp-params-interop-smoke.md](0039-csharp-params-interop-smoke.md) | Q3 | Done | referenced `net481` C# local DLL의 `params` API positional call compile smoke를 추가한다. |
