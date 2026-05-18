@@ -218,7 +218,7 @@
 - [x] VS Code syntax highlighting
 - [x] LSP diagnostics
 - [x] LSP hover
-- [ ] LSP go-to-definition
+- [x] LSP go-to-definition
 - [ ] LSP basic completion
 - [x] diagnostic explanation 문서
 - [x] sample project

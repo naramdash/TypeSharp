@@ -37,3 +37,4 @@
 | [0065-vscode-extension-scaffold.md](0065-vscode-extension-scaffold.md) | Q4 | Done | VS Code가 `.tysh` 파일을 `typesharp` 언어로 인식하고 lexical grammar 기반 syntax highlighting을 제공하는 extension scaffold를 추가한다. |
 | [0066-lsp-diagnostics-publish.md](0066-lsp-diagnostics-publish.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document를 compiler diagnostics로 검사하고 LSP `publishDiagnostics`를 내보낸다. |
 | [0067-lsp-hover.md](0067-lsp-hover.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document의 identifier hover에서 binder symbol 정보를 markdown hover로 반환한다. |
+| [0068-lsp-go-to-definition.md](0068-lsp-go-to-definition.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document의 identifier definition request에서 binder symbol 위치를 LSP Location으로 반환한다. |

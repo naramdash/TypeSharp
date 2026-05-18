@@ -56,6 +56,13 @@ public static class TypeSharpLanguageServer
                     }
                     break;
 
+                case "textDocument/definition":
+                    if (hasId)
+                    {
+                        WriteDefinitionResponse(root, output, idElement, openDocuments, workspaceRoot);
+                    }
+                    break;
+
                 default:
                     if (hasId)
                     {
@@ -146,6 +153,7 @@ public static class TypeSharpLanguageServer
             writer.WriteStartObject();
             writer.WriteNumber("textDocumentSync", 1);
             writer.WriteBoolean("hoverProvider", true);
+            writer.WriteBoolean("definitionProvider", true);
             writer.WriteEndObject();
             writer.WriteEndObject();
             writer.WriteEndObject();
@@ -177,6 +185,31 @@ public static class TypeSharpLanguageServer
         }
 
         WriteHoverResult(output, id, hover);
+    }
+
+    private static void WriteDefinitionResponse(
+        JsonElement root,
+        Stream output,
+        JsonElement id,
+        IReadOnlyDictionary<string, string> openDocuments,
+        string workspaceRoot)
+    {
+        if (!TryGetTextDocumentPosition(root, out var uri, out var position)
+            || !openDocuments.TryGetValue(uri, out var text))
+        {
+            WriteNullResponse(output, id);
+            return;
+        }
+
+        var fileName = ToFileName(uri, workspaceRoot);
+        var location = TypeSharpDocumentDefinition.GetDefinition(text, fileName, uri, position);
+        if (location is null)
+        {
+            WriteNullResponse(output, id);
+            return;
+        }
+
+        WriteLocationResult(output, id, location);
     }
 
     private static bool TryGetTextDocumentPosition(JsonElement root, out string uri, out LspPosition position)
@@ -223,6 +256,27 @@ public static class TypeSharpLanguageServer
                 writer.WritePropertyName("range");
                 WriteRange(writer, hover.Range);
             }
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+
+        WriteFramedJson(output, payload.ToArray());
+    }
+
+    private static void WriteLocationResult(Stream output, JsonElement id, LspLocation location)
+    {
+        using var payload = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(payload))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("jsonrpc", "2.0");
+            writer.WritePropertyName("id");
+            id.WriteTo(writer);
+            writer.WritePropertyName("result");
+            writer.WriteStartObject();
+            writer.WriteString("uri", location.Uri);
+            writer.WritePropertyName("range");
+            WriteRange(writer, location.Range);
             writer.WriteEndObject();
             writer.WriteEndObject();
         }
