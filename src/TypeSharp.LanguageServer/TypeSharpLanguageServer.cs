@@ -63,6 +63,13 @@ public static class TypeSharpLanguageServer
                     }
                     break;
 
+                case "textDocument/completion":
+                    if (hasId)
+                    {
+                        WriteCompletionResponse(root, output, idElement, openDocuments, workspaceRoot);
+                    }
+                    break;
+
                 default:
                     if (hasId)
                     {
@@ -154,6 +161,15 @@ public static class TypeSharpLanguageServer
             writer.WriteNumber("textDocumentSync", 1);
             writer.WriteBoolean("hoverProvider", true);
             writer.WriteBoolean("definitionProvider", true);
+            writer.WritePropertyName("completionProvider");
+            writer.WriteStartObject();
+            writer.WriteBoolean("resolveProvider", false);
+            writer.WritePropertyName("triggerCharacters");
+            writer.WriteStartArray();
+            writer.WriteStringValue(".");
+            writer.WriteStringValue(":");
+            writer.WriteEndArray();
+            writer.WriteEndObject();
             writer.WriteEndObject();
             writer.WriteEndObject();
             writer.WriteEndObject();
@@ -212,6 +228,25 @@ public static class TypeSharpLanguageServer
         WriteLocationResult(output, id, location);
     }
 
+    private static void WriteCompletionResponse(
+        JsonElement root,
+        Stream output,
+        JsonElement id,
+        IReadOnlyDictionary<string, string> openDocuments,
+        string workspaceRoot)
+    {
+        if (!TryGetTextDocumentPosition(root, out var uri, out var position)
+            || !openDocuments.TryGetValue(uri, out var text))
+        {
+            WriteNullResponse(output, id);
+            return;
+        }
+
+        var fileName = ToFileName(uri, workspaceRoot);
+        var items = TypeSharpDocumentCompletion.GetCompletions(text, fileName, position);
+        WriteCompletionResult(output, id, items);
+    }
+
     private static bool TryGetTextDocumentPosition(JsonElement root, out string uri, out LspPosition position)
     {
         uri = string.Empty;
@@ -257,6 +292,35 @@ public static class TypeSharpLanguageServer
                 WriteRange(writer, hover.Range);
             }
             writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+
+        WriteFramedJson(output, payload.ToArray());
+    }
+
+    private static void WriteCompletionResult(
+        Stream output,
+        JsonElement id,
+        IReadOnlyList<LspCompletionItem> items)
+    {
+        using var payload = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(payload))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("jsonrpc", "2.0");
+            writer.WritePropertyName("id");
+            id.WriteTo(writer);
+            writer.WritePropertyName("result");
+            writer.WriteStartArray();
+            foreach (var item in items)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("label", item.Label);
+                writer.WriteNumber("kind", item.Kind);
+                writer.WriteString("detail", item.Detail);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
             writer.WriteEndObject();
         }
 

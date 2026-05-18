@@ -77,6 +77,7 @@ var tests = new (string Name, Action Body)[]
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
     ("language server returns hover for bound symbols", LanguageServerReturnsHoverForBoundSymbols),
     ("language server returns definition for bound symbols", LanguageServerReturnsDefinitionForBoundSymbols),
+    ("language server returns completion items", LanguageServerReturnsCompletionItems),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
@@ -1699,6 +1700,53 @@ static void LanguageServerReturnsDefinitionForBoundSymbols()
         AssertContains("\"line\":2", response);
         AssertContains("\"character\":11", response);
         AssertContains("\"character\":19", response);
+        AssertContains("\"id\":3,\"result\":null", response);
+    });
+}
+
+static void LanguageServerReturnsCompletionItems()
+{
+    WithWorkspace(root =>
+    {
+        var sourcePath = Path.Combine(root, "src", "Main.tysh");
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath) ?? root);
+        var uri = new Uri(sourcePath).AbsoluteUri;
+        var source = "namespace Samples.Lsp\n\nexport fun greeting(): string = \"hello\"\n\nexport fun main(): string = ";
+
+        using var input = new MemoryStream();
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(uri)
+                + ",\"languageId\":\"typesharp\",\"version\":1,\"text\":"
+                + JsonSerializer.Serialize(source)
+                + "}}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(uri)
+                + "},\"position\":{\"line\":4,\"character\":28}}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(new Uri(Path.Combine(root, "src", "Missing.tysh")).AbsoluteUri)
+                + "},\"position\":{\"line\":0,\"character\":0}}}");
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"method\":\"exit\"}");
+        input.Position = 0;
+
+        using var output = new MemoryStream();
+        TypeSharpLanguageServer.Run(input, output, root);
+
+        var response = Encoding.UTF8.GetString(output.ToArray());
+        AssertContains("\"completionProvider\"", response);
+        AssertContains("\"resolveProvider\":false", response);
+        AssertContains("\"id\":2", response);
+        AssertContains("\"label\":\"greeting\"", response);
+        AssertContains("\"kind\":3", response);
+        AssertContains("\"detail\":\"function\"", response);
+        AssertContains("\"label\":\"string\"", response);
+        AssertContains("\"detail\":\"built-in type\"", response);
         AssertContains("\"id\":3,\"result\":null", response);
     });
 }

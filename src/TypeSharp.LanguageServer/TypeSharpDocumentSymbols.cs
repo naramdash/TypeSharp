@@ -6,8 +6,8 @@ namespace TypeSharp.LanguageServer;
 
 public static class TypeSharpDocumentSymbols
 {
-    private static readonly HashSet<string> BuiltInTypes = new(StringComparer.Ordinal)
-    {
+    public static IReadOnlyList<string> BuiltInTypeNames { get; } =
+    [
         "bool",
         "byte",
         "char",
@@ -28,7 +28,9 @@ public static class TypeSharpDocumentSymbols
         "unknown",
         "ushort",
         "void"
-    };
+    ];
+
+    private static readonly HashSet<string> BuiltInTypes = new(BuiltInTypeNames, StringComparer.Ordinal);
 
     public static TypeSharpDocumentSymbol? FindSymbolAt(string text, string fileName, LspPosition position)
     {

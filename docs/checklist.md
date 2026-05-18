@@ -219,7 +219,7 @@
 - [x] LSP diagnostics
 - [x] LSP hover
 - [x] LSP go-to-definition
-- [ ] LSP basic completion
+- [x] LSP basic completion
 - [x] diagnostic explanation 문서
 - [x] sample project
 
