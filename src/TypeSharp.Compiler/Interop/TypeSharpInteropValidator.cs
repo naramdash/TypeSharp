@@ -52,6 +52,17 @@ public static class TypeSharpInteropValidator
                 candidate.Method.Parameters.Count == arguments.Length)
             .ToArray();
 
+        if (candidates.Length > 1)
+        {
+            diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.AmbiguousCSharpOverload.Code,
+                DiagnosticDescriptors.AmbiguousCSharpOverload.DefaultSeverity,
+                $"Call to C# method '{typeName}.{methodName}' matches {candidates.Length} overload candidates. Add an explicit type annotation or make the call unambiguous.",
+                file,
+                node.Span));
+            return;
+        }
+
         if (candidates.Length != 1)
         {
             return;

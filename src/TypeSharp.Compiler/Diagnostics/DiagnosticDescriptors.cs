@@ -119,6 +119,15 @@ public static class DiagnosticDescriptors
         "The project references an external assembly or path that the compiler cannot resolve.",
         "Fix the reference path or add the referenced assembly to the project environment.");
 
+    public static readonly DiagnosticDescriptor AmbiguousCSharpOverload = new(
+        "TS2402",
+        "Ambiguous C# overload",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Interop,
+        "Ambiguous C# overload.",
+        "A C# interop call matches more than one overload candidate and cannot be selected safely.",
+        "Add an explicit type annotation or adjust the call so exactly one C# overload is applicable.");
+
     public static readonly DiagnosticDescriptor InvalidByRefInterop = new(
         "TS2403",
         "Invalid byref interop use",
@@ -152,6 +161,7 @@ public static class DiagnosticDescriptors
         UnresolvedName,
         TypeMismatch,
         MissingReference,
+        AmbiguousCSharpOverload,
         InvalidByRefInterop,
         GeneratedProjectBuildFailed
     ];

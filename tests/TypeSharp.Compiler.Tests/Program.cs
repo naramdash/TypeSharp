@@ -39,9 +39,11 @@ var tests = new (string Name, Action Body)[]
     ("metadata reader reports missing local metadata inputs", MetadataReaderReportsMissingLocalMetadataInputs),
     ("checker reports missing reference diagnostics", CheckerReportsMissingReferenceDiagnostics),
     ("checker reports invalid byref interop diagnostics", CheckerReportsInvalidByRefInteropDiagnostics),
+    ("checker reports ambiguous C# overload diagnostics", CheckerReportsAmbiguousCSharpOverloadDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
+    ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run command locates manifest for future commands", CliRunCommandLocatesManifestForFutureCommands),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
@@ -119,6 +121,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2001",
             "TS2201",
             "TS2401",
+            "TS2402",
             "TS2403",
             "TS3501"
         ],
@@ -534,7 +537,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -674,6 +677,40 @@ static void CheckerReportsInvalidByRefInteropDiagnostics()
     });
 }
 
+static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousOverload"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousOverload
+
+            import { LegacyOverloads } from "Legacy.Tools"
+
+            export fun choose(): string = LegacyOverloads.Pick("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Ambiguous C# overload interop should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("matches 2 overload candidates", diagnostic.Message);
+        AssertContains("make the call unambiguous", diagnostic.Message);
+    });
+}
+
 static void CliCheckEmitsJsonReferenceDiagnostics()
 {
     WithWorkspace(root =>
@@ -776,6 +813,44 @@ static void CliBuildStopsBeforeEmissionOnInvalidByRefInterop()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when invalid byref diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "InvalidByRefBuild.Generated.csproj")), "Build should not emit generated project when invalid byref diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "InvalidByRefBuild.dll")), "Build should not emit generated assembly when invalid byref diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousOverloadBuild"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousOverloadBuild
+
+            import { LegacyOverloads } from "Legacy.Tools"
+
+            export fun choose(): string = LegacyOverloads.Pick("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2402\"", error.ToString());
+        AssertContains("matches 2 overload candidates", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when ambiguous overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "AmbiguousOverloadBuild.Generated.csproj")), "Build should not emit generated project when ambiguous overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "AmbiguousOverloadBuild.dll")), "Build should not emit generated assembly when ambiguous overload diagnostics contain errors.");
     });
 }
 
@@ -1968,6 +2043,19 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static void Increment(ref int value)
                 {
                     value++;
+                }
+            }
+
+            public static class LegacyOverloads
+            {
+                public static string Pick(string value)
+                {
+                    return value;
+                }
+
+                public static string Pick(object value)
+                {
+                    return value == null ? string.Empty : value.ToString();
                 }
             }
 
