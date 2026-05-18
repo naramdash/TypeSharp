@@ -198,8 +198,8 @@ Task packet 압축 기준:
 
 현 시점의 다음 작업은 문서 확장보다 구현 준비에 가깝다.
 
-1. C# ref interop smoke: TypeSharp source compiles a narrow imported C# `ref` call shape in the generated `net481` project.
-2. C# library interop 구현 범위 확정
+1. C# library interop 구현 범위 확정
+2. C# metadata-backed interop validation fixture
 3. C# 7.3 source backend 구현 확대
 
 이 목록은 [checklist.md](checklist.md)의 미완료 항목을 줄이는 방향으로 갱신한다.

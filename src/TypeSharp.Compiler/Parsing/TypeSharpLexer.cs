@@ -36,6 +36,7 @@ public sealed class TypeSharpLexer
         ["for"] = SyntaxKind.ForKeyword,
         ["in"] = SyntaxKind.InKeyword,
         ["out"] = SyntaxKind.OutKeyword,
+        ["ref"] = SyntaxKind.RefKeyword,
         ["if"] = SyntaxKind.IfKeyword,
         ["else"] = SyntaxKind.ElseKeyword,
         ["null"] = SyntaxKind.NullKeyword,
