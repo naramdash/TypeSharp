@@ -118,3 +118,21 @@ Result:
 - Pass. `rg -n "net481" .` returns no stale code, project, or test target references. Remaining matches are intentional latest Framework profile comparison, migration history, or this task packet.
 - Pass. `src/TypeSharp.Runtime/TypeSharp.Runtime.csproj` targets `net48`; compiler/CLI hosts remain `net10.0`.
 - Pass. Current in-flight nominal union match work keeps generated assembly and C# consumer smoke paths on `net48`.
+
+## 2026-05-19 Post-Null-Safety Net48 Recheck
+
+Recheck Start Time: 2026-05-19 04:17:03 +09:00
+Recheck End Time: 2026-05-19 04:19:41 +09:00
+
+Trigger:
+- User reiterated that the repository should be refreshed with the `net481` to `net48` build target change in mind.
+
+Result:
+- Pass. `rg -n "net481|Net481|NET481" src tests Directory.Build.props agent.md -S` returns no code, project, test, or agent contract matches.
+- Pass. `rg -n "net481|Net481|NET481" docs -S` returns only intentional latest Framework profile comparison, migration history, and this task packet.
+- Pass. `dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj` emits `bin\Debug\net48\TypeSharp.Core.dll`.
+- Pass. `dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj` emits `bin\Debug\net48\TypeSharp.Runtime.dll`.
+- Pass. `dotnet build src\TypeSharp.Cli\TypeSharp.Cli.csproj`.
+- Pass. `dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
+- Pass. `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
+- Pass. `dotnet run --project src\TypeSharp.Cli\TypeSharp.Cli.csproj -- check docs\examples\cli-console\TypeSharp.toml --diagnostic-format json` returned `{ "diagnostics": [] }`.
