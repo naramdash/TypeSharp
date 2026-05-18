@@ -42,7 +42,4 @@
 | [0078-csharp-byref-params-interop-status.md](0078-csharp-byref-params-interop-status.md) | Q3 | Done | C# `params`, `out`, `in`, `ref` interop aggregate checklist 상태를 기존 smoke와 diagnostic 근거에 맞춘다. |
 | [0079-0083-public-api-declaration-backend-smokes.md](0079-0083-public-api-declaration-backend-smokes.md) | Q2-Q3 | Done | Core generic APIs, generic functions, class/interface declarations, and generic type declarations의 generated C# public API smokes를 묶는다. |
 | [0084-0085-immutable-record-backend.md](0084-0085-immutable-record-backend.md) | Q2-Q3 | Done | immutable record class shape와 record copy/update lowering smokes를 묶는다. |
-| [0086-nominal-union-backend-smoke.md](0086-nominal-union-backend-smoke.md) | Q2-Q3 | Done | nominal union declaration을 generated C# closed class hierarchy와 runtime case metadata smoke로 고정한다. |
-| [0087-type-level-union-public-boundary-diagnostic.md](0087-type-level-union-public-boundary-diagnostic.md) | Q2-Q3 | Done | type-level union alias의 public .NET ABI 누수를 `TS2204`로 차단한다. |
-| [0088-nominal-union-match-lowering.md](0088-nominal-union-match-lowering.md) | Q2-Q3 | Done | nominal union `match`를 generated C# `net48` case checks로 낮추고 누락 case를 `TS2203`으로 차단한다. |
-| [0089-type-level-union-narrowing.md](0089-type-level-union-narrowing.md) | Q2-Q3 | Done | local type-level union alias를 type-pattern `match` arm에서 좁히고 generated C# `net48` type checks로 낮춘다. |
+| [0086-0089-union-implementation.md](0086-0089-union-implementation.md) | Q2-Q3 | Done | nominal union API, type-level union public boundary diagnostic, nominal union match lowering, and local type-level union narrowing을 묶는다. |
