@@ -1,0 +1,12 @@
+namespace Samples.BasicSemantics
+
+export fun identity(value: string): string = value
+
+export fun text(): string {
+  let message: string = "hello"
+  identity(message)
+}
+
+export fun count(): int = 42
+
+export fun enabled(): bool = true

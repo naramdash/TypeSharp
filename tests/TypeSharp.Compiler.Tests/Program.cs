@@ -101,6 +101,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
+    ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -2609,6 +2610,53 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedEventAddRemoveCall.dll")),
             "Generated project build should compile imported event add/remove calls.");
+    });
+}
+
+static void CliBuildCompilesBasicSemantics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BasicSemantics"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.BasicSemantics"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BasicSemantics
+
+            export fun identity(value: string): string = value
+
+            export fun text(): string {
+              let message: string = "hello"
+              identity(message)
+            }
+
+            export fun count(): int = 42
+
+            export fun enabled(): bool = true
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/BasicSemantics.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static string identity(string value)", generatedSource);
+        AssertContains("var message = \"hello\";", generatedSource);
+        AssertContains("return identity(message);", generatedSource);
+        AssertContains("return 42;", generatedSource);
+        AssertContains("return true;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BasicSemantics.dll")),
+            "Generated project build should compile basic literals, local binding, and function calls.");
     });
 }
 

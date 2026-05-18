@@ -87,10 +87,10 @@
 
 ## MVP 기능
 
-- [ ] 기본 타입과 literal
-- [ ] local binding
+- [x] 기본 타입과 literal
+- [x] local binding
 - [x] compile-time constant `literal`
-- [ ] function declaration/call
+- [x] function declaration/call
 - [ ] class/interface declaration
 - [x] property/method/constructor
 - [ ] generic type/function
