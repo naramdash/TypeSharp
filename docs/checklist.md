@@ -141,7 +141,7 @@
 - [x] C# optional parameter overload validation smoke
 - [x] C# named argument overload validation smoke
 - [x] C# unknown nullability diagnostic smoke
-- [ ] reference resolver for framework assembly and local DLL
+- [x] reference resolver for framework assembly and local DLL
 - [ ] semantic model
 - [ ] type checker
 - [x] type checker basic mismatch skeleton
