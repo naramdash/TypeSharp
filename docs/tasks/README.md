@@ -43,3 +43,4 @@
 | [0079-0083-public-api-declaration-backend-smokes.md](0079-0083-public-api-declaration-backend-smokes.md) | Q2-Q3 | Done | Core generic APIs, generic functions, class/interface declarations, and generic type declarations의 generated C# public API smokes를 묶는다. |
 | [0084-0085-immutable-record-backend.md](0084-0085-immutable-record-backend.md) | Q2-Q3 | Done | immutable record class shape와 record copy/update lowering smokes를 묶는다. |
 | [0086-0089-union-implementation.md](0086-0089-union-implementation.md) | Q2-Q3 | Done | nominal union API, type-level union public boundary diagnostic, nominal union match lowering, and local type-level union narrowing을 묶는다. |
+| [0090-null-safety-diagnostics.md](0090-null-safety-diagnostics.md) | Q2-Q3 | Done | null/nullable 값이 non-null TypeSharp 위치로 흐를 때 `TS2202`로 진단하고 CLI no-emission path를 고정한다. |

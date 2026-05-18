@@ -35,6 +35,7 @@ Current allocated descriptors:
 | `TS1004` | Parser | Error | Unexpected token |
 | `TS2001` | Binding | Error | Unresolved name |
 | `TS2201` | Type Checking | Error | Type mismatch |
+| `TS2202` | Type Checking | Error | Nullability contract violation |
 | `TS2203` | Type Checking | Error | Non-exhaustive match |
 | `TS2204` | Type Checking | Error | Type-level union or structural shape leaked through public boundary |
 | `TS2401` | Interop | Error | Missing referenced assembly or namespace |
@@ -49,7 +50,6 @@ Reserved semantic examples:
 | Code | Intended use |
 | --- | --- |
 | `TS2002` | Duplicate declaration in the same scope |
-| `TS2202` | Nullability contract violation |
 
 Reserved examples are not implemented diagnostics yet. They reserve stable code positions for upcoming binder, type checker, and interop fixtures.
 

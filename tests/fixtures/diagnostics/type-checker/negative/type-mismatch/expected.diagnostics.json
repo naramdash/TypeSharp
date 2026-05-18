@@ -17,9 +17,9 @@
       "end": { "line": 6, "column": 32 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2202",
       "severity": "error",
-      "message": "Cannot return expression of type 'null' from function returning 'string'.",
+      "message": "Cannot return null from function returning non-null type 'string'.",
       "file": "input.tysh",
       "start": { "line": 10, "column": 28 },
       "end": { "line": 10, "column": 34 }

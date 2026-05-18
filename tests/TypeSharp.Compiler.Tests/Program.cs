@@ -59,6 +59,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("CLI build stops before emission on type checker diagnostics", CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics),
+    ("CLI build stops before emission on nullability diagnostics", CliBuildStopsBeforeEmissionOnNullabilityDiagnostics),
     ("CLI build stops before emission on public boundary diagnostics", CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics),
     ("CLI build stops before emission on non-exhaustive match", CliBuildStopsBeforeEmissionOnNonExhaustiveMatch),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
@@ -82,6 +83,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check succeeds on parse-clean project", CliCheckSucceedsOnParseCleanProject),
     ("CLI check emits JSON parser diagnostics", CliCheckEmitsJsonParserDiagnostics),
     ("CLI check emits JSON type checker diagnostics", CliCheckEmitsJsonTypeCheckerDiagnostics),
+    ("CLI check emits JSON nullability diagnostics", CliCheckEmitsJsonNullabilityDiagnostics),
     ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
     ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
@@ -168,6 +170,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS1004",
             "TS2001",
             "TS2201",
+            "TS2202",
             "TS2203",
             "TS2204",
             "TS2401",
@@ -1156,6 +1159,35 @@ static void CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnNullabilityDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullabilityDiagnostics"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullabilityDiagnostics
+
+            export fun broken(): string = null
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2202\"", error.ToString());
+        AssertContains("Cannot return null from function returning non-null type 'string'.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when nullability diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NullabilityDiagnostics.Generated.csproj")), "Build should not emit generated project when nullability diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NullabilityDiagnostics.dll")), "Build should not emit generated assembly when nullability diagnostics contain errors.");
+    });
+}
+
 static void CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics()
 {
     WithWorkspace(root =>
@@ -1648,10 +1680,12 @@ static void CheckerReportsTypeMismatchDiagnostics()
 
         AssertTrue(result.HasErrors, "Checker should report type checker diagnostics.");
         var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2201").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
-        AssertEqual(3, diagnostics.Length);
+        AssertEqual(2, diagnostics.Length);
         AssertEqual("Cannot return expression of type 'int' from function returning 'string'.", diagnostics[0].Message);
         AssertEqual("Cannot assign expression of type 'string' to 'int'.", diagnostics[1].Message);
-        AssertEqual("Cannot return expression of type 'null' from function returning 'string'.", diagnostics[2].Message);
+
+        var nullabilityDiagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2202");
+        AssertEqual("Cannot return null from function returning non-null type 'string'.", nullabilityDiagnostic.Message);
     });
 }
 
@@ -1731,6 +1765,29 @@ static void CliCheckEmitsJsonTypeCheckerDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2201\"", error.ToString());
         AssertContains("Cannot return expression of type 'int' from function returning 'string'.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonNullabilityDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("NullabilityJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullabilityJson
+
+            export fun broken(): string = null
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2202\"", error.ToString());
+        AssertContains("Cannot return null from function returning non-null type 'string'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }

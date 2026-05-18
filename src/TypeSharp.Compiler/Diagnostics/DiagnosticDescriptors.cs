@@ -110,6 +110,15 @@ public static class DiagnosticDescriptors
         "A value expression has a known type that is not assignable to the explicit annotation or return type.",
         "Change the expression, change the annotation, or add an explicit conversion once conversions are supported.");
 
+    public static readonly DiagnosticDescriptor NullabilityContractViolation = new(
+        "TS2202",
+        "Nullability contract violation",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Nullability contract violation.",
+        "A null or nullable value is flowing into a TypeSharp position that is declared non-null.",
+        "Add a null guard, change the target type to nullable, or provide a non-null fallback.");
+
     public static readonly DiagnosticDescriptor PublicBoundaryTypeLeak = new(
         "TS2204",
         "Compile-time type leaked through public boundary",
@@ -196,6 +205,7 @@ public static class DiagnosticDescriptors
         UnexpectedToken,
         UnresolvedName,
         TypeMismatch,
+        NullabilityContractViolation,
         NonExhaustiveMatch,
         PublicBoundaryTypeLeak,
         MissingReference,

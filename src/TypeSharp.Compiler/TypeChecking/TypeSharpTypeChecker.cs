@@ -237,7 +237,15 @@ public static class TypeSharpTypeChecker
             foreach (var body in node.Children.Where(child => child.Kind == SyntaxKind.FunctionBody))
             {
                 var actualReturnType = CheckFunctionBody(body, scope);
-                if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, expectedReturnType, actualReturnType))
+                if (expectedReturnTypeKnown && actualReturnType.IsKnown && IsNullabilityViolation(expectedReturnType, actualReturnType))
+                {
+                    ReportNullabilityViolation(
+                        body,
+                        actualReturnType.IsNull
+                            ? $"Cannot return null from function returning non-null type '{expectedReturnType}'."
+                            : $"Cannot return nullable expression of type '{actualReturnType}' from function returning non-null type '{expectedReturnType}'.");
+                }
+                else if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, expectedReturnType, actualReturnType))
                 {
                     ReportMismatch(
                         body,
@@ -330,7 +338,15 @@ public static class TypeSharpTypeChecker
                 initializerType = CheckInitializer(initializer, scope);
             }
 
-            if (annotationKnown && initializerType.IsKnown && !CanAssign(scope, expectedType, initializerType))
+            if (annotationKnown && initializerType.IsKnown && IsNullabilityViolation(expectedType, initializerType))
+            {
+                ReportNullabilityViolation(
+                    node,
+                    initializerType.IsNull
+                        ? $"Cannot assign null to non-null type '{expectedType}'."
+                        : $"Cannot assign nullable expression of type '{initializerType}' to non-null type '{expectedType}'.");
+            }
+            else if (annotationKnown && initializerType.IsKnown && !CanAssign(scope, expectedType, initializerType))
             {
                 ReportMismatch(
                     node,
@@ -661,11 +677,36 @@ public static class TypeSharpTypeChecker
             return expected.IsNullable || !actual.IsNullable;
         }
 
+        private static bool IsNullabilityViolation(SimpleType expected, SimpleType actual)
+        {
+            if (!expected.IsKnown || !actual.IsKnown || expected.Name is "dynamic" or "unknown")
+            {
+                return false;
+            }
+
+            if (actual.IsNull)
+            {
+                return !expected.IsNullable;
+            }
+
+            return expected.Name == actual.Name && actual.IsNullable && !expected.IsNullable;
+        }
+
         private void ReportMismatch(SyntaxNode node, string message)
         {
             _diagnostics.Add(new Diagnostic(
                 DiagnosticDescriptors.TypeMismatch.Code,
                 DiagnosticDescriptors.TypeMismatch.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportNullabilityViolation(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.NullabilityContractViolation.Code,
+                DiagnosticDescriptors.NullabilityContractViolation.DefaultSeverity,
                 message,
                 _file,
                 node.Span));

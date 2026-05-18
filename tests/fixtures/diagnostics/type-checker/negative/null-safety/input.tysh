@@ -1,0 +1,18 @@
+namespace Samples.NullSafety
+
+fun maybe(): string? = null
+
+fun assignNull(): string {
+  let text: string = null
+  text
+}
+
+fun assignNullable(): string {
+  let maybeText: string? = null
+  let text: string = maybeText
+  text
+}
+
+fun returnNull(): string = null
+
+fun returnNullable(): string = maybe()

@@ -102,7 +102,7 @@
 - [x] type-level union alias
 - [x] union narrowing
 - [x] pattern matching
-- [ ] null safety
+- [x] null safety
 - [ ] basic structural type checking
 - [ ] `Task`/`Task<T>` async interop
 - [x] C# assembly reference
