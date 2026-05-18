@@ -108,7 +108,7 @@
 - [x] C# assembly reference
 - [x] C# local DLL reference
 - [x] C# constructor/static/instance member call
-- [ ] C# `ref`/`out`/`in`/`params` interop
+- [x] C# `ref`/`out`/`in`/`params` interop
 - [x] C# `params` interop compile smoke
 - [x] C# `out` interop compile smoke
 - [x] C# `in` interop compile smoke
