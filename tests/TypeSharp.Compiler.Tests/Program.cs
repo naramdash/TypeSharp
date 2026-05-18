@@ -64,6 +64,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported property access", CliBuildCompilesImportedPropertyAccess),
     ("CLI build compiles imported params call", CliBuildCompilesImportedParamsCall),
     ("CLI build compiles imported out call", CliBuildCompilesImportedOutCall),
+    ("CLI build compiles imported in call", CliBuildCompilesImportedInCall),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -1428,6 +1429,55 @@ static void CliBuildCompilesImportedOutCall()
     });
 }
 
+static void CliBuildCompilesImportedInCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInCall"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInCall
+
+            import { LegacyByRef } from "Legacy.Tools"
+
+            export fun next(): int {
+              let value: int = 41
+              LegacyByRef.AddOne(in value)
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ImportedInCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var value = 41;", generatedSource);
+        AssertContains("return LegacyByRef.AddOne(in value);", generatedSource);
+
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "ImportedInCall.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
+        AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedInCall.dll")),
+            "Generated project build should compile an imported in call.");
+    });
+}
+
 static void CliBuildEmitsGeneratedNet481Assembly()
 {
     WithWorkspace(root =>
@@ -1723,6 +1773,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static bool TryParseCount(string text, out int value)
                 {
                     return int.TryParse(text, out value);
+                }
+
+                public static int AddOne(in int value)
+                {
+                    return value + 1;
                 }
             }
 

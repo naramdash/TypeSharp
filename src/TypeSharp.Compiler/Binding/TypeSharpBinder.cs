@@ -226,6 +226,7 @@ public static class TypeSharpBinder
                     break;
 
                 case SyntaxKind.OutArgument:
+                case SyntaxKind.InArgument:
                     foreach (var child in node.Children.Where(child => !child.IsToken))
                     {
                         BindNode(child, scope);

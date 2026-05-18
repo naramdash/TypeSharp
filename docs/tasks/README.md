@@ -25,3 +25,4 @@
 | [0038-csharp-property-access-smoke.md](0038-csharp-property-access-smoke.md) | Q3 | Done | referenced `net481` C# local DLL의 public property access compile smoke를 추가한다. |
 | [0039-csharp-params-interop-smoke.md](0039-csharp-params-interop-smoke.md) | Q3 | Done | referenced `net481` C# local DLL의 `params` API positional call compile smoke를 추가한다. |
 | [0040-csharp-out-interop-smoke.md](0040-csharp-out-interop-smoke.md) | Q3 | Done | referenced `net481` C# local DLL의 `out` API call-site compile smoke를 추가한다. |
+| [0041-csharp-in-interop-smoke.md](0041-csharp-in-interop-smoke.md) | Q3 | Done | referenced `net481` C# local DLL의 `in` API call-site compile smoke를 추가한다. |

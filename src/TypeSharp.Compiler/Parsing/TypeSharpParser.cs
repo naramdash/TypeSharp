@@ -1148,6 +1148,11 @@ public sealed class TypeSharpParser
             return Node(SyntaxKind.OutArgument, [TokenNode(NextToken()), ParseExpression()]);
         }
 
+        if (Current.Kind == SyntaxKind.InKeyword)
+        {
+            return Node(SyntaxKind.InArgument, [TokenNode(NextToken()), ParseExpression()]);
+        }
+
         if (Current.Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.ColonToken)
         {
             return Node(SyntaxKind.NamedArgument, [TokenNode(NextToken()), TokenNode(NextToken()), ParseExpression()]);

@@ -139,6 +139,7 @@ public enum SyntaxKind
     CallExpression,
     NamedArgument,
     OutArgument,
+    InArgument,
     ArgumentList,
     LambdaExpression,
     CollectionExpression,
