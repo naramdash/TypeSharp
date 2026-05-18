@@ -86,6 +86,7 @@ var tests = new (string Name, Action Body)[]
     ("semantic model resolves symbols at source positions", SemanticModelResolvesSymbolsAtSourcePositions),
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
+    ("inference engine infers local expression graph", InferenceEngineInfersLocalExpressionGraph),
     ("checker reports type mismatch diagnostics", CheckerReportsTypeMismatchDiagnostics),
     ("checker reports parser diagnostics", CheckerReportsParserDiagnostics),
     ("CLI check succeeds on parse-clean project", CliCheckSucceedsOnParseCleanProject),
@@ -1816,6 +1817,43 @@ static void TypeCheckerAcceptsBasicAnnotations()
     var typeCheck = TypeSharpTypeChecker.Check(root, "input.tysh");
 
     AssertFalse(typeCheck.HasErrors, "Type checker should accept simple literal/reference annotations.");
+}
+
+static void InferenceEngineInfersLocalExpressionGraph()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("InferenceGraph"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InferenceGraph
+
+            fun seed(): int = 1
+
+            fun badLiteralFlow(): string {
+              let first = 1
+              let second = first
+              second
+            }
+
+            fun badCallFlow(): string {
+              let value = seed()
+              value
+            }
+
+            fun badComparisonFlow(): int {
+              let same = seed() == 1
+              same
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2201").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+
+        AssertEqual(3, diagnostics.Length);
+        AssertEqual("Cannot return expression of type 'int' from function returning 'string'.", diagnostics[0].Message);
+        AssertEqual("Cannot return expression of type 'int' from function returning 'string'.", diagnostics[1].Message);
+        AssertEqual("Cannot return expression of type 'bool' from function returning 'int'.", diagnostics[2].Message);
+    });
 }
 
 static void CheckerReportsTypeMismatchDiagnostics()

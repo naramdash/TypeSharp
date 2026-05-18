@@ -91,6 +91,11 @@ docs/
 - diagnostics는 source span과 관련 symbol 정보를 포함한다.
 - 추론 실패는 명시 annotation 제안을 제공한다.
 
+현재 구현:
+- `TypeSharpInferenceEngine`은 literal, identifier, direct function/type call, and basic binary expression의 local expression type을 추론한다.
+- `TypeSharpTypeChecker`는 value initializer, function return comparison, and nested expression checking에서 이 engine을 호출한다.
+- 현재 범위는 local expression graph inference이며 generic method inference, contextual lambda inference, overload conversion ranking, and project-wide flow inference는 별도 확장으로 남긴다.
+
 ### Lowering과 IR
 
 권장사항:

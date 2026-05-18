@@ -145,7 +145,7 @@
 - [x] semantic model
 - [x] type checker
 - [x] type checker basic mismatch skeleton
-- [ ] inference engine
+- [x] inference engine
 - [x] C# overload resolution
 - [x] public ABI checker
 - [x] lowering passes

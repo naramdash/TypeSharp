@@ -39,6 +39,7 @@ public static class TypeSharpTypeChecker
 
         private readonly string _file;
         private readonly List<Diagnostic> _diagnostics = [];
+        private readonly TypeSharpInferenceEngine _inference = new();
 
         public Checker(string file)
         {
@@ -164,7 +165,7 @@ public static class TypeSharpTypeChecker
                             child.Children.FirstOrDefault(grandchild => grandchild.Kind == SyntaxKind.Initializer) is { } initializer &&
                             initializer.Children.FirstOrDefault(grandchild => !grandchild.IsToken) is { Kind: SyntaxKind.LiteralExpression } literalExpression)
                         {
-                            var inferredType = InferLiteral(literalExpression);
+                            var inferredType = _inference.InferLiteral(literalExpression);
                             if (inferredType.IsKnown)
                             {
                                 scope.DeclareValue(valueName, inferredType);
@@ -398,18 +399,19 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckExpression(SyntaxNode node, TypeScope scope)
         {
+            if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
+            {
+                return inferredType;
+            }
+
             return node.Kind switch
             {
                 SyntaxKind.ExpressionStatement => node.Children.FirstOrDefault(child => !child.IsToken) is { } expression
                     ? CheckExpression(expression, scope)
                     : SimpleType.Unknown,
-                SyntaxKind.LiteralExpression => InferLiteral(node),
-                SyntaxKind.IdentifierExpression => InferIdentifier(node, scope),
-                SyntaxKind.CallExpression => InferCall(node, scope),
                 SyntaxKind.BlockExpression => CheckBlock(node, new TypeScope(scope)),
                 SyntaxKind.IfExpression => InferIf(node, scope),
                 SyntaxKind.MatchExpression => InferMatch(node, scope),
-                SyntaxKind.BinaryExpression => InferBinary(node, scope),
                 SyntaxKind.MemberAccessExpression => InferMemberAccess(node, scope),
                 SyntaxKind.AwaitExpression => InferAwait(node, scope),
                 SyntaxKind.IndexerExpression => SimpleType.Unknown,
@@ -427,58 +429,6 @@ public static class TypeSharpTypeChecker
             }
 
             return SimpleType.Unknown;
-        }
-
-        private static SimpleType InferLiteral(SyntaxNode node)
-        {
-            var token = node.Children.FirstOrDefault(child => child.IsToken);
-            return token?.Kind switch
-            {
-                SyntaxKind.StringLiteralToken or SyntaxKind.InterpolatedStringLiteralToken => SimpleType.Named("string"),
-                SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword => SimpleType.Named("bool"),
-                SyntaxKind.NullKeyword => SimpleType.Null,
-                SyntaxKind.NumericLiteralToken => InferNumericLiteral(token.Text ?? string.Empty),
-                _ => SimpleType.Unknown
-            };
-        }
-
-        private SimpleType InferIdentifier(SyntaxNode node, TypeScope scope)
-        {
-            if (!TryGetFirstIdentifier(node, out var identifier))
-            {
-                return SimpleType.Unknown;
-            }
-
-            return scope.ResolveValue(identifier.Text ?? string.Empty, out var type)
-                ? type
-                : SimpleType.Unknown;
-        }
-
-        private SimpleType InferCall(SyntaxNode node, TypeScope scope)
-        {
-            if (node.Children.Count == 0)
-            {
-                return SimpleType.Unknown;
-            }
-
-            foreach (var argument in node.Children.Skip(1).Where(child => !child.IsToken))
-            {
-                CheckExpression(argument, scope);
-            }
-
-            var callee = node.Children[0];
-            if (callee.Kind != SyntaxKind.IdentifierExpression || !TryGetFirstIdentifier(callee, out var identifier))
-            {
-                return SimpleType.Unknown;
-            }
-
-            var name = identifier.Text ?? string.Empty;
-            if (scope.ResolveFunction(name, out var returnType))
-            {
-                return returnType;
-            }
-
-            return scope.ResolveType(name) ? SimpleType.Named(name) : SimpleType.Unknown;
         }
 
         private SimpleType InferMemberAccess(SyntaxNode node, TypeScope scope)
@@ -651,38 +601,6 @@ public static class TypeSharpTypeChecker
             }
 
             return MergeBranchTypes(branchTypes);
-        }
-
-        private SimpleType InferBinary(SyntaxNode node, TypeScope scope)
-        {
-            var children = node.Children;
-            foreach (var child in children.Where(child => !child.IsToken))
-            {
-                CheckExpression(child, scope);
-            }
-
-            if (children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
-            {
-                return SimpleType.Named("bool");
-            }
-
-            if (children.Any(child => child.IsToken && child.Kind == SyntaxKind.NullCoalescingToken))
-            {
-                var right = children.Where(child => !child.IsToken).Skip(1).FirstOrDefault();
-                return right is null ? SimpleType.Unknown : CheckExpression(right, scope);
-            }
-
-            return SimpleType.Unknown;
-        }
-
-        private static SimpleType InferNumericLiteral(string text)
-        {
-            if (text.EndsWith("m", StringComparison.OrdinalIgnoreCase))
-            {
-                return SimpleType.Named("decimal");
-            }
-
-            return text.Contains('.', StringComparison.Ordinal) ? SimpleType.Named("double") : SimpleType.Named("int");
         }
 
         private static SimpleType MergeBranchTypes(IReadOnlyList<SimpleType> branchTypes)
@@ -1378,7 +1296,7 @@ public static class TypeSharpTypeChecker
         }
     }
 
-    private sealed class TypeScope
+    private sealed class TypeScope : ITypeSharpInferenceScope
     {
         private readonly TypeScope? _parent;
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
@@ -1557,29 +1475,4 @@ public static class TypeSharpTypeChecker
         StructuralShape
     }
 
-    private readonly record struct SimpleType(string Name, bool IsNullable, bool IsKnown, bool IsNull)
-    {
-        public static SimpleType Unknown { get; } = new(string.Empty, IsNullable: false, IsKnown: false, IsNull: false);
-
-        public static SimpleType Null { get; } = new("null", IsNullable: true, IsKnown: true, IsNull: true);
-
-        public static SimpleType Named(string name) => new(name, IsNullable: false, IsKnown: true, IsNull: false);
-
-        public SimpleType AsNullable() => this with { IsNullable = true };
-
-        public override string ToString()
-        {
-            if (!IsKnown)
-            {
-                return "unknown";
-            }
-
-            if (IsNull)
-            {
-                return "null";
-            }
-
-            return IsNullable ? $"{Name}?" : Name;
-        }
-    }
 }
