@@ -62,6 +62,10 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.ModuleDeclaration)
                 .ToArray();
 
+            var records = root.Children
+                .Where(child => child.Kind == SyntaxKind.RecordDeclaration)
+                .ToArray();
+
             var classes = root.Children
                 .Where(child => child.Kind == SyntaxKind.ClassDeclaration)
                 .ToArray();
@@ -96,6 +100,12 @@ public static class CSharpSourceBackend
             {
                 _builder.AppendLine();
                 EmitModuleDeclaration(module);
+            }
+
+            foreach (var recordDeclaration in records)
+            {
+                _builder.AppendLine();
+                EmitRecordDeclaration(recordDeclaration);
             }
 
             foreach (var classDeclaration in classes)
@@ -197,6 +207,46 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    }");
         }
 
+        private void EmitRecordDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetRecordDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+            var parameters = GetParameters(node);
+
+            _builder.AppendLine($"    {visibility} sealed class {name}{typeParameters}");
+            _builder.AppendLine("    {");
+
+            if (parameters.Count > 0)
+            {
+                _builder.AppendLine($"        public {name}({FormatParameters(parameters)})");
+                _builder.AppendLine("        {");
+                foreach (var parameter in parameters)
+                {
+                    _builder.AppendLine($"            this.{parameter.Name} = {parameter.Name};");
+                }
+
+                _builder.AppendLine("        }");
+                _builder.AppendLine();
+            }
+
+            foreach (var parameter in parameters)
+            {
+                _builder.AppendLine($"        public {parameter.Type} {parameter.Name} {{ get; }}");
+            }
+
+            if (parameters.Count > 0)
+            {
+                _builder.AppendLine();
+            }
+
+            EmitRecordEquals(name, parameters);
+            _builder.AppendLine();
+            EmitRecordGetHashCode(parameters);
+
+            _builder.AppendLine("    }");
+        }
+
         private void EmitClassDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
@@ -285,6 +335,35 @@ public static class CSharpSourceBackend
             _builder.AppendLine("        }");
         }
 
+        private void EmitRecordEquals(string name, IReadOnlyList<CSharpParameter> parameters)
+        {
+            _builder.AppendLine("        public override bool Equals(object obj)");
+            _builder.AppendLine("        {");
+            _builder.AppendLine($"            var other = obj as {name};");
+            var comparisons = parameters.Count == 0
+                ? "true"
+                : string.Join(" && ", parameters.Select(parameter => $"object.Equals({parameter.Name}, other.{parameter.Name})"));
+            _builder.AppendLine($"            return other != null && {comparisons};");
+            _builder.AppendLine("        }");
+        }
+
+        private void EmitRecordGetHashCode(IReadOnlyList<CSharpParameter> parameters)
+        {
+            _builder.AppendLine("        public override int GetHashCode()");
+            _builder.AppendLine("        {");
+            _builder.AppendLine("            unchecked");
+            _builder.AppendLine("            {");
+            _builder.AppendLine("                var hash = 17;");
+            foreach (var parameter in parameters)
+            {
+                _builder.AppendLine($"                hash = (hash * 397) ^ (object.Equals({parameter.Name}, null) ? 0 : {parameter.Name}.GetHashCode());");
+            }
+
+            _builder.AppendLine("                return hash;");
+            _builder.AppendLine("            }");
+            _builder.AppendLine("        }");
+        }
+
         private void EmitInterfaceFunction(SyntaxNode node)
         {
             var name = GetDeclarationName(node);
@@ -309,6 +388,23 @@ public static class CSharpSourceBackend
             return string.Join(", ", parameters);
         }
 
+        private static IReadOnlyList<CSharpParameter> GetParameters(SyntaxNode declaration)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return [];
+            }
+
+            return parameterList.Children
+                .Where(child => child.Kind == SyntaxKind.Parameter)
+                .Select(GetParameter)
+                .ToArray();
+        }
+
+        private static string FormatParameters(IReadOnlyList<CSharpParameter> parameters) =>
+            string.Join(", ", parameters.Select(parameter => $"{parameter.Type} {parameter.Name}"));
+
         private static string GetTypeParameterList(SyntaxNode declaration)
         {
             var typeParameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeParameterList);
@@ -328,10 +424,16 @@ public static class CSharpSourceBackend
 
         private static string EmitParameter(SyntaxNode parameter)
         {
+            var parameterInfo = GetParameter(parameter);
+            return $"{parameterInfo.Type} {parameterInfo.Name}";
+        }
+
+        private static CSharpParameter GetParameter(SyntaxNode parameter)
+        {
             var name = parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
             var annotation = parameter.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
             var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
-            return $"{MapType(typeNode)} {(!string.IsNullOrWhiteSpace(name) ? name : "_")}";
+            return new CSharpParameter(MapType(typeNode), !string.IsNullOrWhiteSpace(name) ? name : "_");
         }
 
         private void EmitBlock(SyntaxNode node)
@@ -749,6 +851,26 @@ public static class CSharpSourceBackend
             return "Generated";
         }
 
+        private static string GetRecordDeclarationName(SyntaxNode node)
+        {
+            var seenRecordKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.RecordKeyword)
+                {
+                    seenRecordKeyword = true;
+                    continue;
+                }
+
+                if (seenRecordKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Generated";
+                }
+            }
+
+            return "Generated";
+        }
+
         private static string GetInterfaceDeclarationName(SyntaxNode node)
         {
             var seenInterfaceKeyword = false;
@@ -858,5 +980,7 @@ public static class CSharpSourceBackend
             IReadOnlyList<string> Usings,
             IReadOnlyList<string> StaticUsings,
             IReadOnlyList<string> ImportedNames);
+
+        private readonly record struct CSharpParameter(string Type, string Name);
     }
 }
