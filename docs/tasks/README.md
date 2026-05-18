@@ -64,3 +64,4 @@
 | [0107-release-readiness-policy.md](0107-release-readiness-policy.md) | Q5 | Done | 릴리스 versioning, breaking change, preview gate, checksum/signing, security, release notes, compatibility matrix 정책을 묶는다. |
 | [0108-semantic-model-lsp-sharing.md](0108-semantic-model-lsp-sharing.md) | Q2-Q4 | Done | compiler semantic model API를 만들고 LSP diagnostics/hover/definition/completion이 공유하게 한다. |
 | [0109-feature-review-gate.md](0109-feature-review-gate.md) | Q1-Q5 | Done | 반복 검토 질문을 기능별 Done gate 정책으로 고정한다. |
+| [0110-backend-abstraction-seam.md](0110-backend-abstraction-seam.md) | Q3 | Done | C# source backend를 compiler backend abstraction 뒤로 연결한다. |

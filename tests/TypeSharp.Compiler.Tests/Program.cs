@@ -28,6 +28,7 @@ var tests = new (string Name, Action Body)[]
     ("binder fixture convention paths are stable", BinderFixtureConventionPathsAreStable),
     ("type checker fixture convention paths are stable", TypeCheckerFixtureConventionPathsAreStable),
     ("C# backend fixture convention paths are stable", CSharpBackendFixtureConventionPathsAreStable),
+    ("backend abstraction exposes C# source backend", BackendAbstractionExposesCSharpSourceBackend),
     ("manifest loader reads explicit manifest path", ManifestLoaderReadsExplicitManifestPath),
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
@@ -264,6 +265,22 @@ static void CSharpBackendFixtureConventionPathsAreStable()
     AssertEqual("tests/fixtures/backend/csharp/positive", CSharpBackendFixtureConventions.PositiveRoot);
     AssertEqual("input.tysh", CSharpBackendFixtureConventions.InputFileName);
     AssertEqual("expected.cs", CSharpBackendFixtureConventions.ExpectedCSharpFileName);
+}
+
+static void BackendAbstractionExposesCSharpSourceBackend()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.BackendAbstraction
+
+        export fun hello(): string = "hello"
+        """);
+
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var backend = CSharpSourceBackendAdapter.Instance;
+
+    AssertEqual("csharp", backend.Name);
+    AssertEqual(".g.cs", backend.GeneratedSourceExtension);
+    AssertEqual(CSharpSourceBackend.Emit(root), backend.Emit(root));
 }
 
 static void ManifestLoaderReadsExplicitManifestPath()

@@ -18,6 +18,7 @@ public static class TypeSharpBuilder
         var generatedFiles = new List<GeneratedCSharpFile>();
         GeneratedCSharpProject? generatedProject = null;
         GeneratedAssembly? generatedAssembly = null;
+        var backend = CSharpSourceBackendAdapter.Instance;
         var parsedSources = new List<(SourceFile SourceFile, SyntaxNode Root)>();
 
         var manifestResult = TypeSharpManifestLoader.Load(manifestPath);
@@ -79,10 +80,10 @@ public static class TypeSharpBuilder
 
         foreach (var (sourceFile, root) in parsedSources)
         {
-            var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath);
+            var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath, backend);
             var outputPath = Path.Combine(outputRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? outputRoot);
-            File.WriteAllText(outputPath, CSharpSourceBackend.Emit(root));
+            File.WriteAllText(outputPath, backend.Emit(root));
             generatedFiles.Add(new GeneratedCSharpFile(outputPath, relativePath));
         }
 
@@ -121,14 +122,14 @@ public static class TypeSharpBuilder
         return new BuildResult(generatedFiles, generatedProject, generatedAssembly, diagnostics);
     }
 
-    private static string ToGeneratedRelativePath(string sourceRelativePath)
+    private static string ToGeneratedRelativePath(string sourceRelativePath, ITypeSharpBackend backend)
     {
         var normalized = sourceRelativePath.Replace('\\', '/');
         var withoutExtension = normalized.EndsWith(".tysh", StringComparison.OrdinalIgnoreCase)
             ? normalized[..^".tysh".Length]
             : normalized;
 
-        return $"{withoutExtension}.g.cs";
+        return $"{withoutExtension}{backend.GeneratedSourceExtension}";
     }
 
     private static string EmitGeneratedProject(

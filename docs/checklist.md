@@ -149,7 +149,7 @@
 - [ ] C# overload resolution
 - [ ] public ABI checker
 - [ ] lowering passes
-- [ ] backend abstraction
+- [x] backend abstraction
 - [x] C# 7.3 source backend
 - [x] C# source backend first golden fixture
 - [x] C# source backend import directive skeleton
