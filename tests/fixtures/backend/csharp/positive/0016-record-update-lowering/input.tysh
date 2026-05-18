@@ -1,0 +1,5 @@
+namespace Samples.Records
+
+public record Customer(Name: string, Age: int)
+
+export fun Birthday(customer: Customer): Customer = customer with { Age: 43 }

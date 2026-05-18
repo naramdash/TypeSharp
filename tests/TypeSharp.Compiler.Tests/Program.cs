@@ -110,6 +110,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles interface declaration API", CliBuildCompilesInterfaceDeclarationApi),
     ("CLI build compiles generic type declaration API", CliBuildCompilesGenericTypeDeclarationApi),
     ("CLI build compiles immutable record API", CliBuildCompilesImmutableRecordApi),
+    ("CLI build compiles record update lowering", CliBuildCompilesRecordUpdateLowering),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -3293,6 +3294,89 @@ static void CliBuildCompilesImmutableRecordApi()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated immutable record APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesRecordUpdateLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RecordUpdateApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Records"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Records
+
+            public record Customer(Name: string, Age: int)
+
+            export fun Birthday(customer: Customer): Customer = customer with { Age: 43 }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RecordUpdateApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return new Customer(customer.Name, 43);", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "RecordUpdateApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with record update lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "RecordUpdateConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>RecordUpdateConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="RecordUpdateApi">
+                  <HintPath>../generated/bin/Debug/net48/RecordUpdateApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace RecordUpdateConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var original = new Samples.Records.Customer("Ada", 42);
+                        var updated = Samples.Records.Module.Birthday(original);
+                        return updated.Name + ":" + updated.Age.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build RecordUpdateConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated record update lowering.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

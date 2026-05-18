@@ -15,6 +15,8 @@ public static class CSharpSourceBackend
     {
         private readonly StringBuilder _builder = new();
         private readonly HashSet<string> _constructorCandidateNames = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, RecordShape> _records = new(StringComparer.Ordinal);
+        private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
 
         public string Emit(SyntaxNode root)
         {
@@ -74,6 +76,11 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.InterfaceDeclaration)
                 .ToArray();
 
+            foreach (var record in records)
+            {
+                RegisterRecord(record);
+            }
+
             foreach (var literal in literals)
             {
                 EmitLiteralDeclaration(literal);
@@ -122,6 +129,19 @@ public static class CSharpSourceBackend
 
             _builder.AppendLine("}");
             return _builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
+        }
+
+        private void RegisterRecord(SyntaxNode node)
+        {
+            var name = GetRecordDeclarationName(node);
+            if (name.Length == 0)
+            {
+                return;
+            }
+
+            var parameters = GetParameters(node);
+            _records[name] = new RecordShape(name, parameters);
+            _constructorCandidateNames.Add(name);
         }
 
         private static CSharpImports CollectImports(SyntaxNode root)
@@ -316,23 +336,37 @@ public static class CSharpSourceBackend
             var staticModifier = isStatic ? " static" : string.Empty;
             var name = GetDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
-            var parameters = GetParameterList(node);
+            var parameters = GetParameters(node);
             var returnType = GetReturnType(node);
             var body = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.FunctionBody);
             var expression = body?.Children.LastOrDefault(child => !child.IsToken);
 
-            _builder.AppendLine($"        {visibility}{staticModifier} {returnType} {name}{typeParameters}({parameters})");
-            _builder.AppendLine("        {");
-            if (expression?.Kind == SyntaxKind.BlockExpression)
+            var previousValueTypes = _valueTypes;
+            _valueTypes = new Dictionary<string, string>(previousValueTypes, StringComparer.Ordinal);
+            foreach (var parameter in parameters)
             {
-                EmitBlock(expression);
-            }
-            else
-            {
-                _builder.AppendLine($"            return {EmitExpression(expression)};");
+                _valueTypes[parameter.Name] = parameter.Type;
             }
 
-            _builder.AppendLine("        }");
+            try
+            {
+                _builder.AppendLine($"        {visibility}{staticModifier} {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
+                _builder.AppendLine("        {");
+                if (expression?.Kind == SyntaxKind.BlockExpression)
+                {
+                    EmitBlock(expression);
+                }
+                else
+                {
+                    _builder.AppendLine($"            return {EmitExpression(expression)};");
+                }
+
+                _builder.AppendLine("        }");
+            }
+            finally
+            {
+                _valueTypes = previousValueTypes;
+            }
         }
 
         private void EmitRecordEquals(string name, IReadOnlyList<CSharpParameter> parameters)
@@ -495,6 +529,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.RefArgument => EmitRefArgument(node),
                 SyntaxKind.LambdaExpression => EmitLambda(node),
                 SyntaxKind.AssignmentExpression => EmitAssignment(node),
+                SyntaxKind.RecordUpdateExpression => EmitRecordUpdate(node),
                 _ => "default(object)"
             };
         }
@@ -584,6 +619,77 @@ public static class CSharpSourceBackend
             }
 
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
+        }
+
+        private string EmitRecordUpdate(SyntaxNode node)
+        {
+            var receiver = node.Children.FirstOrDefault(child => !child.IsToken);
+            var update = node.Children.LastOrDefault(child => child.Kind == SyntaxKind.RecordExpression);
+            if (receiver is null || update is null || !TryGetRecordShape(receiver, out var record))
+            {
+                return "default(object)";
+            }
+
+            var receiverExpression = EmitExpression(receiver);
+            var updatedFields = GetRecordFieldExpressions(update);
+            var arguments = record.Parameters
+                .Select(parameter => updatedFields.TryGetValue(parameter.Name, out var updatedValue)
+                    ? updatedValue
+                    : $"{receiverExpression}.{parameter.Name}");
+
+            return $"new {record.Name}({string.Join(", ", arguments)})";
+        }
+
+        private Dictionary<string, string> GetRecordFieldExpressions(SyntaxNode recordExpression)
+        {
+            var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var field in recordExpression.Children.Where(child => child.Kind == SyntaxKind.RecordField))
+            {
+                var name = field.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                var expression = field.Children.LastOrDefault(child => !child.IsToken);
+                fields[name] = expression is null ? name : EmitExpression(expression);
+            }
+
+            return fields;
+        }
+
+        private bool TryGetRecordShape(SyntaxNode receiver, out RecordShape record)
+        {
+            record = default;
+            if (!TryGetExpressionType(receiver, out var typeName))
+            {
+                return false;
+            }
+
+            return _records.TryGetValue(typeName, out record);
+        }
+
+        private bool TryGetExpressionType(SyntaxNode node, out string typeName)
+        {
+            typeName = string.Empty;
+            if (node.Kind != SyntaxKind.IdentifierExpression)
+            {
+                return false;
+            }
+
+            var name = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (name.Length == 0)
+            {
+                return false;
+            }
+
+            if (!_valueTypes.TryGetValue(name, out var knownType) || knownType.Length == 0)
+            {
+                return false;
+            }
+
+            typeName = knownType;
+            return true;
         }
 
         private static string EmitLiteral(SyntaxNode node)
@@ -982,5 +1088,7 @@ public static class CSharpSourceBackend
             IReadOnlyList<string> ImportedNames);
 
         private readonly record struct CSharpParameter(string Type, string Name);
+
+        private readonly record struct RecordShape(string Name, IReadOnlyList<CSharpParameter> Parameters);
     }
 }

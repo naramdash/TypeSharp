@@ -95,7 +95,7 @@
 - [x] property/method/constructor
 - [x] generic type/function
 - [x] module/namespace
-- [ ] immutable record
+- [x] immutable record
 - [x] `Option<T>`
 - [x] `Result<T, E>`
 - [ ] nominal closed union type
