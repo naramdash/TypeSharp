@@ -193,6 +193,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.InArgument => EmitInArgument(node),
                 SyntaxKind.RefArgument => EmitRefArgument(node),
                 SyntaxKind.LambdaExpression => EmitLambda(node),
+                SyntaxKind.AssignmentExpression => EmitAssignment(node),
                 _ => "default(object)"
             };
         }
@@ -270,6 +271,18 @@ public static class CSharpSourceBackend
             var parameter = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "_";
             var body = node.Children.LastOrDefault(child => !child.IsToken);
             return $"{parameter} => {EmitExpression(body)}";
+        }
+
+        private string EmitAssignment(SyntaxNode node)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            var operatorToken = node.Children.FirstOrDefault(child => child.IsToken);
+            if (expressions.Length < 2 || operatorToken?.Text is null)
+            {
+                return "default(object)";
+            }
+
+            return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
         }
 
         private static string EmitLiteral(SyntaxNode node)

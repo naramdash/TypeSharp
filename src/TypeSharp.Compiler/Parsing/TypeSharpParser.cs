@@ -801,7 +801,7 @@ public sealed class TypeSharpParser
             left = Node(SyntaxKind.BinaryExpression, [left, operatorToken, right]);
         }
 
-        if (Current.Kind == SyntaxKind.EqualsToken)
+        if (IsAssignmentOperator(Current.Kind))
         {
             left = Node(SyntaxKind.AssignmentExpression, [left, TokenNode(NextToken()), ParseExpression()]);
         }
@@ -1326,4 +1326,7 @@ public sealed class TypeSharpParser
             SyntaxKind.PipeGreaterToken => 1,
             _ => 0
         };
+
+    private static bool IsAssignmentOperator(SyntaxKind kind) =>
+        kind is SyntaxKind.EqualsToken or SyntaxKind.PlusEqualsToken or SyntaxKind.MinusEqualsToken;
 }

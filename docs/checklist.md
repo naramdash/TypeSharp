@@ -114,7 +114,7 @@
 - [x] C# `in` interop compile smoke
 - [x] C# `ref` interop compile smoke
 - [x] C# delegate parameter interop compile smoke
-- [ ] C# event interop
+- [x] C# event interop
 - [x] nullable metadata/unknown nullability diagnostics
 - [x] TypeSharp assembly consumed from C#
 
@@ -169,6 +169,7 @@
 - [x] generated C# imported `in` call build smoke
 - [x] generated C# imported `ref` call build smoke
 - [x] generated C# imported delegate lambda call build smoke
+- [x] generated C# imported event add/remove build smoke
 - [ ] IL backend abstraction seam
 - [ ] diagnostics system
 - [x] initial diagnostic/span model
@@ -273,6 +274,7 @@
 - [x] C# `out` call smoke tests
 - [x] C# `in` call smoke tests
 - [x] C# `ref` call smoke tests
+- [x] C# event add/remove call smoke tests
 - [x] ASP.NET/WCF/worker-style `net481` host compatibility smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests

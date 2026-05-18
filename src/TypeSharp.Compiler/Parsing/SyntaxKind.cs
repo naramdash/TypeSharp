@@ -55,6 +55,8 @@ public enum SyntaxKind
     ColonToken,
     QuestionToken,
     EqualsToken,
+    PlusEqualsToken,
+    MinusEqualsToken,
     GreaterToken,
     NullCoalescingToken,
     PlusToken,

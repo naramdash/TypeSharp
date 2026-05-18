@@ -381,6 +381,8 @@ public sealed class TypeSharpLexer
         ("=>", SyntaxKind.EqualsGreaterToken),
         ("->", SyntaxKind.ArrowToken),
         ("|>", SyntaxKind.PipeGreaterToken),
+        ("+=", SyntaxKind.PlusEqualsToken),
+        ("-=", SyntaxKind.MinusEqualsToken),
         ("==", SyntaxKind.EqualsEqualsToken),
         ("!=", SyntaxKind.BangEqualsToken),
         ("<=", SyntaxKind.LessOrEqualsToken),

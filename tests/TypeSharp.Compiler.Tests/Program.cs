@@ -79,6 +79,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
+    ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("net481 application model hosts reference generated assembly and runtime", Net481ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
@@ -547,7 +548,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -592,6 +593,9 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var apply = Require(legacyDelegates.Methods.SingleOrDefault(method => method.Name == "Apply"), "Apply metadata should be present.");
         AssertSequence(["value", "transform"], apply.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string", "System.Func`2<string, string>"], apply.Parameters.Select(parameter => parameter.Type).ToArray());
+
+        var legacyEvents = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyEvents"), "LegacyEvents metadata should be present.");
+        AssertTrue(legacyEvents.Methods.Any(method => method.Name == "Raise"), "LegacyEvents public methods should include Raise while event accessors remain special-name metadata.");
     });
 }
 
@@ -2080,6 +2084,56 @@ static void CliBuildCompilesImportedDelegateLambdaCall()
     });
 }
 
+static void CliBuildCompilesImportedEventAddRemoveCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedEventAddRemoveCall"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedEventAddRemoveCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedEventAddRemoveCall
+
+            import { LegacyEvents } from "Legacy.Tools"
+
+            export fun subscribe(): string {
+              let source = LegacyEvents()
+              source.Transform += text => text
+              source.Transform -= text => text
+              source.Transform += text => text
+              source.Raise("value")
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ImportedEventAddRemoveCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var source = new LegacyEvents();", generatedSource);
+        AssertContains("source.Transform += text => text;", generatedSource);
+        AssertContains("source.Transform -= text => text;", generatedSource);
+        AssertContains("return source.Raise(\"value\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedEventAddRemoveCall.dll")),
+            "Generated project build should compile imported event add/remove calls.");
+    });
+}
+
 static void CliBuildEmitsGeneratedNet481Assembly()
 {
     WithWorkspace(root =>
@@ -2571,6 +2625,17 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Apply(string value, System.Func<string, string> transform)
                 {
                     return transform(value);
+                }
+            }
+
+            public sealed class LegacyEvents
+            {
+                public event System.Func<string, string> Transform;
+
+                public string Raise(string value)
+                {
+                    var handler = Transform;
+                    return handler == null ? value : handler(value);
                 }
             }
 

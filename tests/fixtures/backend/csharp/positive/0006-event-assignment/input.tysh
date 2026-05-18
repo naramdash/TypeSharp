@@ -1,0 +1,11 @@
+namespace Samples.BackendEvents
+
+import { LegacyEvents } from "Legacy.Tools"
+
+export fun subscribe(): string {
+  let source = LegacyEvents()
+  source.Transform += text => text
+  source.Transform -= text => text
+  source.Transform += text => text
+  source.Raise("value")
+}
