@@ -57,3 +57,4 @@
 | [0100-regression-test-policy.md](0100-regression-test-policy.md) | Q1-Q3 | Done | 새 변경이 어떤 fixture, smoke, metadata check, docs verification을 가져야 하는지 정책화한다. |
 | [0101-reference-resolver-audit.md](0101-reference-resolver-audit.md) | Q3 | Done | framework assembly/local DLL reference resolver 구현 범위와 smoke evidence를 체크리스트에 맞춘다. |
 | [0102-metadata-reader-audit.md](0102-metadata-reader-audit.md) | Q3 | Done | C# metadata reader 구현 범위와 framework/local public metadata smoke evidence를 체크리스트에 맞춘다. |
+| [0103-binder-audit.md](0103-binder-audit.md) | Q2 | Done | binder 구현 범위와 symbol/name-resolution smoke evidence를 체크리스트에 맞춘다. |

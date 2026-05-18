@@ -126,7 +126,7 @@
 - [x] parser error recovery
 - [x] compiler core project skeleton
 - [x] manifest parser and project loader
-- [ ] binder
+- [x] binder
 - [x] binder/name resolution skeleton
 - [x] metadata reader
 - [x] C# metadata reader skeleton
