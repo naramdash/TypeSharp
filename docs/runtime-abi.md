@@ -64,6 +64,8 @@ Before closing a change that affects public ABI:
 
 ## Release Policy
 
+General release readiness, release notes, checksums, security, and compatibility matrix policy lives in [release.md](release.md). This section only defines runtime/public ABI release rules.
+
 Before TypeSharp 1.0:
 
 - ABI version remains `0` unless generated assemblies need an incompatible runtime helper contract that must be called out explicitly.

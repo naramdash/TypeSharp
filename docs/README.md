@@ -90,6 +90,9 @@
 28. [runtime-abi.md](runtime-abi.md)
    - `TypeSharp.Core`, `TypeSharp.Runtime`, generated `net48` assembly의 public ABI versioning 정책을 정의한다.
 
+29. [release.md](release.md)
+   - versioning, breaking change, preview feature gate, checksum/signing, security, release notes, compatibility matrix 정책을 정의한다.
+
 ## 문서 원칙
 
 - `goal.md`는 프로젝트의 북극성이다. 다른 문서가 goal과 충돌하면 goal을 먼저 수정하거나 충돌을 명시한다.
@@ -118,6 +121,7 @@
 - `dependencies.md`는 package-free runtime/core surface와 future dependency gate를 추적한다.
 - `framework-targeting.md`는 의료기기/분석기기 벤더 호환성처럼 설치 기반이 중요한 환경에서 `net48`/`net481` 선택 근거를 추적한다.
 - `runtime-abi.md`는 compiler/runtime ABI version alignment, breaking ABI change 기준, compatibility gate를 추적한다.
+- `release.md`는 릴리스 단위 versioning, breaking change, preview gate, checksum/signing, security, release note, compatibility matrix 기준을 묶는다.
 
 ## 반복 검토 프로토콜
 

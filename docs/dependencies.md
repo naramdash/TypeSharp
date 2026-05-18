@@ -42,3 +42,5 @@ When a dependency is proposed, record:
 - runtime deployment shape for ASP.NET/WCF/worker hosts
 - checksum, lock file, or signing strategy
 - replacement or no-dependency alternative considered
+
+Release artifact checksum/signing requirements are defined in [release.md](release.md).

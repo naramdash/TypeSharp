@@ -297,14 +297,14 @@
 
 ## 릴리스 준비
 
-- [ ] versioning 정책
-- [ ] breaking change 정책
-- [ ] preview feature gate
-- [ ] package signing 또는 checksum 정책
+- [x] versioning 정책
+- [x] breaking change 정책
+- [x] preview feature gate
+- [x] package signing 또는 checksum 정책
 - [x] dependency inventory
-- [ ] security policy
-- [ ] release notes template
-- [ ] compatibility matrix
+- [x] security policy
+- [x] release notes template
+- [x] compatibility matrix
 
 ## 반복 검토 질문
 
