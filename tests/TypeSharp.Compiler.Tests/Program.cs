@@ -101,6 +101,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
+    ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
     ("net48 application model hosts reference generated assembly and runtime", Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
@@ -2608,6 +2609,95 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedEventAddRemoveCall.dll")),
             "Generated project build should compile imported event add/remove calls.");
+    });
+}
+
+static void CliBuildCompilesLiteralConstants()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LiteralConstants"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.LiteralConstants"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.LiteralConstants
+
+            public literal ApiVersion: string = "1.0"
+            public literal MaxRetryCount = 3
+            literal FeatureEnabled = true
+
+            export fun version(): string = ApiVersion
+            export fun retries(): int = MaxRetryCount
+            export fun enabled(): bool = FeatureEnabled
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LiteralConstants.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSourcePath = Path.Combine(root, "generated", "src", "Main.g.cs");
+        var generatedSource = File.ReadAllText(generatedSourcePath).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public const string ApiVersion = \"1.0\";", generatedSource);
+        AssertContains("public const int MaxRetryCount = 3;", generatedSource);
+        AssertContains("internal const bool FeatureEnabled = true;", generatedSource);
+        AssertContains("return ApiVersion;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "LiteralConstants.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with literal constants.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "LiteralConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>LiteralConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="LiteralConstants">
+                  <HintPath>../generated/bin/Debug/net48/LiteralConstants.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace LiteralConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.LiteralConstants.Module.ApiVersion + ":" + Samples.LiteralConstants.Module.MaxRetryCount.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build LiteralConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated public literal constants.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

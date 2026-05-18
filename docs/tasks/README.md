@@ -37,3 +37,4 @@
 | [0065-0069-vscode-lsp-tooling.md](0065-0069-vscode-lsp-tooling.md) | Q4 | Done | VS Code `.tysh` language scaffold와 LSP diagnostics, hover, go-to-definition, basic completion을 묶는다. |
 | [0070-0073-runtime-helper-surface.md](0070-0073-runtime-helper-surface.md) | Q3 | Done | `TypeSharp.Runtime`의 union, pattern, equality/hash, async generated-code helper surface를 묶는다. |
 | [0074-runtime-abi-versioning-policy.md](0074-runtime-abi-versioning-policy.md) | Q3 | Done | runtime/core/generated assembly public ABI versioning 정책과 ABI constant alignment smoke를 고정한다. |
+| [0075-compile-time-literal-lowering.md](0075-compile-time-literal-lowering.md) | Q2-Q3 | Done | `literal` compile-time constant declaration을 generated C# `net48` public/internal constant field로 낮춘다. |

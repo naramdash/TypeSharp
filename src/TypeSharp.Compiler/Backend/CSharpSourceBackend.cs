@@ -50,9 +50,23 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    public static class Module");
             _builder.AppendLine("    {");
 
+            var literals = root.Children
+                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration)
+                .ToArray();
+
             var functions = root.Children
                 .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
                 .ToArray();
+
+            foreach (var literal in literals)
+            {
+                EmitLiteralDeclaration(literal);
+            }
+
+            if (literals.Length > 0 && functions.Length > 0)
+            {
+                _builder.AppendLine();
+            }
 
             for (var index = 0; index < functions.Length; index++)
             {
@@ -113,9 +127,20 @@ public static class CSharpSourceBackend
             return new CSharpImports(usings, staticUsings, importedNames);
         }
 
+        private void EmitLiteralDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetLiteralDeclarationName(node);
+            var initializer = GetInitializerExpression(node);
+            var type = GetLiteralType(node, initializer);
+            var storage = CanEmitConstLiteral(type, initializer) ? "const" : "static readonly";
+
+            _builder.AppendLine($"        {visibility} {storage} {type} {name} = {EmitExpression(initializer)};");
+        }
+
         private void EmitFunction(SyntaxNode node)
         {
-            var visibility = node.Children.Any(child => child.Kind == SyntaxKind.ExportModifier) ? "public" : "internal";
+            var visibility = GetVisibility(node);
             var name = GetDeclarationName(node);
             var parameters = GetParameterList(node);
             var returnType = GetReturnType(node);
@@ -314,6 +339,7 @@ public static class CSharpSourceBackend
             return token?.Kind switch
             {
                 SyntaxKind.StringLiteralToken => token.Text ?? "\"\"",
+                SyntaxKind.InterpolatedStringLiteralToken => token.Text ?? "\"\"",
                 SyntaxKind.NumericLiteralToken => token.Text ?? "0",
                 SyntaxKind.TrueKeyword => "true",
                 SyntaxKind.FalseKeyword => "false",
@@ -370,6 +396,99 @@ public static class CSharpSourceBackend
             return "object";
         }
 
+        private static string GetLiteralType(SyntaxNode literal, SyntaxNode? initializer)
+        {
+            var annotation = literal.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
+            if (typeNode is not null)
+            {
+                return MapType(typeNode);
+            }
+
+            return InferLiteralType(initializer);
+        }
+
+        private static string InferLiteralType(SyntaxNode? initializer)
+        {
+            if (initializer?.Kind != SyntaxKind.LiteralExpression)
+            {
+                return "object";
+            }
+
+            var token = initializer.Children.FirstOrDefault(child => child.IsToken);
+            return token?.Kind switch
+            {
+                SyntaxKind.StringLiteralToken or SyntaxKind.InterpolatedStringLiteralToken => "string",
+                SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword => "bool",
+                SyntaxKind.NumericLiteralToken => InferNumericLiteralType(token.Text ?? string.Empty),
+                _ => "object"
+            };
+        }
+
+        private static string InferNumericLiteralType(string text)
+        {
+            if (text.EndsWith("m", StringComparison.OrdinalIgnoreCase))
+            {
+                return "decimal";
+            }
+
+            return text.Contains('.', StringComparison.Ordinal) ? "double" : "int";
+        }
+
+        private static bool CanEmitConstLiteral(string type, SyntaxNode? initializer)
+        {
+            if (initializer?.Kind != SyntaxKind.LiteralExpression)
+            {
+                return false;
+            }
+
+            var token = initializer.Children.FirstOrDefault(child => child.IsToken);
+            if (token is null || token.Kind == SyntaxKind.InterpolatedStringLiteralToken)
+            {
+                return false;
+            }
+
+            if (token.Kind == SyntaxKind.NullKeyword)
+            {
+                return string.Equals(type, "string", StringComparison.Ordinal);
+            }
+
+            return type is "bool"
+                or "byte"
+                or "char"
+                or "decimal"
+                or "double"
+                or "float"
+                or "int"
+                or "long"
+                or "sbyte"
+                or "short"
+                or "string"
+                or "uint"
+                or "ulong"
+                or "ushort";
+        }
+
+        private static SyntaxNode? GetInitializerExpression(SyntaxNode node)
+        {
+            return node.Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.Initializer)?
+                .Children
+                .FirstOrDefault(child => !child.IsToken);
+        }
+
+        private static string GetVisibility(SyntaxNode node)
+        {
+            if (node.Children.Any(child => child.Kind == SyntaxKind.PrivateModifier))
+            {
+                return "private";
+            }
+
+            return node.Children.Any(child => child.Kind is SyntaxKind.ExportModifier or SyntaxKind.PublicModifier)
+                ? "public"
+                : "internal";
+        }
+
         private static string GetDeclarationName(SyntaxNode node)
         {
             var seenFunctionKeyword = false;
@@ -388,6 +507,26 @@ public static class CSharpSourceBackend
             }
 
             return "Generated";
+        }
+
+        private static string GetLiteralDeclarationName(SyntaxNode node)
+        {
+            var seenLiteralKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.LiteralKeyword)
+                {
+                    seenLiteralKeyword = true;
+                    continue;
+                }
+
+                if (seenLiteralKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Literal";
+                }
+            }
+
+            return "Literal";
         }
 
         private static string GetLocalDeclarationName(SyntaxNode node)

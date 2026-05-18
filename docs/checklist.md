@@ -89,7 +89,7 @@
 
 - [ ] 기본 타입과 literal
 - [ ] local binding
-- [ ] compile-time constant `literal`
+- [x] compile-time constant `literal`
 - [ ] function declaration/call
 - [ ] class/interface declaration
 - [x] property/method/constructor

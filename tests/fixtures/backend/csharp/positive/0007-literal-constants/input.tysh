@@ -1,0 +1,14 @@
+namespace Samples.BackendLiterals
+
+public literal ApiVersion: string = "1.0"
+public literal MaxRetryCount = 3
+literal FeatureEnabled = true
+export literal TaxRate = 1.5m
+
+export fun version(): string = ApiVersion
+
+export fun retries(): int = MaxRetryCount
+
+export fun enabled(): bool = FeatureEnabled
+
+export fun rate(): decimal = TaxRate

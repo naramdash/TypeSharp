@@ -101,14 +101,31 @@ public static class TypeSharpTypeChecker
 
                     case SyntaxKind.ValueDeclaration:
                     case SyntaxKind.LiteralDeclaration:
-                        if (TryGetDeclarationName(child, out var valueName) &&
-                            TryGetDirectTypeAnnotation(child, out var valueTypeNode) &&
+                        if (!TryGetDeclarationName(child, out var valueName))
+                        {
+                            break;
+                        }
+
+                        if (TryGetDirectTypeAnnotation(child, out var valueTypeNode) &&
                             TryGetType(valueTypeNode, out var valueType))
                         {
                             scope.DeclareValue(valueName, valueType);
                             if (TryGetFunctionReturnType(valueTypeNode, out var valueFunctionReturnType))
                             {
                                 scope.DeclareFunction(valueName, valueFunctionReturnType);
+                            }
+
+                            break;
+                        }
+
+                        if (child.Kind == SyntaxKind.LiteralDeclaration &&
+                            child.Children.FirstOrDefault(grandchild => grandchild.Kind == SyntaxKind.Initializer) is { } initializer &&
+                            initializer.Children.FirstOrDefault(grandchild => !grandchild.IsToken) is { Kind: SyntaxKind.LiteralExpression } literalExpression)
+                        {
+                            var inferredType = InferLiteral(literalExpression);
+                            if (inferredType.IsKnown)
+                            {
+                                scope.DeclareValue(valueName, inferredType);
                             }
                         }
 
@@ -277,7 +294,7 @@ public static class TypeSharpTypeChecker
             return SimpleType.Unknown;
         }
 
-        private SimpleType InferLiteral(SyntaxNode node)
+        private static SimpleType InferLiteral(SyntaxNode node)
         {
             var token = node.Children.FirstOrDefault(child => child.IsToken);
             return token?.Kind switch
