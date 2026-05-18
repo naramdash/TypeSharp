@@ -166,7 +166,11 @@ public static class TypeSharpMetadataReader
             var accessors = property.GetAccessors();
             if (IsPublicAccessor(reader, accessors.Getter) || IsPublicAccessor(reader, accessors.Setter))
             {
-                properties.Add(new MetadataPropertySymbol(reader.GetString(property.Name)));
+                var provider = new SimpleSignatureTypeProvider();
+                var signature = property.DecodeSignature(provider, genericContext: null);
+                properties.Add(new MetadataPropertySymbol(
+                    reader.GetString(property.Name),
+                    signature.ReturnType.Name));
             }
         }
 

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Xml.Linq;
 using TypeSharp.Compiler;
 using TypeSharp.Cli;
+using TypeSharp.Compiler.Abi;
 using TypeSharp.Compiler.Backend;
 using TypeSharp.Compiler.Binding;
 using TypeSharp.Compiler.Checking;
@@ -4199,18 +4200,18 @@ static void GeneratedNet48AssemblyPublicAbiSnapshotIsStable()
         ]);
 
         AssertFalse(metadata.HasErrors, "Generated public ABI snapshot assembly metadata should be readable.");
-        var assembly = metadata.Assemblies.Single();
-        AssertSequence(["Samples.PublicAbi.Module", "Samples.PublicAbi.Customer"], assembly.Types.Select(type => type.FullName).ToArray());
-
-        var module = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Samples.PublicAbi.Module"), "Generated Module type should be public.");
-        var describe = Require(module.Methods.SingleOrDefault(method => method.Name == "describe"), "Generated describe method should be public.");
-        AssertEqual("string", describe.ReturnType);
-        AssertSequence(["customer"], describe.Parameters.Select(parameter => parameter.Name).ToArray());
-        AssertSequence(["Samples.PublicAbi.Customer"], describe.Parameters.Select(parameter => parameter.Type).ToArray());
-
-        var customer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Samples.PublicAbi.Customer"), "Generated Customer record type should be public.");
-        AssertSequence(["Name", "Age"], customer.Properties.Select(property => property.Name).ToArray());
-        AssertSequence(["Equals", "GetHashCode"], customer.Methods.Select(method => method.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        var snapshot = TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single());
+        AssertSequence(
+        [
+            "assembly PublicAbiSnapshot",
+            "type Samples.PublicAbi.Customer",
+            "  property int Age",
+            "  property string Name",
+            "  method bool Equals(object obj)",
+            "  method int GetHashCode()",
+            "type Samples.PublicAbi.Module",
+            "  method string describe(Samples.PublicAbi.Customer customer)"
+        ], snapshot.Lines);
     });
 }
 

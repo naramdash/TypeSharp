@@ -30,7 +30,8 @@ public sealed record MetadataMethodSymbol(
     IReadOnlyList<MetadataParameterSymbol> Parameters);
 
 public sealed record MetadataPropertySymbol(
-    string Name);
+    string Name,
+    string Type);
 
 public sealed record MetadataParameterSymbol(
     string Name,
