@@ -136,3 +136,19 @@ Result:
 - Pass. `dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
 - Pass. `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
 - Pass. `dotnet run --project src\TypeSharp.Cli\TypeSharp.Cli.csproj -- check docs\examples\cli-console\TypeSharp.toml --diagnostic-format json` returned `{ "diagnostics": [] }`.
+
+## 2026-05-19 Public ABI Net48 Recheck
+
+Recheck Start Time: 2026-05-19 04:54:52 +09:00
+Recheck End Time: 2026-05-19 04:56:57 +09:00
+
+Trigger:
+- User reiterated that the repository should be refreshed with the `net481` to `net48` build target change in mind.
+
+Result:
+- Pass. `rg -n "net481|Net481|NET481|v4\.8\.1|4\.8\.1" docs src tests agent.md -S` returns no stale code, project, or test target references. Remaining matches are intentional latest Framework profile comparison, official .NET Framework 4.8.1 facts, migration history, or this task packet.
+- Pass. `dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
+- Pass. `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
+- Pass. `dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj` emits `bin\Debug\net48\TypeSharp.Core.dll`.
+- Pass. `dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj` emits `bin\Debug\net48\TypeSharp.Runtime.dll`.
+- Pass. `dotnet run --project src\TypeSharp.Cli\TypeSharp.Cli.csproj -- check docs\examples\cli-console\TypeSharp.toml --diagnostic-format json` returned `{ "diagnostics": [] }`.

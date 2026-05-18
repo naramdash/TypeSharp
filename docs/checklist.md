@@ -291,7 +291,7 @@
 - [x] runtime unit tests
 - [x] C# interop tests
 - [x] C# library consumption smoke tests
-- [ ] public ABI snapshot tests
+- [x] public ABI snapshot tests
 - [ ] performance smoke benchmark
 - [ ] regression test policy
 

@@ -123,6 +123,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles async Task interop", CliBuildCompilesAsyncTaskInterop),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
+    ("generated net48 assembly public ABI snapshot is stable", GeneratedNet48AssemblyPublicAbiSnapshotIsStable),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
     ("net48 application model hosts reference generated assembly and runtime", Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -4106,6 +4107,63 @@ static void CliBuildEmitsGeneratedNet48Assembly()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AssemblyEmit.dll")),
             "Build should produce generated net48 assembly.");
+    });
+}
+
+static void GeneratedNet48AssemblyPublicAbiSnapshotIsStable()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "PublicAbiSnapshot"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.PublicAbi"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.PublicAbi
+
+            public record Customer(Name: string, Age: int)
+
+            export fun describe(customer: Customer): string = customer.Name
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/PublicAbiSnapshot.dll", output.ToString());
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "PublicAbiSnapshot.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated public ABI snapshot assembly.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "PublicAbiSnapshot",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/PublicAbiSnapshot.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated public ABI snapshot assembly metadata should be readable.");
+        var assembly = metadata.Assemblies.Single();
+        AssertSequence(["Samples.PublicAbi.Module", "Samples.PublicAbi.Customer"], assembly.Types.Select(type => type.FullName).ToArray());
+
+        var module = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Samples.PublicAbi.Module"), "Generated Module type should be public.");
+        var describe = Require(module.Methods.SingleOrDefault(method => method.Name == "describe"), "Generated describe method should be public.");
+        AssertEqual("string", describe.ReturnType);
+        AssertSequence(["customer"], describe.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Samples.PublicAbi.Customer"], describe.Parameters.Select(parameter => parameter.Type).ToArray());
+
+        var customer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Samples.PublicAbi.Customer"), "Generated Customer record type should be public.");
+        AssertSequence(["Name", "Age"], customer.Properties.Select(property => property.Name).ToArray());
+        AssertSequence(["Equals", "GetHashCode"], customer.Methods.Select(method => method.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
     });
 }
 
