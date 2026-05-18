@@ -40,8 +40,4 @@
 | [0075-0076-basic-csharp-backend-semantics.md](0075-0076-basic-csharp-backend-semantics.md) | Q2-Q3 | Done | `literal`, 기본 타입/literal, local binding, function declaration/call의 generated C# `net48` smoke를 묶는다. |
 | [0077-module-namespace-backend-smoke.md](0077-module-namespace-backend-smoke.md) | Q2 | Done | `module` 선언을 namespace 안의 generated C# static class로 낮추는 smoke를 고정한다. |
 | [0078-csharp-byref-params-interop-status.md](0078-csharp-byref-params-interop-status.md) | Q3 | Done | C# `params`, `out`, `in`, `ref` interop aggregate checklist 상태를 기존 smoke와 diagnostic 근거에 맞춘다. |
-| [0079-core-option-result-generic-api-smoke.md](0079-core-option-result-generic-api-smoke.md) | Q2-Q3 | Done | `Option<T>`와 `Result<T,E>`가 generated public API generic signature로 보존되는지 검증한다. |
-| [0080-generic-function-backend-smoke.md](0080-generic-function-backend-smoke.md) | Q2-Q3 | Done | generic function declaration을 generated C# public API와 C# `net48` consumer smoke로 고정한다. |
-| [0081-class-declaration-backend-smoke.md](0081-class-declaration-backend-smoke.md) | Q2-Q3 | Done | class declaration을 generated C# class와 C# `net48` consumer smoke로 고정한다. |
-| [0082-interface-declaration-backend-smoke.md](0082-interface-declaration-backend-smoke.md) | Q2-Q3 | Done | interface declaration을 generated C# interface와 C# `net48` implementation smoke로 고정한다. |
-| [0083-generic-type-declaration-backend-smoke.md](0083-generic-type-declaration-backend-smoke.md) | Q2-Q3 | Done | generic type declaration을 generated C# generic class와 C# `net48` consumer smoke로 고정한다. |
+| [0079-0083-public-api-declaration-backend-smokes.md](0079-0083-public-api-declaration-backend-smokes.md) | Q2-Q3 | Done | Core generic APIs, generic functions, class/interface declarations, and generic type declarations의 generated C# public API smokes를 묶는다. |
