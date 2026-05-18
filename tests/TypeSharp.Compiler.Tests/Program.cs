@@ -126,6 +126,7 @@ var tests = new (string Name, Action Body)[]
     ("generated net48 assembly public ABI snapshot is stable", GeneratedNet48AssemblyPublicAbiSnapshotIsStable),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
     ("net48 application model hosts reference generated assembly and runtime", Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
+    ("compiler check performance smoke stays bounded", CompilerCheckPerformanceSmokeStaysBounded),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
 };
 
@@ -4240,6 +4241,49 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against the generated TypeSharp assembly.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CompilerCheckPerformanceSmokeStaysBounded()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "PerformanceSmoke"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Performance"
+            generatedOutputRoot = "generated"
+            """);
+
+        const int sourceFileCount = 80;
+        const int functionsPerFile = 15;
+        var builder = new StringBuilder();
+        for (var fileIndex = 0; fileIndex < sourceFileCount; fileIndex++)
+        {
+            builder.Clear();
+            builder.AppendLine("namespace Samples.Performance");
+            builder.AppendLine();
+
+            for (var functionIndex = 0; functionIndex < functionsPerFile; functionIndex++)
+            {
+                var value = fileIndex * functionsPerFile + functionIndex;
+                builder.AppendLine($"export fun value{value}(): int = {value}");
+            }
+
+            WriteFile(root, $"src/File{fileIndex:000}.tysh", builder.ToString());
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        var result = TypeSharpChecker.Check(manifestPath);
+        stopwatch.Stop();
+
+        AssertEqual(sourceFileCount, result.SourceFiles.Count);
+        AssertEqual(0, result.Diagnostics.Count);
+        AssertTrue(
+            stopwatch.Elapsed < TimeSpan.FromSeconds(15),
+            $"Compiler check performance smoke exceeded 15 seconds: {stopwatch.Elapsed.TotalMilliseconds:0}ms.");
     });
 }
 

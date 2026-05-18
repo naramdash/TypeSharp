@@ -292,7 +292,7 @@
 - [x] C# interop tests
 - [x] C# library consumption smoke tests
 - [x] public ABI snapshot tests
-- [ ] performance smoke benchmark
+- [x] performance smoke benchmark
 - [ ] regression test policy
 
 ## 릴리스 준비

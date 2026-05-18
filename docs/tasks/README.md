@@ -53,3 +53,4 @@
 | [0096-migration-guide-draft.md](0096-migration-guide-draft.md) | Q5 | Done | existing .NET Framework 4.8/C# projects가 TypeSharp library를 점진적으로 도입하는 migration guide 초안을 만든다. |
 | [0097-stable-grammar-parser-fixture-audit.md](0097-stable-grammar-parser-fixture-audit.md) | Q1-Q2 | Done | stable grammar parser fixture coverage를 현재 snapshot evidence에 맞춰 문서화한다. |
 | [0098-public-abi-snapshot-smoke.md](0098-public-abi-snapshot-smoke.md) | Q2-Q3 | Done | generated `net48` assembly public metadata shape를 smoke test로 고정한다. |
+| [0099-performance-smoke-benchmark.md](0099-performance-smoke-benchmark.md) | Q2-Q3 | Done | compiler check pipeline의 극단적 성능 회귀를 잡는 관대한 smoke benchmark를 추가한다. |
