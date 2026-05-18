@@ -79,8 +79,10 @@ Done:
 - `string[]` TypeSharp parameter types lower to C# `string[]`.
 - `typesharp run` forwards `--` arguments into `main(args: string[])` for the supported smoke path.
 
+Completed later:
+- Unsupported executable `main` signature diagnostics are completed by [0060-cli-run-main-signature-diagnostic.md](0060-cli-run-main-signature-diagnostic.md).
+
 Remaining:
-- Add explicit diagnostics for unsupported executable `main` signatures.
 - Expand generated entry point support for async main and richer return types.
 - Bring `docs/examples/cli-console` into executable coverage after the backend supports its richer syntax.
 

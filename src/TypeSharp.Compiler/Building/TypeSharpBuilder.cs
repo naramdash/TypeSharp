@@ -67,6 +67,12 @@ public static class TypeSharpBuilder
             return new BuildResult([], null, null, diagnostics);
         }
 
+        if (IsExecutable(manifestResult.Manifest.Project.OutputType) &&
+            !ValidateExecutableEntryPoint(manifestResult.Manifest, parsedSources, diagnostics))
+        {
+            return new BuildResult([], null, null, diagnostics);
+        }
+
         var outputRoot = Path.GetFullPath(Path.Combine(
             manifestResult.Manifest.ProjectDirectory,
             manifestResult.Manifest.Project.GeneratedOutputRoot));
@@ -276,6 +282,82 @@ public static class TypeSharpBuilder
         var elementType = node.Children.FirstOrDefault(child => !child.IsToken);
         return elementType?.Kind == SyntaxKind.TypeName &&
             string.Equals(GetQualifiedName(elementType), "string", StringComparison.Ordinal);
+    }
+
+    private static bool ValidateExecutableEntryPoint(
+        TypeSharpManifest manifest,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        List<Diagnostic> diagnostics)
+    {
+        if (!TryGetMainEntryPoint(manifest, out var namespaceName, out var methodName))
+        {
+            diagnostics.Add(DiagnosticFactory.Manifest(
+                DiagnosticDescriptors.UnsupportedExecutableEntryPoint,
+                "Executable project main must be a non-empty function name or qualified function name.",
+                manifest.ManifestPath));
+            return false;
+        }
+
+        return ValidateExecutableEntryPoint(parsedSources, namespaceName, methodName, manifest.ManifestPath, diagnostics);
+    }
+
+    private static bool ValidateExecutableEntryPoint(
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        string namespaceName,
+        string methodName,
+        string manifestPath,
+        List<Diagnostic> diagnostics)
+    {
+        var mainFunction = FindFunction(parsedSources, namespaceName, methodName);
+        if (mainFunction is null)
+        {
+            diagnostics.Add(DiagnosticFactory.Manifest(
+                DiagnosticDescriptors.UnsupportedExecutableEntryPoint,
+                $"Executable project main '{namespaceName}.{methodName}' was not found.",
+                manifestPath));
+            return false;
+        }
+
+        if (HasNoParameters(mainFunction) || HasSingleStringArrayParameter(mainFunction))
+        {
+            return true;
+        }
+
+        diagnostics.Add(DiagnosticFactory.Manifest(
+            DiagnosticDescriptors.UnsupportedExecutableEntryPoint,
+            $"Executable project main '{namespaceName}.{methodName}' must have no parameters or exactly one 'string[]' parameter.",
+            manifestPath));
+        return false;
+    }
+
+    private static SyntaxNode? FindFunction(
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        string namespaceName,
+        string methodName)
+    {
+        foreach (var (_, root) in parsedSources)
+        {
+            if (!string.Equals(GetNamespaceName(root), namespaceName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var function = root.Children.FirstOrDefault(child =>
+                child.Kind == SyntaxKind.FunctionDeclaration &&
+                string.Equals(GetDeclarationName(child), methodName, StringComparison.Ordinal));
+            if (function is not null)
+            {
+                return function;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool HasNoParameters(SyntaxNode function)
+    {
+        var parameterList = function.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+        return parameterList is null || !parameterList.Children.Any(child => child.Kind == SyntaxKind.Parameter);
     }
 
     private static GeneratedProjectBuildResult BuildGeneratedProject(string outputRoot, string projectRelativePath)

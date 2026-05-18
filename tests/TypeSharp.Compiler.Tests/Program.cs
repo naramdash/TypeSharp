@@ -52,6 +52,7 @@ var tests = new (string Name, Action Body)[]
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
+    ("CLI run reports unsupported main signature", CliRunReportsUnsupportedMainSignature),
     ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
@@ -138,6 +139,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2402",
             "TS2403",
             "TS2404",
+            "TS3500",
             "TS3501"
         ],
         descriptors.Select(descriptor => descriptor.Code).ToArray());
@@ -1089,6 +1091,39 @@ static void CliRunPassesArgumentsToGeneratedMain()
         var generatedProgram = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
         AssertContains("public static string main(string[] args)", generatedSource);
         AssertContains("Module.main(args)", generatedProgram);
+    });
+}
+
+static void CliRunReportsUnsupportedMainSignature()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RunBadMain"
+            targetFramework = "net48"
+            outputType = "exe"
+            rootNamespace = "Samples.RunBadMain"
+            generatedOutputRoot = "generated"
+            main = "Samples.RunBadMain.main"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RunBadMain
+
+            export fun main(count: int): string = "bad"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["run", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS3500\"", error.ToString());
+        AssertContains("must have no parameters or exactly one 'string[]' parameter", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Run should not emit generated C# when main signature is unsupported.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "RunBadMain.Generated.csproj")), "Run should not emit generated project when main signature is unsupported.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RunBadMain.exe")), "Run should not emit generated executable when main signature is unsupported.");
     });
 }
 

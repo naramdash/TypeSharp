@@ -1,6 +1,6 @@
 # Diagnostics
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 TypeSharp diagnostic code taxonomy, descriptor metadata, explanation surface, and golden diagnostic fixture policy를 고정한다. CLI, VS Code language server, test fixtures는 같은 diagnostic descriptor registry를 공유해야 한다.
 
@@ -39,6 +39,7 @@ Current allocated descriptors:
 | `TS2402` | Interop | Error | Ambiguous C# overload |
 | `TS2403` | Interop | Error | Invalid byref interop use |
 | `TS2404` | Interop | Warning | Unknown C# nullability |
+| `TS3500` | Backend | Error | Unsupported executable entry point |
 | `TS3501` | Backend | Error | Generated C# project build failed |
 
 Reserved semantic examples:

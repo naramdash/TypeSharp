@@ -146,6 +146,15 @@ public static class DiagnosticDescriptors
         "A C# interop call returns a reference type from metadata that does not contain nullable annotations.",
         "Add a null guard, use nullable-annotated metadata, or loosen nullable checking for this interop boundary.");
 
+    public static readonly DiagnosticDescriptor UnsupportedExecutableEntryPoint = new(
+        "TS3500",
+        "Unsupported executable entry point",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Backend,
+        "Unsupported executable entry point.",
+        "The project is configured as an executable, but the configured main function cannot be emitted as the generated .NET Framework entry point.",
+        "Use a main function with no parameters or exactly one string[] parameter.");
+
     public static readonly DiagnosticDescriptor GeneratedProjectBuildFailed = new(
         "TS3501",
         "Generated C# project build failed",
@@ -173,6 +182,7 @@ public static class DiagnosticDescriptors
         AmbiguousCSharpOverload,
         InvalidByRefInterop,
         UnknownCSharpNullability,
+        UnsupportedExecutableEntryPoint,
         GeneratedProjectBuildFailed
     ];
 }

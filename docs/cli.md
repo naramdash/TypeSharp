@@ -134,6 +134,7 @@ typesharp run --configuration Debug -- Alice
 규칙:
 - `outputType = "exe"` 프로젝트에서만 동작한다.
 - `--` 뒤의 값은 TypeSharp 프로그램의 `main(args: string[])`로 전달한다.
+- executable `main`은 현재 `main()` 또는 `main(args: string[])` 형태여야 하며, 이 외 signature는 `TS3500`으로 보고한다.
 - 실행 전 build가 실패하면 프로그램을 실행하지 않는다.
 
 현재 구현 메모:
