@@ -68,6 +68,29 @@ Result:
 - Pass. `dotnet build src/TypeSharp.Cli/TypeSharp.Cli.csproj`
 - Pass. CLI check returned `{ "diagnostics": [] }`.
 
+## 2026-05-19 Refresh
+
+Refresh Start Time: 2026-05-19 03:08:05 +09:00
+Refresh End Time: 2026-05-19 03:10:50 +09:00
+
+Trigger:
+- User confirmed the build target has moved from `net481` to `net48` and requested a repo-wide refresh with that decision in mind.
+
+Refresh Scope:
+- Re-check code, project files, tests, docs, and task packets for stale `net481` build target references.
+- Keep intentional `net481` mentions only where they describe the latest .NET Framework profile comparison, official .NET Framework 4.8.1 facts, or migration history.
+- Verify the repository still builds and the compiler smoke suite still passes with `net48` as the generated artifact/runtime/core baseline.
+
+Refresh Result:
+- Pass. `rg -n "net481|Net481|NET481|v4\.8\.1|4\.8\.1" docs src tests agent.md -S` returns no stale code, project, or test target references. Remaining matches are intentional latest Framework profile comparison, official .NET Framework 4.8.1 facts, migration history, or this task packet.
+- Pass. `dotnet build src/TypeSharp.Core/TypeSharp.Core.csproj`
+- Pass. `dotnet build src/TypeSharp.Runtime/TypeSharp.Runtime.csproj`
+- Pass. `dotnet build src/TypeSharp.Cli/TypeSharp.Cli.csproj`
+- Pass. `dotnet build tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj` after serial rerun. The first parallel run hit a shared `src/TypeSharp.Cli/obj` file lock, not a source or target-framework failure.
+- Pass. `dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
+- Pass. `dotnet run --project src/TypeSharp.Cli/TypeSharp.Cli.csproj -- check docs/examples/cli-console/TypeSharp.toml --diagnostic-format json` returned `{ "diagnostics": [] }`.
+- Pass. `git diff --check`
+
 ## Handoff
 
 Done:
@@ -75,9 +98,10 @@ Done:
 - Updated task README and traceability links to the renamed rollups.
 - Normalized older task rollup wording from `net481` to `net48` for runtime/core/generated artifact baseline references.
 - Restored `net48`/`net481` comparison wording in README and requirements where both profiles are intentionally contrasted.
+- Reopened this packet for a 2026-05-19 repo-wide refresh instead of creating a duplicate task packet for the same topic.
 
 Remaining:
-- Commit the consistency sweep.
+- Commit this refresh note.
 
 Blocked:
 - None.
