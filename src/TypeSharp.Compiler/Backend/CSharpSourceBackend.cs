@@ -188,6 +188,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.IdentifierExpression => EmitIdentifier(node),
                 SyntaxKind.MemberAccessExpression => EmitMemberAccess(node),
                 SyntaxKind.CallExpression => EmitCall(node),
+                SyntaxKind.OutArgument => EmitOutArgument(node),
                 _ => "default(object)"
             };
         }
@@ -231,6 +232,12 @@ public static class CSharpSourceBackend
             }
 
             return $"{EmitExpression(callee)}({argumentList})";
+        }
+
+        private string EmitOutArgument(SyntaxNode node)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            return $"out {EmitExpression(expression)}";
         }
 
         private static string EmitLiteral(SyntaxNode node)

@@ -155,6 +155,7 @@
 | C# constructor and instance member call smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 temporary `LegacyFormatter` class를 local `net481` DLL에 만들고 TypeSharp source의 `LegacyFormatter("legacy:")` construction과 `formatter.Format("value")` instance call이 generated `net481` project에서 컴파일되는지 검증한다. |
 | C# property access smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 temporary `LegacyFormatter.Prefix` property를 local `net481` DLL에 만들고 TypeSharp source의 `formatter.Prefix` property read가 generated `net481` project에서 컴파일되는지 검증한다. |
 | C# params call smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 temporary `LegacyParams.Join(string, params string[])` method를 local `net481` DLL에 만들고 TypeSharp source의 `LegacyParams.Join(",", "a", "b", "c")` call이 generated `net481` project에서 컴파일되는지 검증한다. |
+| C# out call smoke | 통과 | `CSharpSourceBackend`가 parsed `out` argument를 `out value` call-site로 emit하고 `tests/TypeSharp.Compiler.Tests`가 temporary `LegacyByRef.TryParseCount(string, out int)` method를 local `net481` DLL에 만들어 generated `net481` project compile smoke로 검증한다. |
 | TypeSharp.Core Option/Result skeleton | 통과 | `src/TypeSharp.Core`가 `net481` SDK-style class library로 추가되고 `Option<T>`, `Result<T,E>`, `Unit` public surface와 Some/None, Ok/Error state smoke tests가 검증한다. |
 | C# reference resolver skeleton | 통과 | `TypeSharpReferenceResolver`가 manifest framework assembly names와 local DLL paths를 deterministic `ResolvedReference` records로 정규화하고 missing local DLL을 `TS2401`로 보고하는 smoke tests가 검증한다. |
 | C# metadata reader skeleton | 통과 | `TypeSharpMetadataReader`가 `ReferenceResolutionResult`를 소비해 framework/local references를 deterministic `MetadataAssemblySymbol` placeholders로 변환하고 reference diagnostics와 missing local metadata input diagnostics를 보존하거나 보고하는 smoke tests가 검증한다. |
@@ -170,7 +171,7 @@
 
 - IL backend 도입 시점과 범위
 - grammar coverage: 새로 발견되는 TypeScript/F#/C# 기능의 Direct/Equivalent/Replacement/Planned/Experimental/Rejected 분류
-- C# byref interop smoke: TypeSharp source compiles a narrow imported C# `out`, `ref`, or `in` call shape in the generated `net481` project.
+- C# byref interop smoke: TypeSharp source compiles a narrow imported C# `ref` or `in` call shape in the generated `net481` project.
 - nominal union optimization: tagged struct 또는 generated closed type 도입 시점
 - type-level union public boundary diagnostic과 수동 nominal union/interface/wrapper 가이드
 - manifest 형식: `TypeSharp.toml` 유지 또는 MSBuild 1급 통합

@@ -105,6 +105,7 @@
 - [x] C# constructor/static/instance member call
 - [ ] C# `ref`/`out`/`in`/`params` interop
 - [x] C# `params` interop compile smoke
+- [x] C# `out` interop compile smoke
 - [ ] C# delegate/event interop
 - [ ] nullable metadata/unknown nullability diagnostics
 - [x] TypeSharp assembly consumed from C#
@@ -147,6 +148,7 @@
 - [x] generated C# imported constructor and instance member call build smoke
 - [x] generated C# imported property access build smoke
 - [x] generated C# imported `params` call build smoke
+- [x] generated C# imported `out` call build smoke
 - [ ] IL backend abstraction seam
 - [ ] diagnostics system
 - [x] initial diagnostic/span model
@@ -239,6 +241,7 @@
 - [x] C# constructor and instance member call smoke tests
 - [x] C# property access smoke tests
 - [x] C# `params` call smoke tests
+- [x] C# `out` call smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests
 - [ ] C# interop tests
