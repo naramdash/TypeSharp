@@ -49,7 +49,7 @@ public static class TypeSharpInteropValidator
             .Where(type => string.Equals(type.Name, typeName, StringComparison.Ordinal) || string.Equals(type.FullName, typeName, StringComparison.Ordinal))
             .SelectMany(type => type.Methods.Select(method => (Type: type, Method: method)))
             .Where(candidate => string.Equals(candidate.Method.Name, methodName, StringComparison.Ordinal) &&
-                IsApplicableArity(candidate.Method, arguments.Length))
+                IsApplicableArity(candidate.Method, arguments))
             .ToArray();
 
         var selectedCandidates = SelectBestCandidates(candidates, arguments);
@@ -73,7 +73,7 @@ public static class TypeSharpInteropValidator
         for (var index = 0; index < arguments.Length; index++)
         {
             var argument = arguments[index];
-            var parameter = GetParameterForArgument(metadataMethod, index);
+            var parameter = GetParameterForArgument(metadataMethod, arguments, index);
             if (parameter is null)
             {
                 continue;
@@ -114,7 +114,7 @@ public static class TypeSharpInteropValidator
 
     private static bool IsExactMatch(MetadataMethodSymbol method, IReadOnlyList<SyntaxNode> arguments)
     {
-        if (!IsApplicableArity(method, arguments.Count))
+        if (!IsApplicableArity(method, arguments))
         {
             return false;
         }
@@ -122,13 +122,20 @@ public static class TypeSharpInteropValidator
         for (var index = 0; index < arguments.Count; index++)
         {
             var argument = arguments[index];
-            var parameter = GetParameterForArgument(method, index);
+            var parameterIndex = GetParameterIndexForArgument(method, arguments, index);
+            if (parameterIndex is null)
+            {
+                return false;
+            }
+
+            var parameter = method.Parameters[parameterIndex.Value];
+            var positionalOrdinal = GetPositionalOrdinal(arguments, index);
+            var expectedType = GetExpectedArgumentType(method, parameter, parameterIndex.Value, positionalOrdinal);
             if (parameter is null)
             {
                 return false;
             }
 
-            var expectedType = GetExpectedArgumentType(method, parameter, index, arguments.Count);
             if (GetArgumentByRefKind(argument) != parameter.ByRefKind ||
                 !TryInferArgumentType(argument, out var argumentType) ||
                 !string.Equals(argumentType, expectedType, StringComparison.Ordinal))
@@ -140,39 +147,109 @@ public static class TypeSharpInteropValidator
         return true;
     }
 
-    private static bool IsApplicableArity(MetadataMethodSymbol method, int argumentCount)
+    private static bool IsApplicableArity(MetadataMethodSymbol method, IReadOnlyList<SyntaxNode> arguments)
     {
-        var requiredParameterCount = method.Parameters.Count(parameter => !parameter.IsOptional && !parameter.IsParams);
-        if (argumentCount < requiredParameterCount)
+        var providedParameters = new bool[method.Parameters.Count];
+        var positionalCount = 0;
+
+        for (var index = 0; index < arguments.Count; index++)
+        {
+            var parameterIndex = GetParameterIndexForArgument(method, arguments, index);
+            if (parameterIndex is null)
+            {
+                return false;
+            }
+
+            if (providedParameters[parameterIndex.Value] && !IsExpandedParamsArgument(method, parameterIndex.Value, GetPositionalOrdinal(arguments, index)))
+            {
+                return false;
+            }
+
+            providedParameters[parameterIndex.Value] = true;
+            if (!TryGetNamedArgumentName(arguments[index], out _))
+            {
+                positionalCount++;
+            }
+        }
+
+        if (!HasParamsParameter(method) && positionalCount > method.Parameters.Count)
         {
             return false;
         }
 
-        return HasParamsParameter(method) || argumentCount <= method.Parameters.Count;
+        for (var index = 0; index < method.Parameters.Count; index++)
+        {
+            var parameter = method.Parameters[index];
+            if (!providedParameters[index] && !parameter.IsOptional && !parameter.IsParams)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool HasParamsParameter(MetadataMethodSymbol method) =>
         method.Parameters.Count > 0 && method.Parameters[method.Parameters.Count - 1].IsParams;
 
-    private static MetadataParameterSymbol? GetParameterForArgument(MetadataMethodSymbol method, int argumentIndex)
+    private static MetadataParameterSymbol? GetParameterForArgument(
+        MetadataMethodSymbol method,
+        IReadOnlyList<SyntaxNode> arguments,
+        int argumentIndex)
     {
-        if (argumentIndex < method.Parameters.Count)
+        var parameterIndex = GetParameterIndexForArgument(method, arguments, argumentIndex);
+        return parameterIndex is null ? null : method.Parameters[parameterIndex.Value];
+    }
+
+    private static int? GetParameterIndexForArgument(
+        MetadataMethodSymbol method,
+        IReadOnlyList<SyntaxNode> arguments,
+        int argumentIndex)
+    {
+        var argument = arguments[argumentIndex];
+        if (TryGetNamedArgumentName(argument, out var name))
         {
-            return method.Parameters[argumentIndex];
+            for (var index = 0; index < method.Parameters.Count; index++)
+            {
+                if (string.Equals(method.Parameters[index].Name, name, StringComparison.Ordinal))
+                {
+                    return index;
+                }
+            }
+
+            return null;
         }
 
-        return HasParamsParameter(method)
-            ? method.Parameters[method.Parameters.Count - 1]
-            : null;
+        var positionalOrdinal = GetPositionalOrdinal(arguments, argumentIndex);
+        if (positionalOrdinal < method.Parameters.Count)
+        {
+            return positionalOrdinal;
+        }
+
+        return HasParamsParameter(method) ? method.Parameters.Count - 1 : null;
+    }
+
+    private static int GetPositionalOrdinal(IReadOnlyList<SyntaxNode> arguments, int argumentIndex)
+    {
+        var ordinal = 0;
+        for (var index = 0; index < argumentIndex; index++)
+        {
+            if (!TryGetNamedArgumentName(arguments[index], out _))
+            {
+                ordinal++;
+            }
+        }
+
+        return ordinal;
     }
 
     private static string GetExpectedArgumentType(
         MetadataMethodSymbol method,
         MetadataParameterSymbol parameter,
-        int argumentIndex,
-        int argumentCount)
+        int parameterIndex,
+        int positionalOrdinal)
     {
-        if (!IsExpandedParamsArgument(method, argumentIndex, argumentCount))
+        if (!IsExpandedParamsArgument(method, parameterIndex, positionalOrdinal))
         {
             return parameter.Type;
         }
@@ -182,7 +259,7 @@ public static class TypeSharpInteropValidator
             : parameter.Type;
     }
 
-    private static bool IsExpandedParamsArgument(MetadataMethodSymbol method, int argumentIndex, int argumentCount)
+    private static bool IsExpandedParamsArgument(MetadataMethodSymbol method, int parameterIndex, int positionalOrdinal)
     {
         if (!HasParamsParameter(method))
         {
@@ -190,7 +267,7 @@ public static class TypeSharpInteropValidator
         }
 
         var fixedParameterCount = method.Parameters.Count - 1;
-        return argumentCount >= fixedParameterCount && argumentIndex >= fixedParameterCount;
+        return parameterIndex == fixedParameterCount && positionalOrdinal >= fixedParameterCount;
     }
 
     private static bool TryGetStaticMemberCall(SyntaxNode call, out string typeName, out string methodName)
@@ -221,17 +298,37 @@ public static class TypeSharpInteropValidator
         return name.Length > 0;
     }
 
-    private static MetadataByRefKind GetArgumentByRefKind(SyntaxNode argument) =>
-        argument.Kind switch
+    private static MetadataByRefKind GetArgumentByRefKind(SyntaxNode argument)
+    {
+        if (argument.Kind == SyntaxKind.NamedArgument)
+        {
+            var expression = argument.Children.LastOrDefault(child => !child.IsToken);
+            return expression is null ? MetadataByRefKind.None : GetArgumentByRefKind(expression);
+        }
+
+        return argument.Kind switch
         {
             SyntaxKind.RefArgument => MetadataByRefKind.Ref,
             SyntaxKind.OutArgument => MetadataByRefKind.Out,
             SyntaxKind.InArgument => MetadataByRefKind.In,
             _ => MetadataByRefKind.None
         };
+    }
 
     private static bool TryInferArgumentType(SyntaxNode argument, out string type)
     {
+        if (argument.Kind == SyntaxKind.NamedArgument)
+        {
+            var expression = argument.Children.LastOrDefault(child => !child.IsToken);
+            if (expression is not null)
+            {
+                return TryInferArgumentType(expression, out type);
+            }
+
+            type = string.Empty;
+            return false;
+        }
+
         if (argument.Kind is SyntaxKind.RefArgument or SyntaxKind.OutArgument or SyntaxKind.InArgument)
         {
             var expression = argument.Children.FirstOrDefault(child => !child.IsToken);
@@ -270,6 +367,18 @@ public static class TypeSharpInteropValidator
         }
 
         return text.Contains('.', StringComparison.Ordinal) ? "double" : "int";
+    }
+
+    private static bool TryGetNamedArgumentName(SyntaxNode argument, out string name)
+    {
+        name = string.Empty;
+        if (argument.Kind != SyntaxKind.NamedArgument)
+        {
+            return false;
+        }
+
+        name = argument.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+        return name.Length > 0;
     }
 
     private static string FormatExpected(MetadataByRefKind kind) =>

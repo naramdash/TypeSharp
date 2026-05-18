@@ -138,6 +138,7 @@
 - [x] C# exact overload match smoke
 - [x] C# expanded params overload validation smoke
 - [x] C# optional parameter overload validation smoke
+- [x] C# named argument overload validation smoke
 - [ ] reference resolver for framework assembly and local DLL
 - [ ] semantic model
 - [ ] type checker
@@ -257,6 +258,7 @@
 - [x] C# exact overload match smoke tests
 - [x] C# expanded params overload validation smoke tests
 - [x] C# optional parameter overload validation smoke tests
+- [x] C# named argument overload validation smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests
 - [x] C# framework static member call smoke tests

@@ -188,6 +188,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.IdentifierExpression => EmitIdentifier(node),
                 SyntaxKind.MemberAccessExpression => EmitMemberAccess(node),
                 SyntaxKind.CallExpression => EmitCall(node),
+                SyntaxKind.NamedArgument => EmitNamedArgument(node),
                 SyntaxKind.OutArgument => EmitOutArgument(node),
                 SyntaxKind.InArgument => EmitInArgument(node),
                 SyntaxKind.RefArgument => EmitRefArgument(node),
@@ -240,6 +241,15 @@ public static class CSharpSourceBackend
         {
             var expression = node.Children.FirstOrDefault(child => !child.IsToken);
             return $"out {EmitExpression(expression)}";
+        }
+
+        private string EmitNamedArgument(SyntaxNode node)
+        {
+            var name = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            var expression = node.Children.LastOrDefault(child => !child.IsToken);
+            return name.Length == 0
+                ? EmitExpression(expression)
+                : $"{name}: {EmitExpression(expression)}";
         }
 
         private string EmitInArgument(SyntaxNode node)

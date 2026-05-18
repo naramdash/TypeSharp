@@ -76,6 +76,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles exact overload match", CliBuildCompilesExactOverloadMatch),
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
+    ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -542,7 +543,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -1949,6 +1950,47 @@ static void CliBuildCompilesImportedOptionalCall()
     });
 }
 
+static void CliBuildCompilesImportedNamedArgumentCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedNamedArgumentCall"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedNamedArgumentCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedNamedArgumentCall
+
+            import { LegacyNamedOverloads } from "Legacy.Tools"
+
+            export fun route(): string = LegacyNamedOverloads.Route("/orders", controller: "Orders")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ImportedNamedArgumentCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyNamedOverloads.Route(\"/orders\", controller: \"Orders\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedNamedArgumentCall.dll")),
+            "Generated project build should compile an imported named argument call.");
+    });
+}
+
 static void CliBuildEmitsGeneratedNet481Assembly()
 {
     WithWorkspace(root =>
@@ -2301,6 +2343,19 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Pick(string value, int count = 1)
                 {
                     return value + count.ToString();
+                }
+            }
+
+            public static class LegacyNamedOverloads
+            {
+                public static string Route(string path, string controller = "Home")
+                {
+                    return controller + ":" + path;
+                }
+
+                public static string Route(string path, int statusCode = 200)
+                {
+                    return statusCode.ToString() + ":" + path;
                 }
             }
 
