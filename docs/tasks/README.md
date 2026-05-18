@@ -43,3 +43,4 @@
 | [0079-0083-public-api-declaration-backend-smokes.md](0079-0083-public-api-declaration-backend-smokes.md) | Q2-Q3 | Done | Core generic APIs, generic functions, class/interface declarations, and generic type declarations의 generated C# public API smokes를 묶는다. |
 | [0084-0085-immutable-record-backend.md](0084-0085-immutable-record-backend.md) | Q2-Q3 | Done | immutable record class shape와 record copy/update lowering smokes를 묶는다. |
 | [0086-nominal-union-backend-smoke.md](0086-nominal-union-backend-smoke.md) | Q2-Q3 | Done | nominal union declaration을 generated C# closed class hierarchy와 runtime case metadata smoke로 고정한다. |
+| [0087-type-level-union-public-boundary-diagnostic.md](0087-type-level-union-public-boundary-diagnostic.md) | Q2-Q3 | Done | type-level union alias의 public .NET ABI 누수를 `TS2204`로 차단한다. |

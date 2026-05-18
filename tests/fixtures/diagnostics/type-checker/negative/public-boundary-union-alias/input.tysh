@@ -1,0 +1,16 @@
+namespace Samples.TypeChecker.PublicBoundary
+
+type LocalAmount = decimal | string
+
+fun normalize(input: LocalAmount): string = "ok"
+
+export type PublicAmount = decimal | string
+
+export fun leakParameter(input: LocalAmount): string = "bad"
+
+export fun leakReturn(): LocalAmount =
+  if true {
+    "bad"
+  } else {
+    42
+  }

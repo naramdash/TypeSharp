@@ -86,6 +86,18 @@ public static class TypeSharpTypeChecker
                         break;
 
                     case SyntaxKind.TypeAliasDeclaration:
+                        if (TryGetDeclarationName(child, out var aliasName))
+                        {
+                            scope.DeclareType(aliasName);
+                            if (TryGetTypeAliasTarget(child, out var aliasTarget) &&
+                                TryGetCompileTimeOnlyType(aliasTarget, scope, out var aliasKind))
+                            {
+                                scope.DeclareCompileTimeOnlyType(aliasName, aliasKind);
+                            }
+                        }
+
+                        break;
+
                     case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.UnionDeclaration:
                     case SyntaxKind.ClassDeclaration:
@@ -147,6 +159,10 @@ public static class TypeSharpTypeChecker
         {
             switch (node.Kind)
             {
+                case SyntaxKind.TypeAliasDeclaration:
+                    CheckTypeAliasDeclaration(node, scope);
+                    break;
+
                 case SyntaxKind.FunctionDeclaration:
                     CheckFunction(node, scope);
                     break;
@@ -157,6 +173,7 @@ public static class TypeSharpTypeChecker
 
                 case SyntaxKind.ValueDeclaration:
                 case SyntaxKind.LiteralDeclaration:
+                    CheckPublicValueBoundary(node, scope);
                     CheckValueDeclaration(node, scope);
                     break;
             }
@@ -173,6 +190,16 @@ public static class TypeSharpTypeChecker
             }
         }
 
+        private void CheckTypeAliasDeclaration(SyntaxNode node, TypeScope scope)
+        {
+            if (!IsPublicBoundaryDeclaration(node) || !TryGetTypeAliasTarget(node, out var target))
+            {
+                return;
+            }
+
+            ReportPublicBoundaryLeaks(target, scope);
+        }
+
         private void CheckFunction(SyntaxNode node, TypeScope parentScope)
         {
             var scope = new TypeScope(parentScope);
@@ -184,6 +211,11 @@ public static class TypeSharpTypeChecker
                 {
                     scope.DeclareValue(parameterIdentifier.Text ?? string.Empty, parameterType);
                 }
+            }
+
+            if (IsPublicBoundaryDeclaration(node))
+            {
+                CheckFunctionPublicBoundary(node, scope);
             }
 
             var expectedReturnType = SimpleType.Unknown;
@@ -201,6 +233,32 @@ public static class TypeSharpTypeChecker
                         $"Cannot return expression of type '{actualReturnType}' from function returning '{expectedReturnType}'.");
                 }
             }
+        }
+
+        private void CheckFunctionPublicBoundary(SyntaxNode node, TypeScope scope)
+        {
+            foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
+            {
+                if (TryGetDirectTypeAnnotation(parameter, out var annotation))
+                {
+                    ReportPublicBoundaryLeaks(annotation, scope);
+                }
+            }
+
+            foreach (var annotation in node.Children.Where(child => child.Kind == SyntaxKind.TypeAnnotation))
+            {
+                ReportPublicBoundaryLeaks(annotation, scope);
+            }
+        }
+
+        private void CheckPublicValueBoundary(SyntaxNode node, TypeScope scope)
+        {
+            if (!IsPublicBoundaryDeclaration(node) || !TryGetDirectTypeAnnotation(node, out var annotation))
+            {
+                return;
+            }
+
+            ReportPublicBoundaryLeaks(annotation, scope);
         }
 
         private SimpleType CheckFunctionBody(SyntaxNode body, TypeScope scope)
@@ -485,6 +543,75 @@ public static class TypeSharpTypeChecker
                 node.Span));
         }
 
+        private void ReportPublicBoundaryLeaks(SyntaxNode node, TypeScope scope)
+        {
+            if (node.Kind == SyntaxKind.TypeAnnotation)
+            {
+                foreach (var child in node.Children.Where(child => !child.IsToken))
+                {
+                    ReportPublicBoundaryLeaks(child, scope);
+                }
+
+                return;
+            }
+
+            if (TryGetCompileTimeOnlyType(node, scope, out _))
+            {
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.PublicBoundaryTypeLeak.Code,
+                    DiagnosticDescriptors.PublicBoundaryTypeLeak.DefaultSeverity,
+                    DiagnosticDescriptors.PublicBoundaryTypeLeak.MessageTemplate,
+                    _file,
+                    node.Span));
+                return;
+            }
+
+            foreach (var child in node.Children.Where(child => !child.IsToken))
+            {
+                ReportPublicBoundaryLeaks(child, scope);
+            }
+        }
+
+        private static bool TryGetCompileTimeOnlyType(SyntaxNode node, TypeScope scope, out CompileTimeOnlyTypeKind kind)
+        {
+            kind = CompileTimeOnlyTypeKind.None;
+            if (node.Kind == SyntaxKind.TypeAnnotation)
+            {
+                var typeNode = node.Children.FirstOrDefault(child => !child.IsToken);
+                return typeNode is not null && TryGetCompileTimeOnlyType(typeNode, scope, out kind);
+            }
+
+            if (node.Kind == SyntaxKind.UnionType)
+            {
+                kind = CompileTimeOnlyTypeKind.TypeLevelUnion;
+                return true;
+            }
+
+            if (node.Kind == SyntaxKind.RecordShapeType)
+            {
+                kind = CompileTimeOnlyTypeKind.StructuralShape;
+                return true;
+            }
+
+            if (node.Kind == SyntaxKind.TypeName &&
+                TryGetSimpleTypeName(node, out var name) &&
+                scope.ResolveCompileTimeOnlyType(name, out kind))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsPublicBoundaryDeclaration(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind is SyntaxKind.ExportModifier or SyntaxKind.PublicModifier);
+
+        private static bool TryGetTypeAliasTarget(SyntaxNode node, out SyntaxNode target)
+        {
+            target = node.Children.LastOrDefault(child => !child.IsToken) ?? node;
+            return target.Kind is not SyntaxKind.TypeAliasDeclaration;
+        }
+
         private static bool TryGetDirectTypeAnnotation(SyntaxNode node, out SyntaxNode annotation)
         {
             annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation) ?? node;
@@ -589,6 +716,25 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        private static bool TryGetSimpleTypeName(SyntaxNode node, out string name)
+        {
+            name = string.Empty;
+            if (node.Kind != SyntaxKind.TypeName || node.Children.Any(child => child.Kind == SyntaxKind.TypeArgumentList))
+            {
+                return false;
+            }
+
+            var identifiers = node.Children.Where(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken).ToArray();
+            var hasDot = node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.DotToken);
+            if (identifiers.Length != 1 || hasDot)
+            {
+                return false;
+            }
+
+            name = identifiers[0].Text ?? string.Empty;
+            return name.Length > 0;
+        }
+
         private static bool TryGetDeclarationName(SyntaxNode node, out string name)
         {
             name = string.Empty;
@@ -646,6 +792,7 @@ public static class TypeSharpTypeChecker
         private readonly TypeScope? _parent;
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, SimpleType> _functions = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
         public TypeScope(TypeScope? parent)
@@ -658,6 +805,8 @@ public static class TypeSharpTypeChecker
         public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = returnType;
 
         public void DeclareType(string name) => _types.Add(name);
+
+        public void DeclareCompileTimeOnlyType(string name, CompileTimeOnlyTypeKind kind) => _compileTimeOnlyTypes[name] = kind;
 
         public bool ResolveValue(string name, out SimpleType type)
         {
@@ -691,7 +840,30 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        public bool ResolveCompileTimeOnlyType(string name, out CompileTimeOnlyTypeKind kind)
+        {
+            if (_compileTimeOnlyTypes.TryGetValue(name, out kind))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveCompileTimeOnlyType(name, out kind);
+            }
+
+            kind = CompileTimeOnlyTypeKind.None;
+            return false;
+        }
+
         public bool ResolveType(string name) => _types.Contains(name) || (_parent?.ResolveType(name) ?? false);
+    }
+
+    private enum CompileTimeOnlyTypeKind
+    {
+        None,
+        TypeLevelUnion,
+        StructuralShape
     }
 
     private readonly record struct SimpleType(string Name, bool IsNullable, bool IsKnown, bool IsNull)

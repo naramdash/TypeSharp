@@ -59,6 +59,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("CLI build stops before emission on type checker diagnostics", CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics),
+    ("CLI build stops before emission on public boundary diagnostics", CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
@@ -80,6 +81,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check succeeds on parse-clean project", CliCheckSucceedsOnParseCleanProject),
     ("CLI check emits JSON parser diagnostics", CliCheckEmitsJsonParserDiagnostics),
     ("CLI check emits JSON type checker diagnostics", CliCheckEmitsJsonTypeCheckerDiagnostics),
+    ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
     ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
     ("language server returns hover for bound symbols", LanguageServerReturnsHoverForBoundSymbols),
@@ -163,6 +165,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS1004",
             "TS2001",
             "TS2201",
+            "TS2204",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -1149,6 +1152,37 @@ static void CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "PublicBoundaryBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.PublicBoundaryBuild
+
+            type LocalAmount = decimal | string
+
+            export fun leak(input: LocalAmount): string = "bad"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2204\"", error.ToString());
+        AssertContains("Type-level union cannot appear in public API. Use a nominal union or interface.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when public boundary diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "PublicBoundaryBuild.Generated.csproj")), "Build should not emit generated project when public boundary diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "PublicBoundaryBuild.dll")), "Build should not emit generated assembly when public boundary diagnostics contain errors.");
+    });
+}
+
 static void ManifestLoaderReportsInvalidManifestShape()
 {
     WithWorkspace(root =>
@@ -1654,6 +1688,31 @@ static void CliCheckEmitsJsonTypeCheckerDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2201\"", error.ToString());
         AssertContains("Cannot return expression of type 'int' from function returning 'string'.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonPublicBoundaryDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("PublicBoundaryJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.PublicBoundaryJson
+
+            type LocalAmount = decimal | string
+
+            export fun leak(input: LocalAmount): string = "bad"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2204\"", error.ToString());
+        AssertContains("Type-level union cannot appear in public API. Use a nominal union or interface.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }

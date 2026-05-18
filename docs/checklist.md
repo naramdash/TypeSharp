@@ -99,7 +99,7 @@
 - [x] `Option<T>`
 - [x] `Result<T, E>`
 - [x] nominal closed union type
-- [ ] type-level union alias
+- [x] type-level union alias
 - [ ] union narrowing
 - [ ] pattern matching
 - [ ] null safety

@@ -110,6 +110,15 @@ public static class DiagnosticDescriptors
         "A value expression has a known type that is not assignable to the explicit annotation or return type.",
         "Change the expression, change the annotation, or add an explicit conversion once conversions are supported.");
 
+    public static readonly DiagnosticDescriptor PublicBoundaryTypeLeak = new(
+        "TS2204",
+        "Compile-time type leaked through public boundary",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Type-level union cannot appear in public API. Use a nominal union or interface.",
+        "Type-level unions and structural shapes are compile-time TypeSharp types and do not have stable CLR metadata representation.",
+        "Replace the public type with a nominal union, nominal interface, or wrapper type.");
+
     public static readonly DiagnosticDescriptor MissingReference = new(
         "TS2401",
         "Missing referenced assembly or namespace",
@@ -178,6 +187,7 @@ public static class DiagnosticDescriptors
         UnexpectedToken,
         UnresolvedName,
         TypeMismatch,
+        PublicBoundaryTypeLeak,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,
