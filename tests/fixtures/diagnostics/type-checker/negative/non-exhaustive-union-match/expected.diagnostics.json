@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for union 'PaymentStatus'. Missing cases: Failed.",
+      "file": "input.tysh",
+      "start": { "line": 10, "column": 3 },
+      "end": { "line": 13, "column": 4 }
+    }
+  ]
+}

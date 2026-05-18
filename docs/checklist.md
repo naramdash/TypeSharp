@@ -101,7 +101,7 @@
 - [x] nominal closed union type
 - [x] type-level union alias
 - [ ] union narrowing
-- [ ] pattern matching
+- [x] pattern matching
 - [ ] null safety
 - [ ] basic structural type checking
 - [ ] `Task`/`Task<T>` async interop

@@ -16,9 +16,11 @@ public static class CSharpSourceBackend
         private readonly StringBuilder _builder = new();
         private readonly HashSet<string> _constructorCandidateNames = new(StringComparer.Ordinal);
         private readonly Dictionary<string, RecordShape> _records = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, UnionShape> _unions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseFactories = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseValues = new(StringComparer.Ordinal);
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
+        private int _temporaryIndex;
 
         public string Emit(SyntaxNode root)
         {
@@ -77,7 +79,8 @@ public static class CSharpSourceBackend
                 _builder.AppendLine($"using {import};");
             }
 
-            if (unions.Length > 0 && !imports.Usings.Contains("TypeSharp.Runtime", StringComparer.Ordinal))
+            var needsRuntime = unions.Length > 0 || ContainsNode(root, SyntaxKind.MatchExpression);
+            if (needsRuntime && !imports.Usings.Contains("TypeSharp.Runtime", StringComparer.Ordinal))
             {
                 _builder.AppendLine("using TypeSharp.Runtime;");
             }
@@ -87,7 +90,7 @@ public static class CSharpSourceBackend
                 _builder.AppendLine($"using static {import};");
             }
 
-            if (imports.Usings.Count > 0 || imports.StaticUsings.Count > 0 || unions.Length > 0)
+            if (imports.Usings.Count > 0 || imports.StaticUsings.Count > 0 || needsRuntime)
             {
                 _builder.AppendLine();
             }
@@ -174,7 +177,9 @@ public static class CSharpSourceBackend
                 return;
             }
 
-            foreach (var unionCase in GetUnionCases(node))
+            var cases = GetUnionCases(node);
+            _unions[unionName] = new UnionShape(unionName, cases);
+            foreach (var unionCase in cases)
             {
                 if (unionCase.Parameters.Count == 0)
                 {
@@ -580,7 +585,7 @@ public static class CSharpSourceBackend
                 }
                 else
                 {
-                    _builder.AppendLine($"            return {EmitExpression(expression)};");
+                    _builder.AppendLine($"            return {EmitExpression(expression, returnType)};");
                 }
 
                 _builder.AppendLine("        }");
@@ -766,7 +771,7 @@ public static class CSharpSourceBackend
             _builder.AppendLine($"            var {name} = {EmitExpression(initializer)};");
         }
 
-        private string EmitExpression(SyntaxNode? node)
+        private string EmitExpression(SyntaxNode? node, string? expectedType = null)
         {
             if (node is null)
             {
@@ -786,6 +791,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.LambdaExpression => EmitLambda(node),
                 SyntaxKind.AssignmentExpression => EmitAssignment(node),
                 SyntaxKind.RecordUpdateExpression => EmitRecordUpdate(node),
+                SyntaxKind.MatchExpression => EmitMatch(node, expectedType ?? "object"),
                 _ => "default(object)"
             };
         }
@@ -825,7 +831,7 @@ public static class CSharpSourceBackend
                 .SkipWhile(child => !ReferenceEquals(child, callee))
                 .Skip(1)
                 .Where(child => !child.IsToken)
-                .Select(EmitExpression);
+                .Select(child => EmitExpression(child));
 
             var argumentList = string.Join(", ", arguments);
             if (TryGetCallTarget(callee, out var callTarget))
@@ -887,6 +893,58 @@ public static class CSharpSourceBackend
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
         }
 
+        private string EmitMatch(SyntaxNode node, string resultType)
+        {
+            var input = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.MatchArm);
+            if (input is null || !TryGetUnionShape(input, out var union))
+            {
+                return "default(object)";
+            }
+
+            var matchValueName = $"__match{_temporaryIndex++}";
+            var builder = new StringBuilder();
+            builder.AppendLine($"new System.Func<{resultType}>(delegate()");
+            builder.AppendLine("            {");
+            builder.AppendLine($"                var {matchValueName} = {EmitExpression(input)};");
+
+            var wroteArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                if (!TryGetMatchArm(arm, union, out var unionCase, out var payloadVariable, out var expression))
+                {
+                    continue;
+                }
+
+                if (wroteArm)
+                {
+                    builder.AppendLine();
+                }
+
+                var predicate = unionCase.Parameters.Count == 0
+                    ? "IsPayloadlessCase"
+                    : "IsPayloadCase";
+                builder.AppendLine($"                if (TypeSharpPattern.{predicate}({matchValueName}, {unionCase.Tag}))");
+                builder.AppendLine("                {");
+                if (payloadVariable.Length > 0 && unionCase.Parameters.Count == 1)
+                {
+                    builder.AppendLine($"                    var {payloadVariable} = TypeSharpPattern.RequirePayload<{unionCase.Parameters[0].Type}>({matchValueName}, {unionCase.Tag});");
+                }
+
+                builder.AppendLine($"                    return {EmitExpression(expression)};");
+                builder.AppendLine("                }");
+                wroteArm = true;
+            }
+
+            if (wroteArm)
+            {
+                builder.AppendLine();
+            }
+
+            builder.AppendLine($"                throw TypeSharpPattern.NoMatch({matchValueName});");
+            builder.Append("            })()");
+            return builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
+        }
+
         private string EmitRecordUpdate(SyntaxNode node)
         {
             var receiver = node.Children.FirstOrDefault(child => !child.IsToken);
@@ -933,6 +991,52 @@ public static class CSharpSourceBackend
             }
 
             return _records.TryGetValue(typeName, out record);
+        }
+
+        private bool TryGetUnionShape(SyntaxNode receiver, out UnionShape union)
+        {
+            union = default;
+            if (!TryGetExpressionType(receiver, out var typeName))
+            {
+                return false;
+            }
+
+            return _unions.TryGetValue(typeName, out union);
+        }
+
+        private static bool TryGetMatchArm(
+            SyntaxNode arm,
+            UnionShape union,
+            out UnionCaseShape unionCase,
+            out string payloadVariable,
+            out SyntaxNode? expression)
+        {
+            unionCase = default;
+            payloadVariable = string.Empty;
+            expression = null;
+
+            var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            var caseName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (caseName.Length == 0)
+            {
+                return false;
+            }
+
+            var foundCase = union.Cases.FirstOrDefault(candidate => string.Equals(candidate.Name, caseName, StringComparison.Ordinal));
+            if (foundCase.Name is null)
+            {
+                return false;
+            }
+
+            unionCase = foundCase;
+            var argumentPattern = pattern?
+                .Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.PatternArgumentList)?
+                .Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            payloadVariable = argumentPattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+            return expression is not null;
         }
 
         private bool TryGetExpressionType(SyntaxNode node, out string typeName)
@@ -1369,6 +1473,16 @@ public static class CSharpSourceBackend
             return value.Length > 0;
         }
 
+        private static bool ContainsNode(SyntaxNode node, SyntaxKind kind)
+        {
+            if (node.Kind == kind)
+            {
+                return true;
+            }
+
+            return node.Children.Any(child => !child.IsToken && ContainsNode(child, kind));
+        }
+
         private static IEnumerable<string> GetNamedImportIdentifiers(SyntaxNode node)
         {
             var insideBraces = false;
@@ -1400,6 +1514,8 @@ public static class CSharpSourceBackend
         private readonly record struct CSharpParameter(string Type, string Name);
 
         private readonly record struct RecordShape(string Name, IReadOnlyList<CSharpParameter> Parameters);
+
+        private readonly record struct UnionShape(string Name, IReadOnlyList<UnionCaseShape> Cases);
 
         private readonly record struct UnionCaseShape(
             string Name,

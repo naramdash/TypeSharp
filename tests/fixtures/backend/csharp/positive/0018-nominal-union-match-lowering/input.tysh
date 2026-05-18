@@ -1,0 +1,14 @@
+namespace Samples.Unions
+
+public union PaymentStatus {
+  Pending
+  Paid(at: string)
+  Failed(reason: string)
+}
+
+export fun describe(status: PaymentStatus): string =
+  match status {
+    Pending => "Waiting"
+    Paid(at) => $"Paid:{at}"
+    Failed(reason) => $"Failed:{reason}"
+  }

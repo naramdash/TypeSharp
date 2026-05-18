@@ -101,7 +101,20 @@ Done:
 - Reopened this packet for a 2026-05-19 repo-wide refresh instead of creating a duplicate task packet for the same topic.
 
 Remaining:
-- Commit this refresh note.
+- None.
 
 Blocked:
 - None.
+
+## 2026-05-19 Net48 Recheck
+
+Recheck Start Time: 2026-05-19 03:43:39 +09:00
+Recheck End Time: 2026-05-19 03:46:26 +09:00
+
+Trigger:
+- User reiterated that the build target moved from `net481` to `net48` and asked to refresh the full repository with that in mind.
+
+Result:
+- Pass. `rg -n "net481" .` returns no stale code, project, or test target references. Remaining matches are intentional latest Framework profile comparison, migration history, or this task packet.
+- Pass. `src/TypeSharp.Runtime/TypeSharp.Runtime.csproj` targets `net48`; compiler/CLI hosts remain `net10.0`.
+- Pass. Current in-flight nominal union match work keeps generated assembly and C# consumer smoke paths on `net48`.

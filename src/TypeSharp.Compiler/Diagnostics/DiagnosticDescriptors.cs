@@ -119,6 +119,15 @@ public static class DiagnosticDescriptors
         "Type-level unions and structural shapes are compile-time TypeSharp types and do not have stable CLR metadata representation.",
         "Replace the public type with a nominal union, nominal interface, or wrapper type.");
 
+    public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
+        "TS2203",
+        "Non-exhaustive match",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Non-exhaustive match.",
+        "A match expression over a known nominal union must handle every declared case.",
+        "Add arms for the missing union cases.");
+
     public static readonly DiagnosticDescriptor MissingReference = new(
         "TS2401",
         "Missing referenced assembly or namespace",
@@ -187,6 +196,7 @@ public static class DiagnosticDescriptors
         UnexpectedToken,
         UnresolvedName,
         TypeMismatch,
+        NonExhaustiveMatch,
         PublicBoundaryTypeLeak,
         MissingReference,
         AmbiguousCSharpOverload,

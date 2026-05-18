@@ -106,6 +106,10 @@ public static class TypeSharpTypeChecker
                         if (TryGetDeclarationName(child, out var typeName))
                         {
                             scope.DeclareType(typeName);
+                            if (child.Kind == SyntaxKind.UnionDeclaration)
+                            {
+                                scope.DeclareUnion(typeName, GetUnionCases(child));
+                            }
                         }
 
                         break;
@@ -358,6 +362,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.CallExpression => InferCall(node, scope),
                 SyntaxKind.BlockExpression => CheckBlock(node, new TypeScope(scope)),
                 SyntaxKind.IfExpression => InferIf(node, scope),
+                SyntaxKind.MatchExpression => InferMatch(node, scope),
                 SyntaxKind.BinaryExpression => InferBinary(node, scope),
                 SyntaxKind.MemberAccessExpression or SyntaxKind.IndexerExpression => SimpleType.Unknown,
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
@@ -446,6 +451,62 @@ public static class TypeSharpTypeChecker
                 foreach (var branch in elseClause.Children.Where(child => !child.IsToken))
                 {
                     branchTypes.Add(CheckExpression(branch, scope));
+                }
+            }
+
+            return MergeBranchTypes(branchTypes);
+        }
+
+        private SimpleType InferMatch(SyntaxNode node, TypeScope scope)
+        {
+            var input = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.MatchArm);
+            var inputType = input is null ? SimpleType.Unknown : CheckExpression(input, scope);
+            var branchTypes = new List<SimpleType>();
+
+            if (inputType.IsKnown && scope.ResolveUnion(inputType.Name, out var union))
+            {
+                var coveredCases = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+                {
+                    var armScope = new TypeScope(scope);
+                    if (TryGetUnionArm(arm, union, out var unionCase, out var payloadName, out var expression))
+                    {
+                        coveredCases.Add(unionCase.Name);
+                        if (payloadName.Length > 0 && unionCase.Parameters.Count == 1)
+                        {
+                            armScope.DeclareValue(payloadName, SimpleType.Named(unionCase.Parameters[0].Type));
+                        }
+                    }
+
+                    if (expression is not null)
+                    {
+                        branchTypes.Add(CheckExpression(expression, armScope));
+                    }
+                }
+
+                var missingCases = union.Cases
+                    .Where(unionCase => !coveredCases.Contains(unionCase.Name))
+                    .Select(unionCase => unionCase.Name)
+                    .ToArray();
+                if (missingCases.Length > 0)
+                {
+                    _diagnostics.Add(new Diagnostic(
+                        DiagnosticDescriptors.NonExhaustiveMatch.Code,
+                        DiagnosticDescriptors.NonExhaustiveMatch.DefaultSeverity,
+                        $"Non-exhaustive match for union '{union.Name}'. Missing cases: {string.Join(", ", missingCases)}.",
+                        _file,
+                        node.Span));
+                }
+
+                return MergeBranchTypes(branchTypes);
+            }
+
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                var expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+                if (expression is not null)
+                {
+                    branchTypes.Add(CheckExpression(expression, scope));
                 }
             }
 
@@ -716,6 +777,80 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        private static IReadOnlyList<UnionCaseInfo> GetUnionCases(SyntaxNode declaration)
+        {
+            var cases = new List<UnionCaseInfo>();
+            foreach (var unionCase in declaration.Children.Where(child => child.Kind == SyntaxKind.UnionCase))
+            {
+                var name = unionCase.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                cases.Add(new UnionCaseInfo(name, GetParameters(unionCase)));
+            }
+
+            return cases;
+        }
+
+        private static IReadOnlyList<ParameterInfo> GetParameters(SyntaxNode declaration)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return [];
+            }
+
+            var parameters = new List<ParameterInfo>();
+            foreach (var parameter in parameterList.Children.Where(child => child.Kind == SyntaxKind.Parameter))
+            {
+                var name = parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                if (TryGetDirectTypeAnnotation(parameter, out var annotation) &&
+                    TryGetType(annotation, out var type) &&
+                    name.Length > 0)
+                {
+                    parameters.Add(new ParameterInfo(name, type.Name));
+                }
+            }
+
+            return parameters;
+        }
+
+        private static bool TryGetUnionArm(
+            SyntaxNode arm,
+            UnionInfo union,
+            out UnionCaseInfo unionCase,
+            out string payloadName,
+            out SyntaxNode? expression)
+        {
+            unionCase = default;
+            payloadName = string.Empty;
+            expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+
+            var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            var caseName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (caseName.Length == 0)
+            {
+                return false;
+            }
+
+            var foundCase = union.Cases.FirstOrDefault(candidate => string.Equals(candidate.Name, caseName, StringComparison.Ordinal));
+            if (foundCase.Name is null)
+            {
+                return false;
+            }
+
+            unionCase = foundCase;
+            var argumentPattern = pattern?
+                .Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.PatternArgumentList)?
+                .Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            payloadName = argumentPattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            return true;
+        }
+
         private static bool TryGetSimpleTypeName(SyntaxNode node, out string name)
         {
             name = string.Empty;
@@ -793,6 +928,7 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, SimpleType> _functions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, UnionInfo> _unions = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
         public TypeScope(TypeScope? parent)
@@ -807,6 +943,8 @@ public static class TypeSharpTypeChecker
         public void DeclareType(string name) => _types.Add(name);
 
         public void DeclareCompileTimeOnlyType(string name, CompileTimeOnlyTypeKind kind) => _compileTimeOnlyTypes[name] = kind;
+
+        public void DeclareUnion(string name, IReadOnlyList<UnionCaseInfo> cases) => _unions[name] = new UnionInfo(name, cases);
 
         public bool ResolveValue(string name, out SimpleType type)
         {
@@ -856,8 +994,30 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        public bool ResolveUnion(string name, out UnionInfo union)
+        {
+            if (_unions.TryGetValue(name, out union))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveUnion(name, out union);
+            }
+
+            union = default;
+            return false;
+        }
+
         public bool ResolveType(string name) => _types.Contains(name) || (_parent?.ResolveType(name) ?? false);
     }
+
+    private readonly record struct UnionInfo(string Name, IReadOnlyList<UnionCaseInfo> Cases);
+
+    private readonly record struct UnionCaseInfo(string Name, IReadOnlyList<ParameterInfo> Parameters);
+
+    private readonly record struct ParameterInfo(string Name, string Type);
 
     private enum CompileTimeOnlyTypeKind
     {

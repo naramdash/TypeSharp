@@ -60,6 +60,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("CLI build stops before emission on type checker diagnostics", CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics),
     ("CLI build stops before emission on public boundary diagnostics", CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics),
+    ("CLI build stops before emission on non-exhaustive match", CliBuildStopsBeforeEmissionOnNonExhaustiveMatch),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
@@ -114,6 +115,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles immutable record API", CliBuildCompilesImmutableRecordApi),
     ("CLI build compiles record update lowering", CliBuildCompilesRecordUpdateLowering),
     ("CLI build compiles nominal union API", CliBuildCompilesNominalUnionApi),
+    ("CLI build compiles nominal union match lowering", CliBuildCompilesNominalUnionMatchLowering),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -165,6 +167,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS1004",
             "TS2001",
             "TS2201",
+            "TS2203",
             "TS2204",
             "TS2401",
             "TS2402",
@@ -1180,6 +1183,45 @@ static void CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when public boundary diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "PublicBoundaryBuild.Generated.csproj")), "Build should not emit generated project when public boundary diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "PublicBoundaryBuild.dll")), "Build should not emit generated assembly when public boundary diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNonExhaustiveMatch()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NonExhaustiveMatchBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NonExhaustiveMatchBuild
+
+            union PaymentStatus {
+              Pending
+              Paid(at: string)
+              Failed(reason: string)
+            }
+
+            export fun describe(status: PaymentStatus): string =
+              match status {
+                Pending => "Waiting"
+                Paid(at) => at
+              }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2203\"", error.ToString());
+        AssertContains("Missing cases: Failed", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when non-exhaustive match diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NonExhaustiveMatchBuild.Generated.csproj")), "Build should not emit generated project when non-exhaustive match diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NonExhaustiveMatchBuild.dll")), "Build should not emit generated assembly when non-exhaustive match diagnostics contain errors.");
     });
 }
 
@@ -3552,6 +3594,116 @@ static void CliBuildCompilesNominalUnionApi()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated nominal union APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesNominalUnionMatchLowering()
+{
+    WithWorkspace(root =>
+    {
+        var runtimeAssemblyPath = BuildRepositoryAssembly(
+            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+        var libRoot = Path.Combine(root, "lib");
+        Directory.CreateDirectory(libRoot);
+        File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"));
+
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnionMatchApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Unions"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/TypeSharp.Runtime.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Unions
+
+            public union PaymentStatus {
+              Pending
+              Paid(at: string)
+              Failed(reason: string)
+            }
+
+            export fun describe(status: PaymentStatus): string =
+              match status {
+                Pending => "Waiting"
+                Paid(at) => $"Paid:{at}"
+                Failed(reason) => $"Failed:{reason}"
+              }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/UnionMatchApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("TypeSharpPattern.IsPayloadlessCase(__match0, 0)", generatedSource);
+        AssertContains("TypeSharpPattern.IsPayloadCase(__match0, 1)", generatedSource);
+        AssertContains("var at = TypeSharpPattern.RequirePayload<string>(__match0, 1);", generatedSource);
+        AssertContains("throw TypeSharpPattern.NoMatch(__match0);", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "UnionMatchApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with nominal union match lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "UnionMatchConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>UnionMatchConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="UnionMatchApi">
+                  <HintPath>../generated/bin/Debug/net48/UnionMatchApi.dll</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Runtime">
+                  <HintPath>../lib/TypeSharp.Runtime.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace UnionMatchConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.Unions.Module.describe(Samples.Unions.PaymentStatus.Pending)
+                            + ":"
+                            + Samples.Unions.Module.describe(Samples.Unions.PaymentStatus.Paid("now"))
+                            + ":"
+                            + Samples.Unions.Module.describe(Samples.Unions.PaymentStatus.Failed("late"));
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build UnionMatchConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated nominal union match lowering.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
