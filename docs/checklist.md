@@ -128,7 +128,7 @@
 - [x] manifest parser and project loader
 - [ ] binder
 - [x] binder/name resolution skeleton
-- [ ] metadata reader
+- [x] metadata reader
 - [x] C# metadata reader skeleton
 - [x] C# metadata reader local public symbol index
 - [x] C# metadata reader params parameter flag
