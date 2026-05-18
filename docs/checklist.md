@@ -124,6 +124,7 @@
 - [x] binder/name resolution skeleton
 - [ ] metadata reader
 - [x] C# metadata reader skeleton
+- [x] C# metadata reader local public symbol index
 - [x] C# reference resolver skeleton
 - [x] C# metadata diagnostics pipeline integration
 - [ ] reference resolver for framework assembly and local DLL
@@ -237,6 +238,7 @@
 - [x] TypeSharp.Core Option/Result behavior smoke tests
 - [x] C# reference resolver smoke tests
 - [x] C# metadata reader smoke tests
+- [x] C# metadata reader local public symbol index smoke tests
 - [x] C# metadata pipeline diagnostics smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests

@@ -34,6 +34,7 @@ var tests = new (string Name, Action Body)[]
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
     ("metadata reader creates framework assembly placeholders", MetadataReaderCreatesFrameworkAssemblyPlaceholders),
     ("metadata reader creates local assembly placeholders", MetadataReaderCreatesLocalAssemblyPlaceholders),
+    ("metadata reader indexes local public symbols", MetadataReaderIndexesLocalPublicSymbols),
     ("metadata reader preserves reference resolution diagnostics", MetadataReaderPreservesReferenceResolutionDiagnostics),
     ("metadata reader reports missing local metadata inputs", MetadataReaderReportsMissingLocalMetadataInputs),
     ("checker reports missing reference diagnostics", CheckerReportsMissingReferenceDiagnostics),
@@ -479,6 +480,8 @@ static void MetadataReaderCreatesLocalAssemblyPlaceholders()
 {
     WithWorkspace(root =>
     {
+        BuildLegacyReferenceDll(root, "Legacy.Billing");
+        BuildLegacyReferenceDll(root, "Legacy.Reporting");
         var manifestPath = WriteManifest(root, """
             [project]
             name = "LocalMetadata"
@@ -489,8 +492,6 @@ static void MetadataReaderCreatesLocalAssemblyPlaceholders()
               "lib/Legacy.Reporting.dll"
             ]
             """);
-        WriteFile(root, "lib/Legacy.Billing.dll", string.Empty);
-        WriteFile(root, "lib/Legacy.Reporting.dll", string.Empty);
 
         var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
         var references = TypeSharpReferenceResolver.Resolve(manifest);
@@ -504,6 +505,55 @@ static void MetadataReaderCreatesLocalAssemblyPlaceholders()
         AssertSequence(["lib/Legacy.Billing.dll", "lib/Legacy.Reporting.dll"], metadata.Assemblies.Select(assembly => assembly.RelativePath ?? string.Empty).ToArray());
         AssertTrue(metadata.Assemblies.All(assembly => assembly.IsLocalAssembly), "Local placeholders should report local kind.");
         AssertTrue(metadata.Assemblies.All(assembly => assembly.Path is not null && Path.IsPathFullyQualified(assembly.Path)), "Local placeholders should keep full paths.");
+        AssertTrue(metadata.Assemblies.All(assembly => assembly.Types.Any()), "Local metadata should include public type symbols.");
+    });
+}
+
+static void MetadataReaderIndexesLocalPublicSymbols()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LocalMetadataSymbols"
+
+            [references]
+            paths = [
+              "lib/Legacy.Tools.dll"
+            ]
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var references = TypeSharpReferenceResolver.Resolve(manifest);
+        var metadata = TypeSharpMetadataReader.Read(references);
+
+        AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
+        var assembly = metadata.Assemblies.Single();
+        AssertSequence(
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyFormatter"],
+            assembly.Types.Select(type => type.FullName).ToArray());
+
+        var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
+        AssertSequence(["Echo"], legacyApi.Methods.Select(method => method.Name).ToArray());
+        AssertSequence(["value"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string"], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertSequence([MetadataByRefKind.None], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.ByRefKind).ToArray());
+
+        var legacyFormatter = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFormatter"), "LegacyFormatter metadata should be present.");
+        AssertSequence(["Prefix"], legacyFormatter.Properties.Select(property => property.Name).ToArray());
+        AssertSequence(["Format"], legacyFormatter.Methods.Select(method => method.Name).ToArray());
+
+        var legacyByRef = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByRef"), "LegacyByRef metadata should be present.");
+        var tryParse = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "TryParseCount"), "TryParseCount metadata should be present.");
+        AssertSequence(["text", "value"], tryParse.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence([MetadataByRefKind.None, MetadataByRefKind.Out], tryParse.Parameters.Select(parameter => parameter.ByRefKind).ToArray());
+
+        var addOne = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "AddOne"), "AddOne metadata should be present.");
+        AssertSequence([MetadataByRefKind.In], addOne.Parameters.Select(parameter => parameter.ByRefKind).ToArray());
+
+        var increment = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "Increment"), "Increment metadata should be present.");
+        AssertSequence([MetadataByRefKind.Ref], increment.Parameters.Select(parameter => parameter.ByRefKind).ToArray());
     });
 }
 

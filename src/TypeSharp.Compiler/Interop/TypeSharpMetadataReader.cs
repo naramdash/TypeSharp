@@ -1,4 +1,6 @@
 using TypeSharp.Compiler.Diagnostics;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 
 namespace TypeSharp.Compiler.Interop;
 
@@ -31,15 +33,164 @@ public static class TypeSharpMetadataReader
                 continue;
             }
 
+            var types = reference.Kind == ResolvedReferenceKind.LocalAssembly
+                ? ReadLocalPublicTypes(reference, diagnostics)
+                : [];
+
             assemblies.Add(new MetadataAssemblySymbol(
                 reference.Identity,
                 reference.Kind,
                 reference.OriginalText,
                 reference.Path,
-                reference.RelativePath));
+                reference.RelativePath)
+            {
+                Types = types
+            });
         }
 
         return assemblies;
+    }
+
+    private static IReadOnlyList<MetadataTypeSymbol> ReadLocalPublicTypes(
+        ResolvedReference reference,
+        List<Diagnostic> diagnostics)
+    {
+        if (string.IsNullOrWhiteSpace(reference.Path))
+        {
+            return [];
+        }
+
+        var types = new List<MetadataTypeSymbol>();
+
+        try
+        {
+            using var stream = File.Open(reference.Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var peReader = new PEReader(stream);
+            if (!peReader.HasMetadata)
+            {
+                diagnostics.Add(DiagnosticFactory.Manifest(
+                    DiagnosticDescriptors.MissingReference,
+                    $"Referenced assembly path '{reference.RelativePath ?? reference.OriginalText}' does not contain readable metadata.",
+                    reference.Path));
+                return [];
+            }
+
+            var reader = peReader.GetMetadataReader();
+            foreach (var handle in reader.TypeDefinitions)
+            {
+                var type = reader.GetTypeDefinition(handle);
+                if (!IsPublicTopLevelType(type.Attributes))
+                {
+                    continue;
+                }
+
+                types.Add(new MetadataTypeSymbol(
+                    reader.GetString(type.Namespace),
+                    reader.GetString(type.Name),
+                    ReadPublicMethods(reader, type),
+                    ReadPublicProperties(reader, type)));
+            }
+        }
+        catch (BadImageFormatException)
+        {
+            diagnostics.Add(DiagnosticFactory.Manifest(
+                DiagnosticDescriptors.MissingReference,
+                $"Referenced assembly path '{reference.RelativePath ?? reference.OriginalText}' does not contain readable metadata.",
+                reference.Path));
+        }
+
+        return types;
+    }
+
+    private static IReadOnlyList<MetadataMethodSymbol> ReadPublicMethods(MetadataReader reader, TypeDefinition type)
+    {
+        var methods = new List<MetadataMethodSymbol>();
+        foreach (var handle in type.GetMethods())
+        {
+            var method = reader.GetMethodDefinition(handle);
+            if (!method.Attributes.HasFlag(System.Reflection.MethodAttributes.Public) ||
+                method.Attributes.HasFlag(System.Reflection.MethodAttributes.SpecialName))
+            {
+                continue;
+            }
+
+            methods.Add(ReadMethod(reader, method));
+        }
+
+        return methods;
+    }
+
+    private static MetadataMethodSymbol ReadMethod(MetadataReader reader, MethodDefinition method)
+    {
+        var provider = new SimpleSignatureTypeProvider();
+        var signature = method.DecodeSignature(provider, genericContext: null);
+        var parameterDefinitions = method.GetParameters()
+            .Select(handle => reader.GetParameter(handle))
+            .Where(parameter => parameter.SequenceNumber > 0)
+            .ToDictionary(parameter => parameter.SequenceNumber);
+
+        var parameters = new List<MetadataParameterSymbol>();
+        for (var index = 0; index < signature.ParameterTypes.Length; index++)
+        {
+            var sequence = index + 1;
+            parameterDefinitions.TryGetValue(sequence, out var parameter);
+            var type = signature.ParameterTypes[index];
+            parameters.Add(new MetadataParameterSymbol(
+                parameter.Name.IsNil ? string.Empty : reader.GetString(parameter.Name),
+                type.Name,
+                GetByRefKind(type, parameter.Attributes)));
+        }
+
+        return new MetadataMethodSymbol(
+            reader.GetString(method.Name),
+            signature.ReturnType.Name,
+            parameters);
+    }
+
+    private static IReadOnlyList<MetadataPropertySymbol> ReadPublicProperties(MetadataReader reader, TypeDefinition type)
+    {
+        var properties = new List<MetadataPropertySymbol>();
+        foreach (var handle in type.GetProperties())
+        {
+            var property = reader.GetPropertyDefinition(handle);
+            var accessors = property.GetAccessors();
+            if (IsPublicAccessor(reader, accessors.Getter) || IsPublicAccessor(reader, accessors.Setter))
+            {
+                properties.Add(new MetadataPropertySymbol(reader.GetString(property.Name)));
+            }
+        }
+
+        return properties;
+    }
+
+    private static bool IsPublicAccessor(MetadataReader reader, MethodDefinitionHandle handle)
+    {
+        if (handle.IsNil)
+        {
+            return false;
+        }
+
+        return reader.GetMethodDefinition(handle).Attributes.HasFlag(System.Reflection.MethodAttributes.Public);
+    }
+
+    private static bool IsPublicTopLevelType(System.Reflection.TypeAttributes attributes) =>
+        attributes.HasFlag(System.Reflection.TypeAttributes.Public);
+
+    private static MetadataByRefKind GetByRefKind(DecodedType type, System.Reflection.ParameterAttributes attributes)
+    {
+        if (!type.IsByRef)
+        {
+            return MetadataByRefKind.None;
+        }
+
+        if (attributes.HasFlag(System.Reflection.ParameterAttributes.Out))
+        {
+            return MetadataByRefKind.Out;
+        }
+
+        return attributes.HasFlag(System.Reflection.ParameterAttributes.In)
+            ? MetadataByRefKind.In
+            : MetadataByRefKind.Ref;
     }
 
     private static bool CanReadLocalReference(ResolvedReference reference, List<Diagnostic> diagnostics)
@@ -68,6 +219,78 @@ public static class TypeSharpMetadataReader
                 $"Referenced assembly path '{displayPath}' cannot be read.",
                 diagnosticFile));
             return false;
+        }
+    }
+
+    private readonly record struct DecodedType(string Name, bool IsByRef)
+    {
+        public DecodedType WithByRef() => this with { IsByRef = true };
+    }
+
+    private sealed class SimpleSignatureTypeProvider : ISignatureTypeProvider<DecodedType, object?>
+    {
+        public DecodedType GetArrayType(DecodedType elementType, ArrayShape shape) => new($"{elementType.Name}[]", IsByRef: false);
+
+        public DecodedType GetByReferenceType(DecodedType elementType) => elementType.WithByRef();
+
+        public DecodedType GetFunctionPointerType(MethodSignature<DecodedType> signature) => new("function*", IsByRef: false);
+
+        public DecodedType GetGenericInstantiation(DecodedType genericType, System.Collections.Immutable.ImmutableArray<DecodedType> typeArguments) =>
+            new($"{genericType.Name}<{string.Join(", ", typeArguments.Select(argument => argument.Name))}>", IsByRef: false);
+
+        public DecodedType GetGenericMethodParameter(object? genericContext, int index) => new($"!!{index}", IsByRef: false);
+
+        public DecodedType GetGenericTypeParameter(object? genericContext, int index) => new($"!{index}", IsByRef: false);
+
+        public DecodedType GetModifiedType(DecodedType modifier, DecodedType unmodifiedType, bool isRequired) => unmodifiedType;
+
+        public DecodedType GetPinnedType(DecodedType elementType) => elementType;
+
+        public DecodedType GetPointerType(DecodedType elementType) => new($"{elementType.Name}*", IsByRef: false);
+
+        public DecodedType GetPrimitiveType(PrimitiveTypeCode typeCode) =>
+            new(typeCode switch
+            {
+                PrimitiveTypeCode.Boolean => "bool",
+                PrimitiveTypeCode.Byte => "byte",
+                PrimitiveTypeCode.Char => "char",
+                PrimitiveTypeCode.Double => "double",
+                PrimitiveTypeCode.Int16 => "short",
+                PrimitiveTypeCode.Int32 => "int",
+                PrimitiveTypeCode.Int64 => "long",
+                PrimitiveTypeCode.Object => "object",
+                PrimitiveTypeCode.SByte => "sbyte",
+                PrimitiveTypeCode.Single => "float",
+                PrimitiveTypeCode.String => "string",
+                PrimitiveTypeCode.UInt16 => "ushort",
+                PrimitiveTypeCode.UInt32 => "uint",
+                PrimitiveTypeCode.UInt64 => "ulong",
+                PrimitiveTypeCode.Void => "void",
+                _ => typeCode.ToString()
+            }, IsByRef: false);
+
+        public DecodedType GetSZArrayType(DecodedType elementType) => new($"{elementType.Name}[]", IsByRef: false);
+
+        public DecodedType GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+        {
+            var type = reader.GetTypeDefinition(handle);
+            return new(QualifiedName(reader, type.Namespace, type.Name), IsByRef: false);
+        }
+
+        public DecodedType GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+        {
+            var type = reader.GetTypeReference(handle);
+            return new(QualifiedName(reader, type.Namespace, type.Name), IsByRef: false);
+        }
+
+        public DecodedType GetTypeFromSpecification(MetadataReader reader, object? genericContext, TypeSpecificationHandle handle, byte rawTypeKind) =>
+            reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
+
+        private static string QualifiedName(MetadataReader reader, StringHandle namespaceHandle, StringHandle nameHandle)
+        {
+            var namespaceName = namespaceHandle.IsNil ? string.Empty : reader.GetString(namespaceHandle);
+            var name = reader.GetString(nameHandle);
+            return namespaceName.Length == 0 ? name : $"{namespaceName}.{name}";
         }
     }
 }
