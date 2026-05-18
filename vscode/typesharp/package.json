@@ -1,0 +1,36 @@
+{
+  "name": "typesharp-vscode",
+  "displayName": "TypeSharp",
+  "description": "Language support scaffold for TypeSharp .tysh source files.",
+  "version": "0.1.0",
+  "publisher": "typesharp",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "typesharp",
+        "aliases": [
+          "TypeSharp",
+          "typesharp"
+        ],
+        "extensions": [
+          ".tysh"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "typesharp",
+        "scopeName": "source.typesharp",
+        "path": "./syntaxes/typesharp.tmLanguage.json"
+      }
+    ]
+  }
+}

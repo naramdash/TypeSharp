@@ -1,0 +1,170 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "TypeSharp",
+  "scopeName": "source.typesharp",
+  "fileTypes": [
+    "tysh"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#attributes"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#operators"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.typesharp",
+          "begin": "/\\*\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.block.typesharp",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.documentation.typesharp",
+          "match": "///.*$"
+        },
+        {
+          "name": "comment.line.double-slash.typesharp",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.triple.typesharp",
+          "begin": "\\$?\"\"\"",
+          "end": "\"\"\""
+        },
+        {
+          "name": "string.quoted.double.typesharp",
+          "begin": "\\$?\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.typesharp",
+              "match": "\\\\."
+            },
+            {
+              "name": "meta.interpolation.typesharp",
+              "begin": "\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.typesharp",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.typesharp",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "variable.other.escaped.typesharp",
+          "begin": "`",
+          "end": "`"
+        }
+      ]
+    },
+    "attributes": {
+      "patterns": [
+        {
+          "name": "meta.attribute.typesharp",
+          "begin": "^\\s*\\[\\s*(?:[A-Za-z_][A-Za-z0-9_]*\\s*:\\s*)?[A-Za-z_][A-Za-z0-9_.]*",
+          "end": "\\]",
+          "patterns": [
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#numbers"
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.typesharp",
+          "match": "\\b(?:0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*|0b[01](?:_?[01])*|[0-9](?:_?[0-9])*(?:\\.[0-9](?:_?[0-9])*)?)(?:i8|i16|i32|i64|u8|u16|u32|u64|un|n|f32|f64|m)?\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.typesharp",
+          "match": "\\b(?:as|await|break|case|catch|continue|do|elif|else|finally|for|from|if|in|is|match|return|throw|try|using|when|where|while|with|yield)\\b"
+        },
+        {
+          "name": "storage.type.typesharp",
+          "match": "\\b(?:class|delegate|enum|extension|interface|module|namespace|record|struct|type|union)\\b"
+        },
+        {
+          "name": "storage.modifier.typesharp",
+          "match": "\\b(?:abstract|ambient|async|checked|default|dynamic|event|explicit|extern|field|get|global|implicit|init|inline|internal|interop|operator|override|params|partial|private|protected|public|readonly|ref|reflect|required|sealed|set|static|throws|unchecked|unsafe|virtual)\\b"
+        },
+        {
+          "name": "keyword.declaration.typesharp",
+          "match": "\\b(?:export|fun|import|let|literal|mut|new|open)\\b"
+        },
+        {
+          "name": "constant.language.typesharp",
+          "match": "\\b(?:base|false|null|this|true|unknown|unit|never)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "support.type.primitive.typesharp",
+          "match": "\\b(?:bool|byte|char|decimal|double|float|int|long|object|sbyte|short|string|uint|ulong|ushort|void)\\b"
+        },
+        {
+          "name": "entity.name.type.typesharp",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.typesharp",
+          "match": "\\|>|<\\||=>|->|<-|\\.\\.\\.|\\.\\.|\\?\\.|\\?\\?|\\?\\?=|==|!=|===|!==|<=|>=|&&|\\|\\||\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|::|[+\\-*/%&|^~!?:=<>.]"
+        }
+      ]
+    }
+  }
+}

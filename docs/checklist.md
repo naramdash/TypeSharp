@@ -214,8 +214,8 @@
 - [x] CLI `run` forwards `--` arguments to `main(args: string[])`
 - [x] CLI `run` unsupported main signature diagnostics
 - [x] formatter convention 문서
-- [ ] VS Code extension scaffold
-- [ ] VS Code syntax highlighting
+- [x] VS Code extension scaffold
+- [x] VS Code syntax highlighting
 - [ ] LSP diagnostics
 - [ ] LSP hover
 - [ ] LSP go-to-definition

@@ -1,6 +1,6 @@
 # TypeSharp 권장 아키텍처
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 TypeSharp 구현을 시작할 때 권장하는 구조를 제안한다. 목표는 .NET Framework 4.8 호환 산출물과 런타임을 만들면서 최신 언어 기능을 안정적으로 낮출 수 있는 컴파일러와 도구를 만드는 것이다.
 
@@ -48,7 +48,7 @@ samples/
 docs/
 ```
 
-현재 저장소에는 초기 `TypeSharp.Compiler`, `TypeSharp.Cli`, `TypeSharp.Compiler.Tests` skeleton이 있다. `TypeSharp.Runtime`, language server, interop tests, golden tests는 후속 작업으로 추가한다.
+현재 저장소에는 초기 `TypeSharp.Compiler`, `TypeSharp.Cli`, `TypeSharp.Core`, `TypeSharp.Runtime`, `TypeSharp.Compiler.Tests`, `vscode/typesharp` skeleton이 있다. language server, interop tests, golden tests는 후속 작업으로 추가한다.
 
 ## Compiler Core
 
@@ -239,6 +239,12 @@ MVP 기능:
 
 VS Code extension은 Language Server Protocol client로 시작하고, 문법 색상화는 TextMate grammar 또는 semantic token의 최소 구현으로 제공한다.
 TextMate grammar는 [grammar/lexical.md](grammar/lexical.md)의 토큰과 keyword 분류를 첫 입력으로 삼고, semantic token은 compiler semantic model에서 보강한다.
+
+현재 scaffold:
+- `vscode/typesharp/package.json` registers language id `typesharp` and extension `.tysh`.
+- `vscode/typesharp/language-configuration.json` defines comments, brackets, pairs, and word pattern.
+- `vscode/typesharp/syntaxes/typesharp.tmLanguage.json` provides lexical TextMate highlighting for comments, strings, numeric literals, attributes, keywords, primitive types, and operators.
+- LSP diagnostics, hover, go-to-definition, and completion remain open and must share compiler diagnostics and semantic model with the CLI.
 
 ## 프로젝트 파일
 
