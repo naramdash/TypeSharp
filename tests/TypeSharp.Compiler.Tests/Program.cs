@@ -71,6 +71,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported out call", CliBuildCompilesImportedOutCall),
     ("CLI build compiles imported in call", CliBuildCompilesImportedInCall),
     ("CLI build compiles imported ref call", CliBuildCompilesImportedRefCall),
+    ("CLI build compiles exact overload match", CliBuildCompilesExactOverloadMatch),
     ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
     ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
@@ -698,7 +699,7 @@ static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
 
             import { LegacyOverloads } from "Legacy.Tools"
 
-            export fun choose(): string = LegacyOverloads.Pick("value")
+            export fun choose(): string = LegacyOverloads.Pick(null)
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -837,7 +838,7 @@ static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
 
             import { LegacyOverloads } from "Legacy.Tools"
 
-            export fun choose(): string = LegacyOverloads.Pick("value")
+            export fun choose(): string = LegacyOverloads.Pick(null)
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -1735,6 +1736,47 @@ static void CliBuildCompilesImportedRefCall()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedRefCall.dll")),
             "Generated project build should compile an imported ref call.");
+    });
+}
+
+static void CliBuildCompilesExactOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ExactOverloadMatch"
+            targetFramework = "net481"
+            outputType = "library"
+            rootNamespace = "Samples.ExactOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ExactOverloadMatch
+
+            import { LegacyOverloads } from "Legacy.Tools"
+
+            export fun choose(): string = LegacyOverloads.Pick("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net481/ExactOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyOverloads.Pick(\"value\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ExactOverloadMatch.dll")),
+            "Generated project build should compile an exact overload match.");
     });
 }
 

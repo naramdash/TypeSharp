@@ -26,3 +26,4 @@
 | [0043-csharp-local-metadata-symbol-index.md](0043-csharp-local-metadata-symbol-index.md) | Q3 | Done | local `net481` C# DLL의 public type/member metadata index를 추가한다. |
 | [0044-csharp-invalid-byref-diagnostic.md](0044-csharp-invalid-byref-diagnostic.md) | Q3 | Done | local C# metadata와 call-site `ref`/`out`/`in` modifier mismatch를 `TS2403`으로 진단한다. |
 | [0045-csharp-ambiguous-overload-diagnostic.md](0045-csharp-ambiguous-overload-diagnostic.md) | Q3 | Done | local C# metadata의 같은 arity overload ambiguity를 `TS2402`로 진단한다. |
+| [0046-csharp-exact-overload-ranking.md](0046-csharp-exact-overload-ranking.md) | Q3 | Done | local C# metadata overload set에서 literal/primitive exact match 후보를 선택한다. |

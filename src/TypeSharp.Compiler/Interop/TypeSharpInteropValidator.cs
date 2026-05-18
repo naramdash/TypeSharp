@@ -52,23 +52,24 @@ public static class TypeSharpInteropValidator
                 candidate.Method.Parameters.Count == arguments.Length)
             .ToArray();
 
-        if (candidates.Length > 1)
+        var selectedCandidates = SelectBestCandidates(candidates, arguments);
+        if (selectedCandidates.Length > 1)
         {
             diagnostics.Add(new Diagnostic(
                 DiagnosticDescriptors.AmbiguousCSharpOverload.Code,
                 DiagnosticDescriptors.AmbiguousCSharpOverload.DefaultSeverity,
-                $"Call to C# method '{typeName}.{methodName}' matches {candidates.Length} overload candidates. Add an explicit type annotation or make the call unambiguous.",
+                $"Call to C# method '{typeName}.{methodName}' matches {selectedCandidates.Length} overload candidates. Add an explicit type annotation or make the call unambiguous.",
                 file,
                 node.Span));
             return;
         }
 
-        if (candidates.Length != 1)
+        if (selectedCandidates.Length != 1)
         {
             return;
         }
 
-        var (metadataType, metadataMethod) = candidates[0];
+        var (metadataType, metadataMethod) = selectedCandidates[0];
         for (var index = 0; index < arguments.Length; index++)
         {
             var argument = arguments[index];
@@ -88,6 +89,44 @@ public static class TypeSharpInteropValidator
                 file,
                 argument.Span));
         }
+    }
+
+    private static (MetadataTypeSymbol Type, MetadataMethodSymbol Method)[] SelectBestCandidates(
+        (MetadataTypeSymbol Type, MetadataMethodSymbol Method)[] candidates,
+        IReadOnlyList<SyntaxNode> arguments)
+    {
+        if (candidates.Length <= 1)
+        {
+            return candidates;
+        }
+
+        var exactMatches = candidates
+            .Where(candidate => IsExactMatch(candidate.Method, arguments))
+            .ToArray();
+
+        return exactMatches.Length > 0 ? exactMatches : candidates;
+    }
+
+    private static bool IsExactMatch(MetadataMethodSymbol method, IReadOnlyList<SyntaxNode> arguments)
+    {
+        if (method.Parameters.Count != arguments.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < arguments.Count; index++)
+        {
+            var argument = arguments[index];
+            var parameter = method.Parameters[index];
+            if (GetArgumentByRefKind(argument) != parameter.ByRefKind ||
+                !TryInferArgumentType(argument, out var argumentType) ||
+                !string.Equals(argumentType, parameter.Type, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool TryGetStaticMemberCall(SyntaxNode call, out string typeName, out string methodName)
@@ -126,6 +165,48 @@ public static class TypeSharpInteropValidator
             SyntaxKind.InArgument => MetadataByRefKind.In,
             _ => MetadataByRefKind.None
         };
+
+    private static bool TryInferArgumentType(SyntaxNode argument, out string type)
+    {
+        if (argument.Kind is SyntaxKind.RefArgument or SyntaxKind.OutArgument or SyntaxKind.InArgument)
+        {
+            var expression = argument.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is not null)
+            {
+                return TryInferArgumentType(expression, out type);
+            }
+
+            type = string.Empty;
+            return false;
+        }
+
+        if (argument.Kind == SyntaxKind.LiteralExpression)
+        {
+            var token = argument.Children.FirstOrDefault(child => child.IsToken);
+            type = token?.Kind switch
+            {
+                SyntaxKind.StringLiteralToken or SyntaxKind.InterpolatedStringLiteralToken => "string",
+                SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword => "bool",
+                SyntaxKind.NumericLiteralToken => InferNumericType(token.Text ?? string.Empty),
+                _ => string.Empty
+            };
+
+            return type.Length > 0;
+        }
+
+        type = string.Empty;
+        return false;
+    }
+
+    private static string InferNumericType(string text)
+    {
+        if (text.EndsWith("m", StringComparison.OrdinalIgnoreCase))
+        {
+            return "decimal";
+        }
+
+        return text.Contains('.', StringComparison.Ordinal) ? "double" : "int";
+    }
 
     private static string FormatExpected(MetadataByRefKind kind) =>
         kind switch
