@@ -1,0 +1,8 @@
+namespace Samples.AsyncInterop
+
+import { Task } from "System.Threading.Tasks"
+
+export async fun greeting(): Task<string> {
+  let value = await Task.FromResult("Hello, async")
+  value
+}

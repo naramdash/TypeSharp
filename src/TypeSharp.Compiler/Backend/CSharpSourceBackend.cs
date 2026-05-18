@@ -599,6 +599,7 @@ public static class CSharpSourceBackend
         {
             var visibility = GetVisibility(node);
             var staticModifier = isStatic ? " static" : string.Empty;
+            var asyncModifier = IsAsyncFunction(node) ? " async" : string.Empty;
             var name = GetDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
             var parameters = GetParameters(node);
@@ -615,7 +616,7 @@ public static class CSharpSourceBackend
 
             try
             {
-                _builder.AppendLine($"        {visibility}{staticModifier} {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
+                _builder.AppendLine($"        {visibility}{staticModifier}{asyncModifier} {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
                 _builder.AppendLine("        {");
                 if (expression?.Kind == SyntaxKind.BlockExpression)
                 {
@@ -830,6 +831,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.AssignmentExpression => EmitAssignment(node),
                 SyntaxKind.RecordUpdateExpression => EmitRecordUpdate(node),
                 SyntaxKind.MatchExpression => EmitMatch(node, expectedType ?? "object"),
+                SyntaxKind.AwaitExpression => EmitAwait(node),
                 _ => "default(object)"
             };
         }
@@ -883,6 +885,12 @@ public static class CSharpSourceBackend
             }
 
             return $"{EmitExpression(callee)}({argumentList})";
+        }
+
+        private string EmitAwait(SyntaxNode node)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            return $"await {EmitExpression(expression)}";
         }
 
         private string EmitOutArgument(SyntaxNode node)
@@ -1426,6 +1434,9 @@ public static class CSharpSourceBackend
                 ? "public"
                 : "internal";
         }
+
+        private static bool IsAsyncFunction(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);
 
         private static string GetDeclarationName(SyntaxNode node)
         {

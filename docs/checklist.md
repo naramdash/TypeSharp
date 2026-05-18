@@ -104,7 +104,7 @@
 - [x] pattern matching
 - [x] null safety
 - [x] basic structural type checking
-- [ ] `Task`/`Task<T>` async interop
+- [x] `Task`/`Task<T>` async interop
 - [x] C# assembly reference
 - [x] C# local DLL reference
 - [x] C# constructor/static/instance member call

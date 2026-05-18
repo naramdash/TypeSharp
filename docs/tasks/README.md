@@ -45,3 +45,4 @@
 | [0086-0089-union-implementation.md](0086-0089-union-implementation.md) | Q2-Q3 | Done | nominal union API, type-level union public boundary diagnostic, nominal union match lowering, and local type-level union narrowing을 묶는다. |
 | [0090-null-safety-diagnostics.md](0090-null-safety-diagnostics.md) | Q2-Q3 | Done | null/nullable 값이 non-null TypeSharp 위치로 흐를 때 `TS2202`로 진단하고 CLI no-emission path를 고정한다. |
 | [0091-basic-structural-type-checking.md](0091-basic-structural-type-checking.md) | Q2-Q3 | Done | local structural shape aliases가 required member를 가진 nominal record 값을 compile-time proof로 받아들이고 mismatch를 진단한다. |
+| [0092-async-task-interop-lowering.md](0092-async-task-interop-lowering.md) | Q2-Q3 | Done | `async fun`과 `await`을 generated C# `async Task<T>` source로 낮춰 `net48` build 및 C# consumer smoke를 고정한다. |

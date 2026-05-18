@@ -243,23 +243,28 @@ public static class TypeSharpTypeChecker
             var expectedReturnTypeKnown =
                 TryGetDirectTypeAnnotation(node, out var returnTypeNode) &&
                 TryGetType(returnTypeNode, out expectedReturnType);
+            var comparisonReturnType = expectedReturnType;
+            if (expectedReturnTypeKnown && IsAsyncFunction(node) && TryGetTaskResultType(expectedReturnType, out var asyncResultType))
+            {
+                comparisonReturnType = asyncResultType;
+            }
 
             foreach (var body in node.Children.Where(child => child.Kind == SyntaxKind.FunctionBody))
             {
                 var actualReturnType = CheckFunctionBody(body, scope);
-                if (expectedReturnTypeKnown && actualReturnType.IsKnown && IsNullabilityViolation(expectedReturnType, actualReturnType))
+                if (expectedReturnTypeKnown && actualReturnType.IsKnown && IsNullabilityViolation(comparisonReturnType, actualReturnType))
                 {
                     ReportNullabilityViolation(
                         body,
                         actualReturnType.IsNull
-                            ? $"Cannot return null from function returning non-null type '{expectedReturnType}'."
-                            : $"Cannot return nullable expression of type '{actualReturnType}' from function returning non-null type '{expectedReturnType}'.");
+                            ? $"Cannot return null from function returning non-null type '{comparisonReturnType}'."
+                            : $"Cannot return nullable expression of type '{actualReturnType}' from function returning non-null type '{comparisonReturnType}'.");
                 }
-                else if (expectedReturnTypeKnown && actualReturnType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, expectedReturnType, actualReturnType, out var structuralMessage))
+                else if (expectedReturnTypeKnown && actualReturnType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, comparisonReturnType, actualReturnType, out var structuralMessage))
                 {
                     ReportMismatch(body, structuralMessage);
                 }
-                else if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, expectedReturnType, actualReturnType))
+                else if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, comparisonReturnType, actualReturnType))
                 {
                     ReportMismatch(
                         body,
@@ -406,6 +411,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.MatchExpression => InferMatch(node, scope),
                 SyntaxKind.BinaryExpression => InferBinary(node, scope),
                 SyntaxKind.MemberAccessExpression => InferMemberAccess(node, scope),
+                SyntaxKind.AwaitExpression => InferAwait(node, scope),
                 SyntaxKind.IndexerExpression => SimpleType.Unknown,
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
                 SyntaxKind.CollectionExpression => SimpleType.Unknown,
@@ -499,6 +505,18 @@ public static class TypeSharpTypeChecker
             }
 
             return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
+        }
+
+        private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is null)
+            {
+                return SimpleType.Unknown;
+            }
+
+            var expressionType = CheckExpression(expression, scope);
+            return TryGetTaskResultType(expressionType, out var resultType) ? resultType : SimpleType.Unknown;
         }
 
         private SimpleType InferIf(SyntaxNode node, TypeScope scope)
@@ -914,6 +932,9 @@ public static class TypeSharpTypeChecker
         private static bool IsPublicBoundaryDeclaration(SyntaxNode node) =>
             node.Children.Any(child => child.Kind is SyntaxKind.ExportModifier or SyntaxKind.PublicModifier);
 
+        private static bool IsAsyncFunction(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);
+
         private static bool TryGetTypeAliasTarget(SyntaxNode node, out SyntaxNode target)
         {
             target = node.Children.LastOrDefault(child => !child.IsToken) ?? node;
@@ -1086,6 +1107,42 @@ public static class TypeSharpTypeChecker
             }
 
             return false;
+        }
+
+        private static bool TryGetTaskResultType(SimpleType type, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!type.IsKnown || type.IsNull)
+            {
+                return false;
+            }
+
+            if (type.Name == "Task")
+            {
+                resultType = SimpleType.Named("unit");
+                return true;
+            }
+
+            const string prefix = "Task<";
+            if (!type.Name.StartsWith(prefix, StringComparison.Ordinal) || !type.Name.EndsWith(">", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var innerName = type.Name[prefix.Length..^1];
+            if (innerName.Length == 0)
+            {
+                return false;
+            }
+
+            var isNullable = innerName.EndsWith("?", StringComparison.Ordinal);
+            if (isNullable)
+            {
+                innerName = innerName[..^1];
+            }
+
+            resultType = isNullable ? SimpleType.Named(innerName).AsNullable() : SimpleType.Named(innerName);
+            return true;
         }
 
         private static IReadOnlyList<UnionCaseInfo> GetUnionCases(SyntaxNode declaration)
