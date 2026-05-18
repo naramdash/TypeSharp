@@ -292,13 +292,13 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - preview feature gate를 도입한다.
 - 샘플 프로젝트와 release checklist를 완성한다.
 
-## 열린 결정
+## 후속 확장 결정
 
-- 직접 IL emit backend를 언제 도입할지 결정해야 한다. MVP backend는 C# 7.3 호환 source generation으로 시작한다.
-- VS Code extension과 CLI를 같은 compiler semantic model 위에서 제공하는 구조를 확정해야 한다.
-- structural type을 public metadata에 자동 adapter로 노출하는 정책은 Stable Backlog로 둔다. MVP는 public boundary diagnostic만 제공한다.
-- nominal closed union의 MVP 런타임 표현은 reference-type class hierarchy로 시작하고, tagged struct나 generated closed type은 성능/ABI 검증 뒤 도입한다.
-- type-level union이 public API boundary에 나타날 때의 diagnostic message와 수동 wrapper/interface 작성 가이드를 확정해야 한다.
+- 직접 IL emit backend 구현은 Stable Backlog다. 현재 결정은 C# 7.3 source backend와 backend artifact seam을 유지하고, public metadata fidelity, PDB/debug info, ABI control, or performance 요구가 source backend 비용을 넘을 때 direct IL backend를 도입하는 것이다.
+- VS Code extension과 CLI는 `TypeSharpSemanticModel`을 공유하는 구조를 현재 계약으로 둔다. 후속 확장은 cross-file project model, metadata/source unified symbol graph, and incremental cache다.
+- structural type을 public metadata에 자동 adapter로 노출하는 정책은 Stable Backlog다. MVP는 public boundary diagnostic과 명시 nominal interface/wrapper 작성을 요구한다.
+- nominal closed union의 MVP 런타임 표현은 reference-type class hierarchy다. tagged struct나 generated closed type은 성능/ABI 검증 뒤 Stable Backlog로 도입한다.
+- type-level union public API boundary는 `TS2204` diagnostic으로 막는다. 수동 대체는 nominal union, interface, or wrapper를 사용하며 guide refinement는 Stable Backlog다.
 
 ## 근거 자료
 

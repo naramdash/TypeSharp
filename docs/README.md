@@ -152,13 +152,13 @@
 
 ## 현재 결론
 
-현재 문서 세트는 TypeSharp의 초기 설계 방향과 문법 표면을 잡기에 충분한 구조를 갖춘다. 남은 미해결 항목은 문서 누락이 아니라 구현 전 결정해야 할 설계 선택과 세부 문법 확장이다.
+현재 문서 세트는 TypeSharp의 초기 설계 방향, MVP 구현 근거, 검증 경로를 잡기에 충분한 구조를 갖춘다. 남은 항목은 현재 목표의 누락이 아니라 Stable Backlog 또는 후속 확장으로 분리된 설계 선택과 세부 문법 확장이다.
 
-주요 열린 결정:
+주요 후속 확장:
 - [grammar/coverage.md](grammar/coverage.md)에 새로 발견되는 TypeScript/F#/C# 기능을 계속 분류하는 작업
-- 직접 IL backend를 도입할 시점과 범위
-- nominal closed union의 런타임 표현
-- TypeScript식 type-level union의 public boundary diagnostic과 수동 대체 가이드
-- structural type의 public API adapter를 언제 자동 생성할지 여부
+- 직접 IL backend 구현
+- nominal closed union의 tagged struct/generated closed type 표현
+- TypeScript식 type-level union의 수동 대체 가이드 refinement
+- structural type의 public API adapter 자동 생성
 - CLI manifest를 장기적으로 `TypeSharp.toml`로 유지할지 MSBuild와 1급 통합할지 여부
 
