@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2001",
+      "severity": "error",
+      "message": "Unresolved name 'MissingType'.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 17 },
+      "end": { "line": 3, "column": 28 }
+    },
+    {
+      "code": "TS2001",
+      "severity": "error",
+      "message": "Unresolved name 'missingName'.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 22 },
+      "end": { "line": 5, "column": 33 }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+namespace Samples.TypeChecker.Negative
+
+fun numberAsString(): string = 42
+
+fun assignMismatch(): int {
+  let answer: int = "forty two"
+  answer
+}
+
+fun nullMismatch(): string = null

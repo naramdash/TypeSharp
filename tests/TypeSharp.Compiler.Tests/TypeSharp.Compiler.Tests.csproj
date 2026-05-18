@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>TypeSharp.Compiler.Tests</AssemblyName>
+    <RootNamespace>TypeSharp.Compiler.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
+    <ProjectReference Include="..\..\src\TypeSharp.Cli\TypeSharp.Cli.csproj" />
+    <Compile Include="..\..\src\TypeSharp.Core\Option.cs" Link="TypeSharpCore\Option.cs" />
+    <Compile Include="..\..\src\TypeSharp.Core\Result.cs" Link="TypeSharpCore\Result.cs" />
+    <Compile Include="..\..\src\TypeSharp.Core\Unit.cs" Link="TypeSharpCore\Unit.cs" />
+  </ItemGroup>
+</Project>

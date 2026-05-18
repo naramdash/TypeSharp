@@ -1,0 +1,26 @@
+// Compile-time constants use literal, not const.
+// Public literal values are designed to lower to C#-visible metadata constants
+// when the initializer is a valid .NET constant expression.
+
+namespace Samples.LiteralsAttributes
+
+import { ObsoleteAttribute, SerializableAttribute } from "System"
+
+public literal DefaultCurrency = "USD"
+public literal MaxRetryCount = 3
+literal MinorUnits = 2
+
+[SerializableAttribute]
+public record CurrencyAmount(amount: decimal, currency: string)
+
+public record RetryPolicy(maxRetryCount: int, backoffSeconds: int)
+
+[ObsoleteAttribute("Use MoneyRules.Create instead.")]
+public fun createLegacyAmount(amount: decimal): CurrencyAmount =
+  CurrencyAmount(amount: amount, currency: DefaultCurrency)
+
+export fun defaultRetryPolicy(): RetryPolicy =
+  RetryPolicy(
+    maxRetryCount: MaxRetryCount,
+    backoffSeconds: MaxRetryCount * MinorUnits
+  )

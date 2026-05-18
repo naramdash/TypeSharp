@@ -1,0 +1,31 @@
+// Dynamic, reflection, native interop, and unsafe features must be visible
+// at the function boundary. Strict mode can then warn or block calls that
+// cross these capabilities without an explicit decision.
+
+namespace Samples.CapabilityBoundaries
+
+import { DllImportAttribute } from "System.Runtime.InteropServices"
+import { Option, Some, None } from "TypeSharp.Core"
+
+[DllImportAttribute("kernel32.dll")]
+interop extern fun GetTickCount(): uint
+
+dynamic fun callLegacyName(value: dynamic): string =
+  value.Name.ToString()
+
+reflect fun tryReadProperty(instance: object, propertyName: string): Option<object?> {
+  let property = instance.GetType().GetProperty(propertyName)
+
+  if property == null {
+    None
+  }
+  else {
+    Some(property.GetValue(instance, null))
+  }
+}
+
+export interop fun readSystemTick(): uint =
+  GetTickCount()
+
+export dynamic fun renderLegacyName(value: dynamic): string =
+  callLegacyName(value)

@@ -1,0 +1,20 @@
+namespace Samples.TypeChecker.Positive
+
+fun text(): string = "hello"
+
+fun number(): int = 42
+
+fun choose(flag: bool): string {
+  if flag {
+    "yes"
+  } else {
+    "no"
+  }
+}
+
+fun main(): string {
+  let greeting: string = text()
+  let count: int = number()
+  let matches: bool = count == 42
+  greeting
+}

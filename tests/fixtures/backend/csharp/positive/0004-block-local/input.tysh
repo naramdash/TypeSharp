@@ -1,0 +1,10 @@
+namespace Samples.BackendBlocks
+
+import { StringBuilder } from "System.Text"
+
+export fun render(): string {
+  let builder = StringBuilder()
+  builder.Append("Hello, ")
+  builder.Append("TypeSharp")
+  builder.ToString()
+}

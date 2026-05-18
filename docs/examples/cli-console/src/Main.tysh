@@ -1,0 +1,41 @@
+// Minimal console application used by the CLI workflow example.
+
+namespace Samples.CliConsole
+
+import static System.Console
+import { map } from "TypeSharp.Collections"
+
+record Greeting(name: string)
+
+let normalize: string -> string = text => text.Trim()
+
+fun makeGreeting(name: string): Greeting =
+  Greeting(name: normalize(name))
+
+fun render(greeting: Greeting): string =
+  $"Hello, {greeting.name}"
+
+export fun main(args: string[]): int {
+  let name =
+    if args.Length > 0 {
+      args[0]
+    } else {
+      "TypeSharp"
+    }
+
+  let greeting = makeGreeting(name)
+  let shout: string -> string = text => text.ToUpperInvariant()
+  let rawLines: string[] = [render(greeting)]
+
+  let lines =
+    rawLines
+    |> map(shout)
+
+  WriteLine(render(greeting))
+
+  for line in lines {
+    WriteLine(line)
+  }
+
+  0
+}

@@ -1,0 +1,44 @@
+// Public APIs should lower to C#-friendly .NET metadata.
+// Structural shapes and type-level unions stay behind the public boundary.
+
+namespace Samples.PublicApi
+
+import { EventArgs, SerializableAttribute } from "System"
+import { Result, Ok, Error } from "TypeSharp.Core"
+
+[Serializable]
+public record Money(amount: decimal, currency: string)
+
+public union AccountError {
+  CurrencyMismatch(expected: string, actual: string)
+  NegativeAmount(amount: decimal)
+}
+
+public delegate AccountChangedHandler(sender: object, args: EventArgs): unit
+
+public class Account(id: string, openingBalance: Money) {
+  public let Id: string { get }
+  public let mut Balance: Money {
+    get
+    private set
+  }
+  public event Changed: AccountChangedHandler
+
+  public fun Deposit(amount: Money): Result<Money, AccountError> {
+    if amount.amount < 0m {
+      Error(NegativeAmount(amount.amount))
+    }
+    elif amount.currency != Balance.currency {
+      Error(CurrencyMismatch(Balance.currency, amount.currency))
+    }
+    else {
+      let next = Money(
+        amount: Balance.amount + amount.amount,
+        currency: Balance.currency
+      )
+
+      Balance = next
+      Ok(next)
+    }
+  }
+}

@@ -1,0 +1,5 @@
+namespace Samples.BackendCalls
+
+import { Regex } from "System.Text.RegularExpressions"
+
+export fun isSlug(): bool = Regex.IsMatch("hello", "^[a-z]+$")

@@ -1,0 +1,5 @@
+namespace Samples.Binder.Negative
+
+fun echo(value: MissingType): string = value
+
+fun main(): string = missingName

@@ -1,0 +1,25 @@
+[project]
+name = "CliConsole"
+targetFramework = "net481"
+outputType = "exe"
+rootNamespace = "Samples.CliConsole"
+sourceRoots = ["src"]
+main = "Samples.CliConsole.main"
+
+[language]
+version = "preview"
+strict = true
+nullable = "strict"
+previewFeatures = []
+
+[references]
+assemblies = [
+  "System",
+  "System.Core"
+]
+paths = []
+packages = []
+
+[tooling]
+diagnosticFormat = "text"
+treatWarningsAsErrors = false

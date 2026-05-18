@@ -1,0 +1,39 @@
+// Runtime/domain unions are nominal and closed.
+// Type-level unions are separate compile-time types.
+
+namespace Samples.Unions
+
+import { DateTime } from "System"
+
+export union Validation<T, E> {
+  Valid(value: T)
+  Invalid(error: E)
+}
+
+export union PaymentStatus {
+  Pending
+  Paid(at: DateTime)
+  Failed(reason: string)
+}
+
+export record Receipt(id: string, paidAt: DateTime)
+
+export fun describe(status: PaymentStatus): string =
+  match status {
+    Pending => "Waiting for payment"
+    Paid(at) => $"Paid at {at}"
+    Failed(reason) => $"Failed: {reason}"
+  }
+
+export fun toReceipt(id: string, status: PaymentStatus): Validation<Receipt, string> =
+  match status {
+    Paid(at) => Valid(Receipt(id: id, paidAt: at))
+    Pending => Invalid("Payment is still pending")
+    Failed(reason) => Invalid(reason)
+  }
+
+export fun map<T, U, E>(result: Validation<T, E>, transform: T -> U): Validation<U, E> =
+  match result {
+    Valid(value) => Valid(transform(value))
+    Invalid(error) => Invalid(error)
+  }

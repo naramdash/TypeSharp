@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS1001",
+      "severity": "error",
+      "message": "Expected function body after function signature.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 40 },
+      "end": { "line": 3, "column": 40 }
+    }
+  ]
+}

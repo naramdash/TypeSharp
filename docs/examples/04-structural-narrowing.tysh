@@ -1,0 +1,28 @@
+// Type-level unions and structural shapes are compile-time tools.
+// They should not leak directly into public .NET metadata.
+
+namespace Samples.Structural
+
+type PrimitiveId = string | int
+
+type Named = { name: string }
+type ContactLike = { name: string, email?: string }
+
+fun normalizeId(id: PrimitiveId): string =
+  match id {
+    text: string => text
+    number: int => number.ToString()
+  }
+
+fun label(value: Named): string =
+  value.name
+
+fun greeting(value: unknown): string =
+  match value {
+    { name } => $"Hello, {name}"
+    text: string => $"Hello, {text}"
+    _ => "Hello"
+  }
+
+fun contactSummary(contact: ContactLike): string =
+  contact.email ?? contact.name

@@ -1,0 +1,5 @@
+# TypeSharp.Core
+
+`TypeSharp.Core` contains user-facing standard library types such as `Option<T>`, `Result<T, E>`, and `Unit`.
+
+This assembly targets `net481` and should remain small, dependency-free, and stable for C# consumers.

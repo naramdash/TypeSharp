@@ -1,0 +1,47 @@
+// Pipelines make functional data flow readable while staying friendly to .NET.
+
+namespace Samples.Pipeline
+
+import { map } from "TypeSharp.Collections"
+
+export record OrderLine(sku: string, quantity: int, price: decimal)
+export record OrderTotal(subtotal: decimal, tax: decimal, total: decimal)
+
+fun lineTotal(line: OrderLine): decimal =
+  line.price * line.quantity
+
+fun addTax(subtotal: decimal): OrderTotal {
+  let tax = subtotal * 0.1m
+  OrderTotal(
+    subtotal: subtotal,
+    tax: tax,
+    total: subtotal + tax
+  )
+}
+
+fun sum(values: decimal[]): decimal {
+  let mut total = 0m
+
+  for value in values {
+    total = total + value
+  }
+
+  total
+}
+
+export fun calculate(lines: OrderLine[]): OrderTotal {
+  let toLineTotal: OrderLine -> decimal = line => lineTotal(line)
+
+  let totals =
+    lines
+    |> map(toLineTotal)
+
+  totals
+  |> sum
+  |> addTax
+}
+
+export let sampleLines: OrderLine[] = [
+  OrderLine(sku: "BOOK-001", quantity: 2, price: 12.5m),
+  OrderLine(sku: "PEN-002", quantity: 5, price: 1.2m)
+]

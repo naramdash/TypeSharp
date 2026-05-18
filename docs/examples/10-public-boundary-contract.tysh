@@ -1,0 +1,79 @@
+// TypeSharp can use TypeScript-like shape and union flexibility locally.
+// Public .NET metadata must still expose nominal records, unions, classes,
+// interfaces, delegates, or framework types.
+
+namespace Samples.PublicBoundaryContract
+
+import { Decimal } from "System"
+import { Result, Ok, Error } from "TypeSharp.Core"
+
+type AmountInput = decimal | string
+type DraftShape = {
+  customerId: string,
+  amount: decimal,
+  note: string?
+}
+
+public record InvoiceDraft(customerId: string, amount: decimal, note: string?)
+
+public union DraftError {
+  MissingCustomer
+  InvalidAmount(source: string)
+}
+
+fun normalizeAmount(input: AmountInput): Result<decimal, DraftError> =
+  match input {
+    amount: decimal => Ok(amount)
+    text: string => {
+      let mut parsed = 0m
+
+      if Decimal.TryParse(text, out parsed) {
+        Ok(parsed)
+      }
+      else {
+        Error(InvalidAmount(text))
+      }
+    }
+  }
+
+fun fromShape(input: DraftShape): Result<InvoiceDraft, DraftError> {
+  if input.customerId.Trim().Length == 0 {
+    Error(MissingCustomer)
+  }
+  elif input.amount <= 0m {
+    Error(InvalidAmount(input.amount.ToString()))
+  }
+  else {
+    Ok(InvoiceDraft(
+      customerId: input.customerId,
+      amount: input.amount,
+      note: input.note
+    ))
+  }
+}
+
+export fun createDraft(
+  customerId: string,
+  amount: decimal,
+  note: string?
+): Result<InvoiceDraft, DraftError> =
+  fromShape({ customerId, amount, note })
+
+export fun createDraftFromText(
+  customerId: string,
+  amountText: string,
+  note: string?
+): Result<InvoiceDraft, DraftError> {
+  let normalized = normalizeAmount(amountText)
+
+  match normalized {
+    Ok(amount) => fromShape({ customerId, amount, note })
+    Error(error) => Error(error)
+  }
+}
+
+// These signatures are intentionally kept as comments because they should
+// produce public boundary diagnostics when parser fixtures are introduced:
+//
+// export fun leakShape(input: DraftShape): InvoiceDraft
+// export fun leakUnion(input: AmountInput): Result<InvoiceDraft, DraftError>

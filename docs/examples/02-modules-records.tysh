@@ -1,0 +1,27 @@
+// Module files are explicit and export only the intended surface.
+
+namespace Samples.Domain
+
+export type CustomerId = string
+export type EmailAddress = string
+
+export record Customer(
+  id: CustomerId,
+  name: string,
+  email: EmailAddress?,
+  tags: string[]
+)
+
+export fun createCustomer(id: CustomerId, name: string): Customer =
+  Customer(
+    id: id,
+    name: name,
+    email: null,
+    tags: []
+  )
+
+export fun rename(customer: Customer, name: string): Customer =
+  customer with { name }
+
+export fun emailLabel(customer: Customer): string =
+  customer.email ?? "(no email)"

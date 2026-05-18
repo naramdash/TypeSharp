@@ -1,0 +1,20 @@
+// TypeSharp source files use the .tysh extension.
+// This sample shows a small CLI-style entry point.
+
+namespace Samples.Hello
+
+import static System.Console
+
+export fun main(args: string[]): int {
+  let providedName: string? =
+    if args.Length > 0 {
+      args[0]
+    } else {
+      null
+    }
+
+  let name = providedName ?? "TypeSharp"
+
+  WriteLine($"Hello, {name}")
+  0
+}

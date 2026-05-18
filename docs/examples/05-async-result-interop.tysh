@@ -1,0 +1,47 @@
+// Async interop lowers to Task/Task<T> for .NET Framework 4.8.1 compatibility.
+// Failures can be modeled as Result while still interoperating with exceptions.
+
+namespace Samples.AsyncInterop
+
+import { FileNotFoundException, StreamReader } from "System.IO"
+import { Console, Exception, UnauthorizedAccessException } from "System"
+import { Result, Ok, Error } from "TypeSharp.Core"
+import type { Task } from "System.Threading.Tasks"
+
+export union ReadError {
+  NotFound(path: string)
+  AccessDenied(path: string)
+  Unexpected(message: string)
+}
+
+export async fun readText(path: string): Task<Result<string, ReadError>> {
+  try {
+    using reader = StreamReader(path) {
+      let text = await reader.ReadToEndAsync()
+      Ok(text)
+    }
+  }
+  catch ex: FileNotFoundException {
+    Error(NotFound(path))
+  }
+  catch ex: UnauthorizedAccessException {
+    Error(AccessDenied(path))
+  }
+  catch ex: Exception {
+    Error(Unexpected(ex.Message))
+  }
+}
+
+export async fun printText(path: string): Task<int> {
+  let result = await readText(path)
+
+  match result {
+    Ok(text) => {
+      Console.WriteLine(text)
+      0
+    }
+    Error(NotFound(_)) => 2
+    Error(AccessDenied(_)) => 3
+    Error(Unexpected(_)) => 1
+  }
+}

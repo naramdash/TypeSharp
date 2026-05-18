@@ -1,0 +1,71 @@
+// Managed C#/.NET Framework library interop.
+// This example calls framework types, static methods, instance members, named args,
+// out parameters, and nullable/Result-safe wrappers.
+
+namespace Samples.CSharpLibraryInterop
+
+import { DateTime, Int32, StringSplitOptions } from "System"
+import { StringBuilder } from "System.Text"
+import { Regex } from "System.Text.RegularExpressions"
+import { Option, Some, None, Result, Ok, Error } from "TypeSharp.Core"
+
+literal SlugCleanupPattern = "[^a-z0-9]+"
+literal SlugSeparator = "-"
+
+export record ParsedAmount(value: int, source: string)
+
+export union ParseError {
+  EmptyInput
+  InvalidInteger(source: string)
+}
+
+export fun tryParseAmount(text: string): Result<ParsedAmount, ParseError> {
+  if text.Trim().Length == 0 {
+    Error(EmptyInput)
+  }
+  else {
+    let mut parsed = 0
+
+    if Int32.TryParse(text, out parsed) {
+      Ok(ParsedAmount(value: parsed, source: text))
+    }
+    else {
+      Error(InvalidInteger(text))
+    }
+  }
+}
+
+export fun findFirstSlug(row: string): Option<string> {
+  let columns = row.Split(separator: [","], options: StringSplitOptions.None)
+
+  if columns.Length == 0 {
+    None
+  }
+  else {
+    let slug = Regex.Replace(
+      columns[0].Trim().ToLowerInvariant(),
+      SlugCleanupPattern,
+      SlugSeparator
+    )
+
+    Some(slug)
+  }
+}
+
+export fun renderReport(rows: string[]): string {
+  let builder = StringBuilder()
+
+  builder.Append("Generated: ")
+  builder.AppendLine(DateTime.Now.ToString("u"))
+
+  for row in rows {
+    let slug = findFirstSlug(row)
+
+    match slug {
+      Some(value) => builder.AppendLine(value)
+      None => builder.AppendLine("(empty)")
+    }
+  }
+
+  builder.ToString()
+}

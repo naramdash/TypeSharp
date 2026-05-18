@@ -1,0 +1,3 @@
+namespace Samples.Backend
+
+export fun greeting(): string = "Hello, TypeSharp"

@@ -1,0 +1,10 @@
+namespace Samples.BackendImports
+
+import { Console } from "System"
+import type { Task } from "System.Threading.Tasks"
+import { StringBuilder } from "System.Text"
+import { DateTime } from "System"
+import static System.Math
+import static System.Math
+
+export fun greeting(): string = "Hello, imports"

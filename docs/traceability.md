@@ -1,0 +1,178 @@
+# 목표-요구사항 추적성
+
+문서 기준일: 2026-05-18
+
+이 문서는 TypeSharp의 목표가 요구사항, 기능 매핑, 아키텍처, 체크리스트로 이어지는지 확인한다.
+
+## 핵심 목표 추적표
+
+| 목표 | 요구사항 | 기능 문서 | 검증 체크리스트 |
+| --- | --- | --- | --- |
+| .NET Framework 4.8.1에서 실행 | [requirements.md](requirements.md) 1, 4, 5, 8 | [feature-map.md](feature-map.md) 전체 lowering 기준 | [checklist.md](checklist.md) 플랫폼, 컴파일러, 테스트 |
+| TypeScript식 암묵적이고 유연한 타입 | [requirements.md](requirements.md) 2, 3, 4 | [feature-map.md](feature-map.md) 1, 2, 4, 5 | [goal.md](goal.md) 기능 목표 1, 6, 7 |
+| TypeScript식 모듈 기반 파일 구조 | [requirements.md](requirements.md) 2, 7 | [feature-map.md](feature-map.md) 10, 13 | [goal.md](goal.md) 기능 목표 2, 10 |
+| F#식 함수형 기능과 일관성 | [requirements.md](requirements.md) 2, 6 | [feature-map.md](feature-map.md) 1, 2, 3, 7, 9, 11 | [goal.md](goal.md) 기능 목표 3, 4, 5, 8 |
+| C#식 다양하고 유연한 편의 기능 | [requirements.md](requirements.md) 3, 5 | [feature-map.md](feature-map.md) 6, 7, 8, 12, 14, 15 | [goal.md](goal.md) 기능 목표 5, 9, 14 |
+| TypeScript/F#/C# 문법 포괄 또는 대체 | [requirements.md](requirements.md) 2, 3, 4 | [grammar/README.md](grammar/README.md), [grammar/coverage.md](grammar/coverage.md) | [checklist.md](checklist.md) 문서 완성도, 언어 사양 |
+| 문법 표면 최소화와 일관성 | [requirements.md](requirements.md) 2, 4, 7 | [grammar/consistency.md](grammar/consistency.md) | [checklist.md](checklist.md) 문서 완성도 |
+| 표준 라이브러리 핵심 타입 | [requirements.md](requirements.md) 6 | [standard-library.md](standard-library.md) | [checklist.md](checklist.md) 런타임 라이브러리 |
+| 실현 가능한 MVP 범위 | [requirements.md](requirements.md) 1, 4, 7, 8 | [feasibility.md](feasibility.md), [architecture.md](architecture.md) | [checklist.md](checklist.md) 플랫폼, 컴파일러, 도구 |
+| Union 설계 | [requirements.md](requirements.md) 2, 5, 6 | [feature-map.md](feature-map.md) 2, 3, 4 | [goal.md](goal.md) Union 설계 결정 |
+| VS Code와 CLI 개발 경험 | [requirements.md](requirements.md) 7 | [cli.md](cli.md), [architecture.md](architecture.md) Tooling | [goal.md](goal.md) 기능 목표 0, 필수 성공 조건 |
+| 최신 C# 기능 반영 | [requirements.md](requirements.md) 3 | [feature-map.md](feature-map.md) 6, 8, 12, 14, 15 | [checklist.md](checklist.md) 언어 사양, MVP 기능 |
+| 최신 F# 기능 반영 | [requirements.md](requirements.md) 3, 6 | [feature-map.md](feature-map.md) 1, 2, 3, 7, 11 | [checklist.md](checklist.md) MVP 기능, 런타임 라이브러리 |
+| 최신 TypeScript 기능 반영 | [requirements.md](requirements.md) 3, 4 | [feature-map.md](feature-map.md) 4, 5, 13 | [checklist.md](checklist.md) 언어 사양, 도구 |
+| C#/.NET 상호 운용 | [requirements.md](requirements.md) 5 | [feature-map.md](feature-map.md) 2, 4, 7, 10, 14, 15, [csharp-interop.md](csharp-interop.md) | [checklist.md](checklist.md) MVP 기능, 테스트 |
+| 컴파일 타임 상수 | [requirements.md](requirements.md) 2, 5 | [feature-map.md](feature-map.md) 15, [grammar/consistency.md](grammar/consistency.md), [grammar/declarations.md](grammar/declarations.md) | [checklist.md](checklist.md) 언어 사양, MVP 기능 |
+| 타입 안전성 기본값 | [requirements.md](requirements.md) 2, 3, 8 | [feature-map.md](feature-map.md) 1, 2, 3, 5, 11 | [checklist.md](checklist.md) 언어 사양, 테스트 |
+| 설명 가능한 lowering | [requirements.md](requirements.md) 3, 4 | [architecture.md](architecture.md) Lowering과 IR, Backend 전략 | [checklist.md](checklist.md) 반복 검토 질문 |
+| 도구 친화성 | [requirements.md](requirements.md) 4, 7 | [architecture.md](architecture.md) Tooling | [checklist.md](checklist.md) 도구 |
+| 에이전틱 장기 수행 | [agent.md](../agent.md) 반복 실행 규칙 | [agentic-execution.md](agentic-execution.md), [README.md](README.md) 반복 검토 프로토콜 | [checklist.md](checklist.md) 문서 완성도, 에이전틱 실행 준비, 반복 검토 질문 |
+| 장기 작업 큐 | [agentic-execution.md](agentic-execution.md) 작업 선택 규칙 | [tasks/README.md](tasks/README.md) task packet 목록 | [checklist.md](checklist.md) 에이전틱 실행 준비 |
+
+## 성공 조건별 검증 경로
+
+### `net481` Hello World
+
+- 요구사항: 플랫폼 요구사항, 컴파일러 요구사항
+- 아키텍처: Backend 전략, CLI
+- 체크리스트: 플랫폼, 컴파일러, 테스트
+- 완료 기준: `typesharp build`가 `net481` 실행 파일 또는 라이브러리를 만들고 Windows .NET Framework 4.8.1 환경에서 실행된다.
+
+### VS Code와 CLI 개발 루프
+
+- 요구사항: 도구 요구사항
+- 문서: [cli.md](cli.md)
+- 아키텍처: CLI, Language Server
+- 체크리스트: 도구
+- 완료 기준: CLI에서 `check`, `build`, `run`, `version`을 사용할 수 있다.
+- 완료 기준: [examples/cli-console](examples/cli-console/README.md) 프로젝트가 `typesharp check`, `typesharp build`, `typesharp run` smoke fixture로 사용된다.
+- 완료 기준: VS Code에서 syntax highlighting, diagnostics, hover, go-to-definition의 최소 기능을 사용할 수 있다.
+- 완료 기준: VS Code extension과 CLI가 같은 compiler semantic model과 diagnostics code를 공유한다.
+
+### Grammar Coverage
+
+- 요구사항: 언어 핵심 요구사항, 최신 언어 기능 반영 요구사항, 컴파일러 요구사항
+- 문법: [grammar/README.md](grammar/README.md), [grammar/coverage.md](grammar/coverage.md)
+- 체크리스트: 문서 완성도, 언어 사양, 도구
+- 완료 기준: TypeScript, F#, C#의 주요 실용 기능이 Direct, Equivalent, Replacement, Planned, Experimental, Rejected 중 하나로 분류된다.
+- 완료 기준: Stable Grammar로 분류된 기능은 syntax 예제와 parser가 구현할 수 있는 grammar skeleton을 가진다.
+- 완료 기준: Replacement 또는 Rejected 기능은 goal의 원칙과 비목표에 연결된다.
+
+### C# 상호 운용
+
+- 요구사항: .NET 상호 운용 요구사항
+- 기능 매핑: nominal union public ABI, type-level union boundary, structural type boundary, async `Task` interop, C# library interop
+- 문서: [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md)
+- 체크리스트: C# assembly/local DLL reference, C# member call, TypeSharp assembly consumed from C#, C# interop tests
+- 완료 기준: C# .NET Framework 프로젝트가 TypeSharp assembly를 참조하고 public API를 호출한다.
+- 완료 기준: TypeSharp 프로젝트가 framework assembly와 local `net481` C# library DLL을 참조하고 constructor, method, property, delegate, event, generic API를 호출한다.
+- 완료 기준: nullable unknown, ambiguous overload, invalid byref, public ABI leak diagnostic이 fixture로 검증된다.
+
+### Null Safety
+
+- 요구사항: 언어 핵심 요구사항, 표준 라이브러리 요구사항
+- 기능 매핑: Null Safety, Option/Result
+- 체크리스트: nullability 규칙, `Option<T>`, type checker negative fixtures
+- 완료 기준: nullable contract 위반이 compile-time diagnostic으로 보고된다.
+
+### Union과 Pattern Matching
+
+- 요구사항: 언어 핵심 요구사항, 최신 언어 기능 반영 요구사항
+- 기능 매핑: Union Type과 Discriminated Union, Pattern Matching
+- 체크리스트: nominal closed union type, type-level union alias, union narrowing, pattern matching, exhaustiveness 규칙
+- 완료 기준: nominal closed union의 누락 case가 diagnostic으로 보고되고, 모든 case를 처리한 match가 실행 코드로 낮아진다.
+- 완료 기준: TypeScript식 type-level union이 local inference와 narrowing에는 사용되지만 public .NET ABI로 직접 노출되지 않는다.
+
+### Structural Type
+
+- 요구사항: 언어 핵심 요구사항, 컴파일러 요구사항
+- 기능 매핑: Structural Type, Type Inference
+- 체크리스트: basic structural type checking, structural type 규칙
+- 완료 기준: 필요한 shape를 가진 값은 통과하고 누락 member가 있는 값은 diagnostic을 낸다.
+
+### Async/Task
+
+- 요구사항: .NET 상호 운용 요구사항, 표준 라이브러리 요구사항
+- 기능 매핑: Async와 Task Workflow
+- 체크리스트: `Task`/`Task<T>` async interop, async helper
+- 완료 기준: TypeSharp async function이 C#에서 `Task`/`Task<T>`로 호출된다.
+
+## 자체 검토 결과
+
+| 기준 | 상태 | 근거 |
+| --- | --- | --- |
+| 목표 명료성 | 통과 | [goal.md](goal.md)에 한 문장 과제, 기준선, 성공 조건이 있다. |
+| 기능 목표 통합 | 통과 | [goal.md](goal.md)에 기능 목표가 통합되어 있다. |
+| 에이전트 지침 | 통과 | [agent.md](../agent.md)에 `/goal` 목표 문장, 시작 루틴, 반복 실행 규칙이 있다. |
+| 장기 실행 계약 | 통과 | [agentic-execution.md](agentic-execution.md)가 Ralph/Goal mode의 부트스트랩, 작업 큐, task packet, Done 기준, 인계 기준을 정의한다. |
+| 작업 패킷 | 통과 | [tasks/README.md](tasks/README.md), [tasks/0001-0005-foundation-bootstrap.md](tasks/0001-0005-foundation-bootstrap.md), [tasks/0006-0017-parser-implementation-and-coverage.md](tasks/0006-0017-parser-implementation-and-coverage.md), [tasks/0018-0022-diagnostics-and-semantics-skeleton.md](tasks/0018-0022-diagnostics-and-semantics-skeleton.md), [tasks/0023-0032-runtime-cli-interop-backend-skeleton.md](tasks/0023-0032-runtime-cli-interop-backend-skeleton.md), [tasks/0033-0037-generated-net481-build-pipeline.md](tasks/0033-0037-generated-net481-build-pipeline.md)가 구현 준비 작업의 완료 상태와 다음 작업을 압축된 rollup 단위로 정의한다. |
+| 필수/권장 분리 | 통과 | [requirements.md](requirements.md)가 영역별 필수/권장을 분리한다. |
+| 최신 기능 분류 | 통과 | [feature-map.md](feature-map.md)가 MVP, Stable Backlog, Preview Watch, Experimental, Rejected를 사용한다. |
+| .NET Framework 제약 반영 | 통과 | 모든 핵심 문서가 `net481`과 .NET Framework 4.8.1을 기준으로 둔다. |
+| 실행 체크리스트 | 통과 | [checklist.md](checklist.md)가 문서, 플랫폼, 언어, 컴파일러, 런타임, 테스트, 릴리스 항목을 가진다. |
+| 공식 근거 | 통과 | [references.md](references.md)에 공식 링크와 기준선이 있다. |
+| 문법 사양 구조 | 통과 | [grammar/README.md](grammar/README.md)가 문법 문서 구성, 안정성 등급, 구현 순서를 정의한다. |
+| 문법 일관성 규칙 | 통과 | [grammar/consistency.md](grammar/consistency.md)가 공통 기호, namespace/import 순서, mutability, optional/nullable 규칙을 정의한다. |
+| 문법 ambiguity 검토 | 통과 | [grammar/ambiguity.md](grammar/ambiguity.md)가 stable grammar의 token/context 충돌, parser decision, recovery 후속 작업을 기록한다. |
+| Parser precedence | 통과 | [grammar/precedence.md](grammar/precedence.md)가 expression/type/pattern operator precedence와 associativity를 parser 구현 전에 고정한다. |
+| 표준 라이브러리 namespace | 통과 | [standard-library.md](standard-library.md)가 `TypeSharp.Core`, `TypeSharp.Collections`, `TypeSharp.Runtime`의 역할을 정의한다. |
+| C# library interop | 통과 | [csharp-interop.md](csharp-interop.md)가 reference, import, type mapping, overload, nullable, public ABI 계약을 정의한다. |
+| CLI command surface | 통과 | [cli.md](cli.md)가 `typesharp` command, manifest, diagnostics format, exit code를 정의한다. |
+| CLI 예제 프로젝트 | 통과 | [examples/cli-console](examples/cli-console/README.md)이 manifest와 `src/Main.tysh` 기반 workflow를 제공한다. |
+| Parser fixture format | 통과 | [parser-fixtures.md](parser-fixtures.md)가 `tests/fixtures/parser/` layout, positive/negative fixture 예, CLI JSON diagnostics snapshot, syntax tree snapshot 정책을 정의한다. |
+| Compiler/CLI skeleton | 통과 | `src/TypeSharp.Compiler`, `src/TypeSharp.Cli`, `tests/TypeSharp.Compiler.Tests`가 host-side compiler/CLI skeleton과 `typesharp version` smoke path를 제공한다. |
+| Manifest/source discovery | 통과 | `TypeSharpManifestLoader`, `TypeSharpManifestLocator`, `SourceDiscovery`가 `TypeSharp.toml` load, parent search, default `src`, deterministic `.tysh` discovery, generated/build folder exclusion을 제공하고 smoke tests가 검증한다. |
+| Minimal lexer/parser | 통과 | `TypeSharpLexer`, `TypeSharpParser`, parser fixtures, and package-free smoke tests cover the first stable grammar subset and `TS1001` recovery. |
+| Parser modules/records coverage | 통과 | `tests/fixtures/parser/positive/0002-modules-records`가 type alias, record declaration, named arguments, record update syntax를 snapshot으로 검증한다. |
+| Parser unions/patterns coverage | 통과 | `tests/fixtures/parser/positive/0003-unions-patterns`가 named import, union declaration, generic type parameters/type arguments, match arms, union case patterns를 snapshot으로 검증한다. |
+| Parser structural/narrowing coverage | 통과 | `tests/fixtures/parser/positive/0004-structural-narrowing`가 type-level union alias, record shape type, `unknown` type name, match type patterns, record patterns, null-coalescing expression을 snapshot으로 검증한다. |
+| Parser async/result interop coverage | 통과 | `tests/fixtures/parser/positive/0005-async-result-interop`가 type-only import, exported async function, nested generic `Task` return type, `try`/typed `catch`, `using`, `await`, block match arms를 snapshot으로 검증한다. |
+| Parser public API coverage | 통과 | `tests/fixtures/parser/positive/0006-public-api`가 attribute list, public/private modifier, delegate, class, property-like `let` member, accessor, event, `elif`, assignment, decimal suffix literal을 snapshot으로 검증한다. |
+| Parser pipeline/collections coverage | 통과 | `tests/fixtures/parser/positive/0007-pipeline-collections`가 exported `let`, `for`, fractional decimal literal, array type, collection literal, lambda, function type annotation, named argument, `|>` pipeline expression을 snapshot으로 검증한다. |
+| Parser C# library interop coverage | 통과 | `tests/fixtures/parser/positive/0008-csharp-library-interop`가 literal declaration, call-site `out`, chained member/indexer/call expression, named arguments, collection literal argument, loop and match syntax를 snapshot으로 검증한다. |
+| Parser literals/attributes coverage | 통과 | `tests/fixtures/parser/positive/0009-literals-attributes`가 public literal declaration, attribute list, attribute constructor argument, expression-bodied call with named arguments를 snapshot으로 검증한다. |
+| Parser public boundary contract coverage | 통과 | `tests/fixtures/parser/positive/0010-public-boundary-contract`가 public boundary-oriented shape aliases, type-level union aliases, nominal public record/union declarations, public factory functions, and record shorthand call arguments를 snapshot으로 검증한다. |
+| Parser capability boundaries coverage | 통과 | `tests/fixtures/parser/positive/0011-capability-boundaries`가 contextual `dynamic`, `reflect`, `interop`, `extern` function modifiers, attribute-prefixed native interop declarations, and exported capability-marked functions를 snapshot으로 검증한다. |
+| Diagnostics taxonomy | 통과 | [diagnostics.md](diagnostics.md)가 diagnostic code range, descriptor metadata, explanation surface, golden diagnostic fixture policy를 정의하고 `DiagnosticDescriptors` registry smoke test가 현재 code set을 고정한다. |
+| Binder name resolution skeleton | 통과 | `TypeSharpBinder`가 parse-clean source의 namespace/import/type/function/value/local/parameter symbol skeleton을 만들고 `TS2001` unresolved type/value diagnostics를 smoke tests로 검증한다. |
+| Binder diagnostic fixtures | 통과 | `BinderFixtureConventions`와 `tests/fixtures/diagnostics/binder` positive/negative fixtures가 `TS2001` golden diagnostics JSON을 package-free smoke harness로 검증한다. |
+| Type checker basic mismatch skeleton | 통과 | `TypeSharpTypeChecker`가 parse-clean/bind-clean source에서 primitive literal/reference/call 기반 explicit annotation mismatch를 `TS2201`로 보고하고 smoke tests가 검증한다. |
+| Type checker diagnostic fixtures | 통과 | `TypeCheckerFixtureConventions`와 `tests/fixtures/diagnostics/type-checker` positive/negative fixtures가 `TS2201` golden diagnostics JSON을 package-free smoke harness로 검증한다. |
+| C# source backend first golden output | 통과 | `CSharpSourceBackend`가 parse-clean/bind-clean/type-check-clean namespace와 exported string-returning function을 C# 7.3-compatible block namespace/static class/method source로 생성하고 `tests/fixtures/backend/csharp/positive/0001-string-return` snapshot이 검증한다. |
+| C# import backend skeleton | 통과 | `CSharpSourceBackend`가 TypeSharp named/type imports를 deterministic C# `using` directives로, static imports를 `using static` directives로 중복 제거해 emit하고 `tests/fixtures/backend/csharp/positive/0002-import-directives` snapshot이 검증한다. |
+| C# call expression backend skeleton | 통과 | `CSharpSourceBackend`가 identifier, member access, and simple positional call expressions를 C# expression source로 emit하고 `tests/fixtures/backend/csharp/positive/0003-call-expression` snapshot이 imported `Regex.IsMatch(...)` output을 검증한다. |
+| C# block/local backend skeleton | 통과 | `CSharpSourceBackend`가 block-bodied functions, local `let` declarations as `var`, simple expression statements, and final expression returns를 emit하고 `tests/fixtures/backend/csharp/positive/0004-block-local` snapshot이 imported `StringBuilder` constructor and instance calls output을 검증한다. |
+| Generated C# net481 compile smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 backend-generated C# source를 temporary SDK-style `net481` C# project에 쓰고 offline `dotnet build`로 컴파일해 generated source가 C# compiler에 수용되는지 검증한다. |
+| Runtime net481 skeleton | 통과 | `src/TypeSharp.Runtime`가 `net481` SDK-style class library로 추가되고 `TypeSharp.Runtime.TypeSharpRuntimeInfo`가 ABI 0 placeholder를 제공하며 `dotnet build src/TypeSharp.Runtime/TypeSharp.Runtime.csproj`가 통과한다. |
+| CLI build generated C# emission | 통과 | `TypeSharpBuilder`와 `typesharp build`가 clean 프로젝트를 검사한 뒤 manifest의 generated output root 아래 deterministic `.g.cs` 파일을 쓰고, diagnostics가 있으면 emission 전에 중단하는 smoke tests가 검증한다. |
+| CLI build net481 project scaffold | 통과 | `TypeSharpBuilder`와 `typesharp build`가 generated output root 아래 deterministic SDK-style `net481` C# project scaffold를 `.g.cs` source와 함께 쓰고 CLI output으로 project scaffold path를 보고하는 smoke tests가 검증한다. |
+| CLI build generated net481 assembly | 통과 | `TypeSharpBuilder`와 `typesharp build`가 generated SDK-style `net481` C# project를 offline-friendly `dotnet build`로 컴파일하고 CLI output으로 generated assembly path를 보고하며, `TS3501` build-failure descriptor와 generated DLL existence smoke tests가 검증한다. |
+| C# consumes generated TypeSharp assembly | 통과 | `tests/TypeSharp.Compiler.Tests`가 `typesharp build`로 만든 generated TypeSharp `net481` DLL을 temporary C# SDK-style `net481` project에서 `<Reference>`로 참조하고 generated `Module.greeting()` public API 호출을 컴파일해 검증한다. |
+| CLI build generated project reference propagation | 통과 | `TypeSharpBuilder`가 manifest framework assembly와 local DLL references를 generated C# project `<Reference>` items로 emit하고 local DLL `HintPath`를 generated output root 기준 상대 경로로 기록하며 smoke test가 generated build success와 missing-reference stop behavior를 검증한다. |
+| C# framework static member call smoke | 통과 | `typesharp build`가 `System.Core` manifest reference와 `import { Regex } from "System.Text.RegularExpressions"` source를 generated project로 낮추고 `Regex.IsMatch(...)` static call이 `net481` generated DLL로 컴파일되는지 smoke test가 검증한다. |
+| C# local DLL static member call smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 temporary `Legacy.Tools` `net481` DLL을 만들고 manifest `references.paths`와 `import { LegacyApi } from "Legacy.Tools"` source를 generated project로 낮춰 `LegacyApi.Echo(...)` static call이 컴파일되는지 검증한다. |
+| C# constructor and instance member call smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 temporary `LegacyFormatter` class를 local `net481` DLL에 만들고 TypeSharp source의 `LegacyFormatter("legacy:")` construction과 `formatter.Format("value")` instance call이 generated `net481` project에서 컴파일되는지 검증한다. |
+| C# property access smoke | 통과 | `tests/TypeSharp.Compiler.Tests`가 temporary `LegacyFormatter.Prefix` property를 local `net481` DLL에 만들고 TypeSharp source의 `formatter.Prefix` property read가 generated `net481` project에서 컴파일되는지 검증한다. |
+| TypeSharp.Core Option/Result skeleton | 통과 | `src/TypeSharp.Core`가 `net481` SDK-style class library로 추가되고 `Option<T>`, `Result<T,E>`, `Unit` public surface와 Some/None, Ok/Error state smoke tests가 검증한다. |
+| C# reference resolver skeleton | 통과 | `TypeSharpReferenceResolver`가 manifest framework assembly names와 local DLL paths를 deterministic `ResolvedReference` records로 정규화하고 missing local DLL을 `TS2401`로 보고하는 smoke tests가 검증한다. |
+| C# metadata reader skeleton | 통과 | `TypeSharpMetadataReader`가 `ReferenceResolutionResult`를 소비해 framework/local references를 deterministic `MetadataAssemblySymbol` placeholders로 변환하고 reference diagnostics와 missing local metadata input diagnostics를 보존하거나 보고하는 smoke tests가 검증한다. |
+| C# metadata pipeline integration | 통과 | `TypeSharpChecker`와 `TypeSharpBuilder`가 reference resolver와 metadata reader diagnostics를 source parse 전에 diagnostics pipeline에 포함하고, missing local DLL의 `TS2401`이 CLI check/build JSON diagnostics와 build emission stop smoke tests로 검증된다. |
+| CLI check parse diagnostics | 통과 | `TypeSharpChecker`와 `typesharp check`가 manifest/source discovery/parser diagnostics를 실행하고 text/JSON diagnostics와 exit code를 smoke tests로 검증한다. |
+| 실현 가능성 검토 | 통과 | [feasibility.md](feasibility.md)가 compiler host, C# source backend, union representation, public ABI boundary를 현실적인 MVP로 낮춘다. |
+| 문법 커버리지 | 통과 | [grammar/coverage.md](grammar/coverage.md)가 TypeScript, F#, C# 기능의 직접 지원/대체/계획/거절 상태를 추적한다. |
+| 남은 미결정 분리 | 통과 | [goal.md](goal.md)와 [README.md](README.md)가 열린 결정을 명시한다. |
+
+## 다음 반복의 입력
+
+다음 단계에서 문서를 더 구체화하려면 아래 결정 중 하나를 먼저 내려야 한다.
+
+- IL backend 도입 시점과 범위
+- grammar coverage: 새로 발견되는 TypeScript/F#/C# 기능의 Direct/Equivalent/Replacement/Planned/Experimental/Rejected 분류
+- C# byref/params interop smoke: TypeSharp source compiles a narrow imported C# `out` or `params` call shape in the generated `net481` project.
+- nominal union optimization: tagged struct 또는 generated closed type 도입 시점
+- type-level union public boundary diagnostic과 수동 nominal union/interface/wrapper 가이드
+- manifest 형식: `TypeSharp.toml` 유지 또는 MSBuild 1급 통합
+- VS Code extension/LSP packaging strategy
+- CLI command implementation order and project manifest validation
+

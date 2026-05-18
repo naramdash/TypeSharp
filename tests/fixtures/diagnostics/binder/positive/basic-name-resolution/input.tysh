@@ -1,0 +1,9 @@
+namespace Samples.Binder.Positive
+
+fun identity(value: string): string = value
+
+fun main(name: string): string {
+  let prefix: string = "Hello"
+  let echoed = identity(name)
+  echoed
+}
