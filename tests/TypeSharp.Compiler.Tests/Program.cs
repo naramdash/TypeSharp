@@ -105,6 +105,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
     ("CLI build compiles core option result APIs", CliBuildCompilesCoreOptionResultApis),
+    ("CLI build compiles generic function API", CliBuildCompilesGenericFunctionApi),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -2874,6 +2875,85 @@ static void CliBuildCompilesCoreOptionResultApis()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated Core model APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesGenericFunctionApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "GenericApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.GenericApi"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.GenericApi
+
+            export fun identity<T>(value: T): T = value
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/GenericApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static T identity<T>(T value)", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic function API.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "GenericApiConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>GenericApiConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="GenericApi">
+                  <HintPath>../generated/bin/Debug/net48/GenericApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace GenericApiConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.GenericApi.Module.identity<string>("value");
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build GenericApiConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated generic function APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

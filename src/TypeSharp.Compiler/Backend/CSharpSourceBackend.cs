@@ -192,12 +192,13 @@ public static class CSharpSourceBackend
         {
             var visibility = GetVisibility(node);
             var name = GetDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
             var parameters = GetParameterList(node);
             var returnType = GetReturnType(node);
             var body = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.FunctionBody);
             var expression = body?.Children.LastOrDefault(child => !child.IsToken);
 
-            _builder.AppendLine($"        {visibility} static {returnType} {name}({parameters})");
+            _builder.AppendLine($"        {visibility} static {returnType} {name}{typeParameters}({parameters})");
             _builder.AppendLine("        {");
             if (expression?.Kind == SyntaxKind.BlockExpression)
             {
@@ -223,6 +224,23 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.Parameter)
                 .Select(EmitParameter);
             return string.Join(", ", parameters);
+        }
+
+        private static string GetTypeParameterList(SyntaxNode declaration)
+        {
+            var typeParameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeParameterList);
+            if (typeParameterList is null)
+            {
+                return string.Empty;
+            }
+
+            var parameters = typeParameterList.Children
+                .Where(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                .Select(child => child.Text ?? string.Empty)
+                .Where(text => text.Length > 0)
+                .ToArray();
+
+            return parameters.Length == 0 ? string.Empty : $"<{string.Join(", ", parameters)}>";
         }
 
         private static string EmitParameter(SyntaxNode parameter)

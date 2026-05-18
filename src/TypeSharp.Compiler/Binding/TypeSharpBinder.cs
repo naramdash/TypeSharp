@@ -175,9 +175,10 @@ public static class TypeSharpBinder
         private void BindFunctionDeclaration(SyntaxNode node, BindingScope parentScope)
         {
             var scope = new BindingScope(parentScope);
+            DeclareTypeParameters(node, scope);
             foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
             {
-                BindTypeAnnotations(parameter, parentScope);
+                BindTypeAnnotations(parameter, scope);
                 if (TryGetFirstIdentifier(parameter, out var parameterToken))
                 {
                     scope.DeclareValue(parameterToken.Text ?? string.Empty);
@@ -187,7 +188,7 @@ public static class TypeSharpBinder
 
             foreach (var typeAnnotation in node.Children.Where(child => child.Kind == SyntaxKind.TypeAnnotation))
             {
-                BindTypeNode(typeAnnotation, parentScope);
+                BindTypeNode(typeAnnotation, scope);
             }
 
             foreach (var body in node.Children.Where(child => child.Kind == SyntaxKind.FunctionBody))
@@ -444,6 +445,21 @@ public static class TypeSharpBinder
             }
         }
 
+        private void DeclareTypeParameters(SyntaxNode node, BindingScope scope)
+        {
+            foreach (var identifier in GetTypeParameterIdentifiers(node))
+            {
+                var name = identifier.Text ?? string.Empty;
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                scope.DeclareType(name);
+                _symbols.Add(new BoundSymbol(name, BoundSymbolKind.Type, _file, identifier.Span));
+            }
+        }
+
         private void BindTypeAnnotations(SyntaxNode node, BindingScope scope)
         {
             foreach (var child in node.Children.Where(child => child.Kind == SyntaxKind.TypeAnnotation))
@@ -606,6 +622,23 @@ public static class TypeSharpBinder
                 }
 
                 if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    yield return child;
+                }
+            }
+        }
+
+        private static IEnumerable<SyntaxNode> GetTypeParameterIdentifiers(SyntaxNode node)
+        {
+            var typeParameterList = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeParameterList);
+            if (typeParameterList is null)
+            {
+                yield break;
+            }
+
+            foreach (var child in typeParameterList.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
                 {
                     yield return child;
                 }
