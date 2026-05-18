@@ -62,7 +62,8 @@ Done:
 - Added traceability rows for each aggregate test category.
 
 Remaining:
-- Public ABI snapshot tests, performance smoke benchmark, and regression test policy remain unchecked.
+- At this task's close, public ABI snapshot tests, performance smoke benchmark, and regression test policy were intentionally left unchecked.
+- Follow-up complete: [0098-public-abi-snapshot-smoke.md](0098-public-abi-snapshot-smoke.md), [0099-performance-smoke-benchmark.md](0099-performance-smoke-benchmark.md), and [0100-regression-test-policy.md](0100-regression-test-policy.md) now close those remaining test coverage items.
 
 Blocked:
 - None.

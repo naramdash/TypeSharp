@@ -54,3 +54,4 @@
 | [0097-stable-grammar-parser-fixture-audit.md](0097-stable-grammar-parser-fixture-audit.md) | Q1-Q2 | Done | stable grammar parser fixture coverage를 현재 snapshot evidence에 맞춰 문서화한다. |
 | [0098-public-abi-snapshot-smoke.md](0098-public-abi-snapshot-smoke.md) | Q2-Q3 | Done | generated `net48` assembly public metadata shape를 smoke test로 고정한다. |
 | [0099-performance-smoke-benchmark.md](0099-performance-smoke-benchmark.md) | Q2-Q3 | Done | compiler check pipeline의 극단적 성능 회귀를 잡는 관대한 smoke benchmark를 추가한다. |
+| [0100-regression-test-policy.md](0100-regression-test-policy.md) | Q1-Q3 | Done | 새 변경이 어떤 fixture, smoke, metadata check, docs verification을 가져야 하는지 정책화한다. |
