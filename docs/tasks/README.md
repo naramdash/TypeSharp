@@ -34,8 +34,4 @@
 | [0062-cli-build-type-diagnostic-stop.md](0062-cli-build-type-diagnostic-stop.md) | Q4 | Done | `typesharp build`가 `TS2201` type checker diagnostics에서 generated emission 전에 멈추는지 고정한다. |
 | [0063-net48-repository-consistency-sweep.md](0063-net48-repository-consistency-sweep.md) | Q0-Q3 | Done | `net481`에서 `net48`로 내려온 기본 build target 결정을 repo-wide 문서 색인과 task rollup에 일관되게 반영한다. |
 | [0064-formatter-convention.md](0064-formatter-convention.md) | Q4 | Done | `typesharp format`과 VS Code formatter가 공유할 `.tysh` canonical layout을 문서화한다. |
-| [0065-vscode-extension-scaffold.md](0065-vscode-extension-scaffold.md) | Q4 | Done | VS Code가 `.tysh` 파일을 `typesharp` 언어로 인식하고 lexical grammar 기반 syntax highlighting을 제공하는 extension scaffold를 추가한다. |
-| [0066-lsp-diagnostics-publish.md](0066-lsp-diagnostics-publish.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document를 compiler diagnostics로 검사하고 LSP `publishDiagnostics`를 내보낸다. |
-| [0067-lsp-hover.md](0067-lsp-hover.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document의 identifier hover에서 binder symbol 정보를 markdown hover로 반환한다. |
-| [0068-lsp-go-to-definition.md](0068-lsp-go-to-definition.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document의 identifier definition request에서 binder symbol 위치를 LSP Location으로 반환한다. |
-| [0069-lsp-basic-completion.md](0069-lsp-basic-completion.md) | Q4 | Done | `TypeSharp.LanguageServer`가 open `.tysh` document의 binder symbols, built-in types, core keywords를 LSP completion items로 반환한다. |
+| [0065-0069-vscode-lsp-tooling.md](0065-0069-vscode-lsp-tooling.md) | Q4 | Done | VS Code `.tysh` language scaffold와 LSP diagnostics, hover, go-to-definition, basic completion을 묶는다. |
