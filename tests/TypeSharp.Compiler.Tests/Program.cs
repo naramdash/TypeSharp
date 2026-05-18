@@ -68,6 +68,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports parser diagnostics", CheckerReportsParserDiagnostics),
     ("CLI check succeeds on parse-clean project", CliCheckSucceedsOnParseCleanProject),
     ("CLI check emits JSON parser diagnostics", CliCheckEmitsJsonParserDiagnostics),
+    ("CLI check emits JSON type checker diagnostics", CliCheckEmitsJsonTypeCheckerDiagnostics),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
@@ -1475,6 +1476,29 @@ static void CliCheckEmitsJsonParserDiagnostics()
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS1001\"", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonTypeCheckerDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("TypeJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.TypeJson
+
+            export fun broken(): string = 42
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("Cannot return expression of type 'int' from function returning 'string'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }

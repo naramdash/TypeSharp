@@ -189,6 +189,7 @@
 | C# delegate lambda call smoke | 통과 | `CSharpSourceBackend`가 single-parameter lambda expression을 C# `parameter => expression`으로 emit하고, temporary `LegacyDelegates.Apply(string, Func<string,string>)` local DLL call이 generated `net48` project로 컴파일되는 smoke test가 검증한다. |
 | C# event add/remove call smoke | 통과 | lexer/parser/backend가 `+=` and `-=` event assignment expressions를 보존하고, temporary `LegacyEvents.Transform` event에 lambda handler를 add/remove한 뒤 generated `net48` project로 컴파일되는 smoke test가 검증한다. |
 | CLI check parse diagnostics | 통과 | `TypeSharpChecker`와 `typesharp check`가 manifest/source discovery/parser diagnostics를 실행하고 text/JSON diagnostics와 exit code를 smoke tests로 검증한다. |
+| CLI check type checker diagnostics | 통과 | `TypeSharpChecker`와 `typesharp check`가 parse/bind-clean source의 `TS2201` type mismatch를 JSON diagnostics로 보고하고 CLI exit code 1을 반환하는 smoke test가 검증한다. |
 | 실현 가능성 검토 | 통과 | [feasibility.md](feasibility.md)가 compiler host, C# source backend, union representation, public ABI boundary를 현실적인 MVP로 낮춘다. |
 | 문법 커버리지 | 통과 | [grammar/coverage.md](grammar/coverage.md)가 TypeScript, F#, C# 기능의 직접 지원/대체/계획/거절 상태를 추적한다. |
 | 남은 미결정 분리 | 통과 | [goal.md](goal.md)와 [README.md](README.md)가 열린 결정을 명시한다. |

@@ -198,9 +198,10 @@
 - [x] project manifest loader
 - [x] CLI command surface 문서
 - [x] CLI `version`
-- [ ] CLI `check`
+- [x] CLI `check`
 - [x] CLI `check` parse diagnostics path
 - [x] CLI `check` reference diagnostics path
+- [x] CLI `check` type checker diagnostics path
 - [ ] CLI `build`
 - [x] CLI `build` generated C# emission path
 - [x] CLI `build` reference diagnostics stop path
@@ -239,6 +240,7 @@
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
 - [x] CLI check parse diagnostics smoke tests
+- [x] CLI check type checker diagnostics smoke tests
 - [x] diagnostic descriptor registry smoke tests
 - [x] binder/name resolution smoke tests
 - [x] type checker basic mismatch smoke tests
