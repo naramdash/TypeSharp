@@ -160,6 +160,7 @@ MVP 결정:
 Current runtime helper:
 - `TypeSharp.Runtime.ITypeSharpUnionCase` defines the tag, case name, payload presence, and payload shape that generated nominal union case classes can expose.
 - `TypeSharp.Runtime.TypeSharpUnion` provides C# 7.3-compatible helper methods for tag checks, payload access, case equality, payload equality, and deterministic hash composition.
+- `TypeSharp.Runtime.TypeSharpPattern` provides C# 7.3-compatible case and payload checks for generated pattern matching lowering.
 
 ## .NET Interop Layer
 

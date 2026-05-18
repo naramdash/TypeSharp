@@ -187,7 +187,7 @@
 - [x] `Result<T, E>`
 - [x] `Unit`
 - [x] nominal union helper
-- [ ] pattern helper
+- [x] pattern helper
 - [ ] equality/hash helper
 - [ ] async helper
 - [ ] public ABI versioning 정책

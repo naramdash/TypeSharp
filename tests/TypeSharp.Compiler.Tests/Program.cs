@@ -36,6 +36,7 @@ var tests = new (string Name, Action Body)[]
     ("net48 runtime artifacts avoid external package dependencies", Net48RuntimeArtifactsAvoidExternalPackageDependencies),
     ("core option and result expose basic states", CoreOptionAndResultExposeBasicStates),
     ("runtime union helper exposes case metadata", RuntimeUnionHelperExposesCaseMetadata),
+    ("runtime pattern helper matches union cases", RuntimePatternHelperMatchesUnionCases),
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
@@ -430,6 +431,26 @@ static void RuntimeUnionHelperExposesCaseMetadata()
     AssertTrue(TypeSharpUnion.PayloadEquals(empty, RuntimeUnionSmoke.EmptyCase.Instance), "Payload-free cases should compare payload equality.");
     AssertThrows<InvalidOperationException>(() => TypeSharpUnion.GetPayload(empty));
     AssertThrows<ArgumentException>(() => TypeSharpUnion.GetTag("not-a-union"));
+}
+
+static void RuntimePatternHelperMatchesUnionCases()
+{
+    var message = new RuntimeUnionSmoke.MessageCase("hello");
+    var empty = RuntimeUnionSmoke.EmptyCase.Instance;
+
+    AssertTrue(TypeSharpPattern.IsCase(message, 1), "Pattern helper should match a case tag.");
+    AssertTrue(TypeSharpPattern.IsPayloadCase(message, 1), "Payload case should match payload case predicate.");
+    AssertFalse(TypeSharpPattern.IsPayloadlessCase(message, 1), "Payload case should not match payload-free predicate.");
+    AssertEqual("hello", TypeSharpPattern.RequirePayload<string>(message, 1));
+
+    AssertTrue(TypeSharpPattern.IsCase(empty, 0), "Payload-free case should match its tag.");
+    AssertTrue(TypeSharpPattern.IsPayloadlessCase(empty, 0), "Payload-free case should match payload-free predicate.");
+    AssertFalse(TypeSharpPattern.IsPayloadCase(empty, 0), "Payload-free case should not match payload predicate.");
+
+    var noMatch = TypeSharpPattern.NoMatch(message);
+    AssertContains("No pattern matched union case 'Message' with tag 1.", noMatch.Message);
+    AssertThrows<InvalidOperationException>(() => TypeSharpPattern.RequirePayload(message, 2));
+    AssertThrows<InvalidOperationException>(() => throw TypeSharpPattern.NoMatch("not-a-union"));
 }
 
 static void ReferenceResolverNormalizesFrameworkAssemblies()
