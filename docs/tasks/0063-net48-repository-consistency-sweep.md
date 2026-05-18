@@ -152,3 +152,19 @@ Result:
 - Pass. `dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj` emits `bin\Debug\net48\TypeSharp.Core.dll`.
 - Pass. `dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj` emits `bin\Debug\net48\TypeSharp.Runtime.dll`.
 - Pass. `dotnet run --project src\TypeSharp.Cli\TypeSharp.Cli.csproj -- check docs\examples\cli-console\TypeSharp.toml --diagnostic-format json` returned `{ "diagnostics": [] }`.
+
+## 2026-05-19 Source Backend Net48 Recheck
+
+Recheck Start Time: 2026-05-19 05:20:30 +09:00
+Recheck End Time: 2026-05-19 05:25:12 +09:00
+
+Trigger:
+- User reiterated that the repository should be refreshed with the `net481` to `net48` build target change in mind after the C# source backend audit.
+
+Result:
+- Pass. `rg -n "net481|Net481|NET481" src tests Directory.Build.props agent.md -S` returns no code, project, test, or agent contract matches.
+- Pass. Remaining `net481`/4.8.1 matches in docs are intentional latest Framework profile comparison, official .NET Framework 4.8.1 facts, migration history, or this task packet.
+- Pass. `dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj` emits `bin\Debug\net48\TypeSharp.Core.dll`.
+- Pass. `dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj` emits `bin\Debug\net48\TypeSharp.Runtime.dll`.
+- Pass. `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
+- Pass. `git diff --check`.
