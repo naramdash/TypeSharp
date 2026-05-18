@@ -1,0 +1,21 @@
+namespace Samples.Structural
+
+record HasAge(Age: int)
+record WrongName(Name: int)
+record Person(Name: string, Age: int)
+
+type Named = { Name: string }
+type WithNickname = { Name: string, Nickname?: string }
+
+fun missing(): Named = HasAge(42)
+
+fun wrong(): Named {
+  let named: Named = WrongName(42)
+  named
+}
+
+fun extraOk(): Named = Person("Ada", 36)
+
+fun optionalOk(): WithNickname = Person("Ada", 36)
+
+fun badMember(value: Named): string = value.Missing

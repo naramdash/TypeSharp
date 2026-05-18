@@ -84,6 +84,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON parser diagnostics", CliCheckEmitsJsonParserDiagnostics),
     ("CLI check emits JSON type checker diagnostics", CliCheckEmitsJsonTypeCheckerDiagnostics),
     ("CLI check emits JSON nullability diagnostics", CliCheckEmitsJsonNullabilityDiagnostics),
+    ("CLI check emits JSON structural diagnostics", CliCheckEmitsJsonStructuralDiagnostics),
     ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
     ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
@@ -1788,6 +1789,33 @@ static void CliCheckEmitsJsonNullabilityDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2202\"", error.ToString());
         AssertContains("Cannot return null from function returning non-null type 'string'.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonStructuralDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("StructuralJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.StructuralJson
+
+            record HasAge(Age: int)
+
+            type Named = { Name: string }
+
+            fun broken(): Named = HasAge(42)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("Type 'HasAge' is missing required member 'Name' for structural type 'Named'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }

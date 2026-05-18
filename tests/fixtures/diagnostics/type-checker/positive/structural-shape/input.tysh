@@ -1,0 +1,19 @@
+namespace Samples.Structural
+
+record Person(Name: string, Age: int, Email: string)
+record Contact(Name: string)
+
+type Named = { Name: string }
+type ContactLike = { Name: string, Email?: string }
+
+fun label(value: Named): string = value.Name
+
+fun acceptsRecord(): string {
+  let person: Named = Person("Ada", 36, "ada@example.test")
+  label(person)
+}
+
+fun optionalMember(): string {
+  let contact: ContactLike = Contact("Ada")
+  contact.Name
+}

@@ -100,6 +100,11 @@ public static class TypeSharpTypeChecker
                                 {
                                     scope.DeclareTypeLevelUnion(aliasName, typeLevelUnion.Members);
                                 }
+
+                                if (TryGetStructuralShape(aliasName, aliasTarget, out var structuralShape))
+                                {
+                                    scope.DeclareStructuralShape(aliasName, structuralShape.Members);
+                                }
                             }
                         }
 
@@ -116,6 +121,11 @@ public static class TypeSharpTypeChecker
                             if (child.Kind == SyntaxKind.UnionDeclaration)
                             {
                                 scope.DeclareUnion(typeName, GetUnionCases(child));
+                            }
+
+                            if (child.Kind == SyntaxKind.RecordDeclaration)
+                            {
+                                scope.DeclareRecordShape(typeName, GetRecordShape(typeName, child).Members);
                             }
                         }
 
@@ -245,6 +255,10 @@ public static class TypeSharpTypeChecker
                             ? $"Cannot return null from function returning non-null type '{expectedReturnType}'."
                             : $"Cannot return nullable expression of type '{actualReturnType}' from function returning non-null type '{expectedReturnType}'.");
                 }
+                else if (expectedReturnTypeKnown && actualReturnType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, expectedReturnType, actualReturnType, out var structuralMessage))
+                {
+                    ReportMismatch(body, structuralMessage);
+                }
                 else if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, expectedReturnType, actualReturnType))
                 {
                     ReportMismatch(
@@ -346,6 +360,10 @@ public static class TypeSharpTypeChecker
                         ? $"Cannot assign null to non-null type '{expectedType}'."
                         : $"Cannot assign nullable expression of type '{initializerType}' to non-null type '{expectedType}'.");
             }
+            else if (annotationKnown && initializerType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, expectedType, initializerType, out var structuralMessage))
+            {
+                ReportMismatch(node, structuralMessage);
+            }
             else if (annotationKnown && initializerType.IsKnown && !CanAssign(scope, expectedType, initializerType))
             {
                 ReportMismatch(
@@ -387,7 +405,8 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.IfExpression => InferIf(node, scope),
                 SyntaxKind.MatchExpression => InferMatch(node, scope),
                 SyntaxKind.BinaryExpression => InferBinary(node, scope),
-                SyntaxKind.MemberAccessExpression or SyntaxKind.IndexerExpression => SimpleType.Unknown,
+                SyntaxKind.MemberAccessExpression => InferMemberAccess(node, scope),
+                SyntaxKind.IndexerExpression => SimpleType.Unknown,
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
                 SyntaxKind.CollectionExpression => SimpleType.Unknown,
                 _ => CheckChildrenForSideEffects(node, scope)
@@ -454,6 +473,32 @@ public static class TypeSharpTypeChecker
             }
 
             return scope.ResolveType(name) ? SimpleType.Named(name) : SimpleType.Unknown;
+        }
+
+        private SimpleType InferMemberAccess(SyntaxNode node, TypeScope scope)
+        {
+            var receiver = node.Children.FirstOrDefault(child => !child.IsToken);
+            var member = node.Children.LastOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken);
+            if (receiver is null || member?.Text is null)
+            {
+                return SimpleType.Unknown;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            if (!receiverType.IsKnown || !scope.ResolveShape(receiverType.Name, out var shape))
+            {
+                return SimpleType.Unknown;
+            }
+
+            var memberName = member.Text;
+            var shapeMember = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+            if (shapeMember.Name is null)
+            {
+                ReportMismatch(node, $"Type '{receiverType}' does not contain member '{memberName}'.");
+                return SimpleType.Unknown;
+            }
+
+            return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
         }
 
         private SimpleType InferIf(SyntaxNode node, TypeScope scope)
@@ -646,7 +691,10 @@ public static class TypeSharpTypeChecker
             return SimpleType.Unknown;
         }
 
-        private static bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual)
+        private static bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual) =>
+            CanAssign(scope, expected, actual, new HashSet<string>(StringComparer.Ordinal));
+
+        private static bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual, HashSet<string> visited)
         {
             if (!expected.IsKnown || !actual.IsKnown)
             {
@@ -669,12 +717,103 @@ public static class TypeSharpTypeChecker
                 return true;
             }
 
+            if (scope.ResolveStructuralShape(expected.Name, out var expectedShape))
+            {
+                return CanAssignToShape(scope, expected, expectedShape, actual, visited);
+            }
+
             if (expected.Name != actual.Name)
             {
                 return false;
             }
 
             return expected.IsNullable || !actual.IsNullable;
+        }
+
+        private static bool CanAssignToShape(TypeScope scope, SimpleType expected, ShapeInfo expectedShape, SimpleType actual, HashSet<string> visited)
+        {
+            if (!actual.IsKnown || actual.IsNull || (actual.IsNullable && !expected.IsNullable))
+            {
+                return false;
+            }
+
+            if (!scope.ResolveShape(actual.Name, out var actualShape))
+            {
+                return false;
+            }
+
+            var key = $"{expectedShape.Name}<={actualShape.Name}";
+            if (!visited.Add(key))
+            {
+                return true;
+            }
+
+            foreach (var expectedMember in expectedShape.Members)
+            {
+                var actualMember = actualShape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, expectedMember.Name, StringComparison.Ordinal));
+                if (actualMember.Name is null)
+                {
+                    if (expectedMember.IsOptional)
+                    {
+                        continue;
+                    }
+
+                    return false;
+                }
+
+                if (!expectedMember.IsOptional && actualMember.IsOptional)
+                {
+                    return false;
+                }
+
+                if (!CanAssign(scope, expectedMember.Type, actualMember.Type, visited))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool TryGetStructuralAssignmentDiagnostic(TypeScope scope, SimpleType expected, SimpleType actual, out string message)
+        {
+            message = string.Empty;
+            if (!expected.IsKnown ||
+                !actual.IsKnown ||
+                !scope.ResolveStructuralShape(expected.Name, out var expectedShape) ||
+                !scope.ResolveShape(actual.Name, out var actualShape))
+            {
+                return false;
+            }
+
+            foreach (var expectedMember in expectedShape.Members)
+            {
+                var actualMember = actualShape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, expectedMember.Name, StringComparison.Ordinal));
+                if (actualMember.Name is null)
+                {
+                    if (expectedMember.IsOptional)
+                    {
+                        continue;
+                    }
+
+                    message = $"Type '{actual}' is missing required member '{expectedMember.Name}' for structural type '{expected}'.";
+                    return true;
+                }
+
+                if (!expectedMember.IsOptional && actualMember.IsOptional)
+                {
+                    message = $"Member '{expectedMember.Name}' on type '{actual}' is optional but structural type '{expected}' requires it.";
+                    return true;
+                }
+
+                if (!CanAssign(scope, expectedMember.Type, actualMember.Type))
+                {
+                    message = $"Member '{expectedMember.Name}' on type '{actual}' has type '{actualMember.Type}', which is not assignable to structural member type '{expectedMember.Type}' on '{expected}'.";
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool IsNullabilityViolation(SimpleType expected, SimpleType actual)
@@ -868,6 +1007,38 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
+        private static bool TryGetStructuralShape(string name, SyntaxNode node, out ShapeInfo shape)
+        {
+            shape = default;
+            if (node.Kind != SyntaxKind.RecordShapeType)
+            {
+                return false;
+            }
+
+            var members = new List<ShapeMemberInfo>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var member in node.Children.Where(child => child.Kind == SyntaxKind.ShapeMember))
+            {
+                var memberName = member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                if (memberName.Length == 0 || !seen.Add(memberName))
+                {
+                    continue;
+                }
+
+                var typeNode = member.Children.LastOrDefault(child => !child.IsToken);
+                if (typeNode is null || !TryGetType(typeNode, out var memberType) || !memberType.IsKnown)
+                {
+                    return false;
+                }
+
+                var isOptional = member.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.QuestionToken);
+                members.Add(new ShapeMemberInfo(memberName, memberType, isOptional));
+            }
+
+            shape = new ShapeInfo(name, members);
+            return true;
+        }
+
         private static bool TryGetGenericType(SyntaxNode node, out SimpleType type)
         {
             type = SimpleType.Unknown;
@@ -955,6 +1126,32 @@ public static class TypeSharpTypeChecker
             }
 
             return parameters;
+        }
+
+        private static ShapeInfo GetRecordShape(string name, SyntaxNode declaration)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return new ShapeInfo(name, []);
+            }
+
+            var members = new List<ShapeMemberInfo>();
+            foreach (var parameter in parameterList.Children.Where(child => child.Kind == SyntaxKind.Parameter))
+            {
+                var memberName = parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                if (memberName.Length == 0 ||
+                    !TryGetDirectTypeAnnotation(parameter, out var annotation) ||
+                    !TryGetType(annotation, out var memberType) ||
+                    !memberType.IsKnown)
+                {
+                    continue;
+                }
+
+                members.Add(new ShapeMemberInfo(memberName, memberType, IsOptional: false));
+            }
+
+            return new ShapeInfo(name, members);
         }
 
         private static bool TryGetUnionArm(
@@ -1132,6 +1329,8 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, TypeLevelUnionInfo> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionInfo> _unions = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, ShapeInfo> _structuralShapes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, ShapeInfo> _recordShapes = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
         public TypeScope(TypeScope? parent)
@@ -1150,6 +1349,10 @@ public static class TypeSharpTypeChecker
         public void DeclareTypeLevelUnion(string name, IReadOnlyList<TypeLevelUnionMemberInfo> members) => _typeLevelUnions[name] = new TypeLevelUnionInfo(name, members);
 
         public void DeclareUnion(string name, IReadOnlyList<UnionCaseInfo> cases) => _unions[name] = new UnionInfo(name, cases);
+
+        public void DeclareStructuralShape(string name, IReadOnlyList<ShapeMemberInfo> members) => _structuralShapes[name] = new ShapeInfo(name, members);
+
+        public void DeclareRecordShape(string name, IReadOnlyList<ShapeMemberInfo> members) => _recordShapes[name] = new ShapeInfo(name, members);
 
         public bool ResolveValue(string name, out SimpleType type)
         {
@@ -1231,6 +1434,48 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        public bool ResolveStructuralShape(string name, out ShapeInfo shape)
+        {
+            if (_structuralShapes.TryGetValue(name, out shape))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveStructuralShape(name, out shape);
+            }
+
+            shape = default;
+            return false;
+        }
+
+        public bool ResolveRecordShape(string name, out ShapeInfo shape)
+        {
+            if (_recordShapes.TryGetValue(name, out shape))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveRecordShape(name, out shape);
+            }
+
+            shape = default;
+            return false;
+        }
+
+        public bool ResolveShape(string name, out ShapeInfo shape)
+        {
+            if (ResolveStructuralShape(name, out shape))
+            {
+                return true;
+            }
+
+            return ResolveRecordShape(name, out shape);
+        }
+
         public bool ResolveType(string name) => _types.Contains(name) || (_parent?.ResolveType(name) ?? false);
     }
 
@@ -1243,6 +1488,10 @@ public static class TypeSharpTypeChecker
     private readonly record struct TypeLevelUnionInfo(string Name, IReadOnlyList<TypeLevelUnionMemberInfo> Members);
 
     private readonly record struct TypeLevelUnionMemberInfo(SimpleType Type);
+
+    private readonly record struct ShapeInfo(string Name, IReadOnlyList<ShapeMemberInfo> Members);
+
+    private readonly record struct ShapeMemberInfo(string Name, SimpleType Type, bool IsOptional);
 
     private enum CompileTimeOnlyTypeKind
     {

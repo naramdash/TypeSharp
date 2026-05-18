@@ -103,7 +103,7 @@
 - [x] union narrowing
 - [x] pattern matching
 - [x] null safety
-- [ ] basic structural type checking
+- [x] basic structural type checking
 - [ ] `Task`/`Task<T>` async interop
 - [x] C# assembly reference
 - [x] C# local DLL reference
