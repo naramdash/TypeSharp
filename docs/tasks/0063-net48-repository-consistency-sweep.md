@@ -168,3 +168,20 @@ Result:
 - Pass. `dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj` emits `bin\Debug\net48\TypeSharp.Runtime.dll`.
 - Pass. `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
 - Pass. `git diff --check`.
+
+## 2026-05-19 Feature Spec Net48 Recheck
+
+Recheck Start Time: 2026-05-19 05:56:45 +09:00
+Recheck End Time: 2026-05-19 05:58:21 +09:00
+
+Trigger:
+- User reiterated that the build target moved from `net481` to `net48`, noted that the docs were updated, and asked to refresh the whole repository with that in mind.
+
+Result:
+- Pass. `rg -n "net481|Net481|NET481|v4\.8\.1|4\.8\.1" src tests vscode Directory.Build.props agent.md -S` returns no code, project, test, VS Code, or agent contract matches.
+- Pass. `rg -n "<TargetFramework>|TargetFramework|DefaultTargetFramework|net48|net481" src tests Directory.Build.props -S` confirms `TypeSharp.Core` and `TypeSharp.Runtime` target `net48`, generated project defaults remain `net48`, and compiler/CLI/LSP/test hosts remain `net10.0`.
+- Pass. Remaining `net481`/4.8.1 matches in docs are intentional latest Framework profile comparison, official .NET Framework 4.8.1 facts, migration history, or this task packet.
+- Pass. `dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj` emits `bin\Debug\net48\TypeSharp.Core.dll`.
+- Pass. `dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj` emits `bin\Debug\net48\TypeSharp.Runtime.dll`.
+- Pass. `dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
+- Pass. `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`.
