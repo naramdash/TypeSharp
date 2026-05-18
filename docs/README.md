@@ -60,40 +60,43 @@
 18. [feature-map.md](feature-map.md)
    - 최신 C#, F#, TypeScript 기능을 TypeSharp에서 MVP, Stable Backlog, Preview Watch, Experimental, Rejected로 분류한다.
 
-19. [architecture.md](architecture.md)
+19. [feature-specs.md](feature-specs.md)
+   - 현재 구현 또는 안정 문법으로 분류된 기능의 세부 사양 문서와 검증 근거를 기능별로 묶는다.
+
+20. [architecture.md](architecture.md)
    - compiler pipeline, backend 전략, runtime library, tooling, test strategy의 권장 구조를 제안한다.
 
-20. [checklist.md](checklist.md)
+21. [checklist.md](checklist.md)
    - 설계와 구현을 반복할 때 완료 여부를 확인하는 실행 체크리스트다.
 
-21. [parser-fixtures.md](parser-fixtures.md)
+22. [parser-fixtures.md](parser-fixtures.md)
    - compiler skeleton 전에 parser positive/negative fixture, diagnostics snapshot, syntax tree snapshot 형식을 고정한다.
 
-22. [regression-testing.md](regression-testing.md)
+23. [regression-testing.md](regression-testing.md)
    - 새 기능, 버그 수정, public ABI 변경, docs-only 결정이 어떤 fixture/smoke/policy 근거를 가져야 하는지 정의한다.
 
-23. [feature-review.md](feature-review.md)
+24. [feature-review.md](feature-review.md)
    - 기능 추가 또는 안정화 때 반복해서 답해야 하는 .NET Framework, public ABI, lowering, diagnostics, tooling, test review gate를 정의한다.
 
-24. [tasks/README.md](tasks/README.md)
+25. [tasks/README.md](tasks/README.md)
    - 장기 실행 에이전트가 바로 집어 들 수 있는 작업 패킷 목록이다.
 
-25. [traceability.md](traceability.md)
+26. [traceability.md](traceability.md)
    - 목표, 요구사항, 기능, 체크리스트가 서로 어떻게 연결되는지 검증한다.
 
-26. [references.md](references.md)
+27. [references.md](references.md)
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
-27. [dependencies.md](dependencies.md)
+28. [dependencies.md](dependencies.md)
    - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
 
-28. [framework-targeting.md](framework-targeting.md)
+29. [framework-targeting.md](framework-targeting.md)
    - Windows 10/11 장비 벤더 환경에서 `net48`과 `net481` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
-29. [runtime-abi.md](runtime-abi.md)
+30. [runtime-abi.md](runtime-abi.md)
    - `TypeSharp.Core`, `TypeSharp.Runtime`, generated `net48` assembly의 public ABI versioning 정책을 정의한다.
 
-30. [release.md](release.md)
+31. [release.md](release.md)
    - versioning, breaking change, preview feature gate, checksum/signing, security, release notes, compatibility matrix 정책을 정의한다.
 
 ## 문서 원칙
@@ -116,6 +119,7 @@
 - `migration-guide.md`는 기존 .NET Framework/C# 환경에서 TypeSharp를 점진적으로 도입하는 절차와 현재 미지원 자동화를 설명한다.
 - `feasibility.md`는 과도한 약속을 MVP, Stable Backlog, Preview Watch, Experimental, Rejected 중 적절한 범위로 낮추고 실제 구현 순서를 정리한다.
 - `feature-map.md`는 외부 언어의 최신 기능을 TypeSharp 의미론으로 번역하는 곳이다.
+- `feature-specs.md`는 현재 구현 또는 안정 문법 기능의 세부 사양 문서와 구현/검증 근거를 기능별로 찾는 색인이다.
 - `checklist.md`는 실제 반복 작업의 입구다. 체크되지 않은 항목은 다음 설계 또는 구현 작업 후보가 된다.
 - `parser-fixtures.md`는 parser 구현 전에 fixture layout, expected diagnostics, syntax tree snapshot 형식을 고정한다.
 - `regression-testing.md`는 새 변경이 어떤 fixture, smoke, metadata check, policy link를 가져야 하는지 정한다.

@@ -67,3 +67,4 @@
 | [0110-backend-abstraction-seam.md](0110-backend-abstraction-seam.md) | Q3 | Done | C# source backend를 compiler backend abstraction 뒤로 연결한다. |
 | [0111-public-abi-checker.md](0111-public-abi-checker.md) | Q3-Q5 | Done | generated assembly public metadata를 deterministic ABI snapshot checker로 검증한다. |
 | [0112-csharp-overload-resolver.md](0112-csharp-overload-resolver.md) | Q3 | Done | C# interop overload 후보 선택을 독립 resolver API로 분리하고 현재 범위를 문서화한다. |
+| [0113-feature-specification-index.md](0113-feature-specification-index.md) | Q1-Q5 | Done | 현재 구현/안정 기능의 세부 사양 문서와 검증 근거를 기능별 색인으로 묶는다. |
