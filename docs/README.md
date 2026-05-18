@@ -63,6 +63,9 @@
 19. [references.md](references.md)
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
+20. [dependencies.md](dependencies.md)
+   - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net481` compatibility audit 기준을 기록한다.
+
 ## 문서 원칙
 
 - `goal.md`는 프로젝트의 북극성이다. 다른 문서가 goal과 충돌하면 goal을 먼저 수정하거나 충돌을 명시한다.
@@ -82,6 +85,7 @@
 - `parser-fixtures.md`는 parser 구현 전에 fixture layout, expected diagnostics, syntax tree snapshot 형식을 고정한다.
 - `tasks/`는 한 세션보다 긴 작업을 task packet으로 쪼개고 상태를 남기는 곳이다.
 - `references.md`는 시간이 지나면 갱신해야 한다. 최신 언어 버전은 반드시 공식 문서로 다시 확인한다.
+- `dependencies.md`는 package-free runtime/core surface와 future dependency gate를 추적한다.
 
 ## 반복 검토 프로토콜
 

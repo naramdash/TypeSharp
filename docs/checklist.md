@@ -58,8 +58,8 @@
 - [x] generated assembly/runtime library가 ASP.NET Web Forms/MVC/Web API 프로젝트에서 참조되는 smoke test가 있다.
 - [x] generated assembly/runtime library가 WCF service/client 또는 contract 프로젝트에서 참조되는 smoke test가 있다.
 - [x] generated assembly/runtime library가 Windows Service 또는 worker-style `net481` 프로젝트에서 참조되는 smoke test가 있다.
-- [ ] .NET 5+ 전용 API 사용 여부를 검사한다.
-- [ ] NuGet dependency의 `net481` 호환성과 라이선스를 기록한다.
+- [x] .NET 5+ 전용 API 사용 여부를 검사한다.
+- [x] NuGet dependency의 `net481` 호환성과 라이선스를 기록한다.
 
 ## 언어 사양
 
@@ -276,6 +276,7 @@
 - [x] C# `ref` call smoke tests
 - [x] C# event add/remove call smoke tests
 - [x] ASP.NET/WCF/worker-style `net481` host compatibility smoke tests
+- [x] `net481` runtime dependency compatibility audit smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests
 - [ ] C# interop tests
@@ -290,7 +291,7 @@
 - [ ] breaking change 정책
 - [ ] preview feature gate
 - [ ] package signing 또는 checksum 정책
-- [ ] dependency inventory
+- [x] dependency inventory
 - [ ] security policy
 - [ ] release notes template
 - [ ] compatibility matrix

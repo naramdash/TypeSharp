@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Xml.Linq;
 using TypeSharp.Compiler;
 using TypeSharp.Cli;
 using TypeSharp.Compiler.Backend;
@@ -28,6 +29,7 @@ var tests = new (string Name, Action Body)[]
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
     ("runtime project targets net481", RuntimeProjectTargetsNet481),
     ("core project targets net481", CoreProjectTargetsNet481),
+    ("net481 runtime artifacts avoid external package dependencies", Net481RuntimeArtifactsAvoidExternalPackageDependencies),
     ("core option and result expose basic states", CoreOptionAndResultExposeBasicStates),
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
@@ -350,6 +352,15 @@ static void CoreProjectTargetsNet481()
     AssertContains("abstract class Result<T, E>", result);
     AssertContains("namespace TypeSharp.Core", unit);
     AssertContains("struct Unit", unit);
+}
+
+static void Net481RuntimeArtifactsAvoidExternalPackageDependencies()
+{
+    AssertNet481PackageFreeArtifact("src/TypeSharp.Core/TypeSharp.Core.csproj");
+    AssertNet481PackageFreeArtifact("src/TypeSharp.Runtime/TypeSharp.Runtime.csproj");
+
+    AssertNoDisallowedNet5RuntimeApiReferences("src/TypeSharp.Core");
+    AssertNoDisallowedNet5RuntimeApiReferences("src/TypeSharp.Runtime");
 }
 
 static void CoreOptionAndResultExposeBasicStates()
@@ -2454,6 +2465,57 @@ static void AssertTextEquals(string expected, string actual)
     if (!string.Equals(expected, actual, StringComparison.Ordinal))
     {
         throw new InvalidOperationException($"Text mismatch.\nExpected:\n{expected}\nActual:\n{actual}");
+    }
+}
+
+static void AssertNet481PackageFreeArtifact(string projectPath)
+{
+    var project = XDocument.Load(projectPath);
+    var targetFrameworks = project.Descendants()
+        .Where(element => element.Name.LocalName is "TargetFramework" or "TargetFrameworks")
+        .Select(element => element.Value.Trim())
+        .ToArray();
+
+    AssertEqual(1, targetFrameworks.Length);
+    AssertEqual("net481", targetFrameworks[0]);
+    AssertFalse(
+        project.Descendants().Any(element => element.Name.LocalName == "PackageReference"),
+        $"{projectPath} should not use external NuGet package references.");
+
+    var packagesConfig = Path.Combine(Path.GetDirectoryName(projectPath) ?? string.Empty, "packages.config");
+    AssertFalse(File.Exists(packagesConfig), $"{projectPath} should not use packages.config.");
+}
+
+static void AssertNoDisallowedNet5RuntimeApiReferences(string sourceRoot)
+{
+    var disallowed = new[]
+    {
+        "System.Text.Json",
+        "DateOnly",
+        "TimeOnly",
+        "System.Half",
+        "System.Index",
+        "System.Range",
+        "Span<",
+        "ReadOnlySpan<",
+        "Memory<",
+        "ReadOnlyMemory<",
+        "ValueTask",
+        "IAsyncEnumerable",
+        "IAsyncEnumerator",
+        "Parallel.ForEachAsync",
+        "Task.WaitAsync"
+    };
+
+    foreach (var sourceFile in Directory.EnumerateFiles(sourceRoot, "*.cs", SearchOption.AllDirectories))
+    {
+        var text = File.ReadAllText(sourceFile);
+        foreach (var api in disallowed)
+        {
+            AssertFalse(
+                text.Contains(api, StringComparison.Ordinal),
+                $"{sourceFile} should not reference .NET 5+ or package-backed runtime API '{api}'.");
+        }
     }
 }
 
