@@ -414,6 +414,11 @@ public static class CSharpSourceBackend
 
             if (node.Kind == SyntaxKind.TypeName)
             {
+                if (TryGetGenericType(node, out var genericType))
+                {
+                    return genericType;
+                }
+
                 var name = GetQualifiedName(node);
                 return name switch
                 {
@@ -444,6 +449,30 @@ public static class CSharpSourceBackend
             }
 
             return "object";
+        }
+
+        private static bool TryGetGenericType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var baseType = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeName);
+            var argumentList = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeArgumentList);
+            if (baseType is null || argumentList is null)
+            {
+                return false;
+            }
+
+            var baseName = MapType(baseType);
+            var arguments = argumentList.Children
+                .Where(child => !child.IsToken)
+                .Select(MapType)
+                .ToArray();
+            if (baseName.Length == 0 || arguments.Length == 0)
+            {
+                return false;
+            }
+
+            type = $"{baseName}<{string.Join(", ", arguments)}>";
+            return true;
         }
 
         private static string GetLiteralType(SyntaxNode literal, SyntaxNode? initializer)

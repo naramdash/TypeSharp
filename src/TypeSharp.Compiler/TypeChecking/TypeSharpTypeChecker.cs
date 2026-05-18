@@ -522,6 +522,11 @@ public static class TypeSharpTypeChecker
 
             if (node.Kind == SyntaxKind.TypeName)
             {
+                if (TryGetGenericType(node, out type))
+                {
+                    return true;
+                }
+
                 var identifiers = node.Children.Where(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken).ToArray();
                 var hasDot = node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.DotToken);
                 if (identifiers.Length == 1 && !hasDot)
@@ -532,6 +537,36 @@ public static class TypeSharpTypeChecker
             }
 
             return false;
+        }
+
+        private static bool TryGetGenericType(SyntaxNode node, out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            var baseType = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeName);
+            var argumentList = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeArgumentList);
+            if (baseType is null || argumentList is null || !TryGetType(baseType, out var genericType))
+            {
+                return false;
+            }
+
+            var arguments = new List<string>();
+            foreach (var argument in argumentList.Children.Where(child => !child.IsToken))
+            {
+                if (!TryGetType(argument, out var argumentType))
+                {
+                    return false;
+                }
+
+                arguments.Add(argumentType.ToString());
+            }
+
+            if (arguments.Count == 0)
+            {
+                return false;
+            }
+
+            type = SimpleType.Named($"{genericType.Name}<{string.Join(",", arguments)}>");
+            return true;
         }
 
         private static bool TryGetFunctionReturnType(SyntaxNode annotation, out SimpleType returnType)

@@ -104,6 +104,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
+    ("CLI build compiles core option result APIs", CliBuildCompilesCoreOptionResultApis),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -2764,6 +2765,115 @@ static void CliBuildCompilesModuleNamespace()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated public module members.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesCoreOptionResultApis()
+{
+    WithWorkspace(root =>
+    {
+        var coreBuild = RunProcess(
+            "dotnet",
+            "build src/TypeSharp.Core/TypeSharp.Core.csproj --nologo --verbosity quiet --ignore-failed-sources",
+            Directory.GetCurrentDirectory());
+        AssertTrue(
+            coreBuild.ExitCode == 0,
+            $"TypeSharp.Core should build before generated API smoke.\nSTDOUT:\n{coreBuild.StandardOutput}\nSTDERR:\n{coreBuild.StandardError}");
+
+        var libRoot = Path.Combine(root, "lib");
+        Directory.CreateDirectory(libRoot);
+        File.Copy(
+            Path.Combine(Directory.GetCurrentDirectory(), "src", "TypeSharp.Core", "bin", "Debug", "net48", "TypeSharp.Core.dll"),
+            Path.Combine(libRoot, "TypeSharp.Core.dll"));
+
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CoreModels"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.CoreModels"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/TypeSharp.Core.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.CoreModels
+
+            import { Option, Result } from "TypeSharp.Core"
+
+            export fun keepOption(value: Option<string>): Option<string> = value
+
+            export fun keepResult(value: Result<int, string>): Result<int, string> = value
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/CoreModels.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using TypeSharp.Core;", generatedSource);
+        AssertContains("public static Option<string> keepOption(Option<string> value)", generatedSource);
+        AssertContains("public static Result<int, string> keepResult(Result<int, string> value)", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CoreModels.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with Core model APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "CoreModelsConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>CoreModelsConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="CoreModels">
+                  <HintPath>../generated/bin/Debug/net48/CoreModels.dll</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Core">
+                  <HintPath>../lib/TypeSharp.Core.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace CoreModelsConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var option = TypeSharp.Core.Option<string>.Some("value");
+                        var result = TypeSharp.Core.Result<int, string>.Ok(42);
+                        return Samples.CoreModels.Module.keepOption(option).Value
+                            + ":"
+                            + Samples.CoreModels.Module.keepResult(result).Value.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build CoreModelsConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated Core model APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

@@ -96,8 +96,8 @@
 - [ ] generic type/function
 - [x] module/namespace
 - [ ] immutable record
-- [ ] `Option<T>`
-- [ ] `Result<T, E>`
+- [x] `Option<T>`
+- [x] `Result<T, E>`
 - [ ] nominal closed union type
 - [ ] type-level union alias
 - [ ] union narrowing

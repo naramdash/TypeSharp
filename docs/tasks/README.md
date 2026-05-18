@@ -40,3 +40,4 @@
 | [0075-0076-basic-csharp-backend-semantics.md](0075-0076-basic-csharp-backend-semantics.md) | Q2-Q3 | Done | `literal`, 기본 타입/literal, local binding, function declaration/call의 generated C# `net48` smoke를 묶는다. |
 | [0077-module-namespace-backend-smoke.md](0077-module-namespace-backend-smoke.md) | Q2 | Done | `module` 선언을 namespace 안의 generated C# static class로 낮추는 smoke를 고정한다. |
 | [0078-csharp-byref-params-interop-status.md](0078-csharp-byref-params-interop-status.md) | Q3 | Done | C# `params`, `out`, `in`, `ref` interop aggregate checklist 상태를 기존 smoke와 diagnostic 근거에 맞춘다. |
+| [0079-core-option-result-generic-api-smoke.md](0079-core-option-result-generic-api-smoke.md) | Q2-Q3 | Done | `Option<T>`와 `Result<T,E>`가 generated public API generic signature로 보존되는지 검증한다. |

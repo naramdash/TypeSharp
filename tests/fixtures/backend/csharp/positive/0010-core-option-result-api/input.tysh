@@ -1,0 +1,7 @@
+namespace Samples.CoreModels
+
+import { Option, Result } from "TypeSharp.Core"
+
+export fun keepOption(value: Option<string>): Option<string> = value
+
+export fun keepResult(value: Result<int, string>): Result<int, string> = value
