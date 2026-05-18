@@ -111,6 +111,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles generic type declaration API", CliBuildCompilesGenericTypeDeclarationApi),
     ("CLI build compiles immutable record API", CliBuildCompilesImmutableRecordApi),
     ("CLI build compiles record update lowering", CliBuildCompilesRecordUpdateLowering),
+    ("CLI build compiles nominal union API", CliBuildCompilesNominalUnionApi),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -3377,6 +3378,121 @@ static void CliBuildCompilesRecordUpdateLowering()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated record update lowering.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesNominalUnionApi()
+{
+    WithWorkspace(root =>
+    {
+        var runtimeAssemblyPath = BuildRepositoryAssembly(
+            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+        var libRoot = Path.Combine(root, "lib");
+        Directory.CreateDirectory(libRoot);
+        File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"));
+
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnionApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Unions"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/TypeSharp.Runtime.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Unions
+
+            public union PaymentStatus {
+              Pending
+              Paid(at: string)
+            }
+
+            export fun pending(): PaymentStatus = Pending
+
+            export fun paid(at: string): PaymentStatus = Paid(at)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/UnionApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using TypeSharp.Runtime;", generatedSource);
+        AssertContains("return PaymentStatus.Pending;", generatedSource);
+        AssertContains("return PaymentStatus.Paid(at);", generatedSource);
+        AssertContains("public abstract class PaymentStatus", generatedSource);
+        AssertContains("public sealed class PendingCase : PaymentStatus, ITypeSharpUnionCase", generatedSource);
+        AssertContains("public sealed class PaidCase : PaymentStatus, ITypeSharpUnionCase", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "UnionApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with nominal union API.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "UnionApiConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>UnionApiConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="UnionApi">
+                  <HintPath>../generated/bin/Debug/net48/UnionApi.dll</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Runtime">
+                  <HintPath>../lib/TypeSharp.Runtime.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            using TypeSharp.Runtime;
+
+            namespace UnionApiConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var pending = Samples.Unions.Module.pending();
+                        var paid = Samples.Unions.Module.paid("now");
+                        var paidCase = (Samples.Unions.PaymentStatus.PaidCase)paid;
+                        return TypeSharpUnion.GetCaseName(pending)
+                            + ":"
+                            + TypeSharpUnion.GetTag(paid).ToString()
+                            + ":"
+                            + paidCase.at
+                            + ":"
+                            + TypeSharpUnion.GetPayload<string>(paid);
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build UnionApiConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated nominal union APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

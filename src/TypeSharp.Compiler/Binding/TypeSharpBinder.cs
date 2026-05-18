@@ -106,7 +106,6 @@ public static class TypeSharpBinder
 
                     case SyntaxKind.TypeAliasDeclaration:
                     case SyntaxKind.RecordDeclaration:
-                    case SyntaxKind.UnionDeclaration:
                     case SyntaxKind.ClassDeclaration:
                     case SyntaxKind.InterfaceDeclaration:
                     case SyntaxKind.DelegateDeclaration:
@@ -115,6 +114,15 @@ public static class TypeSharpBinder
                             AddSymbol(scope, typeName, BoundSymbolKind.Type, typeSpan, declareValue: false, declareType: true);
                         }
 
+                        break;
+
+                    case SyntaxKind.UnionDeclaration:
+                        if (TryGetDeclarationName(child, out var unionName, out var unionSpan))
+                        {
+                            AddSymbol(scope, unionName, BoundSymbolKind.Type, unionSpan, declareValue: false, declareType: true);
+                        }
+
+                        CollectUnionCaseSymbols(child, scope);
                         break;
 
                     case SyntaxKind.FunctionDeclaration:
@@ -134,6 +142,23 @@ public static class TypeSharpBinder
 
                         break;
                 }
+            }
+        }
+
+        private void CollectUnionCaseSymbols(SyntaxNode unionDeclaration, BindingScope scope)
+        {
+            foreach (var unionCase in unionDeclaration.Children.Where(child => child.Kind == SyntaxKind.UnionCase))
+            {
+                var identifier = unionCase.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken);
+                if (identifier is null)
+                {
+                    continue;
+                }
+
+                var kind = unionCase.Children.Any(child => child.Kind == SyntaxKind.ParameterList)
+                    ? BoundSymbolKind.Function
+                    : BoundSymbolKind.Value;
+                AddSymbol(scope, identifier.Text ?? string.Empty, kind, identifier.Span, declareValue: true, declareType: false);
             }
         }
 

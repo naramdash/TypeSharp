@@ -1,0 +1,10 @@
+namespace Samples.Unions
+
+public union PaymentStatus {
+  Pending
+  Paid(at: string)
+}
+
+export fun pending(): PaymentStatus = Pending
+
+export fun paid(at: string): PaymentStatus = Paid(at)

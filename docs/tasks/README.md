@@ -42,3 +42,4 @@
 | [0078-csharp-byref-params-interop-status.md](0078-csharp-byref-params-interop-status.md) | Q3 | Done | C# `params`, `out`, `in`, `ref` interop aggregate checklist 상태를 기존 smoke와 diagnostic 근거에 맞춘다. |
 | [0079-0083-public-api-declaration-backend-smokes.md](0079-0083-public-api-declaration-backend-smokes.md) | Q2-Q3 | Done | Core generic APIs, generic functions, class/interface declarations, and generic type declarations의 generated C# public API smokes를 묶는다. |
 | [0084-0085-immutable-record-backend.md](0084-0085-immutable-record-backend.md) | Q2-Q3 | Done | immutable record class shape와 record copy/update lowering smokes를 묶는다. |
+| [0086-nominal-union-backend-smoke.md](0086-nominal-union-backend-smoke.md) | Q2-Q3 | Done | nominal union declaration을 generated C# closed class hierarchy와 runtime case metadata smoke로 고정한다. |

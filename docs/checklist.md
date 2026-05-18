@@ -98,7 +98,7 @@
 - [x] immutable record
 - [x] `Option<T>`
 - [x] `Result<T, E>`
-- [ ] nominal closed union type
+- [x] nominal closed union type
 - [ ] type-level union alias
 - [ ] union narrowing
 - [ ] pattern matching
