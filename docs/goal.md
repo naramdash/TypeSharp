@@ -51,6 +51,7 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
    - CLI는 project creation, check, build, run, format, version을 제공하는 방향으로 설계한다.
    - VS Code extension은 syntax highlighting, diagnostics, hover, go-to-definition, basic completion을 제공해야 한다.
    - VS Code 기능은 Language Server Protocol 기반으로 만들고 compiler semantic model을 공유해야 한다.
+   - VS Code 지원은 저장소 안의 scaffold에 머물지 않고, extension host에서 Language Server Protocol client를 활성화해 `.tysh` 편집, 진단, hover, definition, completion을 실제 사용 가능한 형태로 제공해야 한다.
    - 에디터 없이도 CLI만으로 CI와 로컬 개발이 가능해야 하며, CLI 없이도 VS Code가 diagnostics와 navigation을 제공해야 한다.
    - 이 개발 경험은 부가 도구가 아니라 TypeSharp 채택의 1순위에 가까운 핵심 산출물이다.
 
@@ -60,6 +61,11 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
    - WCF의 service contract, data contract, message contract, configuration 기반 endpoint/binding/behavior, generated proxy/client interop를 TypeSharp public API와 C# interop 규칙 안에서 다룰 수 있어야 한다.
    - worker/service 계열에서는 Windows Service, IIS-hosted background task, console/daemon-style worker, scheduler 기반 batch job의 .NET Framework runtime, configuration, logging, diagnostics 제약을 명시적으로 고려한다.
    - 이 목표는 ASP.NET Core나 최신 .NET worker로의 전환을 전제로 하지 않는다. .NET Framework ASP.NET/WCF/worker 환경에 남아 있는 전용 hosting, configuration, deployment, diagnostics 연동 지점을 TypeSharp 호환성 범위로 둔다.
+
+채택 경로 공통 요구사항:
+- 공식 문서는 GitHub Pages로 배포 가능한 Astro Starlight 사이트로 작성한다. 저장소 문서와 중복된 설명을 흩뜨리지 않고, 언어 목표, CLI, VS Code/LSP, 예제, 마이그레이션, 진단 설명을 사용자가 탐색 가능한 정보 구조로 제공해야 한다.
+- 예제 프로젝트는 단순 문법 샘플에 그치지 않고 실제로 실행 가능한 프로젝트여야 한다. console/library, C# interop, ASP.NET/WCF/worker-style .NET Framework 4.8 host, diagnostics/tooling workflow처럼 실제 채택 사례에 가까운 여러 시나리오를 포함해야 한다.
+- 공식 문서와 예제는 `typesharp check`, `typesharp build`, `typesharp run`, VS Code LSP 동작, generated `net48` 산출물 검증과 연결되어야 하며, 문서에 있는 명령은 CI나 smoke test에서 재현 가능해야 한다.
 
 2. `unknown` 중심의 안전한 gradual typing
    - TypeScript식 유연성을 가져오되 `any`를 기본 탈출구로 두지 않는다.
@@ -195,7 +201,9 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - 런타임 라이브러리: `TypeSharp.Core.Option<T>`, `TypeSharp.Core.Result<T, E>`, nominal union representation, structural helper, async/workflow helper처럼 생성 코드가 의존하는 최소 라이브러리를 제공한다.
 - 표준 라이브러리 namespace: 사용자 코드가 직접 참조하는 핵심 타입은 [standard-library.md](standard-library.md)의 `TypeSharp.Core`, `TypeSharp.Collections` 정책을 따른다.
 - CLI: [cli.md](cli.md)의 계약에 따라 `typesharp build`, `typesharp check`, `typesharp run`, `typesharp format`의 초기 형태를 제공한다.
-- VS Code extension: syntax highlighting, diagnostics, hover, go-to-definition, basic completion을 제공하고 Language Server Protocol을 통해 compiler semantic model을 재사용한다.
+- VS Code extension: syntax highlighting, diagnostics, hover, go-to-definition, basic completion을 제공하고 Language Server Protocol을 통해 compiler semantic model을 재사용한다. Extension host에서 LSP client를 실제 활성화하고 배포 가능한 extension package 기준을 둔다.
+- 공식 문서 사이트: GitHub Pages에 배포 가능한 Astro Starlight 기반 문서 사이트를 제공하고, 목표/문법/CLI/진단/VS Code/예제/마이그레이션 문서를 탐색 가능한 구조로 묶는다.
+- 실행 예제 프로젝트: 실제 `typesharp` 명령으로 검사, 빌드, 실행할 수 있는 console/library/interop/host-style 예제 프로젝트들을 제공한다.
 - 테스트 스위트: golden diagnostics, emitted IL/metadata, .NET interop, 표준 라이브러리, 회귀 테스트를 포함한다.
 - 도구 문서: 언어 가이드, 기능별 lowering 설명, migration guide, compatibility guide를 제공한다.
 
@@ -231,6 +239,9 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - TypeSharp에서 만든 public API를 C# .NET Framework 프로젝트가 참조해 호출한다.
 - C# .NET Framework assembly의 class, interface, delegate, event, attribute, generic type을 TypeSharp에서 참조한다.
 - TypeSharp가 framework assembly와 local `net48` C# library DLL의 constructor, static/instance member, property, `ref`/`out`/`params` API를 호출한다.
+- VS Code extension이 Language Server Protocol client를 활성화해 `.tysh` 문서의 diagnostics, hover, go-to-definition, basic completion을 실제 편집 루프에서 제공한다.
+- GitHub Pages 배포를 전제로 한 Astro Starlight 공식 문서 사이트가 빌드 가능하고, core goal, grammar, CLI, diagnostics, VS Code/LSP, migration, examples 문서를 연결한다.
+- 여러 실행 예제 프로젝트가 `typesharp check/build/run` 또는 host-specific smoke 명령으로 재현 가능해야 하며, 실제 채택 시나리오별 README와 검증 명령을 가진다.
 - null-safe API를 작성하고, null 관련 오류를 컴파일 단계에서 진단한다.
 - nominal closed union/option/result 기반 모델링을 지원하고, 패턴 매칭에서 누락 case를 진단한다.
 - TypeScript식 type-level union을 local inference, literal union, structural narrowing에 활용하되 public .NET ABI로 직접 새지 않게 진단한다.
@@ -291,6 +302,8 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - 성능 기준, 호환성 매트릭스, breaking change 정책을 수립한다.
 - preview feature gate를 도입한다.
 - 샘플 프로젝트와 release checklist를 완성한다.
+- Astro Starlight 공식 문서 사이트와 GitHub Pages 배포 workflow를 만든다.
+- 실행 가능한 예제 프로젝트 catalog를 확장하고 각 예제의 CLI/host 검증 명령을 고정한다.
 
 ## 후속 확장 결정
 

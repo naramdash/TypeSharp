@@ -4,6 +4,7 @@ using TypeSharp.Compiler.Checking;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Projects;
 using System.Diagnostics;
+using System.Text;
 
 namespace TypeSharp.Cli;
 
@@ -23,6 +24,7 @@ public static class TypeSharpCli
             "check" => RunCheck(args, output, error),
             "build" => RunBuild(args, output, error),
             "run" => RunRun(args, output, error),
+            "explain" => RunExplain(args, output, error),
             "--help" or "-h" or "help" => RunHelp(output),
             _ => RunUnknownCommand(args[0], error)
         };
@@ -65,6 +67,37 @@ public static class TypeSharpCli
         output.WriteLine("  check [project] [options]");
         output.WriteLine("  build [project] [options]");
         output.WriteLine("  run [project] [-- args...]");
+        output.WriteLine("  explain <diagnostic-code> [--json]");
+        return 0;
+    }
+
+    private static int RunExplain(string[] args, TextWriter output, TextWriter error)
+    {
+        var parseResult = ParseExplainCommand(args);
+        if (parseResult.ExitCode is not null)
+        {
+            error.WriteLine(parseResult.Message);
+            return parseResult.ExitCode.Value;
+        }
+
+        if (!DiagnosticDescriptors.TryGetByCode(parseResult.Code ?? string.Empty, out var descriptor))
+        {
+            error.WriteLine($"Unknown diagnostic code '{parseResult.Code}'.");
+            return 1;
+        }
+
+        if (parseResult.Json)
+        {
+            output.Write(FormatDescriptorJson(descriptor));
+            return 0;
+        }
+
+        output.WriteLine($"{descriptor.Code}: {descriptor.Title}");
+        output.WriteLine($"Severity: {descriptor.DefaultSeverity.ToString().ToLowerInvariant()}");
+        output.WriteLine($"Category: {descriptor.Category}");
+        output.WriteLine($"Message: {descriptor.MessageTemplate}");
+        output.WriteLine($"Explanation: {descriptor.Explanation}");
+        output.WriteLine($"Suggested action: {descriptor.SuggestedAction}");
         return 0;
     }
 
@@ -279,6 +312,76 @@ public static class TypeSharpCli
         return new ProjectCommandParseResult(projectArgument, diagnosticFormat, emit, programArguments, null, null);
     }
 
+    private static ExplainCommandParseResult ParseExplainCommand(string[] args)
+    {
+        string? code = null;
+        var json = false;
+
+        for (var index = 1; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (arg == "--json")
+            {
+                json = true;
+                continue;
+            }
+
+            if (arg == "--diagnostic-format")
+            {
+                if (++index >= args.Length)
+                {
+                    return ExplainCommandParseResult.Usage("Missing value for --diagnostic-format.");
+                }
+
+                if (args[index] == "json")
+                {
+                    json = true;
+                    continue;
+                }
+
+                if (args[index] == "text")
+                {
+                    continue;
+                }
+
+                return ExplainCommandParseResult.Usage("Diagnostic format must be 'text' or 'json'.");
+            }
+
+            if (arg.StartsWith("--diagnostic-format=", StringComparison.Ordinal))
+            {
+                var value = arg["--diagnostic-format=".Length..];
+                if (value == "json")
+                {
+                    json = true;
+                    continue;
+                }
+
+                if (value == "text")
+                {
+                    continue;
+                }
+
+                return ExplainCommandParseResult.Usage("Diagnostic format must be 'text' or 'json'.");
+            }
+
+            if (arg.StartsWith("--", StringComparison.Ordinal))
+            {
+                return ExplainCommandParseResult.Usage($"Unknown option '{arg}'.");
+            }
+
+            if (code is not null)
+            {
+                return ExplainCommandParseResult.Usage("Only one diagnostic code can be specified.");
+            }
+
+            code = arg;
+        }
+
+        return string.IsNullOrWhiteSpace(code)
+            ? ExplainCommandParseResult.Usage("Usage: typesharp explain <diagnostic-code> [--json]")
+            : new ExplainCommandParseResult(code, json, null, null);
+    }
+
     private static bool OptionConsumesValue(string option) =>
         option is "--configuration" or "--target" or "--verbosity";
 
@@ -295,6 +398,30 @@ public static class TypeSharpCli
             writer.WriteLine(diagnostic.ToCliText());
         }
     }
+
+    private static string FormatDescriptorJson(DiagnosticDescriptor descriptor)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("{");
+        builder.AppendLine("  \"diagnostic\": {");
+        builder.AppendLine($"    \"code\": \"{EscapeJson(descriptor.Code)}\",");
+        builder.AppendLine($"    \"title\": \"{EscapeJson(descriptor.Title)}\",");
+        builder.AppendLine($"    \"severity\": \"{descriptor.DefaultSeverity.ToString().ToLowerInvariant()}\",");
+        builder.AppendLine($"    \"category\": \"{EscapeJson(descriptor.Category.ToString())}\",");
+        builder.AppendLine($"    \"messageTemplate\": \"{EscapeJson(descriptor.MessageTemplate)}\",");
+        builder.AppendLine($"    \"explanation\": \"{EscapeJson(descriptor.Explanation)}\",");
+        builder.AppendLine($"    \"suggestedAction\": \"{EscapeJson(descriptor.SuggestedAction)}\"");
+        builder.AppendLine("  }");
+        builder.AppendLine("}");
+        return builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
+    }
+
+    private static string EscapeJson(string value) =>
+        value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal);
 
     private static GeneratedProgramRunResult RunGeneratedExecutable(
         string executablePath,
@@ -357,6 +484,15 @@ public static class TypeSharpCli
         string? Message)
     {
         public static ProjectCommandParseResult Usage(string message) => new(null, "text", "csharp", [], 2, message);
+    }
+
+    private sealed record ExplainCommandParseResult(
+        string? Code,
+        bool Json,
+        int? ExitCode,
+        string? Message)
+    {
+        public static ExplainCommandParseResult Usage(string message) => new(null, false, 2, message);
     }
 
     private sealed record GeneratedProgramRunResult(int ExitCode, string StandardOutput, string StandardError);

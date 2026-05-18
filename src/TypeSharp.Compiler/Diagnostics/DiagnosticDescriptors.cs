@@ -215,4 +215,19 @@ public static class DiagnosticDescriptors
         UnsupportedExecutableEntryPoint,
         GeneratedProjectBuildFailed
     ];
+
+    public static bool TryGetByCode(string code, out DiagnosticDescriptor descriptor)
+    {
+        foreach (var candidate in All)
+        {
+            if (string.Equals(candidate.Code, code, StringComparison.OrdinalIgnoreCase))
+            {
+                descriptor = candidate;
+                return true;
+            }
+        }
+
+        descriptor = default!;
+        return false;
+    }
 }

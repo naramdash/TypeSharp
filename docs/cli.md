@@ -28,6 +28,7 @@ typesharp new <template> <name> [options]
 typesharp check [project] [options]
 typesharp build [project] [options]
 typesharp run [project] [-- args...]
+typesharp explain <diagnostic-code> [--json]
 ```
 
 ### `typesharp version`
@@ -142,11 +143,35 @@ typesharp run --configuration Debug -- Alice
 - `int` return은 process exit code가 되고, non-null non-`int` return은 stdout에 출력된다.
 - async main과 richer return handling은 후속 구현 범위다.
 
+### `typesharp explain`
+
+diagnostic code의 의미와 해결 방향을 설명한다. 출력 내용은 [diagnostics.md](diagnostics.md)의 descriptor metadata를 사용한다.
+
+```text
+typesharp explain TS1001
+typesharp explain TS2204 --json
+typesharp explain TS2204 --diagnostic-format json
+```
+
+현재 출력:
+- code
+- title
+- severity
+- category
+- message template
+- explanation
+- suggested action
+
+규칙:
+- code lookup은 대소문자를 구분하지 않는다.
+- descriptor registry에 없는 code는 exit code `1`을 반환한다.
+- 잘못된 option 또는 누락된 code는 exit code `2`를 반환한다.
+- `--json`과 `--diagnostic-format json`은 같은 JSON descriptor payload를 출력한다.
+
 ## Stable Backlog Command
 
 ```text
 typesharp format [project-or-path] [--check]
-typesharp explain <diagnostic-code>
 typesharp lsp
 typesharp test [project]
 ```
@@ -168,22 +193,6 @@ typesharp format --check
 - pipeline과 match expression은 multiline 가독성을 우선한다.
 - parse diagnostics가 있는 파일은 rewrite하지 않는다.
 - `--check`는 파일을 쓰지 않고 format diff가 있으면 non-zero exit code를 반환한다.
-
-### `typesharp explain`
-
-diagnostic code의 의미와 해결 방향을 설명한다. 출력 내용은 [diagnostics.md](diagnostics.md)의 descriptor metadata를 사용한다.
-
-```text
-typesharp explain TS1001
-typesharp explain TS2204 --json
-```
-
-권장 출력:
-- diagnostic title
-- 원인
-- 예시
-- 수정 방향
-- 관련 문서 링크
 
 ### `typesharp lsp`
 
@@ -328,8 +337,8 @@ JSON 형식:
 5. `typesharp build --emit csharp`
 6. `typesharp run`
 7. `typesharp new`
-8. `typesharp format`
-9. `typesharp explain`
+8. `typesharp explain`
+9. `typesharp format`
 10. `typesharp lsp`
 
 ## 후속 확장 결정

@@ -25,6 +25,9 @@ var tests = new (string Name, Action Body)[]
     ("version defaults match the documented CLI contract", VersionDefaultsMatchCliContract),
     ("diagnostic descriptor registry is stable", DiagnosticDescriptorRegistryIsStable),
     ("diagnostic text follows CLI text shape", DiagnosticTextUsesCliShape),
+    ("CLI explain prints diagnostic descriptor metadata", CliExplainPrintsDiagnosticDescriptorMetadata),
+    ("CLI explain emits JSON descriptor metadata", CliExplainEmitsJsonDescriptorMetadata),
+    ("CLI explain rejects unknown diagnostic code", CliExplainRejectsUnknownDiagnosticCode),
     ("parse result exposes error state", ParseResultExposesErrorState),
     ("parser fixture convention paths are stable", ParserFixtureConventionPathsAreStable),
     ("binder fixture convention paths are stable", BinderFixtureConventionPathsAreStable),
@@ -238,6 +241,52 @@ static void DiagnosticTextUsesCliShape()
     AssertEqual(
         "input.tysh(3,40): error TS1001: Expected function body after function signature.",
         diagnostic.ToCliText());
+}
+
+static void CliExplainPrintsDiagnosticDescriptorMetadata()
+{
+    var output = new StringBuilder();
+    var error = new StringBuilder();
+
+    var exitCode = TypeSharpCli.Run(["explain", "TS2204"], new StringWriter(output), new StringWriter(error));
+
+    AssertEqual(0, exitCode);
+    AssertEqual(string.Empty, error.ToString());
+    AssertContains("TS2204: Compile-time type leaked through public boundary", output.ToString());
+    AssertContains("Severity: error", output.ToString());
+    AssertContains("Category: TypeChecking", output.ToString());
+    AssertContains("Message: Type-level union cannot appear in public API. Use a nominal union or interface.", output.ToString());
+    AssertContains("Explanation: Type-level unions and structural shapes are compile-time TypeSharp types", output.ToString());
+    AssertContains("Suggested action: Replace the public type with a nominal union", output.ToString());
+}
+
+static void CliExplainEmitsJsonDescriptorMetadata()
+{
+    var output = new StringBuilder();
+    var error = new StringBuilder();
+
+    var exitCode = TypeSharpCli.Run(["explain", "ts1001", "--json"], new StringWriter(output), new StringWriter(error));
+
+    AssertEqual(0, exitCode);
+    AssertEqual(string.Empty, error.ToString());
+    AssertContains("\"code\": \"TS1001\"", output.ToString());
+    AssertContains("\"title\": \"Missing function body\"", output.ToString());
+    AssertContains("\"severity\": \"error\"", output.ToString());
+    AssertContains("\"category\": \"Parser\"", output.ToString());
+    AssertContains("\"messageTemplate\": \"Expected function body after function signature.\"", output.ToString());
+    AssertContains("\"suggestedAction\": \"Add '= expression', add a block body, or mark the declaration as extern if it is imported.\"", output.ToString());
+}
+
+static void CliExplainRejectsUnknownDiagnosticCode()
+{
+    var output = new StringBuilder();
+    var error = new StringBuilder();
+
+    var exitCode = TypeSharpCli.Run(["explain", "TS9999"], new StringWriter(output), new StringWriter(error));
+
+    AssertEqual(1, exitCode);
+    AssertEqual(string.Empty, output.ToString());
+    AssertContains("Unknown diagnostic code 'TS9999'.", error.ToString());
 }
 
 static void ParseResultExposesErrorState()

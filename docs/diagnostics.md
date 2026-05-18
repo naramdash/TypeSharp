@@ -118,3 +118,5 @@ Descriptor registry smoke tests must also assert that allocated codes are unique
 ## Current Implementation
 
 The compiler exposes descriptor metadata through `TypeSharp.Compiler.Diagnostics.DiagnosticDescriptors`. Current tests pin the allocated descriptor code list and require explanation metadata for every descriptor.
+
+`typesharp explain <code>` reads that descriptor registry directly. It prints code, title, severity, category, message template, explanation, and suggested action in text form, and emits the same descriptor fields as JSON when `--json` or `--diagnostic-format json` is used. Unknown descriptor codes return exit code `1`; CLI usage errors return exit code `2`.

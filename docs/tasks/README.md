@@ -62,3 +62,4 @@
 | [0105-diagnostics-system-audit.md](0105-diagnostics-system-audit.md) | Q1-Q2 | Done | diagnostics system 구현 범위와 descriptor/fixture/CLI/LSP smoke evidence를 체크리스트에 맞춘다. |
 | [0106-csharp-source-backend-audit.md](0106-csharp-source-backend-audit.md) | Q3 | Done | C# 7.3 source backend 구현 범위와 snapshot/build/consumer/host smoke evidence를 체크리스트에 맞춘다. |
 | [0107-0116-release-and-compiler-readiness.md](0107-0116-release-and-compiler-readiness.md) | Q1-Q5 | Done | release readiness, feature review/spec index, semantic model/LSP sharing, backend/IL seams, ABI/overload checks, lowering pipeline, and local inference engine을 묶는다. |
+| [0117-tooling-docs-adoption-goal.md](0117-tooling-docs-adoption-goal.md) | Q4-Q5 | Done | VS Code LSP extension, Astro Starlight 공식 문서, 실행 예제 프로젝트 목표를 추가하고 `typesharp explain` 구현을 완료한다. |

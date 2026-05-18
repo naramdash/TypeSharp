@@ -19,6 +19,9 @@
 - [x] Union 설계 결정이 goal에 명시되어 있다.
 - [x] VS Code와 CLI 개발 경험이 1급 목표로 명시되어 있다.
 - [x] .NET Framework ASP.NET/WCF/worker 호환성 목표가 명시되어 있다.
+- [x] VS Code LSP extension 지원 목표가 명시되어 있다.
+- [x] GitHub Pages/Astro Starlight 공식 문서 목표가 명시되어 있다.
+- [x] 실제 실행 가능한 예제 프로젝트 목표가 명시되어 있다.
 - [x] .NET Framework application model compatibility 계약이 요구사항과 기능 매핑에 반영되어 있다.
 - [x] grammar 폴더가 있고 TypeSharp 문법 목표를 설명한다.
 - [x] syntax consistency 규칙이 문서화되어 있다.
@@ -213,6 +216,7 @@
 - [x] CLI `run` generated `net48` executable smoke path
 - [x] CLI `run` forwards `--` arguments to `main(args: string[])`
 - [x] CLI `run` unsupported main signature diagnostics
+- [x] CLI `explain` diagnostic descriptor metadata command
 - [x] formatter convention 문서
 - [x] VS Code extension scaffold
 - [x] VS Code syntax highlighting
@@ -220,6 +224,10 @@
 - [x] LSP hover
 - [x] LSP go-to-definition
 - [x] LSP basic completion
+- [ ] VS Code extension LSP client activation and packaging
+- [ ] Astro Starlight official docs site
+- [ ] GitHub Pages docs deployment workflow
+- [ ] runnable example project catalog
 - [x] diagnostic explanation 문서
 - [x] sample project
 
@@ -287,6 +295,9 @@
 - [x] CLI run generated `net48` executable smoke tests
 - [x] CLI run `main(args: string[])` argument forwarding smoke tests
 - [x] CLI run unsupported main signature diagnostic smoke tests
+- [x] CLI explain descriptor metadata smoke tests
+- [ ] docs site build smoke tests
+- [ ] runnable example project smoke matrix
 - [x] lowering golden tests
 - [x] runtime unit tests
 - [x] C# interop tests
