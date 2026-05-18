@@ -17,7 +17,7 @@
 - 사용자 코드 예제는 표준 라이브러리 타입과 값을 명시적으로 import한다.
 - compiler-generated code는 `TypeSharp.Runtime` helper를 사용할 수 있지만, 사용자 public API에는 Runtime helper가 직접 노출되지 않아야 한다.
 - `TypeSharp.Core`는 작고 안정적으로 유지한다.
-- 표준 라이브러리는 `net481`에서 로드되어야 한다.
+- 표준 라이브러리는 `net48`에서 로드되어야 한다.
 
 ## Core Types
 
@@ -77,7 +77,7 @@ public fun map<T, U>(items: T[], transform: T -> U): U[]
 - 기본 array/list literal은 언어 문법으로 제공한다.
 - collection helper는 `TypeSharp.Collections`에서 명시 import한다.
 - `map`의 `T -> U` parameter는 public ABI에서 `Func<T, U>` 계열로 낮출 수 있어야 한다.
-- immutable collection type은 `net481` dependency와 라이선스를 검토한 뒤 확정한다.
+- immutable collection type은 `net48` dependency와 라이선스를 검토한 뒤 확정한다.
 
 ## Interop Helpers
 

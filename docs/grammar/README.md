@@ -13,7 +13,7 @@ TypeSharp 문법은 다음을 동시에 만족해야 한다.
 - F#처럼 expression-oriented syntax, immutable binding, nominal closed union, pattern matching, pipeline/composition을 중심에 둔다.
 - C#처럼 class/interface/property/event/delegate/attribute/async/using/extension/partial 같은 .NET 친화 편의 기능을 제공한다.
 - VS Code와 CLI가 같은 grammar와 semantic model을 공유할 수 있어야 한다.
-- .NET Framework 4.8.1로 lowering 가능한 문법만 stable grammar로 들어간다.
+- .NET Framework 4.8로 lowering 가능한 문법만 stable grammar로 들어간다.
 
 ## 문법 문서 구성
 

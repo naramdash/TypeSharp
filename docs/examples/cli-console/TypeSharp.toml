@@ -1,6 +1,6 @@
 [project]
 name = "CliConsole"
-targetFramework = "net481"
+targetFramework = "net48"
 outputType = "exe"
 rootNamespace = "Samples.CliConsole"
 sourceRoots = ["src"]

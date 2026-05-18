@@ -13,7 +13,7 @@
 - 문서, 설계, 구현, 테스트가 서로 어긋나지 않게 한다.
 - 세션이 끊겨도 이어받을 수 있는 상태를 남긴다.
 - 실현 불가능하거나 과도한 기능을 MVP에 섞지 않는다.
-- TypeSharp가 실제로 `net481` 산출물을 만들 수 있는 방향으로 계속 전진한다.
+- TypeSharp가 실제로 `net48` 산출물을 만들 수 있는 방향으로 계속 전진한다.
 
 ## 모드별 기대 입력
 
@@ -48,7 +48,7 @@
 
 | 기준 | 결정 |
 | --- | --- |
-| 실행 타깃 | 생성 산출물과 TypeSharp runtime library는 `net481` 필수 |
+| 실행 타깃 | 생성 산출물과 TypeSharp runtime library는 `net48` 필수 |
 | Host | compiler, CLI, LSP host는 현대 .NET LTS 허용 |
 | MVP backend | C# 7.3 compatible source generation |
 | Source extension | `.tysh` |
@@ -71,7 +71,7 @@
 
 | Queue | 의미 | 예시 |
 | --- | --- | --- |
-| Q0 | 목표와 기준선을 깨는 충돌 수정 | `net481` 불가능한 설계, 문법 충돌, public ABI 누수 |
+| Q0 | 목표와 기준선을 깨는 충돌 수정 | `net48` 불가능한 설계, 문법 충돌, public ABI 누수 |
 | Q1 | 다음 구현을 막는 사양 구멍 | parser fixture 형식, lowering 사양, diagnostics code 정책 |
 | Q2 | MVP compiler skeleton | lexer, parser, syntax tree, source discovery, diagnostics |
 | Q3 | Runtime/interop 핵심 | `Option<T>`, `Result<T,E>`, metadata reader, C# interop tests |
@@ -167,7 +167,7 @@ End Time: <current computer time, yyyy-MM-dd HH:mm:ss zzz, or TBD>
 구현 작업의 Done:
 - 최소 positive test 또는 smoke sample이 있다.
 - 실패해야 하는 경우는 diagnostic test가 있다.
-- generated code 또는 public API가 `net481` 목표와 충돌하지 않는다.
+- generated code 또는 public API가 `net48` 목표와 충돌하지 않는다.
 - CLI 또는 test command로 재현 가능하다.
 - 문서와 checklist가 구현 상태를 반영한다.
 

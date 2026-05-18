@@ -1,6 +1,6 @@
 # TypeSharp 문서
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 디렉터리는 TypeSharp 언어를 만들기 위한 목표, 요구사항, 문법 사양, 권장 아키텍처, 기능 매핑, 체크리스트를 모은다. 문서는 다음 순서로 읽는다.
 
@@ -64,7 +64,10 @@
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
 20. [dependencies.md](dependencies.md)
-   - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net481` compatibility audit 기준을 기록한다.
+   - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
+
+21. [framework-targeting.md](framework-targeting.md)
+   - Windows 10/11 장비 벤더 환경에서 `net48`과 `net48` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
 ## 문서 원칙
 
@@ -86,6 +89,7 @@
 - `tasks/`는 한 세션보다 긴 작업을 task packet으로 쪼개고 상태를 남기는 곳이다.
 - `references.md`는 시간이 지나면 갱신해야 한다. 최신 언어 버전은 반드시 공식 문서로 다시 확인한다.
 - `dependencies.md`는 package-free runtime/core surface와 future dependency gate를 추적한다.
+- `framework-targeting.md`는 의료기기/분석기기 벤더 호환성처럼 설치 기반이 중요한 환경에서 `net48`/`net48` 선택 근거를 추적한다.
 
 ## 반복 검토 프로토콜
 
@@ -101,7 +105,7 @@
 8. CLI 확인: [cli.md](cli.md)의 command, manifest, diagnostics 계약을 깨뜨리지 않는가?
 9. 실현 가능성 확인: [feasibility.md](feasibility.md)의 MVP host/backend/ABI 결정과 충돌하지 않는가?
 10. 기능 상태 확인: MVP, Stable Backlog, Preview Watch, Experimental, Rejected 중 하나로 분류했는가?
-11. lowering 확인: .NET Framework 4.8.1에서 실행 가능한 표현으로 낮출 수 있는가?
+11. lowering 확인: .NET Framework 4.8에서 실행 가능한 표현으로 낮출 수 있는가?
 12. interop 확인: C#/.NET Framework 소비자가 이해할 public API인가?
 13. 테스트 확인: 체크리스트에 positive, negative, interop 검증이 반영되어 있는가?
 14. 근거 확인: 최신 외부 언어 기능을 언급했다면 공식 링크와 기준일이 있는가?

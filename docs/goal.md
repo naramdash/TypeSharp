@@ -1,10 +1,10 @@
 # TypeSharp 목표
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 ## 한 문장 과제
 
-TypeSharp는 .NET Framework 4.8.1용 산출물을 만들고 그 산출물이 .NET Framework 4.8.1에서 실행될 수 있으면서, 최신 C#, F#, TypeScript에서 검증된 표현력, 안전성, 도구 친화성을 하나의 일관된 정적 타입 언어로 통합하는 새 언어다.
+TypeSharp는 .NET Framework 4.8용 산출물을 만들고 그 산출물이 .NET Framework 4.8에서 실행될 수 있으면서, 최신 C#, F#, TypeScript에서 검증된 표현력, 안전성, 도구 친화성을 하나의 일관된 정적 타입 언어로 통합하는 새 언어다.
 
 ## 왜 만드는가
 
@@ -12,7 +12,7 @@ TypeSharp는 .NET Framework 4.8.1용 산출물을 만들고 그 산출물이 .NE
 
 TypeSharp는 다음 문제를 해결한다.
 
-- .NET Framework 4.8.1 프로젝트에서도 최신 정적 타입 언어의 개발 경험을 제공한다.
+- .NET Framework 4.8 프로젝트에서도 최신 정적 타입 언어의 개발 경험을 제공한다.
 - VS Code와 CLI만으로 프로젝트 생성, 편집, 진단 확인, 빌드, 실행이 가능한 기본 개발 루프를 제공한다.
 - C#의 CLR 친화성, F#의 함수형 모델, TypeScript의 구조적 타입 표현을 충돌 없이 조합한다.
 - 최신 문법을 단순히 흉내 내지 않고, .NET Framework에서 예측 가능한 IL, 라이브러리 호출, 또는 컴파일 타임 검사로 낮춘다.
@@ -42,7 +42,7 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
 
 ## 기능 목표
 
-이 기능들은 TypeSharp의 목표에 직접 포함된다. 각 기능은 .NET Framework 4.8.1 호환성, C#/.NET 상호 운용성, 타입 안전성, 설명 가능한 lowering을 만족해야 한다.
+이 기능들은 TypeSharp의 목표에 직접 포함된다. 각 기능은 .NET Framework 4.8 호환성, C#/.NET 상호 운용성, 타입 안전성, 설명 가능한 lowering을 만족해야 한다.
 
 ### 핵심 채택 목표
 
@@ -152,12 +152,14 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
 
 | 축 | 기준 | TypeSharp에서의 의미 |
 | --- | --- | --- |
-| 실행 타깃 | .NET Framework 4.8.1 | 생성 산출물과 표준 런타임 라이브러리는 `net481` 호환이어야 한다. compiler/CLI/LSP host는 [feasibility.md](feasibility.md)에 따라 현대 .NET LTS 기반을 허용한다. |
+| 실행 타깃 | .NET Framework 4.8 | 생성 산출물과 표준 런타임 라이브러리는 `net48` 호환이어야 한다. compiler/CLI/LSP host는 [feasibility.md](feasibility.md)에 따라 현대 .NET LTS 기반을 허용한다. |
 | C# 안정 기능 | C# 14 | 확장 멤버, null 조건부 대입, `field` 지원 프로퍼티, 람다 매개변수 modifier, 부분 생성자/이벤트 등에서 언어 설계 아이디어를 가져온다. |
 | C# 프리뷰 추적 | C# 15 | 컬렉션 표현식 인자와 union type은 프리뷰로 추적하되 안정화 전까지 핵심 호환성 계약으로 삼지 않는다. |
 | F# 안정 기능 | F# 10 | 옵션/ValueOption, computation expression/task 동시 바인딩, 명확한 모듈 구조, 정밀한 경고 제어, 컴파일 성능 방향성을 반영한다. |
 | TypeScript 안정 기능 | TypeScript 6.0 | 구조적 타입, 엄격한 기본값, 명시적 ambient type 관리, ECMAScript 최신 타깃 추적, 7.0 전환 준비 철학을 반영한다. |
 | TypeScript 프리뷰 추적 | TypeScript 7.0 beta | native compiler, 병렬 타입 검사, 더 엄격한 기본값은 구현 전략과 장기 도구 전략에서 추적한다. |
+
+장비 벤더 호환성 배포 profile에서는 `net48`을 기본 호환성 기준으로 둔다. `net481`은 최신 .NET Framework profile로 추적하되, Windows 10/초기 Windows 11 장비, vendor qualification, offline 운용을 고려한 타깃 선택 근거는 [framework-targeting.md](framework-targeting.md)에 기록한다.
 
 ## Union 설계 결정
 
@@ -188,7 +190,7 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - 문법 커버리지: [grammar/coverage.md](grammar/coverage.md)에서 TypeScript, F#, C# 기능을 Direct, Equivalent, Replacement, Planned, Experimental, Rejected 중 하나로 계속 분류한다.
 - 실현 가능성 검토: [feasibility.md](feasibility.md)에 MVP 범위, 낮춘 범위, backend/host 결정을 유지한다.
 - 언어 사양: 타입 시스템, 이름 해석, 모듈 시스템, 표준 라이브러리, .NET 상호 운용 규칙을 설명한다.
-- C# library interop: [csharp-interop.md](csharp-interop.md)에 기존 `net481` C# assembly 참조, metadata symbol, overload, nullable, public ABI 경계 규칙을 유지한다.
+- C# library interop: [csharp-interop.md](csharp-interop.md)에 기존 `net48` C# assembly 참조, metadata symbol, overload, nullable, public ABI 경계 규칙을 유지한다.
 - 컴파일러: TypeSharp 소스를 파싱, 바인딩, 타입 검사, lowering, emit까지 처리한다.
 - 런타임 라이브러리: `TypeSharp.Core.Option<T>`, `TypeSharp.Core.Result<T, E>`, nominal union representation, structural helper, async/workflow helper처럼 생성 코드가 의존하는 최소 라이브러리를 제공한다.
 - 표준 라이브러리 namespace: 사용자 코드가 직접 참조하는 핵심 타입은 [standard-library.md](standard-library.md)의 `TypeSharp.Core`, `TypeSharp.Collections` 정책을 따른다.
@@ -200,7 +202,7 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 ## 설계 원칙
 
 1. .NET Framework 호환성이 먼저다.
-   최신 문법을 추가하더라도 생성된 프로그램과 TypeSharp 표준 런타임은 .NET Framework 4.8.1에서 실행 가능해야 한다. .NET 5+ 전용 API, 런타임 타입, JIT 동작에 의존하는 기능은 `net481` 산출물의 기본 lowering 대상이 될 수 없다.
+   최신 문법을 추가하더라도 생성된 프로그램과 TypeSharp 표준 런타임은 .NET Framework 4.8에서 실행 가능해야 한다. .NET 5+ 전용 API, 런타임 타입, JIT 동작에 의존하는 기능은 `net48` 산출물의 기본 lowering 대상이 될 수 없다.
 
 2. 기능은 출처가 아니라 의미로 채택한다.
    C#, F#, TypeScript의 기능 이름을 그대로 복제하는 것이 목표가 아니다. TypeSharp 내부 의미론에 맞고 .NET Framework로 낮출 수 있는 기능만 채택한다.
@@ -225,10 +227,10 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 
 ## 필수 성공 조건
 
-- `net481` 환경에서 `Hello, TypeSharp` 프로그램을 빌드하고 실행한다.
+- `net48` 환경에서 `Hello, TypeSharp` 프로그램을 빌드하고 실행한다.
 - TypeSharp에서 만든 public API를 C# .NET Framework 프로젝트가 참조해 호출한다.
 - C# .NET Framework assembly의 class, interface, delegate, event, attribute, generic type을 TypeSharp에서 참조한다.
-- TypeSharp가 framework assembly와 local `net481` C# library DLL의 constructor, static/instance member, property, `ref`/`out`/`params` API를 호출한다.
+- TypeSharp가 framework assembly와 local `net48` C# library DLL의 constructor, static/instance member, property, `ref`/`out`/`params` API를 호출한다.
 - null-safe API를 작성하고, null 관련 오류를 컴파일 단계에서 진단한다.
 - nominal closed union/option/result 기반 모델링을 지원하고, 패턴 매칭에서 누락 case를 진단한다.
 - TypeScript식 type-level union을 local inference, literal union, structural narrowing에 활용하되 public .NET ABI로 직접 새지 않게 진단한다.
@@ -258,7 +260,7 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - 이름 해석, 파일/모듈 구조, 기본 타입, 함수/메서드/프로퍼티 선언을 정의한다.
 - [grammar/](grammar/README.md)에 lexical, module, declaration, type, expression, pattern, interop, name resolution 문법 초안을 둔다.
 - [grammar/coverage.md](grammar/coverage.md)에 TypeScript, F#, C# 기능의 포괄/대체/거절 상태를 추적한다.
-- `net481` 산출물 타깃, 패키징 방식, compiler host 요구사항을 [feasibility.md](feasibility.md)의 결정에 맞춰 확정한다.
+- `net48` 산출물 타깃, 패키징 방식, compiler host 요구사항을 [feasibility.md](feasibility.md)의 결정에 맞춰 확정한다.
 - MVP 기능과 프리뷰 추적 기능을 분리한다.
 - CLI command surface와 VS Code extension/LSP 최소 범위를 확정한다.
 
@@ -266,7 +268,7 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 
 - lexer/parser/AST를 구현한다.
 - symbol table과 type checker의 첫 버전을 구현한다.
-- C# 7.3 source backend로 간단한 console app 또는 library assembly를 `net481`로 emit한다.
+- C# 7.3 source backend로 간단한 console app 또는 library assembly를 `net48`로 emit한다.
 - golden diagnostics 테스트 체계를 만든다.
 - `typesharp version`, `typesharp check`, `typesharp build`의 첫 버전을 만든다.
 - VS Code syntax highlighting과 diagnostics 연결을 만든다.

@@ -51,15 +51,15 @@
 
 ## 플랫폼
 
-- [x] .NET Framework 4.8.1 설치 환경에서 smoke test가 실행된다.
-- [x] 생성 assembly가 `net481` 프로젝트에서 참조된다.
+- [x] .NET Framework 4.8 설치 환경에서 smoke test가 실행된다.
+- [x] 생성 assembly가 `net48` 프로젝트에서 참조된다.
 - [x] compiler host 요구사항이 확정되어 있다.
-- [x] runtime library가 `net481`로 빌드된다.
+- [x] runtime library가 `net48`로 빌드된다.
 - [x] generated assembly/runtime library가 ASP.NET Web Forms/MVC/Web API 프로젝트에서 참조되는 smoke test가 있다.
 - [x] generated assembly/runtime library가 WCF service/client 또는 contract 프로젝트에서 참조되는 smoke test가 있다.
-- [x] generated assembly/runtime library가 Windows Service 또는 worker-style `net481` 프로젝트에서 참조되는 smoke test가 있다.
+- [x] generated assembly/runtime library가 Windows Service 또는 worker-style `net48` 프로젝트에서 참조되는 smoke test가 있다.
 - [x] .NET 5+ 전용 API 사용 여부를 검사한다.
-- [x] NuGet dependency의 `net481` 호환성과 라이선스를 기록한다.
+- [x] NuGet dependency의 `net48` 호환성과 라이선스를 기록한다.
 
 ## 언어 사양
 
@@ -155,10 +155,10 @@
 - [x] C# source backend import directive skeleton
 - [x] C# source backend call expression skeleton
 - [x] C# source backend block/local skeleton
-- [x] generated C# `net481` compile smoke
+- [x] generated C# `net48` compile smoke
 - [x] generated C# source emission path
-- [x] generated C# `net481` project scaffold emission path
-- [x] generated C# `net481` assembly build path
+- [x] generated C# `net48` project scaffold emission path
+- [x] generated C# `net48` assembly build path
 - [x] generated C# project manifest reference propagation path
 - [x] generated C# framework static member call build smoke
 - [x] generated C# local DLL static member call build smoke
@@ -181,8 +181,8 @@
 
 - [x] runtime namespace 정책 초안
 - [x] MVP union representation 정책 초안
-- [x] `TypeSharp.Runtime` `net481` project skeleton
-- [x] `TypeSharp.Core` `net481` project skeleton
+- [x] `TypeSharp.Runtime` `net48` project skeleton
+- [x] `TypeSharp.Core` `net48` project skeleton
 - [x] `Option<T>`
 - [x] `Result<T, E>`
 - [x] `Unit`
@@ -205,10 +205,10 @@
 - [x] CLI `build` generated C# emission path
 - [x] CLI `build` reference diagnostics stop path
 - [x] CLI `build` generated C# project scaffold path
-- [x] CLI `build` generated `net481` assembly path
+- [x] CLI `build` generated `net48` assembly path
 - [x] CLI `build` generated project reference propagation path
 - [ ] CLI `run`
-- [x] CLI `run` generated `net481` executable smoke path
+- [x] CLI `run` generated `net48` executable smoke path
 - [ ] formatter convention 문서
 - [ ] VS Code extension scaffold
 - [ ] VS Code syntax highlighting
@@ -248,8 +248,8 @@
 - [x] C# source backend import directive golden fixture
 - [x] C# source backend call expression golden fixture
 - [x] C# source backend block/local golden fixture
-- [x] generated C# `net481` compile smoke
-- [x] runtime `net481` build smoke
+- [x] generated C# `net48` compile smoke
+- [x] runtime `net48` build smoke
 - [x] CLI build generated C# emission smoke tests
 - [x] CLI build generated C# project scaffold smoke tests
 - [x] TypeSharp.Core Option/Result behavior smoke tests
@@ -276,9 +276,9 @@
 - [x] C# `in` call smoke tests
 - [x] C# `ref` call smoke tests
 - [x] C# event add/remove call smoke tests
-- [x] ASP.NET/WCF/worker-style `net481` host compatibility smoke tests
-- [x] `net481` runtime dependency compatibility audit smoke tests
-- [x] CLI run generated `net481` executable smoke tests
+- [x] ASP.NET/WCF/worker-style `net48` host compatibility smoke tests
+- [x] `net48` runtime dependency compatibility audit smoke tests
+- [x] CLI run generated `net48` executable smoke tests
 - [ ] lowering golden tests
 - [ ] runtime unit tests
 - [ ] C# interop tests
@@ -300,7 +300,7 @@
 
 ## 반복 검토 질문
 
-- [ ] 이 기능은 .NET Framework 4.8.1에서 실행 가능한가?
+- [ ] 이 기능은 .NET Framework 4.8에서 실행 가능한가?
 - [ ] 이 기능은 public .NET metadata로 표현 가능한가, 아니면 compile-time only인가?
 - [ ] lowering이 문서화되어 있는가?
 - [ ] C# 소비자가 이 API를 이해할 수 있는가?

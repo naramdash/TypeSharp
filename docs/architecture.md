@@ -2,7 +2,7 @@
 
 문서 기준일: 2026-05-18
 
-이 문서는 TypeSharp 구현을 시작할 때 권장하는 구조를 제안한다. 목표는 .NET Framework 4.8.1 호환 산출물과 런타임을 만들면서 최신 언어 기능을 안정적으로 낮출 수 있는 컴파일러와 도구를 만드는 것이다.
+이 문서는 TypeSharp 구현을 시작할 때 권장하는 구조를 제안한다. 목표는 .NET Framework 4.8 호환 산출물과 런타임을 만들면서 최신 언어 기능을 안정적으로 낮출 수 있는 컴파일러와 도구를 만드는 것이다.
 
 ## 전체 구조
 
@@ -17,18 +17,18 @@ source files
   -> TypeSharp IR
   -> backend
        -> C# 7.3-compatible source for MVP
-       -> IL assembly for net481 later
+       -> IL assembly for net48 later
   -> runtime library
-  -> .NET Framework 4.8.1 execution
+  -> .NET Framework 4.8 execution
 ```
 
 ## Host Target Policy
 
 실현 가능성 결정은 [feasibility.md](feasibility.md)를 따른다.
 
-- 생성 assembly와 TypeSharp 표준 런타임은 `net481`에서 실행되어야 한다.
+- 생성 assembly와 TypeSharp 표준 런타임은 `net48`에서 실행되어야 한다.
 - compiler, CLI, language server host는 현대 .NET LTS 기반으로 구현할 수 있다.
-- host가 `net481`에서 실행되지 않아도 실패가 아니다. 실패 기준은 생성 산출물이 `net481`에서 실행되지 않는 경우다.
+- host가 `net48`에서 실행되지 않아도 실패가 아니다. 실패 기준은 생성 산출물이 `net48`에서 실행되지 않는 경우다.
 - host/runtime/source backend는 프로젝트를 분리해 dependency가 섞이지 않게 한다.
 
 ## 권장 프로젝트 분리
@@ -109,7 +109,7 @@ docs/
 
 MVP 결정:
 - 첫 backend는 C# 7.3 compatible source generation으로 구현한다.
-- generated C# source는 `net481` 프로젝트에서 컴파일 가능해야 한다.
+- generated C# source는 `net48` 프로젝트에서 컴파일 가능해야 한다.
 - generated source와 TypeSharp source span mapping을 초기부터 설계한다.
 
 장점:
@@ -247,7 +247,7 @@ TextMate grammar는 [grammar/lexical.md](grammar/lexical.md)의 토큰과 keywor
 ```toml
 [project]
 name = "Sample"
-targetFramework = "net481"
+targetFramework = "net48"
 outputType = "exe"
 
 [language]

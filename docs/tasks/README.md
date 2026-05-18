@@ -1,6 +1,6 @@
 # Agentic Task Packets
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 폴더는 Ralph mode, Goal mode, Codex `/goal` 같은 장기 실행 에이전트가 바로 집어 들 수 있는 작업 패킷을 보관한다. 작업 패킷 형식과 선택 규칙은 [../agentic-execution.md](../agentic-execution.md)를 따른다.
 
@@ -30,3 +30,4 @@
 | [0053-0055-csharp-delegate-event-host-smokes.md](0053-0055-csharp-delegate-event-host-smokes.md) | Q3 | Done | C# delegate/event call-site와 ASP.NET/WCF/worker-style host reference smokes를 묶는다. |
 | [0056-net481-dependency-compatibility-audit.md](0056-net481-dependency-compatibility-audit.md) | Q3 | Done | Core/Runtime/generated artifact dependency inventory와 `net481` API drift audit를 고정한다. |
 | [0057-cli-run-net481-executable-smoke.md](0057-cli-run-net481-executable-smoke.md) | Q4 | Done | `typesharp run`이 generated `net481` executable을 빌드하고 실행하는 smoke path를 만든다. |
+| [0058-net48-default-target-migration.md](0058-net48-default-target-migration.md) | Q0 | Done | 기본 산출물 타깃을 `net48`로 낮추고 compiler/runtime/tests/current docs 기준을 정렬한다. |

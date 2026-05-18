@@ -2,7 +2,7 @@
 
 문서 기준일: 2026-05-18
 
-이 문서는 C#, F#, TypeScript의 최신 기능을 TypeSharp에서 어떻게 해석할지 정리한다. 목표는 기능 복제가 아니라 .NET Framework 4.8.1에서 실행 가능한 일관된 언어 설계다.
+이 문서는 C#, F#, TypeScript의 최신 기능을 TypeSharp에서 어떻게 해석할지 정리한다. 목표는 기능 복제가 아니라 .NET Framework 4.8에서 실행 가능한 일관된 언어 설계다.
 
 ## 기능 분류
 
@@ -272,7 +272,7 @@ TypeSharp 결정:
 
 ## 14. C# Library Interop
 
-상태: MVP for managed `net481` library interop, Stable Backlog for NuGet restore and extension-method instance sugar
+상태: MVP for managed `net48` library interop, Stable Backlog for NuGet restore and extension-method instance sugar
 
 출처:
 - C#/.NET metadata model
@@ -341,7 +341,7 @@ TypeSharp 결정:
 - worker/service 환경에서는 configuration, logging, diagnostics, long-running process lifecycle과 .NET Framework BCL 제약을 고려하되, host-specific framework dependency를 TypeSharp runtime의 필수 dependency로 넣지 않는다.
 
 Lowering:
-- MVP backend는 host-specific code generation을 하지 않고, host가 참조 가능한 `net481` library assembly와 C# metadata-compatible public surface를 생성한다.
+- MVP backend는 host-specific code generation을 하지 않고, host가 참조 가능한 `net48` library assembly와 C# metadata-compatible public surface를 생성한다.
 - ASP.NET/WCF/worker project template, IIS packaging, WCF config generation, Windows Service scaffolding은 Stable Backlog로 분리한다.
 
 위험:

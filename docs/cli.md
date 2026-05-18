@@ -9,7 +9,7 @@
 - `.tysh` 파일을 CLI만으로 검사, 빌드, 실행할 수 있게 한다.
 - CI 환경에서 재현 가능한 diagnostics와 exit code를 제공한다.
 - VS Code language server와 같은 parser, binder, type checker, diagnostics code를 사용한다.
-- .NET Framework 4.8.1 산출물을 만들 수 있는 프로젝트 단위를 표준화한다.
+- .NET Framework 4.8 산출물을 만들 수 있는 프로젝트 단위를 표준화한다.
 - 사용자가 오류를 만났을 때 `typesharp explain`으로 다음 행동을 알 수 있게 한다.
 
 ## Command 등급
@@ -45,7 +45,7 @@ TypeSharp CLI 0.1.0-preview
 Compiler 0.1.0-preview
 Language preview
 Runtime ABI 0
-Target default net481
+Target default net48
 ```
 
 규칙:
@@ -58,7 +58,7 @@ Target default net481
 
 ```text
 typesharp new console HelloApp
-typesharp new library Billing.Core --target net481
+typesharp new library Billing.Core --target net48
 ```
 
 MVP template:
@@ -71,7 +71,7 @@ MVP template:
 - `.gitignore`
 
 규칙:
-- 기본 target framework는 `net481`이다.
+- 기본 target framework는 `net48`이다.
 - template은 preview feature를 기본으로 켜지 않는다.
 - 생성되는 `.tysh` 코드는 [grammar/consistency.md](grammar/consistency.md)의 문법 일관성 규칙을 따라야 한다.
 
@@ -102,7 +102,7 @@ typesharp check --diagnostic-format json
 
 ### `typesharp build`
 
-소스를 검사한 뒤 `net481` 실행 파일 또는 라이브러리 산출물을 만든다.
+소스를 검사한 뒤 `net48` 실행 파일 또는 라이브러리 산출물을 만든다.
 
 ```text
 typesharp build
@@ -195,7 +195,7 @@ VS Code extension이 시작하는 Language Server Protocol entrypoint다.
 | --- | --- |
 | `--project <path>` | project manifest 경로 지정 |
 | `--configuration Debug|Release` | 빌드 설정 |
-| `--target net481` | target framework override |
+| `--target net48` | target framework override |
 | `--emit csharp|il` | backend 선택. MVP 기본값은 `csharp`, `il`은 Stable Backlog |
 | `--diagnostic-format text|json` | diagnostics 출력 형식 |
 | `--warnings-as-errors` | warning을 error로 승격 |
@@ -231,7 +231,7 @@ VS Code extension이 시작하는 Language Server Protocol entrypoint다.
 ```toml
 [project]
 name = "HelloApp"
-targetFramework = "net481"
+targetFramework = "net48"
 outputType = "exe"
 rootNamespace = "HelloApp"
 sourceRoots = ["src"]
@@ -260,11 +260,11 @@ treatWarningsAsErrors = false
 규칙:
 - `sourceRoots` 아래의 `*.tysh` 파일을 source file로 찾는다.
 - `bin/`, `obj/`, generated output root는 기본 discovery에서 제외한다.
-- manifest의 target framework 기본값은 `net481`이다.
+- manifest의 target framework 기본값은 `net48`이다.
 - `generatedOutputRoot`를 생략하면 `obj/generated`를 기본값으로 사용한다.
 - `main`은 executable project에서만 필수다.
 - `assemblies`는 framework/GAC/reference assembly 이름이다.
-- `paths`는 명시 local DLL reference이며 `net481` 호환성을 검사해야 한다.
+- `paths`는 명시 local DLL reference이며 `net48` 호환성을 검사해야 한다.
 - `packages`는 NuGet reference를 위한 manifest 표면이지만, MVP에서는 restore 구현 없이 diagnostic으로 제한할 수 있다.
 - MSBuild 통합은 Stable Backlog로 두되, manifest 의미와 충돌하지 않아야 한다.
 

@@ -27,9 +27,9 @@ var tests = new (string Name, Action Body)[]
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
-    ("runtime project targets net481", RuntimeProjectTargetsNet481),
-    ("core project targets net481", CoreProjectTargetsNet481),
-    ("net481 runtime artifacts avoid external package dependencies", Net481RuntimeArtifactsAvoidExternalPackageDependencies),
+    ("runtime project targets net48", RuntimeProjectTargetsNet48),
+    ("core project targets net48", CoreProjectTargetsNet48),
+    ("net48 runtime artifacts avoid external package dependencies", Net48RuntimeArtifactsAvoidExternalPackageDependencies),
     ("core option and result expose basic states", CoreOptionAndResultExposeBasicStates),
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
@@ -50,7 +50,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
-    ("CLI run builds and runs generated net481 executable", CliRunBuildsAndRunsGeneratedNet481Executable),
+    ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
@@ -58,7 +58,7 @@ var tests = new (string Name, Action Body)[]
     ("binder fixture diagnostics match", BinderFixtureDiagnosticsMatch),
     ("type checker fixture diagnostics match", TypeCheckerFixtureDiagnosticsMatch),
     ("C# backend fixture snapshots match", CSharpBackendFixtureSnapshotsMatch),
-    ("generated C# compiles in net481 project", GeneratedCSharpCompilesInNet481Project),
+    ("generated C# compiles in net48 project", GeneratedCSharpCompilesInNet48Project),
     ("binder binds local declarations without diagnostics", BinderBindsLocalDeclarationsWithoutDiagnostics),
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
@@ -83,9 +83,9 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
-    ("CLI build emits generated net481 assembly", CliBuildEmitsGeneratedNet481Assembly),
-    ("C# net481 project consumes generated TypeSharp assembly", CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly),
-    ("net481 application model hosts reference generated assembly and runtime", Net481ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
+    ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
+    ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
+    ("net48 application model hosts reference generated assembly and runtime", Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
 };
 
@@ -113,7 +113,7 @@ static void VersionDefaultsMatchCliContract()
     AssertEqual("0.1.0-preview", TypeSharpCompilerInfo.CompilerVersion);
     AssertEqual("preview", TypeSharpCompilerInfo.LanguageVersion);
     AssertEqual(0, TypeSharpCompilerInfo.RuntimeAbiVersion);
-    AssertEqual("net481", TypeSharpCompilerInfo.DefaultTargetFramework);
+    AssertEqual("net48", TypeSharpCompilerInfo.DefaultTargetFramework);
 }
 
 static void DiagnosticDescriptorRegistryIsStable()
@@ -226,7 +226,7 @@ static void ManifestLoaderReadsExplicitManifestPath()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "Billing"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "exe"
             rootNamespace = "Samples.Billing"
             sourceRoots = ["source"]
@@ -256,7 +256,7 @@ static void ManifestLoaderReadsExplicitManifestPath()
         AssertFalse(result.HasErrors, "Manifest should load without errors.");
         var manifest = Require(result.Manifest, "Manifest should be available.");
         AssertEqual("Billing", manifest.Project.Name);
-        AssertEqual("net481", manifest.Project.TargetFramework);
+        AssertEqual("net48", manifest.Project.TargetFramework);
         AssertEqual("exe", manifest.Project.OutputType);
         AssertEqual("Samples.Billing", manifest.Project.RootNamespace);
         AssertSequence(["source"], manifest.Project.SourceRoots);
@@ -325,26 +325,26 @@ static void SourceDiscoveryExcludesBuildAndGeneratedFolders()
     });
 }
 
-static void RuntimeProjectTargetsNet481()
+static void RuntimeProjectTargetsNet48()
 {
     var project = File.ReadAllText(Path.Combine("src", "TypeSharp.Runtime", "TypeSharp.Runtime.csproj"));
     var runtimeInfo = File.ReadAllText(Path.Combine("src", "TypeSharp.Runtime", "TypeSharpRuntimeInfo.cs"));
 
-    AssertContains("<TargetFramework>net481</TargetFramework>", project);
+    AssertContains("<TargetFramework>net48</TargetFramework>", project);
     AssertContains("<AssemblyName>TypeSharp.Runtime</AssemblyName>", project);
     AssertContains("<LangVersion>7.3</LangVersion>", project);
     AssertContains("namespace TypeSharp.Runtime", runtimeInfo);
     AssertContains("RuntimeAbiVersion = 0", runtimeInfo);
 }
 
-static void CoreProjectTargetsNet481()
+static void CoreProjectTargetsNet48()
 {
     var project = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "TypeSharp.Core.csproj"));
     var option = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "Option.cs"));
     var result = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "Result.cs"));
     var unit = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "Unit.cs"));
 
-    AssertContains("<TargetFramework>net481</TargetFramework>", project);
+    AssertContains("<TargetFramework>net48</TargetFramework>", project);
     AssertContains("<AssemblyName>TypeSharp.Core</AssemblyName>", project);
     AssertContains("<LangVersion>7.3</LangVersion>", project);
     AssertContains("namespace TypeSharp.Core", option);
@@ -355,10 +355,10 @@ static void CoreProjectTargetsNet481()
     AssertContains("struct Unit", unit);
 }
 
-static void Net481RuntimeArtifactsAvoidExternalPackageDependencies()
+static void Net48RuntimeArtifactsAvoidExternalPackageDependencies()
 {
-    AssertNet481PackageFreeArtifact("src/TypeSharp.Core/TypeSharp.Core.csproj");
-    AssertNet481PackageFreeArtifact("src/TypeSharp.Runtime/TypeSharp.Runtime.csproj");
+    AssertNet48PackageFreeArtifact("src/TypeSharp.Core/TypeSharp.Core.csproj");
+    AssertNet48PackageFreeArtifact("src/TypeSharp.Runtime/TypeSharp.Runtime.csproj");
 
     AssertNoDisallowedNet5RuntimeApiReferences("src/TypeSharp.Core");
     AssertNoDisallowedNet5RuntimeApiReferences("src/TypeSharp.Runtime");
@@ -695,7 +695,7 @@ static void CheckerReportsInvalidByRefInteropDiagnostics()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "InvalidByRef"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.InvalidByRef"
             generatedOutputRoot = "generated"
@@ -733,7 +733,7 @@ static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "AmbiguousOverload"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.AmbiguousOverload"
             generatedOutputRoot = "generated"
@@ -767,7 +767,7 @@ static void CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "AmbiguousExpandedParamsOverload"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.AmbiguousExpandedParamsOverload"
             generatedOutputRoot = "generated"
@@ -801,7 +801,7 @@ static void CheckerReportsAmbiguousOptionalOverloadDiagnostics()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "AmbiguousOptionalOverload"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.AmbiguousOptionalOverload"
             generatedOutputRoot = "generated"
@@ -835,7 +835,7 @@ static void CheckerReportsUnknownCSharpNullabilityDiagnostics()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "UnknownNullability"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.UnknownNullability"
             generatedOutputRoot = "generated"
@@ -923,7 +923,7 @@ static void CliBuildStopsBeforeEmissionOnReferenceDiagnostics()
         AssertContains("\"code\": \"TS2401\"", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildReferences.Generated.csproj")), "Build should not emit generated project when reference diagnostics contain errors.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "BuildReferences.dll")), "Build should not emit generated assembly when reference diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildReferences.dll")), "Build should not emit generated assembly when reference diagnostics contain errors.");
     });
 }
 
@@ -935,7 +935,7 @@ static void CliBuildStopsBeforeEmissionOnInvalidByRefInterop()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "InvalidByRefBuild"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.InvalidByRefBuild"
             generatedOutputRoot = "generated"
@@ -965,7 +965,7 @@ static void CliBuildStopsBeforeEmissionOnInvalidByRefInterop()
         AssertContains("expects parameter 'value' to be passed with 'ref'", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when invalid byref diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "InvalidByRefBuild.Generated.csproj")), "Build should not emit generated project when invalid byref diagnostics contain errors.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "InvalidByRefBuild.dll")), "Build should not emit generated assembly when invalid byref diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "InvalidByRefBuild.dll")), "Build should not emit generated assembly when invalid byref diagnostics contain errors.");
     });
 }
 
@@ -977,7 +977,7 @@ static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "AmbiguousOverloadBuild"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.AmbiguousOverloadBuild"
             generatedOutputRoot = "generated"
@@ -1003,7 +1003,7 @@ static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
         AssertContains("matches 2 overload candidates", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when ambiguous overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "AmbiguousOverloadBuild.Generated.csproj")), "Build should not emit generated project when ambiguous overload diagnostics contain errors.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "AmbiguousOverloadBuild.dll")), "Build should not emit generated assembly when ambiguous overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AmbiguousOverloadBuild.dll")), "Build should not emit generated assembly when ambiguous overload diagnostics contain errors.");
     });
 }
 
@@ -1026,14 +1026,14 @@ static void ManifestLoaderReportsInvalidManifestShape()
     });
 }
 
-static void CliRunBuildsAndRunsGeneratedNet481Executable()
+static void CliRunBuildsAndRunsGeneratedNet48Executable()
 {
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, """
             [project]
             name = "RunSmoke"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "exe"
             rootNamespace = "Samples.RunSmoke"
             generatedOutputRoot = "generated"
@@ -1053,7 +1053,7 @@ static void CliRunBuildsAndRunsGeneratedNet481Executable()
         AssertEqual($"Hello from TypeSharp run{Environment.NewLine}", output.ToString());
         AssertEqual(string.Empty, error.ToString());
         AssertTrue(File.Exists(Path.Combine(root, "generated", "Program.g.cs")), "Run should emit a generated entry point.");
-        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "RunSmoke.exe")), "Run should build a generated net481 executable.");
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RunSmoke.exe")), "Run should build a generated net48 executable.");
     });
 }
 
@@ -1209,7 +1209,7 @@ static void CSharpBackendFixtureSnapshotsMatch()
     }
 }
 
-static void GeneratedCSharpCompilesInNet481Project()
+static void GeneratedCSharpCompilesInNet48Project()
 {
     WithWorkspace(root =>
     {
@@ -1229,7 +1229,7 @@ static void GeneratedCSharpCompilesInNet481Project()
         WriteFile(projectRoot, "GeneratedSmoke.csproj", """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net481</TargetFramework>
+                <TargetFramework>net48</TargetFramework>
                 <LangVersion>7.3</LangVersion>
                 <ImplicitUsings>false</ImplicitUsings>
                 <Nullable>disable</Nullable>
@@ -1251,7 +1251,7 @@ static void GeneratedCSharpCompilesInNet481Project()
 
         AssertTrue(
             build.ExitCode == 0,
-            $"Generated C# net481 project should compile.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+            $"Generated C# net48 project should compile.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -1431,7 +1431,7 @@ static void CliBuildEmitsGeneratedCSharpSource()
         AssertEqual(0, exitCode);
         AssertContains("Generated C# source: src/Main.g.cs", output.ToString());
         AssertContains("Generated C# project: BuildEmit.Generated.csproj", output.ToString());
-        AssertContains("Generated assembly: bin/Debug/net481/BuildEmit.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/BuildEmit.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
         var generatedPath = Path.Combine(root, "generated", "src", "Main.g.cs");
         AssertTrue(File.Exists(generatedPath), "Build should write generated C# source.");
@@ -1462,7 +1462,7 @@ static void CliBuildEmitsGeneratedCSharpProjectScaffold()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ProjectScaffold"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ProjectScaffold"
             generatedOutputRoot = "generated"
@@ -1487,7 +1487,7 @@ static void CliBuildEmitsGeneratedCSharpProjectScaffold()
             """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net481</TargetFramework>
+                <TargetFramework>net48</TargetFramework>
                 <OutputType>Library</OutputType>
                 <LangVersion>7.3</LangVersion>
                 <ImplicitUsings>false</ImplicitUsings>
@@ -1509,7 +1509,7 @@ static void CliBuildPropagatesManifestReferencesToGeneratedCSharpProject()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ReferencePropagation"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ReferencePropagation"
             generatedOutputRoot = "generated"
@@ -1530,7 +1530,7 @@ static void CliBuildPropagatesManifestReferencesToGeneratedCSharpProject()
 
         AssertEqual(0, exitCode);
         AssertContains("Generated C# project: ReferencePropagation.Generated.csproj", output.ToString());
-        AssertContains("Generated assembly: bin/Debug/net481/ReferencePropagation.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ReferencePropagation.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var projectPath = Path.Combine(root, "generated", "ReferencePropagation.Generated.csproj");
@@ -1539,7 +1539,7 @@ static void CliBuildPropagatesManifestReferencesToGeneratedCSharpProject()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ReferencePropagation.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ReferencePropagation.dll")),
             "Generated project build should succeed with valid manifest references.");
     });
 }
@@ -1551,7 +1551,7 @@ static void CliBuildCompilesFrameworkStaticMemberCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "FrameworkCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.FrameworkCall"
             generatedOutputRoot = "generated"
@@ -1572,7 +1572,7 @@ static void CliBuildCompilesFrameworkStaticMemberCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/FrameworkCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/FrameworkCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1582,7 +1582,7 @@ static void CliBuildCompilesFrameworkStaticMemberCall()
         var projectText = File.ReadAllText(Path.Combine(root, "generated", "FrameworkCall.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("    <Reference Include=\"System.Core\" />", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "FrameworkCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "FrameworkCall.dll")),
             "Generated project build should compile a framework static member call.");
     });
 }
@@ -1595,7 +1595,7 @@ static void CliBuildCompilesLocalDllStaticMemberCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "LocalDllCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.LocalDllCall"
             generatedOutputRoot = "generated"
@@ -1616,7 +1616,7 @@ static void CliBuildCompilesLocalDllStaticMemberCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/LocalDllCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/LocalDllCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1627,7 +1627,7 @@ static void CliBuildCompilesLocalDllStaticMemberCall()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "LocalDllCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalDllCall.dll")),
             "Generated project build should compile a local DLL static member call.");
     });
 }
@@ -1640,7 +1640,7 @@ static void CliBuildCompilesImportedConstructorAndInstanceMemberCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedInstanceCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedInstanceCall"
             generatedOutputRoot = "generated"
@@ -1664,7 +1664,7 @@ static void CliBuildCompilesImportedConstructorAndInstanceMemberCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedInstanceCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInstanceCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1676,7 +1676,7 @@ static void CliBuildCompilesImportedConstructorAndInstanceMemberCall()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedInstanceCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInstanceCall.dll")),
             "Generated project build should compile imported constructor and instance member calls.");
     });
 }
@@ -1689,7 +1689,7 @@ static void CliBuildCompilesImportedPropertyAccess()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedPropertyAccess"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedPropertyAccess"
             generatedOutputRoot = "generated"
@@ -1713,7 +1713,7 @@ static void CliBuildCompilesImportedPropertyAccess()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedPropertyAccess.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedPropertyAccess.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1725,7 +1725,7 @@ static void CliBuildCompilesImportedPropertyAccess()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedPropertyAccess.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedPropertyAccess.dll")),
             "Generated project build should compile imported property access.");
     });
 }
@@ -1738,7 +1738,7 @@ static void CliBuildCompilesImportedParamsCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedParamsCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedParamsCall"
             generatedOutputRoot = "generated"
@@ -1759,7 +1759,7 @@ static void CliBuildCompilesImportedParamsCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedParamsCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedParamsCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1770,7 +1770,7 @@ static void CliBuildCompilesImportedParamsCall()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedParamsCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedParamsCall.dll")),
             "Generated project build should compile an imported params call.");
     });
 }
@@ -1783,7 +1783,7 @@ static void CliBuildCompilesImportedOutCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedOutCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedOutCall"
             generatedOutputRoot = "generated"
@@ -1808,7 +1808,7 @@ static void CliBuildCompilesImportedOutCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedOutCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedOutCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1821,7 +1821,7 @@ static void CliBuildCompilesImportedOutCall()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedOutCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedOutCall.dll")),
             "Generated project build should compile an imported out call.");
     });
 }
@@ -1834,7 +1834,7 @@ static void CliBuildCompilesImportedInCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedInCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedInCall"
             generatedOutputRoot = "generated"
@@ -1858,7 +1858,7 @@ static void CliBuildCompilesImportedInCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedInCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1870,7 +1870,7 @@ static void CliBuildCompilesImportedInCall()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedInCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInCall.dll")),
             "Generated project build should compile an imported in call.");
     });
 }
@@ -1883,7 +1883,7 @@ static void CliBuildCompilesImportedRefCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedRefCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedRefCall"
             generatedOutputRoot = "generated"
@@ -1908,7 +1908,7 @@ static void CliBuildCompilesImportedRefCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedRefCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedRefCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -1921,7 +1921,7 @@ static void CliBuildCompilesImportedRefCall()
         AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
         AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedRefCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedRefCall.dll")),
             "Generated project build should compile an imported ref call.");
     });
 }
@@ -1934,7 +1934,7 @@ static void CliBuildCompilesExactOverloadMatch()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ExactOverloadMatch"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ExactOverloadMatch"
             generatedOutputRoot = "generated"
@@ -1955,14 +1955,14 @@ static void CliBuildCompilesExactOverloadMatch()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ExactOverloadMatch.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ExactOverloadMatch.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("using Legacy.Tools;", generatedSource);
         AssertContains("return LegacyOverloads.Pick(\"value\");", generatedSource);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ExactOverloadMatch.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ExactOverloadMatch.dll")),
             "Generated project build should compile an exact overload match.");
     });
 }
@@ -1975,7 +1975,7 @@ static void CliBuildCompilesExactExpandedParamsOverloadMatch()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ExactExpandedParamsOverloadMatch"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ExactExpandedParamsOverloadMatch"
             generatedOutputRoot = "generated"
@@ -1996,14 +1996,14 @@ static void CliBuildCompilesExactExpandedParamsOverloadMatch()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ExactExpandedParamsOverloadMatch.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ExactExpandedParamsOverloadMatch.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("using Legacy.Tools;", generatedSource);
         AssertContains("return LegacyParamsOverloads.Pick(\",\", \"a\", \"b\");", generatedSource);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ExactExpandedParamsOverloadMatch.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ExactExpandedParamsOverloadMatch.dll")),
             "Generated project build should compile an exact expanded params overload match.");
     });
 }
@@ -2016,7 +2016,7 @@ static void CliBuildCompilesImportedOptionalCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedOptionalCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedOptionalCall"
             generatedOutputRoot = "generated"
@@ -2037,14 +2037,14 @@ static void CliBuildCompilesImportedOptionalCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedOptionalCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedOptionalCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("using Legacy.Tools;", generatedSource);
         AssertContains("return LegacyOptional.Format(\"hello\");", generatedSource);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedOptionalCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedOptionalCall.dll")),
             "Generated project build should compile an imported optional call.");
     });
 }
@@ -2057,7 +2057,7 @@ static void CliBuildCompilesImportedNamedArgumentCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedNamedArgumentCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedNamedArgumentCall"
             generatedOutputRoot = "generated"
@@ -2078,14 +2078,14 @@ static void CliBuildCompilesImportedNamedArgumentCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedNamedArgumentCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedNamedArgumentCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("using Legacy.Tools;", generatedSource);
         AssertContains("return LegacyNamedOverloads.Route(\"/orders\", controller: \"Orders\");", generatedSource);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedNamedArgumentCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedNamedArgumentCall.dll")),
             "Generated project build should compile an imported named argument call.");
     });
 }
@@ -2098,7 +2098,7 @@ static void CliBuildCompilesImportedDelegateLambdaCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedDelegateLambdaCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedDelegateLambdaCall"
             generatedOutputRoot = "generated"
@@ -2119,14 +2119,14 @@ static void CliBuildCompilesImportedDelegateLambdaCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedDelegateLambdaCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("using Legacy.Tools;", generatedSource);
         AssertContains("return LegacyDelegates.Apply(\"value\", text => text);", generatedSource);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedDelegateLambdaCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaCall.dll")),
             "Generated project build should compile an imported delegate lambda call.");
     });
 }
@@ -2139,7 +2139,7 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
         var manifestPath = WriteManifest(root, """
             [project]
             name = "ImportedEventAddRemoveCall"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.ImportedEventAddRemoveCall"
             generatedOutputRoot = "generated"
@@ -2166,7 +2166,7 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/ImportedEventAddRemoveCall.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedEventAddRemoveCall.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -2176,19 +2176,19 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
         AssertContains("source.Transform -= text => text;", generatedSource);
         AssertContains("return source.Raise(\"value\");", generatedSource);
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "ImportedEventAddRemoveCall.dll")),
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedEventAddRemoveCall.dll")),
             "Generated project build should compile imported event add/remove calls.");
     });
 }
 
-static void CliBuildEmitsGeneratedNet481Assembly()
+static void CliBuildEmitsGeneratedNet48Assembly()
 {
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, """
             [project]
             name = "AssemblyEmit"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.AssemblyEmit"
             generatedOutputRoot = "generated"
@@ -2204,22 +2204,22 @@ static void CliBuildEmitsGeneratedNet481Assembly()
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
         AssertEqual(0, exitCode);
-        AssertContains("Generated assembly: bin/Debug/net481/AssemblyEmit.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/AssemblyEmit.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "AssemblyEmit.dll")),
-            "Build should produce generated net481 assembly.");
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AssemblyEmit.dll")),
+            "Build should produce generated net48 assembly.");
     });
 }
 
-static void CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly()
+static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
 {
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, """
             [project]
             name = "InteropSource"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.GeneratedInterop"
             generatedOutputRoot = "generated"
@@ -2236,9 +2236,9 @@ static void CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly()
 
         AssertEqual(0, exitCode);
         AssertEqual(string.Empty, error.ToString());
-        AssertContains("Generated assembly: bin/Debug/net481/InteropSource.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/InteropSource.dll", output.ToString());
 
-        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net481", "InteropSource.dll");
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "InteropSource.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "TypeSharp build should produce a generated assembly for the C# consumer.");
 
         var consumerRoot = Path.Combine(root, "Consumer");
@@ -2246,7 +2246,7 @@ static void CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly()
         WriteFile(consumerRoot, "ConsumerSmoke.csproj", """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net481</TargetFramework>
+                <TargetFramework>net48</TargetFramework>
                 <LangVersion>7.3</LangVersion>
                 <ImplicitUsings>false</ImplicitUsings>
                 <Nullable>disable</Nullable>
@@ -2254,7 +2254,7 @@ static void CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly()
               </PropertyGroup>
               <ItemGroup>
                 <Reference Include="InteropSource">
-                  <HintPath>../generated/bin/Debug/net481/InteropSource.dll</HintPath>
+                  <HintPath>../generated/bin/Debug/net48/InteropSource.dll</HintPath>
                 </Reference>
               </ItemGroup>
             </Project>
@@ -2284,18 +2284,18 @@ static void CSharpNet481ProjectConsumesGeneratedTypeSharpAssembly()
 
         AssertTrue(
             build.ExitCode == 0,
-            $"C# net481 consumer project should compile against the generated TypeSharp assembly.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+            $"C# net48 consumer project should compile against the generated TypeSharp assembly.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
-static void Net481ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime()
+static void Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime()
 {
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, """
             [project]
             name = "HostInteropSource"
-            targetFramework = "net481"
+            targetFramework = "net48"
             outputType = "library"
             rootNamespace = "Samples.HostInterop"
             generatedOutputRoot = "generated"
@@ -2312,17 +2312,17 @@ static void Net481ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime()
 
         AssertEqual(0, exitCode);
         AssertEqual(string.Empty, error.ToString());
-        AssertContains("Generated assembly: bin/Debug/net481/HostInteropSource.dll", output.ToString());
+        AssertContains("Generated assembly: bin/Debug/net48/HostInteropSource.dll", output.ToString());
 
-        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net481", "HostInteropSource.dll");
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "HostInteropSource.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "TypeSharp build should produce a generated assembly for host compatibility smokes.");
 
         var coreAssemblyPath = BuildRepositoryAssembly(
             "src/TypeSharp.Core/TypeSharp.Core.csproj",
-            "src/TypeSharp.Core/bin/Debug/net481/TypeSharp.Core.dll");
+            "src/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
         var runtimeAssemblyPath = BuildRepositoryAssembly(
             "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-            "src/TypeSharp.Runtime/bin/Debug/net481/TypeSharp.Runtime.dll");
+            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
 
         BuildApplicationModelHostProject(
             root,
@@ -2430,7 +2430,7 @@ static void CliBuildStopsBeforeEmissionOnDiagnostics()
         AssertContains("\"code\": \"TS1001\"", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildDiagnostics.Generated.csproj")), "Build should not emit generated C# project when diagnostics contain errors.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net481", "BuildDiagnostics.dll")), "Build should not emit generated assembly when diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildDiagnostics.dll")), "Build should not emit generated assembly when diagnostics contain errors.");
     });
 }
 
@@ -2504,7 +2504,7 @@ static void AssertTextEquals(string expected, string actual)
     }
 }
 
-static void AssertNet481PackageFreeArtifact(string projectPath)
+static void AssertNet48PackageFreeArtifact(string projectPath)
 {
     var project = XDocument.Load(projectPath);
     var targetFrameworks = project.Descendants()
@@ -2513,7 +2513,7 @@ static void AssertNet481PackageFreeArtifact(string projectPath)
         .ToArray();
 
     AssertEqual(1, targetFrameworks.Length);
-    AssertEqual("net481", targetFrameworks[0]);
+    AssertEqual("net48", targetFrameworks[0]);
     AssertFalse(
         project.Descendants().Any(element => element.Name.LocalName == "PackageReference"),
         $"{projectPath} should not use external NuGet package references.");
@@ -2605,7 +2605,7 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
     WriteFile(projectRoot, $"{assemblyName}.csproj", $$"""
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
-            <TargetFramework>net481</TargetFramework>
+            <TargetFramework>net48</TargetFramework>
             <LangVersion>7.3</LangVersion>
             <ImplicitUsings>false</ImplicitUsings>
             <Nullable>disable</Nullable>
@@ -2764,7 +2764,7 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
         build.ExitCode == 0,
         $"Legacy reference assembly should compile.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
 
-    var builtDll = Path.Combine(projectRoot, "bin", "Debug", "net481", $"{assemblyName}.dll");
+    var builtDll = Path.Combine(projectRoot, "bin", "Debug", "net48", $"{assemblyName}.dll");
     var targetDll = Path.Combine(root, "lib", $"{assemblyName}.dll");
     Directory.CreateDirectory(Path.GetDirectoryName(targetDll) ?? root);
     File.Copy(builtDll, targetDll, overwrite: true);
@@ -2803,7 +2803,7 @@ static void BuildApplicationModelHostProject(
     WriteFile(projectRoot, $"{projectName}.csproj", $$"""
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
-            <TargetFramework>net481</TargetFramework>
+            <TargetFramework>net48</TargetFramework>
             <LangVersion>7.3</LangVersion>
             <ImplicitUsings>false</ImplicitUsings>
             <Nullable>disable</Nullable>
@@ -2846,7 +2846,7 @@ static string ToProjectHintPath(string projectRoot, string assemblyPath) =>
 static string MinimalManifest(string name) => $$"""
     [project]
     name = "{{name}}"
-    targetFramework = "net481"
+    targetFramework = "net48"
     outputType = "library"
     """;
 

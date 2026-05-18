@@ -8,7 +8,7 @@
 
 - "모든 기능"은 이름과 표면 문법을 1:1로 복제한다는 뜻이 아니다.
 - 사용자가 세 언어에서 기대하는 실용 사용 사례를 TypeSharp에서 직접 작성할 수 있거나, 더 일관된 TypeSharp 기능으로 대체할 수 있어야 한다.
-- .NET Framework 4.8.1로 안정적으로 낮출 수 없거나 TypeSharp 목표와 충돌하는 기능은 Rejected로 명시한다.
+- .NET Framework 4.8로 안정적으로 낮출 수 없거나 TypeSharp 목표와 충돌하는 기능은 Rejected로 명시한다.
 - 새로 발견한 C#, F#, TypeScript 기능이 이 표에 없으면 문법 설계가 완료된 것이 아니다.
 
 ## 상태

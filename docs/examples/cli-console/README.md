@@ -16,7 +16,7 @@ cli-console/
 ## New Project
 
 ```powershell
-typesharp new console CliConsole --target net481
+typesharp new console CliConsole --target net48
 ```
 
 기대 결과:
@@ -61,8 +61,8 @@ typesharp build --configuration Debug --emit csharp
 
 ```text
 TypeSharp build succeeded.
-Target framework: net481
-Output: bin/Debug/net481/CliConsole.exe
+Target framework: net48
+Output: bin/Debug/net48/CliConsole.exe
 ```
 
 ## Run

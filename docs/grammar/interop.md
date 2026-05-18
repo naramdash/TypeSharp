@@ -2,7 +2,7 @@
 
 문서 기준일: 2026-05-18
 
-TypeSharp는 .NET Framework 4.8.1과 C#/.NET 생태계 위에서 실행된다. 따라서 interop 문법은 부가 기능이 아니라 언어의 핵심이다. 기존 C# 라이브러리 참조와 public ABI 설계의 세부 계약은 [../csharp-interop.md](../csharp-interop.md)를 기준으로 한다.
+TypeSharp는 .NET Framework 4.8과 C#/.NET 생태계 위에서 실행된다. 따라서 interop 문법은 부가 기능이 아니라 언어의 핵심이다. 기존 C# 라이브러리 참조와 public ABI 설계의 세부 계약은 [../csharp-interop.md](../csharp-interop.md)를 기준으로 한다.
 
 ## Managed Assembly Reference
 
@@ -24,7 +24,7 @@ paths = [
 - `paths`는 명시적인 local DLL reference다.
 - NuGet package reference는 manifest 표면을 예약하되, restore/lock/dependency inventory 정책이 필요한 Stable Backlog다.
 - 참조된 assembly의 metadata는 source symbol과 같은 symbol model로 들어간다.
-- `net481`에서 로드할 수 없는 assembly는 build 전에 diagnostic을 낸다.
+- `net48`에서 로드할 수 없는 assembly는 build 전에 diagnostic을 낸다.
 
 ## Attribute
 

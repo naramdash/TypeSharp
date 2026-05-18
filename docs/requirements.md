@@ -1,6 +1,6 @@
 # TypeSharp 필수사항
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 TypeSharp가 반드시 만족해야 하는 요구사항을 정의한다. RFC 2119의 엄격한 용어 대신 한국어 표기를 사용한다.
 
@@ -12,22 +12,23 @@
 
 ### 필수
 
-- 생성 산출물의 기본 실행 타깃은 .NET Framework 4.8.1이어야 한다.
-- 생성 assembly는 `net481` 프로젝트에서 참조 가능해야 한다.
-- 기본 런타임 라이브러리는 .NET Framework 4.8.1에서 로드되어야 한다.
+- 생성 산출물의 기본 실행 타깃은 .NET Framework 4.8이어야 한다.
+- 생성 assembly는 `net48` 프로젝트에서 참조 가능해야 한다.
+- 기본 런타임 라이브러리는 .NET Framework 4.8에서 로드되어야 한다.
 - .NET 5 이상에만 존재하는 BCL API를 기본 lowering 대상으로 삼지 않아야 한다.
 - .NET Framework가 Windows 전용 기술이라는 사실을 전제로 호환성 문서를 작성해야 한다.
 - 생성 assembly와 표준 런타임은 ASP.NET Web Forms, ASP.NET MVC/Web API, WCF service/client, Windows Service, scheduled job, queue/background worker 같은 .NET Framework application model에서 기존 C# library와 같은 방식으로 참조, 배포, 로드될 수 있어야 한다.
 - ASP.NET/WCF/worker 호환성은 ASP.NET Core 또는 최신 .NET worker로의 migration을 요구하지 않아야 하며, `web.config`, `bin` deployment, IIS/AppDomain lifecycle, configuration-based service model, MSBuild packaging 관례를 깨지 않아야 한다.
-- 외부 NuGet dependency는 `net481` 호환 여부, 라이선스, 배포 방식이 문서화되어야 한다.
-- compiler, CLI, language server host는 현대 .NET LTS 기반으로 실행될 수 있다. 단, 생성 산출물과 표준 런타임의 `net481` 호환성 테스트를 반드시 통과해야 한다.
+- 외부 NuGet dependency는 `net48` 호환 여부, 라이선스, 배포 방식이 문서화되어야 한다.
+- compiler, CLI, language server host는 현대 .NET LTS 기반으로 실행될 수 있다. 단, 생성 산출물과 표준 런타임의 `net48` 호환성 테스트를 반드시 통과해야 한다.
 
 ### 권장
 
 - compiler core, runtime library, CLI entrypoint를 분리한다.
 - deterministic build를 지원한다.
 - portable PDB 또는 Windows PDB 지원 전략을 초기에 결정한다.
-- CI는 최소한 Windows에서 `net481` smoke test를 실행한다.
+- CI는 최소한 Windows에서 `net48` smoke test를 실행한다.
+- 의료기기/분석기기 벤더 호환성 profile은 [framework-targeting.md](framework-targeting.md)의 기준에 따라 `net48` 기본 후보와 `net48` 최신 Framework profile을 분리해 검토한다.
 
 ## 2. 언어 핵심 요구사항
 
@@ -117,7 +118,7 @@
 
 ### 권장
 
-- NuGet package reference는 `net481` compatible asset, transitive dependency, license, checksum/lock file 정책과 함께 설계한다.
+- NuGet package reference는 `net48` compatible asset, transitive dependency, license, checksum/lock file 정책과 함께 설계한다.
 - C# extension method instance-call sugar는 overload ranking이 안정된 뒤 제공한다.
 - F# option, tuple, record와의 interop는 별도 compatibility layer로 검토한다.
 - CLS compliance를 public API 체크 옵션으로 제공한다.
@@ -168,7 +169,7 @@
 
 - MVP의 모든 기능은 최소 하나 이상의 positive test와 negative diagnostic test를 가져야 한다.
 - public 기능은 문서, 예제, 테스트가 함께 있어야 한다.
-- .NET Framework 4.8.1이 설치된 Windows 환경에서 smoke test를 통과해야 한다.
+- .NET Framework 4.8이 설치된 Windows 환경에서 smoke test를 통과해야 한다.
 - breaking change 정책을 문서화해야 한다.
 - 프리뷰 기능은 기본 안정성 약속에서 분리해야 한다.
 

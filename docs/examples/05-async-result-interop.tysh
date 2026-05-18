@@ -1,4 +1,4 @@
-// Async interop lowers to Task/Task<T> for .NET Framework 4.8.1 compatibility.
+// Async interop lowers to Task/Task<T> for .NET Framework 4.8 compatibility.
 // Failures can be modeled as Result while still interoperating with exceptions.
 
 namespace Samples.AsyncInterop
