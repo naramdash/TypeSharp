@@ -51,37 +51,40 @@
 15. [lowering.md](lowering.md)
    - 현재 구현된 TypeSharp 기능이 C# 7.3-compatible `net48` source로 어떻게 낮아지는지 기능별 예제와 fixture 근거를 정리한다.
 
-16. [feasibility.md](feasibility.md)
+16. [migration-guide.md](migration-guide.md)
+   - 기존 .NET Framework 4.8/C# 코드베이스가 TypeSharp library를 점진적으로 도입하는 방법과 현재 미지원 자동화를 정리한다.
+
+17. [feasibility.md](feasibility.md)
    - 현재 설계의 실현 가능성, MVP로 낮춘 범위, backend/host/ABI 결정을 기록한다.
 
-17. [feature-map.md](feature-map.md)
+18. [feature-map.md](feature-map.md)
    - 최신 C#, F#, TypeScript 기능을 TypeSharp에서 MVP, Stable Backlog, Preview Watch, Experimental, Rejected로 분류한다.
 
-18. [architecture.md](architecture.md)
+19. [architecture.md](architecture.md)
    - compiler pipeline, backend 전략, runtime library, tooling, test strategy의 권장 구조를 제안한다.
 
-19. [checklist.md](checklist.md)
+20. [checklist.md](checklist.md)
    - 설계와 구현을 반복할 때 완료 여부를 확인하는 실행 체크리스트다.
 
-20. [parser-fixtures.md](parser-fixtures.md)
+21. [parser-fixtures.md](parser-fixtures.md)
    - compiler skeleton 전에 parser positive/negative fixture, diagnostics snapshot, syntax tree snapshot 형식을 고정한다.
 
-21. [tasks/README.md](tasks/README.md)
+22. [tasks/README.md](tasks/README.md)
    - 장기 실행 에이전트가 바로 집어 들 수 있는 작업 패킷 목록이다.
 
-22. [traceability.md](traceability.md)
+23. [traceability.md](traceability.md)
    - 목표, 요구사항, 기능, 체크리스트가 서로 어떻게 연결되는지 검증한다.
 
-23. [references.md](references.md)
+24. [references.md](references.md)
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
-24. [dependencies.md](dependencies.md)
+25. [dependencies.md](dependencies.md)
    - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
 
-25. [framework-targeting.md](framework-targeting.md)
+26. [framework-targeting.md](framework-targeting.md)
    - Windows 10/11 장비 벤더 환경에서 `net48`과 `net481` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
-26. [runtime-abi.md](runtime-abi.md)
+27. [runtime-abi.md](runtime-abi.md)
    - `TypeSharp.Core`, `TypeSharp.Runtime`, generated `net48` assembly의 public ABI versioning 정책을 정의한다.
 
 ## 문서 원칙
@@ -101,6 +104,7 @@
 - `formatting.md`는 parser, formatter, LSP, 예제 파일이 공유하는 canonical layout을 정한다.
 - `diagnostics.md`는 CLI, VS Code, test fixtures가 공유하는 diagnostic code와 explanation metadata를 정한다.
 - `lowering.md`는 구현된 기능의 TypeSharp source, generated C# shape, runtime/helper 의존성, fixture 근거를 연결한다.
+- `migration-guide.md`는 기존 .NET Framework/C# 환경에서 TypeSharp를 점진적으로 도입하는 절차와 현재 미지원 자동화를 설명한다.
 - `feasibility.md`는 과도한 약속을 MVP, Stable Backlog, Preview Watch, Experimental, Rejected 중 적절한 범위로 낮추고 실제 구현 순서를 정리한다.
 - `feature-map.md`는 외부 언어의 최신 기능을 TypeSharp 의미론으로 번역하는 곳이다.
 - `checklist.md`는 실제 반복 작업의 입구다. 체크되지 않은 항목은 다음 설계 또는 구현 작업 후보가 된다.

@@ -33,7 +33,7 @@
 - [ ] 각 기능별 세부 사양 문서가 있다.
 - [x] grammar 수준의 syntax 예제가 있다.
 - [x] lowering 예제가 기능별로 있다.
-- [ ] migration guide 초안이 있다.
+- [x] migration guide 초안이 있다.
 
 ## 에이전틱 실행 준비
 

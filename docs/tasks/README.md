@@ -50,3 +50,4 @@
 | [0093-lowering-examples-catalog.md](0093-lowering-examples-catalog.md) | Q1-Q5 | Done | 구현된 C# 7.3 source backend lowering을 기능별 예제와 fixture 근거로 문서화한다. |
 | [0094-test-coverage-checklist-audit.md](0094-test-coverage-checklist-audit.md) | Q2-Q3 | Done | existing lowering golden, runtime unit, and C# interop test evidence를 checklist/traceability에 맞춘다. |
 | [0095-progress-and-adr-policy.md](0095-progress-and-adr-policy.md) | Q1 | Done | long-running progress log policy와 architecture decision record 형식을 고정한다. |
+| [0096-migration-guide-draft.md](0096-migration-guide-draft.md) | Q5 | Done | existing .NET Framework 4.8/C# projects가 TypeSharp library를 점진적으로 도입하는 migration guide 초안을 만든다. |
