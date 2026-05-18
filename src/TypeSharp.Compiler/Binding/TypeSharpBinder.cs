@@ -108,6 +108,7 @@ public static class TypeSharpBinder
                     case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.UnionDeclaration:
                     case SyntaxKind.ClassDeclaration:
+                    case SyntaxKind.InterfaceDeclaration:
                     case SyntaxKind.DelegateDeclaration:
                         if (TryGetDeclarationName(child, out var typeName, out var typeSpan))
                         {
@@ -152,6 +153,7 @@ public static class TypeSharpBinder
                 case SyntaxKind.RecordDeclaration:
                 case SyntaxKind.UnionDeclaration:
                 case SyntaxKind.ClassDeclaration:
+                case SyntaxKind.InterfaceDeclaration:
                 case SyntaxKind.DelegateDeclaration:
                 case SyntaxKind.ValueDeclaration:
                 case SyntaxKind.LiteralDeclaration:

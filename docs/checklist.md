@@ -91,7 +91,7 @@
 - [x] local binding
 - [x] compile-time constant `literal`
 - [x] function declaration/call
-- [ ] class/interface declaration
+- [x] class/interface declaration
 - [x] property/method/constructor
 - [ ] generic type/function
 - [x] module/namespace

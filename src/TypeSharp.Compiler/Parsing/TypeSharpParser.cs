@@ -48,6 +48,7 @@ public sealed class TypeSharpParser
                 SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
                 SyntaxKind.UnionKeyword => ParseUnionDeclaration(),
                 SyntaxKind.ClassKeyword => ParseClassDeclaration(),
+                SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(),
                 SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
                 SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(),
                 SyntaxKind.LetKeyword => ParseValueDeclaration(),
@@ -98,6 +99,7 @@ public sealed class TypeSharpParser
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(),
             SyntaxKind.ClassKeyword => ParseClassDeclaration(),
+            SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
             SyntaxKind.EventKeyword => ParseEventDeclaration(),
             SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(),
@@ -149,6 +151,7 @@ public sealed class TypeSharpParser
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(children),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(children),
             SyntaxKind.ClassKeyword => ParseClassDeclaration(children),
+            SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(children),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(children),
             SyntaxKind.EventKeyword => ParseEventDeclaration(children),
             SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(children),
@@ -256,6 +259,7 @@ public sealed class TypeSharpParser
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(children),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(children),
             SyntaxKind.ClassKeyword => ParseClassDeclaration(children),
+            SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(children),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(children),
             SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(children),
             SyntaxKind.LetKeyword => ParseValueDeclaration(children),
@@ -263,7 +267,7 @@ public sealed class TypeSharpParser
         };
     }
 
-    private SyntaxNode ParseFunctionDeclaration(List<SyntaxNode>? prefixChildren = null)
+    private SyntaxNode ParseFunctionDeclaration(List<SyntaxNode>? prefixChildren = null, bool allowSignatureOnly = false)
     {
         var children = prefixChildren ?? [];
         var isExtern = false;
@@ -302,7 +306,7 @@ public sealed class TypeSharpParser
             };
             children.Add(Node(SyntaxKind.FunctionBody, bodyChildren));
         }
-        else if (isExtern)
+        else if (isExtern || allowSignatureOnly)
         {
             return Node(SyntaxKind.FunctionDeclaration, children);
         }
@@ -512,6 +516,38 @@ public sealed class TypeSharpParser
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
         return Node(SyntaxKind.ClassDeclaration, children);
+    }
+
+    private SyntaxNode ParseInterfaceDeclaration(List<SyntaxNode>? prefixChildren = null)
+    {
+        var children = prefixChildren ?? [];
+        children.Add(TokenNode(Expect(SyntaxKind.InterfaceKeyword)));
+        children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+
+        if (Current.Kind == SyntaxKind.LessToken)
+        {
+            children.Add(ParseTypeParameterList());
+        }
+
+        children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
+        while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
+        {
+            children.Add(ParseInterfaceMember());
+        }
+
+        children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
+        return Node(SyntaxKind.InterfaceDeclaration, children);
+    }
+
+    private SyntaxNode ParseInterfaceMember()
+    {
+        var children = ParseDeclarationPrefix();
+
+        return Current.Kind switch
+        {
+            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children, allowSignatureOnly: true),
+            _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
+        };
     }
 
     private SyntaxNode ParseClassMember()

@@ -89,6 +89,7 @@ public static class TypeSharpTypeChecker
                     case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.UnionDeclaration:
                     case SyntaxKind.ClassDeclaration:
+                    case SyntaxKind.InterfaceDeclaration:
                     case SyntaxKind.DelegateDeclaration:
                         if (TryGetDeclarationName(child, out var typeName))
                         {

@@ -43,3 +43,4 @@
 | [0079-core-option-result-generic-api-smoke.md](0079-core-option-result-generic-api-smoke.md) | Q2-Q3 | Done | `Option<T>`와 `Result<T,E>`가 generated public API generic signature로 보존되는지 검증한다. |
 | [0080-generic-function-backend-smoke.md](0080-generic-function-backend-smoke.md) | Q2-Q3 | Done | generic function declaration을 generated C# public API와 C# `net48` consumer smoke로 고정한다. |
 | [0081-class-declaration-backend-smoke.md](0081-class-declaration-backend-smoke.md) | Q2-Q3 | Done | class declaration을 generated C# class와 C# `net48` consumer smoke로 고정한다. |
+| [0082-interface-declaration-backend-smoke.md](0082-interface-declaration-backend-smoke.md) | Q2-Q3 | Done | interface declaration을 generated C# interface와 C# `net48` implementation smoke로 고정한다. |

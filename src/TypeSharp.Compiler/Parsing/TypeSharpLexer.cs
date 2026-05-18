@@ -29,6 +29,7 @@ public sealed class TypeSharpLexer
         ["private"] = SyntaxKind.PrivateKeyword,
         ["elif"] = SyntaxKind.ElifKeyword,
         ["class"] = SyntaxKind.ClassKeyword,
+        ["interface"] = SyntaxKind.InterfaceKeyword,
         ["delegate"] = SyntaxKind.DelegateKeyword,
         ["event"] = SyntaxKind.EventKeyword,
         ["mut"] = SyntaxKind.MutKeyword,

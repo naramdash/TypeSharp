@@ -66,6 +66,10 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.ClassDeclaration)
                 .ToArray();
 
+            var interfaces = root.Children
+                .Where(child => child.Kind == SyntaxKind.InterfaceDeclaration)
+                .ToArray();
+
             foreach (var literal in literals)
             {
                 EmitLiteralDeclaration(literal);
@@ -98,6 +102,12 @@ public static class CSharpSourceBackend
             {
                 _builder.AppendLine();
                 EmitClassDeclaration(classDeclaration);
+            }
+
+            foreach (var interfaceDeclaration in interfaces)
+            {
+                _builder.AppendLine();
+                EmitInterfaceDeclaration(interfaceDeclaration);
             }
 
             _builder.AppendLine("}");
@@ -213,6 +223,32 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    }");
         }
 
+        private void EmitInterfaceDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetInterfaceDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+
+            _builder.AppendLine($"    {visibility} interface {name}{typeParameters}");
+            _builder.AppendLine("    {");
+
+            var functions = node.Children
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .ToArray();
+
+            for (var index = 0; index < functions.Length; index++)
+            {
+                if (index > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                EmitInterfaceFunction(functions[index]);
+            }
+
+            _builder.AppendLine("    }");
+        }
+
         private void EmitLiteralDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
@@ -247,6 +283,16 @@ public static class CSharpSourceBackend
             }
 
             _builder.AppendLine("        }");
+        }
+
+        private void EmitInterfaceFunction(SyntaxNode node)
+        {
+            var name = GetDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+            var parameters = GetParameterList(node);
+            var returnType = GetReturnType(node);
+
+            _builder.AppendLine($"        {returnType} {name}{typeParameters}({parameters});");
         }
 
         private static string GetParameterList(SyntaxNode function)
@@ -695,6 +741,26 @@ public static class CSharpSourceBackend
                 }
 
                 if (seenClassKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Generated";
+                }
+            }
+
+            return "Generated";
+        }
+
+        private static string GetInterfaceDeclarationName(SyntaxNode node)
+        {
+            var seenInterfaceKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.InterfaceKeyword)
+                {
+                    seenInterfaceKeyword = true;
+                    continue;
+                }
+
+                if (seenInterfaceKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
                 {
                     return child.Text ?? "Generated";
                 }

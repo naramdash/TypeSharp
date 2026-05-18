@@ -1,0 +1,5 @@
+namespace Samples.Interfaces
+
+public interface IGreeter {
+  fun Echo(value: string): string
+}
