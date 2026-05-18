@@ -11,7 +11,7 @@ End Time: 2026-05-19 00:34:58 +09:00
 
 ## Compressed Packets
 
-- `0057-cli-run-net481-executable-smoke`
+- `0057-cli-run-net48-executable-smoke`
 - `0058-net48-default-target-migration`
 - `0059-cli-run-main-args-forwarding`
 - `0060-cli-run-main-signature-diagnostic`

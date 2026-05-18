@@ -28,7 +28,7 @@
 - deterministic build를 지원한다.
 - portable PDB 또는 Windows PDB 지원 전략을 초기에 결정한다.
 - CI는 최소한 Windows에서 `net48` smoke test를 실행한다.
-- 의료기기/분석기기 벤더 호환성 profile은 [framework-targeting.md](framework-targeting.md)의 기준에 따라 `net48` 기본 후보와 `net48` 최신 Framework profile을 분리해 검토한다.
+- 의료기기/분석기기 벤더 호환성 profile은 [framework-targeting.md](framework-targeting.md)의 기준에 따라 `net48` 기본 후보와 `net481` 최신 Framework profile을 분리해 검토한다.
 
 ## 2. 언어 핵심 요구사항
 

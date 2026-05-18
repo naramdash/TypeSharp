@@ -7,7 +7,7 @@ End Time: 2026-05-18 23:57:43 +09:00
 
 ## Objective
 
-C#/.NET Framework interop smoke coverage를 delegate parameter, event add/remove, and ASP.NET/WCF/worker-style host reference까지 확장해 generated TypeSharp `net481` assembly가 기존 .NET Framework ecosystem에서 일반 C# library처럼 소비되는지 검증한다.
+C#/.NET Framework interop smoke coverage를 delegate parameter, event add/remove, and ASP.NET/WCF/worker-style host reference까지 확장해 generated TypeSharp `net48` assembly가 기존 .NET Framework ecosystem에서 일반 C# library처럼 소비되는지 검증한다.
 
 ## Source Of Truth
 
@@ -27,24 +27,24 @@ C#/.NET Framework interop smoke coverage를 delegate parameter, event add/remove
 - 0053: C# delegate parameter interop smoke
   - emitted single-parameter lambda expressions as C# `parameter => expression`.
   - added a backend golden fixture for delegate-style lambda emission.
-  - verified `LegacyDelegates.Apply(string, Func<string,string>)` generated `net481` build.
+  - verified `LegacyDelegates.Apply(string, Func<string,string>)` generated `net48` build.
 
 - 0054: .NET Framework application model host smokes
-  - built a generated TypeSharp `net481` library.
-  - built `TypeSharp.Core` and `TypeSharp.Runtime` as `net481` DLLs.
+  - built a generated TypeSharp `net48` library.
+  - built `TypeSharp.Core` and `TypeSharp.Runtime` as `net48` DLLs.
   - verified ASP.NET Web Forms-style `System.Web.UI.Page`, WCF `ServiceContract`/`OperationContract`, and Windows Service-style `ServiceBase` consumer projects can reference generated/Core/Runtime assemblies.
 
 - 0055: C# event interop smoke
   - added lexer/parser support for `+=` and `-=`.
   - emitted assignment expressions through the C# backend.
-  - verified imported event add/remove with lambda handlers compiles into a generated `net481` assembly.
+  - verified imported event add/remove with lambda handlers compiles into a generated `net48` assembly.
 
 ## Scope
 
 In:
 - delegate parameter lambda emission and generated build smoke
 - event add/remove assignment tokenization, parsing, emission, and generated build smoke
-- ASP.NET/WCF/worker-style `net481` host reference smoke
+- ASP.NET/WCF/worker-style `net48` host reference smoke
 - checklist and traceability updates
 
 Out:
@@ -57,7 +57,7 @@ Out:
 
 - [x] TypeSharp `text => text` emits C# `text => text`.
 - [x] delegate parameter smoke compiles through `typesharp build`.
-- [x] generated TypeSharp assembly, `TypeSharp.Core`, and `TypeSharp.Runtime` are referenced by ASP.NET/WCF/worker-style `net481` host projects.
+- [x] generated TypeSharp assembly, `TypeSharp.Core`, and `TypeSharp.Runtime` are referenced by ASP.NET/WCF/worker-style `net48` host projects.
 - [x] TypeSharp source parses and emits event `+=` and `-=` assignments.
 - [x] event add/remove smoke compiles through `typesharp build`.
 - [x] checklist and traceability reflect the completed smoke coverage.

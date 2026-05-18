@@ -1,4 +1,4 @@
-# Task: Net481 Dependency Compatibility Audit
+# Task: Net48 Dependency Compatibility Audit
 
 Status: Done
 Queue: Q3
@@ -7,7 +7,7 @@ End Time: 2026-05-19 00:04:01 +09:00
 
 ## Objective
 
-Generated TypeSharp artifact와 `TypeSharp.Core`/`TypeSharp.Runtime`가 package-free `net481` surface를 유지하는지 감사하고, 현재 dependency inventory와 future dependency gate를 문서화한다.
+Generated TypeSharp artifact와 `TypeSharp.Core`/`TypeSharp.Runtime`가 package-free `net48` surface를 유지하는지 감사하고, 현재 dependency inventory와 future dependency gate를 문서화한다.
 
 ## Source Of Truth
 
@@ -24,7 +24,7 @@ Generated TypeSharp artifact와 `TypeSharp.Core`/`TypeSharp.Runtime`가 package-
 ## Scope
 
 In:
-- `TypeSharp.Core` and `TypeSharp.Runtime` `net481` artifact audit
+- `TypeSharp.Core` and `TypeSharp.Runtime` `net48` artifact audit
 - package-free project audit for runtime/core artifacts
 - small static denylist scan for obvious .NET 5+ or package-backed runtime API drift
 - dependency inventory documentation for generated artifact, Core, Runtime, compiler, CLI, test host
@@ -35,14 +35,14 @@ Out:
 - NuGet restore implementation
 - package signing or checksum implementation
 - transitive dependency lock file support
-- compiler/CLI host downgrade to `net481`
+- compiler/CLI host downgrade to `net48`
 
 ## Acceptance Criteria
 
-- [x] `TypeSharp.Core` and `TypeSharp.Runtime` are audited as `net481` and package-free.
+- [x] `TypeSharp.Core` and `TypeSharp.Runtime` are audited as `net48` and package-free.
 - [x] Core/Runtime source is scanned for obvious .NET 5+ or package-backed runtime API drift.
 - [x] dependency inventory records current external NuGet dependency state and license state.
-- [x] future dependency gate records required `net481`, license, checksum/lock, deployment criteria.
+- [x] future dependency gate records required `net48`, license, checksum/lock, deployment criteria.
 - [x] checklist and traceability reflect the audit.
 - [x] existing tests and standard build checks still pass.
 
@@ -76,7 +76,7 @@ Result:
 ## Handoff
 
 Done:
-- Added `Net481RuntimeArtifactsAvoidExternalPackageDependencies` smoke test.
+- Added `Net48RuntimeArtifactsAvoidExternalPackageDependencies` smoke test.
 - Added [../dependencies.md](../dependencies.md) inventory and future dependency gate.
 - Updated checklist and traceability for .NET 5+ API drift audit and dependency inventory.
 

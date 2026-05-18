@@ -67,7 +67,7 @@
    - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
 
 21. [framework-targeting.md](framework-targeting.md)
-   - Windows 10/11 장비 벤더 환경에서 `net48`과 `net48` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
+   - Windows 10/11 장비 벤더 환경에서 `net48`과 `net481` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
 ## 문서 원칙
 
@@ -89,7 +89,7 @@
 - `tasks/`는 한 세션보다 긴 작업을 task packet으로 쪼개고 상태를 남기는 곳이다.
 - `references.md`는 시간이 지나면 갱신해야 한다. 최신 언어 버전은 반드시 공식 문서로 다시 확인한다.
 - `dependencies.md`는 package-free runtime/core surface와 future dependency gate를 추적한다.
-- `framework-targeting.md`는 의료기기/분석기기 벤더 호환성처럼 설치 기반이 중요한 환경에서 `net48`/`net48` 선택 근거를 추적한다.
+- `framework-targeting.md`는 의료기기/분석기기 벤더 호환성처럼 설치 기반이 중요한 환경에서 `net48`/`net481` 선택 근거를 추적한다.
 
 ## 반복 검토 프로토콜
 

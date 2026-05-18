@@ -8,7 +8,7 @@ Rollup Time: 2026-05-18 23:17:39 +09:00
 
 ## Objective
 
-Referenced local `net481` C# DLL metadata를 읽고, 그 metadata를 사용해 TypeSharp source의 C# interop call에서 byref modifier, overload ambiguity, exact overload narrowing, expanded `params` overload 후보를 emission 전에 검증한다.
+Referenced local `net48` C# DLL metadata를 읽고, 그 metadata를 사용해 TypeSharp source의 C# interop call에서 byref modifier, overload ambiguity, exact overload narrowing, expanded `params` overload 후보를 emission 전에 검증한다.
 
 ## Source Of Truth
 
@@ -25,7 +25,7 @@ Referenced local `net481` C# DLL metadata를 읽고, 그 metadata를 사용해 T
 
 ## Completed Work
 
-- `0043-csharp-local-metadata-symbol-index`: local `net481` DLL의 public top-level type, method, property, parameter, and byref metadata를 `MetadataAssemblySymbol.Types`로 index했다.
+- `0043-csharp-local-metadata-symbol-index`: local `net48` DLL의 public top-level type, method, property, parameter, and byref metadata를 `MetadataAssemblySymbol.Types`로 index했다.
 - `0044-csharp-invalid-byref-diagnostic`: parsed `ref`/`out`/`in` call-site modifier가 metadata parameter modifier와 맞지 않을 때 `TS2403`을 보고하고 build emission을 중단한다.
 - `0045-csharp-ambiguous-overload-diagnostic`: direct imported static method call이 여러 same-arity C# metadata 후보와 매칭될 때 `TS2402`를 보고한다.
 - `0046-csharp-exact-overload-ranking`: string, bool, int, double, decimal literal/primitive exact match 후보 하나를 선택해 불필요한 `TS2402`를 피한다.
@@ -34,7 +34,7 @@ Referenced local `net481` C# DLL metadata를 읽고, 그 metadata를 사용해 T
 
 ## Acceptance Criteria
 
-- [x] local C# metadata reader indexes public type/member/parameter symbols from local `net481` DLLs.
+- [x] local C# metadata reader indexes public type/member/parameter symbols from local `net48` DLLs.
 - [x] `ref`/`out`/`in` modifier mismatch is reported as `TS2403`.
 - [x] ambiguous C# overload candidates are reported as `TS2402`.
 - [x] exact literal/primitive overload match can narrow a candidate set to one method.

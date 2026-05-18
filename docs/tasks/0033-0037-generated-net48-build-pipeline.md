@@ -1,4 +1,4 @@
-# Task Group: Generated Net481 Build Pipeline
+# Task Group: Generated Net48 Build Pipeline
 
 Status: Done
 Queue: Q3
@@ -7,7 +7,7 @@ End Time: 2026-05-18 22:28:44 +09:00
 
 ## Objective
 
-Generated C# backend snapshots를 `typesharp build`의 CLI-visible `net481` assembly 산출물, C# consumer smoke, manifest reference propagation까지 연결한다.
+Generated C# backend snapshots를 `typesharp build`의 CLI-visible `net48` assembly 산출물, C# consumer smoke, manifest reference propagation까지 연결한다.
 
 ## Source Of Truth
 
@@ -23,10 +23,10 @@ Generated C# backend snapshots를 `typesharp build`의 CLI-visible `net481` asse
 
 ## Compressed Tasks
 
-- 0033: generated C# source compiles inside a temporary SDK-style `net481` C# project.
+- 0033: generated C# source compiles inside a temporary SDK-style `net48` C# project.
 - 0034: `typesharp build` writes deterministic generated `.g.cs` source and `<ProjectName>.Generated.csproj`.
 - 0035: `typesharp build` invokes offline-friendly `dotnet build` for the generated project and reports the generated DLL path.
-- 0036: a C# `net481` consumer project references the generated TypeSharp DLL and compiles a call to the generated public API.
+- 0036: a C# `net48` consumer project references the generated TypeSharp DLL and compiles a call to the generated public API.
 - 0037: manifest `references.assemblies` and `references.paths` are propagated as generated C# project `<Reference>` items, including relative local DLL `HintPath` values.
 
 Timing note:
@@ -36,7 +36,7 @@ Timing note:
 ## Scope
 
 In:
-- generated C# `net481` compile smoke
+- generated C# `net48` compile smoke
 - generated C# project scaffold emission
 - generated project build invocation from `typesharp build`
 - generated assembly path reporting
@@ -59,12 +59,12 @@ Out:
 
 ## Acceptance Criteria
 
-- [x] generated C# source compiles in a temporary `net481` C# project.
-- [x] `typesharp build` writes generated C# source and SDK-style `net481` generated project scaffold.
+- [x] generated C# source compiles in a temporary `net48` C# project.
+- [x] `typesharp build` writes generated C# source and SDK-style `net48` generated project scaffold.
 - [x] `typesharp build` invokes generated project build for a clean project.
 - [x] generated assembly path is reported by CLI output.
-- [x] generated `net481` DLL exists after build.
-- [x] C# `net481` consumer project references the generated TypeSharp DLL and calls a generated public API.
+- [x] generated `net48` DLL exists after build.
+- [x] C# `net48` consumer project references the generated TypeSharp DLL and calls a generated public API.
 - [x] generated C# project includes deterministic reference items from `references.assemblies`.
 - [x] generated C# project includes deterministic local DLL reference items from `references.paths`.
 - [x] local DLL `HintPath` values are relative to the generated output root when possible.
@@ -88,7 +88,7 @@ dotnet run --project src/TypeSharp.Cli/TypeSharp.Cli.csproj -- check docs/exampl
 ```
 
 Expected:
-- existing tests and generated net481 build pipeline smoke tests pass.
+- existing tests and generated net48 build pipeline smoke tests pass.
 - support libraries and CLI build without errors.
 - CLI check reports no diagnostics for the example project.
 
@@ -102,7 +102,7 @@ Done:
 - Related task packets 0033-0037 were compacted into this rollup.
 
 Remaining:
-- Next implementation should focus on property interop smoke, starting with imported C# property access in generated `net481` projects.
+- Next implementation should focus on property interop smoke, starting with imported C# property access in generated `net48` projects.
 
 Blocked:
 - None.

@@ -33,7 +33,7 @@ Local C# metadata validator가 optional parameter omission과 named argument par
 - [x] ambiguous optional overloads report `TS2402`.
 - [x] generated C# preserves TypeSharp named arguments as C# named arguments.
 - [x] named arguments filter overload candidates by metadata parameter name.
-- [x] single optional and named optional calls compile through generated `net481` projects.
+- [x] single optional and named optional calls compile through generated `net48` projects.
 - [x] existing tests still pass.
 - [x] checklist and traceability are updated.
 

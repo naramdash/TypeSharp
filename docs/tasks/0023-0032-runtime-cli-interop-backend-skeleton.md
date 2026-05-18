@@ -7,7 +7,7 @@ End Time: 2026-05-18 22:23:28 +09:00
 
 ## Objective
 
-Runtime/Core `net481` libraries, first C# source backend, `typesharp build` generated source emission, C# reference/metadata skeleton, and backend import/call/block lowering skeletons를 연결한다.
+Runtime/Core `net48` libraries, first C# source backend, `typesharp build` generated source emission, C# reference/metadata skeleton, and backend import/call/block lowering skeletons를 연결한다.
 
 ## Source Of Truth
 
@@ -28,7 +28,7 @@ Runtime/Core `net481` libraries, first C# source backend, `typesharp build` gene
 ## Compressed Tasks
 
 - 0023: first C# 7.3 source backend golden output.
-- 0024: `TypeSharp.Runtime` `net481` skeleton.
+- 0024: `TypeSharp.Runtime` `net48` skeleton.
 - 0025: CLI build generated C# source emission.
 - 0026: `TypeSharp.Core` `Option<T>`, `Result<T,E>`, and `Unit` skeleton.
 - 0027: C# framework/local reference resolver skeleton.
@@ -46,7 +46,7 @@ Timing note:
 
 In:
 - C# source backend golden fixtures
-- runtime/core `net481` project skeletons
+- runtime/core `net48` project skeletons
 - CLI generated source emission
 - C# reference resolver and metadata placeholder pipeline
 - generated C# import, call expression, block, and local lowering skeletons
@@ -63,7 +63,7 @@ Out:
 ## Acceptance Criteria
 
 - [x] first C# source backend golden fixture is deterministic.
-- [x] runtime/core `net481` projects build.
+- [x] runtime/core `net48` projects build.
 - [x] `typesharp build` emits generated C# source and stops on diagnostics.
 - [x] reference resolver and metadata reader skeletons preserve diagnostics.
 - [x] generated C# backend emits import directives, simple calls, block bodies, local `let`, and final returns.
@@ -95,7 +95,7 @@ Done:
 - Runtime, CLI, interop, and C# backend skeleton task packets are compressed into this rollup.
 
 Remaining:
-- Generated assembly build pipeline work is tracked by [0033-0037-generated-net481-build-pipeline.md](0033-0037-generated-net481-build-pipeline.md).
+- Generated assembly build pipeline work is tracked by [0033-0037-generated-net48-build-pipeline.md](0033-0037-generated-net48-build-pipeline.md).
 
 Blocked:
 - None.
