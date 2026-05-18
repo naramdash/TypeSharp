@@ -49,6 +49,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
+    ("CLI build stops before emission on type checker diagnostics", CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
@@ -1008,6 +1009,35 @@ static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when ambiguous overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "AmbiguousOverloadBuild.Generated.csproj")), "Build should not emit generated project when ambiguous overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AmbiguousOverloadBuild.dll")), "Build should not emit generated assembly when ambiguous overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildTypeDiagnostics"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BuildTypeDiagnostics
+
+            export fun broken(): string = 42
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("Cannot return expression of type 'int' from function returning 'string'.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when type checker diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildTypeDiagnostics.Generated.csproj")), "Build should not emit generated project when type checker diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildTypeDiagnostics.dll")), "Build should not emit generated assembly when type checker diagnostics contain errors.");
     });
 }
 

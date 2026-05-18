@@ -31,3 +31,4 @@
 | [0056-net481-dependency-compatibility-audit.md](0056-net481-dependency-compatibility-audit.md) | Q3 | Done | Core/Runtime/generated artifact dependency inventory와 `net481` API drift audit를 고정한다. |
 | [0057-0060-cli-run-net48-executable-flow.md](0057-0060-cli-run-net48-executable-flow.md) | Q0-Q4 | Done | `net48` executable `typesharp run`, args forwarding, and unsupported main signature diagnostics를 묶는다. |
 | [0061-cli-check-type-diagnostic-coverage.md](0061-cli-check-type-diagnostic-coverage.md) | Q4 | Done | `typesharp check`가 `TS2201` type checker diagnostics를 CLI JSON output으로 보고하는지 고정한다. |
+| [0062-cli-build-type-diagnostic-stop.md](0062-cli-build-type-diagnostic-stop.md) | Q4 | Done | `typesharp build`가 `TS2201` type checker diagnostics에서 generated emission 전에 멈추는지 고정한다. |

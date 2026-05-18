@@ -202,9 +202,10 @@
 - [x] CLI `check` parse diagnostics path
 - [x] CLI `check` reference diagnostics path
 - [x] CLI `check` type checker diagnostics path
-- [ ] CLI `build`
+- [x] CLI `build`
 - [x] CLI `build` generated C# emission path
 - [x] CLI `build` reference diagnostics stop path
+- [x] CLI `build` type checker diagnostics stop path
 - [x] CLI `build` generated C# project scaffold path
 - [x] CLI `build` generated `net48` assembly path
 - [x] CLI `build` generated project reference propagation path
@@ -255,6 +256,7 @@
 - [x] generated C# `net48` compile smoke
 - [x] runtime `net48` build smoke
 - [x] CLI build generated C# emission smoke tests
+- [x] CLI build type checker diagnostics stop smoke tests
 - [x] CLI build generated C# project scaffold smoke tests
 - [x] TypeSharp.Core Option/Result behavior smoke tests
 - [x] C# reference resolver smoke tests
