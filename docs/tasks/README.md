@@ -45,3 +45,4 @@
 | [0086-nominal-union-backend-smoke.md](0086-nominal-union-backend-smoke.md) | Q2-Q3 | Done | nominal union declaration을 generated C# closed class hierarchy와 runtime case metadata smoke로 고정한다. |
 | [0087-type-level-union-public-boundary-diagnostic.md](0087-type-level-union-public-boundary-diagnostic.md) | Q2-Q3 | Done | type-level union alias의 public .NET ABI 누수를 `TS2204`로 차단한다. |
 | [0088-nominal-union-match-lowering.md](0088-nominal-union-match-lowering.md) | Q2-Q3 | Done | nominal union `match`를 generated C# `net48` case checks로 낮추고 누락 case를 `TS2203`으로 차단한다. |
+| [0089-type-level-union-narrowing.md](0089-type-level-union-narrowing.md) | Q2-Q3 | Done | local type-level union alias를 type-pattern `match` arm에서 좁히고 generated C# `net48` type checks로 낮춘다. |

@@ -1,0 +1,15 @@
+namespace Samples.TypeLevelUnion
+
+type PrimitiveId = string | int
+
+fun normalizeInternal(id: PrimitiveId): string =
+  match id {
+    text: string => text
+    number: int => number.ToString()
+  }
+
+export fun normalizeText(text: string): string =
+  normalizeInternal(text)
+
+export fun normalizeNumber(number: int): string =
+  normalizeInternal(number)

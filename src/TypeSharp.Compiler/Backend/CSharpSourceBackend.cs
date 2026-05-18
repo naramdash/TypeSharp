@@ -16,6 +16,7 @@ public static class CSharpSourceBackend
         private readonly StringBuilder _builder = new();
         private readonly HashSet<string> _constructorCandidateNames = new(StringComparer.Ordinal);
         private readonly Dictionary<string, RecordShape> _records = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, TypeLevelUnionShape> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionShape> _unions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseFactories = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseValues = new(StringComparer.Ordinal);
@@ -35,6 +36,10 @@ public static class CSharpSourceBackend
 
             var functions = root.Children
                 .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .ToArray();
+
+            var typeAliases = root.Children
+                .Where(child => child.Kind == SyntaxKind.TypeAliasDeclaration)
                 .ToArray();
 
             var modules = root.Children
@@ -60,6 +65,11 @@ public static class CSharpSourceBackend
             foreach (var importedName in imports.ImportedNames)
             {
                 _constructorCandidateNames.Add(importedName);
+            }
+
+            foreach (var typeAlias in typeAliases)
+            {
+                RegisterTypeAlias(typeAlias);
             }
 
             foreach (var record in records)
@@ -167,6 +177,34 @@ public static class CSharpSourceBackend
             var parameters = GetParameters(node);
             _records[name] = new RecordShape(name, parameters);
             _constructorCandidateNames.Add(name);
+        }
+
+        private void RegisterTypeAlias(SyntaxNode node)
+        {
+            var name = GetTypeAliasDeclarationName(node);
+            var target = node.Children.LastOrDefault(child => !child.IsToken);
+            if (name.Length == 0 || target?.Kind != SyntaxKind.UnionType)
+            {
+                return;
+            }
+
+            var members = new List<TypeLevelUnionMemberShape>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var member in target.Children.Where(child => !child.IsToken))
+            {
+                var sourceType = GetSourceTypeName(member);
+                if (sourceType.Length == 0 || !seen.Add(sourceType))
+                {
+                    continue;
+                }
+
+                members.Add(new TypeLevelUnionMemberShape(sourceType, MapType(member)));
+            }
+
+            if (members.Count >= 2)
+            {
+                _typeLevelUnions[name] = new TypeLevelUnionShape(name, members);
+            }
         }
 
         private void RegisterUnion(SyntaxNode node)
@@ -572,7 +610,7 @@ public static class CSharpSourceBackend
             _valueTypes = new Dictionary<string, string>(previousValueTypes, StringComparer.Ordinal);
             foreach (var parameter in parameters)
             {
-                _valueTypes[parameter.Name] = parameter.Type;
+                _valueTypes[parameter.Name] = parameter.SourceType;
             }
 
             try
@@ -635,7 +673,7 @@ public static class CSharpSourceBackend
             _builder.AppendLine($"        {returnType} {name}{typeParameters}({parameters});");
         }
 
-        private static string GetParameterList(SyntaxNode function)
+        private string GetParameterList(SyntaxNode function)
         {
             var parameterList = function.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
             if (parameterList is null)
@@ -649,7 +687,7 @@ public static class CSharpSourceBackend
             return string.Join(", ", parameters);
         }
 
-        private static IReadOnlyList<CSharpParameter> GetParameters(SyntaxNode declaration)
+        private IReadOnlyList<CSharpParameter> GetParameters(SyntaxNode declaration)
         {
             var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
             if (parameterList is null)
@@ -679,7 +717,7 @@ public static class CSharpSourceBackend
             return $"new object[] {{ {FormatArgumentNames(parameters)} }}";
         }
 
-        private static IReadOnlyList<UnionCaseShape> GetUnionCases(SyntaxNode declaration)
+        private IReadOnlyList<UnionCaseShape> GetUnionCases(SyntaxNode declaration)
         {
             var cases = new List<UnionCaseShape>();
             foreach (var unionCase in declaration.Children.Where(child => child.Kind == SyntaxKind.UnionCase))
@@ -717,18 +755,18 @@ public static class CSharpSourceBackend
             return parameters.Length == 0 ? string.Empty : $"<{string.Join(", ", parameters)}>";
         }
 
-        private static string EmitParameter(SyntaxNode parameter)
+        private string EmitParameter(SyntaxNode parameter)
         {
             var parameterInfo = GetParameter(parameter);
             return $"{parameterInfo.Type} {parameterInfo.Name}";
         }
 
-        private static CSharpParameter GetParameter(SyntaxNode parameter)
+        private CSharpParameter GetParameter(SyntaxNode parameter)
         {
             var name = parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
             var annotation = parameter.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
             var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
-            return new CSharpParameter(MapType(typeNode), !string.IsNullOrWhiteSpace(name) ? name : "_");
+            return new CSharpParameter(MapType(typeNode), !string.IsNullOrWhiteSpace(name) ? name : "_", GetSourceTypeName(typeNode));
         }
 
         private void EmitBlock(SyntaxNode node)
@@ -896,9 +934,16 @@ public static class CSharpSourceBackend
         private string EmitMatch(SyntaxNode node, string resultType)
         {
             var input = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.MatchArm);
-            if (input is null || !TryGetUnionShape(input, out var union))
+            if (input is null)
             {
                 return "default(object)";
+            }
+
+            if (!TryGetUnionShape(input, out var union))
+            {
+                return TryGetTypeLevelUnionShape(input, out var typeLevelUnion)
+                    ? EmitTypeLevelUnionMatch(node, input, typeLevelUnion, resultType)
+                    : "default(object)";
             }
 
             var matchValueName = $"__match{_temporaryIndex++}";
@@ -932,6 +977,54 @@ public static class CSharpSourceBackend
 
                 builder.AppendLine($"                    return {EmitExpression(expression)};");
                 builder.AppendLine("                }");
+                wroteArm = true;
+            }
+
+            if (wroteArm)
+            {
+                builder.AppendLine();
+            }
+
+            builder.AppendLine($"                throw TypeSharpPattern.NoMatch({matchValueName});");
+            builder.Append("            })()");
+            return builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
+        }
+
+        private string EmitTypeLevelUnionMatch(SyntaxNode node, SyntaxNode input, TypeLevelUnionShape union, string resultType)
+        {
+            var matchValueName = $"__match{_temporaryIndex++}";
+            var builder = new StringBuilder();
+            builder.AppendLine($"new System.Func<{resultType}>(delegate()");
+            builder.AppendLine("            {");
+            builder.AppendLine($"                var {matchValueName} = {EmitExpression(input)};");
+
+            var wroteArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                if (!TryGetTypePatternMatchArm(arm, union, out var member, out var variableName, out var expression, out var isDiscard))
+                {
+                    continue;
+                }
+
+                if (wroteArm)
+                {
+                    builder.AppendLine();
+                }
+
+                if (isDiscard)
+                {
+                    builder.AppendLine("                {");
+                    builder.AppendLine($"                    return {EmitExpression(expression)};");
+                    builder.AppendLine("                }");
+                }
+                else
+                {
+                    builder.AppendLine($"                if ({matchValueName} is {member.CSharpType} {variableName})");
+                    builder.AppendLine("                {");
+                    builder.AppendLine($"                    return {EmitExpression(expression)};");
+                    builder.AppendLine("                }");
+                }
+
                 wroteArm = true;
             }
 
@@ -1004,6 +1097,17 @@ public static class CSharpSourceBackend
             return _unions.TryGetValue(typeName, out union);
         }
 
+        private bool TryGetTypeLevelUnionShape(SyntaxNode receiver, out TypeLevelUnionShape union)
+        {
+            union = default;
+            if (!TryGetExpressionType(receiver, out var typeName))
+            {
+                return false;
+            }
+
+            return _typeLevelUnions.TryGetValue(typeName, out union);
+        }
+
         private static bool TryGetMatchArm(
             SyntaxNode arm,
             UnionShape union,
@@ -1037,6 +1141,42 @@ public static class CSharpSourceBackend
             payloadVariable = argumentPattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
             expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
             return expression is not null;
+        }
+
+        private bool TryGetTypePatternMatchArm(
+            SyntaxNode arm,
+            TypeLevelUnionShape union,
+            out TypeLevelUnionMemberShape member,
+            out string variableName,
+            out SyntaxNode? expression,
+            out bool isDiscard)
+        {
+            member = default;
+            variableName = string.Empty;
+            expression = null;
+            isDiscard = false;
+
+            var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            variableName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (variableName == "_")
+            {
+                expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+                isDiscard = expression is not null;
+                return isDiscard;
+            }
+
+            var annotation = pattern?.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
+            var sourceType = GetSourceTypeName(typeNode);
+            var foundMember = union.Members.FirstOrDefault(candidate => candidate.SourceType == sourceType);
+            if (foundMember.SourceType is null)
+            {
+                return false;
+            }
+
+            member = foundMember;
+            expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+            return variableName.Length > 0 && expression is not null;
         }
 
         private bool TryGetExpressionType(SyntaxNode node, out string typeName)
@@ -1077,14 +1217,14 @@ public static class CSharpSourceBackend
             };
         }
 
-        private static string GetReturnType(SyntaxNode function)
+        private string GetReturnType(SyntaxNode function)
         {
             var annotation = function.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
             var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
             return MapType(typeNode);
         }
 
-        private static string MapType(SyntaxNode? node)
+        private string MapType(SyntaxNode? node)
         {
             if (node is null)
             {
@@ -1099,6 +1239,11 @@ public static class CSharpSourceBackend
                 }
 
                 var name = GetQualifiedName(node);
+                if (_typeLevelUnions.ContainsKey(name))
+                {
+                    return "object";
+                }
+
                 return name switch
                 {
                     "bool" => "bool",
@@ -1127,10 +1272,15 @@ public static class CSharpSourceBackend
                 return $"{MapType(elementType)}[]";
             }
 
+            if (node.Kind is SyntaxKind.UnionType or SyntaxKind.RecordShapeType)
+            {
+                return "object";
+            }
+
             return "object";
         }
 
-        private static bool TryGetGenericType(SyntaxNode node, out string type)
+        private bool TryGetGenericType(SyntaxNode node, out string type)
         {
             type = string.Empty;
             var baseType = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeName);
@@ -1154,7 +1304,7 @@ public static class CSharpSourceBackend
             return true;
         }
 
-        private static string GetLiteralType(SyntaxNode literal, SyntaxNode? initializer)
+        private string GetLiteralType(SyntaxNode literal, SyntaxNode? initializer)
         {
             var annotation = literal.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
             var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
@@ -1191,6 +1341,36 @@ public static class CSharpSourceBackend
             }
 
             return text.Contains('.', StringComparison.Ordinal) ? "double" : "int";
+        }
+
+        private static string GetSourceTypeName(SyntaxNode? node)
+        {
+            if (node is null)
+            {
+                return "object";
+            }
+
+            if (node.Kind == SyntaxKind.TypeAnnotation)
+            {
+                return GetSourceTypeName(node.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (node.Kind == SyntaxKind.NullableType)
+            {
+                return GetSourceTypeName(node.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (node.Kind == SyntaxKind.ArrayType)
+            {
+                return $"{GetSourceTypeName(node.Children.FirstOrDefault(child => !child.IsToken))}[]";
+            }
+
+            if (node.Kind == SyntaxKind.TypeName)
+            {
+                return GetQualifiedName(node);
+            }
+
+            return "object";
         }
 
         private static bool CanEmitConstLiteral(string type, SyntaxNode? initializer)
@@ -1265,6 +1445,26 @@ public static class CSharpSourceBackend
             }
 
             return "Generated";
+        }
+
+        private static string GetTypeAliasDeclarationName(SyntaxNode node)
+        {
+            var seenTypeKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.TypeKeyword)
+                {
+                    seenTypeKeyword = true;
+                    continue;
+                }
+
+                if (seenTypeKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
         }
 
         private static string GetLiteralDeclarationName(SyntaxNode node)
@@ -1511,9 +1711,13 @@ public static class CSharpSourceBackend
             IReadOnlyList<string> StaticUsings,
             IReadOnlyList<string> ImportedNames);
 
-        private readonly record struct CSharpParameter(string Type, string Name);
+        private readonly record struct CSharpParameter(string Type, string Name, string SourceType);
 
         private readonly record struct RecordShape(string Name, IReadOnlyList<CSharpParameter> Parameters);
+
+        private readonly record struct TypeLevelUnionShape(string Name, IReadOnlyList<TypeLevelUnionMemberShape> Members);
+
+        private readonly record struct TypeLevelUnionMemberShape(string SourceType, string CSharpType);
 
         private readonly record struct UnionShape(string Name, IReadOnlyList<UnionCaseShape> Cases);
 

@@ -1,0 +1,12 @@
+namespace Samples.TypeLevelUnionNarrowedArmMismatch
+
+type PrimitiveId = string | int
+
+fun normalize(id: PrimitiveId): string =
+  match id {
+    text: string => {
+      let invalid: int = text
+      "bad"
+    }
+    number: int => "number"
+  }

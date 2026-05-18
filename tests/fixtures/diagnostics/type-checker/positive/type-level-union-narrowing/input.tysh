@@ -1,0 +1,17 @@
+namespace Samples.TypeLevelUnionNarrowing
+
+type PrimitiveId = string | int
+
+fun normalize(id: PrimitiveId): string =
+  match id {
+    text: string => text
+    number: int => "number"
+  }
+
+fun localAssignment(): string = {
+  let id: PrimitiveId = "abc"
+  match id {
+    text: string => text
+    number: int => "number"
+  }
+}

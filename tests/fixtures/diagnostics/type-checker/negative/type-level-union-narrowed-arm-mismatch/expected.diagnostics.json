@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign expression of type 'string' to 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 8, "column": 7 },
+      "end": { "line": 8, "column": 30 }
+    }
+  ]
+}

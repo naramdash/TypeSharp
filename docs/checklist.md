@@ -100,7 +100,7 @@
 - [x] `Result<T, E>`
 - [x] nominal closed union type
 - [x] type-level union alias
-- [ ] union narrowing
+- [x] union narrowing
 - [x] pattern matching
 - [ ] null safety
 - [ ] basic structural type checking

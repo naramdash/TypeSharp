@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for type-level union 'PrimitiveId'. Missing members: int.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 3 },
+      "end": { "line": 8, "column": 4 }
+    }
+  ]
+}

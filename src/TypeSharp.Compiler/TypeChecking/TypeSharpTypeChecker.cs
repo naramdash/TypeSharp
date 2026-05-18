@@ -89,10 +89,17 @@ public static class TypeSharpTypeChecker
                         if (TryGetDeclarationName(child, out var aliasName))
                         {
                             scope.DeclareType(aliasName);
-                            if (TryGetTypeAliasTarget(child, out var aliasTarget) &&
-                                TryGetCompileTimeOnlyType(aliasTarget, scope, out var aliasKind))
+                            if (TryGetTypeAliasTarget(child, out var aliasTarget))
                             {
-                                scope.DeclareCompileTimeOnlyType(aliasName, aliasKind);
+                                if (TryGetCompileTimeOnlyType(aliasTarget, scope, out var aliasKind))
+                                {
+                                    scope.DeclareCompileTimeOnlyType(aliasName, aliasKind);
+                                }
+
+                                if (TryGetTypeLevelUnion(aliasName, aliasTarget, out var typeLevelUnion))
+                                {
+                                    scope.DeclareTypeLevelUnion(aliasName, typeLevelUnion.Members);
+                                }
                             }
                         }
 
@@ -230,7 +237,7 @@ public static class TypeSharpTypeChecker
             foreach (var body in node.Children.Where(child => child.Kind == SyntaxKind.FunctionBody))
             {
                 var actualReturnType = CheckFunctionBody(body, scope);
-                if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(expectedReturnType, actualReturnType))
+                if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, expectedReturnType, actualReturnType))
                 {
                     ReportMismatch(
                         body,
@@ -323,7 +330,7 @@ public static class TypeSharpTypeChecker
                 initializerType = CheckInitializer(initializer, scope);
             }
 
-            if (annotationKnown && initializerType.IsKnown && !CanAssign(expectedType, initializerType))
+            if (annotationKnown && initializerType.IsKnown && !CanAssign(scope, expectedType, initializerType))
             {
                 ReportMismatch(
                     node,
@@ -501,12 +508,66 @@ public static class TypeSharpTypeChecker
                 return MergeBranchTypes(branchTypes);
             }
 
+            if (inputType.IsKnown && scope.ResolveTypeLevelUnion(inputType.Name, out var typeLevelUnion))
+            {
+                var coveredMembers = new HashSet<string>(StringComparer.Ordinal);
+                var hasDiscardArm = false;
+                foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+                {
+                    var armScope = new TypeScope(scope);
+                    if (TryGetTypeLevelUnionArm(arm, typeLevelUnion, out var member, out var variableName, out var expression, out var isDiscard))
+                    {
+                        if (isDiscard)
+                        {
+                            hasDiscardArm = true;
+                        }
+                        else
+                        {
+                            coveredMembers.Add(member.Type.Name);
+                            if (variableName.Length > 0)
+                            {
+                                armScope.DeclareValue(variableName, member.Type);
+                            }
+                        }
+                    }
+
+                    if (expression is not null)
+                    {
+                        branchTypes.Add(CheckExpression(expression, armScope));
+                    }
+                }
+
+                var missingMembers = hasDiscardArm
+                    ? []
+                    : typeLevelUnion.Members
+                        .Where(member => !coveredMembers.Contains(member.Type.Name))
+                        .Select(member => member.Type.ToString())
+                        .ToArray();
+                if (missingMembers.Length > 0)
+                {
+                    _diagnostics.Add(new Diagnostic(
+                        DiagnosticDescriptors.NonExhaustiveMatch.Code,
+                        DiagnosticDescriptors.NonExhaustiveMatch.DefaultSeverity,
+                        $"Non-exhaustive match for type-level union '{typeLevelUnion.Name}'. Missing members: {string.Join(", ", missingMembers)}.",
+                        _file,
+                        node.Span));
+                }
+
+                return MergeBranchTypes(branchTypes);
+            }
+
             foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
             {
-                var expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+                var armScope = new TypeScope(scope);
+                if (TryGetTypePattern(arm, out var narrowedType, out var variableName) && variableName.Length > 0)
+                {
+                    armScope.DeclareValue(variableName, narrowedType);
+                }
+
+                var expression = GetMatchArmExpression(arm);
                 if (expression is not null)
                 {
-                    branchTypes.Add(CheckExpression(expression, scope));
+                    branchTypes.Add(CheckExpression(expression, armScope));
                 }
             }
 
@@ -569,7 +630,7 @@ public static class TypeSharpTypeChecker
             return SimpleType.Unknown;
         }
 
-        private static bool CanAssign(SimpleType expected, SimpleType actual)
+        private static bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual)
         {
             if (!expected.IsKnown || !actual.IsKnown)
             {
@@ -584,6 +645,12 @@ public static class TypeSharpTypeChecker
             if (actual.IsNull)
             {
                 return expected.IsNullable;
+            }
+
+            if (scope.ResolveTypeLevelUnion(expected.Name, out var typeLevelUnion) &&
+                typeLevelUnion.Members.Any(member => member.Type.Name == actual.Name && (member.Type.IsNullable || !actual.IsNullable)))
+            {
+                return true;
             }
 
             if (expected.Name != actual.Name)
@@ -728,6 +795,38 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        private static bool TryGetTypeLevelUnion(string name, SyntaxNode node, out TypeLevelUnionInfo union)
+        {
+            union = default;
+            if (node.Kind != SyntaxKind.UnionType)
+            {
+                return false;
+            }
+
+            var members = new List<TypeLevelUnionMemberInfo>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var memberNode in node.Children.Where(child => !child.IsToken))
+            {
+                if (!TryGetType(memberNode, out var memberType) || !memberType.IsKnown || memberType.IsNull)
+                {
+                    return false;
+                }
+
+                if (seen.Add(memberType.Name))
+                {
+                    members.Add(new TypeLevelUnionMemberInfo(memberType));
+                }
+            }
+
+            if (members.Count < 2)
+            {
+                return false;
+            }
+
+            union = new TypeLevelUnionInfo(name, members);
+            return true;
+        }
+
         private static bool TryGetGenericType(SyntaxNode node, out SimpleType type)
         {
             type = SimpleType.Unknown;
@@ -826,7 +925,7 @@ public static class TypeSharpTypeChecker
         {
             unionCase = default;
             payloadName = string.Empty;
-            expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+            expression = GetMatchArmExpression(arm);
 
             var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
             var caseName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
@@ -850,6 +949,68 @@ public static class TypeSharpTypeChecker
             payloadName = argumentPattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
             return true;
         }
+
+        private static bool TryGetTypeLevelUnionArm(
+            SyntaxNode arm,
+            TypeLevelUnionInfo union,
+            out TypeLevelUnionMemberInfo member,
+            out string variableName,
+            out SyntaxNode? expression,
+            out bool isDiscard)
+        {
+            member = default;
+            variableName = string.Empty;
+            expression = GetMatchArmExpression(arm);
+            isDiscard = false;
+
+            var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            variableName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (variableName == "_")
+            {
+                isDiscard = true;
+                return true;
+            }
+
+            if (!TryGetTypePattern(arm, out var narrowedType, out variableName))
+            {
+                return false;
+            }
+
+            var foundMember = union.Members.FirstOrDefault(candidate => candidate.Type.Name == narrowedType.Name);
+            if (!foundMember.Type.IsKnown)
+            {
+                return false;
+            }
+
+            member = foundMember;
+            return true;
+        }
+
+        private static bool TryGetTypePattern(SyntaxNode arm, out SimpleType narrowedType, out string variableName)
+        {
+            narrowedType = SimpleType.Unknown;
+            variableName = string.Empty;
+
+            var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
+            if (pattern is null)
+            {
+                return false;
+            }
+
+            variableName = pattern.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (variableName == "_")
+            {
+                variableName = string.Empty;
+                return false;
+            }
+
+            return TryGetDirectTypeAnnotation(pattern, out var annotation) &&
+                TryGetType(annotation, out narrowedType) &&
+                narrowedType.IsKnown;
+        }
+
+        private static SyntaxNode? GetMatchArmExpression(SyntaxNode arm) =>
+            arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
 
         private static bool TryGetSimpleTypeName(SyntaxNode node, out string name)
         {
@@ -928,6 +1089,7 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, SimpleType> _functions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, TypeLevelUnionInfo> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionInfo> _unions = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
@@ -943,6 +1105,8 @@ public static class TypeSharpTypeChecker
         public void DeclareType(string name) => _types.Add(name);
 
         public void DeclareCompileTimeOnlyType(string name, CompileTimeOnlyTypeKind kind) => _compileTimeOnlyTypes[name] = kind;
+
+        public void DeclareTypeLevelUnion(string name, IReadOnlyList<TypeLevelUnionMemberInfo> members) => _typeLevelUnions[name] = new TypeLevelUnionInfo(name, members);
 
         public void DeclareUnion(string name, IReadOnlyList<UnionCaseInfo> cases) => _unions[name] = new UnionInfo(name, cases);
 
@@ -994,6 +1158,22 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        public bool ResolveTypeLevelUnion(string name, out TypeLevelUnionInfo union)
+        {
+            if (_typeLevelUnions.TryGetValue(name, out union))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveTypeLevelUnion(name, out union);
+            }
+
+            union = default;
+            return false;
+        }
+
         public bool ResolveUnion(string name, out UnionInfo union)
         {
             if (_unions.TryGetValue(name, out union))
@@ -1018,6 +1198,10 @@ public static class TypeSharpTypeChecker
     private readonly record struct UnionCaseInfo(string Name, IReadOnlyList<ParameterInfo> Parameters);
 
     private readonly record struct ParameterInfo(string Name, string Type);
+
+    private readonly record struct TypeLevelUnionInfo(string Name, IReadOnlyList<TypeLevelUnionMemberInfo> Members);
+
+    private readonly record struct TypeLevelUnionMemberInfo(SimpleType Type);
 
     private enum CompileTimeOnlyTypeKind
     {
