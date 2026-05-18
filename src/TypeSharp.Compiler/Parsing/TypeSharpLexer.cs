@@ -7,6 +7,7 @@ public sealed class TypeSharpLexer
     private static readonly Dictionary<string, SyntaxKind> Keywords = new(StringComparer.Ordinal)
     {
         ["namespace"] = SyntaxKind.NamespaceKeyword,
+        ["module"] = SyntaxKind.ModuleKeyword,
         ["import"] = SyntaxKind.ImportKeyword,
         ["static"] = SyntaxKind.StaticKeyword,
         ["export"] = SyntaxKind.ExportKeyword,

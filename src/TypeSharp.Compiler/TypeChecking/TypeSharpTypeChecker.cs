@@ -77,6 +77,14 @@ public static class TypeSharpTypeChecker
 
                         break;
 
+                    case SyntaxKind.ModuleDeclaration:
+                        if (TryGetDeclarationName(child, out var moduleName))
+                        {
+                            scope.DeclareType(moduleName);
+                        }
+
+                        break;
+
                     case SyntaxKind.TypeAliasDeclaration:
                     case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.UnionDeclaration:
@@ -142,10 +150,25 @@ public static class TypeSharpTypeChecker
                     CheckFunction(node, scope);
                     break;
 
+                case SyntaxKind.ModuleDeclaration:
+                    CheckModuleDeclaration(node, scope);
+                    break;
+
                 case SyntaxKind.ValueDeclaration:
                 case SyntaxKind.LiteralDeclaration:
                     CheckValueDeclaration(node, scope);
                     break;
+            }
+        }
+
+        private void CheckModuleDeclaration(SyntaxNode node, TypeScope parentScope)
+        {
+            var scope = new TypeScope(parentScope);
+            CollectTopLevelTypesAndFunctions(node, scope);
+
+            foreach (var child in node.Children.Where(child => !child.IsToken))
+            {
+                CheckTopLevelDeclaration(child, scope);
             }
         }
 
@@ -536,7 +559,7 @@ public static class TypeSharpTypeChecker
             var seenDeclarationKeyword = false;
             foreach (var child in node.Children)
             {
-                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
+                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.ModuleKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
                 {
                     seenDeclarationKeyword = true;
                     continue;

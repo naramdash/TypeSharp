@@ -58,6 +58,10 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
                 .ToArray();
 
+            var modules = root.Children
+                .Where(child => child.Kind == SyntaxKind.ModuleDeclaration)
+                .ToArray();
+
             foreach (var literal in literals)
             {
                 EmitLiteralDeclaration(literal);
@@ -79,6 +83,13 @@ public static class CSharpSourceBackend
             }
 
             _builder.AppendLine("    }");
+
+            foreach (var module in modules)
+            {
+                _builder.AppendLine();
+                EmitModuleDeclaration(module);
+            }
+
             _builder.AppendLine("}");
             return _builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
         }
@@ -125,6 +136,45 @@ public static class CSharpSourceBackend
             }
 
             return new CSharpImports(usings, staticUsings, importedNames);
+        }
+
+        private void EmitModuleDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetModuleDeclarationName(node);
+
+            _builder.AppendLine($"    {visibility} static class {name}");
+            _builder.AppendLine("    {");
+
+            var literals = node.Children
+                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration)
+                .ToArray();
+
+            var functions = node.Children
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .ToArray();
+
+            foreach (var literal in literals)
+            {
+                EmitLiteralDeclaration(literal);
+            }
+
+            if (literals.Length > 0 && functions.Length > 0)
+            {
+                _builder.AppendLine();
+            }
+
+            for (var index = 0; index < functions.Length; index++)
+            {
+                if (index > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                EmitFunction(functions[index]);
+            }
+
+            _builder.AppendLine("    }");
         }
 
         private void EmitLiteralDeclaration(SyntaxNode node)
@@ -527,6 +577,26 @@ public static class CSharpSourceBackend
             }
 
             return "Literal";
+        }
+
+        private static string GetModuleDeclarationName(SyntaxNode node)
+        {
+            var seenModuleKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.ModuleKeyword)
+                {
+                    seenModuleKeyword = true;
+                    continue;
+                }
+
+                if (seenModuleKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Module";
+                }
+            }
+
+            return "Module";
         }
 
         private static string GetLocalDeclarationName(SyntaxNode node)

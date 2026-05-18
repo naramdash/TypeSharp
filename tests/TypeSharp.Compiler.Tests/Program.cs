@@ -66,6 +66,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
+    ("parser parses module declaration without diagnostics", ParserParsesModuleDeclarationWithoutDiagnostics),
     ("parser fixture snapshots match", ParserFixtureSnapshotsMatch),
     ("binder fixture diagnostics match", BinderFixtureDiagnosticsMatch),
     ("type checker fixture diagnostics match", TypeCheckerFixtureDiagnosticsMatch),
@@ -102,6 +103,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
+    ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
@@ -1301,6 +1303,23 @@ static void ParserParsesHelloFixtureWithoutDiagnostics()
 
     AssertFalse(result.HasErrors, "Hello fixture should parse without diagnostics.");
     AssertEqual(SyntaxKind.SourceFile, Require(result.Root, "Parser should produce a root syntax node.").Kind);
+}
+
+static void ParserParsesModuleDeclarationWithoutDiagnostics()
+{
+    var result = TypeSharpParser.ParseText("""
+        namespace Samples.ModuleSmoke
+
+        export module MathEx {
+          public literal Seed = 7
+
+          export fun identity(value: string): string = value
+        }
+        """);
+
+    AssertFalse(result.HasErrors, "Module declaration should parse without diagnostics.");
+    var root = Require(result.Root, "Parser should produce a root syntax node.");
+    AssertTrue(root.Children.Any(child => child.Kind == SyntaxKind.ModuleDeclaration), "Parser should produce a module declaration node.");
 }
 
 static void ParserFixtureSnapshotsMatch()
@@ -2657,6 +2676,94 @@ static void CliBuildCompilesBasicSemantics()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BasicSemantics.dll")),
             "Generated project build should compile basic literals, local binding, and function calls.");
+    });
+}
+
+static void CliBuildCompilesModuleNamespace()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ModuleNamespace"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ModuleNamespace"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ModuleNamespace
+
+            export module MathEx {
+              public literal Seed = 7
+
+              export fun identity(value: string): string = value
+
+              export fun seed(): int = Seed
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ModuleNamespace.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("namespace Samples.ModuleNamespace", generatedSource);
+        AssertContains("public static class MathEx", generatedSource);
+        AssertContains("public const int Seed = 7;", generatedSource);
+        AssertContains("public static string identity(string value)", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ModuleNamespace.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with module namespace output.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ModuleConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ModuleConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ModuleNamespace">
+                  <HintPath>../generated/bin/Debug/net48/ModuleNamespace.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ModuleConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.ModuleNamespace.MathEx.identity("ok") + ":" + Samples.ModuleNamespace.MathEx.Seed.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ModuleConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated public module members.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

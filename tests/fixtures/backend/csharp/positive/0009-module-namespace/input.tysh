@@ -1,0 +1,9 @@
+namespace Samples.ModuleNamespace
+
+export module MathEx {
+  public literal Seed = 7
+
+  export fun identity(value: string): string = value
+
+  export fun seed(): int = Seed
+}

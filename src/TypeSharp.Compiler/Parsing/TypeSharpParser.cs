@@ -37,6 +37,7 @@ public sealed class TypeSharpParser
             children.Add(Current.Kind switch
             {
                 SyntaxKind.NamespaceKeyword => ParseNamespaceDeclaration(),
+                SyntaxKind.ModuleKeyword => ParseModuleDeclaration(),
                 SyntaxKind.ImportKeyword => ParseImportDeclaration(),
                 SyntaxKind.ExportKeyword => ParseExportedDeclaration(),
                 SyntaxKind.OpenBracketToken => ParseDeclarationWithPrefix(),
@@ -66,6 +67,43 @@ public sealed class TypeSharpParser
 
         children.Add(ParseQualifiedName());
         return Node(SyntaxKind.NamespaceDeclaration, children);
+    }
+
+    private SyntaxNode ParseModuleDeclaration(List<SyntaxNode>? prefixChildren = null)
+    {
+        var children = prefixChildren ?? [];
+        children.Add(TokenNode(Expect(SyntaxKind.ModuleKeyword)));
+        children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+        children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
+
+        while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
+        {
+            children.Add(ParseModuleMemberDeclaration());
+        }
+
+        children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
+        return Node(SyntaxKind.ModuleDeclaration, children);
+    }
+
+    private SyntaxNode ParseModuleMemberDeclaration()
+    {
+        return Current.Kind switch
+        {
+            SyntaxKind.ExportKeyword => ParseExportedDeclaration(),
+            SyntaxKind.OpenBracketToken => ParseDeclarationWithPrefix(),
+            SyntaxKind.PublicKeyword => ParseDeclarationWithPrefix(),
+            SyntaxKind.PrivateKeyword => ParseDeclarationWithPrefix(),
+            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(),
+            SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
+            SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
+            SyntaxKind.UnionKeyword => ParseUnionDeclaration(),
+            SyntaxKind.ClassKeyword => ParseClassDeclaration(),
+            SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
+            SyntaxKind.EventKeyword => ParseEventDeclaration(),
+            SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(),
+            SyntaxKind.LetKeyword => ParseValueDeclaration(),
+            _ => ParseSkippedToken()
+        };
     }
 
     private SyntaxNode ParseImportDeclaration()
@@ -106,6 +144,7 @@ public sealed class TypeSharpParser
         return Current.Kind switch
         {
             _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children),
+            SyntaxKind.ModuleKeyword => ParseModuleDeclaration(children),
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(children),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(children),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(children),
@@ -212,6 +251,7 @@ public sealed class TypeSharpParser
         return Current.Kind switch
         {
             _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children),
+            SyntaxKind.ModuleKeyword => ParseModuleDeclaration(children),
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(children),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(children),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(children),

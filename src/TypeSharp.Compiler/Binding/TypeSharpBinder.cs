@@ -83,6 +83,14 @@ public static class TypeSharpBinder
 
                         break;
 
+                    case SyntaxKind.ModuleDeclaration:
+                        if (TryGetDeclarationName(child, out var moduleName, out var moduleSpan))
+                        {
+                            AddSymbol(scope, moduleName, BoundSymbolKind.Namespace, moduleSpan, declareValue: false, declareType: true);
+                        }
+
+                        break;
+
                     case SyntaxKind.ImportNamedDeclaration:
                     case SyntaxKind.ImportTypeDeclaration:
                         foreach (var importName in GetNamedImportIdentifiers(child))
@@ -136,6 +144,10 @@ public static class TypeSharpBinder
                     BindFunctionDeclaration(node, scope);
                     break;
 
+                case SyntaxKind.ModuleDeclaration:
+                    BindModuleDeclaration(node, scope);
+                    break;
+
                 case SyntaxKind.TypeAliasDeclaration:
                 case SyntaxKind.RecordDeclaration:
                 case SyntaxKind.UnionDeclaration:
@@ -146,6 +158,17 @@ public static class TypeSharpBinder
                     BindTypeAnnotations(node, scope);
                     BindInitializers(node, scope);
                     break;
+            }
+        }
+
+        private void BindModuleDeclaration(SyntaxNode node, BindingScope parentScope)
+        {
+            var scope = new BindingScope(parentScope);
+            CollectTopLevelSymbols(node, scope);
+
+            foreach (var child in node.Children.Where(child => !child.IsToken))
+            {
+                BindTopLevelDeclaration(child, scope);
             }
         }
 
@@ -543,7 +566,7 @@ public static class TypeSharpBinder
             var seenDeclarationKeyword = false;
             foreach (var child in node.Children)
             {
-                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
+                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.ModuleKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
                 {
                     seenDeclarationKeyword = true;
                     continue;

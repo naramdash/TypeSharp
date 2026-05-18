@@ -94,7 +94,7 @@
 - [ ] class/interface declaration
 - [x] property/method/constructor
 - [ ] generic type/function
-- [ ] module/namespace
+- [x] module/namespace
 - [ ] immutable record
 - [ ] `Option<T>`
 - [ ] `Result<T, E>`
