@@ -142,7 +142,7 @@
 - [x] C# named argument overload validation smoke
 - [x] C# unknown nullability diagnostic smoke
 - [x] reference resolver for framework assembly and local DLL
-- [ ] semantic model
+- [x] semantic model
 - [x] type checker
 - [x] type checker basic mismatch skeleton
 - [ ] inference engine

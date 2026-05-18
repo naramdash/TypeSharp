@@ -1,5 +1,5 @@
 using TypeSharp.Compiler.Binding;
-using TypeSharp.Compiler.Parsing;
+using TypeSharp.Compiler.Semantics;
 
 namespace TypeSharp.LanguageServer;
 
@@ -28,17 +28,13 @@ public static class TypeSharpDocumentCompletion
     {
         var prefix = GetPrefix(text, position);
         var items = new Dictionary<string, LspCompletionItem>(StringComparer.Ordinal);
-        var parseResult = TypeSharpParser.ParseText(text, fileName);
-        if (parseResult.Root is not null)
+        var model = TypeSharpSemanticModel.AnalyzeText(text, fileName, includeSymbolsForParseErrors: true);
+        foreach (var symbol in model.Symbols)
         {
-            var bindingResult = TypeSharpBinder.Bind(parseResult.Root, fileName);
-            foreach (var symbol in bindingResult.Symbols)
-            {
-                AddItem(items, prefix, symbol.Name, ToCompletionKind(symbol.Kind), ToDisplayKind(symbol.Kind));
-            }
+            AddItem(items, prefix, symbol.Name, ToCompletionKind(symbol.Kind), ToDisplayKind(symbol.Kind));
         }
 
-        foreach (var type in TypeSharpDocumentSymbols.BuiltInTypeNames)
+        foreach (var type in TypeSharpSemanticModel.BuiltInTypeNames)
         {
             AddItem(items, prefix, type, LspCompletionItemKind.Keyword, "built-in type");
         }

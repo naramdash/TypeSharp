@@ -11,6 +11,7 @@ using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Parsing;
 using TypeSharp.Compiler.Projects;
+using TypeSharp.Compiler.Semantics;
 using TypeSharp.Compiler.Testing;
 using TypeSharp.Compiler.TypeChecking;
 using TypeSharp.Core;
@@ -76,6 +77,7 @@ var tests = new (string Name, Action Body)[]
     ("C# backend fixture snapshots match", CSharpBackendFixtureSnapshotsMatch),
     ("generated C# compiles in net48 project", GeneratedCSharpCompilesInNet48Project),
     ("binder binds local declarations without diagnostics", BinderBindsLocalDeclarationsWithoutDiagnostics),
+    ("semantic model resolves symbols at source positions", SemanticModelResolvesSymbolsAtSourcePositions),
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
     ("checker reports type mismatch diagnostics", CheckerReportsTypeMismatchDiagnostics),
@@ -1613,6 +1615,33 @@ static void BinderBindsLocalDeclarationsWithoutDiagnostics()
     AssertFalse(binding.HasErrors, "Binder should resolve local function, parameter, and let references.");
     AssertTrue(binding.Symbols.Any(symbol => symbol.Kind == BoundSymbolKind.Function && symbol.Name == "identity"), "Binder should expose function symbols.");
     AssertTrue(binding.Symbols.Any(symbol => symbol.Kind == BoundSymbolKind.Local && symbol.Name == "name"), "Binder should expose local let symbols.");
+}
+
+static void SemanticModelResolvesSymbolsAtSourcePositions()
+{
+    var model = TypeSharpSemanticModel.AnalyzeText("""
+        namespace Samples.Semantics
+
+        fun identity(value: string): string = value
+
+        fun main(): string {
+          let name = "TypeSharp"
+          identity(name)
+        }
+        """, "input.tysh");
+
+    AssertFalse(model.HasErrors, "Semantic model should include binder and type-checker diagnostics without errors for clean input.");
+    AssertTrue(model.Symbols.Any(symbol => symbol.Kind == BoundSymbolKind.Function && symbol.Name == "identity"), "Semantic model should expose bound function symbols.");
+
+    var reference = Require(model.FindSymbolAt(new SourcePosition(7, 13)), "Semantic model should resolve the local name reference.");
+    AssertEqual("name", reference.Name);
+    AssertEqual(BoundSymbolKind.Local, reference.Kind);
+    AssertEqual(new SourcePosition(6, 7), reference.SymbolSpan.Start);
+    AssertEqual(new SourcePosition(7, 12), reference.TargetSpan.Start);
+
+    var builtIn = Require(model.FindSymbolAt(new SourcePosition(3, 21)), "Semantic model should resolve built-in type references.");
+    AssertEqual("string", builtIn.Name);
+    AssertTrue(builtIn.IsBuiltIn, "Built-in types should be marked separately from source symbols.");
 }
 
 static void CheckerReportsUnresolvedNameDiagnostics()
