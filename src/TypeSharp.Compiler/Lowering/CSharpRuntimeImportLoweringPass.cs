@@ -37,6 +37,7 @@ public sealed class CSharpRuntimeImportLoweringPass : ITypeSharpLoweringPass
     private static bool IsHeaderNode(SyntaxNode node) =>
         node.Kind is
             SyntaxKind.NamespaceDeclaration or
+            SyntaxKind.OpenDeclaration or
             SyntaxKind.ImportNamedDeclaration or
             SyntaxKind.ImportTypeDeclaration or
             SyntaxKind.ImportStaticDeclaration;

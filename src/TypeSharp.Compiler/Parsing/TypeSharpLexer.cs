@@ -9,6 +9,7 @@ public sealed class TypeSharpLexer
         ["namespace"] = SyntaxKind.NamespaceKeyword,
         ["module"] = SyntaxKind.ModuleKeyword,
         ["import"] = SyntaxKind.ImportKeyword,
+        ["open"] = SyntaxKind.OpenKeyword,
         ["static"] = SyntaxKind.StaticKeyword,
         ["export"] = SyntaxKind.ExportKeyword,
         ["fun"] = SyntaxKind.FunKeyword,

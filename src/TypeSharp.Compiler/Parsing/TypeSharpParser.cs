@@ -39,6 +39,7 @@ public sealed class TypeSharpParser
                 SyntaxKind.NamespaceKeyword => ParseNamespaceDeclaration(),
                 SyntaxKind.ModuleKeyword => ParseModuleDeclaration(),
                 SyntaxKind.ImportKeyword => ParseImportDeclaration(),
+                SyntaxKind.OpenKeyword => ParseOpenDeclaration(),
                 SyntaxKind.ExportKeyword => ParseExportedDeclaration(),
                 SyntaxKind.OpenBracketToken => ParseDeclarationWithPrefix(),
                 SyntaxKind.PublicKeyword => ParseDeclarationWithPrefix(),
@@ -141,6 +142,17 @@ public sealed class TypeSharpParser
 
         children.Add(ParseSkippedToken());
         return Node(SyntaxKind.ImportNamedDeclaration, children);
+    }
+
+    private SyntaxNode ParseOpenDeclaration()
+    {
+        var children = new List<SyntaxNode>
+        {
+            TokenNode(Expect(SyntaxKind.OpenKeyword)),
+            ParseQualifiedName()
+        };
+
+        return Node(SyntaxKind.OpenDeclaration, children);
     }
 
     private SyntaxNode ParseDeclarationWithPrefix()

@@ -1,0 +1,5 @@
+namespace Samples.OpenDeclarations
+
+open System.Text
+
+export fun greeting(): string = "ok"

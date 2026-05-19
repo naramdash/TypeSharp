@@ -147,6 +147,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
     ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
+    ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
     ("CLI build compiles framework static member call", CliBuildCompilesFrameworkStaticMemberCall),
@@ -3867,6 +3868,42 @@ static void CliBuildIgnoresAmbientMainEntryPoint()
     });
 }
 
+static void CliBuildLowersOpenDeclarationsToUsingDirectives()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "OpenUsing"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.OpenUsing"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.OpenUsing
+
+            import { StringBuilder } from "System.Text"
+            open System.Text
+            open System.Globalization
+
+            export fun greeting(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        AssertEqual(1, CountOccurrences(generatedSource, "using System.Text;"));
+        AssertContains("using System.Globalization;", generatedSource);
+        AssertContains("namespace Samples.OpenUsing", generatedSource);
+    });
+}
+
 static void CliBuildEmitsGeneratedCSharpProjectScaffold()
 {
     WithWorkspace(root =>
@@ -6938,6 +6975,19 @@ static void AssertContains(string expectedSubstring, string actual)
     {
         throw new InvalidOperationException($"Expected output to contain '{expectedSubstring}', got '{actual}'.");
     }
+}
+
+static int CountOccurrences(string text, string value)
+{
+    var count = 0;
+    var index = 0;
+    while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+    {
+        count++;
+        index += value.Length;
+    }
+
+    return count;
 }
 
 static void AssertThrows<TException>(Action action)

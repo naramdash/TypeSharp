@@ -199,6 +199,9 @@ Positive fixture coverage:
 | `tests/fixtures/parser/positive/0010-public-boundary-contract` | `docs/examples/10-public-boundary-contract.tysh` | public-boundary shape aliases, type-level union aliases, nominal public records/unions, record shorthand expressions, `Result` calls, public factory functions |
 | `tests/fixtures/parser/positive/0011-capability-boundaries` | `docs/examples/11-capability-boundaries.tysh` | explicit `dynamic`, `reflect`, `interop`, `extern` markers, attribute-prefixed native interop declarations, exported capability-marked functions |
 | `tests/fixtures/parser/positive/0012-interface-declaration` | parser-only fixture | interface declarations with function signatures |
+| `tests/fixtures/parser/positive/0013-partial-declarations` | parser-only fixture | `partial` modules, records, classes, and interfaces |
+| `tests/fixtures/parser/positive/0014-ambient-declarations` | parser-only fixture | `ambient` function signatures without TypeSharp bodies |
+| `tests/fixtures/parser/positive/0015-open-declarations` | parser-only fixture | root-level `open` declarations before exported declarations |
 
 Negative fixture coverage:
 

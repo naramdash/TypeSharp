@@ -21,6 +21,8 @@ Source files without an explicit file-scoped `namespace` still lower under the m
 
 Ambient function signatures are explicit declarations of external host APIs. The current compiler parses and checks those signatures but omits them from generated C# output.
 
+Root-level `open Namespace.Name` declarations lower to generated C# `using Namespace.Name;` directives. Ambiguity diagnostics and module-local `open` semantics remain future work.
+
 Canonical doc: [`grammar/declarations.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/declarations.md)
 
 ## Expressions

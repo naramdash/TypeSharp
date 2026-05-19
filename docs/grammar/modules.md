@@ -130,6 +130,7 @@ open_declaration ::= "open" qualified_name
 
 규칙:
 - `open`은 module/namespace member lookup을 편하게 하는 문법이다.
+- 현재 구현된 slice는 root-level `open Namespace`를 parser에서 보존하고 generated C# `using Namespace;` directive로 낮춘다.
 - public API surface를 만들지 않는다.
 - wildcard import와 같은 과도한 이름 오염은 warning 대상이다.
 

@@ -103,3 +103,4 @@
 | [0154-unknown-access-narrowing-diagnostic.md](0154-unknown-access-narrowing-diagnostic.md) | Q2-Q3 | Done | `unknown` 값의 member/indexer access를 narrowing proof 없이 사용하면 `TS2209`로 막는다. |
 | [0155-root-namespace-fallback-for-source-modules.md](0155-root-namespace-fallback-for-source-modules.md) | Q2-Q4 | Done | namespace 없는 source file을 global namespace가 아니라 manifest `rootNamespace` 아래 generated module로 낮춘다. |
 | [0156-ambient-function-signature-parsing.md](0156-ambient-function-signature-parsing.md) | Q2-Q4 | Done | `ambient` function signature를 파싱하되 generated C# member로 emit하지 않는다. |
+| [0157-open-declaration-lowering.md](0157-open-declaration-lowering.md) | Q2-Q4 | Done | root-level `open Namespace`를 파싱하고 generated C# `using Namespace;`로 낮춘다. |

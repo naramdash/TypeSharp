@@ -274,6 +274,15 @@ public static class CSharpSourceBackend
                         staticUsings.Add(qualifiedName);
                     }
                 }
+
+                if (child.Kind == SyntaxKind.OpenDeclaration)
+                {
+                    var namespaceName = GetQualifiedName(child);
+                    if (namespaceName.Length > 0 && seenUsings.Add(namespaceName))
+                    {
+                        usings.Add(namespaceName);
+                    }
+                }
             }
 
             return new CSharpImports(usings, staticUsings, importedNames);
