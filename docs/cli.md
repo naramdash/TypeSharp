@@ -291,7 +291,8 @@ treatWarningsAsErrors = false
 - 각 source file은 source root 상대 경로에서 `.tysh` 확장자를 제거한 module path를 가진다.
 - 여러 source root에서 같은 module path가 나오면 source module graph가 모호하므로 `TS0111` error를 보고한다.
 - relative source module specifier가 target module path를 찾지 못하면 `TS0112` error를 보고한다.
-- target이 존재하는 relative source import도 현재는 project-wide import binding/lowering이 없어 `TS0113` error로 emission 전에 중단한다.
+- unaliased relative named source import는 target module의 generated C# container를 `using static`으로 가져오고, relative namespace import는 generated container alias로 낮춘다.
+- 아직 지원하지 않는 relative source import form, 예를 들어 named source import alias는 `TS0113` error로 emission 전에 중단한다.
 - `bin/`, `obj/`, generated output root는 기본 discovery에서 제외한다.
 - manifest의 target framework 기본값은 `net48`이다.
 - `generatedOutputRoot`를 생략하면 `obj/generated`를 기본값으로 사용한다.

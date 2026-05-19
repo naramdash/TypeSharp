@@ -13,9 +13,18 @@ public static class CSharpSourceBackend
 
     public static string Emit(SyntaxNode root, string? defaultNamespace, string moduleContainerName)
     {
+        return Emit(root, defaultNamespace, moduleContainerName, new Dictionary<string, CSharpSourceImportTarget>(StringComparer.Ordinal));
+    }
+
+    public static string Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports)
+    {
         var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
         var emitter = new Emitter();
-        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName);
+        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName, sourceImports);
     }
 
     private sealed class Emitter
@@ -30,7 +39,11 @@ public static class CSharpSourceBackend
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
 
-        public string Emit(SyntaxNode root, string? defaultNamespace, string moduleContainerName)
+        public string Emit(
+            SyntaxNode root,
+            string? defaultNamespace,
+            string moduleContainerName,
+            IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports)
         {
             var explicitNamespace = root.Children.FirstOrDefault(child => child.Kind == SyntaxKind.NamespaceDeclaration) is { } namespaceDeclaration
                 ? GetQualifiedName(namespaceDeclaration)
@@ -39,7 +52,7 @@ public static class CSharpSourceBackend
                 ? explicitNamespace
                 : NormalizeNamespace(defaultNamespace);
 
-            var imports = CollectImports(root);
+            var imports = CollectImports(root, sourceImports);
             var literals = root.Children
                 .Where(child => child.Kind == SyntaxKind.LiteralDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
@@ -245,7 +258,9 @@ public static class CSharpSourceBackend
             }
         }
 
-        private static CSharpImports CollectImports(SyntaxNode root)
+        private static CSharpImports CollectImports(
+            SyntaxNode root,
+            IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports)
         {
             var usings = new List<string>();
             var aliases = new List<CSharpImportAlias>();
@@ -261,19 +276,44 @@ public static class CSharpSourceBackend
                 if (child.Kind is SyntaxKind.ImportNamedDeclaration or SyntaxKind.ImportTypeDeclaration)
                 {
                     var moduleSpecifier = child.Children.FirstOrDefault(grandchild => grandchild.IsToken && grandchild.Kind == SyntaxKind.StringLiteralToken);
-                    if (TryUnquoteStringLiteral(moduleSpecifier?.Text, out var namespaceName) && seenUsings.Add(namespaceName))
+                    if (!TryUnquoteStringLiteral(moduleSpecifier?.Text, out var namespaceName))
+                    {
+                        continue;
+                    }
+
+                    var isRelativeSourceImport = IsRelativeSpecifier(namespaceName);
+                    if (isRelativeSourceImport)
+                    {
+                        if (!sourceImports.TryGetValue(namespaceName, out var sourceImport))
+                        {
+                            continue;
+                        }
+
+                        if (seenUsings.Add(sourceImport.NamespaceName))
+                        {
+                            usings.Add(sourceImport.NamespaceName);
+                        }
+
+                        if (child.Kind == SyntaxKind.ImportNamedDeclaration &&
+                            seenStaticUsings.Add(sourceImport.QualifiedModuleContainer))
+                        {
+                            staticUsings.Add(sourceImport.QualifiedModuleContainer);
+                        }
+                    }
+                    else if (seenUsings.Add(namespaceName))
                     {
                         usings.Add(namespaceName);
                     }
 
                     foreach (var specifier in GetNamedImportSpecifiers(child))
                     {
-                        if (seenImportedNames.Add(specifier.LocalName))
+                        if (!isRelativeSourceImport && seenImportedNames.Add(specifier.LocalName))
                         {
                             importedNames.Add(specifier.LocalName);
                         }
 
                         if (specifier.IsAlias &&
+                            !IsRelativeSpecifier(namespaceName) &&
                             namespaceName.Length > 0 &&
                             seenAliases.Add(specifier.LocalName))
                         {
@@ -287,11 +327,26 @@ public static class CSharpSourceBackend
                 if (child.Kind == SyntaxKind.ImportNamespaceDeclaration)
                 {
                     var moduleSpecifier = child.Children.FirstOrDefault(grandchild => grandchild.IsToken && grandchild.Kind == SyntaxKind.StringLiteralToken);
-                    if (TryUnquoteStringLiteral(moduleSpecifier?.Text, out var namespaceName) &&
-                        TryGetNamespaceImportAlias(child, out var alias) &&
-                        seenAliases.Add(alias))
+                    if (!TryUnquoteStringLiteral(moduleSpecifier?.Text, out var namespaceName) ||
+                        !TryGetNamespaceImportAlias(child, out var alias))
                     {
-                        aliases.Add(new CSharpImportAlias(alias, namespaceName));
+                        continue;
+                    }
+
+                    var qualifiedName = namespaceName;
+                    if (IsRelativeSpecifier(namespaceName))
+                    {
+                        if (!sourceImports.TryGetValue(namespaceName, out var sourceImport))
+                        {
+                            continue;
+                        }
+
+                        qualifiedName = sourceImport.QualifiedModuleContainer;
+                    }
+
+                    if (seenAliases.Add(alias))
+                    {
+                        aliases.Add(new CSharpImportAlias(alias, qualifiedName));
                         if (seenImportedNames.Add(alias))
                         {
                             importedNames.Add(alias);
@@ -2089,6 +2144,12 @@ public static class CSharpSourceBackend
             value = text[1..^1];
             return value.Length > 0;
         }
+
+        private static bool IsRelativeSpecifier(string specifier) =>
+            specifier == "." ||
+            specifier == ".." ||
+            specifier.StartsWith("./", StringComparison.Ordinal) ||
+            specifier.StartsWith("../", StringComparison.Ordinal);
 
         private static bool ContainsNode(SyntaxNode node, SyntaxKind kind)
         {

@@ -76,7 +76,8 @@
 - [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
 - [x] source root 상대 module path가 중복되면 `TS0111`로 보고된다.
 - [x] relative source module specifier가 module graph edge로 수집되고 unresolved target은 `TS0112`로 보고된다.
-- [x] project-wide source import binding 전 relative source import는 `TS0113`으로 emission 전에 중단된다.
+- [x] unaliased relative named source import와 relative namespace source import가 generated C# container using/alias로 낮아진다.
+- [x] 아직 지원하지 않는 relative source import form은 `TS0113`으로 emission 전에 중단된다.
 - [x] named import alias 문법과 C# alias using lowering 규칙이 있다.
 - [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
 - [x] import alias same-file conflict는 `TS2002` duplicate symbol diagnostic으로 보고된다.

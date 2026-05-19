@@ -65,9 +65,11 @@ public static class TypeSharpBuilder
             parsedSources.Add((sourceFile, parseResult.Root));
         }
 
-        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources
+        var sourceModules = parsedSources
             .Select(source => new SourceModule(source.SourceFile, source.Root))
-            .ToArray()).Diagnostics);
+            .ToArray();
+        var sourceModuleGraph = SourceModuleGraph.Build(sourceModules);
+        diagnostics.AddRange(sourceModuleGraph.Diagnostics);
 
         if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
         {
@@ -85,13 +87,15 @@ public static class TypeSharpBuilder
             manifestResult.Manifest.Project.GeneratedOutputRoot));
 
         var rootNamespace = GetRootNamespace(manifestResult.Manifest);
+        var sourceModuleTargets = BuildSourceModuleTargets(parsedSources, rootNamespace);
         foreach (var (sourceFile, root) in parsedSources)
         {
             var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath, backend);
             var outputPath = Path.Combine(outputRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
-            var moduleContainerName = GetGeneratedModuleContainerName(sourceFile, parsedSources.Count);
+            var moduleContainerName = GeneratedModuleContainerNaming.GetContainerName(sourceFile, parsedSources.Count);
+            var sourceImports = BuildSourceImports(sourceFile, sourceModuleGraph, sourceModuleTargets);
             var artifact = backend is CSharpSourceBackendAdapter csharpBackend
-                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName)
+                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports)
                 : backend.Emit(root);
             if (artifact.Kind != TypeSharpBackendArtifactKind.SourceText)
             {
@@ -148,22 +152,6 @@ public static class TypeSharpBuilder
             : normalized;
 
         return $"{withoutExtension}{backend.GeneratedArtifactExtension}";
-    }
-
-    private static string GetGeneratedModuleContainerName(SourceFile sourceFile, int sourceFileCount)
-    {
-        if (sourceFileCount <= 1)
-        {
-            return "Module";
-        }
-
-        var builder = new StringBuilder("Module");
-        foreach (var character in sourceFile.ModulePath)
-        {
-            builder.Append(char.IsLetterOrDigit(character) ? character : '_');
-        }
-
-        return builder.ToString();
     }
 
     private static string EmitGeneratedProject(
@@ -286,11 +274,48 @@ public static class TypeSharpBuilder
                 string.Equals(GetDeclarationName(child), methodName, StringComparison.Ordinal));
             if (function is not null)
             {
-                return GetGeneratedModuleContainerName(sourceFile, parsedSources.Count);
+                return GeneratedModuleContainerNaming.GetContainerName(sourceFile, parsedSources.Count);
             }
         }
 
         return "Module";
+    }
+
+    private static IReadOnlyDictionary<string, CSharpSourceImportTarget> BuildSourceImports(
+        SourceFile sourceFile,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets)
+    {
+        var imports = new Dictionary<string, CSharpSourceImportTarget>(StringComparer.Ordinal);
+        foreach (var dependency in sourceModuleGraph.Dependencies)
+        {
+            if (dependency.Kind != SourceModuleDependencyKind.Import ||
+                !string.Equals(dependency.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) ||
+                !sourceModuleTargets.TryGetValue(dependency.ToModulePath, out var target))
+            {
+                continue;
+            }
+
+            imports[dependency.Specifier] = target with { Specifier = dependency.Specifier };
+        }
+
+        return imports;
+    }
+
+    private static IReadOnlyDictionary<string, CSharpSourceImportTarget> BuildSourceModuleTargets(
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        string defaultNamespace)
+    {
+        var targets = new Dictionary<string, CSharpSourceImportTarget>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (sourceFile, root) in parsedSources)
+        {
+            targets[sourceFile.ModulePath] = new CSharpSourceImportTarget(
+                string.Empty,
+                GetNamespaceName(root, defaultNamespace),
+                GeneratedModuleContainerNaming.GetContainerName(sourceFile, parsedSources.Count));
+        }
+
+        return targets;
     }
 
     private static string GetMainInvocationArguments(

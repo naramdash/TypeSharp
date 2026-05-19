@@ -71,9 +71,17 @@ public static class TypeSharpTypeChecker
                 {
                     case SyntaxKind.ImportNamedDeclaration:
                     case SyntaxKind.ImportTypeDeclaration:
+                        var isRelativeSourceImport = child.Kind == SyntaxKind.ImportNamedDeclaration &&
+                            TryGetModuleSpecifier(child, out var moduleSpecifier) &&
+                            IsRelativeSpecifier(moduleSpecifier);
                         foreach (var importName in GetNamedImportIdentifiers(child))
                         {
-                            scope.DeclareType(importName.Text ?? string.Empty);
+                            var name = importName.Text ?? string.Empty;
+                            scope.DeclareType(name);
+                            if (isRelativeSourceImport)
+                            {
+                                scope.DeclareFunction(name, SimpleType.Unknown);
+                            }
                         }
 
                         break;
@@ -1739,6 +1747,36 @@ public static class TypeSharpTypeChecker
                     }
                 }
             }
+        }
+
+        private static bool TryGetModuleSpecifier(SyntaxNode node, out string specifier)
+        {
+            var token = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.StringLiteralToken);
+            if (TryUnquoteStringLiteral(token?.Text, out specifier))
+            {
+                return true;
+            }
+
+            specifier = string.Empty;
+            return false;
+        }
+
+        private static bool IsRelativeSpecifier(string specifier) =>
+            specifier == "." ||
+            specifier == ".." ||
+            specifier.StartsWith("./", StringComparison.Ordinal) ||
+            specifier.StartsWith("../", StringComparison.Ordinal);
+
+        private static bool TryUnquoteStringLiteral(string? text, out string value)
+        {
+            value = string.Empty;
+            if (string.IsNullOrEmpty(text) || text.Length < 2 || text[0] != '"' || text[^1] != '"')
+            {
+                return false;
+            }
+
+            value = text[1..^1];
+            return value.Length > 0;
         }
 
         private static bool TryGetNamespaceImportAlias(SyntaxNode node, out SyntaxNode alias)

@@ -70,9 +70,9 @@ public static class DiagnosticDescriptors
         "Unsupported source module import",
         DiagnosticSeverity.Error,
         DiagnosticCategory.Project,
-        "Source module imports require project-wide import binding before they can be checked or emitted.",
-        "The compiler can identify source module graph edges, but does not yet bind imported source declarations or lower cross-file source imports to generated C#.",
-        "Keep source module imports out of build inputs until project-wide import binding is implemented, or use the current C# namespace import forms.");
+        "This source module import form is not supported by the current generated C# backend.",
+        "The compiler can lower simple relative named imports through static module-container usings and namespace imports through module-container aliases, but forms such as named source import aliases still need project-wide binding support.",
+        "Use an unaliased relative named import, a relative namespace import, or keep the declaration in the same source file until this import form is implemented.");
 
     public static readonly DiagnosticDescriptor UnexpectedCharacter = new(
         "TS1000",

@@ -82,12 +82,12 @@ var tests = new (string Name, Action Body)[]
     ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI check emits JSON duplicate source module diagnostics", CliCheckEmitsJsonDuplicateSourceModuleDiagnostics),
-    ("CLI check emits JSON unsupported source module import diagnostics", CliCheckEmitsJsonUnsupportedSourceModuleImportDiagnostics),
+    ("CLI check emits JSON unsupported source module import alias diagnostics", CliCheckEmitsJsonUnsupportedSourceModuleImportAliasDiagnostics),
     ("CLI check emits JSON unresolved source module diagnostics", CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics),
     ("CLI check emits JSON unsupported package diagnostics", CliCheckEmitsJsonUnsupportedPackageDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on duplicate source modules", CliBuildStopsBeforeEmissionOnDuplicateSourceModules),
-    ("CLI build stops before emission on source module imports", CliBuildStopsBeforeEmissionOnSourceModuleImports),
+    ("CLI build stops before emission on unsupported source module import aliases", CliBuildStopsBeforeEmissionOnUnsupportedSourceModuleImportAliases),
     ("CLI build stops before emission on package diagnostics", CliBuildStopsBeforeEmissionOnPackageDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
@@ -159,6 +159,8 @@ var tests = new (string Name, Action Body)[]
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
     ("CLI build uses module path containers for multiple sources", CliBuildUsesModulePathContainersForMultipleSources),
+    ("CLI build lowers relative source named imports", CliBuildLowersRelativeSourceNamedImports),
+    ("CLI build lowers relative source namespace imports", CliBuildLowersRelativeSourceNamespaceImports),
     ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
@@ -948,14 +950,13 @@ static void SourceModuleGraphCollectsRelativeImportDependencies()
 
         var graph = SourceModuleGraph.Build(modules);
 
-        AssertTrue(graph.HasErrors, "Resolved source imports should still be blocked until project-wide import binding exists.");
+        AssertFalse(graph.HasErrors, "Supported relative source imports should be recorded without blocking diagnostics.");
         var dependency = graph.Dependencies.Single();
         AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
         AssertEqual("Feature/Main", dependency.FromModulePath);
         AssertEqual("Feature/Helper", dependency.ToModulePath);
         AssertEqual("./Helper", dependency.Specifier);
-        var diagnostic = graph.Diagnostics.Single(diagnostic => diagnostic.Code == "TS0113");
-        AssertContains("Source module import './Helper' resolves to 'Feature/Helper'", diagnostic.Message);
+        AssertEqual(0, graph.Diagnostics.Count);
     });
 }
 
@@ -1727,7 +1728,7 @@ static void CliCheckEmitsJsonDuplicateSourceModuleDiagnostics()
     });
 }
 
-static void CliCheckEmitsJsonUnsupportedSourceModuleImportDiagnostics()
+static void CliCheckEmitsJsonUnsupportedSourceModuleImportAliasDiagnostics()
 {
     WithWorkspace(root =>
     {
@@ -1735,7 +1736,7 @@ static void CliCheckEmitsJsonUnsupportedSourceModuleImportDiagnostics()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.SourceImportJson
 
-            import { Helper } from "./Helper"
+            import { keep as keepHelper } from "./Helper"
             """);
         WriteFile(root, "src/Helper.tysh", """
             namespace Samples.SourceImportJson
@@ -1750,7 +1751,7 @@ static void CliCheckEmitsJsonUnsupportedSourceModuleImportDiagnostics()
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS0113\"", error.ToString());
-        AssertContains("Source module import './Helper' resolves to 'Helper'", error.ToString());
+        AssertContains("Source module import './Helper' resolves to 'Helper', but this import form is not implemented yet.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
@@ -1868,22 +1869,22 @@ static void CliBuildStopsBeforeEmissionOnDuplicateSourceModules()
     });
 }
 
-static void CliBuildStopsBeforeEmissionOnSourceModuleImports()
+static void CliBuildStopsBeforeEmissionOnUnsupportedSourceModuleImportAliases()
 {
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, """
             [project]
-            name = "BuildSourceImports"
+            name = "BuildSourceImportAliases"
             generatedOutputRoot = "generated"
             """);
         WriteFile(root, "src/Main.tysh", """
-            namespace Samples.BuildSourceImports
+            namespace Samples.BuildSourceImportAliases
 
-            import { Helper } from "./Helper"
+            import { keep as keepHelper } from "./Helper"
             """);
         WriteFile(root, "src/Helper.tysh", """
-            namespace Samples.BuildSourceImports
+            namespace Samples.BuildSourceImportAliases
 
             export fun keep(): string = "ok"
             """);
@@ -1895,10 +1896,10 @@ static void CliBuildStopsBeforeEmissionOnSourceModuleImports()
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS0113\"", error.ToString());
-        AssertContains("Source module import './Helper' resolves to 'Helper'", error.ToString());
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when source module imports are unsupported.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildSourceImports.Generated.csproj")), "Build should not emit generated project when source module imports are unsupported.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildSourceImports.dll")), "Build should not emit generated assembly when source module imports are unsupported.");
+        AssertContains("Source module import './Helper' resolves to 'Helper', but this import form is not implemented yet.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when source module import aliases are unsupported.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildSourceImportAliases.Generated.csproj")), "Build should not emit generated project when source module import aliases are unsupported.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildSourceImportAliases.dll")), "Build should not emit generated assembly when source module import aliases are unsupported.");
     });
 }
 
@@ -4292,6 +4293,83 @@ static void CliBuildUsesModulePathContainersForMultipleSources()
         AssertContains("public static class ModuleFeature_Helper", generatedHelper);
         AssertContains("public static string helperValue()", generatedHelper);
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MultiSourceModules.dll")), "Generated multi-source project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceNamedImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceNamed"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceNamed
+
+            import { helper } from "./Feature/Helper"
+
+            export fun mainValue(): string = helper()
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceNamed
+
+            export fun helper(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceNamed.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceNamed;", generatedMain);
+        AssertContains("using static Samples.RelativeSourceNamed.ModuleFeature_Helper;", generatedMain);
+        AssertContains("public static class ModuleMain", generatedMain);
+        AssertContains("return helper();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceNamed.dll")), "Generated relative source named import project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceNamespaceImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceNamespace"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceNamespace
+
+            import * as Helper from "./Feature/Helper"
+
+            export fun mainValue(): string = Helper.helper()
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceNamespace
+
+            export fun helper(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceNamespace.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Helper = Samples.RelativeSourceNamespace.ModuleFeature_Helper;", generatedMain);
+        AssertContains("public static class ModuleMain", generatedMain);
+        AssertContains("return Helper.helper();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceNamespace.dll")), "Generated relative source namespace import project should compile to a net48 DLL.");
     });
 }
 

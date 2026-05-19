@@ -59,12 +59,13 @@ public sealed record SourceModuleGraph(
                     module.SourceFile.RelativePath,
                     specifierToken.Span));
 
-                if (kind == SourceModuleDependencyKind.Import)
+                if (kind == SourceModuleDependencyKind.Import &&
+                    !IsSupportedSourceImport(node))
                 {
                     diagnostics.Add(new Diagnostic(
                         DiagnosticDescriptors.UnsupportedSourceModuleImport.Code,
                         DiagnosticDescriptors.UnsupportedSourceModuleImport.DefaultSeverity,
-                        $"Source module import '{specifier}' resolves to '{resolvedModulePath}', but project-wide source import binding is not implemented yet.",
+                        $"Source module import '{specifier}' resolves to '{resolvedModulePath}', but this import form is not implemented yet.",
                         module.SourceFile.RelativePath,
                         specifierToken.Span));
                 }
@@ -97,6 +98,21 @@ public sealed record SourceModuleGraph(
                 kind = default;
                 return false;
         }
+    }
+
+    private static bool IsSupportedSourceImport(SyntaxNode node)
+    {
+        if (node.Kind == SyntaxKind.ImportNamespaceDeclaration)
+        {
+            return true;
+        }
+
+        if (node.Kind is SyntaxKind.ImportNamedDeclaration or SyntaxKind.ImportTypeDeclaration)
+        {
+            return !GetNamedImportSpecifiers(node).Any(specifier => specifier.IsAlias);
+        }
+
+        return false;
     }
 
     private static bool TryGetModuleSpecifier(SyntaxNode node, out SyntaxNode specifierToken, out string specifier)
@@ -166,5 +182,47 @@ public sealed record SourceModuleGraph(
         }
 
         return text;
+    }
+
+    private static IEnumerable<NamedImportSpecifier> GetNamedImportSpecifiers(SyntaxNode node)
+    {
+        var insideBraces = false;
+        for (var index = 0; index < node.Children.Count; index++)
+        {
+            var child = node.Children[index];
+            if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+            {
+                insideBraces = true;
+                continue;
+            }
+
+            if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+            {
+                yield break;
+            }
+
+            if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } text)
+            {
+                if (index + 2 < node.Children.Count &&
+                    node.Children[index + 1].IsToken &&
+                    node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                    node.Children[index + 2].IsToken &&
+                    node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                    node.Children[index + 2].Text is { Length: > 0 } alias)
+                {
+                    yield return new NamedImportSpecifier(text, alias);
+                    index += 2;
+                }
+                else
+                {
+                    yield return new NamedImportSpecifier(text, text);
+                }
+            }
+        }
+    }
+
+    private readonly record struct NamedImportSpecifier(string ImportedName, string LocalName)
+    {
+        public bool IsAlias => !string.Equals(ImportedName, LocalName, StringComparison.Ordinal);
     }
 }

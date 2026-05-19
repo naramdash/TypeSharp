@@ -63,6 +63,20 @@ import { helper } from "./Feature/Helper"
 
 Missing relative modules report `TS0112`. Resolved relative imports are tracked by the source module graph. Some source import lowering remains active implementation work, so unsupported forms report `TS0113` rather than producing partial generated C#.
 
+Unaliased named source imports lower through a generated C# `using static` directive for the target source module container:
+
+```text
+import { helper } from "./Feature/Helper"
+```
+
+Namespace source imports lower to a generated C# alias for the target source module container:
+
+```text
+import * as Helper from "./Feature/Helper"
+```
+
+Named source import aliases such as `import { helper as h } from "./Feature/Helper"` remain unsupported and report `TS0113`.
+
 ## Export Surface
 
 `export` marks public TypeSharp declarations for generated API shape where the declaration is implemented by the backend.
