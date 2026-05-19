@@ -155,6 +155,15 @@ public static class DiagnosticDescriptors
         "The dynamic type weakens static checking and must be visible at the function boundary before code can cross a late-bound .NET dynamic boundary.",
         "Add the 'dynamic' modifier to the containing function or replace the annotation with a statically checked type.");
 
+    public static readonly DiagnosticDescriptor DynamicCallRequiresCapability = new(
+        "TS2207",
+        "Dynamic call requires capability",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Calling a dynamic function requires a 'dynamic' function modifier.",
+        "A function marked with the dynamic capability crosses a late-bound .NET dynamic boundary, so callers must also make that boundary explicit.",
+        "Add the 'dynamic' modifier to the containing function or isolate the dynamic call behind a statically checked wrapper.");
+
     public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
         "TS2203",
         "Non-exhaustive match",
@@ -247,6 +256,7 @@ public static class DiagnosticDescriptors
         PublicBoundaryTypeLeak,
         UnsupportedGenericConstraint,
         DynamicCapabilityRequired,
+        DynamicCallRequiresCapability,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,

@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2207",
+      "severity": "error",
+      "message": "Call to dynamic function 'readLegacy' requires a 'dynamic' function modifier on the containing function.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 3 },
+      "end": { "line": 7, "column": 20 }
+    },
+    {
+      "code": "TS2207",
+      "severity": "error",
+      "message": "Call to dynamic function 'readLegacy' requires a 'dynamic' function modifier on the containing function.",
+      "file": "input.tysh",
+      "start": { "line": 10, "column": 12 },
+      "end": { "line": 10, "column": 22 }
+    }
+  ]
+}

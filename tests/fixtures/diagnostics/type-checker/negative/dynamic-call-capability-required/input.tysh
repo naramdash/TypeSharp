@@ -1,0 +1,13 @@
+namespace Samples.DynamicCallCapability.Negative
+
+dynamic fun readLegacy(value: dynamic): string =
+  value.ToString()
+
+fun missingDirect(value: string): string =
+  readLegacy(value)
+
+fun missingPipeline(value: string): string =
+  value |> readLegacy
+
+dynamic fun allowed(value: dynamic): string =
+  readLegacy(value)

@@ -137,7 +137,7 @@ public static class TypeSharpTypeChecker
                             TryGetDirectTypeAnnotation(child, out var functionReturnTypeNode) &&
                             TryGetType(functionReturnTypeNode, out var functionReturnType))
                         {
-                            scope.DeclareFunction(functionName, functionReturnType);
+                            scope.DeclareFunction(functionName, functionReturnType, GetFunctionCapabilities(child));
                         }
 
                         break;
@@ -460,6 +460,8 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckExpression(SyntaxNode node, TypeScope scope)
         {
+            CheckDynamicCallCapability(node, scope);
+
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
                 return inferredType;
@@ -1007,6 +1009,16 @@ public static class TypeSharpTypeChecker
                 node.Span));
         }
 
+        private void ReportDynamicCallRequiresCapability(SyntaxNode node, string functionName)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.DynamicCallRequiresCapability.Code,
+                DiagnosticDescriptors.DynamicCallRequiresCapability.DefaultSeverity,
+                $"Call to dynamic function '{functionName}' requires a 'dynamic' function modifier on the containing function.",
+                _file,
+                node.Span));
+        }
+
         private void ReportDynamicCapabilityRequired(SyntaxNode node)
         {
             _diagnostics.Add(new Diagnostic(
@@ -1039,6 +1051,40 @@ public static class TypeSharpTypeChecker
                     ReportDynamicCapabilityRequired(annotation);
                 }
             }
+        }
+
+        private void CheckDynamicCallCapability(SyntaxNode node, TypeScope scope)
+        {
+            if (scope.AllowsDynamic)
+            {
+                return;
+            }
+
+            if (node.Kind == SyntaxKind.CallExpression &&
+                TryGetDirectCallName(node, out var callName) &&
+                scope.ResolveFunctionInfo(callName, out var function) &&
+                function.Capabilities.RequiresDynamic)
+            {
+                ReportDynamicCallRequiresCapability(node, callName);
+                return;
+            }
+
+            if (node.Kind != SyntaxKind.BinaryExpression ||
+                !node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.PipeGreaterToken))
+            {
+                return;
+            }
+
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2 ||
+                !TryGetPipelineTargetFunctionName(expressions[1], out var targetName) ||
+                !scope.ResolveFunctionInfo(targetName, out var targetFunction) ||
+                !targetFunction.Capabilities.RequiresDynamic)
+            {
+                return;
+            }
+
+            ReportDynamicCallRequiresCapability(expressions[1], targetName);
         }
 
         private void ReportPublicBoundaryLeaks(SyntaxNode node, TypeScope scope)
@@ -1109,6 +1155,9 @@ public static class TypeSharpTypeChecker
 
         private static bool HasFunctionModifier(SyntaxNode node, SyntaxKind modifier) =>
             node.Children.Any(child => child.Kind == modifier);
+
+        private static FunctionCapabilities GetFunctionCapabilities(SyntaxNode node) =>
+            new(RequiresDynamic: HasFunctionModifier(node, SyntaxKind.DynamicModifier));
 
         private static bool TryGetTypeAliasTarget(SyntaxNode node, out SyntaxNode target)
         {
@@ -1181,6 +1230,32 @@ public static class TypeSharpTypeChecker
             }
 
             return node.Children.Any(child => !child.IsToken && ContainsDynamicType(child));
+        }
+
+        private static bool TryGetDirectCallName(SyntaxNode node, out string name)
+        {
+            name = string.Empty;
+            if (node.Kind != SyntaxKind.CallExpression ||
+                node.Children.FirstOrDefault(child => !child.IsToken) is not { Kind: SyntaxKind.IdentifierExpression } callee ||
+                !TryGetFirstIdentifier(callee, out var identifier))
+            {
+                return false;
+            }
+
+            name = identifier.Text ?? string.Empty;
+            return name.Length > 0;
+        }
+
+        private static bool TryGetPipelineTargetFunctionName(SyntaxNode target, out string name)
+        {
+            name = string.Empty;
+            if (target.Kind == SyntaxKind.IdentifierExpression && TryGetFirstIdentifier(target, out var identifier))
+            {
+                name = identifier.Text ?? string.Empty;
+                return name.Length > 0;
+            }
+
+            return TryGetDirectCallName(target, out name);
         }
 
         private static bool TryGetTypeLevelUnion(string name, SyntaxNode node, out TypeLevelUnionInfo union)
@@ -1593,7 +1668,7 @@ public static class TypeSharpTypeChecker
         private readonly TypeScope? _parent;
         private readonly bool _allowsDynamic;
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, SimpleType> _functions = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, FunctionInfo> _functions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, TypeLevelUnionInfo> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionInfo> _unions = new(StringComparer.Ordinal);
@@ -1611,7 +1686,9 @@ public static class TypeSharpTypeChecker
 
         public void DeclareValue(string name, SimpleType type) => _values[name] = type;
 
-        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = returnType;
+        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default);
+
+        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities);
 
         public void DeclareType(string name) => _types.Add(name);
 
@@ -1643,8 +1720,9 @@ public static class TypeSharpTypeChecker
 
         public bool ResolveFunction(string name, out SimpleType returnType)
         {
-            if (_functions.TryGetValue(name, out returnType))
+            if (_functions.TryGetValue(name, out var function))
             {
+                returnType = function.ReturnType;
                 return true;
             }
 
@@ -1654,6 +1732,22 @@ public static class TypeSharpTypeChecker
             }
 
             returnType = SimpleType.Unknown;
+            return false;
+        }
+
+        public bool ResolveFunctionInfo(string name, out FunctionInfo function)
+        {
+            if (_functions.TryGetValue(name, out function))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveFunctionInfo(name, out function);
+            }
+
+            function = default;
             return false;
         }
 
@@ -1765,6 +1859,10 @@ public static class TypeSharpTypeChecker
     private readonly record struct ShapeMemberInfo(string Name, SimpleType Type, bool IsOptional);
 
     private readonly record struct RecordExpressionFieldInfo(SyntaxNode Node, SimpleType Type);
+
+    private readonly record struct FunctionInfo(SimpleType ReturnType, FunctionCapabilities Capabilities);
+
+    private readonly record struct FunctionCapabilities(bool RequiresDynamic);
 
     private enum CompileTimeOnlyTypeKind
     {

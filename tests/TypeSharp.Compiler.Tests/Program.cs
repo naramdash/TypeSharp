@@ -124,6 +124,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON duplicate symbol diagnostics", CliCheckEmitsJsonDuplicateSymbolDiagnostics),
     ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
     ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
+    ("CLI check emits JSON dynamic call capability diagnostics", CliCheckEmitsJsonDynamicCallCapabilityDiagnostics),
     ("CLI check keeps warnings nonblocking by default", CliCheckKeepsWarningsNonblockingByDefault),
     ("CLI check treats warnings as errors", CliCheckTreatsWarningsAsErrors),
     ("CLI build stops before emission on warnings as errors", CliBuildStopsBeforeEmissionOnWarningsAsErrors),
@@ -257,6 +258,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2204",
             "TS2205",
             "TS2206",
+            "TS2207",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -2862,6 +2864,33 @@ static void CliCheckEmitsJsonDynamicCapabilityDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2206\"", error.ToString());
         AssertContains("Dynamic type annotation requires a 'dynamic' function modifier.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonDynamicCallCapabilityDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("DynamicCallCapabilityJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DynamicCallCapabilityJson
+
+            dynamic fun readLegacy(value: dynamic): string =
+              value.ToString()
+
+            export fun leak(value: string): string =
+              readLegacy(value)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2207\"", error.ToString());
+        AssertContains("Call to dynamic function 'readLegacy' requires a 'dynamic' function modifier on the containing function.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
