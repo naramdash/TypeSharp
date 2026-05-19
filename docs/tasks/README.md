@@ -89,3 +89,4 @@
 | [0140-indexer-expression-lowering.md](0140-indexer-expression-lowering.md) | Q2-Q3 | Done | `receiver[index]`를 C# 7.3-compatible indexer/array access로 낮추고 imported C# indexer smoke 근거를 추가한다. |
 | [0141-record-expression-construction.md](0141-record-expression-construction.md) | Q2-Q3 | Done | expected nominal record type이 있는 `{ Field: value }` expression을 C# 7.3-compatible constructor call로 낮추고 mismatch diagnostics를 추가한다. |
 | [0142-csharp-field-interop-smoke.md](0142-csharp-field-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 public field metadata index와 static/instance field access compile smoke를 추가한다. |
+| [0143-csharp-generic-method-interop-smoke.md](0143-csharp-generic-method-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 generic method metadata placeholder와 imported generic method compile smoke를 추가한다. |

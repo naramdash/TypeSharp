@@ -120,6 +120,7 @@
 - [x] C# imported indexer access compile smoke
 - [x] C# attribute reference interop compile smoke
 - [x] C# generic type reference interop compile smoke
+- [x] C# generic method interop compile smoke
 - [x] C# `ref`/`out`/`in`/`params` interop
 - [x] C# `params` interop compile smoke
 - [x] C# `out` interop compile smoke
@@ -144,6 +145,7 @@
 - [x] C# metadata reader skeleton
 - [x] C# metadata reader local public symbol index
 - [x] C# metadata reader public field symbol index
+- [x] C# metadata reader generic method signature placeholder index
 - [x] C# metadata reader params parameter flag
 - [x] C# reference resolver skeleton
 - [x] C# metadata diagnostics pipeline integration
@@ -188,6 +190,7 @@
 - [x] generated C# imported `ref` call build smoke
 - [x] generated C# imported delegate lambda call build smoke
 - [x] generated C# imported event add/remove build smoke
+- [x] generated C# imported generic method call build smoke
 - [x] generated C# imported attribute reference build smoke
 - [x] generated C# imported generic type reference build smoke
 - [x] generated C# generic constraint build smoke
@@ -328,6 +331,7 @@
 - [x] C# `in` call smoke tests
 - [x] C# `ref` call smoke tests
 - [x] C# event add/remove call smoke tests
+- [x] C# generic method call smoke tests
 - [x] C# attribute reference smoke tests
 - [x] C# generic type reference smoke tests
 - [x] generic constraint lowering smoke tests

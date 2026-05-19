@@ -136,6 +136,7 @@ fun isSlug(value: string): bool =
 - property get은 member access로, property set은 assignment로 낮춘다.
 - field read는 member access로 낮추고 static/instance field shape은 C# metadata로 index한다.
 - indexer는 `value[index]` 형태로 다루고 generated C#의 일반 indexer/array access로 낮춘다.
+- generic method call은 명시 type argument 없이 generated C# call site를 보존할 수 있는 경우 C# compiler의 method type inference에 맡긴다. TypeSharp-side generic method inference는 별도 확장이다.
 
 ### Named, Optional, Params Argument
 

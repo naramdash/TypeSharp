@@ -155,6 +155,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
+    ("CLI build compiles imported generic method call", CliBuildCompilesImportedGenericMethodCall),
     ("CLI build compiles imported attribute and generic type references", CliBuildCompilesImportedAttributeAndGenericTypeReferences),
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
@@ -1169,7 +1170,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFields"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyGenericMethods"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -1234,6 +1235,12 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertEqual("string", instanceCode.Type);
         AssertFalse(instanceCode.IsStatic, "InstanceCode should not be marked static.");
         AssertFalse(instanceCode.IsLiteral, "InstanceCode should not be marked literal.");
+
+        var legacyGenericMethods = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyGenericMethods"), "LegacyGenericMethods metadata should be present.");
+        var identity = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "Identity"), "Identity<T> metadata should be present.");
+        AssertEqual("!!0", identity.ReturnType);
+        AssertSequence(["value"], identity.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["!!0"], identity.Parameters.Select(parameter => parameter.Type).ToArray());
     });
 }
 
@@ -4253,6 +4260,52 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
     });
 }
 
+static void CliBuildCompilesImportedGenericMethodCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedGenericMethodCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedGenericMethodCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedGenericMethodCall
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun echo(): string =
+              LegacyGenericMethods.Identity("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedGenericMethodCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyGenericMethods.Identity(\"value\");", generatedSource);
+
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "ImportedGenericMethodCall.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
+        AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedGenericMethodCall.dll")),
+            "Generated project build should compile imported generic method call.");
+    });
+}
+
 static void CliBuildCompilesImportedAttributeAndGenericTypeReferences()
 {
     WithWorkspace(root =>
@@ -6664,6 +6717,14 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public const string StaticCode = "static";
 
                 public readonly string InstanceCode = "instance";
+            }
+
+            public static class LegacyGenericMethods
+            {
+                public static T Identity<T>(T value)
+                {
+                    return value;
+                }
             }
         }
         """);

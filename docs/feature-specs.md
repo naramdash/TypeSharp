@@ -34,8 +34,8 @@
 | Feature | Primary spec | Implementation/evidence |
 | --- | --- | --- |
 | Framework assembly and local DLL references | [cli.md](cli.md), [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md) | reference resolver smokes, metadata reader smokes |
-| C# metadata reader | [csharp-interop.md](csharp-interop.md), [regression-testing.md](regression-testing.md) | local public type/method/property/field/parameter metadata smokes |
-| C# constructor/static/instance/property/field/indexer calls | [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md), [lowering.md](lowering.md) | generated `net48` build smokes |
+| C# metadata reader | [csharp-interop.md](csharp-interop.md), [regression-testing.md](regression-testing.md) | local public type/method/generic method placeholder/property/field/parameter metadata smokes |
+| C# constructor/static/instance/property/field/indexer/generic method calls | [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md), [lowering.md](lowering.md) | generated `net48` build smokes |
 | C# `params`, `out`, `in`, `ref` calls | [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md), [diagnostics.md](diagnostics.md) | metadata smokes, byref diagnostics, generated build smokes |
 | C# optional and named argument overload validation | [csharp-interop.md](csharp-interop.md), [grammar/expressions.md](grammar/expressions.md) | optional/named overload diagnostics and generated build smokes |
 | C# overload resolution | [csharp-interop.md](csharp-interop.md), [grammar/resolution.md](grammar/resolution.md), [traceability.md](traceability.md) | `TypeSharpCSharpOverloadResolver`, ambiguity diagnostics, exact/params/optional/named smokes |
