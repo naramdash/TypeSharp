@@ -54,6 +54,7 @@ var tests = new (string Name, Action Body)[]
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
     ("source discovery reports duplicate module paths", SourceDiscoveryReportsDuplicateModulePaths),
+    ("source module graph collects relative import dependencies", SourceModuleGraphCollectsRelativeImportDependencies),
     ("runtime project targets net48", RuntimeProjectTargetsNet48),
     ("core project targets net48", CoreProjectTargetsNet48),
     ("runtime ABI constants are aligned", RuntimeAbiConstantsAreAligned),
@@ -81,9 +82,12 @@ var tests = new (string Name, Action Body)[]
     ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI check emits JSON duplicate source module diagnostics", CliCheckEmitsJsonDuplicateSourceModuleDiagnostics),
+    ("CLI check emits JSON unsupported source module import diagnostics", CliCheckEmitsJsonUnsupportedSourceModuleImportDiagnostics),
+    ("CLI check emits JSON unresolved source module diagnostics", CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics),
     ("CLI check emits JSON unsupported package diagnostics", CliCheckEmitsJsonUnsupportedPackageDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on duplicate source modules", CliBuildStopsBeforeEmissionOnDuplicateSourceModules),
+    ("CLI build stops before emission on source module imports", CliBuildStopsBeforeEmissionOnSourceModuleImports),
     ("CLI build stops before emission on package diagnostics", CliBuildStopsBeforeEmissionOnPackageDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
@@ -262,6 +266,8 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS0103",
             "TS0110",
             "TS0111",
+            "TS0112",
+            "TS0113",
             "TS1000",
             "TS1001",
             "TS1002",
@@ -909,6 +915,45 @@ static void SourceDiscoveryReportsDuplicateModulePaths()
         AssertEqual("src/Feature/Config.tysh", diagnostic.File);
         AssertContains("Duplicate source module path 'Feature/Config'", diagnostic.Message);
         AssertContains("shared/Feature/Config.tysh", diagnostic.Message);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeImportDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraph"));
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraph
+
+            import { Helper } from "./Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraph
+
+            export fun keep(): string = "ok"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertTrue(graph.HasErrors, "Resolved source imports should still be blocked until project-wide import binding exists.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        var diagnostic = graph.Diagnostics.Single(diagnostic => diagnostic.Code == "TS0113");
+        AssertContains("Source module import './Helper' resolves to 'Feature/Helper'", diagnostic.Message);
     });
 }
 
@@ -1680,6 +1725,57 @@ static void CliCheckEmitsJsonDuplicateSourceModuleDiagnostics()
     });
 }
 
+static void CliCheckEmitsJsonUnsupportedSourceModuleImportDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceImportJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceImportJson
+
+            import { Helper } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceImportJson
+
+            export fun keep(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0113\"", error.ToString());
+        AssertContains("Source module import './Helper' resolves to 'Helper'", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("MissingSourceImportJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingSourceImportJson
+
+            import { Helper } from "./Missing"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0112\"", error.ToString());
+        AssertContains("Source module specifier './Missing' could not be resolved from module 'Main'.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
 static void CliCheckEmitsJsonUnsupportedPackageDiagnostics()
 {
     WithWorkspace(root =>
@@ -1767,6 +1863,40 @@ static void CliBuildStopsBeforeEmissionOnDuplicateSourceModules()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Feature", "Config.g.cs")), "Build should not emit generated C# when duplicate source modules contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildDuplicateModules.Generated.csproj")), "Build should not emit generated project when duplicate source modules contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildDuplicateModules.dll")), "Build should not emit generated assembly when duplicate source modules contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnSourceModuleImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildSourceImports"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BuildSourceImports
+
+            import { Helper } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.BuildSourceImports
+
+            export fun keep(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0113\"", error.ToString());
+        AssertContains("Source module import './Helper' resolves to 'Helper'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when source module imports are unsupported.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildSourceImports.Generated.csproj")), "Build should not emit generated project when source module imports are unsupported.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildSourceImports.dll")), "Build should not emit generated assembly when source module imports are unsupported.");
     });
 }
 

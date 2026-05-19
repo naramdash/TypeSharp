@@ -29,6 +29,8 @@ Current allocated descriptors:
 | `TS0103` | Project | Error | Invalid manifest value |
 | `TS0110` | Project | Warning | Source root not found |
 | `TS0111` | Project | Error | Duplicate source module path |
+| `TS0112` | Project | Error | Unresolved source module |
+| `TS0113` | Project | Error | Unsupported source module import |
 | `TS1000` | Parser | Error | Unexpected character |
 | `TS1001` | Parser | Error | Missing function body |
 | `TS1002` | Parser | Error | Unterminated string literal |

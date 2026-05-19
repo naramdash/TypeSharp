@@ -56,6 +56,24 @@ public static class DiagnosticDescriptors
         "Source files are part of the project module graph by their source-root-relative module path. Two files with the same module path would make imports and public surface ownership ambiguous.",
         "Rename or move one source file, or adjust sourceRoots so each module path is unique.");
 
+    public static readonly DiagnosticDescriptor UnresolvedSourceModule = new(
+        "TS0112",
+        "Unresolved source module",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Project,
+        "Source module specifier could not be resolved.",
+        "A relative TypeSharp source module specifier must resolve to a discovered source-root-relative module path before the project module graph is well-formed.",
+        "Create the target source file, fix the relative specifier, or move the file under a configured source root.");
+
+    public static readonly DiagnosticDescriptor UnsupportedSourceModuleImport = new(
+        "TS0113",
+        "Unsupported source module import",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Project,
+        "Source module imports require project-wide import binding before they can be checked or emitted.",
+        "The compiler can identify source module graph edges, but does not yet bind imported source declarations or lower cross-file source imports to generated C#.",
+        "Keep source module imports out of build inputs until project-wide import binding is implemented, or use the current C# namespace import forms.");
+
     public static readonly DiagnosticDescriptor UnexpectedCharacter = new(
         "TS1000",
         "Unexpected character",
@@ -280,6 +298,8 @@ public static class DiagnosticDescriptors
         InvalidManifestValue,
         SourceRootNotFound,
         DuplicateSourceModulePath,
+        UnresolvedSourceModule,
+        UnsupportedSourceModuleImport,
         UnexpectedCharacter,
         MissingFunctionBody,
         UnterminatedStringLiteral,

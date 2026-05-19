@@ -65,6 +65,10 @@ public static class TypeSharpBuilder
             parsedSources.Add((sourceFile, parseResult.Root));
         }
 
+        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources
+            .Select(source => new SourceModule(source.SourceFile, source.Root))
+            .ToArray()).Diagnostics);
+
         if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
         {
             return new BuildResult([], null, null, diagnostics);

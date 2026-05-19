@@ -26,23 +26,33 @@ public static class TypeSharpChecker
         var metadataResult = TypeSharpMetadataReader.Read(TypeSharpReferenceResolver.Resolve(manifestResult.Manifest));
         diagnostics.AddRange(metadataResult.Diagnostics);
 
+        var parsedSources = new List<SourceModule>();
         foreach (var sourceFile in sourceDiscovery.SourceFiles)
         {
             var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
             diagnostics.AddRange(parseResult.Diagnostics);
-            if (!parseResult.HasErrors && parseResult.Root is not null)
+            if (parseResult.HasErrors || parseResult.Root is null)
             {
-                diagnostics.AddRange(TypeSharpInteropValidator.Validate(
-                    parseResult.Root,
-                    metadataResult.Assemblies,
-                    sourceFile.RelativePath,
-                    manifestResult.Manifest.Language.Nullable));
-                var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath);
-                diagnostics.AddRange(bindingResult.Diagnostics);
-                if (!bindingResult.HasErrors)
-                {
-                    diagnostics.AddRange(TypeSharpTypeChecker.Check(parseResult.Root, sourceFile.RelativePath).Diagnostics);
-                }
+                continue;
+            }
+
+            parsedSources.Add(new SourceModule(sourceFile, parseResult.Root));
+        }
+
+        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources).Diagnostics);
+
+        foreach (var parsedSource in parsedSources)
+        {
+            diagnostics.AddRange(TypeSharpInteropValidator.Validate(
+                parsedSource.Root,
+                metadataResult.Assemblies,
+                parsedSource.SourceFile.RelativePath,
+                manifestResult.Manifest.Language.Nullable));
+            var bindingResult = TypeSharpBinder.Bind(parsedSource.Root, parsedSource.SourceFile.RelativePath);
+            diagnostics.AddRange(bindingResult.Diagnostics);
+            if (!bindingResult.HasErrors)
+            {
+                diagnostics.AddRange(TypeSharpTypeChecker.Check(parsedSource.Root, parsedSource.SourceFile.RelativePath).Diagnostics);
             }
         }
 

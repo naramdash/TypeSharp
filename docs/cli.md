@@ -290,6 +290,8 @@ treatWarningsAsErrors = false
 - `sourceRoots` 아래의 `*.tysh` 파일을 source file로 찾는다.
 - 각 source file은 source root 상대 경로에서 `.tysh` 확장자를 제거한 module path를 가진다.
 - 여러 source root에서 같은 module path가 나오면 source module graph가 모호하므로 `TS0111` error를 보고한다.
+- relative source module specifier가 target module path를 찾지 못하면 `TS0112` error를 보고한다.
+- target이 존재하는 relative source import도 현재는 project-wide import binding/lowering이 없어 `TS0113` error로 emission 전에 중단한다.
 - `bin/`, `obj/`, generated output root는 기본 discovery에서 제외한다.
 - manifest의 target framework 기본값은 `net48`이다.
 - `generatedOutputRoot`를 생략하면 `obj/generated`를 기본값으로 사용한다.
@@ -340,6 +342,7 @@ JSON 형식:
 - source file 확장자는 `.tysh`다.
 - discovered source file은 project-relative path와 source-root-relative module path를 함께 보존한다.
 - source-root-relative module path는 대소문자 차이만으로 구분하지 않는다.
+- `./`와 `../` source module specifier는 현재 file의 module path directory를 기준으로 해석한다.
 
 제외 기본값:
 - `bin`

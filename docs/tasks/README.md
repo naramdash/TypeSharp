@@ -111,3 +111,4 @@
 | [0162-export-specifier-parsing.md](0162-export-specifier-parsing.md) | Q2-Q4 | Done | `export { ... }`, `export type { ... }`, `export * from ...` 문법을 parser surface에 추가한다. |
 | [0163-unsupported-export-forwarding-diagnostic.md](0163-unsupported-export-forwarding-diagnostic.md) | Q2-Q4 | Done | source module graph 지원 전 `export { ... }`/`export type { ... }`/`export * from ...` 사용을 `TS2003`으로 막는다. |
 | [0164-source-module-path-identity.md](0164-source-module-path-identity.md) | Q2-Q4 | Done | source root 상대 module path를 source discovery에 고정하고 중복 module path를 `TS0111`로 막는다. |
+| [0165-relative-source-module-graph.md](0165-relative-source-module-graph.md) | Q2-Q4 | Done | relative source import/export specifier를 source module graph edge로 수집하고 미지원 source import를 `TS0113`으로 막는다. |

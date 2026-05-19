@@ -21,6 +21,8 @@ Source files without an explicit file-scoped `namespace` still lower under the m
 
 Each discovered `.tysh` file has a source-root-relative module path. If two source roots produce the same module path, `typesharp check` and `typesharp build` report `TS0111` before generated C# emission.
 
+Relative source module specifiers such as `./Helper` are resolved against that module path. Missing relative modules report `TS0112`. Existing relative source imports are recorded in the source module graph but currently report `TS0113` until project-wide import binding and C# lowering are implemented.
+
 Ambient function signatures are explicit declarations of external host APIs. The current compiler parses and checks those signatures but omits them from generated C# output.
 
 Root-level `open Namespace.Name` declarations lower to generated C# `using Namespace.Name;` directives. Ambiguity diagnostics and module-local `open` semantics remain future work.

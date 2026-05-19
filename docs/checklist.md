@@ -74,6 +74,8 @@
 - [x] module/namespace/import 규칙 초안이 있다.
 - [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
 - [x] source root 상대 module path가 중복되면 `TS0111`로 보고된다.
+- [x] relative source module specifier가 module graph edge로 수집되고 unresolved target은 `TS0112`로 보고된다.
+- [x] project-wide source import binding 전 relative source import는 `TS0113`으로 emission 전에 중단된다.
 - [x] named import alias 문법과 C# alias using lowering 규칙이 있다.
 - [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
 - [x] import alias same-file conflict는 `TS2002` duplicate symbol diagnostic으로 보고된다.
@@ -323,6 +325,7 @@
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
 - [x] duplicate source module path diagnostic smoke tests
+- [x] source module graph relative import diagnostic smoke tests
 - [x] CLI new console/library project templates
 - [x] CLI check parse diagnostics smoke tests
 - [x] CLI check type checker diagnostics smoke tests

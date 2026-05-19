@@ -57,9 +57,11 @@ import static System.Math
 결정:
 - module specifier는 TypeScript처럼 string literal을 사용한다.
 - .NET assembly reference와 source module path resolution은 project manifest와 compiler host가 담당한다.
+- `./` 또는 `../`로 시작하는 relative source module specifier는 현재 source file의 module path를 기준으로 해석한다. target source module이 없으면 `TS0112`를 보고한다.
 - `import type`은 compile-time type만 가져오며 runtime dependency를 만들지 않는다.
 - 현재 구현된 named import alias slice는 `import { Name as Alias } from "Namespace"`를 generated C# `using Alias = Namespace.Name;` directive로 낮춘다.
 - 현재 구현된 namespace import slice는 `import * as Alias from "Namespace"`를 generated C# `using Alias = Namespace;` directive로 낮춘다.
+- 현재 구현된 source module graph slice는 relative import specifier를 dependency edge로 기록하지만, project-wide source import binding/lowering은 아직 구현하지 않는다. target이 존재하는 relative source import는 `TS0113`으로 막아 generated C# emission 전에 중단한다.
 - named/namespace import alias가 같은 file scope의 기존 선언이나 다른 import alias와 같은 local name을 쓰면 binder가 `TS2002` duplicate symbol diagnostic을 보고한다. Cross-file source module graph conflict analysis는 별도 후속 작업이다.
 
 ## Export
@@ -79,7 +81,7 @@ export_specifier      ::= identifier ("as" identifier)?
 - .NET public accessibility와 module export는 별도이므로 mapping 사양이 필요하다.
 - library project에서는 export된 declaration만 public API 후보가 된다.
 - 현재 구현된 export specifier slice는 `export { Name as Alias }`, `export { Name } from "Module"`, `export type { Name } from "Module"`, and `export * from "Module"`를 parser syntax tree에 보존한다.
-- Source module graph resolution, export binding, duplicate export diagnostics, and C# re-export lowering은 후속 작업이다. 그때까지 `typesharp check`와 `typesharp build`는 export specifier/re-export declarations를 `TS2003`으로 보고하고 generated C# emission 전에 중단한다.
+- Source module graph는 relative export-from specifier도 dependency edge로 기록한다. Export binding, duplicate export diagnostics, and C# re-export lowering은 후속 작업이다. 그때까지 `typesharp check`와 `typesharp build`는 export specifier/re-export declarations를 `TS2003`으로 보고하고 generated C# emission 전에 중단한다.
 
 ## Namespace
 
