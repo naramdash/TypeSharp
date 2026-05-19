@@ -156,6 +156,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
     ("CLI build compiles imported generic method call", CliBuildCompilesImportedGenericMethodCall),
+    ("CLI build compiles imported interface reference", CliBuildCompilesImportedInterfaceReference),
     ("CLI build compiles imported attribute and generic type references", CliBuildCompilesImportedAttributeAndGenericTypeReferences),
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
@@ -321,7 +322,9 @@ static void CliNewCreatesLibraryProject()
 
         var exitCode = TypeSharpCli.Run(["new", "library", "Billing.Core", "--target", "net48", "--output", projectRoot], new StringWriter(output), new StringWriter(error));
 
-        AssertEqual(0, exitCode);
+        AssertTrue(
+            exitCode == 0,
+            $"Imported interface reference should compile.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
         AssertEqual(string.Empty, error.ToString());
         AssertTrue(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "Library template should create a manifest.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Library.tysh")), "Library template should create src/Library.tysh.");
@@ -1170,7 +1173,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyGenericMethods"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.LegacyNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -1241,6 +1244,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertEqual("!!0", identity.ReturnType);
         AssertSequence(["value"], identity.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["!!0"], identity.Parameters.Select(parameter => parameter.Type).ToArray());
+
+        var legacyNamedInterface = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.ILegacyNamed"), "ILegacyNamed metadata should be present.");
+        AssertSequence(["Name"], legacyNamedInterface.Properties.Select(property => property.Name).ToArray());
+        var legacyNamed = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNamed"), "LegacyNamed metadata should be present.");
+        AssertSequence(["Name"], legacyNamed.Properties.Select(property => property.Name).ToArray());
     });
 }
 
@@ -4306,6 +4314,55 @@ static void CliBuildCompilesImportedGenericMethodCall()
     });
 }
 
+static void CliBuildCompilesImportedInterfaceReference()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInterfaceReference"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInterfaceReference"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInterfaceReference
+
+            import { ILegacyNamed } from "Legacy.Tools"
+
+            export fun describe(value: ILegacyNamed): string =
+              value.Name
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported interface reference should compile.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInterfaceReference.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("public static string describe(ILegacyNamed value)", generatedSource);
+        AssertContains("return value.Name;", generatedSource);
+
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "ImportedInterfaceReference.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
+        AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInterfaceReference.dll")),
+            "Generated project build should compile imported interface references.");
+    });
+}
+
 static void CliBuildCompilesImportedAttributeAndGenericTypeReferences()
 {
     WithWorkspace(root =>
@@ -6725,6 +6782,21 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 {
                     return value;
                 }
+            }
+
+            public interface ILegacyNamed
+            {
+                string Name { get; }
+            }
+
+            public sealed class LegacyNamed : ILegacyNamed
+            {
+                public LegacyNamed(string name)
+                {
+                    Name = name;
+                }
+
+                public string Name { get; }
             }
         }
         """);

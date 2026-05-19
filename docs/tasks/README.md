@@ -90,3 +90,4 @@
 | [0141-record-expression-construction.md](0141-record-expression-construction.md) | Q2-Q3 | Done | expected nominal record type이 있는 `{ Field: value }` expression을 C# 7.3-compatible constructor call로 낮추고 mismatch diagnostics를 추가한다. |
 | [0142-csharp-field-interop-smoke.md](0142-csharp-field-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 public field metadata index와 static/instance field access compile smoke를 추가한다. |
 | [0143-csharp-generic-method-interop-smoke.md](0143-csharp-generic-method-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 generic method metadata placeholder와 imported generic method compile smoke를 추가한다. |
+| [0144-csharp-interface-interop-smoke.md](0144-csharp-interface-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 interface metadata index와 imported interface reference compile smoke를 추가한다. |

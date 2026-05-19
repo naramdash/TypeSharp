@@ -116,6 +116,7 @@
 - [x] C# assembly reference
 - [x] C# local DLL reference
 - [x] C# constructor/static/instance member call
+- [x] C# imported interface reference compile smoke
 - [x] C# imported field access compile smoke
 - [x] C# imported indexer access compile smoke
 - [x] C# attribute reference interop compile smoke
@@ -181,6 +182,7 @@
 - [x] generated C# local DLL static member call build smoke
 - [x] generated C# pipeline expression build smoke
 - [x] generated C# imported constructor and instance member call build smoke
+- [x] generated C# imported interface reference build smoke
 - [x] generated C# imported property access build smoke
 - [x] generated C# imported field access build smoke
 - [x] generated C# imported indexer access build smoke
@@ -323,6 +325,7 @@
 - [x] C# framework static member call smoke tests
 - [x] C# local DLL static member call smoke tests
 - [x] C# constructor and instance member call smoke tests
+- [x] C# interface reference smoke tests
 - [x] C# property access smoke tests
 - [x] C# field access smoke tests
 - [x] C# indexer access smoke tests
