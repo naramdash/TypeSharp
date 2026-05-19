@@ -40,6 +40,8 @@ packages = []
 
 Canonical doc: [`cli.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/cli.md)
 
+Human guide: [Project Configuration](../project-configuration/)
+
 ## Runtime And Core Libraries
 
 The generated code can depend on:
@@ -71,3 +73,9 @@ Executable projects produce `.exe` instead of `.dll`.
 The VS Code extension lives in `vscode/typesharp` and starts the language server over stdio. It currently covers diagnostics, hover, go-to-definition, completion, and formatting smokes.
 
 See [VS Code And LSP](../vscode-lsp/) for commands and package-shape checks.
+
+## Language Reference Entry Points
+
+- [Modules And Imports](../modules/) for source module paths, imports, exports, and generated containers.
+- [Type System](../type-system/) for inference, null safety, `unknown`, `dynamic`, structural shapes, unions, and public ABI boundaries.
+- [Grammar And Language Reference](../reference/) for syntax coverage and canonical repository links.

@@ -23,7 +23,7 @@
 - [x] GitHub Pages/Astro Starlight 공식 문서 목표가 명시되어 있다.
 - [x] GitHub repository root README human entry point가 있다.
 - [x] Vue/Nuxt/TypeScript/C#/F# 공식 문서 구조 벤치마크가 GitHub Pages 문서 개선 근거로 기록되어 있다.
-- [ ] Vue/Nuxt/TypeScript/C#/F# 공식 문서 전체 페이지/정보 구조를 재벤치마크하고 GitHub Pages 문서를 초심자부터 고급 사용자까지 대규모 개편한다.
+- [x] Vue/Nuxt/TypeScript/C#/F# 공식 문서 전체 페이지/정보 구조를 재벤치마크하고 GitHub Pages 문서를 초심자부터 고급 사용자까지 대규모 개편한다.
 - [x] 실제 실행 가능한 예제 프로젝트 목표가 명시되어 있다.
 - [x] .NET Framework application model compatibility 계약이 요구사항과 기능 매핑에 반영되어 있다.
 - [x] grammar 폴더가 있고 TypeSharp 문법 목표를 설명한다.

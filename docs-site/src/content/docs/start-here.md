@@ -41,6 +41,8 @@ TypeSharp borrows from expression-oriented and functional programming, but emits
 TypeSharp uses structural shape checking and type-level union ideas, but public .NET metadata must be nominal. Learn:
 
 - [Language Tour](../language-tour/) for structural shapes, type-level unions, and public boundary rules.
+- [Type System](../type-system/) for `unknown`, `dynamic`, narrowing, structural shapes, and nominal public API.
+- [Modules And Imports](../modules/) for TypeScript-style source files, relative module paths, imports, and exports.
 - [Fundamentals](../fundamentals/) for structural shapes versus nominal public API.
 - [Diagnostics](../diagnostics/) for public boundary and nullability errors.
 - [Guides](../guides/) for C# interop and generated output.
@@ -50,6 +52,7 @@ TypeSharp uses structural shape checking and type-level union ideas, but public 
 Start with:
 
 - [Advanced Topics](../advanced/) for compiler pipeline, lowering, metadata, diagnostics, LSP, and regression strategy.
+- [Project Configuration](../project-configuration/) for manifest, generated output, source roots, references, and build shape.
 - [Grammar And Language Reference](../reference/) for syntax and public ABI rules.
 - [Core Goal](../goal/) for the project constraints.
 

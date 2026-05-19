@@ -113,4 +113,4 @@
 | [0164-source-module-path-identity.md](0164-source-module-path-identity.md) | Q2-Q4 | Done | source root 상대 module path를 source discovery에 고정하고 중복 module path를 `TS0111`로 막는다. |
 | [0165-relative-source-module-graph.md](0165-relative-source-module-graph.md) | Q2-Q4 | Done | relative source import/export specifier를 source module graph edge로 수집하고 미지원 source import를 `TS0113`으로 막는다. |
 | [0166-multi-source-module-container-lowering.md](0166-multi-source-module-container-lowering.md) | Q2-Q4 | Done | 다중 source project에서 module path 기반 generated C# container를 써서 같은 namespace 안의 source files를 함께 빌드한다. |
-| [0167-official-docs-deep-benchmark-docs-overhaul.md](0167-official-docs-deep-benchmark-docs-overhaul.md) | Q5 | Planned | Vue/Nuxt/TypeScript/C#/F# 공식 문서 전체 페이지와 정보 구조를 깊게 벤치마크하고 GitHub Pages 문서를 초심자부터 고급 사용자까지 포괄하도록 대규모 개편한다. |
+| [0167-official-docs-deep-benchmark-docs-overhaul.md](0167-official-docs-deep-benchmark-docs-overhaul.md) | Q5 | Done | Vue/Nuxt/TypeScript/C#/F# 공식 문서 전체 페이지와 정보 구조를 깊게 벤치마크하고 GitHub Pages 문서를 초심자부터 고급 사용자까지 포괄하도록 대규모 개편한다. |

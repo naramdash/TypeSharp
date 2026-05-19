@@ -26,6 +26,8 @@ namespace Samples.Billing
 import { LegacyFormatter } from "Legacy.Tools"
 ```
 
+Use [Modules And Imports](../modules/) for source module paths, relative specifiers, export surface rules, and generated C# container naming. Use [Project Configuration](../project-configuration/) for source roots and manifest settings.
+
 ## Type Inference
 
 The current inference engine handles common local literal, identifier, direct call, binary expression, and pipeline flows. Public APIs should still use explicit annotations where C# metadata matters.
@@ -75,3 +77,5 @@ Diagnostics use stable codes. Examples:
 - `TS2404`: unknown C# nullability
 
 Use [Diagnostics](../diagnostics/) and `typesharp explain TS2202` for explanations.
+
+Use [Type System](../type-system/) for a deeper view of inference, null safety, `unknown`, `dynamic`, structural shapes, unions, generics, async, and public ABI boundaries.

@@ -1,9 +1,9 @@
 # Task 0167: Official Docs Deep Benchmark And Docs Overhaul
 
-Status: Planned
+Status: Done
 Queue: Q5
-Start Time: TBD
-End Time: TBD
+Start Time: 2026-05-19 22:08:34 +09:00
+End Time: 2026-05-19 22:14:41 +09:00
 
 ## Objective
 
@@ -60,18 +60,18 @@ Out:
 
 ## Acceptance Criteria
 
-- [ ] The benchmark report inventories all reachable official docs pages for Vue.js, Nuxt.js, TypeScript, C#, and F# or records explicit limitations for pages that cannot be automatically enumerated.
-- [ ] The report includes dated source URLs, version labels, navigation trees, page counts, page archetypes, and benchmark observations.
-- [ ] The report compares beginner, intermediate, advanced, migrator, and reference/API user paths across all five sources.
-- [ ] The report maps TypeSharp docs gaps to concrete docs-site additions or rewrites.
-- [ ] GitHub Pages docs include clear human-facing tutorials, guides, cookbook, fundamentals, grammar, API/reference, tooling, interop, diagnostics, migration, troubleshooting, examples, and advanced sections.
-- [ ] TypeSharp language features influenced by TypeScript, F#, and C# are documented for both beginners and advanced users.
-- [ ] New docs pages avoid copied official prose and explain TypeSharp-specific behavior, examples, limitations, and links.
-- [ ] Docs navigation and cross-links make the first-time path and reference path easy to follow.
-- [ ] Docs contract checks verify key new pages, sidebar entries, and headings.
-- [ ] The docs site build passes.
-- [ ] The task packet records verification commands and results before being marked Done.
-- [ ] The completed task is committed and pushed.
+- [x] The benchmark report inventories all reachable official docs pages for Vue.js, Nuxt.js, TypeScript, C#, and F# or records explicit limitations for pages that cannot be automatically enumerated.
+- [x] The report includes dated source URLs, version labels, navigation trees, page counts, page archetypes, and benchmark observations.
+- [x] The report compares beginner, intermediate, advanced, migrator, and reference/API user paths across all five sources.
+- [x] The report maps TypeSharp docs gaps to concrete docs-site additions or rewrites.
+- [x] GitHub Pages docs include clear human-facing tutorials, guides, cookbook, fundamentals, grammar, API/reference, tooling, interop, diagnostics, migration, troubleshooting, examples, and advanced sections.
+- [x] TypeSharp language features influenced by TypeScript, F#, and C# are documented for both beginners and advanced users.
+- [x] New docs pages avoid copied official prose and explain TypeSharp-specific behavior, examples, limitations, and links.
+- [x] Docs navigation and cross-links make the first-time path and reference path easy to follow.
+- [x] Docs contract checks verify key new pages, sidebar entries, and headings.
+- [x] The docs site build passes.
+- [x] The task packet records verification commands and results before being marked Done.
+- [x] The completed task is committed and pushed.
 
 ## Suggested Verification
 
@@ -89,3 +89,18 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 - Respect official site rate limits and prefer sitemap/source navigation files when available.
 - Keep benchmark content as analysis and summary. Do not paste large official docs excerpts into the repository.
 - If the benchmark identifies missing compiler/language behavior, add separate implementation tasks instead of mixing implementation with the docs overhaul.
+
+## Progress
+
+- 2026-05-19 22:08:34 +09:00: Replaced long inline PowerShell inventory attempts with a temporary Node.js inventory script under ignored `tests/tmp/`.
+- 2026-05-19 22:09:26 +09:00: Generated `docs/official-docs-deep-benchmark-inventory.json` from official Vue, Nuxt, TypeScript, C#, and F# documentation indexes/TOCs.
+- 2026-05-19 22:13:41 +09:00: Added `docs/official-docs-deep-benchmark.md`, new GitHub Pages pages for project configuration, modules/imports, and type system, sidebar entries, cross-links, and docs contract checks.
+- 2026-05-19 22:14:41 +09:00: Ran final whitespace and tracked-binary checks.
+
+## Verification Results
+
+- `dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`: passed with 0 warnings and 0 errors.
+- `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- "docs site contract is stable"`: passed.
+- `npm run build` from `docs-site`: passed and generated 24 pages.
+- `git diff --check`: passed. Git reported expected LF-to-CRLF working-copy warnings only.
+- `git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"`: passed with no tracked binaries listed.

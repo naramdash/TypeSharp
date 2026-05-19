@@ -31,7 +31,7 @@ Goal: add TypeSharp code to an existing `net48` environment without changing the
 2. Run [Library Public API](../tutorials/#2-library-public-api).
 3. Run [C# Interop](../tutorials/#3-c-interop).
 4. Use [Guides](../guides/) for manifest and CLI workflow details.
-5. Use [API And CLI Reference](../api/) for command, manifest, and generated output details.
+5. Use [Project Configuration](../project-configuration/) and [API And CLI Reference](../api/) for command, manifest, and generated output details.
 
 Important boundaries:
 
@@ -45,9 +45,11 @@ Important boundaries:
 Goal: understand where TypeSharp is intentionally similar to TypeScript and where .NET metadata changes the rules.
 
 1. Read [Language Tour](../language-tour/) for type inference, structural shapes, type-level unions, narrowing, and public boundary rules.
-2. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, and `TS2204`.
-3. Read [Grammar And Language Reference](../reference/) when you need formal syntax boundaries.
-4. Use [Cookbook](../cookbook/) for common interop tasks.
+2. Read [Type System](../type-system/) for `unknown`, `dynamic`, structural shapes, type-level unions, and public CLR boundaries.
+3. Read [Modules And Imports](../modules/) for TypeScript-style source files and relative module paths.
+4. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, and `TS2204`.
+5. Read [Grammar And Language Reference](../reference/) when you need formal syntax boundaries.
+6. Use [Cookbook](../cookbook/) for common interop tasks.
 
 Translate expectations carefully:
 
@@ -61,8 +63,9 @@ Goal: use immutable data, options/results, unions, pattern matching, pipelines, 
 
 1. Read [Language Tour](../language-tour/) from `Option`, `Result`, and unions onward.
 2. Read [Fundamentals](../fundamentals/) for expression-oriented features and current inference scope.
-3. Read [Grammar And Language Reference](../reference/) for patterns, type syntax, and declarations.
-4. Use [Advanced Topics](../advanced/) to understand lowering and stability boundaries.
+3. Read [Type System](../type-system/) for nominal unions, pattern matching boundaries, generics, and async.
+4. Read [Grammar And Language Reference](../reference/) for patterns, type syntax, and declarations.
+5. Use [Advanced Topics](../advanced/) to understand lowering and stability boundaries.
 
 Keep in mind:
 
@@ -94,6 +97,9 @@ Good first questions:
 | Create a project | [Tutorials](../tutorials/) |
 | Understand the language quickly | [Language Tour](../language-tour/) |
 | Understand current feature support | [Fundamentals](../fundamentals/) and [Reference](../reference/) |
+| Configure a project | [Project Configuration](../project-configuration/) |
+| Understand modules and imports | [Modules And Imports](../modules/) |
+| Understand types and public boundaries | [Type System](../type-system/) |
 | Call a C# DLL | [.NET Interop](../dotnet-interop/) and [Cookbook](../cookbook/) |
 | Consume TypeSharp from C# | [.NET Interop](../dotnet-interop/) |
 | Fix diagnostics | [Diagnostics](../diagnostics/) and [Troubleshooting](../troubleshooting/) |

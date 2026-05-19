@@ -18,6 +18,8 @@ generatedOutputRoot = "generated"
 
 Source files use the `.tysh` extension and are discovered from the configured source root or the default `src` folder.
 
+Use [Project Configuration](../project-configuration/) for the full manifest, source root, generated output, reference, configuration, and target override contract.
+
 ## CLI Workflow
 
 Use `check` before `build` when iterating:
@@ -53,6 +55,8 @@ import { LegacyFormatter } from "Legacy.Tools"
 ```
 
 Implemented interop coverage includes constructors, static/instance calls, property and field reads, indexers, delegates, events, attributes, generic types, and selected overload validation.
+
+Use [Modules And Imports](../modules/) for source module identity, relative module resolution, export forwarding status, and generated C# module containers.
 
 ## Null Safety
 

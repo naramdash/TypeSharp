@@ -3958,9 +3958,12 @@ static void DocsSiteContractIsStable()
     AssertContains("slug: 'tutorials'", astroConfig);
     AssertContains("slug: 'fundamentals'", astroConfig);
     AssertContains("slug: 'guides'", astroConfig);
+    AssertContains("slug: 'project-configuration'", astroConfig);
     AssertContains("slug: 'dotnet-interop'", astroConfig);
     AssertContains("slug: 'cookbook'", astroConfig);
     AssertContains("slug: 'goal'", astroConfig);
+    AssertContains("slug: 'modules'", astroConfig);
+    AssertContains("slug: 'type-system'", astroConfig);
     AssertContains("slug: 'grammar'", astroConfig);
     AssertContains("slug: 'reference'", astroConfig);
     AssertContains("slug: 'api'", astroConfig);
@@ -3985,10 +3988,13 @@ static void DocsSiteContractIsStable()
         "tutorials",
         "fundamentals",
         "guides",
+        "project-configuration",
         "dotnet-interop",
         "cookbook",
         "examples",
         "migration",
+        "modules",
+        "type-system",
         "grammar",
         "reference",
         "api",
@@ -4038,6 +4044,15 @@ static void DocsSiteContractIsStable()
     AssertContains("CLI Workflow", guidesPage);
     AssertContains("C# References And Imports", guidesPage);
     AssertContains("Option, Result, Records, And Unions", guidesPage);
+    AssertContains("Project Configuration", guidesPage);
+    AssertContains("Modules And Imports", guidesPage);
+
+    var projectConfigurationPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "project-configuration.md"));
+    AssertContains("Minimal Manifest", projectConfigurationPage);
+    AssertContains("Source Roots", projectConfigurationPage);
+    AssertContains("Generated Output", projectConfigurationPage);
+    AssertContains("References", projectConfigurationPage);
+    AssertContains("Configuration And Target Overrides", projectConfigurationPage);
 
     var dotnetInteropPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "dotnet-interop.md"));
     AssertContains("Generated Target", dotnetInteropPage);
@@ -4055,12 +4070,28 @@ static void DocsSiteContractIsStable()
     AssertContains("Values And Functions", fundamentalsPage);
     AssertContains("Structural Shapes Versus Nominal Public API", fundamentalsPage);
     AssertContains("Collections, Pipelines, And Async", fundamentalsPage);
+    AssertContains("Type System", fundamentalsPage);
+
+    var modulesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "modules.md"));
+    AssertContains("Files Are Modules", modulesPage);
+    AssertContains("Generated Containers", modulesPage);
+    AssertContains("Relative Source Imports", modulesPage);
+    AssertContains("Export Surface", modulesPage);
+
+    var typeSystemPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "type-system.md"));
+    AssertContains("Local Inference", typeSystemPage);
+    AssertContains("Null Safety", typeSystemPage);
+    AssertContains("`unknown`", typeSystemPage);
+    AssertContains("Nominal Public API", typeSystemPage);
+    AssertContains("Type-Level And Nominal Unions", typeSystemPage);
 
     var referencePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "reference.md"));
     AssertContains("Declarations", referencePage);
     AssertContains("Expressions", referencePage);
     AssertContains("Types", referencePage);
     AssertContains("Public ABI Rules", referencePage);
+    AssertContains("Modules And Imports", referencePage);
+    AssertContains("Type System", referencePage);
 
     var apiPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
     AssertContains("CLI Commands", apiPage);
@@ -4086,6 +4117,27 @@ static void DocsSiteContractIsStable()
     AssertContains("npm run test:live", vscodeLspPage);
     AssertContains("npm run test:host", vscodeLspPage);
     AssertContains("diagnostics, hover, go-to-definition, completion, and formatting", vscodeLspPage);
+
+    var docsRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs");
+    var benchmarkPage = File.ReadAllText(Path.Combine(docsRoot, "official-docs-deep-benchmark.md"));
+    AssertContains("Official Documentation Deep Benchmark", benchmarkPage);
+    AssertContains("Vue.js", benchmarkPage);
+    AssertContains("Nuxt", benchmarkPage);
+    AssertContains("TypeScript", benchmarkPage);
+    AssertContains("C#", benchmarkPage);
+    AssertContains("F#", benchmarkPage);
+    AssertContains("Project Configuration", benchmarkPage);
+    AssertContains("Modules And Imports", benchmarkPage);
+    AssertContains("Type System", benchmarkPage);
+
+    using var benchmarkInventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(docsRoot, "official-docs-deep-benchmark-inventory.json")));
+    var benchmarkSources = benchmarkInventory.RootElement.GetProperty("sources");
+    AssertEqual(5, benchmarkSources.GetArrayLength());
+    AssertTrue(benchmarkSources[0].GetProperty("totalEntries").GetInt32() >= 90, "Vue official docs inventory should include guide/API entries.");
+    AssertTrue(benchmarkSources[1].GetProperty("totalEntries").GetInt32() >= 300, "Nuxt official docs inventory should include v4 docs entries.");
+    AssertTrue(benchmarkSources[2].GetProperty("totalEntries").GetInt32() >= 70, "TypeScript official docs inventory should include docs navigation entries.");
+    AssertTrue(benchmarkSources[3].GetProperty("totalEntries").GetInt32() >= 250, "C# official docs inventory should include Learn TOC entries.");
+    AssertTrue(benchmarkSources[4].GetProperty("totalEntries").GetInt32() >= 140, "F# official docs inventory should include Learn TOC entries.");
 }
 
 static void GitHubPagesWorkflowContractIsStable()

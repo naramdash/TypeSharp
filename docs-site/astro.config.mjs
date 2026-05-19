@@ -30,6 +30,7 @@ export default defineConfig({
           label: 'Use TypeSharp',
           items: [
             { label: 'Guides', slug: 'guides' },
+            { label: 'Project Configuration', slug: 'project-configuration' },
             { label: '.NET Interop', slug: 'dotnet-interop' },
             { label: 'Cookbook', slug: 'cookbook' },
             { label: 'Examples', slug: 'examples' },
@@ -39,6 +40,8 @@ export default defineConfig({
         {
           label: 'Reference',
           items: [
+            { label: 'Modules And Imports', slug: 'modules' },
+            { label: 'Type System', slug: 'type-system' },
             { label: 'Grammar', slug: 'grammar' },
             { label: 'Language Reference', slug: 'reference' },
             { label: 'API And CLI Reference', slug: 'api' },

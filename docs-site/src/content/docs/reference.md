@@ -35,6 +35,8 @@ Export specifier syntax such as `export { Name as Alias } from "Module"`, `expor
 
 Canonical doc: [`grammar/declarations.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/declarations.md)
 
+Human guide: [Modules And Imports](../modules/)
+
 ## Expressions
 
 Expressions include literals, identifiers, calls, member access, indexer access, blocks, `if`, `match`, lambdas, collection expressions, pipeline expressions, async/await, and record expressions for the implemented subset.
@@ -46,6 +48,8 @@ Canonical doc: [`grammar/expressions.md`](https://github.com/naramdash/TypeSharp
 Type syntax includes primitive names, nullable types, arrays, generic types, function types, structural shapes, type-level unions, and nominal declarations.
 
 Canonical doc: [`grammar/types.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/types.md)
+
+Human guide: [Type System](../type-system/)
 
 ## Patterns
 

@@ -16,6 +16,9 @@ This site is the human-facing publishing surface for the repository documentatio
 - [Language Tour](language-tour/) explains the language before the formal reference.
 - [Tutorials](tutorials/) lists runnable, sequential learning paths.
 - [Guides](guides/) explains everyday project, CLI, interop, and modeling tasks.
+- [Project Configuration](project-configuration/) explains `TypeSharp.toml`, source roots, generated output, references, and build shape.
+- [Modules And Imports](modules/) explains source module paths, imports, exports, namespaces, and generated containers.
+- [Type System](type-system/) explains inference, null safety, `unknown`, `dynamic`, structural shapes, unions, generics, and public ABI boundaries.
 - [.NET Interop](dotnet-interop/) covers `net48`, local C# DLLs, generated assemblies, and host compatibility.
 - [Cookbook](cookbook/) gives short recipes for common actions.
 - [Fundamentals](fundamentals/) summarizes values, modules, types, records, unions, async, and diagnostics.
