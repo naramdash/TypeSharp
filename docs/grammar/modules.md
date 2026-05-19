@@ -158,6 +158,7 @@ ambient public fun Invoke(name: string): dynamic
 
 규칙:
 - ambient는 명시해야 한다.
+- 현재 구현된 slice는 body 없는 ambient function signature를 parser/binder/type-checker에서 보존하고 generated C# emission에서는 제외한다.
 - ambient 파일은 manifest에서 분리할 수 있어야 한다.
 - ambient declaration이 runtime symbol과 맞지 않으면 interop diagnostics를 제공한다.
 

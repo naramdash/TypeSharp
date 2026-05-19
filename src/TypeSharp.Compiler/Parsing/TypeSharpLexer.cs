@@ -29,6 +29,7 @@ public sealed class TypeSharpLexer
         ["public"] = SyntaxKind.PublicKeyword,
         ["private"] = SyntaxKind.PrivateKeyword,
         ["partial"] = SyntaxKind.PartialKeyword,
+        ["ambient"] = SyntaxKind.AmbientKeyword,
         ["elif"] = SyntaxKind.ElifKeyword,
         ["class"] = SyntaxKind.ClassKeyword,
         ["interface"] = SyntaxKind.InterfaceKeyword,

@@ -145,6 +145,8 @@ var tests = new (string Name, Action Body)[]
     ("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
+    ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
+    ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
     ("CLI build compiles framework static member call", CliBuildCompilesFrameworkStaticMemberCall),
@@ -3796,6 +3798,72 @@ static void CliBuildUsesRootNamespaceForNamespaceLessSource()
         var generatedEntryPoint = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
         AssertContains("namespace Samples.RootNamespaceFallback", generatedEntryPoint);
         AssertContains("object result = Module.main(args);", generatedEntryPoint);
+    });
+}
+
+static void CliBuildOmitsAmbientFunctionDeclarations()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbientBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.AmbientBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbientBuild
+
+            ambient public fun HostValue(): int
+
+            export fun local(): int = 42
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        AssertContains("public static int local()", generatedSource);
+        AssertFalse(generatedSource.Contains("HostValue", StringComparison.Ordinal), "Ambient functions should not be emitted as generated C# members.");
+    });
+}
+
+static void CliBuildIgnoresAmbientMainEntryPoint()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbientMain"
+            targetFramework = "net48"
+            outputType = "exe"
+            rootNamespace = "Samples.AmbientMain"
+            main = "main"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbientMain
+
+            ambient public fun main(args: string[]): int
+
+            export fun fallback(): int = 0
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS3500\"", error.ToString());
+        AssertContains("Executable project main 'Samples.AmbientMain.main' was not found.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when only an ambient main signature exists.");
     });
 }
 

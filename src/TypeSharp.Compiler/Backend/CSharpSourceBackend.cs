@@ -36,35 +36,35 @@ public static class CSharpSourceBackend
 
             var imports = CollectImports(root);
             var literals = root.Children
-                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration)
+                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var functions = root.Children
-                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var typeAliases = root.Children
-                .Where(child => child.Kind == SyntaxKind.TypeAliasDeclaration)
+                .Where(child => child.Kind == SyntaxKind.TypeAliasDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var modules = root.Children
-                .Where(child => child.Kind == SyntaxKind.ModuleDeclaration)
+                .Where(child => child.Kind == SyntaxKind.ModuleDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var records = root.Children
-                .Where(child => child.Kind == SyntaxKind.RecordDeclaration)
+                .Where(child => child.Kind == SyntaxKind.RecordDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var unions = root.Children
-                .Where(child => child.Kind == SyntaxKind.UnionDeclaration)
+                .Where(child => child.Kind == SyntaxKind.UnionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var classes = root.Children
-                .Where(child => child.Kind == SyntaxKind.ClassDeclaration)
+                .Where(child => child.Kind == SyntaxKind.ClassDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var interfaces = root.Children
-                .Where(child => child.Kind == SyntaxKind.InterfaceDeclaration)
+                .Where(child => child.Kind == SyntaxKind.InterfaceDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             foreach (var importedName in imports.ImportedNames)
@@ -289,11 +289,11 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    {");
 
             var literals = node.Children
-                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration)
+                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             var functions = node.Children
-                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             foreach (var literal in literals)
@@ -553,7 +553,7 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    {");
 
             var functions = node.Children
-                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             for (var index = 0; index < functions.Length; index++)
@@ -581,7 +581,7 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    {");
 
             var functions = node.Children
-                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration)
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
             for (var index = 0; index < functions.Length; index++)
@@ -1795,6 +1795,9 @@ public static class CSharpSourceBackend
 
         private static bool IsAsyncFunction(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);
+
+        private static bool IsAmbientDeclaration(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.AmbientModifier);
 
         private static string GetDeclarationName(SyntaxNode node)
         {

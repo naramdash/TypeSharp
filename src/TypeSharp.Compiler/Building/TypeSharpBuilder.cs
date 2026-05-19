@@ -260,6 +260,7 @@ public static class TypeSharpBuilder
 
             var mainFunction = root.Children.FirstOrDefault(child =>
                 child.Kind == SyntaxKind.FunctionDeclaration &&
+                !IsAmbientDeclaration(child) &&
                 string.Equals(GetDeclarationName(child), methodName, StringComparison.Ordinal));
             if (mainFunction is not null && HasSingleStringArrayParameter(mainFunction))
             {
@@ -358,6 +359,7 @@ public static class TypeSharpBuilder
 
             var function = root.Children.FirstOrDefault(child =>
                 child.Kind == SyntaxKind.FunctionDeclaration &&
+                !IsAmbientDeclaration(child) &&
                 string.Equals(GetDeclarationName(child), methodName, StringComparison.Ordinal));
             if (function is not null)
             {
@@ -373,6 +375,9 @@ public static class TypeSharpBuilder
         var parameterList = function.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
         return parameterList is null || !parameterList.Children.Any(child => child.Kind == SyntaxKind.Parameter);
     }
+
+    private static bool IsAmbientDeclaration(SyntaxNode node) =>
+        node.Children.Any(child => child.Kind == SyntaxKind.AmbientModifier);
 
     private static GeneratedProjectBuildResult BuildGeneratedProject(string outputRoot, string projectRelativePath, string configuration)
     {

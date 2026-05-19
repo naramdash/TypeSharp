@@ -44,6 +44,7 @@ public sealed class TypeSharpParser
                 SyntaxKind.PublicKeyword => ParseDeclarationWithPrefix(),
                 SyntaxKind.PrivateKeyword => ParseDeclarationWithPrefix(),
                 SyntaxKind.PartialKeyword => ParseDeclarationWithPrefix(),
+                SyntaxKind.AmbientKeyword => ParseDeclarationWithPrefix(),
                 _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(),
                 SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
                 SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
@@ -96,6 +97,7 @@ public sealed class TypeSharpParser
             SyntaxKind.PublicKeyword => ParseDeclarationWithPrefix(),
             SyntaxKind.PrivateKeyword => ParseDeclarationWithPrefix(),
             SyntaxKind.PartialKeyword => ParseDeclarationWithPrefix(),
+            SyntaxKind.AmbientKeyword => ParseDeclarationWithPrefix(),
             _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(),
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
@@ -171,7 +173,7 @@ public sealed class TypeSharpParser
             children.Add(ParseAttributeList());
         }
 
-        while (Current.Kind is SyntaxKind.ExportKeyword or SyntaxKind.PublicKeyword or SyntaxKind.PrivateKeyword or SyntaxKind.PartialKeyword)
+        while (Current.Kind is SyntaxKind.ExportKeyword or SyntaxKind.PublicKeyword or SyntaxKind.PrivateKeyword or SyntaxKind.PartialKeyword or SyntaxKind.AmbientKeyword)
         {
             children.Add(ParseDeclarationModifier());
         }
@@ -223,6 +225,7 @@ public sealed class TypeSharpParser
             SyntaxKind.PublicKeyword => new SyntaxNode(SyntaxKind.PublicModifier, token.Span, children: [token]),
             SyntaxKind.PrivateKeyword => new SyntaxNode(SyntaxKind.PrivateModifier, token.Span, children: [token]),
             SyntaxKind.PartialKeyword => new SyntaxNode(SyntaxKind.PartialModifier, token.Span, children: [token]),
+            SyntaxKind.AmbientKeyword => new SyntaxNode(SyntaxKind.AmbientModifier, token.Span, children: [token]),
             _ => token
         };
     }
@@ -275,6 +278,7 @@ public sealed class TypeSharpParser
     {
         var children = prefixChildren ?? [];
         var isExtern = false;
+        var isAmbient = children.Any(child => child.Kind == SyntaxKind.AmbientModifier);
 
         while (IsFunctionModifier(Current))
         {
@@ -315,7 +319,7 @@ public sealed class TypeSharpParser
             };
             children.Add(Node(SyntaxKind.FunctionBody, bodyChildren));
         }
-        else if (isExtern || allowSignatureOnly)
+        else if (isExtern || isAmbient || allowSignatureOnly)
         {
             return Node(SyntaxKind.FunctionDeclaration, children);
         }

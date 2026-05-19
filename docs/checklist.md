@@ -73,6 +73,7 @@
 - [x] declaration grammar 초안이 있다.
 - [x] module/namespace/import 규칙 초안이 있다.
 - [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
+- [x] ambient function signature 문법 초안과 parser fixture가 있다.
 - [x] 이름 해석 규칙 초안이 있다.
 - [x] overload candidate 규칙 초안이 있다.
 - [x] generic constraint 문법 초안이 있다.
@@ -212,6 +213,7 @@
 - [x] generated C# imported generic type reference build smoke
 - [x] generated C# generic constraint build smoke
 - [x] generated C# partial declaration lowering smoke
+- [x] generated C# ambient function no-emission smoke
 - [x] generated C# collection expression array lowering smoke
 - [x] generated C# explicit target `List<T>` collection expression lowering smoke
 - [x] generated C# indexer expression lowering smoke
@@ -299,6 +301,7 @@
 - [x] parser literals/attributes positive fixture
 - [x] parser public boundary contract positive fixture
 - [x] parser capability boundaries positive fixture
+- [x] parser ambient declarations positive fixture
 - [x] parser fixture format policy
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
@@ -320,6 +323,7 @@
 - [x] C# source backend golden fixture
 - [x] C# source backend import directive golden fixture
 - [x] CLI build root namespace fallback smoke tests
+- [x] CLI build ambient function no-emission smoke tests
 - [x] C# source backend call expression golden fixture
 - [x] C# source backend block/local golden fixture
 - [x] generated C# `net48` compile smoke

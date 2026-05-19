@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | Lexical grammar and tokens | [grammar/lexical.md](grammar/lexical.md), [grammar/README.md](grammar/README.md) | parser fixtures, TextMate syntax scaffold |
 | Parser precedence and ambiguity rules | [grammar/precedence.md](grammar/precedence.md), [grammar/ambiguity.md](grammar/ambiguity.md) | parser snapshot fixtures |
-| Module graph, namespace, import/export | [grammar/modules.md](grammar/modules.md), [grammar/resolution.md](grammar/resolution.md) | parser fixtures, binder symbols, backend import snapshots, root namespace fallback build smoke |
+| Module graph, namespace, import/export, ambient signatures | [grammar/modules.md](grammar/modules.md), [grammar/resolution.md](grammar/resolution.md) | parser fixtures, binder symbols, backend import snapshots, root namespace fallback build smoke, ambient parser fixture and build smoke |
 | Function, value, literal declarations | [grammar/declarations.md](grammar/declarations.md), [lowering.md](lowering.md) | parser fixtures, binder/type checker smokes, generated C# snapshots |
 | Record, record expression, class, interface, delegate declarations | [grammar/declarations.md](grammar/declarations.md), [grammar/types.md](grammar/types.md), [grammar/expressions.md](grammar/expressions.md), [lowering.md](lowering.md) | backend snapshots, record expression diagnostics, generic constraint lowering snapshot, generated `net48` build, C# consumer smokes |
 | Nominal closed union declarations | [grammar/declarations.md](grammar/declarations.md), [grammar/types.md](grammar/types.md), [standard-library.md](standard-library.md), [lowering.md](lowering.md) | runtime helper smokes, backend snapshots, generated build and consumer smokes |
