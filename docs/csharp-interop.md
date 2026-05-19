@@ -134,6 +134,7 @@ fun isSlug(value: string): bool =
 - `TypeName(args)`는 C# constructor call로 해석한다.
 - `TypeName.Member`는 static member, `value.Member`는 instance member lookup으로 해석한다.
 - property get은 member access로, property set은 assignment로 낮춘다.
+- field read는 member access로 낮추고 static/instance field shape은 C# metadata로 index한다.
 - indexer는 `value[index]` 형태로 다루고 generated C#의 일반 indexer/array access로 낮춘다.
 
 ### Named, Optional, Params Argument

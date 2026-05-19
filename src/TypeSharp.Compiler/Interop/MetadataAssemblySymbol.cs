@@ -18,7 +18,8 @@ public sealed record MetadataTypeSymbol(
     string Namespace,
     string Name,
     IReadOnlyList<MetadataMethodSymbol> Methods,
-    IReadOnlyList<MetadataPropertySymbol> Properties)
+    IReadOnlyList<MetadataPropertySymbol> Properties,
+    IReadOnlyList<MetadataFieldSymbol> Fields)
 {
     public string FullName => Namespace.Length == 0 ? Name : $"{Namespace}.{Name}";
 }
@@ -32,6 +33,12 @@ public sealed record MetadataMethodSymbol(
 public sealed record MetadataPropertySymbol(
     string Name,
     string Type);
+
+public sealed record MetadataFieldSymbol(
+    string Name,
+    string Type,
+    bool IsStatic,
+    bool IsLiteral);
 
 public sealed record MetadataParameterSymbol(
     string Name,

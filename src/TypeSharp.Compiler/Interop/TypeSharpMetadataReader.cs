@@ -89,7 +89,8 @@ public static class TypeSharpMetadataReader
                     reader.GetString(type.Namespace),
                     reader.GetString(type.Name),
                     ReadPublicMethods(reader, type, assemblyHasNullableMetadata),
-                    ReadPublicProperties(reader, type)));
+                    ReadPublicProperties(reader, type),
+                    ReadPublicFields(reader, type)));
             }
         }
         catch (BadImageFormatException)
@@ -175,6 +176,29 @@ public static class TypeSharpMetadataReader
         }
 
         return properties;
+    }
+
+    private static IReadOnlyList<MetadataFieldSymbol> ReadPublicFields(MetadataReader reader, TypeDefinition type)
+    {
+        var fields = new List<MetadataFieldSymbol>();
+        foreach (var handle in type.GetFields())
+        {
+            var field = reader.GetFieldDefinition(handle);
+            if (!field.Attributes.HasFlag(System.Reflection.FieldAttributes.Public))
+            {
+                continue;
+            }
+
+            var provider = new SimpleSignatureTypeProvider();
+            var signature = field.DecodeSignature(provider, genericContext: null);
+            fields.Add(new MetadataFieldSymbol(
+                reader.GetString(field.Name),
+                signature.Name,
+                field.Attributes.HasFlag(System.Reflection.FieldAttributes.Static),
+                field.Attributes.HasFlag(System.Reflection.FieldAttributes.Literal)));
+        }
+
+        return fields;
     }
 
     private static bool IsPublicAccessor(MetadataReader reader, MethodDefinitionHandle handle)

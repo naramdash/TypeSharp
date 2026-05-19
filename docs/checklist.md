@@ -116,6 +116,7 @@
 - [x] C# assembly reference
 - [x] C# local DLL reference
 - [x] C# constructor/static/instance member call
+- [x] C# imported field access compile smoke
 - [x] C# imported indexer access compile smoke
 - [x] C# attribute reference interop compile smoke
 - [x] C# generic type reference interop compile smoke
@@ -142,6 +143,7 @@
 - [x] metadata reader
 - [x] C# metadata reader skeleton
 - [x] C# metadata reader local public symbol index
+- [x] C# metadata reader public field symbol index
 - [x] C# metadata reader params parameter flag
 - [x] C# reference resolver skeleton
 - [x] C# metadata diagnostics pipeline integration
@@ -178,6 +180,7 @@
 - [x] generated C# pipeline expression build smoke
 - [x] generated C# imported constructor and instance member call build smoke
 - [x] generated C# imported property access build smoke
+- [x] generated C# imported field access build smoke
 - [x] generated C# imported indexer access build smoke
 - [x] generated C# imported `params` call build smoke
 - [x] generated C# imported `out` call build smoke
@@ -318,6 +321,7 @@
 - [x] C# local DLL static member call smoke tests
 - [x] C# constructor and instance member call smoke tests
 - [x] C# property access smoke tests
+- [x] C# field access smoke tests
 - [x] C# indexer access smoke tests
 - [x] C# `params` call smoke tests
 - [x] C# `out` call smoke tests

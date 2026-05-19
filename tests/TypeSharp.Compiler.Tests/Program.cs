@@ -143,6 +143,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles local DLL static member call", CliBuildCompilesLocalDllStaticMemberCall),
     ("CLI build compiles imported constructor and instance member call", CliBuildCompilesImportedConstructorAndInstanceMemberCall),
     ("CLI build compiles imported property access", CliBuildCompilesImportedPropertyAccess),
+    ("CLI build compiles imported field access", CliBuildCompilesImportedFieldAccess),
     ("CLI build compiles imported indexer access", CliBuildCompilesImportedIndexerAccess),
     ("CLI build compiles imported params call", CliBuildCompilesImportedParamsCall),
     ("CLI build compiles imported out call", CliBuildCompilesImportedOutCall),
@@ -1168,7 +1169,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFields"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -1222,6 +1223,17 @@ static void MetadataReaderIndexesLocalPublicSymbols()
 
         var legacyBox = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyBox`1"), "LegacyBox<T> metadata should be present.");
         AssertSequence(["Value"], legacyBox.Properties.Select(property => property.Name).ToArray());
+
+        var legacyFields = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFields"), "LegacyFields metadata should be present.");
+        AssertSequence(["InstanceCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        var staticCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "StaticCode"), "StaticCode field metadata should be present.");
+        AssertEqual("string", staticCode.Type);
+        AssertTrue(staticCode.IsStatic, "StaticCode should be marked static.");
+        AssertTrue(staticCode.IsLiteral, "StaticCode should be marked literal.");
+        var instanceCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "InstanceCode"), "InstanceCode field metadata should be present.");
+        AssertEqual("string", instanceCode.Type);
+        AssertFalse(instanceCode.IsStatic, "InstanceCode should not be marked static.");
+        AssertFalse(instanceCode.IsLiteral, "InstanceCode should not be marked literal.");
     });
 }
 
@@ -1398,6 +1410,7 @@ static void CSharpOverloadResolverSelectsExactLiteralMatch()
                 MetadataNullabilityKind.NotApplicable,
                 [new MetadataParameterSymbol("value", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
         ],
+        [],
         []);
 
     var resolution = TypeSharpCSharpOverloadResolver.Resolve(
@@ -3688,6 +3701,55 @@ static void CliBuildCompilesImportedPropertyAccess()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedPropertyAccess.dll")),
             "Generated project build should compile imported property access.");
+    });
+}
+
+static void CliBuildCompilesImportedFieldAccess()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedFieldAccess"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedFieldAccess"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedFieldAccess
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun codes(): string {
+              let fields = LegacyFields()
+              LegacyFields.StaticCode + ":" + fields.InstanceCode
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedFieldAccess.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var fields = new LegacyFields();", generatedSource);
+        AssertContains("return LegacyFields.StaticCode + \":\" + fields.InstanceCode;", generatedSource);
+
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "ImportedFieldAccess.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
+        AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedFieldAccess.dll")),
+            "Generated project build should compile imported field access.");
     });
 }
 
@@ -6595,6 +6657,13 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 {
                     return prefix + value;
                 }
+            }
+
+            public sealed class LegacyFields
+            {
+                public const string StaticCode = "static";
+
+                public readonly string InstanceCode = "instance";
             }
         }
         """);

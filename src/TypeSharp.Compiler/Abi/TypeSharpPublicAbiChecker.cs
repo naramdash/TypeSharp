@@ -20,6 +20,11 @@ public static class TypeSharpPublicAbiChecker
                 lines.Add($"  property {property.Type} {property.Name}");
             }
 
+            foreach (var field in type.Fields.OrderBy(field => field.Name, StringComparer.Ordinal))
+            {
+                lines.Add($"  field {FormatFieldModifiers(field)}{field.Type} {field.Name}");
+            }
+
             foreach (var method in type.Methods
                 .OrderBy(method => method.Name, StringComparer.Ordinal)
                 .ThenBy(method => FormatParameters(method.Parameters), StringComparer.Ordinal))
@@ -29,6 +34,22 @@ public static class TypeSharpPublicAbiChecker
         }
 
         return new PublicAbiSnapshot(lines);
+    }
+
+    private static string FormatFieldModifiers(MetadataFieldSymbol field)
+    {
+        var modifiers = new List<string>();
+        if (field.IsStatic)
+        {
+            modifiers.Add("static");
+        }
+
+        if (field.IsLiteral)
+        {
+            modifiers.Add("literal");
+        }
+
+        return modifiers.Count == 0 ? string.Empty : $"{string.Join(" ", modifiers)} ";
     }
 
     private static string FormatParameters(IReadOnlyList<MetadataParameterSymbol> parameters) =>
