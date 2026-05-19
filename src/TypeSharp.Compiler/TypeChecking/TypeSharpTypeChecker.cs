@@ -440,9 +440,17 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckExpressionWithExpected(SyntaxNode node, TypeScope scope, SimpleType? expectedType)
         {
-            return expectedType.HasValue && node.Kind == SyntaxKind.RecordExpression
-                ? CheckRecordExpression(node, scope, expectedType.Value)
-                : CheckExpression(node, scope);
+            if (expectedType.HasValue && node.Kind == SyntaxKind.RecordExpression)
+            {
+                return CheckRecordExpression(node, scope, expectedType.Value);
+            }
+
+            if (expectedType.HasValue && node.Kind == SyntaxKind.CollectionExpression)
+            {
+                return InferCollection(node, scope, expectedType.Value);
+            }
+
+            return CheckExpression(node, scope);
         }
 
         private SimpleType CheckExpression(SyntaxNode node, TypeScope scope)
@@ -586,7 +594,7 @@ public static class TypeSharpTypeChecker
             return fields;
         }
 
-        private SimpleType InferCollection(SyntaxNode node, TypeScope scope)
+        private SimpleType InferCollection(SyntaxNode node, TypeScope scope, SimpleType? expectedType = null)
         {
             var elementTypes = new List<SimpleType>();
             foreach (var element in node.Children.Where(child => !child.IsToken))
@@ -597,7 +605,9 @@ public static class TypeSharpTypeChecker
             var knownElementTypes = elementTypes.Where(type => type.IsKnown).ToArray();
             if (knownElementTypes.Length == 0)
             {
-                return SimpleType.Unknown;
+                return expectedType.HasValue && TryGetCollectionElementType(expectedType.Value, out _)
+                    ? expectedType.Value
+                    : SimpleType.Unknown;
             }
 
             var elementType = knownElementTypes[0];
@@ -619,7 +629,47 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
+            if (expectedType.HasValue &&
+                TryGetCollectionElementType(expectedType.Value, out var expectedElementType))
+            {
+                if (IsNullabilityViolation(expectedElementType, elementType) ||
+                    !CanAssign(scope, expectedElementType, elementType))
+                {
+                    ReportMismatch(
+                        node,
+                        $"Collection expression element expects '{expectedElementType}' but found '{elementType}'.");
+                    return SimpleType.Unknown;
+                }
+
+                return expectedType.Value;
+            }
+
             return SimpleType.Named($"{elementType.Name}[]");
+        }
+
+        private static bool TryGetCollectionElementType(SimpleType collectionType, out SimpleType elementType)
+        {
+            elementType = SimpleType.Unknown;
+            if (!collectionType.IsKnown || collectionType.IsNull)
+            {
+                return false;
+            }
+
+            if (collectionType.Name.EndsWith("[]", StringComparison.Ordinal))
+            {
+                elementType = SimpleType.Named(collectionType.Name[..^2]);
+                return true;
+            }
+
+            if (TryGetSingleGenericArgument(collectionType.Name, out var typeName, out var argument) &&
+                (string.Equals(typeName, "List", StringComparison.Ordinal) ||
+                 string.Equals(typeName, "System.Collections.Generic.List", StringComparison.Ordinal)))
+            {
+                elementType = SimpleType.Named(argument);
+                return true;
+            }
+
+            return false;
         }
 
         private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
@@ -1429,6 +1479,29 @@ public static class TypeSharpTypeChecker
             }
 
             return false;
+        }
+
+        private static bool TryGetSingleGenericArgument(string typeName, out string genericName, out string argument)
+        {
+            genericName = string.Empty;
+            argument = string.Empty;
+
+            var open = typeName.IndexOf('<', StringComparison.Ordinal);
+            var close = typeName.LastIndexOf('>');
+            if (open <= 0 || close <= open + 1 || close != typeName.Length - 1)
+            {
+                return false;
+            }
+
+            var inner = typeName.Substring(open + 1, close - open - 1).Trim();
+            if (inner.Length == 0 || inner.Contains(',', StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            genericName = typeName[..open].Trim();
+            argument = inner;
+            return genericName.Length > 0;
         }
 
         private static bool TryGetFirstIdentifier(SyntaxNode node, out SyntaxNode identifier)

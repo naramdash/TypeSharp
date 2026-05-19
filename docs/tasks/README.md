@@ -93,3 +93,4 @@
 | [0144-csharp-interface-interop-smoke.md](0144-csharp-interface-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 interface metadata index와 imported interface reference compile smoke를 추가한다. |
 | [0145-github-readme-human-accessibility.md](0145-github-readme-human-accessibility.md) | Q5 | Done | GitHub repository 첫 화면용 root `README.md`를 일반 사용자에게 읽히는 소개/quickstart/문서 길잡이로 만든다. |
 | [0146-github-pages-human-docs-expansion.md](0146-github-pages-human-docs-expansion.md) | Q5 | Done | TypeScript/F#/C# 공식 문서 구조를 참고해 GitHub Pages 문서 사이트를 tutorials, guides, cookbook, fundamentals, grammar, API 중심으로 확장한다. |
+| [0147-list-target-collection-expression-lowering.md](0147-list-target-collection-expression-lowering.md) | Q2-Q3 | Done | 명시적 target `List<T>` collection expression을 C# 7.3-compatible collection initializer로 낮추고 smoke/fixture 근거를 추가한다. |

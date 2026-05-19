@@ -113,6 +113,7 @@
 - [x] basic structural type checking
 - [x] `Task`/`Task<T>` async interop
 - [x] simple homogeneous collection expression to array lowering
+- [x] explicit target `List<T>` collection expression lowering
 - [x] indexer expression lowering
 - [x] C# assembly reference
 - [x] C# local DLL reference
@@ -198,6 +199,7 @@
 - [x] generated C# imported generic type reference build smoke
 - [x] generated C# generic constraint build smoke
 - [x] generated C# collection expression array lowering smoke
+- [x] generated C# explicit target `List<T>` collection expression lowering smoke
 - [x] generated C# indexer expression lowering smoke
 - [x] generated C# record expression construction smoke
 - [x] IL backend abstraction seam

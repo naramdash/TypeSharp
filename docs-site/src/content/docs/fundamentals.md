@@ -46,7 +46,7 @@ Records are immutable-first data types. Classes and interfaces lower to C#-frien
 
 ## Collections, Pipelines, And Async
 
-Simple homogeneous collection expressions lower to arrays. Pipeline expressions lower to nested function calls.
+Simple homogeneous collection expressions lower to arrays by default, or to `List<T>` when an explicit target type is present. Pipeline expressions lower to nested function calls.
 
 ```text
 export fun total(): int {

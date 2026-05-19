@@ -198,6 +198,8 @@ export fun numbers(): int[] {
   let values: int[] = [1, 2, 3]
   values
 }
+
+export fun nameList(): List<string> = ["Ada", "Grace"]
 ```
 
 Generated C#:
@@ -213,13 +215,20 @@ public static int[] numbers()
     var values = new int[] { 1, 2, 3 };
     return values;
 }
+
+public static List<string> nameList()
+{
+    return new List<string> { "Ada", "Grace" };
+}
 ```
 
 Rules:
 - simple homogeneous collection expressions lower to C# 7.3-compatible array creation expressions.
+- explicit target `List<T>` collection expressions lower to C# 7.3-compatible collection initializers.
 - expected array types from return annotations or local annotations drive empty array lowering.
+- expected `List<T>` types from return annotations or local annotations drive empty list lowering.
 - mixed known element types are reported as `TS2201`.
-- `List<T>`, dictionary, spread, target-specific builder, and advanced C# collection expression forms remain Stable Backlog.
+- target-type-free `List<T>` inference, dictionary, spread, target-specific builder, and advanced C# collection expression forms remain Stable Backlog.
 
 Evidence:
 - `tests/fixtures/backend/csharp/positive/0022-collection-expression-lowering`

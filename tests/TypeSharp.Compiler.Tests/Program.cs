@@ -5861,12 +5861,23 @@ static void CliBuildCompilesCollectionExpressionLowering()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.Collections
 
+            import { List } from "System.Collections.Generic"
+
             export fun names(): string[] = ["Ada", "Grace"]
 
             export fun emptyNames(): string[] = []
 
             export fun numbers(): int[] {
               let values: int[] = [1, 2, 3]
+              values
+            }
+
+            export fun nameList(): List<string> = ["Ada", "Grace"]
+
+            export fun emptyNameList(): List<string> = []
+
+            export fun numberList(): List<int> {
+              let values: List<int> = [1, 2, 3]
               values
             }
             """);
@@ -5883,6 +5894,9 @@ static void CliBuildCompilesCollectionExpressionLowering()
         AssertContains("return new string[] { \"Ada\", \"Grace\" };", generatedSource);
         AssertContains("return new string[] { };", generatedSource);
         AssertContains("var values = new int[] { 1, 2, 3 };", generatedSource);
+        AssertContains("return new List<string> { \"Ada\", \"Grace\" };", generatedSource);
+        AssertContains("return new List<string> { };", generatedSource);
+        AssertContains("var values = new List<int> { 1, 2, 3 };", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CollectionExpressions.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with collection expression lowering.");
@@ -5923,10 +5937,17 @@ static void CliBuildCompilesCollectionExpressionLowering()
                         var names = Samples.Collections.Module.names();
                         var empty = Samples.Collections.Module.emptyNames();
                         var numbers = Samples.Collections.Module.numbers();
+                        var nameList = Samples.Collections.Module.nameList();
+                        var emptyNameList = Samples.Collections.Module.emptyNameList();
+                        var numberList = Samples.Collections.Module.numberList();
                         return names.Length == 2
                             && names[1] == "Grace"
                             && empty.Length == 0
-                            && numbers[2] == 3;
+                            && numbers[2] == 3
+                            && nameList.Count == 2
+                            && nameList[1] == "Grace"
+                            && emptyNameList.Count == 0
+                            && numberList[2] == 3;
                     }
                 }
             }

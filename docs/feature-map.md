@@ -194,7 +194,7 @@ Lowering:
 
 ## 8. Collection Expression
 
-상태: MVP for simple homogeneous array literal, Stable Backlog for `List<T>`/advanced collection expression, C# 15 collection argument는 Preview Watch
+상태: MVP for simple homogeneous array literal and explicit target `List<T>` lowering, Stable Backlog for advanced collection expression, C# 15 collection argument는 Preview Watch
 
 출처:
 - C# collection expression과 C# 15 collection expression arguments
@@ -203,7 +203,8 @@ Lowering:
 
 TypeSharp 결정:
 - 기본 homogeneous array literal은 MVP 문법과 C# 7.3 source backend lowering으로 지원한다.
-- `List<T>` literal inference, dictionary literal, spread, target-specific builder는 Stable Backlog로 둔다.
+- 명시적 또는 문맥상 target type이 `List<T>`일 때 collection literal은 C# 7.3-compatible `new List<T> { ... }` collection initializer로 낮춘다.
+- target type 없이 `List<T>`로 추론하는 정책, dictionary literal, spread, target-specific builder는 Stable Backlog로 둔다.
 - 사전 literal, spread, target-specific builder는 Stable Backlog로 둔다.
 - capacity/comparer 같은 생성 인자는 preview feature로 분리한다.
 - target type이 없는 homogeneous collection literal은 MVP에서 `T[]`로 추론한다.
@@ -211,7 +212,8 @@ TypeSharp 결정:
 
 Lowering:
 - implemented MVP array literal lowers to C# 7.3-compatible `new T[] { ... }`.
-- future `List<T>` constructor, collection initializer, and helper factory lowering remain Stable Backlog until target-type policy is richer.
+- explicit target `List<T>` literal lowers to C# 7.3-compatible `new List<T> { ... }`.
+- future `List<T>` inference, dictionary constructor, spread, target-specific builder, and helper factory lowering remain Stable Backlog until target-type policy is richer.
 
 ## 9. Record와 Immutable Data
 

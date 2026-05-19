@@ -1,10 +1,21 @@
 namespace Samples.Collections
 
+import { List } from "System.Collections.Generic"
+
 export fun names(): string[] = ["Ada", "Grace"]
 
 export fun emptyNames(): string[] = []
 
 export fun numbers(): int[] {
   let values: int[] = [1, 2, 3]
+  values
+}
+
+export fun nameList(): List<string> = ["Ada", "Grace"]
+
+export fun emptyNameList(): List<string> = []
+
+export fun numberList(): List<int> {
+  let values: List<int> = [1, 2, 3]
   values
 }

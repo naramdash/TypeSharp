@@ -1036,6 +1036,11 @@ public static class CSharpSourceBackend
         {
             var elements = node.Children.Where(child => !child.IsToken).ToArray();
             var initializer = FormatCollectionInitializer(elements);
+            if (TryGetListCollectionType(expectedType, out var listType))
+            {
+                return $"new {listType} {initializer}";
+            }
+
             var expectedElementType = GetArrayElementType(expectedType);
             if (expectedElementType.Length > 0)
             {
@@ -1587,6 +1592,30 @@ public static class CSharpSourceBackend
             return typeName[..^2];
         }
 
+        private static bool TryGetListCollectionType(string? typeName, out string listType)
+        {
+            listType = string.Empty;
+            if (string.IsNullOrWhiteSpace(typeName))
+            {
+                return false;
+            }
+
+            var trimmed = typeName.Trim();
+            if (!TryGetSingleGenericArgument(trimmed, out var genericName, out _))
+            {
+                return false;
+            }
+
+            if (!string.Equals(genericName, "List", StringComparison.Ordinal) &&
+                !string.Equals(genericName, "System.Collections.Generic.List", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            listType = trimmed;
+            return true;
+        }
+
         private static string MapSourceTypeName(string sourceType) =>
             sourceType switch
             {
@@ -1632,10 +1661,62 @@ public static class CSharpSourceBackend
 
             if (node.Kind == SyntaxKind.TypeName)
             {
+                if (TryGetSourceGenericType(node, out var genericType))
+                {
+                    return genericType;
+                }
+
                 return GetQualifiedName(node);
             }
 
             return "object";
+        }
+
+        private static bool TryGetSourceGenericType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var baseType = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeName);
+            var argumentList = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeArgumentList);
+            if (baseType is null || argumentList is null)
+            {
+                return false;
+            }
+
+            var baseName = GetSourceTypeName(baseType);
+            var arguments = argumentList.Children
+                .Where(child => !child.IsToken)
+                .Select(GetSourceTypeName)
+                .ToArray();
+            if (baseName.Length == 0 || arguments.Length == 0)
+            {
+                return false;
+            }
+
+            type = $"{baseName}<{string.Join(",", arguments)}>";
+            return true;
+        }
+
+        private static bool TryGetSingleGenericArgument(string typeName, out string genericName, out string argument)
+        {
+            genericName = string.Empty;
+            argument = string.Empty;
+
+            var open = typeName.IndexOf('<', StringComparison.Ordinal);
+            var close = typeName.LastIndexOf('>');
+            if (open <= 0 || close <= open + 1 || close != typeName.Length - 1)
+            {
+                return false;
+            }
+
+            var inner = typeName.Substring(open + 1, close - open - 1).Trim();
+            if (inner.Length == 0 || inner.Contains(',', StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            genericName = typeName[..open].Trim();
+            argument = inner;
+            return genericName.Length > 0;
         }
 
         private static bool CanEmitConstLiteral(string type, SyntaxNode? initializer)
