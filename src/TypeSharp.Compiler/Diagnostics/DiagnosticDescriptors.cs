@@ -146,6 +146,15 @@ public static class DiagnosticDescriptors
         "The current C# 7.3 backend can lower class, struct, new(), and nominal/interface type constraints, but not every design-level TypeSharp constraint.",
         "Use a C# 7.3-compatible constraint or remove the unsupported constraint until the backend supports it.");
 
+    public static readonly DiagnosticDescriptor DynamicCapabilityRequired = new(
+        "TS2206",
+        "Dynamic capability required",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Dynamic type annotation requires a 'dynamic' function modifier.",
+        "The dynamic type weakens static checking and must be visible at the function boundary before code can cross a late-bound .NET dynamic boundary.",
+        "Add the 'dynamic' modifier to the containing function or replace the annotation with a statically checked type.");
+
     public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
         "TS2203",
         "Non-exhaustive match",
@@ -237,6 +246,7 @@ public static class DiagnosticDescriptors
         NonExhaustiveMatch,
         PublicBoundaryTypeLeak,
         UnsupportedGenericConstraint,
+        DynamicCapabilityRequired,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,

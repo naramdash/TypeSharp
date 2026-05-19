@@ -97,3 +97,4 @@
 | [0148-unsupported-package-reference-diagnostic.md](0148-unsupported-package-reference-diagnostic.md) | Q3-Q4 | Done | manifest `references.packages`를 `TS2405` unsupported package reference diagnostic으로 고정하고 check/build no-emission smoke를 추가한다. |
 | [0149-partial-declaration-lowering.md](0149-partial-declaration-lowering.md) | Q2-Q3 | Done | `partial` declaration modifier를 parser/backend에 연결하고 class/interface/record/module C# 7.3 lowering smoke를 추가한다. |
 | [0150-official-docs-benchmark-and-docs-expansion.md](0150-official-docs-benchmark-and-docs-expansion.md) | Q5 | Done | Vue/Nuxt/TypeScript/C#/F# 공식 문서 사이트 전체 구조를 벤치마크하고 그 결과로 GitHub Pages 문서를 초심자부터 고급 사용자까지 포괄하도록 확장한다. |
+| [0151-dynamic-capability-boundary-diagnostic.md](0151-dynamic-capability-boundary-diagnostic.md) | Q2-Q3 | Done | `dynamic` type annotation이 명시 `dynamic fun` boundary 밖에서 쓰이면 `TS2206`으로 막는다. |

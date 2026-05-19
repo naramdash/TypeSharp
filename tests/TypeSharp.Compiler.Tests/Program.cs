@@ -123,6 +123,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
     ("CLI check emits JSON duplicate symbol diagnostics", CliCheckEmitsJsonDuplicateSymbolDiagnostics),
     ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
+    ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
     ("CLI check keeps warnings nonblocking by default", CliCheckKeepsWarningsNonblockingByDefault),
     ("CLI check treats warnings as errors", CliCheckTreatsWarningsAsErrors),
     ("CLI build stops before emission on warnings as errors", CliBuildStopsBeforeEmissionOnWarningsAsErrors),
@@ -255,6 +256,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2203",
             "TS2204",
             "TS2205",
+            "TS2206",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -2837,6 +2839,30 @@ static void CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2205\"", error.ToString());
         AssertContains("Generic constraint 'notnull' cannot be lowered by the C# 7.3 backend.", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonDynamicCapabilityDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("DynamicCapabilityJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DynamicCapabilityJson
+
+            export fun leak(value: dynamic): string =
+              value.ToString()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2206\"", error.ToString());
+        AssertContains("Dynamic type annotation requires a 'dynamic' function modifier.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
 

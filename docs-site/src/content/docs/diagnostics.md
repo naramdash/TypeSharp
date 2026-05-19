@@ -19,4 +19,4 @@ Example explanation command:
 typesharp explain TS2204
 ```
 
-The descriptor registry keeps diagnostic code, severity, category, explanation, and suggested action stable for tools. Current binding diagnostics include unresolved names like `TS2001` and duplicate symbols like `TS2002`; current type-checking diagnostics include public-boundary leaks like `TS2204` and C# 7.3 backend constraint limits like `TS2205`.
+The descriptor registry keeps diagnostic code, severity, category, explanation, and suggested action stable for tools. Current binding diagnostics include unresolved names like `TS2001` and duplicate symbols like `TS2002`; current type-checking diagnostics include public-boundary leaks like `TS2204`, C# 7.3 backend constraint limits like `TS2205`, and dynamic capability boundary errors like `TS2206`.

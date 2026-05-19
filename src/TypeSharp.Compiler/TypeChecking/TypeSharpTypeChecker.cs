@@ -237,7 +237,8 @@ public static class TypeSharpTypeChecker
         {
             CheckGenericConstraints(node);
 
-            var scope = new TypeScope(parentScope);
+            var scope = new TypeScope(parentScope, allowsDynamic: HasFunctionModifier(node, SyntaxKind.DynamicModifier));
+            CheckFunctionDynamicCapability(node, scope);
             foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
             {
                 if (TryGetFirstIdentifier(parameter, out var parameterIdentifier) &&
@@ -392,6 +393,10 @@ public static class TypeSharpTypeChecker
             var annotationKnown =
                 TryGetDirectTypeAnnotation(node, out var typeNode) &&
                 TryGetType(typeNode, out expectedType);
+            if (annotationKnown && !scope.AllowsDynamic && ContainsDynamicType(typeNode))
+            {
+                ReportDynamicCapabilityRequired(typeNode);
+            }
 
             var initializerType = SimpleType.Unknown;
             if (node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer) is { } initializer)
@@ -1002,6 +1007,40 @@ public static class TypeSharpTypeChecker
                 node.Span));
         }
 
+        private void ReportDynamicCapabilityRequired(SyntaxNode node)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.DynamicCapabilityRequired.Code,
+                DiagnosticDescriptors.DynamicCapabilityRequired.DefaultSeverity,
+                DiagnosticDescriptors.DynamicCapabilityRequired.MessageTemplate,
+                _file,
+                node.Span));
+        }
+
+        private void CheckFunctionDynamicCapability(SyntaxNode node, TypeScope scope)
+        {
+            if (scope.AllowsDynamic)
+            {
+                return;
+            }
+
+            foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
+            {
+                if (TryGetDirectTypeAnnotation(parameter, out var annotation) && ContainsDynamicType(annotation))
+                {
+                    ReportDynamicCapabilityRequired(annotation);
+                }
+            }
+
+            foreach (var annotation in node.Children.Where(child => child.Kind == SyntaxKind.TypeAnnotation))
+            {
+                if (ContainsDynamicType(annotation))
+                {
+                    ReportDynamicCapabilityRequired(annotation);
+                }
+            }
+        }
+
         private void ReportPublicBoundaryLeaks(SyntaxNode node, TypeScope scope)
         {
             if (node.Kind == SyntaxKind.TypeAnnotation)
@@ -1068,6 +1107,9 @@ public static class TypeSharpTypeChecker
         private static bool IsAsyncFunction(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);
 
+        private static bool HasFunctionModifier(SyntaxNode node, SyntaxKind modifier) =>
+            node.Children.Any(child => child.Kind == modifier);
+
         private static bool TryGetTypeAliasTarget(SyntaxNode node, out SyntaxNode target)
         {
             target = node.Children.LastOrDefault(child => !child.IsToken) ?? node;
@@ -1127,6 +1169,18 @@ public static class TypeSharpTypeChecker
             }
 
             return false;
+        }
+
+        private static bool ContainsDynamicType(SyntaxNode node)
+        {
+            if (node.Kind == SyntaxKind.TypeName &&
+                TryGetSimpleTypeName(node, out var name) &&
+                string.Equals(name, "dynamic", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return node.Children.Any(child => !child.IsToken && ContainsDynamicType(child));
         }
 
         private static bool TryGetTypeLevelUnion(string name, SyntaxNode node, out TypeLevelUnionInfo union)
@@ -1537,6 +1591,7 @@ public static class TypeSharpTypeChecker
     private sealed class TypeScope : ITypeSharpInferenceScope
     {
         private readonly TypeScope? _parent;
+        private readonly bool _allowsDynamic;
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, SimpleType> _functions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
@@ -1546,10 +1601,13 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, ShapeInfo> _recordShapes = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
-        public TypeScope(TypeScope? parent)
+        public TypeScope(TypeScope? parent, bool allowsDynamic = false)
         {
             _parent = parent;
+            _allowsDynamic = allowsDynamic;
         }
+
+        public bool AllowsDynamic => _allowsDynamic || (_parent?.AllowsDynamic ?? false);
 
         public void DeclareValue(string name, SimpleType type) => _values[name] = type;
 

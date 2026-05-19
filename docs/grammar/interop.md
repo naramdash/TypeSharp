@@ -195,13 +195,14 @@ capability_modifier ::= "unsafe" | "dynamic" | "reflect" | "interop"
 예:
 
 ```typesharp
-interop fun callLegacy(name: string): dynamic
+interop dynamic fun callLegacy(name: string): dynamic
 unsafe fun copy(src: nativeptr<byte>, dst: nativeptr<byte>, len: int): unit
 ```
 
 규칙:
 - capability marker는 호출자에게 warning 또는 effect로 전파될 수 있다.
 - strict mode에서는 marker 없는 escape를 금지한다.
+- `dynamic` type annotation은 containing function에 `dynamic` modifier가 없으면 `TS2206`으로 보고한다.
 
 ## Extern and Native
 

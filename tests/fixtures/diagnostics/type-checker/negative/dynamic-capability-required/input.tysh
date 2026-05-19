@@ -1,0 +1,15 @@
+namespace Samples.DynamicCapability.Negative
+
+fun missingParameter(value: dynamic): string =
+  value.ToString()
+
+fun missingReturn(value: string): dynamic =
+  value
+
+fun missingLocal(): string {
+  let value: dynamic = "late"
+  value.ToString()
+}
+
+dynamic fun allowed(value: dynamic): dynamic =
+  value

@@ -24,7 +24,7 @@
 | C# overload resolution | MVP | nominal-first ranking을 사용하고 ambiguous call에는 annotation을 요구한다. |
 | `ref`/`out`/`in`/`params` | MVP | declaration parameter modifier를 C# metadata와 연결한다. |
 | C# extension method instance syntax | Stable Backlog | MVP에서는 static call 또는 명시 helper를 우선한다. |
-| `dynamic`/reflection/COM/P/Invoke | MVP opt-in | `dynamic`, `reflect`, `interop`, `unsafe` marker 없이는 strict mode에서 diagnostic이다. |
+| `dynamic`/reflection/COM/P/Invoke | MVP opt-in | `dynamic`, `reflect`, `interop`, `unsafe` marker 없이는 strict mode에서 diagnostic이다. `dynamic` type annotation without a `dynamic fun` boundary is reported as `TS2206`. |
 | F# specific ABI | Stable Backlog | F# option/record/union compatibility layer는 별도 검토한다. |
 | ASP.NET/WCF/worker host compatibility | MVP contract and smoke coverage, Stable Backlog templates/packaging | generated `net48` library와 runtime은 host-specific migration 없이 기존 .NET Framework application model에서 로드 가능해야 한다. ASP.NET Web Forms-style/WCF/worker host smoke는 검증 범위에 포함하고, generated templates와 packaging automation은 별도 단계로 둔다. |
 
@@ -212,7 +212,7 @@ MVP ranking은 C# 소비자가 예측하기 쉬운 순서로 둔다.
 규칙:
 - nominal match는 structural match보다 우선한다.
 - type inference만으로 후보가 안정적으로 하나로 줄지 않으면 diagnostic을 낸다.
-- `dynamic` 값이 포함된 call은 명시 `dynamic` marker 또는 compatibility option 없이는 strict mode에서 diagnostic이다.
+- `dynamic` 값이 포함된 type annotation은 명시 `dynamic` marker 또는 compatibility option 없이는 strict mode에서 `TS2206` diagnostic이다.
 - C# extension method instance-call sugar는 ranking 안정화 전까지 Stable Backlog다.
 
 ## Nullability

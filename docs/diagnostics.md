@@ -40,6 +40,7 @@ Current allocated descriptors:
 | `TS2203` | Type Checking | Error | Non-exhaustive match |
 | `TS2204` | Type Checking | Error | Type-level union or structural shape leaked through public boundary |
 | `TS2205` | Type Checking | Error | Unsupported generic constraint |
+| `TS2206` | Type Checking | Error | Dynamic capability required |
 | `TS2401` | Interop | Error | Missing referenced assembly or namespace |
 | `TS2402` | Interop | Error | Ambiguous C# overload |
 | `TS2403` | Interop | Error | Invalid byref interop use |

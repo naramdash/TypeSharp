@@ -134,6 +134,7 @@
 - [x] C# delegate parameter interop compile smoke
 - [x] C# event interop
 - [x] nullable metadata/unknown nullability diagnostics
+- [x] `dynamic` type annotation capability marker diagnostic
 - [x] TypeSharp assembly consumed from C#
 
 ## 컴파일러
@@ -162,6 +163,7 @@
 - [x] C# optional parameter overload validation smoke
 - [x] C# named argument overload validation smoke
 - [x] C# unknown nullability diagnostic smoke
+- [x] dynamic capability marker diagnostic smoke
 - [x] reference resolver for framework assembly and local DLL
 - [x] semantic model
 - [x] type checker
@@ -330,6 +332,7 @@
 - [x] C# optional parameter overload validation smoke tests
 - [x] C# named argument overload validation smoke tests
 - [x] C# unknown nullability diagnostic smoke tests
+- [x] dynamic capability marker diagnostic smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests
 - [x] C# framework static member call smoke tests
