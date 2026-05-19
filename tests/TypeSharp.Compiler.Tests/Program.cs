@@ -53,6 +53,7 @@ var tests = new (string Name, Action Body)[]
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
+    ("source discovery reports duplicate module paths", SourceDiscoveryReportsDuplicateModulePaths),
     ("runtime project targets net48", RuntimeProjectTargetsNet48),
     ("core project targets net48", CoreProjectTargetsNet48),
     ("runtime ABI constants are aligned", RuntimeAbiConstantsAreAligned),
@@ -79,8 +80,10 @@ var tests = new (string Name, Action Body)[]
     ("checker reports ambiguous optional overload diagnostics", CheckerReportsAmbiguousOptionalOverloadDiagnostics),
     ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
+    ("CLI check emits JSON duplicate source module diagnostics", CliCheckEmitsJsonDuplicateSourceModuleDiagnostics),
     ("CLI check emits JSON unsupported package diagnostics", CliCheckEmitsJsonUnsupportedPackageDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
+    ("CLI build stops before emission on duplicate source modules", CliBuildStopsBeforeEmissionOnDuplicateSourceModules),
     ("CLI build stops before emission on package diagnostics", CliBuildStopsBeforeEmissionOnPackageDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
@@ -258,6 +261,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS0102",
             "TS0103",
             "TS0110",
+            "TS0111",
             "TS1000",
             "TS1001",
             "TS1002",
@@ -855,6 +859,8 @@ static void SourceDiscoveryDefaultsToSrcRoot()
 
         AssertFalse(result.HasErrors, "Source discovery should not fail.");
         AssertSequence(["src/A.tysh", "src/B.tysh"], result.SourceFiles.Select(file => file.RelativePath).ToArray());
+        AssertSequence(["A.tysh", "B.tysh"], result.SourceFiles.Select(file => file.SourceRootRelativePath).ToArray());
+        AssertSequence(["A", "B"], result.SourceFiles.Select(file => file.ModulePath).ToArray());
     });
 }
 
@@ -878,6 +884,31 @@ static void SourceDiscoveryExcludesBuildAndGeneratedFolders()
         var result = SourceDiscovery.Discover(manifest);
 
         AssertSequence(["src/Main.tysh"], result.SourceFiles.Select(file => file.RelativePath).ToArray());
+    });
+}
+
+static void SourceDiscoveryReportsDuplicateModulePaths()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "DuplicateModules"
+            sourceRoots = ["src", "shared"]
+            """);
+        WriteFile(root, "src/Feature/Config.tysh", "namespace Samples\n");
+        WriteFile(root, "shared/Feature/Config.tysh", "namespace Samples\n");
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var result = SourceDiscovery.Discover(manifest);
+
+        AssertTrue(result.HasErrors, "Duplicate source module paths should fail source discovery.");
+        AssertSequence(["shared/Feature/Config.tysh", "src/Feature/Config.tysh"], result.SourceFiles.Select(file => file.RelativePath).ToArray());
+        AssertSequence(["Feature/Config", "Feature/Config"], result.SourceFiles.Select(file => file.ModulePath).ToArray());
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS0111");
+        AssertEqual("src/Feature/Config.tysh", diagnostic.File);
+        AssertContains("Duplicate source module path 'Feature/Config'", diagnostic.Message);
+        AssertContains("shared/Feature/Config.tysh", diagnostic.Message);
     });
 }
 
@@ -1625,6 +1656,30 @@ static void CliCheckEmitsJsonReferenceDiagnostics()
     });
 }
 
+static void CliCheckEmitsJsonDuplicateSourceModuleDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CliDuplicateModules"
+            sourceRoots = ["src", "shared"]
+            """);
+        WriteFile(root, "src/Feature/Config.tysh", "namespace Samples.CliDuplicateModules\n");
+        WriteFile(root, "shared/Feature/Config.tysh", "namespace Samples.CliDuplicateModules\n");
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0111\"", error.ToString());
+        AssertContains("Duplicate source module path 'Feature/Config'", error.ToString());
+        AssertContains("\"file\": \"src/Feature/Config.tysh\"", error.ToString());
+    });
+}
+
 static void CliCheckEmitsJsonUnsupportedPackageDiagnostics()
 {
     WithWorkspace(root =>
@@ -1685,6 +1740,33 @@ static void CliBuildStopsBeforeEmissionOnReferenceDiagnostics()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildReferences.Generated.csproj")), "Build should not emit generated project when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildReferences.dll")), "Build should not emit generated assembly when reference diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnDuplicateSourceModules()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildDuplicateModules"
+            sourceRoots = ["src", "shared"]
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Feature/Config.tysh", "namespace Samples.BuildDuplicateModules\n");
+        WriteFile(root, "shared/Feature/Config.tysh", "namespace Samples.BuildDuplicateModules\n");
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0111\"", error.ToString());
+        AssertContains("Duplicate source module path 'Feature/Config'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Feature", "Config.g.cs")), "Build should not emit generated C# when duplicate source modules contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildDuplicateModules.Generated.csproj")), "Build should not emit generated project when duplicate source modules contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildDuplicateModules.dll")), "Build should not emit generated assembly when duplicate source modules contain errors.");
     });
 }
 

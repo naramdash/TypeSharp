@@ -18,6 +18,8 @@ import_or_open_declaration ::= import_declaration | open_declaration
 규칙:
 - TypeSharp source file의 기본 확장자는 `.tysh`다.
 - 모든 source file은 기본적으로 module이다.
+- 각 source file은 source root 상대 경로에서 `.tysh` 확장자를 제거한 module path를 가진다. 예를 들어 `src/Feature/Config.tysh`는 기본 `src` source root에서 `Feature/Config` module path가 된다.
+- 같은 project 안에서 source-root-relative module path가 중복되면 `typesharp check`와 `typesharp build`는 `TS0111`로 보고한다.
 - source file은 file-scoped namespace를 기본으로 사용한다.
 - file-scoped namespace가 없으면 generated C# namespace는 manifest `rootNamespace`로 fallback한다.
 - import/open은 file-scoped namespace 다음, 실제 선언 전으로 모은다.

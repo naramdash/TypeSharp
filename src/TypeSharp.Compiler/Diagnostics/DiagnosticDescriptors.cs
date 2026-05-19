@@ -47,6 +47,15 @@ public static class DiagnosticDescriptors
         "A configured source root was not found, so no .tysh files can be discovered from that root.",
         "Create the source root or remove it from TypeSharp.toml.");
 
+    public static readonly DiagnosticDescriptor DuplicateSourceModulePath = new(
+        "TS0111",
+        "Duplicate source module path",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Project,
+        "Duplicate source module path.",
+        "Source files are part of the project module graph by their source-root-relative module path. Two files with the same module path would make imports and public surface ownership ambiguous.",
+        "Rename or move one source file, or adjust sourceRoots so each module path is unique.");
+
     public static readonly DiagnosticDescriptor UnexpectedCharacter = new(
         "TS1000",
         "Unexpected character",
@@ -270,6 +279,7 @@ public static class DiagnosticDescriptors
         InvalidManifestSyntax,
         InvalidManifestValue,
         SourceRootNotFound,
+        DuplicateSourceModulePath,
         UnexpectedCharacter,
         MissingFunctionBody,
         UnterminatedStringLiteral,

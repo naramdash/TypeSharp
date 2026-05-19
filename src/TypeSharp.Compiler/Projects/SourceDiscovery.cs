@@ -32,6 +32,8 @@ public static class SourceDiscovery
 
             CollectSourceFiles(
                 manifest.ProjectDirectory,
+                NormalizeSourceRoot(sourceRoot),
+                sourceRootPath,
                 sourceRootPath,
                 generatedOutputRoot,
                 files);
@@ -43,11 +45,15 @@ public static class SourceDiscovery
             .ThenBy(file => file.RelativePath, StringComparer.Ordinal)
             .ToArray();
 
+        ReportDuplicateModulePaths(orderedFiles, diagnostics);
+
         return new SourceDiscoveryResult(orderedFiles, diagnostics);
     }
 
     private static void CollectSourceFiles(
         string projectDirectory,
+        string sourceRoot,
+        string sourceRootPath,
         string directory,
         string generatedOutputRoot,
         List<SourceFile> files)
@@ -61,12 +67,36 @@ public static class SourceDiscovery
         {
             var fullPath = NormalizeFullPath(file);
             var relativePath = NormalizeRelativePath(Path.GetRelativePath(projectDirectory, fullPath));
-            files.Add(new SourceFile(fullPath, relativePath));
+            var sourceRootRelativePath = NormalizeRelativePath(Path.GetRelativePath(sourceRootPath, fullPath));
+            files.Add(new SourceFile(
+                fullPath,
+                relativePath,
+                sourceRoot,
+                sourceRootRelativePath,
+                SourceFile.DeriveModulePath(sourceRootRelativePath)));
         }
 
         foreach (var childDirectory in Directory.EnumerateDirectories(directory).OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase))
         {
-            CollectSourceFiles(projectDirectory, NormalizeFullPath(childDirectory), generatedOutputRoot, files);
+            CollectSourceFiles(projectDirectory, sourceRoot, sourceRootPath, NormalizeFullPath(childDirectory), generatedOutputRoot, files);
+        }
+    }
+
+    private static void ReportDuplicateModulePaths(IReadOnlyList<SourceFile> files, List<Diagnostic> diagnostics)
+    {
+        var seen = new Dictionary<string, SourceFile>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in files)
+        {
+            if (seen.TryGetValue(file.ModulePath, out var existing))
+            {
+                diagnostics.Add(DiagnosticFactory.Manifest(
+                    DiagnosticDescriptors.DuplicateSourceModulePath,
+                    $"Duplicate source module path '{file.ModulePath}' for '{file.RelativePath}'. It conflicts with '{existing.RelativePath}'.",
+                    file.RelativePath));
+                continue;
+            }
+
+            seen.Add(file.ModulePath, file);
         }
     }
 
@@ -94,4 +124,10 @@ public static class SourceDiscovery
 
     private static string NormalizeRelativePath(string path) =>
         path.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+
+    private static string NormalizeSourceRoot(string path)
+    {
+        var normalized = NormalizeRelativePath(path).Trim('/');
+        return string.IsNullOrWhiteSpace(normalized) ? "." : normalized;
+    }
 }

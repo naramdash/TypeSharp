@@ -110,3 +110,4 @@
 | [0161-import-alias-conflict-diagnostics.md](0161-import-alias-conflict-diagnostics.md) | Q2-Q4 | Done | import alias가 같은 file scope의 선언/alias와 충돌하면 `TS2002`로 보고하는 계약을 고정한다. |
 | [0162-export-specifier-parsing.md](0162-export-specifier-parsing.md) | Q2-Q4 | Done | `export { ... }`, `export type { ... }`, `export * from ...` 문법을 parser surface에 추가한다. |
 | [0163-unsupported-export-forwarding-diagnostic.md](0163-unsupported-export-forwarding-diagnostic.md) | Q2-Q4 | Done | source module graph 지원 전 `export { ... }`/`export type { ... }`/`export * from ...` 사용을 `TS2003`으로 막는다. |
+| [0164-source-module-path-identity.md](0164-source-module-path-identity.md) | Q2-Q4 | Done | source root 상대 module path를 source discovery에 고정하고 중복 module path를 `TS0111`로 막는다. |
