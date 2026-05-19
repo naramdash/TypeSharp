@@ -19,6 +19,7 @@ public sealed class TypeSharpLexer
         ["record"] = SyntaxKind.RecordKeyword,
         ["union"] = SyntaxKind.UnionKeyword,
         ["match"] = SyntaxKind.MatchKeyword,
+        ["as"] = SyntaxKind.AsKeyword,
         ["from"] = SyntaxKind.FromKeyword,
         ["with"] = SyntaxKind.WithKeyword,
         ["where"] = SyntaxKind.WhereKeyword,

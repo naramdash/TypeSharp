@@ -248,6 +248,12 @@ public sealed class TypeSharpParser
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
             children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+            if (Current.Kind == SyntaxKind.AsKeyword)
+            {
+                children.Add(TokenNode(NextToken()));
+                children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+            }
+
             if (Current.Kind == SyntaxKind.CommaToken)
             {
                 children.Add(TokenNode(NextToken()));

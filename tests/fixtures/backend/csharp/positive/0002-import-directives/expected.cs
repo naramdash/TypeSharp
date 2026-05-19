@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Text;
 using System.Globalization;
+using Builder = System.Text.StringBuilder;
 using static System.Math;
 
 namespace Samples.BackendImports

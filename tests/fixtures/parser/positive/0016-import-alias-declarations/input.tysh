@@ -1,0 +1,5 @@
+namespace Samples.ImportAliases
+
+import { StringBuilder as Builder, Encoding } from "System.Text"
+
+export fun greeting(): string = "ok"

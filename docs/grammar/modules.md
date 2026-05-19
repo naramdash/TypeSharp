@@ -56,6 +56,7 @@ import static System.Math
 - module specifier는 TypeScript처럼 string literal을 사용한다.
 - .NET assembly reference와 source module path resolution은 project manifest와 compiler host가 담당한다.
 - `import type`은 compile-time type만 가져오며 runtime dependency를 만들지 않는다.
+- 현재 구현된 named import alias slice는 `import { Name as Alias } from "Namespace"`를 generated C# `using Alias = Namespace.Name;` directive로 낮춘다.
 
 ## Export
 

@@ -202,6 +202,7 @@ Positive fixture coverage:
 | `tests/fixtures/parser/positive/0013-partial-declarations` | parser-only fixture | `partial` modules, records, classes, and interfaces |
 | `tests/fixtures/parser/positive/0014-ambient-declarations` | parser-only fixture | `ambient` function signatures without TypeSharp bodies |
 | `tests/fixtures/parser/positive/0015-open-declarations` | parser-only fixture | root-level `open` declarations before exported declarations |
+| `tests/fixtures/parser/positive/0016-import-alias-declarations` | parser-only fixture | named import specifier aliases with `as` |
 
 Negative fixture coverage:
 

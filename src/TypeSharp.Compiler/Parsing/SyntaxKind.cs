@@ -21,6 +21,7 @@ public enum SyntaxKind
     RecordKeyword,
     UnionKeyword,
     MatchKeyword,
+    AsKeyword,
     FromKeyword,
     WithKeyword,
     WhereKeyword,

@@ -666,8 +666,9 @@ public static class TypeSharpBinder
         private static IEnumerable<SyntaxNode> GetNamedImportIdentifiers(SyntaxNode node)
         {
             var insideBraces = false;
-            foreach (var child in node.Children)
+            for (var index = 0; index < node.Children.Count; index++)
             {
+                var child = node.Children[index];
                 if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
                 {
                     insideBraces = true;
@@ -681,7 +682,19 @@ public static class TypeSharpBinder
 
                 if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
                 {
-                    yield return child;
+                    if (index + 2 < node.Children.Count &&
+                        node.Children[index + 1].IsToken &&
+                        node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                        node.Children[index + 2].IsToken &&
+                        node.Children[index + 2].Kind == SyntaxKind.IdentifierToken)
+                    {
+                        yield return node.Children[index + 2];
+                        index += 2;
+                    }
+                    else
+                    {
+                        yield return child;
+                    }
                 }
             }
         }

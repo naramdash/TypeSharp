@@ -94,6 +94,11 @@ public static class CSharpSourceBackend
                 _builder.AppendLine($"using {import};");
             }
 
+            foreach (var alias in imports.Aliases)
+            {
+                _builder.AppendLine($"using {alias.LocalName} = {alias.QualifiedName};");
+            }
+
             var needsRuntime = unions.Length > 0 || ContainsNode(root, SyntaxKind.MatchExpression);
             if (needsRuntime && !imports.Usings.Contains("TypeSharp.Runtime", StringComparer.Ordinal))
             {
@@ -105,7 +110,7 @@ public static class CSharpSourceBackend
                 _builder.AppendLine($"using static {import};");
             }
 
-            if (imports.Usings.Count > 0 || imports.StaticUsings.Count > 0 || needsRuntime)
+            if (imports.Usings.Count > 0 || imports.Aliases.Count > 0 || imports.StaticUsings.Count > 0 || needsRuntime)
             {
                 _builder.AppendLine();
             }
@@ -238,9 +243,11 @@ public static class CSharpSourceBackend
         private static CSharpImports CollectImports(SyntaxNode root)
         {
             var usings = new List<string>();
+            var aliases = new List<CSharpImportAlias>();
             var staticUsings = new List<string>();
             var importedNames = new List<string>();
             var seenUsings = new HashSet<string>(StringComparer.Ordinal);
+            var seenAliases = new HashSet<string>(StringComparer.Ordinal);
             var seenStaticUsings = new HashSet<string>(StringComparer.Ordinal);
             var seenImportedNames = new HashSet<string>(StringComparer.Ordinal);
 
@@ -248,18 +255,25 @@ public static class CSharpSourceBackend
             {
                 if (child.Kind is SyntaxKind.ImportNamedDeclaration or SyntaxKind.ImportTypeDeclaration)
                 {
-                    foreach (var importedName in GetNamedImportIdentifiers(child))
-                    {
-                        if (seenImportedNames.Add(importedName))
-                        {
-                            importedNames.Add(importedName);
-                        }
-                    }
-
                     var moduleSpecifier = child.Children.FirstOrDefault(grandchild => grandchild.IsToken && grandchild.Kind == SyntaxKind.StringLiteralToken);
                     if (TryUnquoteStringLiteral(moduleSpecifier?.Text, out var namespaceName) && seenUsings.Add(namespaceName))
                     {
                         usings.Add(namespaceName);
+                    }
+
+                    foreach (var specifier in GetNamedImportSpecifiers(child))
+                    {
+                        if (seenImportedNames.Add(specifier.LocalName))
+                        {
+                            importedNames.Add(specifier.LocalName);
+                        }
+
+                        if (specifier.IsAlias &&
+                            namespaceName.Length > 0 &&
+                            seenAliases.Add(specifier.LocalName))
+                        {
+                            aliases.Add(new CSharpImportAlias(specifier.LocalName, $"{namespaceName}.{specifier.ImportedName}"));
+                        }
                     }
 
                     continue;
@@ -285,7 +299,7 @@ public static class CSharpSourceBackend
                 }
             }
 
-            return new CSharpImports(usings, staticUsings, importedNames);
+            return new CSharpImports(usings, aliases, staticUsings, importedNames);
         }
 
         private void EmitModuleDeclaration(SyntaxNode node)
@@ -2064,11 +2078,12 @@ public static class CSharpSourceBackend
             return node.Children.Any(child => !child.IsToken && ContainsNode(child, kind));
         }
 
-        private static IEnumerable<string> GetNamedImportIdentifiers(SyntaxNode node)
+        private static IEnumerable<NamedImportSpecifier> GetNamedImportSpecifiers(SyntaxNode node)
         {
             var insideBraces = false;
-            foreach (var child in node.Children)
+            for (var index = 0; index < node.Children.Count; index++)
             {
+                var child = node.Children[index];
                 if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
                 {
                     insideBraces = true;
@@ -2082,15 +2097,36 @@ public static class CSharpSourceBackend
 
                 if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } text)
                 {
-                    yield return text;
+                    if (index + 2 < node.Children.Count &&
+                        node.Children[index + 1].IsToken &&
+                        node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                        node.Children[index + 2].IsToken &&
+                        node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                        node.Children[index + 2].Text is { Length: > 0 } alias)
+                    {
+                        yield return new NamedImportSpecifier(text, alias);
+                        index += 2;
+                    }
+                    else
+                    {
+                        yield return new NamedImportSpecifier(text, text);
+                    }
                 }
             }
         }
 
         private sealed record CSharpImports(
             IReadOnlyList<string> Usings,
+            IReadOnlyList<CSharpImportAlias> Aliases,
             IReadOnlyList<string> StaticUsings,
             IReadOnlyList<string> ImportedNames);
+
+        private readonly record struct CSharpImportAlias(string LocalName, string QualifiedName);
+
+        private readonly record struct NamedImportSpecifier(string ImportedName, string LocalName)
+        {
+            public bool IsAlias => !string.Equals(ImportedName, LocalName, StringComparison.Ordinal);
+        }
 
         private readonly record struct CSharpParameter(string Type, string Name, string SourceType);
 

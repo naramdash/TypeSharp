@@ -148,6 +148,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
+    ("CLI build lowers import alias to using alias directive", CliBuildLowersImportAliasToUsingAliasDirective),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
     ("CLI build compiles framework static member call", CliBuildCompilesFrameworkStaticMemberCall),
@@ -3901,6 +3902,40 @@ static void CliBuildLowersOpenDeclarationsToUsingDirectives()
         AssertEqual(1, CountOccurrences(generatedSource, "using System.Text;"));
         AssertContains("using System.Globalization;", generatedSource);
         AssertContains("namespace Samples.OpenUsing", generatedSource);
+    });
+}
+
+static void CliBuildLowersImportAliasToUsingAliasDirective()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportAlias"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportAlias
+
+            import { StringBuilder as Builder } from "System.Text"
+
+            export fun create(): Builder = Builder()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        AssertContains("using Builder = System.Text.StringBuilder;", generatedSource);
+        AssertContains("public static Builder create()", generatedSource);
+        AssertContains("return new Builder();", generatedSource);
     });
 }
 
