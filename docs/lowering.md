@@ -131,6 +131,37 @@ Evidence:
 - `tests/fixtures/backend/csharp/positive/0004-block-local`
 - `tests/fixtures/backend/csharp/positive/0008-basic-semantics`
 
+## Pipeline Expressions
+
+TypeSharp:
+
+```tysh
+export fun compute(): string =
+  1
+  |> increment
+  |> add(2)
+  |> format
+```
+
+Generated C#:
+
+```csharp
+public static string compute()
+{
+    return format(add(increment(1), 2));
+}
+```
+
+Rules:
+- `value |> f` lowers to `f(value)`.
+- `value |> f(args...)` lowers to `f(value, args...)`.
+- chained pipelines lower as left-associative nested calls.
+- placeholder-based partial application and dedicated composition operators remain Stable Backlog.
+
+Evidence:
+- `tests/fixtures/backend/csharp/positive/0023-pipeline-lowering`
+- `CLI build compiles pipeline lowering`
+
 ## Literals
 
 TypeSharp:
@@ -156,12 +187,84 @@ Evidence:
 - `tests/fixtures/backend/csharp/positive/0007-literal-constants`
 - `CLI build compiles literal constants`
 
+## Collection Expressions
+
+TypeSharp:
+
+```tysh
+export fun names(): string[] = ["Ada", "Grace"]
+
+export fun numbers(): int[] {
+  let values: int[] = [1, 2, 3]
+  values
+}
+```
+
+Generated C#:
+
+```csharp
+public static string[] names()
+{
+    return new string[] { "Ada", "Grace" };
+}
+
+public static int[] numbers()
+{
+    var values = new int[] { 1, 2, 3 };
+    return values;
+}
+```
+
+Rules:
+- simple homogeneous collection expressions lower to C# 7.3-compatible array creation expressions.
+- expected array types from return annotations or local annotations drive empty array lowering.
+- mixed known element types are reported as `TS2201`.
+- `List<T>`, dictionary, spread, target-specific builder, and advanced C# collection expression forms remain Stable Backlog.
+
+Evidence:
+- `tests/fixtures/backend/csharp/positive/0022-collection-expression-lowering`
+- `tests/fixtures/diagnostics/type-checker/negative/collection-expression-mismatch`
+- `CLI build compiles collection expression lowering`
+
+## Indexer Expressions
+
+TypeSharp:
+
+```tysh
+export fun firstName(): string {
+  let names: string[] = ["Ada", "Grace"]
+  names[0]
+}
+```
+
+Generated C#:
+
+```csharp
+public static string firstName()
+{
+    var names = new string[] { "Ada", "Grace" };
+    return names[0];
+}
+```
+
+Rules:
+- `receiver[index]` lowers to C# 7.3-compatible indexer or array access.
+- array receiver types such as `T[]` infer the indexed expression as `T`.
+- imported C# indexers are preserved as normal generated C# indexer access.
+- richer metadata-backed indexer overload validation remains future work.
+
+Evidence:
+- `tests/fixtures/backend/csharp/positive/0024-indexer-expression-lowering`
+- `CLI build compiles imported indexer access`
+
 ## Records
 
 TypeSharp:
 
 ```tysh
 public record Customer(Name: string, Age: int)
+
+export fun create(): Customer = { Name: "Ada", Age: 36 }
 
 export fun birthday(customer: Customer): Customer =
   customer with { Age: 43 }
@@ -179,6 +282,7 @@ public sealed class Customer
     public override int GetHashCode() { ... }
 }
 
+return new Customer("Ada", 36);
 return new Customer(customer.Name, 43);
 ```
 
@@ -186,13 +290,19 @@ Rules:
 - TypeSharp `record` lowers to a sealed immutable C# class.
 - constructor parameters become get-only public properties.
 - value equality and hash code are emitted explicitly for C# 7.3 compatibility.
+- expected nominal record expressions lower to constructor calls in record parameter order.
+- record expression fields are type-checked against the target record or structural shape when the expected type is known.
 - record update lowers to a constructor call that reads unchanged fields from the source record.
+- structural object literal lowering without a nominal target remains future work.
 
 Evidence:
 - `tests/fixtures/backend/csharp/positive/0015-immutable-record-api`
 - `tests/fixtures/backend/csharp/positive/0016-record-update-lowering`
+- `tests/fixtures/backend/csharp/positive/0025-record-expression-construction`
+- `tests/fixtures/diagnostics/type-checker/negative/record-expression-mismatch`
 - `CLI build compiles immutable record API`
 - `CLI build compiles record update lowering`
+- `CLI build compiles record expression construction`
 
 ## Public API Declarations
 

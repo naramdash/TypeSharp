@@ -1,0 +1,10 @@
+namespace Samples.Collections
+
+export fun names(): string[] = ["Ada", "Grace"]
+
+export fun emptyNames(): string[] = []
+
+export fun numbers(): int[] {
+  let values: int[] = [1, 2, 3]
+  values
+}

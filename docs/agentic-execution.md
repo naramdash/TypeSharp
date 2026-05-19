@@ -1,6 +1,6 @@
 # Agentic Execution Contract
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 Ralph mode, Goal mode, Codex `/goal`처럼 장기 작업을 이어가는 에이전트가 TypeSharp 과제를 안정적으로 수행하기 위해 필요한 실행 계약을 정의한다. 특정 도구의 내부 구현에 의존하지 않고, 어떤 장기 실행 모드에서도 같은 목표, 같은 우선순위, 같은 완료 기준으로 움직이게 만드는 것이 목적이다.
 
@@ -111,6 +111,7 @@
 6. Record
    - 완료한 항목을 체크한다.
    - 남은 항목, 막힌 결정, 검증하지 못한 내용을 남긴다.
+   - task가 `Done`이면 관련 변경을 커밋하고 원격 브랜치로 push한다.
    - 진행 기록은 [progress.md](progress.md)의 task packet, rollup, commit, 인계 정책을 따른다.
 
 ## Task Packet Template

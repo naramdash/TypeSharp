@@ -34,10 +34,12 @@ Current allocated descriptors:
 | `TS1003` | Parser | Error | Missing expression |
 | `TS1004` | Parser | Error | Unexpected token |
 | `TS2001` | Binding | Error | Unresolved name |
+| `TS2002` | Binding | Error | Duplicate symbol |
 | `TS2201` | Type Checking | Error | Type mismatch |
 | `TS2202` | Type Checking | Error | Nullability contract violation |
 | `TS2203` | Type Checking | Error | Non-exhaustive match |
 | `TS2204` | Type Checking | Error | Type-level union or structural shape leaked through public boundary |
+| `TS2205` | Type Checking | Error | Unsupported generic constraint |
 | `TS2401` | Interop | Error | Missing referenced assembly or namespace |
 | `TS2402` | Interop | Error | Ambiguous C# overload |
 | `TS2403` | Interop | Error | Invalid byref interop use |
@@ -45,13 +47,7 @@ Current allocated descriptors:
 | `TS3500` | Backend | Error | Unsupported executable entry point |
 | `TS3501` | Backend | Error | Generated C# project build failed |
 
-Reserved semantic examples:
-
-| Code | Intended use |
-| --- | --- |
-| `TS2002` | Duplicate declaration in the same scope |
-
-Reserved examples are not implemented diagnostics yet. They reserve stable code positions for upcoming binder, type checker, and interop fixtures.
+No reserved examples are currently listed in this document. Future diagnostics should be added to the allocated descriptor table when implemented.
 
 ## Descriptor Metadata
 

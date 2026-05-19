@@ -19,7 +19,7 @@ internal sealed class TypeSharpInferenceEngine
             SyntaxKind.LiteralExpression => InferLiteral(node),
             SyntaxKind.IdentifierExpression => InferIdentifier(node, scope),
             SyntaxKind.CallExpression => InferCall(node, scope, inferNested),
-            SyntaxKind.BinaryExpression => InferBinary(node, inferNested),
+            SyntaxKind.BinaryExpression => InferBinary(node, scope, inferNested),
             _ => SimpleType.Unknown
         };
 
@@ -85,10 +85,21 @@ internal sealed class TypeSharpInferenceEngine
         return scope.ResolveType(name) ? SimpleType.Named(name) : SimpleType.Unknown;
     }
 
-    private static SimpleType InferBinary(SyntaxNode node, Func<SyntaxNode, SimpleType> inferNested)
+    private static SimpleType InferBinary(
+        SyntaxNode node,
+        ITypeSharpInferenceScope scope,
+        Func<SyntaxNode, SimpleType> inferNested)
     {
         var children = node.Children;
-        foreach (var child in children.Where(child => !child.IsToken))
+        var expressions = children.Where(child => !child.IsToken).ToArray();
+        if (children.Any(child => child.IsToken && child.Kind == SyntaxKind.PipeGreaterToken) &&
+            expressions.Length >= 2)
+        {
+            inferNested(expressions[0]);
+            return InferPipelineTarget(expressions[1], scope, inferNested);
+        }
+
+        foreach (var child in expressions)
         {
             inferNested(child);
         }
@@ -104,6 +115,27 @@ internal sealed class TypeSharpInferenceEngine
             return right is null ? SimpleType.Unknown : inferNested(right);
         }
 
+        return SimpleType.Unknown;
+    }
+
+    private static SimpleType InferPipelineTarget(
+        SyntaxNode target,
+        ITypeSharpInferenceScope scope,
+        Func<SyntaxNode, SimpleType> inferNested)
+    {
+        if (target.Kind == SyntaxKind.CallExpression)
+        {
+            return InferCall(target, scope, inferNested);
+        }
+
+        if (target.Kind == SyntaxKind.IdentifierExpression &&
+            TryGetFirstIdentifier(target, out var identifier) &&
+            scope.ResolveFunction(identifier.Text ?? string.Empty, out var returnType))
+        {
+            return returnType;
+        }
+
+        inferNested(target);
         return SimpleType.Unknown;
     }
 

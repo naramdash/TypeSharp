@@ -1,6 +1,6 @@
 # TypeSharp Feasibility Review
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 현재 TypeSharp 문서 세트가 실제 구현 가능한 계획인지 검토하고, 불가능하거나 지나치게 어렵거나 모호한 약속을 실현 가능한 형태로 낮춘 결과를 기록한다.
 
@@ -16,7 +16,7 @@ TypeSharp의 방향은 실현 가능하다. 다만 실현 가능하려면 다음
 6. nominal closed union의 MVP lowering은 reference-type class hierarchy로 시작한다.
 7. TypeScript의 고급 type-level programming은 MVP에서 제외하고 complexity budget 아래 Planned/Experimental로 둔다.
 8. C# library interop는 managed `net48` assembly 참조와 metadata 기반 호출을 MVP로 두고, NuGet restore와 extension-method instance sugar는 Stable Backlog로 둔다.
-9. ASP.NET/WCF/worker 호환성은 host-specific framework를 TypeSharp runtime에 끌어들이지 않고, generated `net48` library assembly와 C# metadata-compatible public API 계약으로 시작한다.
+9. ASP.NET/WCF/worker 호환성은 host-specific framework를 TypeSharp runtime에 끌어들이지 않고, generated `net48` library assembly와 C# metadata-compatible public API 계약 및 host reference/build smoke coverage로 시작한다.
 
 ## 조정한 결정
 
@@ -30,7 +30,7 @@ TypeSharp의 방향은 실현 가능하다. 다만 실현 가능하려면 다음
 | Type operators | `typeof`, `keyof`, indexed access까지 MVP로 보이면 범위가 너무 넓다. | MVP는 literal union과 local shape/narrowing 중심, type operators는 Planned. |
 | Type provider | 빌드 중 외부 코드 실행 모델은 보안/캐시/재현성 비용이 크다. | Type provider는 Experimental이며, schema import/generator도 sandbox 정책 이후. |
 | C# library interop | NuGet restore, source generator, extension method sugar까지 한 번에 넣으면 compiler와 build system 범위가 커진다. | MVP는 framework assembly/local DLL reference, metadata reader, nominal-first overload resolution, C# call lowering으로 제한한다. |
-| ASP.NET/WCF/worker compatibility | host template, IIS packaging, WCF config generation, Windows Service scaffolding까지 MVP로 넣으면 build/deployment 범위가 커진다. | MVP는 기존 .NET Framework host가 참조할 수 있는 `net48` library ABI와 runtime dependency shape를 보장하고, host-specific templates and smokes는 Stable Backlog로 둔다. |
+| ASP.NET/WCF/worker compatibility | host template, IIS packaging, WCF config generation, Windows Service scaffolding까지 MVP로 넣으면 build/deployment 범위가 커진다. | MVP는 기존 .NET Framework host가 참조할 수 있는 `net48` library ABI와 runtime dependency shape를 보장하고, ASP.NET/WCF/worker reference/build smokes를 포함한다. Generated templates, IIS packaging, and installer automation remain Stable Backlog. |
 
 ## MVP 가능 범위
 
@@ -69,7 +69,7 @@ MVP에서 실제로 구현 가능한 언어 범위:
 | F# computation expression builder | Planned | 기본 `async fun`/`Task` interop 이후가 적절하다. |
 | NuGet restore in compiler | Stable Backlog | lock file, transitive dependency, license, checksum 정책이 필요하다. |
 | C# extension method instance sugar | Stable Backlog | overload ranking과 name conflict 규칙이 안정화되어야 한다. |
-| ASP.NET/WCF/Windows Service templates | Stable Backlog | generated assembly ABI and runtime dependency shape가 안정된 뒤 host-specific packaging/smoke를 추가하는 편이 안전하다. |
+| ASP.NET/WCF/Windows Service templates and packaging automation | Stable Backlog | Current smoke coverage verifies host reference/build shape. Generated templates, IIS packaging, service installers, and deployment automation need separate compatibility policy. |
 
 ## 구현 우선순위
 

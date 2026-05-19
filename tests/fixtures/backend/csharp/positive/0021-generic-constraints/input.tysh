@@ -1,0 +1,15 @@
+namespace Samples.GenericConstraints
+
+export fun keep<T>(value: T): T where T: class + IEntity = value
+
+public class Repository<T> where T: class + IEntity + new() {
+  public fun Keep(value: T): T = value
+}
+
+public interface IEntity {
+  fun Id(): string
+}
+
+public interface IFactory {
+  fun Create<T>(): T where T: class + new()
+}

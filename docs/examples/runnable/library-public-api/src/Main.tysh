@@ -1,0 +1,9 @@
+namespace Samples.Runnable.PublicApi
+
+public record Customer(Name: string, Age: int)
+
+public class CustomerService {
+  public fun Keep(customer: Customer): Customer = customer
+}
+
+export fun libraryName(): string = "LibraryPublicApi"

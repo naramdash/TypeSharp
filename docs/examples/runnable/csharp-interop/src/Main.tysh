@@ -1,0 +1,8 @@
+namespace Samples.Runnable.CSharpInterop
+
+import { LegacyApi } from "Legacy.Tools"
+import { LegacyParams } from "Legacy.Tools"
+
+export fun echo(): string = LegacyApi.Echo("from local C#")
+
+export fun join(): string = LegacyParams.Join(",", "a", "b", "c")

@@ -1,0 +1,5 @@
+namespace Samples.Runnable.Diagnostics
+
+fun maybe(): string? = null
+
+export fun broken(): string = maybe()

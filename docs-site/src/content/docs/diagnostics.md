@@ -1,0 +1,22 @@
+---
+title: Diagnostics
+description: Diagnostic codes, metadata, JSON shape, and explanation surface.
+---
+
+Diagnostic policy is defined in `docs/diagnostics.md`.
+
+Diagnostics are shared by:
+
+- compiler and checker internals,
+- `typesharp check` and `typesharp build`,
+- `typesharp explain`,
+- Language Server Protocol diagnostics,
+- golden fixture snapshots.
+
+Example explanation command:
+
+```text
+typesharp explain TS2204
+```
+
+The descriptor registry keeps diagnostic code, severity, category, explanation, and suggested action stable for tools. Current binding diagnostics include unresolved names like `TS2001` and duplicate symbols like `TS2002`; current type-checking diagnostics include public-boundary leaks like `TS2204` and C# 7.3 backend constraint limits like `TS2205`.

@@ -1,6 +1,6 @@
 # 최신 언어 기능 매핑
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 C#, F#, TypeScript의 최신 기능을 TypeSharp에서 어떻게 해석할지 정리한다. 목표는 기능 복제가 아니라 .NET Framework 4.8에서 실행 가능한 일관된 언어 설계다.
 
@@ -140,6 +140,19 @@ TypeSharp 결정:
 - overload resolution은 추론 결과가 불안정하면 명시 annotation을 요구한다.
 - 추론 실패 메시지는 "어디에 타입을 적으면 되는지"를 알려야 한다.
 
+### Pipeline And Composition
+
+상태: MVP for first-argument pipeline lowering, Stable Backlog for composition/placeholder partial application
+
+TypeSharp 결정:
+- `value |> f`는 `f(value)`로 낮춘다.
+- `value |> f(args...)`는 `f(value, args...)`로 낮춘다.
+- chained pipeline은 left-associative nested call로 낮춘다.
+- placeholder 기반 partial application과 dedicated composition operator는 Stable Backlog로 둔다.
+
+Lowering:
+- MVP backend lowers pipeline expressions to C# 7.3-compatible nested calls before generated `net48` compilation.
+
 ## 6. Extension-Like Members
 
 상태: Stable Backlog
@@ -181,7 +194,7 @@ Lowering:
 
 ## 8. Collection Expression
 
-상태: MVP for simple array/list literal, Stable Backlog for advanced collection expression, C# 15 collection argument는 Preview Watch
+상태: MVP for simple homogeneous array literal, Stable Backlog for `List<T>`/advanced collection expression, C# 15 collection argument는 Preview Watch
 
 출처:
 - C# collection expression과 C# 15 collection expression arguments
@@ -189,14 +202,16 @@ Lowering:
 - TypeScript array/object literal
 
 TypeSharp 결정:
-- 기본 배열/리스트 literal은 MVP 문법으로 지원한다.
+- 기본 homogeneous array literal은 MVP 문법과 C# 7.3 source backend lowering으로 지원한다.
+- `List<T>` literal inference, dictionary literal, spread, target-specific builder는 Stable Backlog로 둔다.
 - 사전 literal, spread, target-specific builder는 Stable Backlog로 둔다.
 - capacity/comparer 같은 생성 인자는 preview feature로 분리한다.
 - target type이 없는 homogeneous collection literal은 MVP에서 `T[]`로 추론한다.
 - 빈 collection literal `[]`은 contextual type 또는 명시 타입 주석을 요구한다.
 
 Lowering:
-- array literal, `List<T>` constructor, collection initializer, helper factory 중 target type에 따라 선택한다.
+- implemented MVP array literal lowers to C# 7.3-compatible `new T[] { ... }`.
+- future `List<T>` constructor, collection initializer, and helper factory lowering remain Stable Backlog until target-type policy is richer.
 
 ## 9. Record와 Immutable Data
 
@@ -209,8 +224,10 @@ Lowering:
 
 TypeSharp 결정:
 - record는 immutable property, value equality, copy/update 문법을 제공한다.
+- expected nominal record type이 있는 `{ Field: value }` record expression은 record construction으로 낮춘다.
 - public .NET API는 class 또는 struct 중 명시 선택하게 한다.
 - with-copy는 generated method로 낮춘다.
+- MVP lowering은 generated C# sealed class constructor call을 사용하며 structural object literal lowering은 별도 단계로 둔다.
 
 위험:
 - equality semantics가 reference type interop와 충돌할 수 있다.
@@ -290,6 +307,7 @@ TypeSharp 결정:
 
 Lowering:
 - MVP backend는 C# 7.3 source generation이므로 managed interop 호출은 generated C#의 일반 member call로 낮춘다.
+- `value[index]` indexer expression은 generated C#의 일반 indexer 또는 array access로 낮춘다.
 - `ref`/`out`/`in`, optional parameter, `params`, delegate conversion은 C# metadata 정보를 보존해 generated C# call site에 반영한다.
 - TypeSharp public API는 C#에서 이해 가능한 nominal metadata로만 노출한다.
 
@@ -326,7 +344,7 @@ Lowering:
 
 ## 16. .NET Framework Application Model Compatibility
 
-상태: MVP contract for assembly/runtime compatibility, Stable Backlog for project templates and host-specific smoke suites
+상태: MVP contract and smoke coverage for assembly/runtime compatibility, Stable Backlog for generated templates and packaging automation
 
 출처:
 - .NET Framework ASP.NET Web Forms, ASP.NET MVC/Web API hosting model
@@ -342,11 +360,12 @@ TypeSharp 결정:
 
 Lowering:
 - MVP backend는 host-specific code generation을 하지 않고, host가 참조 가능한 `net48` library assembly와 C# metadata-compatible public surface를 생성한다.
-- ASP.NET/WCF/worker project template, IIS packaging, WCF config generation, Windows Service scaffolding은 Stable Backlog로 분리한다.
+- Runnable/internal smokes verify ASP.NET Web Forms-style page, WCF service/client contract, WCF client proxy shape, worker-style host references, and generated/Core/Runtime DLL deployment shape.
+- ASP.NET/WCF/worker project template generation, IIS packaging, general WCF config generation, and Windows Service scaffolding remain Stable Backlog.
 
 위험:
 - host-specific helper를 runtime에 섞으면 ASP.NET/WCF/worker가 필요 없는 library에도 deployment 부담이 생긴다.
-- WCF attribute/configuration 모델은 public ABI와 generated metadata에 민감하므로 nullable, delegate/event, attribute interop 안정화 이후 host smoke를 추가해야 한다.
+- WCF attribute/configuration 모델은 public ABI와 generated metadata에 민감하므로 current smoke는 reference/build and proxy-shape coverage에 머물고, IIS-hosted execution/deployment packaging은 별도 검증이 필요하다.
 - IIS/AppDomain lifecycle과 shadow copy는 static initialization, file IO, reflection cache 설계에 제약을 만든다.
 
 ## 지연 또는 거절 후보

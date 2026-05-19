@@ -189,6 +189,17 @@ public static class TypeSharpTypeChecker
                     CheckFunction(node, scope);
                     break;
 
+                case SyntaxKind.RecordDeclaration:
+                case SyntaxKind.ClassDeclaration:
+                case SyntaxKind.InterfaceDeclaration:
+                case SyntaxKind.DelegateDeclaration:
+                    CheckGenericConstraints(node);
+                    foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
+                    {
+                        CheckGenericConstraints(function);
+                    }
+                    break;
+
                 case SyntaxKind.ModuleDeclaration:
                     CheckModuleDeclaration(node, scope);
                     break;
@@ -224,6 +235,8 @@ public static class TypeSharpTypeChecker
 
         private void CheckFunction(SyntaxNode node, TypeScope parentScope)
         {
+            CheckGenericConstraints(node);
+
             var scope = new TypeScope(parentScope);
             foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
             {
@@ -252,7 +265,7 @@ public static class TypeSharpTypeChecker
 
             foreach (var body in node.Children.Where(child => child.Kind == SyntaxKind.FunctionBody))
             {
-                var actualReturnType = CheckFunctionBody(body, scope);
+                var actualReturnType = CheckFunctionBody(body, scope, expectedReturnTypeKnown ? comparisonReturnType : null);
                 if (expectedReturnTypeKnown && actualReturnType.IsKnown && IsNullabilityViolation(comparisonReturnType, actualReturnType))
                 {
                     ReportNullabilityViolation(
@@ -271,6 +284,33 @@ public static class TypeSharpTypeChecker
                         body,
                         $"Cannot return expression of type '{actualReturnType}' from function returning '{expectedReturnType}'.");
                 }
+            }
+        }
+
+        private void CheckGenericConstraints(SyntaxNode node)
+        {
+            foreach (var constraintItem in node.Children
+                .Where(child => child.Kind == SyntaxKind.WhereClause)
+                .SelectMany(child => child.Children)
+                .Where(child => child.Kind == SyntaxKind.GenericConstraint)
+                .SelectMany(child => child.Children)
+                .Where(child => child.Kind == SyntaxKind.ConstraintItem))
+            {
+                var token = constraintItem.Children.FirstOrDefault(child =>
+                    child.IsToken
+                    && child.Kind == SyntaxKind.IdentifierToken
+                    && string.Equals(child.Text, "notnull", StringComparison.Ordinal));
+                if (token is null)
+                {
+                    continue;
+                }
+
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.UnsupportedGenericConstraint.Code,
+                    DiagnosticDescriptors.UnsupportedGenericConstraint.DefaultSeverity,
+                    "Generic constraint 'notnull' cannot be lowered by the C# 7.3 backend.",
+                    _file,
+                    token.Span));
             }
         }
 
@@ -300,7 +340,7 @@ public static class TypeSharpTypeChecker
             ReportPublicBoundaryLeaks(annotation, scope);
         }
 
-        private SimpleType CheckFunctionBody(SyntaxNode body, TypeScope scope)
+        private SimpleType CheckFunctionBody(SyntaxNode body, TypeScope scope, SimpleType? expectedType)
         {
             var expressionChildren = body.Children.Where(child => !child.IsToken).ToArray();
             if (expressionChildren.Length == 0)
@@ -310,21 +350,20 @@ public static class TypeSharpTypeChecker
 
             if (expressionChildren[0].Kind == SyntaxKind.BlockExpression)
             {
-                return CheckBlock(expressionChildren[0], new TypeScope(scope));
+                return CheckBlock(expressionChildren[0], new TypeScope(scope), expectedType);
             }
 
-            return CheckExpression(expressionChildren[^1], scope);
+            return CheckExpressionWithExpected(expressionChildren[^1], scope, expectedType);
         }
 
-        private SimpleType CheckBlock(SyntaxNode node, TypeScope scope)
+        private SimpleType CheckBlock(SyntaxNode node, TypeScope scope, SimpleType? expectedType = null)
         {
             var lastExpressionType = SimpleType.Unknown;
-            foreach (var child in node.Children)
+            var children = node.Children.Where(child => !child.IsToken).ToArray();
+            for (var index = 0; index < children.Length; index++)
             {
-                if (child.IsToken)
-                {
-                    continue;
-                }
+                var child = children[index];
+                var isLast = index == children.Length - 1;
 
                 if (child.Kind == SyntaxKind.ValueDeclaration)
                 {
@@ -335,11 +374,13 @@ public static class TypeSharpTypeChecker
                 if (child.Kind == SyntaxKind.ExpressionStatement)
                 {
                     var expression = child.Children.FirstOrDefault(grandchild => !grandchild.IsToken);
-                    lastExpressionType = expression is null ? SimpleType.Unknown : CheckExpression(expression, scope);
+                    lastExpressionType = expression is null
+                        ? SimpleType.Unknown
+                        : CheckExpressionWithExpected(expression, scope, isLast ? expectedType : null);
                     continue;
                 }
 
-                lastExpressionType = CheckExpression(child, scope);
+                lastExpressionType = CheckExpressionWithExpected(child, scope, isLast ? expectedType : null);
             }
 
             return lastExpressionType;
@@ -355,7 +396,7 @@ public static class TypeSharpTypeChecker
             var initializerType = SimpleType.Unknown;
             if (node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer) is { } initializer)
             {
-                initializerType = CheckInitializer(initializer, scope);
+                initializerType = CheckInitializer(initializer, scope, annotationKnown ? expectedType : null);
             }
 
             if (annotationKnown && initializerType.IsKnown && IsNullabilityViolation(expectedType, initializerType))
@@ -391,10 +432,17 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private SimpleType CheckInitializer(SyntaxNode node, TypeScope scope)
+        private SimpleType CheckInitializer(SyntaxNode node, TypeScope scope, SimpleType? expectedType = null)
         {
             var expression = node.Children.FirstOrDefault(child => !child.IsToken);
-            return expression is null ? SimpleType.Unknown : CheckExpression(expression, scope);
+            return expression is null ? SimpleType.Unknown : CheckExpressionWithExpected(expression, scope, expectedType);
+        }
+
+        private SimpleType CheckExpressionWithExpected(SyntaxNode node, TypeScope scope, SimpleType? expectedType)
+        {
+            return expectedType.HasValue && node.Kind == SyntaxKind.RecordExpression
+                ? CheckRecordExpression(node, scope, expectedType.Value)
+                : CheckExpression(node, scope);
         }
 
         private SimpleType CheckExpression(SyntaxNode node, TypeScope scope)
@@ -414,9 +462,10 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.MatchExpression => InferMatch(node, scope),
                 SyntaxKind.MemberAccessExpression => InferMemberAccess(node, scope),
                 SyntaxKind.AwaitExpression => InferAwait(node, scope),
-                SyntaxKind.IndexerExpression => SimpleType.Unknown,
+                SyntaxKind.IndexerExpression => InferIndexer(node, scope),
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
-                SyntaxKind.CollectionExpression => SimpleType.Unknown,
+                SyntaxKind.CollectionExpression => InferCollection(node, scope),
+                SyntaxKind.RecordExpression => CheckRecordExpression(node, scope, SimpleType.Unknown),
                 _ => CheckChildrenForSideEffects(node, scope)
             };
         }
@@ -455,6 +504,122 @@ public static class TypeSharpTypeChecker
             }
 
             return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
+        }
+
+        private SimpleType InferIndexer(SyntaxNode node, TypeScope scope)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2)
+            {
+                return SimpleType.Unknown;
+            }
+
+            var receiverType = CheckExpression(expressions[0], scope);
+            CheckExpression(expressions[1], scope);
+            if (!receiverType.IsKnown || receiverType.IsNull || !receiverType.Name.EndsWith("[]", StringComparison.Ordinal))
+            {
+                return SimpleType.Unknown;
+            }
+
+            var elementTypeName = receiverType.Name[..^2];
+            return elementTypeName.Length == 0 ? SimpleType.Unknown : SimpleType.Named(elementTypeName);
+        }
+
+        private SimpleType CheckRecordExpression(SyntaxNode node, TypeScope scope, SimpleType expectedType)
+        {
+            var fields = GetRecordExpressionFieldTypes(node, scope);
+            if (!expectedType.IsKnown || expectedType.IsNull || !scope.ResolveShape(expectedType.Name, out var shape))
+            {
+                return SimpleType.Unknown;
+            }
+
+            foreach (var member in shape.Members.Where(member => !member.IsOptional))
+            {
+                if (!fields.ContainsKey(member.Name))
+                {
+                    ReportMismatch(
+                        node,
+                        $"Record expression for '{expectedType}' is missing required field '{member.Name}'.");
+                }
+            }
+
+            foreach (var field in fields)
+            {
+                var member = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, field.Key, StringComparison.Ordinal));
+                if (member.Name is null)
+                {
+                    ReportMismatch(
+                        field.Value.Node,
+                        $"Type '{expectedType}' does not contain field '{field.Key}'.");
+                    continue;
+                }
+
+                if (field.Value.Type.IsKnown && !CanAssign(scope, member.Type, field.Value.Type))
+                {
+                    ReportMismatch(
+                        field.Value.Node,
+                        $"Record expression field '{field.Key}' expects '{member.Type}' but found '{field.Value.Type}'.");
+                }
+            }
+
+            return expectedType;
+        }
+
+        private Dictionary<string, RecordExpressionFieldInfo> GetRecordExpressionFieldTypes(SyntaxNode node, TypeScope scope)
+        {
+            var fields = new Dictionary<string, RecordExpressionFieldInfo>(StringComparer.Ordinal);
+            foreach (var field in node.Children.Where(child => child.Kind == SyntaxKind.RecordField))
+            {
+                var name = field.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                var expression = field.Children.LastOrDefault(child => !child.IsToken);
+                var type = expression is null
+                    ? scope.ResolveValue(name, out var valueType) ? valueType : SimpleType.Unknown
+                    : CheckExpression(expression, scope);
+                fields[name] = new RecordExpressionFieldInfo(field, type);
+            }
+
+            return fields;
+        }
+
+        private SimpleType InferCollection(SyntaxNode node, TypeScope scope)
+        {
+            var elementTypes = new List<SimpleType>();
+            foreach (var element in node.Children.Where(child => !child.IsToken))
+            {
+                elementTypes.Add(CheckExpression(element, scope));
+            }
+
+            var knownElementTypes = elementTypes.Where(type => type.IsKnown).ToArray();
+            if (knownElementTypes.Length == 0)
+            {
+                return SimpleType.Unknown;
+            }
+
+            var elementType = knownElementTypes[0];
+            foreach (var actual in knownElementTypes.Skip(1))
+            {
+                if (!string.Equals(elementType.Name, actual.Name, StringComparison.Ordinal) ||
+                    elementType.IsNullable != actual.IsNullable ||
+                    elementType.IsNull != actual.IsNull)
+                {
+                    ReportMismatch(
+                        node,
+                        $"Collection expression elements must have a consistent type. Expected '{elementType}' but found '{actual}'.");
+                    return SimpleType.Unknown;
+                }
+            }
+
+            if (elementType.IsNull)
+            {
+                return SimpleType.Unknown;
+            }
+
+            return SimpleType.Named($"{elementType.Name}[]");
         }
 
         private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
@@ -1467,6 +1632,8 @@ public static class TypeSharpTypeChecker
     private readonly record struct ShapeInfo(string Name, IReadOnlyList<ShapeMemberInfo> Members);
 
     private readonly record struct ShapeMemberInfo(string Name, SimpleType Type, bool IsOptional);
+
+    private readonly record struct RecordExpressionFieldInfo(SyntaxNode Node, SimpleType Type);
 
     private enum CompileTimeOnlyTypeKind
     {

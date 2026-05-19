@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Record expression field 'Age' expects 'int' but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 46 },
+      "end": { "line": 5, "column": 56 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Record expression for 'Customer' is missing required field 'Age'.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 32 },
+      "end": { "line": 7, "column": 47 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Type 'Customer' does not contain field 'Unknown'.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 54 },
+      "end": { "line": 9, "column": 67 }
+    }
+  ]
+}

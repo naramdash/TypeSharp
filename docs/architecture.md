@@ -270,6 +270,7 @@ MVP 기능:
 - hover
 - go-to-definition
 - basic completion
+- document formatting
 
 VS Code extension은 Language Server Protocol client로 시작하고, 문법 색상화는 TextMate grammar 또는 semantic token의 최소 구현으로 제공한다.
 TextMate grammar는 [grammar/lexical.md](grammar/lexical.md)의 토큰과 keyword 분류를 첫 입력으로 삼고, semantic token은 compiler semantic model에서 보강한다.
@@ -278,7 +279,9 @@ TextMate grammar는 [grammar/lexical.md](grammar/lexical.md)의 토큰과 keywor
 - `vscode/typesharp/package.json` registers language id `typesharp` and extension `.tysh`.
 - `vscode/typesharp/language-configuration.json` defines comments, brackets, pairs, and word pattern.
 - `vscode/typesharp/syntaxes/typesharp.tmLanguage.json` provides lexical TextMate highlighting for comments, strings, numeric literals, attributes, keywords, primitive types, and operators.
-- LSP diagnostics, hover, go-to-definition, and completion remain open and must share compiler diagnostics and semantic model with the CLI.
+- `vscode/typesharp/extension.js` activates on `onLanguage:typesharp`, starts `TypeSharp.LanguageServer` over stdio, maps `textDocument/publishDiagnostics` into VS Code diagnostics, forwards hover, go-to-definition, and completion providers to LSP requests, and registers a document formatter that mirrors the CLI formatter MVP whitespace normalization.
+- `vscode/typesharp/package.json` includes package file metadata for the JS extension, language configuration, TextMate grammar, and a `server/**` folder reserved for bundled language server publish output.
+- Workspace manifest discovery, project-wide LSP symbols, metadata member completion, and published VSIX automation remain future tooling work.
 
 ## 프로젝트 파일
 

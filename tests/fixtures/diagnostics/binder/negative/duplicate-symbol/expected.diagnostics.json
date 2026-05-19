@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2002",
+      "severity": "error",
+      "message": "Duplicate symbol 'echo' in the same scope.",
+      "file": "input.tysh",
+      "start": { "line": 4, "column": 5 },
+      "end": { "line": 4, "column": 9 }
+    },
+    {
+      "code": "TS2002",
+      "severity": "error",
+      "message": "Duplicate symbol 'Customer' in the same scope.",
+      "file": "input.tysh",
+      "start": { "line": 10, "column": 8 },
+      "end": { "line": 10, "column": 16 }
+    },
+    {
+      "code": "TS2002",
+      "severity": "error",
+      "message": "Duplicate symbol 'value' in the same scope.",
+      "file": "input.tysh",
+      "start": { "line": 14, "column": 26 },
+      "end": { "line": 14, "column": 31 }
+    }
+  ]
+}

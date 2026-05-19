@@ -21,6 +21,7 @@
 | `TypeSharp.Compiler` | `net10.0` host | None | N/A | Host-side compiler implementation. Generated/runtime artifact dependency가 아니다. |
 | `TypeSharp.Cli` | `net10.0` host | None | N/A | Depends on `TypeSharp.Compiler` project reference only. |
 | `TypeSharp.Compiler.Tests` | `net10.0` host | None | N/A | Project references and linked core sources only. |
+| `docs-site` | Astro static site | `astro` 6.3.5, `@astrojs/starlight` 0.39.2, `typescript` 5.9.3 | MIT, MIT, Apache-2.0 | GitHub Pages documentation site only. Locked by `docs-site/package-lock.json`; not part of generated `net48` runtime deployment. |
 
 ## Compatibility Audit
 
@@ -30,6 +31,7 @@
 - Core/Runtime artifacts do not use `PackageReference` or `packages.config`.
 - Core/Runtime source is scanned for a small denylist of .NET 5+ or package-backed runtime APIs such as `DateOnly`, `TimeOnly`, `System.Text.Json`, `IAsyncEnumerable`, `ValueTask`, `Span<T>`, and `Task.WaitAsync`.
 - Existing `dotnet build` on the `net48` projects remains the primary compatibility check; the static scan is a guardrail for obvious drift.
+- `docs-site` dependencies are installed with `npm ci` from `package-lock.json`; `npm run build` is the docs site build smoke.
 
 ## Future Dependency Gate
 

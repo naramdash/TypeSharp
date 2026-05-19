@@ -28,12 +28,12 @@ In:
 - function parameter, local `let`, lambda, for-pattern, and match-pattern scoped bindings
 - simple type annotation and value expression name resolution
 - unresolved-name `TS2001` diagnostics
+- duplicate symbol `TS2002` diagnostics, now implemented by [0126-binder-duplicate-symbol-diagnostics.md](0126-binder-duplicate-symbol-diagnostics.md)
 - binder fixture, CLI, backend, and LSP smoke evidence
 
 Out:
 - full semantic model
 - overload binding
-- duplicate symbol diagnostics
 - imported metadata member binding beyond current static-call allowance
 - control/data flow analysis
 

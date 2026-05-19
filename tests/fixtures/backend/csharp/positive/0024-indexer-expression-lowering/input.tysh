@@ -1,0 +1,6 @@
+namespace Samples.Indexers
+
+export fun firstName(): string {
+  let names: string[] = ["Ada", "Grace"]
+  names[0]
+}

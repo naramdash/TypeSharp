@@ -4,6 +4,12 @@ obj/
 tests/tmp/
 TestResults/
 artifacts/
+node_modules/
+docs-site/.astro/
+docs-site/dist/
+vscode/typesharp/server/
+docs/examples/runnable/**/generated/
+docs/examples/runnable/**/lib/
 *.user
 *.suo
 *.userosscache

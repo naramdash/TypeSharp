@@ -12,8 +12,10 @@ namespace TypeSharp.Compiler.Building;
 
 public static class TypeSharpBuilder
 {
-    public static BuildResult Build(string manifestPath)
+    public static BuildResult Build(string manifestPath, string configuration = "Debug", string? targetFrameworkOverride = null)
     {
+        configuration = NormalizeBuildConfiguration(configuration);
+        targetFrameworkOverride = NormalizeTargetFrameworkOverride(targetFrameworkOverride);
         var diagnostics = new List<Diagnostic>();
         var generatedFiles = new List<GeneratedCSharpFile>();
         GeneratedCSharpProject? generatedProject = null;
@@ -107,11 +109,12 @@ public static class TypeSharpBuilder
         var projectRelativePath = $"{SanitizeFileName(manifestResult.Manifest.Project.Name)}.Generated.csproj";
         var projectPath = Path.Combine(outputRoot, projectRelativePath);
         Directory.CreateDirectory(outputRoot);
-        File.WriteAllText(projectPath, EmitGeneratedProject(manifestResult.Manifest, referenceResult.References, outputRoot));
+        var targetFramework = ResolveTargetFramework(manifestResult.Manifest, targetFrameworkOverride);
+        File.WriteAllText(projectPath, EmitGeneratedProject(manifestResult.Manifest, referenceResult.References, outputRoot, targetFramework));
         File.WriteAllText(Path.Combine(outputRoot, "NuGet.config"), EmitOfflineNuGetConfig());
         generatedProject = new GeneratedCSharpProject(projectPath, projectRelativePath);
 
-        var projectBuild = BuildGeneratedProject(outputRoot, generatedProject.RelativePath);
+        var projectBuild = BuildGeneratedProject(outputRoot, generatedProject.RelativePath, configuration);
         if (projectBuild.ExitCode != 0)
         {
             diagnostics.Add(DiagnosticFactory.Manifest(
@@ -121,7 +124,7 @@ public static class TypeSharpBuilder
             return new BuildResult(generatedFiles, generatedProject, null, diagnostics);
         }
 
-        var assemblyRelativePath = ToGeneratedAssemblyRelativePath(manifestResult.Manifest);
+        var assemblyRelativePath = ToGeneratedAssemblyRelativePath(manifestResult.Manifest, configuration, targetFramework);
         var assemblyPath = Path.Combine(outputRoot, assemblyRelativePath.Replace('/', Path.DirectorySeparatorChar));
         generatedAssembly = new GeneratedAssembly(assemblyPath, assemblyRelativePath);
 
@@ -141,11 +144,9 @@ public static class TypeSharpBuilder
     private static string EmitGeneratedProject(
         TypeSharpManifest manifest,
         IReadOnlyList<ResolvedReference> references,
-        string outputRoot)
+        string outputRoot,
+        string targetFramework)
     {
-        var targetFramework = string.IsNullOrWhiteSpace(manifest.Project.TargetFramework)
-            ? TypeSharpCompilerInfo.DefaultTargetFramework
-            : manifest.Project.TargetFramework;
         var outputType = IsExecutable(manifest.Project.OutputType)
             ? "Exe"
             : "Library";
@@ -367,7 +368,7 @@ public static class TypeSharpBuilder
         return parameterList is null || !parameterList.Children.Any(child => child.Kind == SyntaxKind.Parameter);
     }
 
-    private static GeneratedProjectBuildResult BuildGeneratedProject(string outputRoot, string projectRelativePath)
+    private static GeneratedProjectBuildResult BuildGeneratedProject(string outputRoot, string projectRelativePath, string configuration)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
@@ -381,6 +382,8 @@ public static class TypeSharpBuilder
         };
         process.StartInfo.ArgumentList.Add("build");
         process.StartInfo.ArgumentList.Add(projectRelativePath);
+        process.StartInfo.ArgumentList.Add("--configuration");
+        process.StartInfo.ArgumentList.Add(configuration);
         process.StartInfo.ArgumentList.Add("--nologo");
         process.StartInfo.ArgumentList.Add("--verbosity");
         process.StartInfo.ArgumentList.Add("quiet");
@@ -398,14 +401,52 @@ public static class TypeSharpBuilder
         return new GeneratedProjectBuildResult(process.ExitCode, standardOutput, standardError);
     }
 
-    private static string ToGeneratedAssemblyRelativePath(TypeSharpManifest manifest)
+    private static string ToGeneratedAssemblyRelativePath(TypeSharpManifest manifest, string configuration, string targetFramework)
     {
-        var configuration = "Debug";
-        var targetFramework = string.IsNullOrWhiteSpace(manifest.Project.TargetFramework)
-            ? TypeSharpCompilerInfo.DefaultTargetFramework
-            : manifest.Project.TargetFramework;
         var extension = IsExecutable(manifest.Project.OutputType) ? "exe" : "dll";
         return $"bin/{configuration}/{targetFramework}/{manifest.Project.Name}.{extension}";
+    }
+
+    private static string ResolveTargetFramework(TypeSharpManifest manifest, string? targetFrameworkOverride)
+    {
+        if (!string.IsNullOrWhiteSpace(targetFrameworkOverride))
+        {
+            return targetFrameworkOverride;
+        }
+
+        return string.IsNullOrWhiteSpace(manifest.Project.TargetFramework)
+            ? TypeSharpCompilerInfo.DefaultTargetFramework
+            : manifest.Project.TargetFramework;
+    }
+
+    private static string NormalizeBuildConfiguration(string configuration)
+    {
+        if (string.Equals(configuration, "Debug", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Debug";
+        }
+
+        if (string.Equals(configuration, "Release", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Release";
+        }
+
+        throw new ArgumentException("Build configuration must be 'Debug' or 'Release'.", nameof(configuration));
+    }
+
+    private static string? NormalizeTargetFrameworkOverride(string? targetFrameworkOverride)
+    {
+        if (targetFrameworkOverride is null)
+        {
+            return null;
+        }
+
+        if (string.Equals(targetFrameworkOverride, TypeSharpCompilerInfo.DefaultTargetFramework, StringComparison.OrdinalIgnoreCase))
+        {
+            return TypeSharpCompilerInfo.DefaultTargetFramework;
+        }
+
+        throw new ArgumentException("Target framework override must be 'net48'.", nameof(targetFrameworkOverride));
     }
 
     private static bool TryGetMainEntryPoint(TypeSharpManifest manifest, out string namespaceName, out string methodName)

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <ImplicitUsings>false</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AssemblyName>Legacy.Tools</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildProjectDirectory)\..\lib\</OutputPath>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Collection expression elements must have a consistent type. Expected 'int' but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 24 },
+      "end": { "line": 3, "column": 34 }
+    }
+  ]
+}

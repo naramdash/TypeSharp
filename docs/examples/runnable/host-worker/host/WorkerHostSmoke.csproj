@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <ImplicitUsings>false</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="HostWorker">
+      <HintPath>..\generated\bin\Debug\net48\HostWorker.dll</HintPath>
+    </Reference>
+    <Reference Include="TypeSharp.Core">
+      <HintPath>..\lib\TypeSharp.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="TypeSharp.Runtime">
+      <HintPath>..\lib\TypeSharp.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

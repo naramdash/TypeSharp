@@ -20,6 +20,7 @@ public sealed class TypeSharpLexer
         ["match"] = SyntaxKind.MatchKeyword,
         ["from"] = SyntaxKind.FromKeyword,
         ["with"] = SyntaxKind.WithKeyword,
+        ["where"] = SyntaxKind.WhereKeyword,
         ["async"] = SyntaxKind.AsyncKeyword,
         ["await"] = SyntaxKind.AwaitKeyword,
         ["try"] = SyntaxKind.TryKeyword,

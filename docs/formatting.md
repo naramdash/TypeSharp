@@ -2,13 +2,13 @@
 
 문서 기준일: 2026-05-19
 
-이 문서는 `typesharp format`, VS Code formatter, parser fixtures, examples가 공유할 공식 formatting convention을 정의한다. 아직 formatter 구현이 없어도 새 `.tysh` 예제와 fixture는 이 문서를 기준으로 작성한다.
+이 문서는 `typesharp format`, VS Code formatter, parser fixtures, examples가 공유할 공식 formatting convention을 정의한다. 현재 CLI formatter MVP는 parser-clean `.tysh` 파일의 줄끝, 후행 공백, 연속 blank line, 최종 newline을 정규화하고, 아래 전체 convention은 AST 기반 formatter가 확장해 나갈 기준이다.
 
 ## 목표
 
 - TypeSharp source가 formatter, LSP, analyzer가 다루기 쉬운 안정적인 layout을 갖게 한다.
 - [grammar/consistency.md](grammar/consistency.md)의 공통 문법 규칙을 실제 파일 layout으로 고정한다.
-- `typesharp format --check`가 나중에 비교할 canonical output의 기준을 제공한다.
+- `typesharp format --check`가 canonical whitespace output과 실제 파일을 비교한다.
 
 비목표:
 - formatter 구현 세부 알고리즘을 정하지 않는다.
@@ -261,7 +261,7 @@ let older = customer with {
 
 ## `typesharp format` 계약
 
-초기 formatter는 아래 동작을 목표로 한다.
+초기 formatter는 현재 아래 동작을 제공한다.
 
 - project 또는 path 인자를 받아 `.tysh` 파일만 대상으로 삼는다.
 - `--check`는 파일을 쓰지 않고 format diff가 있으면 non-zero exit code를 반환한다.
@@ -269,3 +269,4 @@ let older = customer with {
 - source discovery는 [cli.md](cli.md)의 manifest/source discovery 규칙을 따른다.
 - diagnostics code와 source span은 CLI와 LSP가 공유하는 compiler model을 사용한다.
 - formatter output은 parser가 다시 읽을 수 있어야 한다.
+- 현재 rewrite 범위는 LF line ending, trailing whitespace 제거, 연속 blank line 하나로 축소, 최종 newline 보장이다. 선언 재정렬, indentation 재계산, AST 재출력은 후속 formatter 확장이다.

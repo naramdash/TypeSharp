@@ -1,0 +1,10 @@
+namespace Samples.RecordExpressions
+
+public record Customer(Name: string, Age: int)
+
+export fun create(): Customer = { Name: "Ada", Age: 36 }
+
+export fun localCreate(): Customer {
+  let customer: Customer = { Name: "Grace", Age: 42 }
+  customer
+}

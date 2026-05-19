@@ -1,0 +1,26 @@
+[project]
+name = "ConsoleHello"
+targetFramework = "net48"
+outputType = "exe"
+rootNamespace = "Samples.Runnable.ConsoleHello"
+sourceRoots = ["src"]
+generatedOutputRoot = "generated"
+main = "Samples.Runnable.ConsoleHello.main"
+
+[language]
+version = "preview"
+strict = true
+nullable = "strict"
+previewFeatures = []
+
+[references]
+assemblies = [
+  "System",
+  "System.Core"
+]
+paths = []
+packages = []
+
+[tooling]
+diagnosticFormat = "text"
+treatWarningsAsErrors = false

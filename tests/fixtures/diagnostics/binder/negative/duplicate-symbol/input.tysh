@@ -1,0 +1,14 @@
+namespace Samples.DuplicateSymbols
+
+fun echo(): string = "one"
+fun echo(): string = "two"
+
+record Customer {
+  Name: string
+}
+
+record Customer {
+  Name: string
+}
+
+fun local(value: string, value: string): string = value

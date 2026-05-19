@@ -169,9 +169,9 @@ public sealed class TypeSharpParser
             children.Add(ParseAttributeList());
         }
 
-        while (Current.Kind is SyntaxKind.PublicKeyword or SyntaxKind.PrivateKeyword)
+        while (Current.Kind is SyntaxKind.ExportKeyword or SyntaxKind.PublicKeyword or SyntaxKind.PrivateKeyword)
         {
-            children.Add(ParseAccessModifier());
+            children.Add(ParseDeclarationModifier());
         }
 
         return children;
@@ -212,11 +212,12 @@ public sealed class TypeSharpParser
         return Node(SyntaxKind.AttributeList, children);
     }
 
-    private SyntaxNode ParseAccessModifier()
+    private SyntaxNode ParseDeclarationModifier()
     {
         var token = TokenNode(NextToken());
         return token.Kind switch
         {
+            SyntaxKind.ExportKeyword => new SyntaxNode(SyntaxKind.ExportModifier, token.Span, children: [token]),
             SyntaxKind.PublicKeyword => new SyntaxNode(SyntaxKind.PublicModifier, token.Span, children: [token]),
             SyntaxKind.PrivateKeyword => new SyntaxNode(SyntaxKind.PrivateModifier, token.Span, children: [token]),
             _ => token
@@ -291,6 +292,11 @@ public sealed class TypeSharpParser
         if (Current.Kind == SyntaxKind.ColonToken)
         {
             children.Add(ParseTypeAnnotation());
+        }
+
+        if (Current.Kind == SyntaxKind.WhereKeyword)
+        {
+            children.Add(ParseWhereClause());
         }
 
         if (Current.Kind == SyntaxKind.OpenBraceToken)
@@ -398,6 +404,11 @@ public sealed class TypeSharpParser
         if (Current.Kind == SyntaxKind.OpenParenToken)
         {
             children.Add(ParseParameterList());
+        }
+
+        if (Current.Kind == SyntaxKind.WhereKeyword)
+        {
+            children.Add(ParseWhereClause());
         }
 
         return Node(SyntaxKind.RecordDeclaration, children);
@@ -508,6 +519,11 @@ public sealed class TypeSharpParser
             children.Add(ParseParameterList());
         }
 
+        if (Current.Kind == SyntaxKind.WhereKeyword)
+        {
+            children.Add(ParseWhereClause());
+        }
+
         children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
@@ -527,6 +543,11 @@ public sealed class TypeSharpParser
         if (Current.Kind == SyntaxKind.LessToken)
         {
             children.Add(ParseTypeParameterList());
+        }
+
+        if (Current.Kind == SyntaxKind.WhereKeyword)
+        {
+            children.Add(ParseWhereClause());
         }
 
         children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
@@ -581,7 +602,78 @@ public sealed class TypeSharpParser
             children.Add(ParseTypeAnnotation());
         }
 
+        if (Current.Kind == SyntaxKind.WhereKeyword)
+        {
+            children.Add(ParseWhereClause());
+        }
+
         return Node(SyntaxKind.DelegateDeclaration, children);
+    }
+
+    private SyntaxNode ParseWhereClause()
+    {
+        var children = new List<SyntaxNode>
+        {
+            TokenNode(Expect(SyntaxKind.WhereKeyword))
+        };
+
+        while (Current.Kind != SyntaxKind.OpenBraceToken
+            && Current.Kind != SyntaxKind.EqualsToken
+            && Current.Kind != SyntaxKind.EndOfFileToken)
+        {
+            var constraintChildren = new List<SyntaxNode>
+            {
+                TokenNode(Expect(SyntaxKind.IdentifierToken)),
+                TokenNode(Expect(SyntaxKind.ColonToken)),
+                ParseConstraintItem()
+            };
+
+            while (Current.Kind == SyntaxKind.PlusToken)
+            {
+                constraintChildren.Add(TokenNode(NextToken()));
+                constraintChildren.Add(ParseConstraintItem());
+            }
+
+            children.Add(Node(SyntaxKind.GenericConstraint, constraintChildren));
+
+            if (Current.Kind == SyntaxKind.CommaToken)
+            {
+                children.Add(TokenNode(NextToken()));
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return Node(SyntaxKind.WhereClause, children);
+    }
+
+    private SyntaxNode ParseConstraintItem()
+    {
+        var children = new List<SyntaxNode>();
+
+        if (Current.Kind == SyntaxKind.IdentifierToken
+            && string.Equals(Current.Text, "new", StringComparison.Ordinal)
+            && Peek(1).Kind == SyntaxKind.OpenParenToken)
+        {
+            children.Add(TokenNode(NextToken()));
+            children.Add(TokenNode(Expect(SyntaxKind.OpenParenToken)));
+            children.Add(TokenNode(Expect(SyntaxKind.CloseParenToken)));
+            return Node(SyntaxKind.ConstraintItem, children);
+        }
+
+        if (Current.Kind == SyntaxKind.ClassKeyword
+            || (Current.Kind == SyntaxKind.IdentifierToken
+                && (string.Equals(Current.Text, "struct", StringComparison.Ordinal)
+                    || string.Equals(Current.Text, "notnull", StringComparison.Ordinal))))
+        {
+            children.Add(TokenNode(NextToken()));
+            return Node(SyntaxKind.ConstraintItem, children);
+        }
+
+        children.Add(ParseType());
+        return Node(SyntaxKind.ConstraintItem, children);
     }
 
     private SyntaxNode ParseEventDeclaration(List<SyntaxNode>? prefixChildren = null)
@@ -1169,7 +1261,7 @@ public sealed class TypeSharpParser
                 or SyntaxKind.NullKeyword
                 or SyntaxKind.TrueKeyword
                 or SyntaxKind.FalseKeyword => Node(SyntaxKind.LiteralExpression, [TokenNode(NextToken())]),
-            SyntaxKind.OpenBraceToken => ParseBlockExpression(),
+            SyntaxKind.OpenBraceToken => IsRecordExpressionStart() ? ParseRecordExpression() : ParseBlockExpression(),
             SyntaxKind.OpenBracketToken => ParseCollectionExpression(),
             SyntaxKind.OpenParenToken => ParseParenthesizedExpression(),
             _ => ParseMissingExpression()
@@ -1210,6 +1302,27 @@ public sealed class TypeSharpParser
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
         return Node(SyntaxKind.RecordExpression, children);
+    }
+
+    private bool IsRecordExpressionStart()
+    {
+        if (Current.Kind != SyntaxKind.OpenBraceToken)
+        {
+            return false;
+        }
+
+        var first = Peek(1);
+        if (first.Kind == SyntaxKind.CloseBraceToken)
+        {
+            return true;
+        }
+
+        if (first.Kind != SyntaxKind.IdentifierToken)
+        {
+            return false;
+        }
+
+        return Peek(2).Kind is SyntaxKind.ColonToken or SyntaxKind.CommaToken or SyntaxKind.CloseBraceToken;
     }
 
     private SyntaxNode ParseArgument()

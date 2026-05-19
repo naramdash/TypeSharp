@@ -29,6 +29,7 @@ typesharp check [project] [options]
 typesharp build [project] [options]
 typesharp run [project] [-- args...]
 typesharp explain <diagnostic-code> [--json]
+typesharp format [project-or-path] [--check]
 ```
 
 ### `typesharp version`
@@ -122,6 +123,9 @@ Stable Backlog backend:
 - output path는 manifest와 CLI option이 충돌하지 않게 결정한다.
 - `build`는 `check`와 같은 diagnostics를 먼저 통과해야 한다.
 - MVP에서 `--emit`을 생략하면 `csharp`를 기본값으로 사용한다.
+- 현재 `--configuration`은 `Debug` 또는 `Release`만 허용하며 generated SDK-style C# project의 build configuration과 reported assembly path를 결정한다.
+- 현재 `--target`은 `net48`만 허용하며 manifest `targetFramework`보다 우선한다.
+- 현재 `--verbosity quiet`은 성공 artifact log를 숨기고, `minimal`은 final assembly path만 출력하며, `normal`은 generated source/project/assembly path를 출력한다. `diagnostic`은 `normal` 출력에 build option 요약을 추가한다.
 
 ### `typesharp run`
 
@@ -137,6 +141,8 @@ typesharp run --configuration Debug -- Alice
 - `--` 뒤의 값은 TypeSharp 프로그램의 `main(args: string[])`로 전달한다.
 - executable `main`은 현재 `main()` 또는 `main(args: string[])` 형태여야 하며, 이 외 signature는 `TS3500`으로 보고한다.
 - 실행 전 build가 실패하면 프로그램을 실행하지 않는다.
+- 현재 `--configuration`은 build와 동일하게 generated executable의 `bin/<Configuration>/net48` output path를 선택한다.
+- 현재 `--target`은 build와 동일하게 generated executable project의 target framework와 output path를 선택한다.
 
 현재 구현 메모:
 - 초기 smoke path는 `main(): string`, `main(): int`, `main(args: string[]): string`, `main(args: string[]): int` 형태를 generated C# entry point로 감싸 실행한다.
@@ -168,12 +174,10 @@ typesharp explain TS2204 --diagnostic-format json
 - 잘못된 option 또는 누락된 code는 exit code `2`를 반환한다.
 - `--json`과 `--diagnostic-format json`은 같은 JSON descriptor payload를 출력한다.
 
-## Stable Backlog Command
+## Formatting Command
 
 ```text
 typesharp format [project-or-path] [--check]
-typesharp lsp
-typesharp test [project]
 ```
 
 ### `typesharp format`
@@ -188,11 +192,19 @@ typesharp format --check
 
 규칙:
 - formatter convention은 [formatting.md](formatting.md)를 따른다.
-- formatter는 semicolon을 출력하지 않는다.
+- 현재 formatter MVP는 parser-clean `.tysh` 파일만 rewrite한다.
+- 현재 rewrite 범위는 LF line ending, trailing whitespace 제거, 연속 blank line 하나로 축소, 최종 newline 보장이다.
 - `namespace`, `import`/`open`, declaration 순서를 유지한다.
-- pipeline과 match expression은 multiline 가독성을 우선한다.
+- pipeline과 match expression은 현재 재배치하지 않으며, canonical layout은 [formatting.md](formatting.md)의 후속 formatter 확장 기준이다.
 - parse diagnostics가 있는 파일은 rewrite하지 않는다.
 - `--check`는 파일을 쓰지 않고 format diff가 있으면 non-zero exit code를 반환한다.
+
+## Stable Backlog Command
+
+```text
+typesharp lsp
+typesharp test [project]
+```
 
 ### `typesharp lsp`
 
@@ -220,6 +232,9 @@ VS Code extension이 시작하는 Language Server Protocol entrypoint다.
 규칙:
 - CLI option은 manifest option을 override할 수 있지만, override 사실을 diagnostics/log에 남겨야 한다.
 - CI 친화성을 위해 `--diagnostic-format json`과 `--no-color`는 모든 MVP command에서 동작해야 한다.
+- `--verbosity`는 현재 project command에서 검증되며 build success log 상세도를 제어한다.
+- 알 수 없는 project command option은 usage 오류로 중단한다.
+- `--preview`는 현재 project command에서 인식되며 후속 preview feature gate와 연결할 reserved option이다.
 - `--preview` 없이 preview 문법을 사용하면 diagnostic을 낸다.
 
 ## Exit Code

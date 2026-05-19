@@ -1,0 +1,9 @@
+namespace Samples.RecordExpressions
+
+record Customer(Name: string, Age: int)
+
+fun invalidType(): Customer = { Name: "Ada", Age: "old" }
+
+fun missingField(): Customer = { Name: "Ada" }
+
+fun extraField(): Customer = { Name: "Ada", Age: 36, Unknown: true }

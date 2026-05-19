@@ -18,14 +18,16 @@
 | Parser precedence and ambiguity rules | [grammar/precedence.md](grammar/precedence.md), [grammar/ambiguity.md](grammar/ambiguity.md) | parser snapshot fixtures |
 | Module graph, namespace, import/export | [grammar/modules.md](grammar/modules.md), [grammar/resolution.md](grammar/resolution.md) | parser fixtures, binder symbols, backend import snapshots |
 | Function, value, literal declarations | [grammar/declarations.md](grammar/declarations.md), [lowering.md](lowering.md) | parser fixtures, binder/type checker smokes, generated C# snapshots |
-| Record, class, interface, delegate declarations | [grammar/declarations.md](grammar/declarations.md), [grammar/types.md](grammar/types.md), [lowering.md](lowering.md) | backend snapshots, generated `net48` build, C# consumer smokes |
+| Record, record expression, class, interface, delegate declarations | [grammar/declarations.md](grammar/declarations.md), [grammar/types.md](grammar/types.md), [grammar/expressions.md](grammar/expressions.md), [lowering.md](lowering.md) | backend snapshots, record expression diagnostics, generic constraint lowering snapshot, generated `net48` build, C# consumer smokes |
 | Nominal closed union declarations | [grammar/declarations.md](grammar/declarations.md), [grammar/types.md](grammar/types.md), [standard-library.md](standard-library.md), [lowering.md](lowering.md) | runtime helper smokes, backend snapshots, generated build and consumer smokes |
 | Type-level union and public boundary rule | [grammar/types.md](grammar/types.md), [grammar/resolution.md](grammar/resolution.md), [csharp-interop.md](csharp-interop.md) | type checker diagnostics, CLI no-emission smokes |
 | Structural shape checking | [grammar/types.md](grammar/types.md), [feature-map.md](feature-map.md), [lowering.md](lowering.md) | type checker positive/negative fixtures, CLI diagnostics smoke |
 | Nullability and unknown C# nullability | [grammar/types.md](grammar/types.md), [csharp-interop.md](csharp-interop.md), [diagnostics.md](diagnostics.md) | `TS2202`, `TS2404`, diagnostics fixtures, CLI smokes |
 | Pattern matching and exhaustiveness | [grammar/patterns.md](grammar/patterns.md), [grammar/expressions.md](grammar/expressions.md), [lowering.md](lowering.md) | nominal/type-level union diagnostics and backend snapshots |
+| Pipeline expression lowering | [grammar/expressions.md](grammar/expressions.md), [feature-map.md](feature-map.md), [feasibility.md](feasibility.md), [lowering.md](lowering.md) | pipeline backend snapshot, generated build and C# consumer smoke |
 | Async `Task<T>` interop | [grammar/expressions.md](grammar/expressions.md), [csharp-interop.md](csharp-interop.md), [lowering.md](lowering.md) | async backend snapshot, generated build and C# consumer smoke |
-| Blocks, local `let`, calls, member access, lambdas, for expressions | [grammar/expressions.md](grammar/expressions.md), [lowering.md](lowering.md) | parser fixtures, binder smoke, backend snapshots |
+| Collection expression array lowering | [grammar/expressions.md](grammar/expressions.md), [feature-map.md](feature-map.md), [lowering.md](lowering.md) | collection backend snapshot, mismatch diagnostic fixture, generated build and C# consumer smoke |
+| Blocks, local `let`, calls, member access, indexer access, lambdas, for expressions | [grammar/expressions.md](grammar/expressions.md), [lowering.md](lowering.md) | parser fixtures, binder smoke, backend snapshots |
 
 ## Interop And ABI Features
 
@@ -33,7 +35,7 @@
 | --- | --- | --- |
 | Framework assembly and local DLL references | [cli.md](cli.md), [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md) | reference resolver smokes, metadata reader smokes |
 | C# metadata reader | [csharp-interop.md](csharp-interop.md), [regression-testing.md](regression-testing.md) | local public type/method/property/parameter metadata smokes |
-| C# constructor/static/instance/property calls | [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md), [lowering.md](lowering.md) | generated `net48` build smokes |
+| C# constructor/static/instance/property/indexer calls | [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md), [lowering.md](lowering.md) | generated `net48` build smokes |
 | C# `params`, `out`, `in`, `ref` calls | [csharp-interop.md](csharp-interop.md), [grammar/interop.md](grammar/interop.md), [diagnostics.md](diagnostics.md) | metadata smokes, byref diagnostics, generated build smokes |
 | C# optional and named argument overload validation | [csharp-interop.md](csharp-interop.md), [grammar/expressions.md](grammar/expressions.md) | optional/named overload diagnostics and generated build smokes |
 | C# overload resolution | [csharp-interop.md](csharp-interop.md), [grammar/resolution.md](grammar/resolution.md), [traceability.md](traceability.md) | `TypeSharpCSharpOverloadResolver`, ambiguity diagnostics, exact/params/optional/named smokes |
@@ -49,8 +51,8 @@
 | Generated C# source/project/assembly emission | [architecture.md](architecture.md), [lowering.md](lowering.md), [regression-testing.md](regression-testing.md) | backend snapshots, generated `net48` build smokes |
 | Backend abstraction | [architecture.md](architecture.md), [requirements.md](requirements.md) | `ITypeSharpBackend`, C# backend adapter smoke |
 | Semantic model for LSP | [architecture.md](architecture.md), [requirements.md](requirements.md) | `TypeSharpSemanticModel`, LSP diagnostics/hover/definition/completion smokes |
-| VS Code syntax highlighting and language scaffold | [grammar/lexical.md](grammar/lexical.md), [README.md](README.md) | VS Code extension scaffold and TextMate grammar |
-| Formatter convention | [formatting.md](formatting.md) | docs policy and feature review gate |
+| VS Code syntax highlighting and LSP client | [grammar/lexical.md](grammar/lexical.md), [README.md](README.md), [architecture.md](architecture.md) | VS Code extension scaffold, TextMate grammar, and stdio LSP client activation |
+| Formatter convention, CLI format MVP, and VS Code format provider | [formatting.md](formatting.md), [cli.md](cli.md), [architecture.md](architecture.md) | docs policy, `typesharp format`, VS Code document formatter provider, and CLI/extension format smoke tests |
 | Regression, feature review, release policy | [regression-testing.md](regression-testing.md), [feature-review.md](feature-review.md), [release.md](release.md) | checklist and traceability policy rows |
 
 ## Adding A New Feature

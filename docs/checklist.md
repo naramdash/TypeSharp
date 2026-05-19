@@ -97,6 +97,7 @@
 - [x] class/interface declaration
 - [x] property/method/constructor
 - [x] generic type/function
+- [x] C# 7.3-compatible generic constraint lowering
 - [x] module/namespace
 - [x] immutable record
 - [x] `Option<T>`
@@ -105,12 +106,19 @@
 - [x] type-level union alias
 - [x] union narrowing
 - [x] pattern matching
+- [x] pipeline expression lowering
+- [x] nominal record expression construction lowering
 - [x] null safety
 - [x] basic structural type checking
 - [x] `Task`/`Task<T>` async interop
+- [x] simple homogeneous collection expression to array lowering
+- [x] indexer expression lowering
 - [x] C# assembly reference
 - [x] C# local DLL reference
 - [x] C# constructor/static/instance member call
+- [x] C# imported indexer access compile smoke
+- [x] C# attribute reference interop compile smoke
+- [x] C# generic type reference interop compile smoke
 - [x] C# `ref`/`out`/`in`/`params` interop
 - [x] C# `params` interop compile smoke
 - [x] C# `out` interop compile smoke
@@ -162,17 +170,27 @@
 - [x] generated C# source emission path
 - [x] generated C# `net48` project scaffold emission path
 - [x] generated C# `net48` assembly build path
+- [x] generated C# `net48` Debug/Release configuration build path
+- [x] generated C# `net48` target framework override build path
 - [x] generated C# project manifest reference propagation path
 - [x] generated C# framework static member call build smoke
 - [x] generated C# local DLL static member call build smoke
+- [x] generated C# pipeline expression build smoke
 - [x] generated C# imported constructor and instance member call build smoke
 - [x] generated C# imported property access build smoke
+- [x] generated C# imported indexer access build smoke
 - [x] generated C# imported `params` call build smoke
 - [x] generated C# imported `out` call build smoke
 - [x] generated C# imported `in` call build smoke
 - [x] generated C# imported `ref` call build smoke
 - [x] generated C# imported delegate lambda call build smoke
 - [x] generated C# imported event add/remove build smoke
+- [x] generated C# imported attribute reference build smoke
+- [x] generated C# imported generic type reference build smoke
+- [x] generated C# generic constraint build smoke
+- [x] generated C# collection expression array lowering smoke
+- [x] generated C# indexer expression lowering smoke
+- [x] generated C# record expression construction smoke
 - [x] IL backend abstraction seam
 - [x] diagnostics system
 - [x] initial diagnostic/span model
@@ -217,17 +235,26 @@
 - [x] CLI `run` forwards `--` arguments to `main(args: string[])`
 - [x] CLI `run` unsupported main signature diagnostics
 - [x] CLI `explain` diagnostic descriptor metadata command
+- [x] CLI `format`
+- [x] CLI `format --check`
+- [x] CLI `format` parse-diagnostic no-rewrite path
 - [x] formatter convention 문서
+- [x] VS Code document formatter provider
 - [x] VS Code extension scaffold
 - [x] VS Code syntax highlighting
 - [x] LSP diagnostics
 - [x] LSP hover
 - [x] LSP go-to-definition
 - [x] LSP basic completion
-- [ ] VS Code extension LSP client activation and packaging
-- [ ] Astro Starlight official docs site
-- [ ] GitHub Pages docs deployment workflow
-- [ ] runnable example project catalog
+- [x] VS Code extension LSP client activation and packaging
+- [x] VS Code Extension Host smoke
+- [x] docs site VS Code/LSP smoke command contract
+- [x] Astro Starlight official docs site
+- [x] GitHub Pages docs deployment workflow
+- [x] runnable example project catalog
+- [x] runnable ASP.NET/WCF host example project
+- [x] runnable WCF client/proxy-shaped host example project
+- [x] runnable host examples reference TypeSharp.Core/Runtime dependencies
 - [x] diagnostic explanation 문서
 - [x] sample project
 
@@ -248,10 +275,16 @@
 - [x] parser fixture format policy
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
+- [x] CLI new console/library project templates
 - [x] CLI check parse diagnostics smoke tests
 - [x] CLI check type checker diagnostics smoke tests
+- [x] CLI common option parsing smoke tests
+- [x] CLI preview option acceptance and unknown project option rejection smoke tests
+- [x] CLI warnings-as-errors smoke tests
+- [x] CLI verbosity parsing and build output smoke tests
 - [x] diagnostic descriptor registry smoke tests
 - [x] binder/name resolution smoke tests
+- [x] binder duplicate symbol diagnostics
 - [x] type checker basic mismatch smoke tests
 - [x] binder fixtures
 - [x] type checker positive fixtures
@@ -285,19 +318,33 @@
 - [x] C# local DLL static member call smoke tests
 - [x] C# constructor and instance member call smoke tests
 - [x] C# property access smoke tests
+- [x] C# indexer access smoke tests
 - [x] C# `params` call smoke tests
 - [x] C# `out` call smoke tests
 - [x] C# `in` call smoke tests
 - [x] C# `ref` call smoke tests
 - [x] C# event add/remove call smoke tests
+- [x] C# attribute reference smoke tests
+- [x] C# generic type reference smoke tests
+- [x] generic constraint lowering smoke tests
+- [x] pipeline lowering smoke tests
+- [x] collection expression lowering smoke tests
+- [x] indexer expression lowering smoke tests
+- [x] record expression construction smoke tests
+- [x] record expression mismatch diagnostic fixture
+- [x] collection expression mismatch diagnostic fixture
 - [x] ASP.NET/WCF/worker-style `net48` host compatibility smoke tests
 - [x] `net48` runtime dependency compatibility audit smoke tests
 - [x] CLI run generated `net48` executable smoke tests
 - [x] CLI run `main(args: string[])` argument forwarding smoke tests
 - [x] CLI run unsupported main signature diagnostic smoke tests
+- [x] CLI build/run `--configuration Debug|Release` smoke tests
+- [x] CLI build/run `--target net48` override smoke tests
+- [x] CLI build `--verbosity quiet|minimal|normal|diagnostic` smoke tests
 - [x] CLI explain descriptor metadata smoke tests
-- [ ] docs site build smoke tests
-- [ ] runnable example project smoke matrix
+- [x] CLI format check/write smoke tests
+- [x] docs site build smoke tests
+- [x] runnable example project smoke matrix
 - [x] lowering golden tests
 - [x] runtime unit tests
 - [x] C# interop tests

@@ -1,0 +1,25 @@
+[project]
+name = "DiagnosticsNullSafety"
+targetFramework = "net48"
+outputType = "library"
+rootNamespace = "Samples.Runnable.Diagnostics"
+sourceRoots = ["src"]
+generatedOutputRoot = "generated"
+
+[language]
+version = "preview"
+strict = true
+nullable = "strict"
+previewFeatures = []
+
+[references]
+assemblies = [
+  "System",
+  "System.Core"
+]
+paths = []
+packages = []
+
+[tooling]
+diagnosticFormat = "json"
+treatWarningsAsErrors = false

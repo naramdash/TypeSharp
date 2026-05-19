@@ -208,6 +208,11 @@ public static class TypeSharpBinder
             DeclareTypeParameters(node, scope);
             BindTypeAnnotations(node, scope);
             BindInitializers(node, scope);
+
+            foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
+            {
+                BindFunctionDeclaration(function, scope);
+            }
         }
 
         private void BindFunctionDeclaration(SyntaxNode node, BindingScope parentScope)
@@ -219,8 +224,7 @@ public static class TypeSharpBinder
                 BindTypeAnnotations(parameter, scope);
                 if (TryGetFirstIdentifier(parameter, out var parameterToken))
                 {
-                    scope.DeclareValue(parameterToken.Text ?? string.Empty);
-                    _symbols.Add(new BoundSymbol(parameterToken.Text ?? string.Empty, BoundSymbolKind.Parameter, _file, parameterToken.Span));
+                    AddSymbol(scope, parameterToken.Text ?? string.Empty, BoundSymbolKind.Parameter, parameterToken.Span, declareValue: true, declareType: false);
                 }
             }
 
@@ -359,8 +363,7 @@ public static class TypeSharpBinder
 
             if (TryGetDeclarationName(node, out var name, out var span))
             {
-                scope.DeclareValue(name);
-                _symbols.Add(new BoundSymbol(name, BoundSymbolKind.Local, _file, span));
+                AddSymbol(scope, name, BoundSymbolKind.Local, span, declareValue: true, declareType: false);
             }
         }
 
@@ -392,8 +395,7 @@ public static class TypeSharpBinder
             var scope = new BindingScope(parentScope);
             if (node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken) is { } parameter)
             {
-                scope.DeclareValue(parameter.Text ?? string.Empty);
-                _symbols.Add(new BoundSymbol(parameter.Text ?? string.Empty, BoundSymbolKind.Parameter, _file, parameter.Span));
+                AddSymbol(scope, parameter.Text ?? string.Empty, BoundSymbolKind.Parameter, parameter.Span, declareValue: true, declareType: false);
             }
 
             foreach (var child in node.Children.Where(child => !child.IsToken))
@@ -472,8 +474,7 @@ public static class TypeSharpBinder
 
             if (node.IsToken && node.Kind == SyntaxKind.IdentifierToken)
             {
-                scope.DeclareValue(node.Text ?? string.Empty);
-                _symbols.Add(new BoundSymbol(node.Text ?? string.Empty, BoundSymbolKind.Local, _file, node.Span));
+                AddSymbol(scope, node.Text ?? string.Empty, BoundSymbolKind.Local, node.Span, declareValue: true, declareType: false);
                 return;
             }
 
@@ -493,8 +494,7 @@ public static class TypeSharpBinder
                     continue;
                 }
 
-                scope.DeclareType(name);
-                _symbols.Add(new BoundSymbol(name, BoundSymbolKind.Type, _file, identifier.Span));
+                AddSymbol(scope, name, BoundSymbolKind.Type, identifier.Span, declareValue: false, declareType: true);
             }
         }
 
@@ -505,7 +505,11 @@ public static class TypeSharpBinder
                 BindTypeNode(child, scope);
             }
 
-            foreach (var child in node.Children.Where(child => !child.IsToken && child.Kind != SyntaxKind.TypeAnnotation && child.Kind != SyntaxKind.Initializer && child.Kind != SyntaxKind.FunctionBody))
+            foreach (var child in node.Children.Where(child => !child.IsToken
+                && child.Kind != SyntaxKind.TypeAnnotation
+                && child.Kind != SyntaxKind.Initializer
+                && child.Kind != SyntaxKind.FunctionBody
+                && child.Kind != SyntaxKind.FunctionDeclaration))
             {
                 BindTypeAnnotations(child, scope);
             }
@@ -584,6 +588,16 @@ public static class TypeSharpBinder
                 identifier.Span));
         }
 
+        private void ReportDuplicateSymbol(SourceSpan span, string name)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.DuplicateSymbol.Code,
+                DiagnosticDescriptors.DuplicateSymbol.DefaultSeverity,
+                $"Duplicate symbol '{name}' in the same scope.",
+                _file,
+                span));
+        }
+
         private void AddSymbol(
             BindingScope scope,
             string name,
@@ -594,6 +608,12 @@ public static class TypeSharpBinder
         {
             if (string.IsNullOrWhiteSpace(name))
             {
+                return;
+            }
+
+            if ((declareValue && scope.HasLocalValue(name)) || (declareType && scope.HasLocalType(name)))
+            {
+                ReportDuplicateSymbol(span, name);
                 return;
             }
 
@@ -707,6 +727,10 @@ public static class TypeSharpBinder
         {
             _parent = parent;
         }
+
+        public bool HasLocalValue(string name) => _values.Contains(name);
+
+        public bool HasLocalType(string name) => _types.Contains(name);
 
         public void DeclareValue(string name) => _values.Add(name);
 

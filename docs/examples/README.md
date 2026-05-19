@@ -1,8 +1,8 @@
 # TypeSharp Examples
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
-이 폴더는 현재 문법 문서를 기준으로 TypeSharp 코드가 실제로 어떻게 보일지 보여주는 `.tysh` 예제를 모은다. 예제는 아직 컴파일러가 없는 설계 샘플이며, 이후 parser fixture, language server smoke sample, CLI sample project로 승격할 수 있어야 한다.
+이 폴더는 TypeSharp 코드 예제와 실행 가능한 예제 프로젝트를 함께 둔다. 상위의 단일 `.tysh` 파일들은 언어 표면과 설계 방향을 보여주는 feature examples이고, [runnable/](runnable/README.md) 아래 프로젝트들은 현재 CLI와 smoke test로 검증하는 adoption examples다.
 
 ## 파일 확장자
 
@@ -27,6 +27,7 @@ TypeSharp source file의 기본 확장자는 `.tysh`로 정한다.
 - [10-public-boundary-contract.tysh](10-public-boundary-contract.tysh): local structural/type-level flexibility normalized into C#-friendly public types.
 - [11-capability-boundaries.tysh](11-capability-boundaries.tysh): explicit `dynamic`, `reflect`, `interop` capability markers.
 - [cli-console/](cli-console/README.md): `TypeSharp.toml`, `src/Main.tysh`, `typesharp check/build/run` workflow.
+- [runnable/](runnable/README.md): smoke-tested console, library, C# interop, ASP.NET/WCF host, worker host, and diagnostics example projects.
 
 ## 예제 커버리지
 

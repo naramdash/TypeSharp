@@ -101,6 +101,15 @@ public static class DiagnosticDescriptors
         "Name resolution could not find a matching value, type, import, parameter, or local binding in scope.",
         "Declare the symbol, import it explicitly, or qualify the reference.");
 
+    public static readonly DiagnosticDescriptor DuplicateSymbol = new(
+        "TS2002",
+        "Duplicate symbol",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Binding,
+        "Duplicate symbol.",
+        "A declaration introduced a value or type name that already exists in the same scope.",
+        "Rename one declaration or move it into a nested scope.");
+
     public static readonly DiagnosticDescriptor TypeMismatch = new(
         "TS2201",
         "Type mismatch",
@@ -127,6 +136,15 @@ public static class DiagnosticDescriptors
         "Type-level union cannot appear in public API. Use a nominal union or interface.",
         "Type-level unions and structural shapes are compile-time TypeSharp types and do not have stable CLR metadata representation.",
         "Replace the public type with a nominal union, nominal interface, or wrapper type.");
+
+    public static readonly DiagnosticDescriptor UnsupportedGenericConstraint = new(
+        "TS2205",
+        "Unsupported generic constraint",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported generic constraint.",
+        "The current C# 7.3 backend can lower class, struct, new(), and nominal/interface type constraints, but not every design-level TypeSharp constraint.",
+        "Use a C# 7.3-compatible constraint or remove the unsupported constraint until the backend supports it.");
 
     public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
         "TS2203",
@@ -204,10 +222,12 @@ public static class DiagnosticDescriptors
         MissingExpression,
         UnexpectedToken,
         UnresolvedName,
+        DuplicateSymbol,
         TypeMismatch,
         NullabilityContractViolation,
         NonExhaustiveMatch,
         PublicBoundaryTypeLeak,
+        UnsupportedGenericConstraint,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,

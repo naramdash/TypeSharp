@@ -2,7 +2,7 @@
 
 문서 기준일: 2026-05-18
 
-이 폴더는 TypeSharp CLI가 목표로 하는 최소 console project 흐름을 보여준다. 아직 실제 CLI가 구현된 것은 아니며, 이 예제는 `typesharp new`, `typesharp check`, `typesharp build`, `typesharp run`의 기준 fixture로 승격될 수 있어야 한다.
+이 폴더는 초기 CLI console workflow sketch다. 현재 smoke-tested runnable console project는 [../runnable/console-hello](../runnable/console-hello/README.md)에 있으며, 새 예제 검증은 [../runnable](../runnable/README.md) catalog를 기준으로 한다.
 
 ## Project Structure
 

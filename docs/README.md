@@ -84,19 +84,22 @@
 26. [traceability.md](traceability.md)
    - 목표, 요구사항, 기능, 체크리스트가 서로 어떻게 연결되는지 검증한다.
 
-27. [references.md](references.md)
+27. [../docs-site](../docs-site)
+   - GitHub Pages 배포를 전제로 한 Astro Starlight 공식 문서 사이트다.
+
+28. [references.md](references.md)
    - .NET Framework, C#, F#, TypeScript 최신 기준선의 공식 근거 링크를 기록한다.
 
-28. [dependencies.md](dependencies.md)
+29. [dependencies.md](dependencies.md)
    - generated assembly, runtime/core, compiler/CLI/test host dependency inventory와 `net48` compatibility audit 기준을 기록한다.
 
-29. [framework-targeting.md](framework-targeting.md)
+30. [framework-targeting.md](framework-targeting.md)
    - Windows 10/11 장비 벤더 환경에서 `net48`과 `net481` 중 어떤 .NET Framework 타깃을 선택할지 판단 기준을 기록한다.
 
-30. [runtime-abi.md](runtime-abi.md)
+31. [runtime-abi.md](runtime-abi.md)
    - `TypeSharp.Core`, `TypeSharp.Runtime`, generated `net48` assembly의 public ABI versioning 정책을 정의한다.
 
-31. [release.md](release.md)
+32. [release.md](release.md)
    - versioning, breaking change, preview feature gate, checksum/signing, security, release notes, compatibility matrix 정책을 정의한다.
 
 ## 문서 원칙
@@ -125,6 +128,7 @@
 - `regression-testing.md`는 새 변경이 어떤 fixture, smoke, metadata check, policy link를 가져야 하는지 정한다.
 - `feature-review.md`는 기능별 .NET Framework, public ABI, lowering, diagnostics, tooling, test review 질문을 완료 기준으로 바꾼다.
 - `tasks/`는 한 세션보다 긴 작업을 task packet으로 쪼개고 상태를 남기는 곳이다.
+- `docs-site/`는 `docs/`의 source-of-truth 문서를 GitHub Pages용 Starlight site로 탐색 가능하게 묶는다.
 - `references.md`는 시간이 지나면 갱신해야 한다. 최신 언어 버전은 반드시 공식 문서로 다시 확인한다.
 - `dependencies.md`는 package-free runtime/core surface와 future dependency gate를 추적한다.
 - `framework-targeting.md`는 의료기기/분석기기 벤더 호환성처럼 설치 기반이 중요한 환경에서 `net48`/`net481` 선택 근거를 추적한다.

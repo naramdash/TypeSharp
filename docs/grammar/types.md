@@ -209,6 +209,11 @@ constraint_item ::= type | "class" | "struct" | "notnull" | "new" "(" ")"
 fun create<T>(): T where T: new()
 ```
 
+현재 C# 7.3 source backend lowering 범위:
+- `class`, `struct`, `new()`, nominal/interface type constraint는 C# `where` clause로 보존한다.
+- `notnull`은 TypeSharp 설계 문법에 남겨 두지만 C# 7.3 backend에서는 `TS2205`로 막는다.
+- constraint satisfiability, ordering normalization, generic method inference는 후속 작업이다.
+
 ## Type Query and Type Operators
 
 Planned Grammar:

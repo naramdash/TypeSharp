@@ -1,0 +1,13 @@
+namespace Samples.Pipeline
+
+export fun increment(value: int): int = value + 1
+
+export fun add(value: int, amount: int): int = value + amount
+
+export fun format(value: int): string = value.ToString()
+
+export fun compute(): string =
+  1
+  |> increment
+  |> add(2)
+  |> format

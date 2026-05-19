@@ -25,9 +25,22 @@ var tests = new (string Name, Action Body)[]
     ("version defaults match the documented CLI contract", VersionDefaultsMatchCliContract),
     ("diagnostic descriptor registry is stable", DiagnosticDescriptorRegistryIsStable),
     ("diagnostic text follows CLI text shape", DiagnosticTextUsesCliShape),
+    ("CLI new creates console project", CliNewCreatesConsoleProject),
+    ("CLI new creates library project", CliNewCreatesLibraryProject),
+    ("CLI new rejects non-empty output directory", CliNewRejectsNonEmptyOutputDirectory),
+    ("CLI accepts common no-color option", CliAcceptsCommonNoColorOption),
+    ("CLI accepts preview project option", CliAcceptsPreviewProjectOption),
+    ("CLI rejects unknown project option", CliRejectsUnknownProjectOption),
+    ("CLI rejects invalid diagnostic format", CliRejectsInvalidDiagnosticFormat),
+    ("CLI rejects invalid configuration", CliRejectsInvalidConfiguration),
+    ("CLI rejects invalid target framework", CliRejectsInvalidTargetFramework),
+    ("CLI rejects invalid verbosity", CliRejectsInvalidVerbosity),
     ("CLI explain prints diagnostic descriptor metadata", CliExplainPrintsDiagnosticDescriptorMetadata),
     ("CLI explain emits JSON descriptor metadata", CliExplainEmitsJsonDescriptorMetadata),
     ("CLI explain rejects unknown diagnostic code", CliExplainRejectsUnknownDiagnosticCode),
+    ("CLI format check succeeds on formatted project", CliFormatCheckSucceedsOnFormattedProject),
+    ("CLI format checks and writes normalized source", CliFormatChecksAndWritesNormalizedSource),
+    ("CLI format reports parse diagnostics without rewriting", CliFormatReportsParseDiagnosticsWithoutRewriting),
     ("parse result exposes error state", ParseResultExposesErrorState),
     ("parser fixture convention paths are stable", ParserFixtureConventionPathsAreStable),
     ("binder fixture convention paths are stable", BinderFixtureConventionPathsAreStable),
@@ -77,6 +90,12 @@ var tests = new (string Name, Action Body)[]
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
     ("CLI run reports unsupported main signature", CliRunReportsUnsupportedMainSignature),
     ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
+    ("CLI build honors Release configuration", CliBuildHonorsReleaseConfiguration),
+    ("CLI run honors Release configuration", CliRunHonorsReleaseConfiguration),
+    ("CLI build honors target framework override", CliBuildHonorsTargetFrameworkOverride),
+    ("CLI run honors target framework override", CliRunHonorsTargetFrameworkOverride),
+    ("CLI build honors quiet verbosity", CliBuildHonorsQuietVerbosity),
+    ("CLI build honors minimal verbosity", CliBuildHonorsMinimalVerbosity),
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
     ("parser parses module declaration without diagnostics", ParserParsesModuleDeclarationWithoutDiagnostics),
@@ -88,6 +107,7 @@ var tests = new (string Name, Action Body)[]
     ("binder binds local declarations without diagnostics", BinderBindsLocalDeclarationsWithoutDiagnostics),
     ("semantic model resolves symbols at source positions", SemanticModelResolvesSymbolsAtSourcePositions),
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
+    ("checker reports duplicate symbol diagnostics", CheckerReportsDuplicateSymbolDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
     ("inference engine infers local expression graph", InferenceEngineInfersLocalExpressionGraph),
     ("checker reports type mismatch diagnostics", CheckerReportsTypeMismatchDiagnostics),
@@ -98,11 +118,24 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON nullability diagnostics", CliCheckEmitsJsonNullabilityDiagnostics),
     ("CLI check emits JSON structural diagnostics", CliCheckEmitsJsonStructuralDiagnostics),
     ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
+    ("CLI check emits JSON duplicate symbol diagnostics", CliCheckEmitsJsonDuplicateSymbolDiagnostics),
+    ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
+    ("CLI check keeps warnings nonblocking by default", CliCheckKeepsWarningsNonblockingByDefault),
+    ("CLI check treats warnings as errors", CliCheckTreatsWarningsAsErrors),
+    ("CLI build stops before emission on warnings as errors", CliBuildStopsBeforeEmissionOnWarningsAsErrors),
     ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
     ("language server returns hover for bound symbols", LanguageServerReturnsHoverForBoundSymbols),
     ("language server returns definition for bound symbols", LanguageServerReturnsDefinitionForBoundSymbols),
     ("language server returns completion items", LanguageServerReturnsCompletionItems),
+    ("VS Code extension activates LSP client", VsCodeExtensionActivatesLspClient),
+    ("VS Code extension activation smoke runs in mocked extension host", VsCodeExtensionActivationSmokeRunsInMockedExtensionHost),
+    ("VS Code extension live smoke runs against bundled language server", VsCodeExtensionLiveSmokeRunsAgainstBundledLanguageServer),
+    ("VS Code extension package shape is stable", VsCodeExtensionPackageShapeIsStable),
+    ("runnable example catalog smoke matrix is stable", RunnableExampleCatalogSmokeMatrixIsStable),
+    ("runnable example project commands are smoke-tested", RunnableExampleProjectCommandsAreSmokeTested),
+    ("docs site contract is stable", DocsSiteContractIsStable),
+    ("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
@@ -110,6 +143,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles local DLL static member call", CliBuildCompilesLocalDllStaticMemberCall),
     ("CLI build compiles imported constructor and instance member call", CliBuildCompilesImportedConstructorAndInstanceMemberCall),
     ("CLI build compiles imported property access", CliBuildCompilesImportedPropertyAccess),
+    ("CLI build compiles imported indexer access", CliBuildCompilesImportedIndexerAccess),
     ("CLI build compiles imported params call", CliBuildCompilesImportedParamsCall),
     ("CLI build compiles imported out call", CliBuildCompilesImportedOutCall),
     ("CLI build compiles imported in call", CliBuildCompilesImportedInCall),
@@ -120,6 +154,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
+    ("CLI build compiles imported attribute and generic type references", CliBuildCompilesImportedAttributeAndGenericTypeReferences),
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
     ("CLI build compiles core option result APIs", CliBuildCompilesCoreOptionResultApis),
@@ -127,12 +162,16 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles class declaration API", CliBuildCompilesClassDeclarationApi),
     ("CLI build compiles interface declaration API", CliBuildCompilesInterfaceDeclarationApi),
     ("CLI build compiles generic type declaration API", CliBuildCompilesGenericTypeDeclarationApi),
+    ("CLI build compiles generic constraint API", CliBuildCompilesGenericConstraintApi),
     ("CLI build compiles immutable record API", CliBuildCompilesImmutableRecordApi),
     ("CLI build compiles record update lowering", CliBuildCompilesRecordUpdateLowering),
+    ("CLI build compiles record expression construction", CliBuildCompilesRecordExpressionConstruction),
     ("CLI build compiles nominal union API", CliBuildCompilesNominalUnionApi),
     ("CLI build compiles nominal union match lowering", CliBuildCompilesNominalUnionMatchLowering),
     ("CLI build compiles type-level union narrowing", CliBuildCompilesTypeLevelUnionNarrowing),
     ("CLI build compiles async Task interop", CliBuildCompilesAsyncTaskInterop),
+    ("CLI build compiles collection expression lowering", CliBuildCompilesCollectionExpressionLowering),
+    ("CLI build compiles pipeline lowering", CliBuildCompilesPipelineLowering),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("generated net48 assembly public ABI snapshot is stable", GeneratedNet48AssemblyPublicAbiSnapshotIsStable),
@@ -203,10 +242,12 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS1003",
             "TS1004",
             "TS2001",
+            "TS2002",
             "TS2201",
             "TS2202",
             "TS2203",
             "TS2204",
+            "TS2205",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -241,6 +282,238 @@ static void DiagnosticTextUsesCliShape()
     AssertEqual(
         "input.tysh(3,40): error TS1001: Expected function body after function signature.",
         diagnostic.ToCliText());
+}
+
+static void CliNewCreatesConsoleProject()
+{
+    WithWorkspace(root =>
+    {
+        var projectRoot = Path.Combine(root, "HelloApp");
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["new", "console", "HelloApp", "--output", projectRoot], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+        AssertContains("Created TypeSharp console project", output.ToString());
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "Console template should create a manifest.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Main.tysh")), "Console template should create src/Main.tysh.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, ".gitignore")), "Console template should create .gitignore.");
+        AssertContains("outputType = \"exe\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
+        AssertContains("main = \"HelloApp.main\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
+        AssertContains("export fun main(): string", File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh")));
+
+        var checkExitCode = TypeSharpCli.Run(["check", Path.Combine(projectRoot, "TypeSharp.toml")], new StringWriter(), new StringWriter());
+        AssertEqual(0, checkExitCode);
+    });
+}
+
+static void CliNewCreatesLibraryProject()
+{
+    WithWorkspace(root =>
+    {
+        var projectRoot = Path.Combine(root, "Billing.Core");
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["new", "library", "Billing.Core", "--target", "net48", "--output", projectRoot], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "Library template should create a manifest.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Library.tysh")), "Library template should create src/Library.tysh.");
+        AssertContains("outputType = \"library\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
+        AssertContains("rootNamespace = \"Billing.Core\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
+        AssertContains("export fun greeting", File.ReadAllText(Path.Combine(projectRoot, "src", "Library.tysh")));
+
+        var buildExitCode = TypeSharpCli.Run(["build", Path.Combine(projectRoot, "TypeSharp.toml")], new StringWriter(), new StringWriter());
+        AssertEqual(0, buildExitCode);
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "Billing.Core.dll")), "Library template should build a generated net48 DLL.");
+    });
+}
+
+static void CliNewRejectsNonEmptyOutputDirectory()
+{
+    WithWorkspace(root =>
+    {
+        var projectRoot = Path.Combine(root, "Existing");
+        Directory.CreateDirectory(projectRoot);
+        File.WriteAllText(Path.Combine(projectRoot, "keep.txt"), "do not overwrite");
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["new", "console", "Existing", "--output", projectRoot], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("is not empty", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "New command should not write into non-empty directories.");
+    });
+}
+
+static void CliAcceptsCommonNoColorOption()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("NoColor"));
+        WriteFile(root, "src/Main.tysh", "namespace Samples.NoColor\n\nexport fun greeting(): string = \"ok\"\n");
+
+        var versionOutput = new StringBuilder();
+        var versionError = new StringBuilder();
+        AssertEqual(0, TypeSharpCli.Run(["version", "--json", "--no-color"], new StringWriter(versionOutput), new StringWriter(versionError)));
+        AssertContains("\"cli\":", versionOutput.ToString());
+        AssertEqual(string.Empty, versionError.ToString());
+
+        var newRoot = Path.Combine(root, "NoColorNew");
+        var newOutput = new StringBuilder();
+        var newError = new StringBuilder();
+        AssertEqual(0, TypeSharpCli.Run(["new", "library", "NoColorNew", "--no-color", "--output", newRoot], new StringWriter(newOutput), new StringWriter(newError)));
+        AssertTrue(File.Exists(Path.Combine(newRoot, "TypeSharp.toml")), "New command should accept --no-color and create a manifest.");
+        AssertEqual(string.Empty, newError.ToString());
+
+        var checkOutput = new StringBuilder();
+        var checkError = new StringBuilder();
+        AssertEqual(0, TypeSharpCli.Run(["check", manifestPath, "--no-color"], new StringWriter(checkOutput), new StringWriter(checkError)));
+        AssertEqual(string.Empty, checkError.ToString());
+
+        var explainOutput = new StringBuilder();
+        var explainError = new StringBuilder();
+        AssertEqual(0, TypeSharpCli.Run(["explain", "TS1001", "--no-color"], new StringWriter(explainOutput), new StringWriter(explainError)));
+        AssertContains("TS1001", explainOutput.ToString());
+        AssertEqual(string.Empty, explainError.ToString());
+
+        var formatOutput = new StringBuilder();
+        var formatError = new StringBuilder();
+        AssertEqual(0, TypeSharpCli.Run(["format", manifestPath, "--check", "--no-color"], new StringWriter(formatOutput), new StringWriter(formatError)));
+        AssertContains("All TypeSharp files are formatted.", formatOutput.ToString());
+        AssertEqual(string.Empty, formatError.ToString());
+    });
+}
+
+static void CliAcceptsPreviewProjectOption()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("PreviewOption"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.PreviewOption
+
+            export fun greeting(): string = "preview"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--preview"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+    });
+}
+
+static void CliRejectsUnknownProjectOption()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("UnknownProjectOption"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnknownProjectOption
+
+            export fun greeting(): string = "unknown"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--unknown-option"], output, error);
+
+        AssertEqual(2, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("Unknown option '--unknown-option'.", error.ToString());
+    });
+}
+
+static void CliRejectsInvalidDiagnosticFormat()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("InvalidDiagnosticFormat"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidDiagnosticFormat
+
+            export fun greeting(): string = "ok"
+            """);
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "xml"], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(2, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("Diagnostic format must be 'text' or 'json'.", error.ToString());
+    });
+}
+
+static void CliRejectsInvalidConfiguration()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("InvalidConfiguration"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidConfiguration
+
+            export fun greeting(): string = "ok"
+            """);
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--configuration", "Fast"], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(2, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("Configuration must be 'Debug' or 'Release'.", error.ToString());
+    });
+}
+
+static void CliRejectsInvalidTargetFramework()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("InvalidTarget"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidTarget
+
+            export fun greeting(): string = "ok"
+            """);
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--target", "net481"], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(2, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("Target framework must be 'net48'.", error.ToString());
+    });
+}
+
+static void CliRejectsInvalidVerbosity()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("InvalidVerbosity"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidVerbosity
+
+            export fun greeting(): string = "ok"
+            """);
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--verbosity", "loud"], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(2, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("Verbosity must be 'quiet', 'minimal', 'normal', or 'diagnostic'.", error.ToString());
+    });
 }
 
 static void CliExplainPrintsDiagnosticDescriptorMetadata()
@@ -287,6 +560,72 @@ static void CliExplainRejectsUnknownDiagnosticCode()
     AssertEqual(1, exitCode);
     AssertEqual(string.Empty, output.ToString());
     AssertContains("Unknown diagnostic code 'TS9999'.", error.ToString());
+}
+
+static void CliFormatCheckSucceedsOnFormattedProject()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("FormatProject"));
+        WriteFile(root, "src/Main.tysh", "namespace Samples.FormatProject\n\nexport fun greeting(): string = \"ok\"\n");
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["format", manifestPath, "--check"], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(0, exitCode);
+        AssertEqual($"All TypeSharp files are formatted.{Environment.NewLine}", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+    });
+}
+
+static void CliFormatChecksAndWritesNormalizedSource()
+{
+    WithWorkspace(root =>
+    {
+        var sourcePath = Path.Combine(root, "Main.tysh");
+        File.WriteAllText(
+            sourcePath,
+            "namespace Samples.Format  \r\n\r\n\r\nexport fun greeting(): string = \"ok\"  ");
+        var checkOutput = new StringBuilder();
+        var checkError = new StringBuilder();
+
+        var checkExitCode = TypeSharpCli.Run(["format", sourcePath, "--check"], new StringWriter(checkOutput), new StringWriter(checkError));
+
+        AssertEqual(1, checkExitCode);
+        AssertContains("Needs formatting: Main.tysh", checkOutput.ToString());
+        AssertEqual(string.Empty, checkError.ToString());
+
+        var formatOutput = new StringBuilder();
+        var formatError = new StringBuilder();
+        var formatExitCode = TypeSharpCli.Run(["format", sourcePath], new StringWriter(formatOutput), new StringWriter(formatError));
+
+        AssertEqual(0, formatExitCode);
+        AssertContains("Formatted: Main.tysh", formatOutput.ToString());
+        AssertEqual(string.Empty, formatError.ToString());
+        AssertTextEquals(
+            "namespace Samples.Format\n\nexport fun greeting(): string = \"ok\"\n",
+            File.ReadAllText(sourcePath));
+    });
+}
+
+static void CliFormatReportsParseDiagnosticsWithoutRewriting()
+{
+    WithWorkspace(root =>
+    {
+        var sourcePath = Path.Combine(root, "Broken.tysh");
+        var original = "namespace Samples.FormatBroken\n\nexport fun broken(): string\n";
+        File.WriteAllText(sourcePath, original);
+        var output = new StringBuilder();
+        var error = new StringBuilder();
+
+        var exitCode = TypeSharpCli.Run(["format", sourcePath], new StringWriter(output), new StringWriter(error));
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("TS1001", error.ToString());
+        AssertEqual(original, File.ReadAllText(sourcePath));
+    });
 }
 
 static void ParseResultExposesErrorState()
@@ -829,7 +1168,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyFormatter"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -855,7 +1194,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence([false, true], format.Parameters.Select(parameter => parameter.IsOptional).ToArray());
 
         var legacyFormatter = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFormatter"), "LegacyFormatter metadata should be present.");
-        AssertSequence(["Prefix"], legacyFormatter.Properties.Select(property => property.Name).ToArray());
+        AssertSequence(["Item", "Prefix"], legacyFormatter.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         AssertSequence(["Format"], legacyFormatter.Methods.Select(method => method.Name).ToArray());
 
         var legacyByRef = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByRef"), "LegacyByRef metadata should be present.");
@@ -877,6 +1216,12 @@ static void MetadataReaderIndexesLocalPublicSymbols()
 
         var legacyEvents = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyEvents"), "LegacyEvents metadata should be present.");
         AssertTrue(legacyEvents.Methods.Any(method => method.Name == "Raise"), "LegacyEvents public methods should include Raise while event accessors remain special-name metadata.");
+
+        var legacyMarkerAttribute = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyMarkerAttribute"), "LegacyMarkerAttribute metadata should be present.");
+        AssertSequence(["Name"], legacyMarkerAttribute.Properties.Select(property => property.Name).ToArray());
+
+        var legacyBox = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyBox`1"), "LegacyBox<T> metadata should be present.");
+        AssertSequence(["Value"], legacyBox.Properties.Select(property => property.Name).ToArray());
     });
 }
 
@@ -1483,11 +1828,17 @@ static void CliRunBuildsAndRunsGeneratedNet48Executable()
 
         var exitCode = TypeSharpCli.Run(["run", manifestPath], output, error);
 
-        AssertEqual(0, exitCode);
-        AssertEqual($"Hello from TypeSharp run{Environment.NewLine}", output.ToString());
-        AssertEqual(string.Empty, error.ToString());
         AssertTrue(File.Exists(Path.Combine(root, "generated", "Program.g.cs")), "Run should emit a generated entry point.");
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RunSmoke.exe")), "Run should build a generated net48 executable.");
+
+        if (exitCode == 0)
+        {
+            AssertEqual($"Hello from TypeSharp run{Environment.NewLine}", output.ToString());
+            AssertEqual(string.Empty, error.ToString());
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(exitCode, output.ToString(), error.ToString(), "RunSmoke");
     });
 }
 
@@ -1514,14 +1865,20 @@ static void CliRunPassesArgumentsToGeneratedMain()
 
         var exitCode = TypeSharpCli.Run(["run", manifestPath, "--", "alpha", "beta"], output, error);
 
-        AssertEqual(0, exitCode);
-        AssertEqual($"2{Environment.NewLine}", output.ToString());
-        AssertEqual(string.Empty, error.ToString());
-
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
         var generatedProgram = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
         AssertContains("public static string main(string[] args)", generatedSource);
         AssertContains("Module.main(args)", generatedProgram);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RunArgs.exe")), "Run should build a generated net48 executable with argument forwarding.");
+
+        if (exitCode == 0)
+        {
+            AssertEqual($"2{Environment.NewLine}", output.ToString());
+            AssertEqual(string.Empty, error.ToString());
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(exitCode, output.ToString(), error.ToString(), "RunArgs");
     });
 }
 
@@ -1576,6 +1933,192 @@ static void CliRunRejectsLibraryProjects()
         AssertEqual(5, exitCode);
         AssertEqual(string.Empty, output.ToString());
         AssertContains("typesharp run requires project outputType = \"exe\".", error.ToString());
+    });
+}
+
+static void CliBuildHonorsReleaseConfiguration()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ReleaseBuild"
+            targetFramework = "net48"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ReleaseBuild
+
+            export fun greeting(): string = "release"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--configuration", "Release"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Release/net48/ReleaseBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Release", "net48", "ReleaseBuild.dll")), "Build should write the generated assembly under the selected Release configuration.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ReleaseBuild.dll")), "Release build should not report or require the Debug assembly path.");
+    });
+}
+
+static void CliRunHonorsReleaseConfiguration()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ReleaseRun"
+            targetFramework = "net48"
+            outputType = "exe"
+            rootNamespace = "Samples.ReleaseRun"
+            generatedOutputRoot = "generated"
+            main = "Samples.ReleaseRun.main"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ReleaseRun
+
+            export fun main(): string = "Release run"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["run", manifestPath, "--configuration=Release"], output, error);
+
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Release", "net48", "ReleaseRun.exe")), "Run should build the generated executable under the selected Release configuration.");
+
+        if (exitCode == 0)
+        {
+            AssertEqual($"Release run{Environment.NewLine}", output.ToString());
+            AssertEqual(string.Empty, error.ToString());
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(exitCode, output.ToString(), error.ToString(), "ReleaseRun");
+    });
+}
+
+static void CliBuildHonorsTargetFrameworkOverride()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "TargetOverrideBuild"
+            targetFramework = "net481"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.TargetOverrideBuild
+
+            export fun greeting(): string = "target"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--target", "net48"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/TargetOverrideBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "TargetOverrideBuild.dll")), "Build should use the selected target framework override for generated assembly output.");
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "TargetOverrideBuild.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", projectText);
+        AssertFalse(projectText.Contains("<TargetFramework>net481</TargetFramework>", StringComparison.Ordinal), "Generated project should not keep the manifest target when CLI --target overrides it.");
+    });
+}
+
+static void CliRunHonorsTargetFrameworkOverride()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "TargetOverrideRun"
+            targetFramework = "net481"
+            outputType = "exe"
+            rootNamespace = "Samples.TargetOverrideRun"
+            generatedOutputRoot = "generated"
+            main = "Samples.TargetOverrideRun.main"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.TargetOverrideRun
+
+            export fun main(): string = "Target run"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["run", manifestPath, "--target=net48"], output, error);
+
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "TargetOverrideRun.exe")), "Run should use the selected target framework override for generated executable output.");
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "TargetOverrideRun.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", projectText);
+
+        if (exitCode == 0)
+        {
+            AssertEqual($"Target run{Environment.NewLine}", output.ToString());
+            AssertEqual(string.Empty, error.ToString());
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(exitCode, output.ToString(), error.ToString(), "TargetOverrideRun");
+    });
+}
+
+static void CliBuildHonorsQuietVerbosity()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "QuietBuild"
+            targetFramework = "net48"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.QuietBuild
+
+            export fun greeting(): string = "quiet"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--verbosity", "quiet"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "QuietBuild.dll")), "Quiet build should still emit the generated assembly.");
+    });
+}
+
+static void CliBuildHonorsMinimalVerbosity()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MinimalBuild"
+            targetFramework = "net48"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MinimalBuild
+
+            export fun greeting(): string = "minimal"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--verbosity=minimal"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual($"Generated assembly: bin/Debug/net48/MinimalBuild.dll{Environment.NewLine}", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MinimalBuild.dll")), "Minimal build should emit the generated assembly.");
     });
 }
 
@@ -1845,6 +2388,39 @@ static void CheckerReportsUnresolvedNameDiagnostics()
     });
 }
 
+static void CheckerReportsDuplicateSymbolDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("DuplicateSymbols"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DuplicateSymbols
+
+            fun echo(): string = "one"
+            fun echo(): string = "two"
+
+            record Customer {
+              Name: string
+            }
+
+            record Customer {
+              Name: string
+            }
+
+            fun local(value: string, value: string): string = value
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Checker should report duplicate binder diagnostics.");
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2002").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        AssertEqual(3, diagnostics.Length);
+        AssertEqual("Duplicate symbol 'echo' in the same scope.", diagnostics[0].Message);
+        AssertEqual("Duplicate symbol 'Customer' in the same scope.", diagnostics[1].Message);
+        AssertEqual("Duplicate symbol 'value' in the same scope.", diagnostics[2].Message);
+    });
+}
+
 static void TypeCheckerAcceptsBasicAnnotations()
 {
     var result = TypeSharpParser.ParseText("""
@@ -2091,6 +2667,137 @@ static void CliCheckEmitsJsonPublicBoundaryDiagnostics()
     });
 }
 
+static void CliCheckEmitsJsonDuplicateSymbolDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("DuplicateJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DuplicateJson
+
+            export fun keep(): string = "one"
+            export fun keep(): string = "two"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2002\"", error.ToString());
+        AssertContains("Duplicate symbol 'keep' in the same scope.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsupportedConstraint"
+            diagnosticFormat = "json"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsupportedConstraint
+
+            export fun keep<T>(value: T): T where T: notnull = value
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2205\"", error.ToString());
+        AssertContains("Generic constraint 'notnull' cannot be lowered by the C# 7.3 backend.", error.ToString());
+    });
+}
+
+static void CliCheckKeepsWarningsNonblockingByDefault()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "WarningDefaultCheck"
+            targetFramework = "net48"
+            outputType = "library"
+            sourceRoots = ["missing"]
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("warning TS0110", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+    });
+}
+
+static void CliCheckTreatsWarningsAsErrors()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "WarningAsErrorCheck"
+            targetFramework = "net48"
+            outputType = "library"
+            sourceRoots = ["missing"]
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--warnings-as-errors", "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0110\"", error.ToString());
+        AssertContains("\"severity\": \"warning\"", error.ToString());
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnWarningsAsErrors()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "WarningAsErrorBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.WarningAsErrorBuild"
+            sourceRoots = ["src", "missing"]
+            generatedOutputRoot = "generated"
+
+            [tooling]
+            diagnosticFormat = "text"
+            treatWarningsAsErrors = true
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.WarningAsErrorBuild
+
+            export fun greeting(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("warning TS0110", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when warnings are treated as errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "WarningAsErrorBuild.Generated.csproj")), "Build should not emit generated project when warnings are treated as errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "WarningAsErrorBuild.dll")), "Build should not emit generated assembly when warnings are treated as errors.");
+    });
+}
+
 static void LspDiagnosticMapperUsesZeroBasedRanges()
 {
     var diagnostic = new Diagnostic(
@@ -2299,6 +3006,368 @@ static void LanguageServerReturnsCompletionItems()
         AssertContains("\"detail\":\"built-in type\"", response);
         AssertContains("\"id\":3,\"result\":null", response);
     });
+}
+
+static void VsCodeExtensionActivatesLspClient()
+{
+    var extensionRoot = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp");
+    using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(extensionRoot, "package.json")));
+    var root = packageJson.RootElement;
+
+    AssertEqual("./extension.js", root.GetProperty("main").GetString());
+    AssertTrue(
+        root.GetProperty("activationEvents").EnumerateArray().Any(value => value.GetString() == "onLanguage:typesharp"),
+        "VS Code extension should activate when a TypeSharp file opens.");
+
+    var configuration = root.GetProperty("contributes").GetProperty("configuration").GetProperty("properties");
+    AssertTrue(
+        configuration.TryGetProperty("typesharp.languageServer.command", out _),
+        "VS Code extension should expose a language server command override.");
+    AssertTrue(
+        configuration.TryGetProperty("typesharp.languageServer.args", out _),
+        "VS Code extension should expose language server argument overrides.");
+    AssertTrue(
+        configuration.TryGetProperty("typesharp.languageServer.cwd", out _),
+        "VS Code extension should expose language server working directory overrides.");
+
+    var extensionSource = File.ReadAllText(Path.Combine(extensionRoot, "extension.js"));
+    AssertContains("childProcess.spawn", extensionSource);
+    AssertContains("textDocument/didOpen", extensionSource);
+    AssertContains("textDocument/didChange", extensionSource);
+    AssertContains("textDocument/publishDiagnostics", extensionSource);
+    AssertContains("textDocument/hover", extensionSource);
+    AssertContains("textDocument/definition", extensionSource);
+    AssertContains("textDocument/completion", extensionSource);
+    AssertContains("TypeSharp.LanguageServer.dll", extensionSource);
+}
+
+static void VsCodeExtensionActivationSmokeRunsInMockedExtensionHost()
+{
+    var extensionRoot = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp");
+    var result = RunProcess("node", "test/extension-smoke.js", extensionRoot);
+
+    AssertTrue(
+        result.ExitCode == 0,
+        $"VS Code extension smoke should exercise activation, LSP forwarding, diagnostics, and shutdown.\nSTDOUT:\n{result.StandardOutput}\nSTDERR:\n{result.StandardError}");
+}
+
+static void VsCodeExtensionLiveSmokeRunsAgainstBundledLanguageServer()
+{
+    var extensionRoot = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp");
+    var prepare = RunProcess("npm", "run prepare:server", extensionRoot);
+    AssertTrue(
+        prepare.ExitCode == 0,
+        $"VS Code extension server publish should succeed before live smoke.\nSTDOUT:\n{prepare.StandardOutput}\nSTDERR:\n{prepare.StandardError}");
+
+    var result = RunProcess("npm", "run test:live", extensionRoot);
+    AssertTrue(
+        result.ExitCode == 0,
+        $"VS Code extension live smoke should use the bundled language server for diagnostics, hover, definition, completion, and shutdown.\nSTDOUT:\n{result.StandardOutput}\nSTDERR:\n{result.StandardError}");
+}
+
+static void VsCodeExtensionPackageShapeIsStable()
+{
+    var extensionRoot = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp");
+    using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(extensionRoot, "package.json")));
+    var root = packageJson.RootElement;
+
+    var scripts = root.GetProperty("scripts");
+    AssertEqual("node --check extension.js", scripts.GetProperty("check").GetString());
+    AssertEqual("node --check test/extension-smoke.js", scripts.GetProperty("check:smoke").GetString());
+    AssertEqual("node --check test/extension-live-smoke.js", scripts.GetProperty("check:live").GetString());
+    AssertEqual("node --check test/extension-host-smoke.js && node --check test/run-extension-host-smoke.js", scripts.GetProperty("check:host").GetString());
+    AssertEqual("node test/extension-smoke.js", scripts.GetProperty("test:smoke").GetString());
+    AssertEqual("node test/extension-live-smoke.js", scripts.GetProperty("test:live").GetString());
+    AssertEqual("node test/run-extension-host-smoke.js", scripts.GetProperty("test:host").GetString());
+    AssertEqual(
+        "dotnet publish ../../src/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo",
+        scripts.GetProperty("prepare:server").GetString());
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "extension.js")), "VS Code extension entrypoint should exist.");
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "extension-smoke.js")), "VS Code mocked extension host smoke should exist.");
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "extension-live-smoke.js")), "VS Code live extension smoke should exist.");
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "extension-host-smoke.js")), "VS Code Extension Host smoke should exist.");
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "run-extension-host-smoke.js")), "VS Code Extension Host smoke runner should exist.");
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "language-configuration.json")), "VS Code language configuration should exist.");
+    AssertTrue(
+        File.Exists(Path.Combine(extensionRoot, "syntaxes", "typesharp.tmLanguage.json")),
+        "VS Code TextMate grammar should exist.");
+
+    var files = root.GetProperty("files")
+        .EnumerateArray()
+        .Select(value => value.GetString())
+        .ToArray();
+    AssertTrue(files.Contains("extension.js"), "VS Code package should include the extension entrypoint.");
+    AssertTrue(files.Contains("language-configuration.json"), "VS Code package should include language configuration.");
+    AssertTrue(files.Contains("syntaxes/**"), "VS Code package should include TextMate grammar assets.");
+    AssertTrue(files.Contains("server/**"), "VS Code package should reserve bundled language server assets.");
+    AssertFalse(root.TryGetProperty("dependencies", out var dependencies) && dependencies.EnumerateObject().Any(), "VS Code extension should remain dependency-free for the current package smoke.");
+
+    var gitignore = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), ".gitignore"));
+    AssertContains("vscode/typesharp/server/", gitignore);
+}
+
+static void RunnableExampleCatalogSmokeMatrixIsStable()
+{
+    var catalogRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs", "examples", "runnable");
+    var catalogReadme = File.ReadAllText(Path.Combine(catalogRoot, "README.md"));
+    var projects = new[]
+    {
+        "console-hello",
+        "library-public-api",
+        "csharp-interop",
+        "host-aspnet-wcf",
+        "host-worker",
+        "diagnostics-null-safety"
+    };
+
+    foreach (var project in projects)
+    {
+        var projectRoot = Path.Combine(catalogRoot, project);
+        AssertTrue(Directory.Exists(projectRoot), $"Runnable example '{project}' should exist.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), $"Runnable example '{project}' should have a README.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName)), $"Runnable example '{project}' should have a TypeSharp manifest.");
+        AssertTrue(
+            Directory.EnumerateFiles(Path.Combine(projectRoot, "src"), "*.tysh", SearchOption.AllDirectories).Any(),
+            $"Runnable example '{project}' should have TypeSharp source files.");
+        AssertContains($"[{project}]({project}/README.md)", catalogReadme);
+    }
+
+    AssertContains("typesharp check", catalogReadme);
+    AssertContains("typesharp build", catalogReadme);
+    AssertContains("typesharp run", catalogReadme);
+    AssertContains("dotnet build legacy-src", catalogReadme);
+    AssertContains("dotnet build host", catalogReadme);
+    AssertContains("ASP.NET", catalogReadme);
+    AssertContains("WCF", catalogReadme);
+    AssertContains("TS2202", catalogReadme);
+}
+
+static void RunnableExampleProjectCommandsAreSmokeTested()
+{
+    WithWorkspace(root =>
+    {
+        var sourceRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs", "examples", "runnable");
+        var examplesRoot = Path.Combine(root, "runnable");
+        CopyDirectory(sourceRoot, examplesRoot);
+
+        SmokeConsoleHelloExample(Path.Combine(examplesRoot, "console-hello"));
+        SmokeLibraryPublicApiExample(Path.Combine(examplesRoot, "library-public-api"));
+        SmokeCSharpInteropExample(Path.Combine(examplesRoot, "csharp-interop"));
+        SmokeHostAspNetWcfExample(Path.Combine(examplesRoot, "host-aspnet-wcf"));
+        SmokeHostWorkerExample(Path.Combine(examplesRoot, "host-worker"));
+        SmokeDiagnosticsNullSafetyExample(Path.Combine(examplesRoot, "diagnostics-null-safety"));
+    });
+}
+
+static void SmokeConsoleHelloExample(string projectRoot)
+{
+    var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
+    RunCliCommand(["check", manifestPath], expectedExitCode: 0);
+    RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+
+    var output = new StringWriter();
+    var error = new StringWriter();
+    var runExitCode = TypeSharpCli.Run(["run", manifestPath], output, error);
+    if (runExitCode == 0)
+    {
+        AssertEqual($"Hello, TypeSharp{Environment.NewLine}", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        return;
+    }
+
+    AssertEqual(4, runExitCode);
+    AssertContains("Could not run generated executable", error.ToString());
+    AssertTrue(
+        File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "ConsoleHello.exe")),
+        "Console example should still produce the generated executable before environment launch failures.");
+}
+
+static void SmokeLibraryPublicApiExample(string projectRoot)
+{
+    var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
+    RunCliCommand(["check", manifestPath], expectedExitCode: 0);
+    RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+    AssertTrue(
+        File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "LibraryPublicApi.dll")),
+        "Library public API example should build a generated net48 assembly.");
+}
+
+static void SmokeCSharpInteropExample(string projectRoot)
+{
+    var legacyBuild = RunProcess(
+        "dotnet",
+        "build legacy-src/Legacy.Tools.csproj --nologo --verbosity quiet --ignore-failed-sources",
+        projectRoot);
+    AssertTrue(
+        legacyBuild.ExitCode == 0,
+        $"C# interop legacy DLL should compile.\nSTDOUT:\n{legacyBuild.StandardOutput}\nSTDERR:\n{legacyBuild.StandardError}");
+    AssertTrue(
+        File.Exists(Path.Combine(projectRoot, "lib", "Legacy.Tools.dll")),
+        "C# interop example should build lib/Legacy.Tools.dll.");
+
+    var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
+    RunCliCommand(["check", manifestPath], expectedExitCode: 0);
+    RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+    AssertTrue(
+        File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "CSharpInterop.dll")),
+        "C# interop example should build a generated net48 assembly.");
+}
+
+static void SmokeHostWorkerExample(string projectRoot)
+{
+    var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
+    RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+    CopyRuntimeDependenciesToExample(projectRoot);
+    var hostProject = File.ReadAllText(Path.Combine(projectRoot, "host", "WorkerHostSmoke.csproj"));
+    AssertContains("<Reference Include=\"TypeSharp.Core\">", hostProject);
+    AssertContains("<Reference Include=\"TypeSharp.Runtime\">", hostProject);
+    var hostSource = File.ReadAllText(Path.Combine(projectRoot, "host", "WorkerSmoke.cs"));
+    AssertContains("TypeSharp.Core.Result<string, string>", hostSource);
+    AssertContains("TypeSharp.Runtime.TypeSharpRuntimeInfo.RuntimeAbiVersion", hostSource);
+
+    var hostBuild = RunProcess(
+        "dotnet",
+        "build host/WorkerHostSmoke.csproj --nologo --verbosity quiet --ignore-failed-sources",
+        projectRoot);
+    AssertTrue(
+        hostBuild.ExitCode == 0,
+        $"Host worker example should compile after TypeSharp build.\nSTDOUT:\n{hostBuild.StandardOutput}\nSTDERR:\n{hostBuild.StandardError}");
+}
+
+static void SmokeHostAspNetWcfExample(string projectRoot)
+{
+    var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
+    RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+    CopyRuntimeDependenciesToExample(projectRoot);
+    AssertTrue(
+        File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "HostAspNetWcf.dll")),
+        "ASP.NET/WCF host example should build a generated net48 assembly.");
+    var hostProject = File.ReadAllText(Path.Combine(projectRoot, "host", "AspNetWcfHostSmoke.csproj"));
+    AssertContains("<Reference Include=\"TypeSharp.Core\">", hostProject);
+    AssertContains("<Reference Include=\"TypeSharp.Runtime\">", hostProject);
+    AssertTrue(
+        File.Exists(Path.Combine(projectRoot, "host", "web.config")),
+        "ASP.NET/WCF host example should include a web.config deployment-shape placeholder.");
+    var hostSource = File.ReadAllText(Path.Combine(projectRoot, "host", "AspNetWcfSmoke.cs"));
+    AssertContains("ClientBase<IGreetingService>", hostSource);
+    AssertContains("Channel.GetGreeting()", hostSource);
+    AssertContains("TypeSharp.Core.Option<string>", hostSource);
+    AssertContains("TypeSharp.Runtime.TypeSharpRuntimeInfo.TargetFramework", hostSource);
+    var webConfig = File.ReadAllText(Path.Combine(projectRoot, "host", "web.config"));
+    AssertContains("<basicHttpBinding>", webConfig);
+    AssertContains("<client>", webConfig);
+    AssertContains("contract=\"Samples.Runnable.HostAspNetWcf.Host.IGreetingService\"", webConfig);
+
+    var hostBuild = RunProcess(
+        "dotnet",
+        "build host/AspNetWcfHostSmoke.csproj --nologo --verbosity quiet --ignore-failed-sources",
+        projectRoot);
+    AssertTrue(
+        hostBuild.ExitCode == 0,
+        $"ASP.NET/WCF host example should compile after TypeSharp build.\nSTDOUT:\n{hostBuild.StandardOutput}\nSTDERR:\n{hostBuild.StandardError}");
+}
+
+static void CopyRuntimeDependenciesToExample(string projectRoot)
+{
+    var coreAssemblyPath = BuildRepositoryAssembly(
+        "src/TypeSharp.Core/TypeSharp.Core.csproj",
+        "src/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
+    var runtimeAssemblyPath = BuildRepositoryAssembly(
+        "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+        "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+    var libRoot = Path.Combine(projectRoot, "lib");
+    Directory.CreateDirectory(libRoot);
+    File.Copy(coreAssemblyPath, Path.Combine(libRoot, "TypeSharp.Core.dll"), overwrite: true);
+    File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"), overwrite: true);
+}
+
+static void SmokeDiagnosticsNullSafetyExample(string projectRoot)
+{
+    var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
+    var output = new StringWriter();
+    var error = new StringWriter();
+    var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+    AssertEqual(1, exitCode);
+    AssertEqual(string.Empty, output.ToString());
+    AssertContains("\"code\": \"TS2202\"", error.ToString());
+}
+
+static void DocsSiteContractIsStable()
+{
+    var siteRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs-site");
+    using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(siteRoot, "package.json")));
+    var root = packageJson.RootElement;
+
+    AssertEqual("typesharp-docs-site", root.GetProperty("name").GetString());
+    AssertEqual("astro build", root.GetProperty("scripts").GetProperty("build").GetString());
+    AssertEqual("6.3.5", root.GetProperty("dependencies").GetProperty("astro").GetString());
+    AssertEqual("0.39.2", root.GetProperty("dependencies").GetProperty("@astrojs/starlight").GetString());
+    AssertTrue(File.Exists(Path.Combine(siteRoot, "package-lock.json")), "Docs site should have a committed npm lockfile.");
+
+    var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.mjs"));
+    AssertContains("starlight({", astroConfig);
+    AssertContains("title: 'TypeSharp'", astroConfig);
+    AssertContains("slug: 'goal'", astroConfig);
+    AssertContains("slug: 'grammar'", astroConfig);
+    AssertContains("slug: 'cli'", astroConfig);
+    AssertContains("slug: 'diagnostics'", astroConfig);
+    AssertContains("slug: 'vscode-lsp'", astroConfig);
+    AssertContains("slug: 'migration'", astroConfig);
+    AssertContains("slug: 'examples'", astroConfig);
+
+    var contentConfig = File.ReadAllText(Path.Combine(siteRoot, "src", "content.config.ts"));
+    AssertContains("docsLoader", contentConfig);
+    AssertContains("docsSchema", contentConfig);
+
+    foreach (var page in new[] { "index", "goal", "grammar", "cli", "diagnostics", "vscode-lsp", "migration", "examples" })
+    {
+        AssertTrue(
+            File.Exists(Path.Combine(siteRoot, "src", "content", "docs", $"{page}.md")),
+            $"Docs site page '{page}' should exist.");
+    }
+
+    var vscodeLspPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "vscode-lsp.md"));
+    AssertContains("npm run check", vscodeLspPage);
+    AssertContains("npm run check:live", vscodeLspPage);
+    AssertContains("npm run prepare:server", vscodeLspPage);
+    AssertContains("npm run test:live", vscodeLspPage);
+    AssertContains("npm run test:host", vscodeLspPage);
+    AssertContains("diagnostics, hover, go-to-definition, completion, and formatting", vscodeLspPage);
+}
+
+static void GitHubPagesWorkflowContractIsStable()
+{
+    var workflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "docs.yml");
+    var workflow = File.ReadAllText(workflowPath);
+
+    AssertContains("name: Docs", workflow);
+    AssertContains("branches:", workflow);
+    AssertContains("- main", workflow);
+    AssertContains("pages: write", workflow);
+    AssertContains("id-token: write", workflow);
+    AssertContains("uses: actions/checkout@v5", workflow);
+    AssertContains("uses: actions/setup-node@v5", workflow);
+    AssertContains("node-version: 24", workflow);
+    AssertContains("cache-dependency-path: docs-site/package-lock.json", workflow);
+    AssertContains("run: npm ci", workflow);
+    AssertContains("run: npm run build", workflow);
+    AssertContains("uses: actions/configure-pages@v5", workflow);
+    AssertContains("uses: actions/upload-pages-artifact@v5", workflow);
+    AssertContains("path: docs-site/dist", workflow);
+    AssertContains("uses: actions/deploy-pages@v5", workflow);
+    AssertContains("if: github.event_name != 'pull_request'", workflow);
+}
+
+static void RunCliCommand(string[] args, int expectedExitCode)
+{
+    var output = new StringWriter();
+    var error = new StringWriter();
+    var exitCode = TypeSharpCli.Run(args, output, error);
+
+    AssertTrue(
+        exitCode == expectedExitCode,
+        $"Expected CLI exit code {expectedExitCode}, got {exitCode}.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
 }
 
 static void CliBuildEmitsGeneratedCSharpSource()
@@ -2619,6 +3688,55 @@ static void CliBuildCompilesImportedPropertyAccess()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedPropertyAccess.dll")),
             "Generated project build should compile imported property access.");
+    });
+}
+
+static void CliBuildCompilesImportedIndexerAccess()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerAccess"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerAccess"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerAccess
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun item(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[2]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedIndexerAccess.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var formatter = new LegacyFormatter(\"legacy:\");", generatedSource);
+        AssertContains("return formatter[2];", generatedSource);
+
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "ImportedIndexerAccess.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
+        AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerAccess.dll")),
+            "Generated project build should compile imported indexer access.");
     });
 }
 
@@ -3070,6 +4188,53 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedEventAddRemoveCall.dll")),
             "Generated project build should compile imported event add/remove calls.");
+    });
+}
+
+static void CliBuildCompilesImportedAttributeAndGenericTypeReferences()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedAttributeGenericType"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedAttributeGenericType"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedAttributeGenericType
+
+            import { LegacyBox, LegacyMarkerAttribute } from "Legacy.Tools"
+
+            [LegacyMarkerAttribute("generic-type")]
+            export fun keep(box: LegacyBox<string>): LegacyBox<string> = box
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedAttributeGenericType.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("public static LegacyBox<string> keep(LegacyBox<string> box)", generatedSource);
+        AssertContains("return box;", generatedSource);
+
+        var projectText = File.ReadAllText(Path.Combine(root, "generated", "ImportedAttributeGenericType.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", projectText);
+        AssertContains("      <HintPath>../lib/Legacy.Tools.dll</HintPath>", projectText);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedAttributeGenericType.dll")),
+            "Generated project build should compile imported attribute and generic type references.");
     });
 }
 
@@ -3644,6 +4809,121 @@ static void CliBuildCompilesGenericTypeDeclarationApi()
     });
 }
 
+static void CliBuildCompilesGenericConstraintApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "GenericConstraints"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.GenericConstraints"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.GenericConstraints
+
+            export fun keep<T>(value: T): T where T: class + IEntity = value
+
+            public class Repository<T> where T: class + IEntity + new() {
+              public fun Keep(value: T): T = value
+            }
+
+            public interface IEntity {
+              fun Id(): string
+            }
+
+            public interface IFactory {
+              fun Create<T>(): T where T: class + new()
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/GenericConstraints.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static T keep<T>(T value)", generatedSource);
+        AssertContains("where T : class, IEntity", generatedSource);
+        AssertContains("public class Repository<T>", generatedSource);
+        AssertContains("where T : class, IEntity, new()", generatedSource);
+        AssertContains("T Create<T>()", generatedSource);
+        AssertContains("where T : class, new();", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericConstraints.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic constraint APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "GenericConstraintsConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>GenericConstraintsConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="GenericConstraints">
+                  <HintPath>../generated/bin/Debug/net48/GenericConstraints.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace GenericConstraintsConsumer
+            {
+                public sealed class Entity : Samples.GenericConstraints.IEntity
+                {
+                    public string Id()
+                    {
+                        return "id";
+                    }
+                }
+
+                public sealed class Factory : Samples.GenericConstraints.IFactory
+                {
+                    public T Create<T>() where T : class, new()
+                    {
+                        return new T();
+                    }
+                }
+
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var entity = new Entity();
+                        var repository = new Samples.GenericConstraints.Repository<Entity>();
+                        var kept = Samples.GenericConstraints.Module.keep<Entity>(repository.Keep(entity));
+                        return kept.Id();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build GenericConstraintsConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated generic constraint APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
 static void CliBuildCompilesImmutableRecordApi()
 {
     WithWorkspace(root =>
@@ -3811,6 +5091,88 @@ static void CliBuildCompilesRecordUpdateLowering()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated record update lowering.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesRecordExpressionConstruction()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RecordExpressionApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.RecordExpressions"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RecordExpressions
+
+            public record Customer(Name: string, Age: int)
+
+            export fun Create(): Customer = { Name: "Ada", Age: 42 }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RecordExpressionApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return new Customer(\"Ada\", 42);", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "RecordExpressionApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with record expression construction.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "RecordExpressionConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>RecordExpressionConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="RecordExpressionApi">
+                  <HintPath>../generated/bin/Debug/net48/RecordExpressionApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace RecordExpressionConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var customer = Samples.RecordExpressions.Module.Create();
+                        return customer.Name + ":" + customer.Age.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build RecordExpressionConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated record expression construction.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -4231,6 +5593,191 @@ static void CliBuildCompilesAsyncTaskInterop()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated async Task API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesCollectionExpressionLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CollectionExpressions"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Collections"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Collections
+
+            export fun names(): string[] = ["Ada", "Grace"]
+
+            export fun emptyNames(): string[] = []
+
+            export fun numbers(): int[] {
+              let values: int[] = [1, 2, 3]
+              values
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/CollectionExpressions.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return new string[] { \"Ada\", \"Grace\" };", generatedSource);
+        AssertContains("return new string[] { };", generatedSource);
+        AssertContains("var values = new int[] { 1, 2, 3 };", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CollectionExpressions.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with collection expression lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "CollectionConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>CollectionConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="CollectionExpressions">
+                  <HintPath>../generated/bin/Debug/net48/CollectionExpressions.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace CollectionConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        var names = Samples.Collections.Module.names();
+                        var empty = Samples.Collections.Module.emptyNames();
+                        var numbers = Samples.Collections.Module.numbers();
+                        return names.Length == 2
+                            && names[1] == "Grace"
+                            && empty.Length == 0
+                            && numbers[2] == 3;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build CollectionConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated collection expression API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesPipelineLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "PipelineLowering"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Pipeline"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Pipeline
+
+            export fun increment(value: int): int = value + 1
+
+            export fun add(value: int, amount: int): int = value + amount
+
+            export fun format(value: int): string = value.ToString()
+
+            export fun compute(): string =
+              1
+              |> increment
+              |> add(2)
+              |> format
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/PipelineLowering.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return value + 1;", generatedSource);
+        AssertContains("return value + amount;", generatedSource);
+        AssertContains("return format(add(increment(1), 2));", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "PipelineLowering.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with pipeline lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "PipelineConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>PipelineConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="PipelineLowering">
+                  <HintPath>../generated/bin/Debug/net48/PipelineLowering.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace PipelineConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.Pipeline.Module.compute();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build PipelineConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated pipeline API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -4826,6 +6373,24 @@ static void WithWorkspace(Action<string> action)
     }
 }
 
+static void CopyDirectory(string sourceRoot, string targetRoot)
+{
+    foreach (var directory in Directory.EnumerateDirectories(sourceRoot, "*", SearchOption.AllDirectories))
+    {
+        var relativeDirectory = Path.GetRelativePath(sourceRoot, directory);
+        Directory.CreateDirectory(Path.Combine(targetRoot, relativeDirectory));
+    }
+
+    Directory.CreateDirectory(targetRoot);
+    foreach (var file in Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories))
+    {
+        var relativeFile = Path.GetRelativePath(sourceRoot, file);
+        var targetFile = Path.Combine(targetRoot, relativeFile);
+        Directory.CreateDirectory(Path.GetDirectoryName(targetFile) ?? targetRoot);
+        File.Copy(file, targetFile, overwrite: true);
+    }
+}
+
 static string WriteManifest(string root, string content)
 {
     var manifestPath = Path.Combine(root, TypeSharpManifestLocator.ManifestFileName);
@@ -4987,6 +6552,26 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
             }
 
+            public sealed class LegacyMarkerAttribute : System.Attribute
+            {
+                public LegacyMarkerAttribute(string name)
+                {
+                    Name = name;
+                }
+
+                public string Name { get; }
+            }
+
+            public sealed class LegacyBox<T>
+            {
+                public LegacyBox(T value)
+                {
+                    Value = value;
+                }
+
+                public T Value { get; }
+            }
+
             public sealed class LegacyFormatter
             {
                 private readonly string prefix;
@@ -4999,6 +6584,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public string Prefix
                 {
                     get { return prefix; }
+                }
+
+                public string this[int index]
+                {
+                    get { return prefix + index.ToString(); }
                 }
 
                 public string Format(string value)
@@ -5126,6 +6716,20 @@ static int CountRuntimeImports(SyntaxNode root) =>
             grandchild.IsToken
             && grandchild.Kind == SyntaxKind.StringLiteralToken
             && string.Equals(grandchild.Text, "\"TypeSharp.Runtime\"", StringComparison.Ordinal)));
+
+static void AssertGeneratedExecutableLaunchBlocked(int exitCode, string output, string error, string executableName)
+{
+    AssertEqual(4, exitCode);
+    AssertEqual(string.Empty, output);
+    AssertContains("Could not run generated executable", error);
+    AssertTrue(
+        error.Contains("application control", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("애플리케이션 제어 정책", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("permission", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("access", StringComparison.OrdinalIgnoreCase)
+            || error.Contains(executableName, StringComparison.OrdinalIgnoreCase),
+        $"Launch failure should look like a local executable policy or permission block.\nSTDERR:\n{error}");
+}
 
 static ProcessResult RunProcess(string fileName, string arguments, string workingDirectory)
 {

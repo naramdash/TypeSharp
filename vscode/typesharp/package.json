@@ -1,15 +1,37 @@
 {
   "name": "typesharp-vscode",
   "displayName": "TypeSharp",
-  "description": "Language support scaffold for TypeSharp .tysh source files.",
+  "description": "Language support for TypeSharp .tysh source files.",
   "version": "0.1.0",
   "publisher": "typesharp",
   "license": "UNLICENSED",
+  "main": "./extension.js",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:typesharp"
+  ],
+  "scripts": {
+    "check": "node --check extension.js",
+    "check:smoke": "node --check test/extension-smoke.js",
+    "check:live": "node --check test/extension-live-smoke.js",
+    "check:host": "node --check test/extension-host-smoke.js && node --check test/run-extension-host-smoke.js",
+    "test:smoke": "node test/extension-smoke.js",
+    "test:live": "node test/extension-live-smoke.js",
+    "test:host": "node test/run-extension-host-smoke.js",
+    "prepare:server": "dotnet publish ../../src/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo"
+  },
+  "files": [
+    "extension.js",
+    "language-configuration.json",
+    "syntaxes/**",
+    "server/**",
+    "README.md",
+    "package.json"
   ],
   "contributes": {
     "languages": [
@@ -31,6 +53,29 @@
         "scopeName": "source.typesharp",
         "path": "./syntaxes/typesharp.tmLanguage.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "TypeSharp",
+      "properties": {
+        "typesharp.languageServer.command": {
+          "type": "string",
+          "default": "",
+          "description": "Optional command used to start the TypeSharp language server. Leave empty to use the bundled server DLL or the repository development build."
+        },
+        "typesharp.languageServer.args": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments passed to the configured TypeSharp language server command."
+        },
+        "typesharp.languageServer.cwd": {
+          "type": "string",
+          "default": "",
+          "description": "Optional working directory for the TypeSharp language server process. Leave empty to use the current workspace folder."
+        }
+      }
+    }
   }
 }
