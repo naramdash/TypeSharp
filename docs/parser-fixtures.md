@@ -203,6 +203,7 @@ Positive fixture coverage:
 | `tests/fixtures/parser/positive/0014-ambient-declarations` | parser-only fixture | `ambient` function signatures without TypeSharp bodies |
 | `tests/fixtures/parser/positive/0015-open-declarations` | parser-only fixture | root-level `open` declarations before exported declarations |
 | `tests/fixtures/parser/positive/0016-import-alias-declarations` | parser-only fixture | named import specifier aliases with `as` |
+| `tests/fixtures/parser/positive/0017-namespace-import-declarations` | parser-only fixture | namespace import aliases with `import * as Alias` |
 
 Negative fixture coverage:
 

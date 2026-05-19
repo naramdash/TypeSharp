@@ -279,6 +279,23 @@ public static class CSharpSourceBackend
                     continue;
                 }
 
+                if (child.Kind == SyntaxKind.ImportNamespaceDeclaration)
+                {
+                    var moduleSpecifier = child.Children.FirstOrDefault(grandchild => grandchild.IsToken && grandchild.Kind == SyntaxKind.StringLiteralToken);
+                    if (TryUnquoteStringLiteral(moduleSpecifier?.Text, out var namespaceName) &&
+                        TryGetNamespaceImportAlias(child, out var alias) &&
+                        seenAliases.Add(alias))
+                    {
+                        aliases.Add(new CSharpImportAlias(alias, namespaceName));
+                        if (seenImportedNames.Add(alias))
+                        {
+                            importedNames.Add(alias);
+                        }
+                    }
+
+                    continue;
+                }
+
                 if (child.Kind == SyntaxKind.ImportStaticDeclaration)
                 {
                     var typeName = child.Children.FirstOrDefault(grandchild => grandchild.Kind == SyntaxKind.TypeName);
@@ -2113,6 +2130,25 @@ public static class CSharpSourceBackend
                     }
                 }
             }
+        }
+
+        private static bool TryGetNamespaceImportAlias(SyntaxNode node, out string alias)
+        {
+            for (var index = 0; index + 1 < node.Children.Count; index++)
+            {
+                if (node.Children[index].IsToken &&
+                    node.Children[index].Kind == SyntaxKind.AsKeyword &&
+                    node.Children[index + 1].IsToken &&
+                    node.Children[index + 1].Kind == SyntaxKind.IdentifierToken &&
+                    node.Children[index + 1].Text is { Length: > 0 } text)
+                {
+                    alias = text;
+                    return true;
+                }
+            }
+
+            alias = string.Empty;
+            return false;
         }
 
         private sealed record CSharpImports(

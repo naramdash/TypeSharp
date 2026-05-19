@@ -38,6 +38,7 @@ public sealed class CSharpRuntimeImportLoweringPass : ITypeSharpLoweringPass
         node.Kind is
             SyntaxKind.NamespaceDeclaration or
             SyntaxKind.OpenDeclaration or
+            SyntaxKind.ImportNamespaceDeclaration or
             SyntaxKind.ImportNamedDeclaration or
             SyntaxKind.ImportTypeDeclaration or
             SyntaxKind.ImportStaticDeclaration;

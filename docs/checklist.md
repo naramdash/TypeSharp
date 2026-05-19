@@ -74,6 +74,7 @@
 - [x] module/namespace/import 규칙 초안이 있다.
 - [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
 - [x] named import alias 문법과 C# alias using lowering 규칙이 있다.
+- [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
 - [x] root-level open declaration 문법과 lowering 규칙이 있다.
 - [x] ambient function signature 문법 초안과 parser fixture가 있다.
 - [x] 이름 해석 규칙 초안이 있다.
@@ -187,6 +188,7 @@
 - [x] C# source backend first golden fixture
 - [x] C# source backend import directive skeleton
 - [x] C# source backend named import alias using lowering
+- [x] C# source backend namespace import alias using lowering
 - [x] C# source backend root namespace fallback
 - [x] C# source backend open declaration using lowering
 - [x] C# source backend call expression skeleton
@@ -218,6 +220,7 @@
 - [x] generated C# generic constraint build smoke
 - [x] generated C# partial declaration lowering smoke
 - [x] generated C# named import alias using lowering smoke
+- [x] generated C# namespace import alias using lowering smoke
 - [x] generated C# open declaration using lowering smoke
 - [x] generated C# ambient function no-emission smoke
 - [x] generated C# collection expression array lowering smoke
@@ -310,6 +313,7 @@
 - [x] parser ambient declarations positive fixture
 - [x] parser open declarations positive fixture
 - [x] parser import alias declarations positive fixture
+- [x] parser namespace import declarations positive fixture
 - [x] parser fixture format policy
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
@@ -334,6 +338,7 @@
 - [x] CLI build ambient function no-emission smoke tests
 - [x] CLI build open declaration using lowering smoke tests
 - [x] CLI build named import alias using lowering smoke tests
+- [x] CLI build namespace import alias using lowering smoke tests
 - [x] C# source backend call expression golden fixture
 - [x] C# source backend block/local golden fixture
 - [x] generated C# `net48` compile smoke

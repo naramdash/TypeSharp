@@ -149,6 +149,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
     ("CLI build lowers import alias to using alias directive", CliBuildLowersImportAliasToUsingAliasDirective),
+    ("CLI build lowers namespace import to using alias directive", CliBuildLowersNamespaceImportToUsingAliasDirective),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
     ("CLI build compiles framework static member call", CliBuildCompilesFrameworkStaticMemberCall),
@@ -3936,6 +3937,39 @@ static void CliBuildLowersImportAliasToUsingAliasDirective()
         AssertContains("using Builder = System.Text.StringBuilder;", generatedSource);
         AssertContains("public static Builder create()", generatedSource);
         AssertContains("return new Builder();", generatedSource);
+    });
+}
+
+static void CliBuildLowersNamespaceImportToUsingAliasDirective()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NamespaceImport"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NamespaceImport"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NamespaceImport
+
+            import * as Text from "System.Text"
+
+            export fun encodingName(): string = Text.Encoding.UTF8.EncodingName
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        AssertContains("using Text = System.Text;", generatedSource);
+        AssertContains("return Text.Encoding.UTF8.EncodingName;", generatedSource);
     });
 }
 

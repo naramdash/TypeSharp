@@ -87,6 +87,7 @@ public enum SyntaxKind
     ModuleDeclaration,
     OpenDeclaration,
     ImportStaticDeclaration,
+    ImportNamespaceDeclaration,
     ImportNamedDeclaration,
     ImportTypeDeclaration,
     FunctionDeclaration,

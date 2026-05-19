@@ -1,0 +1,5 @@
+namespace Samples.NamespaceImport
+
+import * as Text from "System.Text"
+
+export fun name(): string = "ok"

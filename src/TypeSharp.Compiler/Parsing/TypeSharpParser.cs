@@ -127,6 +127,16 @@ public sealed class TypeSharpParser
             return Node(SyntaxKind.ImportStaticDeclaration, children);
         }
 
+        if (Current.Kind == SyntaxKind.StarToken)
+        {
+            children.Add(TokenNode(NextToken()));
+            children.Add(TokenNode(Expect(SyntaxKind.AsKeyword)));
+            children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+            children.Add(TokenNode(Expect(SyntaxKind.FromKeyword)));
+            children.Add(TokenNode(Expect(SyntaxKind.StringLiteralToken)));
+            return Node(SyntaxKind.ImportNamespaceDeclaration, children);
+        }
+
         if (Current.Kind == SyntaxKind.TypeKeyword)
         {
             children.Add(TokenNode(NextToken()));

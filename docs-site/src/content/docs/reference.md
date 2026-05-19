@@ -25,6 +25,8 @@ Root-level `open Namespace.Name` declarations lower to generated C# `using Names
 
 Named import aliases such as `import { StringBuilder as Builder } from "System.Text"` lower to generated C# `using Builder = System.Text.StringBuilder;` directives.
 
+Namespace imports such as `import * as Text from "System.Text"` lower to generated C# `using Text = System.Text;` directives.
+
 Canonical doc: [`grammar/declarations.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/declarations.md)
 
 ## Expressions

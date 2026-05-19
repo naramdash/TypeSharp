@@ -105,3 +105,4 @@
 | [0156-ambient-function-signature-parsing.md](0156-ambient-function-signature-parsing.md) | Q2-Q4 | Done | `ambient` function signature를 파싱하되 generated C# member로 emit하지 않는다. |
 | [0157-open-declaration-lowering.md](0157-open-declaration-lowering.md) | Q2-Q4 | Done | root-level `open Namespace`를 파싱하고 generated C# `using Namespace;`로 낮춘다. |
 | [0158-named-import-alias-lowering.md](0158-named-import-alias-lowering.md) | Q2-Q4 | Done | `import { Name as Alias }`를 파싱하고 generated C# alias using으로 낮춘다. |
+| [0159-namespace-import-alias-lowering.md](0159-namespace-import-alias-lowering.md) | Q2-Q4 | Done | `import * as Alias`를 파싱하고 generated C# namespace alias using으로 낮춘다. |

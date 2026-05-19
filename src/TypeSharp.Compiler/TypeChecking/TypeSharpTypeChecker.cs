@@ -78,6 +78,14 @@ public static class TypeSharpTypeChecker
 
                         break;
 
+                    case SyntaxKind.ImportNamespaceDeclaration:
+                        if (TryGetNamespaceImportAlias(child, out var importAlias))
+                        {
+                            scope.DeclareType(importAlias.Text ?? string.Empty);
+                        }
+
+                        break;
+
                     case SyntaxKind.ModuleDeclaration:
                         if (TryGetDeclarationName(child, out var moduleName))
                         {
@@ -1731,6 +1739,24 @@ public static class TypeSharpTypeChecker
                     }
                 }
             }
+        }
+
+        private static bool TryGetNamespaceImportAlias(SyntaxNode node, out SyntaxNode alias)
+        {
+            for (var index = 0; index + 1 < node.Children.Count; index++)
+            {
+                if (node.Children[index].IsToken &&
+                    node.Children[index].Kind == SyntaxKind.AsKeyword &&
+                    node.Children[index + 1].IsToken &&
+                    node.Children[index + 1].Kind == SyntaxKind.IdentifierToken)
+                {
+                    alias = node.Children[index + 1];
+                    return true;
+                }
+            }
+
+            alias = node;
+            return false;
         }
     }
 

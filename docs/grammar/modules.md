@@ -57,6 +57,7 @@ import static System.Math
 - .NET assembly reference와 source module path resolution은 project manifest와 compiler host가 담당한다.
 - `import type`은 compile-time type만 가져오며 runtime dependency를 만들지 않는다.
 - 현재 구현된 named import alias slice는 `import { Name as Alias } from "Namespace"`를 generated C# `using Alias = Namespace.Name;` directive로 낮춘다.
+- 현재 구현된 namespace import slice는 `import * as Alias from "Namespace"`를 generated C# `using Alias = Namespace;` directive로 낮춘다.
 
 ## Export
 

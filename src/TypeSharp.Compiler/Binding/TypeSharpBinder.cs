@@ -100,6 +100,14 @@ public static class TypeSharpBinder
 
                         break;
 
+                    case SyntaxKind.ImportNamespaceDeclaration:
+                        if (TryGetNamespaceImportAlias(child, out var importAlias))
+                        {
+                            AddSymbol(scope, importAlias.Text ?? string.Empty, BoundSymbolKind.Import, importAlias.Span, declareValue: true, declareType: true);
+                        }
+
+                        break;
+
                     case SyntaxKind.ImportStaticDeclaration:
                         _hasStaticImport = true;
                         break;
@@ -697,6 +705,24 @@ public static class TypeSharpBinder
                     }
                 }
             }
+        }
+
+        private static bool TryGetNamespaceImportAlias(SyntaxNode node, out SyntaxNode alias)
+        {
+            for (var index = 0; index + 1 < node.Children.Count; index++)
+            {
+                if (node.Children[index].IsToken &&
+                    node.Children[index].Kind == SyntaxKind.AsKeyword &&
+                    node.Children[index + 1].IsToken &&
+                    node.Children[index + 1].Kind == SyntaxKind.IdentifierToken)
+                {
+                    alias = node.Children[index + 1];
+                    return true;
+                }
+            }
+
+            alias = node;
+            return false;
         }
 
         private static IEnumerable<SyntaxNode> GetTypeParameterIdentifiers(SyntaxNode node)

@@ -2,6 +2,7 @@ namespace Samples.BackendImports
 
 import { Console } from "System"
 import type { Task } from "System.Threading.Tasks"
+import * as Text from "System.Text"
 import { StringBuilder } from "System.Text"
 import { StringBuilder as Builder } from "System.Text"
 import { DateTime } from "System"
