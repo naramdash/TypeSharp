@@ -142,9 +142,9 @@ public static class DiagnosticDescriptors
         "Unsupported export forwarding",
         DiagnosticSeverity.Error,
         DiagnosticCategory.Binding,
-        "Export specifier declarations require source module graph support before they can be checked or emitted.",
-        "Export specifier declarations describe a source module public surface across files. The current compiler parses the syntax, but does not yet resolve source module graph edges or lower re-exports to generated C#.",
-        "Export declarations directly for now, or remove re-export specifier syntax from build inputs until source module graph support is implemented.");
+        "This export specifier form is parsed but not implemented yet.",
+        "Export specifier declarations can describe local public surface or forward public surface across files. The current compiler supports unaliased local export lists, but does not yet lower re-exports or renamed export specifiers to generated C#.",
+        "Use direct export modifiers or unaliased local export lists for now, and remove re-export or renamed export specifier syntax from build inputs until that form is implemented.");
 
     public static readonly DiagnosticDescriptor TypeMismatch = new(
         "TS2201",

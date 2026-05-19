@@ -115,3 +115,4 @@
 | [0166-multi-source-module-container-lowering.md](0166-multi-source-module-container-lowering.md) | Q2-Q4 | Done | 다중 source project에서 module path 기반 generated C# container를 써서 같은 namespace 안의 source files를 함께 빌드한다. |
 | [0167-official-docs-deep-benchmark-docs-overhaul.md](0167-official-docs-deep-benchmark-docs-overhaul.md) | Q5 | Done | Vue/Nuxt/TypeScript/C#/F# 공식 문서 전체 페이지와 정보 구조를 깊게 벤치마크하고 GitHub Pages 문서를 초심자부터 고급 사용자까지 포괄하도록 대규모 개편한다. |
 | [0168-relative-source-import-lowering.md](0168-relative-source-import-lowering.md) | Q2-Q4 | Done | unaliased relative named source import와 relative namespace source import를 generated C# container using/alias로 낮춘다. |
+| [0169-local-export-list-public-surface.md](0169-local-export-list-public-surface.md) | Q2-Q4 | Done | same-file `export { Name }`/`export type { TypeName }` list를 generated C# public surface marker로 낮춘다. |

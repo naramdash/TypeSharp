@@ -96,6 +96,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on public boundary diagnostics", CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics),
     ("CLI build stops before emission on non-exhaustive match", CliBuildStopsBeforeEmissionOnNonExhaustiveMatch),
     ("CLI build stops before emission on unsupported export forwarding", CliBuildStopsBeforeEmissionOnUnsupportedExportForwarding),
+    ("CLI build uses local export lists for public surface", CliBuildUsesLocalExportListsForPublicSurface),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
@@ -122,6 +123,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports duplicate symbol diagnostics", CheckerReportsDuplicateSymbolDiagnostics),
     ("checker reports import alias conflict diagnostics", CheckerReportsImportAliasConflictDiagnostics),
     ("checker reports unsupported export forwarding diagnostics", CheckerReportsUnsupportedExportForwardingDiagnostics),
+    ("checker reports unresolved local export list diagnostics", CheckerReportsUnresolvedLocalExportListDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
     ("inference engine infers local expression graph", InferenceEngineInfersLocalExpressionGraph),
     ("checker reports type mismatch diagnostics", CheckerReportsTypeMismatchDiagnostics),
@@ -2174,6 +2176,44 @@ static void CliBuildStopsBeforeEmissionOnUnsupportedExportForwarding()
     });
 }
 
+static void CliBuildUsesLocalExportListsForPublicSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LocalExportListBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.LocalExportListBuild
+
+            record Customer(Name: string)
+
+            fun visible(): string = "visible"
+
+            fun hidden(): string = "hidden"
+
+            export type { Customer }
+            export { visible }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LocalExportListBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static string visible()", generatedSource);
+        AssertContains("internal static string hidden()", generatedSource);
+        AssertContains("public sealed class Customer", generatedSource);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalExportListBuild.dll")), "Generated project with local export lists should compile to a net48 DLL.");
+    });
+}
+
 static void ManifestLoaderReportsInvalidManifestShape()
 {
     WithWorkspace(root =>
@@ -2909,6 +2949,28 @@ static void CheckerReportsUnsupportedExportForwardingDiagnostics()
         AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[1].Message);
         AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[2].Message);
         AssertEqual("src/Main.tysh", diagnostics[0].File);
+    });
+}
+
+static void CheckerReportsUnresolvedLocalExportListDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("MissingLocalExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingLocalExport
+
+            export { missingValue }
+            export type { MissingType }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Checker should report unresolved local export list entries.");
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2001").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        AssertEqual(2, diagnostics.Length);
+        AssertEqual("Unresolved name 'missingValue'.", diagnostics[0].Message);
+        AssertEqual("Unresolved name 'MissingType'.", diagnostics[1].Message);
     });
 }
 

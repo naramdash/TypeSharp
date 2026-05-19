@@ -82,7 +82,8 @@
 - [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
 - [x] import alias same-file conflict는 `TS2002` duplicate symbol diagnostic으로 보고된다.
 - [x] export specifier/re-export 문법 parser fixture가 있다.
-- [x] source module graph 지원 전 export specifier/re-export 사용은 `TS2003`으로 emission 전에 중단된다.
+- [x] local export list가 같은 파일 선언을 generated C# public surface로 표시한다.
+- [x] re-export/renamed export specifier 사용은 `TS2003`으로 emission 전에 중단된다.
 - [x] root-level open declaration 문법과 lowering 규칙이 있다.
 - [x] ambient function signature 문법 초안과 parser fixture가 있다.
 - [x] 이름 해석 규칙 초안이 있다.

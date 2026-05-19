@@ -82,8 +82,9 @@ export_specifier      ::= identifier ("as" identifier)?
 - public surface는 export로 결정한다.
 - .NET public accessibility와 module export는 별도이므로 mapping 사양이 필요하다.
 - library project에서는 export된 declaration만 public API 후보가 된다.
-- 현재 구현된 export specifier slice는 `export { Name as Alias }`, `export { Name } from "Module"`, `export type { Name } from "Module"`, and `export * from "Module"`를 parser syntax tree에 보존한다.
-- Source module graph는 relative export-from specifier도 dependency edge로 기록한다. Export binding, duplicate export diagnostics, and C# re-export lowering은 후속 작업이다. 그때까지 `typesharp check`와 `typesharp build`는 export specifier/re-export declarations를 `TS2003`으로 보고하고 generated C# emission 전에 중단한다.
+- 현재 구현된 local export list slice는 `export { Name }`와 `export type { TypeName }`를 같은 파일 선언의 public surface marker로 해석하고 generated C# public accessibility에 반영한다.
+- 현재 구현된 re-export parser slice는 `export { Name as Alias }`, `export { Name } from "Module"`, `export type { Name } from "Module"`, and `export * from "Module"`를 parser syntax tree에 보존한다.
+- Source module graph는 relative export-from specifier도 dependency edge로 기록한다. Re-export binding, duplicate export diagnostics, export alias lowering, and C# re-export lowering은 후속 작업이다. 그때까지 `typesharp check`와 `typesharp build`는 re-export/renamed export specifier declarations를 `TS2003`으로 보고하고 generated C# emission 전에 중단한다.
 
 ## Namespace
 

@@ -86,6 +86,16 @@ export record Customer(Name: string)
 export fun greet(name: string): string = "Hello, " + name
 ```
 
+Local export lists can mark declarations in the same file as public surface:
+
+```text
+record Customer(Name: string)
+fun greet(name: string): string = "Hello, " + name
+
+export type { Customer }
+export { greet }
+```
+
 Forwarding exports are parser-visible:
 
 ```text
@@ -94,7 +104,7 @@ export type { CustomerShape } from "./Models"
 export * from "./Models"
 ```
 
-The current compiler reports `TS2003` for those forwarding forms until module graph public-surface lowering is implemented.
+The current compiler reports `TS2003` for forwarding exports and renamed export specifiers until module graph public-surface lowering and alias lowering are implemented.
 
 ## Related Pages
 

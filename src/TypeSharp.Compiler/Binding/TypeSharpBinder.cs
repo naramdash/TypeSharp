@@ -114,6 +114,13 @@ public static class TypeSharpBinder
 
                     case SyntaxKind.ExportNamedDeclaration:
                     case SyntaxKind.ExportTypeDeclaration:
+                        if (IsUnsupportedExportSpecifierDeclaration(child))
+                        {
+                            ReportUnsupportedExportForwarding(child);
+                        }
+
+                        break;
+
                     case SyntaxKind.ExportStarDeclaration:
                         ReportUnsupportedExportForwarding(child);
                         break;
@@ -202,6 +209,48 @@ public static class TypeSharpBinder
                     BindTypeAnnotations(node, scope);
                     BindInitializers(node, scope);
                     break;
+
+                case SyntaxKind.ExportNamedDeclaration:
+                    BindLocalExportNamedDeclaration(node, scope);
+                    break;
+
+                case SyntaxKind.ExportTypeDeclaration:
+                    BindLocalExportTypeDeclaration(node, scope);
+                    break;
+            }
+        }
+
+        private void BindLocalExportNamedDeclaration(SyntaxNode node, BindingScope scope)
+        {
+            if (IsUnsupportedExportSpecifierDeclaration(node))
+            {
+                return;
+            }
+
+            foreach (var exportName in GetExportedIdentifiers(node))
+            {
+                var name = exportName.Text ?? string.Empty;
+                if (!scope.ResolveValue(name) && !scope.ResolveType(name))
+                {
+                    ReportUnresolved(exportName, name);
+                }
+            }
+        }
+
+        private void BindLocalExportTypeDeclaration(SyntaxNode node, BindingScope scope)
+        {
+            if (IsUnsupportedExportSpecifierDeclaration(node))
+            {
+                return;
+            }
+
+            foreach (var exportName in GetExportedIdentifiers(node))
+            {
+                var name = exportName.Text ?? string.Empty;
+                if (!scope.ResolveType(name))
+                {
+                    ReportUnresolved(exportName, name);
+                }
             }
         }
 
@@ -620,6 +669,60 @@ public static class TypeSharpBinder
                 DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate,
                 _file,
                 node.Span));
+        }
+
+        private static bool IsUnsupportedExportSpecifierDeclaration(SyntaxNode node) =>
+            HasFromSpecifier(node) || HasExportAlias(node);
+
+        private static bool HasFromSpecifier(SyntaxNode node) =>
+            node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.FromKeyword);
+
+        private static bool HasExportAlias(SyntaxNode node)
+        {
+            var insideBraces = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    insideBraces = true;
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+                {
+                    return false;
+                }
+
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.AsKeyword)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<SyntaxNode> GetExportedIdentifiers(SyntaxNode node)
+        {
+            var insideBraces = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    insideBraces = true;
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+                {
+                    yield break;
+                }
+
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    yield return child;
+                }
+            }
         }
 
         private void AddSymbol(

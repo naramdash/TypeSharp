@@ -36,6 +36,7 @@ public static class CSharpSourceBackend
         private readonly Dictionary<string, UnionShape> _unions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseFactories = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseValues = new(StringComparer.Ordinal);
+        private HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
 
@@ -51,6 +52,7 @@ public static class CSharpSourceBackend
             var namespaceName = explicitNamespace.Length > 0
                 ? explicitNamespace
                 : NormalizeNamespace(defaultNamespace);
+            _localExportedNames = CollectLocalExportedNames(root);
 
             var imports = CollectImports(root, sourceImports);
             var literals = root.Children
@@ -1878,16 +1880,60 @@ public static class CSharpSourceBackend
             return annotation is not null;
         }
 
-        private static string GetVisibility(SyntaxNode node)
+        private string GetVisibility(SyntaxNode node)
         {
             if (node.Children.Any(child => child.Kind == SyntaxKind.PrivateModifier))
             {
                 return "private";
             }
 
-            return node.Children.Any(child => child.Kind is SyntaxKind.ExportModifier or SyntaxKind.PublicModifier)
+            if (node.Children.Any(child => child.Kind is SyntaxKind.ExportModifier or SyntaxKind.PublicModifier))
+            {
+                return "public";
+            }
+
+            return TryGetLocalExportableDeclarationName(node, out var name) &&
+                _localExportedNames.Contains(name)
                 ? "public"
                 : "internal";
+        }
+
+        private static HashSet<string> CollectLocalExportedNames(SyntaxNode root)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var exportDeclaration in root.Children.Where(child => child.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration))
+            {
+                if (HasFromSpecifier(exportDeclaration) || HasExportAlias(exportDeclaration))
+                {
+                    continue;
+                }
+
+                foreach (var name in GetExportedIdentifiers(exportDeclaration))
+                {
+                    names.Add(name);
+                }
+            }
+
+            return names;
+        }
+
+        private static bool TryGetLocalExportableDeclarationName(SyntaxNode node, out string name)
+        {
+            name = node.Kind switch
+            {
+                SyntaxKind.FunctionDeclaration => GetDeclarationName(node),
+                SyntaxKind.ValueDeclaration => GetLocalDeclarationName(node),
+                SyntaxKind.LiteralDeclaration => GetLiteralDeclarationName(node),
+                SyntaxKind.ModuleDeclaration => GetModuleDeclarationName(node),
+                SyntaxKind.TypeAliasDeclaration => GetTypeAliasDeclarationName(node),
+                SyntaxKind.RecordDeclaration => GetRecordDeclarationName(node),
+                SyntaxKind.UnionDeclaration => GetUnionDeclarationName(node),
+                SyntaxKind.ClassDeclaration => GetClassDeclarationName(node),
+                SyntaxKind.InterfaceDeclaration => GetInterfaceDeclarationName(node),
+                _ => string.Empty
+            };
+
+            return name.Length > 0;
         }
 
         private static string GetPartialModifier(SyntaxNode node) =>
@@ -2150,6 +2196,57 @@ public static class CSharpSourceBackend
             specifier == ".." ||
             specifier.StartsWith("./", StringComparison.Ordinal) ||
             specifier.StartsWith("../", StringComparison.Ordinal);
+
+        private static bool HasFromSpecifier(SyntaxNode node) =>
+            node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.FromKeyword);
+
+        private static bool HasExportAlias(SyntaxNode node)
+        {
+            var insideBraces = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    insideBraces = true;
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+                {
+                    return false;
+                }
+
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.AsKeyword)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<string> GetExportedIdentifiers(SyntaxNode node)
+        {
+            var insideBraces = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    insideBraces = true;
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+                {
+                    yield break;
+                }
+
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } name)
+                {
+                    yield return name;
+                }
+            }
+        }
 
         private static bool ContainsNode(SyntaxNode node, SyntaxKind kind)
         {
