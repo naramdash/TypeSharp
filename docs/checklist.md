@@ -259,6 +259,7 @@
 - [x] VS Code Extension Host smoke
 - [x] docs site VS Code/LSP smoke command contract
 - [x] Astro Starlight official docs site
+- [x] GitHub Pages human docs tutorials/guides/cookbook/fundamentals/reference/API structure
 - [x] GitHub Pages docs deployment workflow
 - [x] runnable example project catalog
 - [x] runnable ASP.NET/WCF host example project

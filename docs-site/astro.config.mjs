@@ -15,31 +15,39 @@ export default defineConfig({
       description: '.NET Framework 4.8-compatible static language design, compiler, CLI, and VS Code tooling.',
       sidebar: [
         {
-          label: 'Start',
+          label: 'Learn',
           items: [
             { label: 'Overview', slug: 'index' },
-            { label: 'Core Goal', slug: 'goal' },
+            { label: 'Start Here', slug: 'start-here' },
+            { label: 'Tutorials', slug: 'tutorials' },
+            { label: 'Fundamentals', slug: 'fundamentals' },
           ],
         },
         {
-          label: 'Language',
+          label: 'Use TypeSharp',
           items: [
-            { label: 'Grammar', slug: 'grammar' },
+            { label: 'Guides', slug: 'guides' },
+            { label: 'Cookbook', slug: 'cookbook' },
+            { label: 'Examples', slug: 'examples' },
             { label: 'Migration', slug: 'migration' },
           ],
         },
         {
-          label: 'Tooling',
+          label: 'Reference',
           items: [
+            { label: 'Grammar', slug: 'grammar' },
+            { label: 'Language Reference', slug: 'reference' },
+            { label: 'API And CLI Reference', slug: 'api' },
             { label: 'CLI', slug: 'cli' },
             { label: 'Diagnostics', slug: 'diagnostics' },
-            { label: 'VS Code And LSP', slug: 'vscode-lsp' },
           ],
         },
         {
-          label: 'Adoption',
+          label: 'Tools And Project',
           items: [
-            { label: 'Examples', slug: 'examples' },
+            { label: 'VS Code And LSP', slug: 'vscode-lsp' },
+            { label: 'Troubleshooting', slug: 'troubleshooting' },
+            { label: 'Core Goal', slug: 'goal' },
           ],
         },
       ],

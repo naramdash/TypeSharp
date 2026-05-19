@@ -1,9 +1,9 @@
 # Task 0146: GitHub Pages Human Docs Expansion
 
-Status: Planned
+Status: Done
 Queue: Q5
 Start Time: 2026-05-19 14:42:55 +09:00
-End Time: TBD
+End Time: 2026-05-19 14:56:43 +09:00
 
 ## Objective
 
@@ -81,16 +81,16 @@ Out:
 
 ## Acceptance Criteria
 
-- [ ] The docs site has a human-oriented information architecture inspired by the official TypeScript, C#, and F# docs patterns above.
-- [ ] The first page tells users what TypeSharp is, why `net48` matters, current preview status, and the fastest safe next step.
-- [ ] Tutorials are sequential and runnable or explicitly tied to existing runnable examples.
-- [ ] Guides explain concepts directly instead of only pointing at internal design docs.
-- [ ] Cookbook recipes solve concrete user tasks with short code and commands.
-- [ ] Fundamentals pages cover the language model a new user needs before reading full grammar/reference material.
-- [ ] Grammar/reference/API pages are scannable and link back to canonical grammar, CLI, diagnostics, and interop docs.
-- [ ] Site navigation separates Learn, Guides, Cookbook, Reference, Migration, Examples, and Troubleshooting.
-- [ ] Every new page either has verified commands, existing fixture/smoke evidence, or an explicit status note.
-- [ ] Docs-site build passes and the docs contract smoke is updated if the expected page set changes.
+- [x] The docs site has a human-oriented information architecture inspired by the official TypeScript, C#, and F# docs patterns above.
+- [x] The first page tells users what TypeSharp is, why `net48` matters, current preview status, and the fastest safe next step.
+- [x] Tutorials are sequential and runnable or explicitly tied to existing runnable examples.
+- [x] Guides explain concepts directly instead of only pointing at internal design docs.
+- [x] Cookbook recipes solve concrete user tasks with short code and commands.
+- [x] Fundamentals pages cover the language model a new user needs before reading full grammar/reference material.
+- [x] Grammar/reference/API pages are scannable and link back to canonical grammar, CLI, diagnostics, and interop docs.
+- [x] Site navigation separates Learn, Guides, Cookbook, Reference, Migration, Examples, and Troubleshooting.
+- [x] Every new page either has verified commands, existing fixture/smoke evidence, or an explicit status note.
+- [x] Docs-site build passes and the docs contract smoke is updated if the expected page set changes.
 
 ## Verification
 
@@ -105,7 +105,12 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 ```
 
 Result:
-- Not run yet. This task is queued for a future implementation pass.
+- PASS `dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj`
+- PASS `npm run build` in `docs-site` generated 17 pages/Pagefind search index.
+- PASS `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- "docs site contract"`
+- PASS `dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- "runnable example"`
+- PASS `git diff --check`
+- PASS `git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"` returned no tracked binary artifacts.
 
 ## Handoff
 
@@ -115,13 +120,15 @@ Done:
   - https://www.typescriptlang.org/docs/
   - https://learn.microsoft.com/en-us/dotnet/csharp/
   - https://learn.microsoft.com/en-us/dotnet/fsharp/
+- Added a human-first Starlight sidebar with Learn, Use TypeSharp, Reference, and Tools And Project groups.
+- Added Start Here, Tutorials, Guides, Cookbook, Fundamentals, Reference, API, and Troubleshooting pages.
+- Expanded the landing page so new users see TypeSharp purpose, `net48` target, preview status, and first safe commands.
+- Kept internal docs links relative so GitHub Pages repository-base deployments keep navigation inside the site.
+- Updated the docs-site contract smoke to pin the expanded route set and important content anchors.
+- Updated checklist, traceability, and task index evidence for this docs expansion.
 
 Remaining:
-- Design the Starlight sidebar and page tree.
-- Write the expanded docs content.
-- Update docs-site contract smoke if the expected route set changes.
-- Run verification.
-- Update this packet to `Done`, set `End Time`, then commit and push the implementation.
+- Future docs tasks can deepen individual tutorial pages as language features move from preview/backlog to implemented.
 
 Blocked:
 - None.

@@ -3336,24 +3336,102 @@ static void DocsSiteContractIsStable()
     var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.mjs"));
     AssertContains("starlight({", astroConfig);
     AssertContains("title: 'TypeSharp'", astroConfig);
+    AssertContains("label: 'Learn'", astroConfig);
+    AssertContains("label: 'Use TypeSharp'", astroConfig);
+    AssertContains("label: 'Reference'", astroConfig);
+    AssertContains("label: 'Tools And Project'", astroConfig);
+    AssertContains("slug: 'start-here'", astroConfig);
+    AssertContains("slug: 'tutorials'", astroConfig);
+    AssertContains("slug: 'fundamentals'", astroConfig);
+    AssertContains("slug: 'guides'", astroConfig);
+    AssertContains("slug: 'cookbook'", astroConfig);
     AssertContains("slug: 'goal'", astroConfig);
     AssertContains("slug: 'grammar'", astroConfig);
+    AssertContains("slug: 'reference'", astroConfig);
+    AssertContains("slug: 'api'", astroConfig);
     AssertContains("slug: 'cli'", astroConfig);
     AssertContains("slug: 'diagnostics'", astroConfig);
     AssertContains("slug: 'vscode-lsp'", astroConfig);
     AssertContains("slug: 'migration'", astroConfig);
     AssertContains("slug: 'examples'", astroConfig);
+    AssertContains("slug: 'troubleshooting'", astroConfig);
 
     var contentConfig = File.ReadAllText(Path.Combine(siteRoot, "src", "content.config.ts"));
     AssertContains("docsLoader", contentConfig);
     AssertContains("docsSchema", contentConfig);
 
-    foreach (var page in new[] { "index", "goal", "grammar", "cli", "diagnostics", "vscode-lsp", "migration", "examples" })
+    foreach (var page in new[]
+    {
+        "index",
+        "start-here",
+        "tutorials",
+        "fundamentals",
+        "guides",
+        "cookbook",
+        "examples",
+        "migration",
+        "grammar",
+        "reference",
+        "api",
+        "cli",
+        "diagnostics",
+        "vscode-lsp",
+        "troubleshooting",
+        "goal"
+    })
     {
         AssertTrue(
             File.Exists(Path.Combine(siteRoot, "src", "content", "docs", $"{page}.md")),
             $"Docs site page '{page}' should exist.");
     }
+
+    var startHerePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "start-here.md"));
+    AssertContains("I Maintain .NET Framework Applications", startHerePage);
+    AssertContains("I Know C#", startHerePage);
+    AssertContains("I Know F#", startHerePage);
+    AssertContains("I Know TypeScript", startHerePage);
+
+    var tutorialsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "tutorials.md"));
+    AssertContains("Hello Project", tutorialsPage);
+    AssertContains("Library Public API", tutorialsPage);
+    AssertContains("C# Interop", tutorialsPage);
+    AssertContains("Diagnostics Workflow", tutorialsPage);
+    AssertContains("VS Code And LSP Workflow", tutorialsPage);
+    AssertContains("Host Compatibility Overview", tutorialsPage);
+
+    var guidesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "guides.md"));
+    AssertContains("Project Structure", guidesPage);
+    AssertContains("CLI Workflow", guidesPage);
+    AssertContains("C# References And Imports", guidesPage);
+    AssertContains("Option, Result, Records, And Unions", guidesPage);
+
+    var cookbookPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "cookbook.md"));
+    AssertContains("Call A Local C# DLL", cookbookPage);
+    AssertContains("Expose A TypeSharp API To C#", cookbookPage);
+    AssertContains("Model Nullable Input Safely", cookbookPage);
+    AssertContains("Consume Generated DLLs From A Host Project", cookbookPage);
+
+    var fundamentalsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "fundamentals.md"));
+    AssertContains("Values And Functions", fundamentalsPage);
+    AssertContains("Structural Shapes Versus Nominal Public API", fundamentalsPage);
+    AssertContains("Collections, Pipelines, And Async", fundamentalsPage);
+
+    var referencePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "reference.md"));
+    AssertContains("Declarations", referencePage);
+    AssertContains("Expressions", referencePage);
+    AssertContains("Types", referencePage);
+    AssertContains("Public ABI Rules", referencePage);
+
+    var apiPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
+    AssertContains("CLI Commands", apiPage);
+    AssertContains("Manifest Reference", apiPage);
+    AssertContains("Runtime And Core Libraries", apiPage);
+    AssertContains("Generated Assembly Layout", apiPage);
+
+    var troubleshootingPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "troubleshooting.md"));
+    AssertContains("The CLI Cannot Find A Manifest", troubleshootingPage);
+    AssertContains("Generated `.exe` Is Blocked", troubleshootingPage);
+    AssertContains("typesharp explain TS2202", troubleshootingPage);
 
     var vscodeLspPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "vscode-lsp.md"));
     AssertContains("npm run check", vscodeLspPage);
