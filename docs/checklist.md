@@ -196,6 +196,7 @@
 - [x] C# source backend named import alias using lowering
 - [x] C# source backend namespace import alias using lowering
 - [x] C# source backend root namespace fallback
+- [x] C# source backend multi-source module path container lowering
 - [x] C# source backend open declaration using lowering
 - [x] C# source backend call expression skeleton
 - [x] C# source backend block/local skeleton
@@ -225,6 +226,7 @@
 - [x] generated C# imported generic type reference build smoke
 - [x] generated C# generic constraint build smoke
 - [x] generated C# partial declaration lowering smoke
+- [x] generated C# multi-source module path container smoke
 - [x] generated C# named import alias using lowering smoke
 - [x] generated C# namespace import alias using lowering smoke
 - [x] generated C# open declaration using lowering smoke

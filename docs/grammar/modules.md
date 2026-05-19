@@ -22,6 +22,7 @@ import_or_open_declaration ::= import_declaration | open_declaration
 - 같은 project 안에서 source-root-relative module path가 중복되면 `typesharp check`와 `typesharp build`는 `TS0111`로 보고한다.
 - source file은 file-scoped namespace를 기본으로 사용한다.
 - file-scoped namespace가 없으면 generated C# namespace는 manifest `rootNamespace`로 fallback한다.
+- 단일 source build는 top-level declarations를 generated C# `Module` container에 둔다. 다중 source build는 같은 namespace 안의 source file들이 충돌하지 않도록 source module path 기반 container name을 사용한다.
 - import/open은 file-scoped namespace 다음, 실제 선언 전으로 모은다.
 - import/export가 없더라도 global script가 되지 않는다.
 - global scope 오염은 `ambient` 선언 또는 manifest opt-in으로만 허용한다.

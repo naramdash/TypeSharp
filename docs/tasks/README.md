@@ -112,3 +112,4 @@
 | [0163-unsupported-export-forwarding-diagnostic.md](0163-unsupported-export-forwarding-diagnostic.md) | Q2-Q4 | Done | source module graph 지원 전 `export { ... }`/`export type { ... }`/`export * from ...` 사용을 `TS2003`으로 막는다. |
 | [0164-source-module-path-identity.md](0164-source-module-path-identity.md) | Q2-Q4 | Done | source root 상대 module path를 source discovery에 고정하고 중복 module path를 `TS0111`로 막는다. |
 | [0165-relative-source-module-graph.md](0165-relative-source-module-graph.md) | Q2-Q4 | Done | relative source import/export specifier를 source module graph edge로 수집하고 미지원 source import를 `TS0113`으로 막는다. |
+| [0166-multi-source-module-container-lowering.md](0166-multi-source-module-container-lowering.md) | Q2-Q4 | Done | 다중 source project에서 module path 기반 generated C# container를 써서 같은 namespace 안의 source files를 함께 빌드한다. |

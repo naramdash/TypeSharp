@@ -8,9 +8,14 @@ public static class CSharpSourceBackend
 {
     public static string Emit(SyntaxNode root, string? defaultNamespace = null)
     {
+        return Emit(root, defaultNamespace, "Module");
+    }
+
+    public static string Emit(SyntaxNode root, string? defaultNamespace, string moduleContainerName)
+    {
         var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
         var emitter = new Emitter();
-        return emitter.Emit(loweredRoot, defaultNamespace);
+        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName);
     }
 
     private sealed class Emitter
@@ -25,7 +30,7 @@ public static class CSharpSourceBackend
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
 
-        public string Emit(SyntaxNode root, string? defaultNamespace)
+        public string Emit(SyntaxNode root, string? defaultNamespace, string moduleContainerName)
         {
             var explicitNamespace = root.Children.FirstOrDefault(child => child.Kind == SyntaxKind.NamespaceDeclaration) is { } namespaceDeclaration
                 ? GetQualifiedName(namespaceDeclaration)
@@ -117,7 +122,7 @@ public static class CSharpSourceBackend
 
             _builder.AppendLine($"namespace {namespaceName}");
             _builder.AppendLine("{");
-            _builder.AppendLine("    public static class Module");
+            _builder.AppendLine($"    public static class {moduleContainerName}");
             _builder.AppendLine("    {");
 
             foreach (var literal in literals)

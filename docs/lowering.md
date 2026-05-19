@@ -61,7 +61,8 @@ namespace Samples.Backend
 ```
 
 Rules:
-- top-level functions lower to static methods on generated `Module`.
+- top-level functions lower to static methods on generated `Module` for a single-source build.
+- multi-source builds use deterministic module-path-based generated containers such as `ModuleMain` and `ModuleFeature_Helper`, so files in the same C# namespace do not collide on a single `Module` type.
 - `export` lowers to `public`; private/internal source remains non-public.
 - expression-bodied functions lower to block-bodied C# methods with `return`.
 
@@ -69,6 +70,8 @@ Evidence:
 - `tests/fixtures/backend/csharp/positive/0001-string-return`
 - `tests/fixtures/backend/csharp/positive/0008-basic-semantics`
 - `CLI build compiles basic semantics`
+- `CLI build uses module path containers for multiple sources`
+- `CLI run uses module path container for multi-source executable`
 
 ## Imports And Calls
 

@@ -99,6 +99,7 @@ var tests = new (string Name, Action Body)[]
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
+    ("CLI run uses module path container for multi-source executable", CliRunUsesModulePathContainerForMultiSourceExecutable),
     ("CLI run reports unsupported main signature", CliRunReportsUnsupportedMainSignature),
     ("CLI run rejects library projects", CliRunRejectsLibraryProjects),
     ("CLI build honors Release configuration", CliBuildHonorsReleaseConfiguration),
@@ -157,6 +158,7 @@ var tests = new (string Name, Action Body)[]
     ("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
+    ("CLI build uses module path containers for multiple sources", CliBuildUsesModulePathContainersForMultipleSources),
     ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
@@ -2267,6 +2269,53 @@ static void CliRunPassesArgumentsToGeneratedMain()
     });
 }
 
+static void CliRunUsesModulePathContainerForMultiSourceExecutable()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RunMultiSource"
+            targetFramework = "net48"
+            outputType = "exe"
+            rootNamespace = "Samples.RunMultiSource"
+            generatedOutputRoot = "generated"
+            main = "Samples.RunMultiSource.main"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RunMultiSource
+
+            export fun main(args: string[]): string = args.Length.ToString()
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RunMultiSource
+
+            export fun helper(): string = "unused"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["run", manifestPath, "--", "alpha", "beta", "gamma"], output, error);
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Feature", "Helper.g.cs"));
+        var generatedProgram = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
+        AssertContains("public static class ModuleMain", generatedMain);
+        AssertContains("public static class ModuleFeature_Helper", generatedHelper);
+        AssertContains("ModuleMain.main(args)", generatedProgram);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RunMultiSource.exe")), "Run should build a generated multi-source net48 executable.");
+
+        if (exitCode == 0)
+        {
+            AssertEqual($"3{Environment.NewLine}", output.ToString());
+            AssertEqual(string.Empty, error.ToString());
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(exitCode, output.ToString(), error.ToString(), "RunMultiSource");
+    });
+}
+
 static void CliRunReportsUnsupportedMainSignature()
 {
     WithWorkspace(root =>
@@ -4153,6 +4202,44 @@ static void CliBuildUsesRootNamespaceForNamespaceLessSource()
         var generatedEntryPoint = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
         AssertContains("namespace Samples.RootNamespaceFallback", generatedEntryPoint);
         AssertContains("object result = Module.main(args);", generatedEntryPoint);
+    });
+}
+
+static void CliBuildUsesModulePathContainersForMultipleSources()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MultiSourceModules"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MultiSourceModules
+
+            export fun mainValue(): string = "main"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.MultiSourceModules
+
+            export fun helperValue(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/MultiSourceModules.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Feature", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static class ModuleMain", generatedMain);
+        AssertContains("public static string mainValue()", generatedMain);
+        AssertContains("public static class ModuleFeature_Helper", generatedHelper);
+        AssertContains("public static string helperValue()", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MultiSourceModules.dll")), "Generated multi-source project should compile to a net48 DLL.");
     });
 }
 
