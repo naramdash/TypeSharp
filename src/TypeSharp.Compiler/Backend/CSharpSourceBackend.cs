@@ -6,11 +6,11 @@ namespace TypeSharp.Compiler.Backend;
 
 public static class CSharpSourceBackend
 {
-    public static string Emit(SyntaxNode root)
+    public static string Emit(SyntaxNode root, string? defaultNamespace = null)
     {
         var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
         var emitter = new Emitter();
-        return emitter.Emit(loweredRoot);
+        return emitter.Emit(loweredRoot, defaultNamespace);
     }
 
     private sealed class Emitter
@@ -25,11 +25,14 @@ public static class CSharpSourceBackend
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
 
-        public string Emit(SyntaxNode root)
+        public string Emit(SyntaxNode root, string? defaultNamespace)
         {
-            var namespaceName = root.Children.FirstOrDefault(child => child.Kind == SyntaxKind.NamespaceDeclaration) is { } namespaceDeclaration
+            var explicitNamespace = root.Children.FirstOrDefault(child => child.Kind == SyntaxKind.NamespaceDeclaration) is { } namespaceDeclaration
                 ? GetQualifiedName(namespaceDeclaration)
-                : "TypeSharp.Generated";
+                : string.Empty;
+            var namespaceName = explicitNamespace.Length > 0
+                ? explicitNamespace
+                : NormalizeNamespace(defaultNamespace);
 
             var imports = CollectImports(root);
             var literals = root.Children
@@ -1641,6 +1644,9 @@ public static class CSharpSourceBackend
                 "ushort" => "ushort",
                 _ => sourceType
             };
+
+        private static string NormalizeNamespace(string? namespaceName) =>
+            string.IsNullOrWhiteSpace(namespaceName) ? "TypeSharp.Generated" : namespaceName.Trim();
 
         private static string GetSourceTypeName(SyntaxNode? node)
         {

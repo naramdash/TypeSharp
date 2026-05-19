@@ -19,6 +19,7 @@ import_or_open_declaration ::= import_declaration | open_declaration
 - TypeSharp source file의 기본 확장자는 `.tysh`다.
 - 모든 source file은 기본적으로 module이다.
 - source file은 file-scoped namespace를 기본으로 사용한다.
+- file-scoped namespace가 없으면 generated C# namespace는 manifest `rootNamespace`로 fallback한다.
 - import/open은 file-scoped namespace 다음, 실제 선언 전으로 모은다.
 - import/export가 없더라도 global script가 되지 않는다.
 - global scope 오염은 `ambient` 선언 또는 manifest opt-in으로만 허용한다.

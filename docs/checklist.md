@@ -72,6 +72,7 @@
 - [x] expression grammar 초안이 있다.
 - [x] declaration grammar 초안이 있다.
 - [x] module/namespace/import 규칙 초안이 있다.
+- [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
 - [x] 이름 해석 규칙 초안이 있다.
 - [x] overload candidate 규칙 초안이 있다.
 - [x] generic constraint 문법 초안이 있다.
@@ -182,6 +183,7 @@
 - [x] C# 7.3 source backend
 - [x] C# source backend first golden fixture
 - [x] C# source backend import directive skeleton
+- [x] C# source backend root namespace fallback
 - [x] C# source backend call expression skeleton
 - [x] C# source backend block/local skeleton
 - [x] generated C# `net48` compile smoke
@@ -317,6 +319,7 @@
 - [x] diagnostic golden tests
 - [x] C# source backend golden fixture
 - [x] C# source backend import directive golden fixture
+- [x] CLI build root namespace fallback smoke tests
 - [x] C# source backend call expression golden fixture
 - [x] C# source backend block/local golden fixture
 - [x] generated C# `net48` compile smoke

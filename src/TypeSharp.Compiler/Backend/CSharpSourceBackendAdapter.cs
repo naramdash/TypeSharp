@@ -18,4 +18,7 @@ public sealed class CSharpSourceBackendAdapter : ITypeSharpBackend
 
     public TypeSharpBackendArtifact Emit(SyntaxNode root) =>
         TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root));
+
+    public TypeSharpBackendArtifact Emit(SyntaxNode root, string? defaultNamespace) =>
+        TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root, defaultNamespace));
 }

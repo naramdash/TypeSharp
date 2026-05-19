@@ -144,6 +144,7 @@ var tests = new (string Name, Action Body)[]
     ("docs site contract is stable", DocsSiteContractIsStable),
     ("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
+    ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
     ("CLI build emits generated C# project scaffold", CliBuildEmitsGeneratedCSharpProjectScaffold),
     ("CLI build propagates manifest references to generated C# project", CliBuildPropagatesManifestReferencesToGeneratedCSharpProject),
     ("CLI build compiles framework static member call", CliBuildCompilesFrameworkStaticMemberCall),
@@ -3758,6 +3759,43 @@ static void CliBuildEmitsGeneratedCSharpSource()
 
             """.Replace("\r\n", "\n", StringComparison.Ordinal),
             File.ReadAllText(generatedPath).Replace("\r\n", "\n", StringComparison.Ordinal));
+    });
+}
+
+static void CliBuildUsesRootNamespaceForNamespaceLessSource()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RootNamespaceFallback"
+            targetFramework = "net48"
+            outputType = "exe"
+            rootNamespace = "Samples.RootNamespaceFallback"
+            main = "main"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            export fun main(args: string[]): int =
+              args.Length
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RootNamespaceFallback.exe", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs"));
+        AssertContains("namespace Samples.RootNamespaceFallback", generatedSource);
+        AssertContains("public static int main(string[] args)", generatedSource);
+        AssertContains("return args.Length;", generatedSource);
+
+        var generatedEntryPoint = File.ReadAllText(Path.Combine(root, "generated", "Program.g.cs"));
+        AssertContains("namespace Samples.RootNamespaceFallback", generatedEntryPoint);
+        AssertContains("object result = Module.main(args);", generatedEntryPoint);
     });
 }
 

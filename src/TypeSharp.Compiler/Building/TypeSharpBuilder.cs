@@ -80,11 +80,14 @@ public static class TypeSharpBuilder
             manifestResult.Manifest.ProjectDirectory,
             manifestResult.Manifest.Project.GeneratedOutputRoot));
 
+        var rootNamespace = GetRootNamespace(manifestResult.Manifest);
         foreach (var (sourceFile, root) in parsedSources)
         {
             var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath, backend);
             var outputPath = Path.Combine(outputRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
-            var artifact = backend.Emit(root);
+            var artifact = backend is CSharpSourceBackendAdapter csharpBackend
+                ? csharpBackend.Emit(root, rootNamespace)
+                : backend.Emit(root);
             if (artifact.Kind != TypeSharpBackendArtifactKind.SourceText)
             {
                 throw new NotSupportedException($"Backend '{backend.Name}' emits '{artifact.Kind}' artifacts, but the current project builder expects generated source text.");
@@ -100,7 +103,7 @@ public static class TypeSharpBuilder
         {
             const string relativePath = "Program.g.cs";
             var outputPath = Path.Combine(outputRoot, relativePath);
-            var mainInvocationArguments = GetMainInvocationArguments(parsedSources, mainNamespace, mainMethod);
+            var mainInvocationArguments = GetMainInvocationArguments(parsedSources, mainNamespace, mainMethod, rootNamespace);
             Directory.CreateDirectory(outputRoot);
             File.WriteAllText(outputPath, EmitEntryPoint(mainNamespace, mainMethod, mainInvocationArguments));
             generatedFiles.Add(new GeneratedCSharpFile(outputPath, relativePath));
@@ -151,7 +154,7 @@ public static class TypeSharpBuilder
             ? "Exe"
             : "Library";
         var assemblyName = XmlEscape(manifest.Project.Name);
-        var rootNamespace = XmlEscape(manifest.Project.RootNamespace ?? manifest.Project.Name);
+        var rootNamespace = XmlEscape(GetRootNamespace(manifest));
 
         var builder = new StringBuilder();
         builder.AppendLine("<Project Sdk=\"Microsoft.NET.Sdk\">");
@@ -245,11 +248,12 @@ public static class TypeSharpBuilder
     private static string GetMainInvocationArguments(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         string namespaceName,
-        string methodName)
+        string methodName,
+        string defaultNamespace)
     {
         foreach (var (_, root) in parsedSources)
         {
-            if (!string.Equals(GetNamespaceName(root), namespaceName, StringComparison.Ordinal))
+            if (!string.Equals(GetNamespaceName(root, defaultNamespace), namespaceName, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -306,17 +310,18 @@ public static class TypeSharpBuilder
             return false;
         }
 
-        return ValidateExecutableEntryPoint(parsedSources, namespaceName, methodName, manifest.ManifestPath, diagnostics);
+        return ValidateExecutableEntryPoint(parsedSources, namespaceName, methodName, GetRootNamespace(manifest), manifest.ManifestPath, diagnostics);
     }
 
     private static bool ValidateExecutableEntryPoint(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         string namespaceName,
         string methodName,
+        string defaultNamespace,
         string manifestPath,
         List<Diagnostic> diagnostics)
     {
-        var mainFunction = FindFunction(parsedSources, namespaceName, methodName);
+        var mainFunction = FindFunction(parsedSources, namespaceName, methodName, defaultNamespace);
         if (mainFunction is null)
         {
             diagnostics.Add(DiagnosticFactory.Manifest(
@@ -341,11 +346,12 @@ public static class TypeSharpBuilder
     private static SyntaxNode? FindFunction(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         string namespaceName,
-        string methodName)
+        string methodName,
+        string defaultNamespace)
     {
         foreach (var (_, root) in parsedSources)
         {
-            if (!string.Equals(GetNamespaceName(root), namespaceName, StringComparison.Ordinal))
+            if (!string.Equals(GetNamespaceName(root, defaultNamespace), namespaceName, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -457,7 +463,7 @@ public static class TypeSharpBuilder
         var lastDot = main.LastIndexOf('.');
         if (lastDot < 0)
         {
-            namespaceName = manifest.Project.RootNamespace ?? "TypeSharp.Generated";
+            namespaceName = GetRootNamespace(manifest);
             methodName = main;
             return methodName.Length > 0;
         }
@@ -467,11 +473,26 @@ public static class TypeSharpBuilder
         return namespaceName.Length > 0 && methodName.Length > 0;
     }
 
-    private static string GetNamespaceName(SyntaxNode root)
+    private static string GetRootNamespace(TypeSharpManifest manifest)
+    {
+        if (!string.IsNullOrWhiteSpace(manifest.Project.RootNamespace))
+        {
+            return manifest.Project.RootNamespace.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(manifest.Project.Name))
+        {
+            return manifest.Project.Name.Trim();
+        }
+
+        return "TypeSharp.Generated";
+    }
+
+    private static string GetNamespaceName(SyntaxNode root, string defaultNamespace)
     {
         var namespaceDeclaration = root.Children.FirstOrDefault(child => child.Kind == SyntaxKind.NamespaceDeclaration);
         var namespaceName = GetQualifiedName(namespaceDeclaration);
-        return namespaceName.Length > 0 ? namespaceName : "TypeSharp.Generated";
+        return namespaceName.Length > 0 ? namespaceName : defaultNamespace;
     }
 
     private static string GetDeclarationName(SyntaxNode node)
