@@ -1,9 +1,9 @@
 # Task 0145: GitHub README Human Accessibility
 
-Status: Planned
+Status: Done
 Queue: Q5
 Start Time: 2026-05-19 14:40:25 +09:00
-End Time: TBD
+End Time: 2026-05-19 14:47:32 +09:00
 
 ## Objective
 
@@ -30,13 +30,13 @@ Out:
 
 ## Acceptance Criteria
 
-- [ ] Root `README.md` exists.
-- [ ] The first screen answers "what is this?", ".NET Framework 4.8 why?", "current status?", and "how do I try it?".
-- [ ] Quickstart commands match existing CLI/build/test contracts.
-- [ ] Links resolve to existing repository paths or intentionally documented external locations.
-- [ ] The README explains where human docs live and where internal task/goal documents live.
-- [ ] The README avoids unexplained internal jargon such as task packet, goal mode, or traceability before the user-facing introduction.
-- [ ] Verification records at least README path/link checks and relevant docs/test smoke commands.
+- [x] Root `README.md` exists.
+- [x] The first screen answers "what is this?", ".NET Framework 4.8 why?", "current status?", and "how do I try it?".
+- [x] Quickstart commands match existing CLI/build/test contracts.
+- [x] Links resolve to existing repository paths or intentionally documented external locations.
+- [x] The README explains where human docs live and where internal task/goal documents live.
+- [x] The README avoids unexplained internal jargon such as task packet, goal mode, or traceability before the user-facing introduction.
+- [x] Verification records at least README path/link checks and relevant docs/test smoke commands.
 
 ## Verification
 
@@ -53,17 +53,23 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 ```
 
 Result:
-- Not run yet. This task is queued for a future implementation pass.
+- PASS root `README.md` exists.
+- PASS README link extraction and local path checks.
+- PASS compiler test project build.
+- PASS docs site contract smoke.
+- PASS docs-site build.
+- PASS whitespace check.
+- PASS tracked binary artifact check returned no files.
 
 ## Handoff
 
 Done:
-- Task packet added to the queue.
+- Added root `README.md` with a human-readable project introduction, preview status, `net48` motivation, quickstart commands, docs links, repository map, development checks, generated binary policy, and contributor/governance pointers.
+- Updated checklist, traceability, and task index.
 
 Remaining:
-- Create or rewrite root `README.md`.
-- Run verification.
-- Update this packet to `Done`, set `End Time`, then commit and push the README implementation.
+- None for the root README entry point.
+- Broader GitHub Pages tutorial/guide/cookbook expansion remains queued in [0146-github-pages-human-docs-expansion.md](0146-github-pages-human-docs-expansion.md).
 
 Blocked:
 - None.
