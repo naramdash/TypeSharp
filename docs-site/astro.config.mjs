@@ -13,6 +13,7 @@ export default defineConfig({
     starlight({
       title: 'TypeSharp',
       description: '.NET Framework 4.8-compatible static language design, compiler, CLI, and VS Code tooling.',
+      disable404Route: true,
       sidebar: [
         {
           label: 'Learn',

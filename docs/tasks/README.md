@@ -106,3 +106,4 @@
 | [0157-open-declaration-lowering.md](0157-open-declaration-lowering.md) | Q2-Q4 | Done | root-level `open Namespace`를 파싱하고 generated C# `using Namespace;`로 낮춘다. |
 | [0158-named-import-alias-lowering.md](0158-named-import-alias-lowering.md) | Q2-Q4 | Done | `import { Name as Alias }`를 파싱하고 generated C# alias using으로 낮춘다. |
 | [0159-namespace-import-alias-lowering.md](0159-namespace-import-alias-lowering.md) | Q2-Q4 | Done | `import * as Alias`를 파싱하고 generated C# namespace alias using으로 낮춘다. |
+| [0160-docs-site-custom-404.md](0160-docs-site-custom-404.md) | Q5 | Done | Starlight docs-site custom 404 page를 추가해 GitHub Pages build warning을 제거한다. |
