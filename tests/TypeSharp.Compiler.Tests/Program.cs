@@ -3436,9 +3436,12 @@ static void DocsSiteContractIsStable()
     AssertContains("label: 'Reference'", astroConfig);
     AssertContains("label: 'Tools And Project'", astroConfig);
     AssertContains("slug: 'start-here'", astroConfig);
+    AssertContains("slug: 'learning-paths'", astroConfig);
+    AssertContains("slug: 'language-tour'", astroConfig);
     AssertContains("slug: 'tutorials'", astroConfig);
     AssertContains("slug: 'fundamentals'", astroConfig);
     AssertContains("slug: 'guides'", astroConfig);
+    AssertContains("slug: 'dotnet-interop'", astroConfig);
     AssertContains("slug: 'cookbook'", astroConfig);
     AssertContains("slug: 'goal'", astroConfig);
     AssertContains("slug: 'grammar'", astroConfig);
@@ -3446,6 +3449,7 @@ static void DocsSiteContractIsStable()
     AssertContains("slug: 'api'", astroConfig);
     AssertContains("slug: 'cli'", astroConfig);
     AssertContains("slug: 'diagnostics'", astroConfig);
+    AssertContains("slug: 'advanced'", astroConfig);
     AssertContains("slug: 'vscode-lsp'", astroConfig);
     AssertContains("slug: 'migration'", astroConfig);
     AssertContains("slug: 'examples'", astroConfig);
@@ -3459,9 +3463,12 @@ static void DocsSiteContractIsStable()
     {
         "index",
         "start-here",
+        "learning-paths",
+        "language-tour",
         "tutorials",
         "fundamentals",
         "guides",
+        "dotnet-interop",
         "cookbook",
         "examples",
         "migration",
@@ -3470,6 +3477,7 @@ static void DocsSiteContractIsStable()
         "api",
         "cli",
         "diagnostics",
+        "advanced",
         "vscode-lsp",
         "troubleshooting",
         "goal"
@@ -3485,6 +3493,20 @@ static void DocsSiteContractIsStable()
     AssertContains("I Know C#", startHerePage);
     AssertContains("I Know F#", startHerePage);
     AssertContains("I Know TypeScript", startHerePage);
+    AssertContains("I Am Evaluating The Compiler Or Tooling", startHerePage);
+
+    var learningPathsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "learning-paths.md"));
+    AssertContains("Programming Beginner", learningPathsPage);
+    AssertContains("C# And .NET Framework Maintainer", learningPathsPage);
+    AssertContains("TypeScript User", learningPathsPage);
+    AssertContains("F# Or Functional Programming User", learningPathsPage);
+    AssertContains("Advanced Implementer", learningPathsPage);
+
+    var languageTourPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "language-tour.md"));
+    AssertContains("Files And Projects", languageTourPage);
+    AssertContains("Type-Level Unions", languageTourPage);
+    AssertContains("C# Interop", languageTourPage);
+    AssertContains("Current Stability Model", languageTourPage);
 
     var tutorialsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "tutorials.md"));
     AssertContains("Hello Project", tutorialsPage);
@@ -3499,6 +3521,12 @@ static void DocsSiteContractIsStable()
     AssertContains("CLI Workflow", guidesPage);
     AssertContains("C# References And Imports", guidesPage);
     AssertContains("Option, Result, Records, And Unions", guidesPage);
+
+    var dotnetInteropPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "dotnet-interop.md"));
+    AssertContains("Generated Target", dotnetInteropPage);
+    AssertContains("Supported C# Interop Shape", dotnetInteropPage);
+    AssertContains("Host Project Compatibility", dotnetInteropPage);
+    AssertContains("Executables And Antivirus", dotnetInteropPage);
 
     var cookbookPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "cookbook.md"));
     AssertContains("Call A Local C# DLL", cookbookPage);
@@ -3522,6 +3550,12 @@ static void DocsSiteContractIsStable()
     AssertContains("Manifest Reference", apiPage);
     AssertContains("Runtime And Core Libraries", apiPage);
     AssertContains("Generated Assembly Layout", apiPage);
+
+    var advancedPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "advanced.md"));
+    AssertContains("Compiler Pipeline", advancedPage);
+    AssertContains("Public ABI Contract", advancedPage);
+    AssertContains("Metadata Reader And Interop Validation", advancedPage);
+    AssertContains("Regression Strategy", advancedPage);
 
     var troubleshootingPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "troubleshooting.md"));
     AssertContains("The CLI Cannot Find A Manifest", troubleshootingPage);

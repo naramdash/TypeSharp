@@ -12,12 +12,16 @@ This site is the human-facing publishing surface for the repository documentatio
 ## Start Here
 
 - [Start Here](start-here/) helps new users choose the right path.
+- [Learning Paths](learning-paths/) gives beginner, C# maintainer, TypeScript, F#, and advanced routes.
+- [Language Tour](language-tour/) explains the language before the formal reference.
 - [Tutorials](tutorials/) lists runnable, sequential learning paths.
 - [Guides](guides/) explains everyday project, CLI, interop, and modeling tasks.
+- [.NET Interop](dotnet-interop/) covers `net48`, local C# DLLs, generated assemblies, and host compatibility.
 - [Cookbook](cookbook/) gives short recipes for common actions.
 - [Fundamentals](fundamentals/) summarizes values, modules, types, records, unions, async, and diagnostics.
 - [Grammar](grammar/) links the stable grammar surface and coverage matrix.
 - [API And CLI Reference](api/) collects CLI, manifest, runtime/core, generated assembly, and VS Code reference material.
+- [Advanced Topics](advanced/) connects lowering, public ABI, metadata, diagnostics, LSP, and regression strategy.
 - [Troubleshooting](troubleshooting/) maps common failures to diagnostics and checks.
 
 ## Fastest Safe Check

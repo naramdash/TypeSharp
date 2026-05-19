@@ -22,6 +22,7 @@
 - [x] VS Code LSP extension 지원 목표가 명시되어 있다.
 - [x] GitHub Pages/Astro Starlight 공식 문서 목표가 명시되어 있다.
 - [x] GitHub repository root README human entry point가 있다.
+- [x] Vue/Nuxt/TypeScript/C#/F# 공식 문서 구조 벤치마크가 GitHub Pages 문서 개선 근거로 기록되어 있다.
 - [x] 실제 실행 가능한 예제 프로젝트 목표가 명시되어 있다.
 - [x] .NET Framework application model compatibility 계약이 요구사항과 기능 매핑에 반영되어 있다.
 - [x] grammar 폴더가 있고 TypeSharp 문법 목표를 설명한다.
@@ -265,6 +266,7 @@
 - [x] docs site VS Code/LSP smoke command contract
 - [x] Astro Starlight official docs site
 - [x] GitHub Pages human docs tutorials/guides/cookbook/fundamentals/reference/API structure
+- [x] GitHub Pages docs benchmark-driven learning paths/language tour/.NET interop/advanced topics structure
 - [x] GitHub Pages docs deployment workflow
 - [x] runnable example project catalog
 - [x] runnable ASP.NET/WCF host example project
