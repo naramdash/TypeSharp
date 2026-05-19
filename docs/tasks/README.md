@@ -91,3 +91,4 @@
 | [0142-csharp-field-interop-smoke.md](0142-csharp-field-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 public field metadata index와 static/instance field access compile smoke를 추가한다. |
 | [0143-csharp-generic-method-interop-smoke.md](0143-csharp-generic-method-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 generic method metadata placeholder와 imported generic method compile smoke를 추가한다. |
 | [0144-csharp-interface-interop-smoke.md](0144-csharp-interface-interop-smoke.md) | Q3 | Done | local `net48` C# DLL의 interface metadata index와 imported interface reference compile smoke를 추가한다. |
+| [0145-github-readme-human-accessibility.md](0145-github-readme-human-accessibility.md) | Q5 | Planned | GitHub repository 첫 화면용 root `README.md`를 일반 사용자에게 읽히는 소개/quickstart/문서 길잡이로 만든다. |
