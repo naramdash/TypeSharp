@@ -505,6 +505,12 @@ public static class TypeSharpTypeChecker
             }
 
             var receiverType = CheckExpression(receiver, scope);
+            if (IsUnknownType(receiverType))
+            {
+                ReportUnknownAccessRequiresNarrowing(node);
+                return SimpleType.Unknown;
+            }
+
             if (!receiverType.IsKnown || !scope.ResolveShape(receiverType.Name, out var shape))
             {
                 return SimpleType.Unknown;
@@ -531,6 +537,12 @@ public static class TypeSharpTypeChecker
 
             var receiverType = CheckExpression(expressions[0], scope);
             CheckExpression(expressions[1], scope);
+            if (IsUnknownType(receiverType))
+            {
+                ReportUnknownAccessRequiresNarrowing(node);
+                return SimpleType.Unknown;
+            }
+
             if (!receiverType.IsKnown || receiverType.IsNull || !receiverType.Name.EndsWith("[]", StringComparison.Ordinal))
             {
                 return SimpleType.Unknown;
@@ -1019,6 +1031,16 @@ public static class TypeSharpTypeChecker
                 node.Span));
         }
 
+        private void ReportUnknownAccessRequiresNarrowing(SyntaxNode node)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnknownAccessRequiresNarrowing.Code,
+                DiagnosticDescriptors.UnknownAccessRequiresNarrowing.DefaultSeverity,
+                DiagnosticDescriptors.UnknownAccessRequiresNarrowing.MessageTemplate,
+                _file,
+                node.Span));
+        }
+
         private void ReportCapabilityCallRequiresMarker(SyntaxNode node, string functionName, string capability)
         {
             _diagnostics.Add(new Diagnostic(
@@ -1181,6 +1203,9 @@ public static class TypeSharpTypeChecker
 
         private static bool IsAsyncFunction(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);
+
+        private static bool IsUnknownType(SimpleType type) =>
+            type.IsKnown && !type.IsNull && string.Equals(type.Name, "unknown", StringComparison.Ordinal);
 
         private static bool HasFunctionModifier(SyntaxNode node, SyntaxKind modifier) =>
             node.Children.Any(child => child.Kind == modifier);

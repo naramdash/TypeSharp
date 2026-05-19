@@ -100,3 +100,4 @@
 | [0151-dynamic-capability-boundary-diagnostic.md](0151-dynamic-capability-boundary-diagnostic.md) | Q2-Q3 | Done | `dynamic` type annotation이 명시 `dynamic fun` boundary 밖에서 쓰이면 `TS2206`으로 막는다. |
 | [0152-dynamic-call-capability-propagation.md](0152-dynamic-call-capability-propagation.md) | Q2-Q3 | Done | non-`dynamic` 함수가 `dynamic fun`을 직접 호출하거나 pipeline target으로 사용하면 `TS2207`로 막는다. |
 | [0153-capability-call-marker-propagation.md](0153-capability-call-marker-propagation.md) | Q2-Q3 | Done | non-capability 함수가 `reflect`, `interop`, `unsafe` 함수를 직접 호출하거나 pipeline target으로 사용하면 `TS2208`로 막는다. |
+| [0154-unknown-access-narrowing-diagnostic.md](0154-unknown-access-narrowing-diagnostic.md) | Q2-Q3 | Done | `unknown` 값의 member/indexer access를 narrowing proof 없이 사용하면 `TS2209`로 막는다. |

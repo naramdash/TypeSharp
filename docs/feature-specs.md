@@ -22,6 +22,7 @@
 | Nominal closed union declarations | [grammar/declarations.md](grammar/declarations.md), [grammar/types.md](grammar/types.md), [standard-library.md](standard-library.md), [lowering.md](lowering.md) | runtime helper smokes, backend snapshots, generated build and consumer smokes |
 | Type-level union and public boundary rule | [grammar/types.md](grammar/types.md), [grammar/resolution.md](grammar/resolution.md), [csharp-interop.md](csharp-interop.md) | type checker diagnostics, CLI no-emission smokes |
 | Structural shape checking | [grammar/types.md](grammar/types.md), [feature-map.md](feature-map.md), [lowering.md](lowering.md) | type checker positive/negative fixtures, CLI diagnostics smoke |
+| Unknown access narrowing | [grammar/types.md](grammar/types.md), [feature-map.md](feature-map.md), [diagnostics.md](diagnostics.md) | `TS2209`, diagnostics fixture, CLI smoke |
 | Nullability and unknown C# nullability | [grammar/types.md](grammar/types.md), [csharp-interop.md](csharp-interop.md), [diagnostics.md](diagnostics.md) | `TS2202`, `TS2404`, diagnostics fixtures, CLI smokes |
 | Capability boundaries | [grammar/types.md](grammar/types.md), [grammar/interop.md](grammar/interop.md), [csharp-interop.md](csharp-interop.md), [diagnostics.md](diagnostics.md) | `TS2206`, `TS2207`, `TS2208`, diagnostics fixtures, CLI smokes |
 | Pattern matching and exhaustiveness | [grammar/patterns.md](grammar/patterns.md), [grammar/expressions.md](grammar/expressions.md), [lowering.md](lowering.md) | nominal/type-level union diagnostics and backend snapshots |

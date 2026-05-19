@@ -40,6 +40,7 @@ unit never unknown dynamic
 - `unit`은 값 없는 성공을 의미하며 .NET `void`/`Unit` lowering 정책이 필요하다.
 - `never`는 도달 불가능 또는 반환하지 않는 expression type이다.
 - `unknown`은 안전한 top type이다.
+- `unknown` value의 member/indexer access는 structural shape나 더 좁은 type proof 없이 `TS2209`로 보고한다.
 - `dynamic`은 명시적 interop escape hatch다.
 
 ## Nominal Type

@@ -65,12 +65,17 @@ internal sealed class TypeSharpInferenceEngine
             return SimpleType.Unknown;
         }
 
+        var callee = node.Children[0];
+        if (callee.Kind != SyntaxKind.IdentifierExpression)
+        {
+            inferNested(callee);
+        }
+
         foreach (var argument in node.Children.Skip(1).Where(child => !child.IsToken))
         {
             inferNested(argument);
         }
 
-        var callee = node.Children[0];
         if (callee.Kind != SyntaxKind.IdentifierExpression || !TryGetFirstIdentifier(callee, out var identifier))
         {
             return SimpleType.Unknown;

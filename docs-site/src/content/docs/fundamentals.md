@@ -30,6 +30,8 @@ import { LegacyFormatter } from "Legacy.Tools"
 
 The current inference engine handles common local literal, identifier, direct call, binary expression, and pipeline flows. Public APIs should still use explicit annotations where C# metadata matters.
 
+`unknown` is the safe gradual-typing boundary. Accessing a member or indexer on an `unknown` value produces `TS2209` until code proves a structural shape or narrower type.
+
 ## Structural Shapes Versus Nominal Public API
 
 Structural shapes are useful inside TypeSharp code:
@@ -68,6 +70,7 @@ Diagnostics use stable codes. Examples:
 - `TS2201`: type mismatch
 - `TS2202`: nullability contract violation
 - `TS2204`: compile-time type leaked through public boundary
+- `TS2209`: unknown access requires narrowing
 - `TS2401`: missing referenced assembly
 - `TS2404`: unknown C# nullability
 

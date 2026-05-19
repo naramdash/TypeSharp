@@ -68,6 +68,7 @@ TypeSharp 결정:
 - `union` 선언은 tag, case payload, runtime representation, public .NET API 노출 규칙을 가진다.
 - nominal closed union은 pattern matching에서 exhaustiveness를 진단한다.
 - TypeScript식 `A | B` union은 local inference, literal union, `unknown` narrowing, structural shape union을 위한 compile-time type-level union으로 사용한다.
+- `unknown`의 member/indexer access는 structural shape 또는 더 좁은 type proof가 생기기 전까지 `TS2209`로 거부한다.
 - type-level union은 public .NET metadata에 직접 노출하지 않는다.
 - public API에 type-level union이 나타나면 nominal union, nominal interface, wrapper 중 하나로 명시적으로 닫으라는 diagnostic을 낸다.
 - C# 15 preview union은 방향성만 추적하며 TypeSharp의 안정 ABI 계약으로 삼지 않는다.

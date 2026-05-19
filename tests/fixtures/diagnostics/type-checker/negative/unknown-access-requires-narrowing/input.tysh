@@ -1,0 +1,15 @@
+namespace Samples.UnknownAccess.Negative
+
+type Named = { Name: string }
+
+fun allowedShape(value: Named): string =
+  value.Name
+
+fun missingMemberNarrowing(value: unknown): string =
+  value.Name
+
+fun missingCallCalleeNarrowing(value: unknown): string =
+  value.Name.ToString()
+
+fun missingIndexerNarrowing(value: unknown): string =
+  value[0]

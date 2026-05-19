@@ -126,6 +126,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
     ("CLI check emits JSON dynamic call capability diagnostics", CliCheckEmitsJsonDynamicCallCapabilityDiagnostics),
     ("CLI check emits JSON capability call marker diagnostics", CliCheckEmitsJsonCapabilityCallMarkerDiagnostics),
+    ("CLI check emits JSON unknown access diagnostics", CliCheckEmitsJsonUnknownAccessDiagnostics),
     ("CLI check keeps warnings nonblocking by default", CliCheckKeepsWarningsNonblockingByDefault),
     ("CLI check treats warnings as errors", CliCheckTreatsWarningsAsErrors),
     ("CLI build stops before emission on warnings as errors", CliBuildStopsBeforeEmissionOnWarningsAsErrors),
@@ -261,6 +262,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2206",
             "TS2207",
             "TS2208",
+            "TS2209",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -2920,6 +2922,30 @@ static void CliCheckEmitsJsonCapabilityCallMarkerDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2208\"", error.ToString());
         AssertContains("Call to reflect function 'readProperty' requires a 'reflect' function modifier on the containing function.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonUnknownAccessDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("UnknownAccessJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnknownAccessJson
+
+            export fun leak(value: unknown): string =
+              value.Name
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2209\"", error.ToString());
+        AssertContains("Unknown value must be narrowed before member or indexer access.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }

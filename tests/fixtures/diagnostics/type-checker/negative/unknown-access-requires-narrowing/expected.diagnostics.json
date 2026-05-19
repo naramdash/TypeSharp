@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2209",
+      "severity": "error",
+      "message": "Unknown value must be narrowed before member or indexer access.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 3 },
+      "end": { "line": 9, "column": 13 }
+    },
+    {
+      "code": "TS2209",
+      "severity": "error",
+      "message": "Unknown value must be narrowed before member or indexer access.",
+      "file": "input.tysh",
+      "start": { "line": 12, "column": 3 },
+      "end": { "line": 12, "column": 13 }
+    },
+    {
+      "code": "TS2209",
+      "severity": "error",
+      "message": "Unknown value must be narrowed before member or indexer access.",
+      "file": "input.tysh",
+      "start": { "line": 15, "column": 3 },
+      "end": { "line": 15, "column": 11 }
+    }
+  ]
+}

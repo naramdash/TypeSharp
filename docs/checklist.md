@@ -108,6 +108,7 @@
 - [x] nominal closed union type
 - [x] type-level union alias
 - [x] union narrowing
+- [x] `unknown` member/indexer access narrowing diagnostic
 - [x] pattern matching
 - [x] pipeline expression lowering
 - [x] nominal record expression construction lowering
@@ -168,6 +169,7 @@
 - [x] dynamic capability marker diagnostic smoke
 - [x] dynamic call capability propagation diagnostic smoke
 - [x] reflect/interop/unsafe call capability marker diagnostic smoke
+- [x] unknown access narrowing diagnostic smoke
 - [x] reference resolver for framework assembly and local DLL
 - [x] semantic model
 - [x] type checker
@@ -339,6 +341,7 @@
 - [x] dynamic capability marker diagnostic smoke tests
 - [x] dynamic call capability propagation diagnostic smoke tests
 - [x] reflect/interop/unsafe call capability marker diagnostic smoke tests
+- [x] unknown access narrowing diagnostic smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests
 - [x] C# framework static member call smoke tests

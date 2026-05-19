@@ -173,6 +173,15 @@ public static class DiagnosticDescriptors
         "A function marked with reflect, interop, or unsafe crosses an explicit escape boundary, so callers must also make that boundary visible.",
         "Add the matching capability modifier to the containing function or isolate the call behind a statically checked wrapper.");
 
+    public static readonly DiagnosticDescriptor UnknownAccessRequiresNarrowing = new(
+        "TS2209",
+        "Unknown access requires narrowing",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unknown value must be narrowed before member or indexer access.",
+        "The unknown type is a safe gradual-typing boundary. Code must prove a shape or narrower type before accessing members or indexers.",
+        "Use a match/type pattern, assign to a structural shape after validation, or change the value to a statically known type.");
+
     public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
         "TS2203",
         "Non-exhaustive match",
@@ -267,6 +276,7 @@ public static class DiagnosticDescriptors
         DynamicCapabilityRequired,
         DynamicCallRequiresCapability,
         CapabilityCallRequiresMarker,
+        UnknownAccessRequiresNarrowing,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,
