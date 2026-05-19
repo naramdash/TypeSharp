@@ -112,6 +112,12 @@ public static class TypeSharpBinder
                         _hasStaticImport = true;
                         break;
 
+                    case SyntaxKind.ExportNamedDeclaration:
+                    case SyntaxKind.ExportTypeDeclaration:
+                    case SyntaxKind.ExportStarDeclaration:
+                        ReportUnsupportedExportForwarding(child);
+                        break;
+
                     case SyntaxKind.TypeAliasDeclaration:
                     case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.ClassDeclaration:
@@ -604,6 +610,16 @@ public static class TypeSharpBinder
                 $"Duplicate symbol '{name}' in the same scope.",
                 _file,
                 span));
+        }
+
+        private void ReportUnsupportedExportForwarding(SyntaxNode node)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedExportForwarding.Code,
+                DiagnosticDescriptors.UnsupportedExportForwarding.DefaultSeverity,
+                DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate,
+                _file,
+                node.Span));
         }
 
         private void AddSymbol(

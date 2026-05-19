@@ -25,7 +25,7 @@ Root-level `open Namespace.Name` declarations lower to generated C# `using Names
 
 Named import aliases such as `import { StringBuilder as Builder } from "System.Text"` lower to generated C# `using Builder = System.Text.StringBuilder;` directives. Namespace import aliases such as `import * as Text from "System.Text"` lower to `using Text = System.Text;`. If an import alias reuses a name from the same file scope, `typesharp check` reports `TS2002`.
 
-Export specifier syntax such as `export { Name as Alias } from "Module"`, `export type { Name } from "Module"`, and `export * from "Module"` is parser-visible. Source module graph resolution and C# re-export lowering remain future work.
+Export specifier syntax such as `export { Name as Alias } from "Module"`, `export type { Name } from "Module"`, and `export * from "Module"` is parser-visible. Source module graph resolution and C# re-export lowering remain future work, so `typesharp check` and `typesharp build` currently report `TS2003` for those declarations instead of silently emitting incomplete C#.
 
 Canonical doc: [`grammar/declarations.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/declarations.md)
 

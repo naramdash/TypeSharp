@@ -110,6 +110,15 @@ public static class DiagnosticDescriptors
         "A declaration introduced a value or type name that already exists in the same scope.",
         "Rename one declaration or move it into a nested scope.");
 
+    public static readonly DiagnosticDescriptor UnsupportedExportForwarding = new(
+        "TS2003",
+        "Unsupported export forwarding",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Binding,
+        "Export specifier declarations require source module graph support before they can be checked or emitted.",
+        "Export specifier declarations describe a source module public surface across files. The current compiler parses the syntax, but does not yet resolve source module graph edges or lower re-exports to generated C#.",
+        "Export declarations directly for now, or remove re-export specifier syntax from build inputs until source module graph support is implemented.");
+
     public static readonly DiagnosticDescriptor TypeMismatch = new(
         "TS2201",
         "Type mismatch",
@@ -268,6 +277,7 @@ public static class DiagnosticDescriptors
         UnexpectedToken,
         UnresolvedName,
         DuplicateSymbol,
+        UnsupportedExportForwarding,
         TypeMismatch,
         NullabilityContractViolation,
         NonExhaustiveMatch,

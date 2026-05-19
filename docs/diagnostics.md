@@ -35,6 +35,7 @@ Current allocated descriptors:
 | `TS1004` | Parser | Error | Unexpected token |
 | `TS2001` | Binding | Error | Unresolved name |
 | `TS2002` | Binding | Error | Duplicate symbol, including import aliases that collide with the same file scope |
+| `TS2003` | Binding | Error | Unsupported export forwarding |
 | `TS2201` | Type Checking | Error | Type mismatch |
 | `TS2202` | Type Checking | Error | Nullability contract violation |
 | `TS2203` | Type Checking | Error | Non-exhaustive match |

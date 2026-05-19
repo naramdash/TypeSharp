@@ -88,6 +88,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on nullability diagnostics", CliBuildStopsBeforeEmissionOnNullabilityDiagnostics),
     ("CLI build stops before emission on public boundary diagnostics", CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics),
     ("CLI build stops before emission on non-exhaustive match", CliBuildStopsBeforeEmissionOnNonExhaustiveMatch),
+    ("CLI build stops before emission on unsupported export forwarding", CliBuildStopsBeforeEmissionOnUnsupportedExportForwarding),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
@@ -112,6 +113,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
     ("checker reports duplicate symbol diagnostics", CheckerReportsDuplicateSymbolDiagnostics),
     ("checker reports import alias conflict diagnostics", CheckerReportsImportAliasConflictDiagnostics),
+    ("checker reports unsupported export forwarding diagnostics", CheckerReportsUnsupportedExportForwardingDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
     ("inference engine infers local expression graph", InferenceEngineInfersLocalExpressionGraph),
     ("checker reports type mismatch diagnostics", CheckerReportsTypeMismatchDiagnostics),
@@ -124,6 +126,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
     ("CLI check emits JSON duplicate symbol diagnostics", CliCheckEmitsJsonDuplicateSymbolDiagnostics),
     ("CLI check emits JSON import alias conflict diagnostics", CliCheckEmitsJsonImportAliasConflictDiagnostics),
+    ("CLI check emits JSON unsupported export forwarding diagnostics", CliCheckEmitsJsonUnsupportedExportForwardingDiagnostics),
     ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
     ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
     ("CLI check emits JSON dynamic call capability diagnostics", CliCheckEmitsJsonDynamicCallCapabilityDiagnostics),
@@ -262,6 +265,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS1004",
             "TS2001",
             "TS2002",
+            "TS2003",
             "TS2201",
             "TS2202",
             "TS2203",
@@ -1925,6 +1929,36 @@ static void CliBuildStopsBeforeEmissionOnNonExhaustiveMatch()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnUnsupportedExportForwarding()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ExportForwardingBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ExportForwardingBuild
+
+            export fun keep(): string = "ok"
+            export * from "Prelude"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2003\"", error.ToString());
+        AssertContains(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsupported export forwarding diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "ExportForwardingBuild.Generated.csproj")), "Build should not emit generated project when unsupported export forwarding diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ExportForwardingBuild.dll")), "Build should not emit generated assembly when unsupported export forwarding diagnostics contain errors.");
+    });
+}
+
 static void ManifestLoaderReportsInvalidManifestShape()
 {
     WithWorkspace(root =>
@@ -2590,6 +2624,32 @@ static void CheckerReportsImportAliasConflictDiagnostics()
     });
 }
 
+static void CheckerReportsUnsupportedExportForwardingDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("ExportForwarding"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ExportForwarding
+
+            export fun keep(): string = "ok"
+            export { keep as alias }
+            export type { Customer } from "Models"
+            export * from "Prelude"
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Checker should report parser-visible but unsupported export specifier declarations.");
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2003").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        AssertEqual(3, diagnostics.Length);
+        AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[0].Message);
+        AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[1].Message);
+        AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[2].Message);
+        AssertEqual("src/Main.tysh", diagnostics[0].File);
+    });
+}
+
 static void TypeCheckerAcceptsBasicAnnotations()
 {
     var result = TypeSharpParser.ParseText("""
@@ -2880,6 +2940,30 @@ static void CliCheckEmitsJsonImportAliasConflictDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2002\"", error.ToString());
         AssertContains("Duplicate symbol 'Builder' in the same scope.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonUnsupportedExportForwardingDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("ExportForwardingJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ExportForwardingJson
+
+            export fun keep(): string = "ok"
+            export { keep } from "Prelude"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2003\"", error.ToString());
+        AssertContains(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
