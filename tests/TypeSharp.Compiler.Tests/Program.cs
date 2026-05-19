@@ -65,6 +65,7 @@ var tests = new (string Name, Action Body)[]
     ("reference resolver normalizes framework assemblies", ReferenceResolverNormalizesFrameworkAssemblies),
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
+    ("reference resolver reports unsupported package diagnostics", ReferenceResolverReportsUnsupportedPackageDiagnostics),
     ("metadata reader creates framework assembly placeholders", MetadataReaderCreatesFrameworkAssemblyPlaceholders),
     ("metadata reader creates local assembly placeholders", MetadataReaderCreatesLocalAssemblyPlaceholders),
     ("metadata reader indexes local public symbols", MetadataReaderIndexesLocalPublicSymbols),
@@ -78,7 +79,9 @@ var tests = new (string Name, Action Body)[]
     ("checker reports ambiguous optional overload diagnostics", CheckerReportsAmbiguousOptionalOverloadDiagnostics),
     ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
+    ("CLI check emits JSON unsupported package diagnostics", CliCheckEmitsJsonUnsupportedPackageDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
+    ("CLI build stops before emission on package diagnostics", CliBuildStopsBeforeEmissionOnPackageDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("CLI build stops before emission on type checker diagnostics", CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics),
@@ -255,6 +258,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2402",
             "TS2403",
             "TS2404",
+            "TS2405",
             "TS3500",
             "TS3501"
         ],
@@ -1089,6 +1093,33 @@ static void ReferenceResolverReportsMissingLocalDllDiagnostics()
     });
 }
 
+static void ReferenceResolverReportsUnsupportedPackageDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "PackageReferences"
+
+            [references]
+            packages = [
+              "Newtonsoft.Json:13.0.3",
+              "Newtonsoft.Json:13.0.3"
+            ]
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var result = TypeSharpReferenceResolver.Resolve(manifest);
+
+        AssertTrue(result.HasErrors, "NuGet package references should produce an unsupported diagnostic until restore is implemented.");
+        AssertEqual(0, result.References.Count);
+        var diagnostic = result.Diagnostics.Single();
+        AssertEqual("TS2405", diagnostic.Code);
+        AssertEqual("NuGet package reference 'Newtonsoft.Json:13.0.3' is not supported by the current compiler.", diagnostic.Message);
+        AssertEqual(Path.GetFullPath(manifestPath), diagnostic.File);
+    });
+}
+
 static void MetadataReaderCreatesFrameworkAssemblyPlaceholders()
 {
     WithWorkspace(root =>
@@ -1573,6 +1604,36 @@ static void CliCheckEmitsJsonReferenceDiagnostics()
     });
 }
 
+static void CliCheckEmitsJsonUnsupportedPackageDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CliCheckPackages"
+
+            [references]
+            packages = [
+              "Newtonsoft.Json:13.0.3"
+            ]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.CliCheckPackages
+
+            export fun ok(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2405\"", error.ToString());
+        AssertContains("NuGet package reference 'Newtonsoft.Json:13.0.3' is not supported by the current compiler.", error.ToString());
+    });
+}
+
 static void CliBuildStopsBeforeEmissionOnReferenceDiagnostics()
 {
     WithWorkspace(root =>
@@ -1603,6 +1664,39 @@ static void CliBuildStopsBeforeEmissionOnReferenceDiagnostics()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildReferences.Generated.csproj")), "Build should not emit generated project when reference diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildReferences.dll")), "Build should not emit generated assembly when reference diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnPackageDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildPackages"
+            generatedOutputRoot = "generated"
+
+            [references]
+            packages = [
+              "Newtonsoft.Json:13.0.3"
+            ]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BuildPackages
+
+            export fun ok(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2405\"", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when package diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildPackages.Generated.csproj")), "Build should not emit generated project when package diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildPackages.dll")), "Build should not emit generated assembly when package diagnostics contain errors.");
     });
 }
 

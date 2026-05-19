@@ -11,6 +11,7 @@ public static class TypeSharpReferenceResolver
         var references = new List<ResolvedReference>();
         var seenAssemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenPackages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var assembly in manifest.References.Assemblies)
         {
@@ -57,6 +58,20 @@ public static class TypeSharpReferenceResolver
                 path,
                 fullPath,
                 NormalizeRelativePath(System.IO.Path.GetRelativePath(manifest.ProjectDirectory, fullPath))));
+        }
+
+        foreach (var package in manifest.References.Packages)
+        {
+            var trimmed = package.Trim();
+            if (trimmed.Length == 0 || !seenPackages.Add(trimmed))
+            {
+                continue;
+            }
+
+            diagnostics.Add(DiagnosticFactory.Manifest(
+                DiagnosticDescriptors.UnsupportedPackageReference,
+                $"NuGet package reference '{trimmed}' is not supported by the current compiler.",
+                manifest.ManifestPath));
         }
 
         return new ReferenceResolutionResult(references, diagnostics);

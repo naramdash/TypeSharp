@@ -45,14 +45,14 @@ paths = [
 ]
 
 packages = [
-  { id = "Newtonsoft.Json", version = "13.0.3" }
+  "Newtonsoft.Json:13.0.3"
 ]
 ```
 
 규칙:
 - `assemblies`는 target framework reference assembly 또는 GAC/framework assembly 이름이다.
 - `paths`는 repository 또는 build environment에 존재하는 명시 DLL 경로다.
-- `packages`는 장기 manifest 표면으로 예약하되, MVP compiler는 NuGet restore를 직접 수행하지 않아도 된다.
+- `packages`는 장기 manifest 표면으로 예약하되, 현재 compiler는 NuGet restore를 직접 수행하지 않고 `TS2405`로 build/check를 중단한다.
 - package를 허용할 때는 `net48` compatible asset 선택, transitive dependency, license, checksum 또는 lock file 정책을 함께 구현해야 한다.
 - 같은 simple name의 assembly가 여러 경로에서 발견되면 manifest가 우선순위를 명시하거나 diagnostic을 낸다.
 

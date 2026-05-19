@@ -154,6 +154,7 @@
 - [x] C# metadata diagnostics pipeline integration
 - [x] C# invalid byref interop diagnostic smoke
 - [x] C# ambiguous overload diagnostic smoke
+- [x] C# unsupported NuGet package reference diagnostic smoke
 - [x] C# exact overload match smoke
 - [x] C# expanded params overload validation smoke
 - [x] C# optional parameter overload validation smoke
@@ -319,6 +320,7 @@
 - [x] C# metadata pipeline diagnostics smoke tests
 - [x] C# invalid byref interop diagnostic smoke tests
 - [x] C# ambiguous overload diagnostic smoke tests
+- [x] C# unsupported NuGet package reference diagnostic smoke tests
 - [x] C# exact overload match smoke tests
 - [x] C# expanded params overload validation smoke tests
 - [x] C# optional parameter overload validation smoke tests

@@ -33,7 +33,10 @@ generatedOutputRoot = "generated"
 
 [references]
 paths = ["lib/Legacy.Tools.dll"]
+packages = []
 ```
+
+`references.packages` is reserved for future NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `paths` for now.
 
 Canonical doc: [`cli.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/cli.md)
 

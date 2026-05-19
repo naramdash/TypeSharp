@@ -191,6 +191,15 @@ public static class DiagnosticDescriptors
         "A C# interop call returns a reference type from metadata that does not contain nullable annotations.",
         "Add a null guard, use nullable-annotated metadata, or loosen nullable checking for this interop boundary.");
 
+    public static readonly DiagnosticDescriptor UnsupportedPackageReference = new(
+        "TS2405",
+        "Unsupported package reference",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.Interop,
+        "NuGet package references are not supported by the current compiler.",
+        "The manifest reserves references.packages for future NuGet restore and package lock support, but the MVP compiler does not restore or inspect packages.",
+        "Resolve the package outside TypeSharp and reference a local net48-compatible DLL path, or remove the package reference until package restore is implemented.");
+
     public static readonly DiagnosticDescriptor UnsupportedExecutableEntryPoint = new(
         "TS3500",
         "Unsupported executable entry point",
@@ -232,6 +241,7 @@ public static class DiagnosticDescriptors
         AmbiguousCSharpOverload,
         InvalidByRefInterop,
         UnknownCSharpNullability,
+        UnsupportedPackageReference,
         UnsupportedExecutableEntryPoint,
         GeneratedProjectBuildFailed
     ];

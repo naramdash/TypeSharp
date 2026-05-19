@@ -44,6 +44,7 @@ Current allocated descriptors:
 | `TS2402` | Interop | Error | Ambiguous C# overload |
 | `TS2403` | Interop | Error | Invalid byref interop use |
 | `TS2404` | Interop | Warning | Unknown C# nullability |
+| `TS2405` | Interop | Error | Unsupported package reference |
 | `TS3500` | Backend | Error | Unsupported executable entry point |
 | `TS3501` | Backend | Error | Generated C# project build failed |
 

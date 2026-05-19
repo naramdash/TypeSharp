@@ -24,6 +24,12 @@ paths = ["lib/Legacy.Tools.dll"]
 
 Related diagnostic: `TS2401`.
 
+## A NuGet Package Reference Fails
+
+`references.packages` is reserved for future NuGet restore support. The current compiler reports `TS2405` and stops before generated C# emission.
+
+Resolve the package outside TypeSharp, copy or build a `net48`-compatible DLL, then reference it with `references.paths`.
+
 ## Build Stops Before Emitting Generated C#
 
 This is expected when parser, binder, type checker, public boundary, or interop diagnostics contain errors. Fix the diagnostics first, then run `typesharp build` again.
@@ -35,6 +41,7 @@ Common diagnostics:
 - `TS2204`: compile-time type leaked through public boundary
 - `TS2402`: ambiguous C# overload
 - `TS2403`: invalid byref interop use
+- `TS2405`: unsupported package reference
 
 Use:
 

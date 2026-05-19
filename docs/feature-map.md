@@ -305,7 +305,7 @@ TypeSharp 결정:
 - overload resolution은 C# 소비자가 예측하기 쉬운 nominal-first ranking을 사용한다.
 - nullable annotation이 없는 C# assembly는 unknown nullability로 다루고 strict mode에서 warning 또는 guard 요구 diagnostic을 낸다.
 - `dynamic`, reflection, COM, P/Invoke는 capability marker 없이 암묵적으로 허용하지 않는다.
-- NuGet restore, lock file, license inventory까지 포함한 package reference는 Stable Backlog로 둔다.
+- manifest `references.packages`는 현재 `TS2405` diagnostic으로 명확히 거부한다. NuGet restore, lock file, license inventory까지 포함한 package reference 구현은 Stable Backlog로 둔다.
 
 Lowering:
 - MVP backend는 C# 7.3 source generation이므로 managed interop 호출은 generated C#의 일반 member call로 낮춘다.

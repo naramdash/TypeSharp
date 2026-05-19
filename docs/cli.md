@@ -294,7 +294,7 @@ treatWarningsAsErrors = false
 - `main`은 executable project에서만 필수다.
 - `assemblies`는 framework/GAC/reference assembly 이름이다.
 - `paths`는 명시 local DLL reference이며 `net48` 호환성을 검사해야 한다.
-- `packages`는 NuGet reference를 위한 manifest 표면이지만, MVP에서는 restore 구현 없이 diagnostic으로 제한할 수 있다.
+- `packages`는 NuGet reference를 위한 manifest 표면이지만, 현재 compiler는 restore를 수행하지 않고 `TS2405` diagnostic으로 제한한다.
 - MSBuild 통합은 Stable Backlog로 두되, manifest 의미와 충돌하지 않아야 한다.
 
 ## Diagnostics Format
