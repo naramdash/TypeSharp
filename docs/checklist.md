@@ -96,6 +96,7 @@
 - [x] compile-time constant `literal`
 - [x] function declaration/call
 - [x] class/interface declaration
+- [x] partial class/interface/record/module declaration lowering
 - [x] property/method/constructor
 - [x] generic type/function
 - [x] C# 7.3-compatible generic constraint lowering
@@ -199,6 +200,7 @@
 - [x] generated C# imported attribute reference build smoke
 - [x] generated C# imported generic type reference build smoke
 - [x] generated C# generic constraint build smoke
+- [x] generated C# partial declaration lowering smoke
 - [x] generated C# collection expression array lowering smoke
 - [x] generated C# explicit target `List<T>` collection expression lowering smoke
 - [x] generated C# indexer expression lowering smoke

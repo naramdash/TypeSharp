@@ -187,6 +187,60 @@ Evidence:
 - `tests/fixtures/backend/csharp/positive/0007-literal-constants`
 - `CLI build compiles literal constants`
 
+## Partial Declarations
+
+TypeSharp:
+
+```tysh
+export partial module Hooks {
+  export fun label(): string = "hook"
+}
+
+public partial record Customer(Name: string)
+
+public partial class Greeter {
+  public fun Echo(value: string): string = value
+}
+
+public partial interface IGreeter {
+  fun Echo(value: string): string
+}
+```
+
+Generated C#:
+
+```csharp
+public static partial class Hooks
+{
+    public static string label()
+    {
+        return "hook";
+    }
+}
+
+public sealed partial class Customer
+{
+}
+
+public partial class Greeter
+{
+}
+
+public partial interface IGreeter
+{
+}
+```
+
+Rules:
+- `partial` is preserved for TypeSharp declarations that lower to C# type declarations.
+- `module` lowers to `static partial class`, `record` lowers to `sealed partial class`, `union` lowers to `abstract partial class`, and `class`/`interface` lower to direct partial C# declarations.
+- Partial methods, partial events, partial constructors, and cross-file partial merge validation remain future work.
+
+Evidence:
+- `tests/fixtures/parser/positive/0013-partial-declarations`
+- `tests/fixtures/backend/csharp/positive/0026-partial-declarations`
+- `CLI build compiles partial declaration API`
+
 ## Collection Expressions
 
 TypeSharp:

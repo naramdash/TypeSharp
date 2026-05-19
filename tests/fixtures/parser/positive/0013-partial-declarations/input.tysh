@@ -1,0 +1,15 @@
+namespace Samples.Partials
+
+export partial module Hooks {
+  export fun label(): string = "hook"
+}
+
+public partial record Customer(Name: string)
+
+partial class Greeter {
+  public fun Echo(value: string): string = value
+}
+
+public partial interface IGreeter {
+  fun Echo(value: string): string
+}

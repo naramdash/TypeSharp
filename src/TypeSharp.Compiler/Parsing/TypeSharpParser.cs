@@ -43,6 +43,7 @@ public sealed class TypeSharpParser
                 SyntaxKind.OpenBracketToken => ParseDeclarationWithPrefix(),
                 SyntaxKind.PublicKeyword => ParseDeclarationWithPrefix(),
                 SyntaxKind.PrivateKeyword => ParseDeclarationWithPrefix(),
+                SyntaxKind.PartialKeyword => ParseDeclarationWithPrefix(),
                 _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(),
                 SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
                 SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
@@ -94,6 +95,7 @@ public sealed class TypeSharpParser
             SyntaxKind.OpenBracketToken => ParseDeclarationWithPrefix(),
             SyntaxKind.PublicKeyword => ParseDeclarationWithPrefix(),
             SyntaxKind.PrivateKeyword => ParseDeclarationWithPrefix(),
+            SyntaxKind.PartialKeyword => ParseDeclarationWithPrefix(),
             _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(),
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
@@ -169,7 +171,7 @@ public sealed class TypeSharpParser
             children.Add(ParseAttributeList());
         }
 
-        while (Current.Kind is SyntaxKind.ExportKeyword or SyntaxKind.PublicKeyword or SyntaxKind.PrivateKeyword)
+        while (Current.Kind is SyntaxKind.ExportKeyword or SyntaxKind.PublicKeyword or SyntaxKind.PrivateKeyword or SyntaxKind.PartialKeyword)
         {
             children.Add(ParseDeclarationModifier());
         }
@@ -220,6 +222,7 @@ public sealed class TypeSharpParser
             SyntaxKind.ExportKeyword => new SyntaxNode(SyntaxKind.ExportModifier, token.Span, children: [token]),
             SyntaxKind.PublicKeyword => new SyntaxNode(SyntaxKind.PublicModifier, token.Span, children: [token]),
             SyntaxKind.PrivateKeyword => new SyntaxNode(SyntaxKind.PrivateModifier, token.Span, children: [token]),
+            SyntaxKind.PartialKeyword => new SyntaxNode(SyntaxKind.PartialModifier, token.Span, children: [token]),
             _ => token
         };
     }

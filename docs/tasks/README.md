@@ -95,3 +95,4 @@
 | [0146-github-pages-human-docs-expansion.md](0146-github-pages-human-docs-expansion.md) | Q5 | Done | TypeScript/F#/C# 공식 문서 구조를 참고해 GitHub Pages 문서 사이트를 tutorials, guides, cookbook, fundamentals, grammar, API 중심으로 확장한다. |
 | [0147-list-target-collection-expression-lowering.md](0147-list-target-collection-expression-lowering.md) | Q2-Q3 | Done | 명시적 target `List<T>` collection expression을 C# 7.3-compatible collection initializer로 낮추고 smoke/fixture 근거를 추가한다. |
 | [0148-unsupported-package-reference-diagnostic.md](0148-unsupported-package-reference-diagnostic.md) | Q3-Q4 | Done | manifest `references.packages`를 `TS2405` unsupported package reference diagnostic으로 고정하고 check/build no-emission smoke를 추가한다. |
+| [0149-partial-declaration-lowering.md](0149-partial-declaration-lowering.md) | Q2-Q3 | Done | `partial` declaration modifier를 parser/backend에 연결하고 class/interface/record/module C# 7.3 lowering smoke를 추가한다. |

@@ -279,9 +279,10 @@ public static class CSharpSourceBackend
         private void EmitModuleDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
+            var partialModifier = GetPartialModifier(node);
             var name = GetModuleDeclarationName(node);
 
-            _builder.AppendLine($"    {visibility} static class {name}");
+            _builder.AppendLine($"    {visibility} static{partialModifier} class {name}");
             _builder.AppendLine("    {");
 
             var literals = node.Children
@@ -318,11 +319,12 @@ public static class CSharpSourceBackend
         private void EmitRecordDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
+            var partialModifier = GetPartialModifier(node);
             var name = GetRecordDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
             var parameters = GetParameters(node);
 
-            _builder.AppendLine($"    {visibility} sealed class {name}{typeParameters}");
+            _builder.AppendLine($"    {visibility} sealed{partialModifier} class {name}{typeParameters}");
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
 
@@ -359,12 +361,13 @@ public static class CSharpSourceBackend
         private void EmitUnionDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
+            var partialModifier = GetPartialModifier(node);
             var name = GetUnionDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
             var cases = GetUnionCases(node);
             var baseType = $"{name}{typeParameters}";
 
-            _builder.AppendLine($"    {visibility} abstract class {baseType}");
+            _builder.AppendLine($"    {visibility} abstract{partialModifier} class {baseType}");
             _builder.AppendLine("    {");
             _builder.AppendLine($"        private {name}()");
             _builder.AppendLine("        {");
@@ -538,10 +541,11 @@ public static class CSharpSourceBackend
         private void EmitClassDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
+            var partialModifier = GetPartialModifier(node);
             var name = GetClassDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
 
-            _builder.AppendLine($"    {visibility} class {name}{typeParameters}");
+            _builder.AppendLine($"    {visibility}{partialModifier} class {name}{typeParameters}");
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
 
@@ -565,10 +569,11 @@ public static class CSharpSourceBackend
         private void EmitInterfaceDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
+            var partialModifier = GetPartialModifier(node);
             var name = GetInterfaceDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
 
-            _builder.AppendLine($"    {visibility} interface {name}{typeParameters}");
+            _builder.AppendLine($"    {visibility}{partialModifier} interface {name}{typeParameters}");
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
 
@@ -1778,6 +1783,9 @@ public static class CSharpSourceBackend
                 ? "public"
                 : "internal";
         }
+
+        private static string GetPartialModifier(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.PartialModifier) ? " partial" : string.Empty;
 
         private static bool IsAsyncFunction(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);

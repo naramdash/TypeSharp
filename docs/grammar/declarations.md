@@ -1,6 +1,6 @@
 # Declaration Grammar
 
-문서 기준일: 2026-05-18
+문서 기준일: 2026-05-19
 
 이 문서는 TypeSharp의 선언 문법을 정의한다. 목표는 TypeScript의 type alias/interface, F#의 function/record/union, C#의 class/interface/property/event/delegate/attribute/partial/extension 편의 기능을 하나의 일관된 선언 체계로 통합하는 것이다.
 
@@ -28,7 +28,7 @@ modifier ::= "public" | "private" | "protected" | "internal"
 규칙:
 - modifier 순서는 formatter가 정규화한다.
 - `public`은 module export와 .NET public metadata를 모두 고려해야 한다.
-- `partial`은 C# interop와 generated code를 위해 지원한다.
+- `partial`은 C# interop와 generated code를 위해 지원하며, 현재 구현은 `module`, `record`, `union`, `class`, `interface` declaration을 C# partial type declaration으로 낮춘다.
 - `async`는 `fun` declaration에 붙어 `Task`/`Task<T>` lowering을 요청한다.
 - `unsafe`, `dynamic`, `reflect`, `interop`는 capability marker이며 일반 modifier 위치에 둔다.
 

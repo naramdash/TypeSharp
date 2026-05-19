@@ -370,6 +370,30 @@ Lowering:
 - WCF attribute/configuration 모델은 public ABI와 generated metadata에 민감하므로 current smoke는 reference/build and proxy-shape coverage에 머물고, IIS-hosted execution/deployment packaging은 별도 검증이 필요하다.
 - IIS/AppDomain lifecycle과 shadow copy는 static initialization, file IO, reflection cache 설계에 제약을 만든다.
 
+## 17. Partial Declarations
+
+상태: MVP for class/interface/record/module generated C# lowering, Stable Backlog for partial methods/events/constructors and augmentation hooks
+
+출처:
+- C# partial type declarations
+- C# source-generation interop patterns
+
+TypeSharp 결정:
+- `partial`은 declaration prefix modifier로 읽고 syntax tree에 `PartialModifier`로 보존한다.
+- 현재 C# source backend는 TypeSharp `module`, `record`, `union`, `class`, `interface`가 생성하는 C# type declaration에 `partial` modifier를 보존한다.
+- C# 7.3-compatible modifier order를 사용해 `static partial class`, `sealed partial class`, `abstract partial class`, `partial class`, and `partial interface`로 낮춘다.
+- partial methods, partial events, partial constructors, and same-assembly generated augmentation hooks는 Stable Backlog로 둔다.
+
+Lowering:
+- `partial module` -> C# `static partial class`.
+- `partial record` -> C# `sealed partial class`.
+- `partial union` -> C# `abstract partial class`.
+- `partial class`/`partial interface` -> C# `partial class`/`partial interface`.
+
+위험:
+- partial type은 같은 assembly 안에서만 결합되므로 generated DLL을 참조하는 외부 C# consumer가 별도 partial part를 추가할 수 없다.
+- generated source augmentation hook이 없으면 partial은 우선 source-generation interop contract와 future extension point로 동작한다.
+
 ## 지연 또는 거절 후보
 
 | 기능 | 상태 | 이유 |

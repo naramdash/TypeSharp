@@ -14,6 +14,7 @@ public static class TypeSharpDocumentCompletion
         "let",
         "literal",
         "type",
+        "partial",
         "record",
         "union",
         "match",
