@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2208",
+      "severity": "error",
+      "message": "Call to reflect function 'readProperty' requires a 'reflect' function modifier on the containing function.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 3 },
+      "end": { "line": 13, "column": 22 }
+    },
+    {
+      "code": "TS2208",
+      "severity": "error",
+      "message": "Call to interop function 'callNative' requires a 'interop' function modifier on the containing function.",
+      "file": "input.tysh",
+      "start": { "line": 16, "column": 3 },
+      "end": { "line": 16, "column": 20 }
+    },
+    {
+      "code": "TS2208",
+      "severity": "error",
+      "message": "Call to unsafe function 'copyUnsafe' requires a 'unsafe' function modifier on the containing function.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 12 },
+      "end": { "line": 19, "column": 22 }
+    }
+  ]
+}

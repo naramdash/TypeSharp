@@ -237,7 +237,7 @@ public static class TypeSharpTypeChecker
         {
             CheckGenericConstraints(node);
 
-            var scope = new TypeScope(parentScope, allowsDynamic: HasFunctionModifier(node, SyntaxKind.DynamicModifier));
+            var scope = new TypeScope(parentScope, allowedCapabilities: GetFunctionCapabilities(node));
             CheckFunctionDynamicCapability(node, scope);
             foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
             {
@@ -460,7 +460,7 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckExpression(SyntaxNode node, TypeScope scope)
         {
-            CheckDynamicCallCapability(node, scope);
+            CheckCapabilityCall(node, scope);
 
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
@@ -1019,6 +1019,16 @@ public static class TypeSharpTypeChecker
                 node.Span));
         }
 
+        private void ReportCapabilityCallRequiresMarker(SyntaxNode node, string functionName, string capability)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.CapabilityCallRequiresMarker.Code,
+                DiagnosticDescriptors.CapabilityCallRequiresMarker.DefaultSeverity,
+                $"Call to {capability} function '{functionName}' requires a '{capability}' function modifier on the containing function.",
+                _file,
+                node.Span));
+        }
+
         private void ReportDynamicCapabilityRequired(SyntaxNode node)
         {
             _diagnostics.Add(new Diagnostic(
@@ -1053,19 +1063,13 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private void CheckDynamicCallCapability(SyntaxNode node, TypeScope scope)
+        private void CheckCapabilityCall(SyntaxNode node, TypeScope scope)
         {
-            if (scope.AllowsDynamic)
-            {
-                return;
-            }
-
             if (node.Kind == SyntaxKind.CallExpression &&
                 TryGetDirectCallName(node, out var callName) &&
-                scope.ResolveFunctionInfo(callName, out var function) &&
-                function.Capabilities.RequiresDynamic)
+                scope.ResolveFunctionInfo(callName, out var function))
             {
-                ReportDynamicCallRequiresCapability(node, callName);
+                ReportCapabilityMismatch(node, scope, callName, function.Capabilities);
                 return;
             }
 
@@ -1078,13 +1082,38 @@ public static class TypeSharpTypeChecker
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
             if (expressions.Length < 2 ||
                 !TryGetPipelineTargetFunctionName(expressions[1], out var targetName) ||
-                !scope.ResolveFunctionInfo(targetName, out var targetFunction) ||
-                !targetFunction.Capabilities.RequiresDynamic)
+                !scope.ResolveFunctionInfo(targetName, out var targetFunction))
             {
                 return;
             }
 
-            ReportDynamicCallRequiresCapability(expressions[1], targetName);
+            ReportCapabilityMismatch(expressions[1], scope, targetName, targetFunction.Capabilities);
+        }
+
+        private void ReportCapabilityMismatch(SyntaxNode node, TypeScope scope, string functionName, FunctionCapabilities capabilities)
+        {
+            if (capabilities.RequiresDynamic && !scope.AllowsDynamic)
+            {
+                ReportDynamicCallRequiresCapability(node, functionName);
+                return;
+            }
+
+            if (capabilities.RequiresReflect && !scope.AllowsReflect)
+            {
+                ReportCapabilityCallRequiresMarker(node, functionName, "reflect");
+                return;
+            }
+
+            if (capabilities.RequiresInterop && !scope.AllowsInterop)
+            {
+                ReportCapabilityCallRequiresMarker(node, functionName, "interop");
+                return;
+            }
+
+            if (capabilities.RequiresUnsafe && !scope.AllowsUnsafe)
+            {
+                ReportCapabilityCallRequiresMarker(node, functionName, "unsafe");
+            }
         }
 
         private void ReportPublicBoundaryLeaks(SyntaxNode node, TypeScope scope)
@@ -1157,7 +1186,11 @@ public static class TypeSharpTypeChecker
             node.Children.Any(child => child.Kind == modifier);
 
         private static FunctionCapabilities GetFunctionCapabilities(SyntaxNode node) =>
-            new(RequiresDynamic: HasFunctionModifier(node, SyntaxKind.DynamicModifier));
+            new(
+                RequiresDynamic: HasFunctionModifier(node, SyntaxKind.DynamicModifier),
+                RequiresReflect: HasFunctionModifier(node, SyntaxKind.ReflectModifier),
+                RequiresInterop: HasFunctionModifier(node, SyntaxKind.InteropModifier),
+                RequiresUnsafe: HasFunctionModifier(node, SyntaxKind.UnsafeModifier));
 
         private static bool TryGetTypeAliasTarget(SyntaxNode node, out SyntaxNode target)
         {
@@ -1666,7 +1699,7 @@ public static class TypeSharpTypeChecker
     private sealed class TypeScope : ITypeSharpInferenceScope
     {
         private readonly TypeScope? _parent;
-        private readonly bool _allowsDynamic;
+        private readonly FunctionCapabilities _allowedCapabilities;
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, FunctionInfo> _functions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
@@ -1676,13 +1709,19 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, ShapeInfo> _recordShapes = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
-        public TypeScope(TypeScope? parent, bool allowsDynamic = false)
+        public TypeScope(TypeScope? parent, FunctionCapabilities allowedCapabilities = default)
         {
             _parent = parent;
-            _allowsDynamic = allowsDynamic;
+            _allowedCapabilities = allowedCapabilities;
         }
 
-        public bool AllowsDynamic => _allowsDynamic || (_parent?.AllowsDynamic ?? false);
+        public bool AllowsDynamic => _allowedCapabilities.RequiresDynamic || (_parent?.AllowsDynamic ?? false);
+
+        public bool AllowsReflect => _allowedCapabilities.RequiresReflect || (_parent?.AllowsReflect ?? false);
+
+        public bool AllowsInterop => _allowedCapabilities.RequiresInterop || (_parent?.AllowsInterop ?? false);
+
+        public bool AllowsUnsafe => _allowedCapabilities.RequiresUnsafe || (_parent?.AllowsUnsafe ?? false);
 
         public void DeclareValue(string name, SimpleType type) => _values[name] = type;
 
@@ -1862,7 +1901,11 @@ public static class TypeSharpTypeChecker
 
     private readonly record struct FunctionInfo(SimpleType ReturnType, FunctionCapabilities Capabilities);
 
-    private readonly record struct FunctionCapabilities(bool RequiresDynamic);
+    private readonly record struct FunctionCapabilities(
+        bool RequiresDynamic,
+        bool RequiresReflect,
+        bool RequiresInterop,
+        bool RequiresUnsafe);
 
     private enum CompileTimeOnlyTypeKind
     {

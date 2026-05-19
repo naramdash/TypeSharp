@@ -204,6 +204,7 @@ unsafe fun copy(src: nativeptr<byte>, dst: nativeptr<byte>, len: int): unit
 - strict mode에서는 marker 없는 escape를 금지한다.
 - `dynamic` type annotation은 containing function에 `dynamic` modifier가 없으면 `TS2206`으로 보고한다.
 - `dynamic fun`을 non-`dynamic` function에서 직접 호출하거나 pipeline target으로 사용하면 `TS2207`로 보고한다.
+- `reflect`, `interop`, or `unsafe` function을 matching marker가 없는 function에서 직접 호출하거나 pipeline target으로 사용하면 `TS2208`로 보고한다.
 
 ## Extern and Native
 

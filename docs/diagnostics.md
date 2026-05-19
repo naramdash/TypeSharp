@@ -42,6 +42,7 @@ Current allocated descriptors:
 | `TS2205` | Type Checking | Error | Unsupported generic constraint |
 | `TS2206` | Type Checking | Error | Dynamic capability required |
 | `TS2207` | Type Checking | Error | Dynamic call requires capability |
+| `TS2208` | Type Checking | Error | Capability call requires marker |
 | `TS2401` | Interop | Error | Missing referenced assembly or namespace |
 | `TS2402` | Interop | Error | Ambiguous C# overload |
 | `TS2403` | Interop | Error | Invalid byref interop use |

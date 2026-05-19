@@ -1,0 +1,28 @@
+namespace Samples.CapabilityCallMarker.Negative
+
+reflect fun readProperty(value: string): string =
+  value
+
+interop fun callNative(value: string): string =
+  value
+
+unsafe fun copyUnsafe(value: string): string =
+  value
+
+fun missingReflect(value: string): string =
+  readProperty(value)
+
+fun missingInterop(value: string): string =
+  callNative(value)
+
+fun missingUnsafePipeline(value: string): string =
+  value |> copyUnsafe
+
+reflect fun allowedReflect(value: string): string =
+  readProperty(value)
+
+interop fun allowedInterop(value: string): string =
+  callNative(value)
+
+unsafe fun allowedUnsafe(value: string): string =
+  copyUnsafe(value)

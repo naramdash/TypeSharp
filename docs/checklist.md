@@ -136,6 +136,7 @@
 - [x] nullable metadata/unknown nullability diagnostics
 - [x] `dynamic` type annotation capability marker diagnostic
 - [x] `dynamic fun` call capability propagation diagnostic
+- [x] `reflect`/`interop`/`unsafe` call capability marker diagnostic
 - [x] TypeSharp assembly consumed from C#
 
 ## 컴파일러
@@ -166,6 +167,7 @@
 - [x] C# unknown nullability diagnostic smoke
 - [x] dynamic capability marker diagnostic smoke
 - [x] dynamic call capability propagation diagnostic smoke
+- [x] reflect/interop/unsafe call capability marker diagnostic smoke
 - [x] reference resolver for framework assembly and local DLL
 - [x] semantic model
 - [x] type checker
@@ -336,6 +338,7 @@
 - [x] C# unknown nullability diagnostic smoke tests
 - [x] dynamic capability marker diagnostic smoke tests
 - [x] dynamic call capability propagation diagnostic smoke tests
+- [x] reflect/interop/unsafe call capability marker diagnostic smoke tests
 - [x] emitted assembly smoke tests
 - [x] generated project reference propagation smoke tests
 - [x] C# framework static member call smoke tests

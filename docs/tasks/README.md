@@ -99,3 +99,4 @@
 | [0150-official-docs-benchmark-and-docs-expansion.md](0150-official-docs-benchmark-and-docs-expansion.md) | Q5 | Done | Vue/Nuxt/TypeScript/C#/F# 공식 문서 사이트 전체 구조를 벤치마크하고 그 결과로 GitHub Pages 문서를 초심자부터 고급 사용자까지 포괄하도록 확장한다. |
 | [0151-dynamic-capability-boundary-diagnostic.md](0151-dynamic-capability-boundary-diagnostic.md) | Q2-Q3 | Done | `dynamic` type annotation이 명시 `dynamic fun` boundary 밖에서 쓰이면 `TS2206`으로 막는다. |
 | [0152-dynamic-call-capability-propagation.md](0152-dynamic-call-capability-propagation.md) | Q2-Q3 | Done | non-`dynamic` 함수가 `dynamic fun`을 직접 호출하거나 pipeline target으로 사용하면 `TS2207`로 막는다. |
+| [0153-capability-call-marker-propagation.md](0153-capability-call-marker-propagation.md) | Q2-Q3 | Done | non-capability 함수가 `reflect`, `interop`, `unsafe` 함수를 직접 호출하거나 pipeline target으로 사용하면 `TS2208`로 막는다. |

@@ -304,7 +304,7 @@ TypeSharp 결정:
 - C# constructor, static/instance member, property, field, indexer, delegate, event, generic type을 MVP interop 대상으로 둔다.
 - overload resolution은 C# 소비자가 예측하기 쉬운 nominal-first ranking을 사용한다.
 - nullable annotation이 없는 C# assembly는 unknown nullability로 다루고 strict mode에서 warning 또는 guard 요구 diagnostic을 낸다.
-- `dynamic`, reflection, COM, P/Invoke는 capability marker 없이 암묵적으로 허용하지 않는다. `dynamic` type annotation은 `dynamic fun` boundary 밖에서 `TS2206`으로 보고하고, `dynamic fun` 호출은 non-`dynamic` caller에서 `TS2207`로 보고한다.
+- `dynamic`, reflection, COM, P/Invoke는 capability marker 없이 암묵적으로 허용하지 않는다. `dynamic` type annotation은 `dynamic fun` boundary 밖에서 `TS2206`으로 보고하고, `dynamic fun` 호출은 non-`dynamic` caller에서 `TS2207`로 보고한다. `reflect`, `interop`, `unsafe` function 호출은 matching marker가 없는 caller에서 `TS2208`로 보고한다.
 - manifest `references.packages`는 현재 `TS2405` diagnostic으로 명확히 거부한다. NuGet restore, lock file, license inventory까지 포함한 package reference 구현은 Stable Backlog로 둔다.
 
 Lowering:

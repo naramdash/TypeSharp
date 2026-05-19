@@ -164,6 +164,15 @@ public static class DiagnosticDescriptors
         "A function marked with the dynamic capability crosses a late-bound .NET dynamic boundary, so callers must also make that boundary explicit.",
         "Add the 'dynamic' modifier to the containing function or isolate the dynamic call behind a statically checked wrapper.");
 
+    public static readonly DiagnosticDescriptor CapabilityCallRequiresMarker = new(
+        "TS2208",
+        "Capability call requires marker",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Calling a capability-marked function requires the same function modifier.",
+        "A function marked with reflect, interop, or unsafe crosses an explicit escape boundary, so callers must also make that boundary visible.",
+        "Add the matching capability modifier to the containing function or isolate the call behind a statically checked wrapper.");
+
     public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
         "TS2203",
         "Non-exhaustive match",
@@ -257,6 +266,7 @@ public static class DiagnosticDescriptors
         UnsupportedGenericConstraint,
         DynamicCapabilityRequired,
         DynamicCallRequiresCapability,
+        CapabilityCallRequiresMarker,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,

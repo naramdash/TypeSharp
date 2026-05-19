@@ -125,6 +125,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
     ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
     ("CLI check emits JSON dynamic call capability diagnostics", CliCheckEmitsJsonDynamicCallCapabilityDiagnostics),
+    ("CLI check emits JSON capability call marker diagnostics", CliCheckEmitsJsonCapabilityCallMarkerDiagnostics),
     ("CLI check keeps warnings nonblocking by default", CliCheckKeepsWarningsNonblockingByDefault),
     ("CLI check treats warnings as errors", CliCheckTreatsWarningsAsErrors),
     ("CLI build stops before emission on warnings as errors", CliBuildStopsBeforeEmissionOnWarningsAsErrors),
@@ -259,6 +260,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2205",
             "TS2206",
             "TS2207",
+            "TS2208",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -2891,6 +2893,33 @@ static void CliCheckEmitsJsonDynamicCallCapabilityDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2207\"", error.ToString());
         AssertContains("Call to dynamic function 'readLegacy' requires a 'dynamic' function modifier on the containing function.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonCapabilityCallMarkerDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("CapabilityCallMarkerJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.CapabilityCallMarkerJson
+
+            reflect fun readProperty(value: string): string =
+              value
+
+            export fun leak(value: string): string =
+              readProperty(value)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2208\"", error.ToString());
+        AssertContains("Call to reflect function 'readProperty' requires a 'reflect' function modifier on the containing function.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
