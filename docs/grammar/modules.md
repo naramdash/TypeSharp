@@ -58,6 +58,7 @@ import static System.Math
 - `import type`은 compile-time type만 가져오며 runtime dependency를 만들지 않는다.
 - 현재 구현된 named import alias slice는 `import { Name as Alias } from "Namespace"`를 generated C# `using Alias = Namespace.Name;` directive로 낮춘다.
 - 현재 구현된 namespace import slice는 `import * as Alias from "Namespace"`를 generated C# `using Alias = Namespace;` directive로 낮춘다.
+- named/namespace import alias가 같은 file scope의 기존 선언이나 다른 import alias와 같은 local name을 쓰면 binder가 `TS2002` duplicate symbol diagnostic을 보고한다. Cross-file source module graph conflict analysis는 별도 후속 작업이다.
 
 ## Export
 

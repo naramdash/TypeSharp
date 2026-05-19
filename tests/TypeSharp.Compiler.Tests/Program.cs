@@ -111,6 +111,7 @@ var tests = new (string Name, Action Body)[]
     ("semantic model resolves symbols at source positions", SemanticModelResolvesSymbolsAtSourcePositions),
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
     ("checker reports duplicate symbol diagnostics", CheckerReportsDuplicateSymbolDiagnostics),
+    ("checker reports import alias conflict diagnostics", CheckerReportsImportAliasConflictDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
     ("inference engine infers local expression graph", InferenceEngineInfersLocalExpressionGraph),
     ("checker reports type mismatch diagnostics", CheckerReportsTypeMismatchDiagnostics),
@@ -122,6 +123,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON structural diagnostics", CliCheckEmitsJsonStructuralDiagnostics),
     ("CLI check emits JSON public boundary diagnostics", CliCheckEmitsJsonPublicBoundaryDiagnostics),
     ("CLI check emits JSON duplicate symbol diagnostics", CliCheckEmitsJsonDuplicateSymbolDiagnostics),
+    ("CLI check emits JSON import alias conflict diagnostics", CliCheckEmitsJsonImportAliasConflictDiagnostics),
     ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
     ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
     ("CLI check emits JSON dynamic call capability diagnostics", CliCheckEmitsJsonDynamicCallCapabilityDiagnostics),
@@ -2558,6 +2560,36 @@ static void CheckerReportsDuplicateSymbolDiagnostics()
     });
 }
 
+static void CheckerReportsImportAliasConflictDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("ImportAliasConflict"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportAliasConflict
+
+            import { StringBuilder as TextBuilder } from "System.Text"
+
+            record TextBuilder {
+              Value: string
+            }
+
+            import * as Text from "System.Text"
+            import * as Text from "System.IO"
+
+            fun describe(value: TextBuilder): string = value.ToString()
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Checker should report import alias binder conflicts.");
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2002").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        AssertEqual(2, diagnostics.Length);
+        AssertEqual("Duplicate symbol 'TextBuilder' in the same scope.", diagnostics[0].Message);
+        AssertEqual("Duplicate symbol 'Text' in the same scope.", diagnostics[1].Message);
+    });
+}
+
 static void TypeCheckerAcceptsBasicAnnotations()
 {
     var result = TypeSharpParser.ParseText("""
@@ -2824,6 +2856,30 @@ static void CliCheckEmitsJsonDuplicateSymbolDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2002\"", error.ToString());
         AssertContains("Duplicate symbol 'keep' in the same scope.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonImportAliasConflictDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("ImportAliasConflictJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportAliasConflictJson
+
+            import { StringBuilder as Builder } from "System.Text"
+            import * as Builder from "System.IO"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2002\"", error.ToString());
+        AssertContains("Duplicate symbol 'Builder' in the same scope.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }

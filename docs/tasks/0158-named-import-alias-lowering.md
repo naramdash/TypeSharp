@@ -67,4 +67,4 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 
 ## Follow-up
 
-- Namespace import aliases were split into [0159-namespace-import-alias-lowering.md](0159-namespace-import-alias-lowering.md). Export specifier aliases, relative source module resolution, and duplicate/conflicting import alias diagnostics remain future work.
+- Namespace import aliases were split into [0159-namespace-import-alias-lowering.md](0159-namespace-import-alias-lowering.md). Duplicate/conflicting import alias diagnostics were covered by [0161-import-alias-conflict-diagnostics.md](0161-import-alias-conflict-diagnostics.md). Export specifier aliases and relative source module resolution remain future work.

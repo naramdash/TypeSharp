@@ -75,6 +75,7 @@
 - [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
 - [x] named import alias 문법과 C# alias using lowering 규칙이 있다.
 - [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
+- [x] import alias same-file conflict는 `TS2002` duplicate symbol diagnostic으로 보고된다.
 - [x] root-level open declaration 문법과 lowering 규칙이 있다.
 - [x] ambient function signature 문법 초안과 parser fixture가 있다.
 - [x] 이름 해석 규칙 초안이 있다.
@@ -327,6 +328,7 @@
 - [x] diagnostic descriptor registry smoke tests
 - [x] binder/name resolution smoke tests
 - [x] binder duplicate symbol diagnostics
+- [x] binder import alias conflict diagnostics
 - [x] type checker basic mismatch smoke tests
 - [x] binder fixtures
 - [x] type checker positive fixtures
