@@ -108,3 +108,4 @@
 | [0159-namespace-import-alias-lowering.md](0159-namespace-import-alias-lowering.md) | Q2-Q4 | Done | `import * as Alias`를 파싱하고 generated C# namespace alias using으로 낮춘다. |
 | [0160-docs-site-custom-404.md](0160-docs-site-custom-404.md) | Q5 | Done | Starlight docs-site custom 404 page를 추가해 GitHub Pages build warning을 제거한다. |
 | [0161-import-alias-conflict-diagnostics.md](0161-import-alias-conflict-diagnostics.md) | Q2-Q4 | Done | import alias가 같은 file scope의 선언/alias와 충돌하면 `TS2002`로 보고하는 계약을 고정한다. |
+| [0162-export-specifier-parsing.md](0162-export-specifier-parsing.md) | Q2-Q4 | Done | `export { ... }`, `export type { ... }`, `export * from ...` 문법을 parser surface에 추가한다. |

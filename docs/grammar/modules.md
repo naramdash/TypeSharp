@@ -76,6 +76,8 @@ export_specifier      ::= identifier ("as" identifier)?
 - public surface는 export로 결정한다.
 - .NET public accessibility와 module export는 별도이므로 mapping 사양이 필요하다.
 - library project에서는 export된 declaration만 public API 후보가 된다.
+- 현재 구현된 export specifier slice는 `export { Name as Alias }`, `export { Name } from "Module"`, `export type { Name } from "Module"`, and `export * from "Module"`를 parser syntax tree에 보존한다.
+- Source module graph resolution, export binding, duplicate export diagnostics, and C# re-export lowering은 후속 작업이다.
 
 ## Namespace
 

@@ -254,6 +254,12 @@ public sealed class TypeSharpParser
 
     private void ParseNamedImportClause(List<SyntaxNode> children)
     {
+        ParseSpecifierClause(children);
+        ParseModuleSpecifier(children);
+    }
+
+    private void ParseSpecifierClause(List<SyntaxNode> children)
+    {
         children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
@@ -275,30 +281,66 @@ public sealed class TypeSharpParser
         }
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
+    }
+
+    private void ParseModuleSpecifier(List<SyntaxNode> children)
+    {
         children.Add(TokenNode(Expect(SyntaxKind.FromKeyword)));
         children.Add(TokenNode(Expect(SyntaxKind.StringLiteralToken)));
     }
 
+    private void ParseOptionalModuleSpecifier(List<SyntaxNode> children)
+    {
+        if (Current.Kind == SyntaxKind.FromKeyword)
+        {
+            ParseModuleSpecifier(children);
+        }
+    }
+
     private SyntaxNode ParseExportedDeclaration()
     {
-        var children = new List<SyntaxNode>();
         var export = TokenNode(Expect(SyntaxKind.ExportKeyword));
-        children.Add(new SyntaxNode(SyntaxKind.ExportModifier, export.Span, children: [export]));
-        children.AddRange(ParseDeclarationPrefix());
+
+        if (Current.Kind == SyntaxKind.StarToken)
+        {
+            var children = new List<SyntaxNode> { export, TokenNode(NextToken()) };
+            ParseModuleSpecifier(children);
+            return Node(SyntaxKind.ExportStarDeclaration, children);
+        }
+
+        if (Current.Kind == SyntaxKind.TypeKeyword && Peek(1).Kind == SyntaxKind.OpenBraceToken)
+        {
+            var children = new List<SyntaxNode> { export, TokenNode(NextToken()) };
+            ParseSpecifierClause(children);
+            ParseOptionalModuleSpecifier(children);
+            return Node(SyntaxKind.ExportTypeDeclaration, children);
+        }
+
+        if (Current.Kind == SyntaxKind.OpenBraceToken)
+        {
+            var children = new List<SyntaxNode> { export };
+            ParseSpecifierClause(children);
+            ParseOptionalModuleSpecifier(children);
+            return Node(SyntaxKind.ExportNamedDeclaration, children);
+        }
+
+        var declarationChildren = new List<SyntaxNode>();
+        declarationChildren.Add(new SyntaxNode(SyntaxKind.ExportModifier, export.Span, children: [export]));
+        declarationChildren.AddRange(ParseDeclarationPrefix());
 
         return Current.Kind switch
         {
-            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children),
-            SyntaxKind.ModuleKeyword => ParseModuleDeclaration(children),
-            SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(children),
-            SyntaxKind.RecordKeyword => ParseRecordDeclaration(children),
-            SyntaxKind.UnionKeyword => ParseUnionDeclaration(children),
-            SyntaxKind.ClassKeyword => ParseClassDeclaration(children),
-            SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(children),
-            SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(children),
-            SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(children),
-            SyntaxKind.LetKeyword => ParseValueDeclaration(children),
-            _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
+            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(declarationChildren),
+            SyntaxKind.ModuleKeyword => ParseModuleDeclaration(declarationChildren),
+            SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(declarationChildren),
+            SyntaxKind.RecordKeyword => ParseRecordDeclaration(declarationChildren),
+            SyntaxKind.UnionKeyword => ParseUnionDeclaration(declarationChildren),
+            SyntaxKind.ClassKeyword => ParseClassDeclaration(declarationChildren),
+            SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(declarationChildren),
+            SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(declarationChildren),
+            SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(declarationChildren),
+            SyntaxKind.LetKeyword => ParseValueDeclaration(declarationChildren),
+            _ => Node(SyntaxKind.SkippedToken, [..declarationChildren, ParseSkippedToken()])
         };
     }
 

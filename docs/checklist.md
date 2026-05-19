@@ -76,6 +76,7 @@
 - [x] named import alias 문법과 C# alias using lowering 규칙이 있다.
 - [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
 - [x] import alias same-file conflict는 `TS2002` duplicate symbol diagnostic으로 보고된다.
+- [x] export specifier/re-export 문법 parser fixture가 있다.
 - [x] root-level open declaration 문법과 lowering 규칙이 있다.
 - [x] ambient function signature 문법 초안과 parser fixture가 있다.
 - [x] 이름 해석 규칙 초안이 있다.
@@ -315,6 +316,7 @@
 - [x] parser open declarations positive fixture
 - [x] parser import alias declarations positive fixture
 - [x] parser namespace import declarations positive fixture
+- [x] parser export specifier declarations positive fixture
 - [x] parser fixture format policy
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests

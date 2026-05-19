@@ -65,4 +65,4 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 
 ## Follow-up
 
-- Duplicate/conflicting import alias diagnostics were covered by [0161-import-alias-conflict-diagnostics.md](0161-import-alias-conflict-diagnostics.md). Relative source module namespace imports, namespace member completion, project-wide symbol resolution, and export star/alias declarations remain future work.
+- Duplicate/conflicting import alias diagnostics were covered by [0161-import-alias-conflict-diagnostics.md](0161-import-alias-conflict-diagnostics.md). Export star/alias parsing was covered by [0162-export-specifier-parsing.md](0162-export-specifier-parsing.md). Relative source module namespace imports, namespace member completion, project-wide symbol resolution, and export binding/lowering remain future work.

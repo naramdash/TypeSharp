@@ -1,0 +1,8 @@
+namespace Samples.ExportSpecifiers
+
+export { Customer, buildCustomer as createCustomer } from "./customer"
+export type { CustomerView as View } from "./views"
+export { LocalOnly }
+export * from "./prelude"
+
+export fun keep(): string = "ok"
