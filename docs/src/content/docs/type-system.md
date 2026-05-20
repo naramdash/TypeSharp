@@ -5,6 +5,8 @@ description: Type inference, null safety, unknown, dynamic, structural shapes, u
 
 TypeSharp combines TypeScript-style local flexibility, F#-style expression-oriented modeling, and C#/.NET metadata constraints. The result is a type system that is strict by default but honest about what can be emitted as public CLR metadata.
 
+For a C# documentation-style breakdown of strong typing, CLR metadata, value/reference categories, built-in mapping, generics, nullability, and public ABI decisions, use [C# And CLR Type Model](../csharp-type-model/).
+
 ## Local Inference
 
 The compiler infers common local values and expression flows so small functions do not need annotation noise.
@@ -126,5 +128,6 @@ Use generics for reusable code, but keep public constraints simple enough for C#
 
 - [Fundamentals](../fundamentals/)
 - [Modules And Imports](../modules/)
+- [C# And CLR Type Model](../csharp-type-model/)
 - [.NET Interop](../dotnet-interop/)
 - [Diagnostics](../diagnostics/)

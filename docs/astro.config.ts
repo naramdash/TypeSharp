@@ -72,6 +72,8 @@ export default defineConfig({
           items: [
             { label: 'Modules And Imports', slug: 'modules' },
             { label: 'Type System', slug: 'type-system' },
+            { label: 'C# And CLR Type Model', slug: 'csharp-type-model' },
+            { label: 'C# Members And Overloads', slug: 'csharp-members-overloads' },
             { label: 'Feature Status', slug: 'feature-status' },
             { label: 'Grammar', slug: 'grammar' },
             { label: 'Language Reference', slug: 'reference' },

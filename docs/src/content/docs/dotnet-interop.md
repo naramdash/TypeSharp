@@ -7,6 +7,8 @@ This is the canonical docs ledger for TypeSharp's C#/.NET Framework interop, pub
 
 TypeSharp's interop model is conservative: generated output should behave like ordinary `.NET Framework 4.8` assemblies that C# projects can reference. TypeScript-style structural and type-level features may help local TypeSharp checking, but they must not leak through public CLR metadata boundaries.
 
+Use [C# And CLR Type Model](../csharp-type-model/) for type-category and public ABI mapping, and [C# Members And Overloads](../csharp-members-overloads/) for member lookup, constructors, overloads, byref arguments, delegates, events, extension methods, and related diagnostics.
+
 ## Goals
 
 TypeSharp interop must support these durable goals:

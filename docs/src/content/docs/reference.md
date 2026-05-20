@@ -47,9 +47,11 @@ Canonical pages: [Grammar](../grammar/), [Language Tour](../language-tour/), [Ty
 
 Type syntax includes primitive names, nullable types, arrays, generic types, function types, structural shapes, structural intersection aliases, limited `keyof`, limited indexed access types, type-level unions, and nominal declarations.
 
-Canonical pages: [Grammar](../grammar/), [Type System](../type-system/), [Feature Status](../feature-status/)
+Canonical pages: [Grammar](../grammar/), [Type System](../type-system/), [C# And CLR Type Model](../csharp-type-model/), [Feature Status](../feature-status/)
 
 Human guide: [Type System](../type-system/)
+
+Detailed C#/.NET reference: [C# And CLR Type Model](../csharp-type-model/)
 
 ## Patterns
 
@@ -73,6 +75,8 @@ Overload resolution is nominal-first. Candidate checks include arity, named/opti
 
 Canonical pages: [Grammar](../grammar/), [Modules And Imports](../modules/), [.NET Interop](../dotnet-interop/), [Diagnostics](../diagnostics/)
 
+Detailed C#/.NET reference: [C# Members And Overloads](../csharp-members-overloads/)
+
 ## Public ABI Rules
 
 Public API must lower to C#-understandable CLR metadata. Structural shapes, intersection aliases, and type-level unions are compile-time-only and must not leak directly through public boundaries.
@@ -80,6 +84,8 @@ Public API must lower to C#-understandable CLR metadata. Structural shapes, inte
 Canonical pages:
 
 - [.NET Interop](../dotnet-interop/)
+- [C# And CLR Type Model](../csharp-type-model/)
+- [C# Members And Overloads](../csharp-members-overloads/)
 - [Project Requirements](../requirements/)
 - [Advanced Topics](../advanced/)
 

@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0266                          |
+| Completed range    | 0001-0267                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -42,7 +42,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 - [x] docs에 tysh 프로젝트가 실제로 어떻게 net48 런타임 아티펙트를 구성하는지 아키텍처 & 원리를 설명하는 문서 남기기, 적절하게 mermaid 다이어그램을 사용해서 tysh 프로젝트의 아키텍처 설명하기
 - [x] [Vue Docs Writing Guide](https://github.com/vuejs/docs/blob/main/.github/contributing/writing-guide.md)를 확인해서 이 프로젝트에 맞게 문서 작성 가이드라인 만들기, 특히 tysh 예제 프로젝트 코드에 대한 문서 작성 가이드라인 만들기, 이모지를 적절하게 활용해서 가독성 높이기
 - [x] GitHub Action 으로 중요한 변경이 있을때마다 실제로 이 언어와 관련된 중요 산출물들을 release를 통해 제공될 수 있게 변경하기
-- [ ] C# 공식문서 확인해서 현재 docs 폴더 내용 구체화하기. 현재 처럼 2단 구성이 아니라 C# 공식문서 만큼 상세하게 설명하기
+- [x] C# 공식문서 확인해서 현재 docs 폴더 내용 구체화하기. 현재 처럼 2단 구성이 아니라 C# 공식문서 만큼 상세하게 설명하기
 - [ ] tysh 예제 프로젝트 코드 현실성 있게 작성하기, 실제로 실행 가능한 코드로 작성하기
 - [ ] tysh 예제 프로젝트 코드에 대한 설명 추가하기, 각 코드 블록마다 설명을 추가해서 사용자가 이해하기 쉽게 만들기
 - [ ] 이 레포가 모노레포임을 감안하여 폴더 구조 과감하게 최적화하기. cli, test, docs, lang, agent 등으로 폴더 구조를 명확하게 나누고, 각 폴더에 README.md 파일을 추가해서 해당 폴더의 목적과 내용을 설명하기
@@ -52,6 +52,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q5       | Done   | User directive | C# docs parity detail                              | [tasks-rollup.md#task-0267-csharp-docs-parity-detail](tasks-rollup.md#task-0267-csharp-docs-parity-detail)                                                     | Added Microsoft Learn C#-style detailed reference pages for TypeSharp CLR type mapping, members, overloads, byref/delegates/events/extension methods, and diagnostics. |
 | Q5       | Done   | User directive | Release artifacts workflow                         | [tasks-rollup.md#task-0266-release-artifacts-workflow](tasks-rollup.md#task-0266-release-artifacts-workflow)                                                   | Added a tag/manual GitHub Release workflow for CLI, `net48` runtime libraries, VSIX, release notes, and SHA-256 manifest assets.                         |
 | Q5       | Done   | User directive | Docs writing guide                                  | [tasks-rollup.md#task-0265-docs-writing-guide](tasks-rollup.md#task-0265-docs-writing-guide)                                                                   | Adapted the Vue Docs Writing Guide into TypeSharp docs authoring rules, `tysh` example project guidance, emoji policy, and review checks.               |
 | Q5       | Done   | User directive | Runtime artifact architecture docs                  | [tasks-rollup.md#task-0264-runtime-artifact-architecture-docs](tasks-rollup.md#task-0264-runtime-artifact-architecture-docs)                                   | Added Runtime Artifacts docs with Mermaid diagrams for tool/runtime boundaries, build sequence, references, and deployable `net48` artifacts.           |

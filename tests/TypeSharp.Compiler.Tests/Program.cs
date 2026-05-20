@@ -10544,6 +10544,8 @@ static void DocsSiteContractIsStable()
     AssertContains("slug: 'goal'", astroConfig);
     AssertContains("slug: 'modules'", astroConfig);
     AssertContains("slug: 'type-system'", astroConfig);
+    AssertContains("slug: 'csharp-type-model'", astroConfig);
+    AssertContains("slug: 'csharp-members-overloads'", astroConfig);
     AssertContains("slug: 'grammar'", astroConfig);
     AssertContains("slug: 'reference'", astroConfig);
     AssertContains("slug: 'api'", astroConfig);
@@ -10577,6 +10579,8 @@ static void DocsSiteContractIsStable()
         "migration",
         "modules",
         "type-system",
+        "csharp-type-model",
+        "csharp-members-overloads",
         "grammar",
         "reference",
         "api",
@@ -10681,6 +10685,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Supported C# Interop Shape", dotnetInteropPage);
     AssertContains("Host Project Compatibility", dotnetInteropPage);
     AssertContains("Executables And Antivirus", dotnetInteropPage);
+    AssertContains("C# And CLR Type Model", dotnetInteropPage);
+    AssertContains("C# Members And Overloads", dotnetInteropPage);
 
     var cookbookPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "cookbook.md"));
     AssertContains("Call A Local C# DLL", cookbookPage);
@@ -10709,6 +10715,34 @@ static void DocsSiteContractIsStable()
     AssertContains("`unknown`", typeSystemPage);
     AssertContains("Nominal Public API", typeSystemPage);
     AssertContains("Type-Level And Nominal Unions", typeSystemPage);
+    AssertContains("C# And CLR Type Model", typeSystemPage);
+
+    var csharpTypeModelPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "csharp-type-model.md"));
+    AssertContains("Official sources reviewed on 2026-05-21", csharpTypeModelPage);
+    AssertContains("The C# type system", csharpTypeModelPage);
+    AssertContains("Strong Typing And Metadata", csharpTypeModelPage);
+    AssertContains("Value Types And Reference Types", csharpTypeModelPage);
+    AssertContains("Built-In Type Mapping", csharpTypeModelPage);
+    AssertContains("Compile-Time-Only Types", csharpTypeModelPage);
+    AssertContains("Generics And Constraints", csharpTypeModelPage);
+    AssertContains("Function Types And Delegates", csharpTypeModelPage);
+    AssertContains("Public Type Decision Matrix", csharpTypeModelPage);
+    AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
+    AssertContains("System.Nullable<T>", csharpTypeModelPage);
+    AssertContains("```tysh", csharpTypeModelPage);
+
+    var csharpMembersPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "csharp-members-overloads.md"));
+    AssertContains("Official sources reviewed on 2026-05-21", csharpMembersPage);
+    AssertContains("Object-oriented techniques in C#", csharpMembersPage);
+    AssertContains("Member Surface", csharpMembersPage);
+    AssertContains("Methods And Overload Ranking", csharpMembersPage);
+    AssertContains("Named, Optional, And Params Arguments", csharpMembersPage);
+    AssertContains("Ref, Out, And In", csharpMembersPage);
+    AssertContains("Delegates And Lambdas", csharpMembersPage);
+    AssertContains("Extension Methods", csharpMembersPage);
+    AssertContains("Exceptions And Domain Failures", csharpMembersPage);
+    AssertContains("TS2406", csharpMembersPage);
+    AssertContains("```tysh", csharpMembersPage);
 
     var referencePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "reference.md"));
     AssertContains("Declarations", referencePage);
@@ -10717,6 +10751,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Public ABI Rules", referencePage);
     AssertContains("Modules And Imports", referencePage);
     AssertContains("Type System", referencePage);
+    AssertContains("C# And CLR Type Model", referencePage);
+    AssertContains("C# Members And Overloads", referencePage);
 
     var apiPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
     AssertContains("CLI Commands", apiPage);

@@ -32,6 +32,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [Grammar](../grammar/) and [Grammar And Language Reference](../reference/): stable syntax, grammar summaries, feature spec index, and parser evidence.
 - [Modules And Imports](../modules/): source module paths, imports, exports, and generated containers.
 - [Type System](../type-system/): inference, null safety, `unknown`, `dynamic`, structural shapes, intersections, unions, and public ABI boundaries.
+- [C# And CLR Type Model](../csharp-type-model/) and [C# Members And Overloads](../csharp-members-overloads/): Microsoft Learn C#-style detailed reference pages for TypeSharp's CLR type mapping, member lookup, overloads, delegates, events, extension methods, and diagnostics.
 - [Lowering](../lowering/): TypeSharp-to-C# 7.3 lowering contract and fixture evidence.
 - [Runtime Artifacts](../runtime-artifacts/): generated C# project shape, `net48` assembly layout, Core/Runtime references, and deployment set.
 - [.NET Interop](../dotnet-interop/): C#/.NET Framework interop, runtime ABI, public ABI, and host compatibility.

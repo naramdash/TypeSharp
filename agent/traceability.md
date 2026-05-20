@@ -12,7 +12,7 @@
 | Required platform, language, compiler, interop, tooling, runtime, quality constraints | [Project Requirements](../docs/src/content/docs/requirements.md) |
 | MVP, stable backlog, preview watch, experimental/rejected boundaries | [Feature Status](../docs/src/content/docs/feature-status.md) |
 | Syntax and language contracts | [Grammar](../docs/src/content/docs/grammar.md), [Grammar And Language Reference](../docs/src/content/docs/reference.md) |
-| Type system, lowering, interop, CLI/API, diagnostics | [Type System](../docs/src/content/docs/type-system.md), [Lowering](../docs/src/content/docs/lowering.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md), [API And CLI Reference](../docs/src/content/docs/api.md), [Diagnostics](../docs/src/content/docs/diagnostics.md) |
+| Type system, lowering, interop, CLI/API, diagnostics | [Type System](../docs/src/content/docs/type-system.md), [C# And CLR Type Model](../docs/src/content/docs/csharp-type-model.md), [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md), [Lowering](../docs/src/content/docs/lowering.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md), [API And CLI Reference](../docs/src/content/docs/api.md), [Diagnostics](../docs/src/content/docs/diagnostics.md) |
 | Architecture, dependencies, fixture policy, regression policy, release policy | [Project Policy](../docs/src/content/docs/project-policy.md) |
 | User-facing tutorials, examples, cookbook, migration, and docs authoring rules | [docs/src/content/docs](../docs/src/content/docs), [Writing Guide](../docs/src/content/docs/writing-guide.md) |
 
@@ -54,6 +54,7 @@
 | Runtime artifact architecture docs | [tasks-rollup.md#task-0264-runtime-artifact-architecture-docs](tasks-rollup.md#task-0264-runtime-artifact-architecture-docs), [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md), `docs/astro.config.ts`, `docs/package.json`, `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Docs writing guide | [tasks-rollup.md#task-0265-docs-writing-guide](tasks-rollup.md#task-0265-docs-writing-guide), [Writing Guide](../docs/src/content/docs/writing-guide.md), [Examples](../docs/src/content/docs/examples.md), `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Release artifacts workflow | [tasks-rollup.md#task-0266-release-artifacts-workflow](tasks-rollup.md#task-0266-release-artifacts-workflow), `.github/workflows/release-artifacts.yml`, [Project Policy](../docs/src/content/docs/project-policy.md), `tests/TypeSharp.Compiler.Tests/Program.cs` |
+| C# docs parity detail | [tasks-rollup.md#task-0267-csharp-docs-parity-detail](tasks-rollup.md#task-0267-csharp-docs-parity-detail), [C# And CLR Type Model](../docs/src/content/docs/csharp-type-model.md), [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md), `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Modules, imports, exports, safety gates | [tasks-rollup.md#language-safety-modules-and-import-export](tasks-rollup.md#language-safety-modules-and-import-export), source module and diagnostics fixtures |
 | Test suite quality audit | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit), `tests/TypeSharp.Compiler.Tests/Program.cs`, `tests/fixtures`, `vscode/typesharp/test`, `examples/runnable` |
 

@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 00:48:40 +09:00
+End Time: 2026-05-21 00:58:39 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0266. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0267. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0266 |
+| Completed work covered | 0001-0267 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -103,12 +103,15 @@ Completed docs/adoption work established:
 - Docs Mermaid rendering is enabled for architecture pages through docs-only `astro-mermaid` and `mermaid` dependencies.
 - The Writing Guide adapts the Vue Docs Writing Guide into TypeSharp-specific authoring rules, `tysh` example project guidance, emoji usage, and review checks.
 - Release artifact automation publishes tagged CLI, `net48` runtime library, VSIX, release notes, and SHA-256 manifest assets to GitHub Releases.
+- Microsoft Learn C#-style detailed TypeSharp reference pages now explain CLR type mapping, value/reference/nullability/generic public type rules, member lookup, overload ranking, byref calls, delegates, events, extension methods, exception boundaries, and interop diagnostics.
 
 Primary evidence:
 
 - `docs/src/content/docs`
 - `.github/workflows/release-artifacts.yml`
 - [Writing Guide](../docs/src/content/docs/writing-guide.md)
+- [C# And CLR Type Model](../docs/src/content/docs/csharp-type-model.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
 - `docs/research`
 - [agent.md](../agent.md)
 - [tasks.md](tasks.md)
@@ -468,6 +471,36 @@ Primary evidence:
 - [Project Policy](../docs/src/content/docs/project-policy.md)
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0267 CSharp Docs Parity Detail
+
+Completed C# documentation parity work established:
+
+- Reviewed Microsoft Learn C# language documentation, the C# type system, object-oriented techniques, language reference, keywords, operators, and exception handling pages on 2026-05-21.
+- Added [C# And CLR Type Model](../docs/src/content/docs/csharp-type-model.md) with detailed TypeSharp rules for strong typing, CLR metadata, value/reference types, built-in mapping, named public types, compile-time-only types, nullability, generics, collections, delegates, async tasks, and public type decisions.
+- Added [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md) with detailed TypeSharp guidance for C# member surfaces, imports, constructors, overload ranking, named/optional/params arguments, byref calls, properties, fields, indexers, delegates, lambdas, events, extension methods, exception boundaries, and diagnostics.
+- Connected the new detailed pages from the Reference sidebar, Grammar And Language Reference, Type System, .NET Interop, and Project Ledger pages.
+- Strengthened the docs site contract so the new pages, sidebar slugs, source attribution, `tysh` examples, interop links, and detailed C# topic sections are checked.
+
+Verification:
+
+```powershell
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+npm run build          # in docs
+git diff --check
+```
+
+Notes:
+
+- `npm run build` completed and generated 36 pages; Vite emitted the existing non-fatal chunk-size warning from the Mermaid client bundle.
+
+Primary evidence:
+
+- `docs/src/content/docs/csharp-type-model.md`
+- `docs/src/content/docs/csharp-members-overloads.md`
+- `docs/astro.config.ts`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -492,7 +525,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0266 is compressed here.
+- Completed historical work through task 0267 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
