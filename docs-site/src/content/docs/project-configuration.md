@@ -80,9 +80,12 @@ typesharp run TypeSharp.toml --configuration Debug --target net48
 
 Keep `net48` as the default TypeSharp compatibility target unless a documented compatibility profile says otherwise.
 
+Use [Project Policy](../project-policy/) for the canonical dependency inventory, future dependency gate, target-framework profile rules, and release baseline policy.
+
 ## Related Pages
 
 - [Modules And Imports](../modules/)
 - [CLI](../cli/)
 - [.NET Interop](../dotnet-interop/)
+- [Project Policy](../project-policy/)
 - [Troubleshooting](../troubleshooting/)

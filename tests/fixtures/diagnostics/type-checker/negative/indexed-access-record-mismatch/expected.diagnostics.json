@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot return expression of type 'int' from function returning 'CustomerName'.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 29 },
+      "end": { "line": 7, "column": 33 }
+    },
+    {
+      "code": "TS2204",
+      "severity": "error",
+      "message": "Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 20 },
+      "end": { "line": 9, "column": 32 }
+    }
+  ]
+}

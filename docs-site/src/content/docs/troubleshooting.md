@@ -36,12 +36,26 @@ This is expected when parser, binder, type checker, public boundary, or interop 
 
 Common diagnostics:
 
+- `TS0114`: source import or re-export references a non-exported target name
+- `TS2004`: duplicate local export
 - `TS2201`: type mismatch
 - `TS2202`: nullability contract violation
 - `TS2204`: compile-time type leaked through public boundary
-- `TS2402`: ambiguous C# overload
+- `TS2402`: ambiguous C# overload or constructor
 - `TS2403`: invalid byref interop use
 - `TS2405`: unsupported package reference
+- `TS2406`: no matching C# overload or constructor
+- `TS2407`: missing C# method
+- `TS2408`: missing C# type
+- `TS2409`: missing C# static member
+- `TS2410`: missing C# instance member
+- `TS2411`: missing or mismatched C# instance indexer
+- `TS2412`: missing C# instance property setter
+- `TS2413`: read-only C# instance field assignment
+- `TS2414`: missing C# static property setter
+- `TS2415`: read-only C# static field assignment
+- `TS2416`: missing C# instance event
+- `TS2417`: unsatisfied C# generic constraint
 
 Use:
 

@@ -1,0 +1,5 @@
+namespace Samples.RecordSpread
+
+record Customer(Name: string, Age: int)
+
+fun invalid(): Customer = { ...1, Name: "Ada", Age: 36 }

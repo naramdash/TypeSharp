@@ -1,0 +1,5 @@
+namespace Samples.Extensions.Negative
+
+public extension string {
+  public fun Bad(value: int): bool = true
+}

@@ -22,9 +22,55 @@ public static class CSharpSourceBackend
         string moduleContainerName,
         IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports)
     {
+        return Emit(root, defaultNamespace, moduleContainerName, sourceImports, [], [], []);
+    }
+
+    public static string Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
+    {
+        return Emit(root, defaultNamespace, moduleContainerName, sourceImports, [], [], functionReExports);
+    }
+
+    public static string Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
+    {
+        return Emit(root, defaultNamespace, moduleContainerName, sourceImports, [], functionImportAliases, functionReExports);
+    }
+
+    public static string Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
+        IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
+    {
+        return Emit(root, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, [], functionImportAliases, functionReExports);
+    }
+
+    public static string Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
+        IReadOnlyList<CSharpSourceValueReExport> valueReExports,
+        IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
+    {
         var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
         var emitter = new Emitter();
-        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName, sourceImports);
+        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, functionImportAliases, functionReExports);
     }
 
     private sealed class Emitter
@@ -32,7 +78,10 @@ public static class CSharpSourceBackend
         private readonly StringBuilder _builder = new();
         private readonly HashSet<string> _constructorCandidateNames = new(StringComparer.Ordinal);
         private readonly Dictionary<string, RecordShape> _records = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, RecordShape> _structuralShapes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, TypeLevelUnionShape> _typeLevelUnions = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _compileTimeOnlyTypeAliases = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _compileTimeOnlyTypeAliasRuntimeTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionShape> _unions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseFactories = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseValues = new(StringComparer.Ordinal);
@@ -40,11 +89,21 @@ public static class CSharpSourceBackend
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
 
+        private sealed record CSharpSourceLiteralExportAlias(string ExportedName, SyntaxNode Literal);
+
+        private sealed record CSharpSourceValueExportAlias(string ExportedName, SyntaxNode Value);
+
+        private readonly record struct CollectionSegment(bool IsSpread, IReadOnlyList<SyntaxNode> Elements, SyntaxNode? Expression);
+
         public string Emit(
             SyntaxNode root,
             string? defaultNamespace,
             string moduleContainerName,
-            IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports)
+            IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+            IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
+            IReadOnlyList<CSharpSourceValueReExport> valueReExports,
+            IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+            IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
         {
             var explicitNamespace = root.Children.FirstOrDefault(child => child.Kind == SyntaxKind.NamespaceDeclaration) is { } namespaceDeclaration
                 ? GetQualifiedName(namespaceDeclaration)
@@ -58,6 +117,11 @@ public static class CSharpSourceBackend
             var literals = root.Children
                 .Where(child => child.Kind == SyntaxKind.LiteralDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
+            var literalExportAliases = CollectLocalLiteralExportAliases(root);
+            var values = root.Children
+                .Where(child => child.Kind == SyntaxKind.ValueDeclaration && !IsAmbientDeclaration(child) && CanLowerTopLevelValueDeclaration(child))
+                .ToArray();
+            var valueExportAliases = CollectLocalValueExportAliases(root);
 
             var functions = root.Children
                 .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
@@ -86,15 +150,14 @@ public static class CSharpSourceBackend
             var interfaces = root.Children
                 .Where(child => child.Kind == SyntaxKind.InterfaceDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
+            var extensionDeclarations = root.Children
+                .Where(child => child.Kind == SyntaxKind.ExtensionDeclaration && !IsAmbientDeclaration(child))
+                .Concat(modules.SelectMany(module => module.Children.Where(child => child.Kind == SyntaxKind.ExtensionDeclaration && !IsAmbientDeclaration(child))))
+                .ToArray();
 
             foreach (var importedName in imports.ImportedNames)
             {
                 _constructorCandidateNames.Add(importedName);
-            }
-
-            foreach (var typeAlias in typeAliases)
-            {
-                RegisterTypeAlias(typeAlias);
             }
 
             foreach (var record in records)
@@ -102,9 +165,24 @@ public static class CSharpSourceBackend
                 RegisterRecord(record);
             }
 
+            foreach (var typeAlias in typeAliases)
+            {
+                RegisterTypeAlias(typeAlias);
+            }
+
             foreach (var union in unions)
             {
                 RegisterUnion(union);
+            }
+
+            foreach (var value in values)
+            {
+                RegisterTopLevelValue(value);
+            }
+
+            foreach (var valueImportAlias in valueImportAliases)
+            {
+                _valueTypes[valueImportAlias.LocalName] = valueImportAlias.Type;
             }
 
             _builder.AppendLine("// <auto-generated />");
@@ -145,7 +223,115 @@ public static class CSharpSourceBackend
                 EmitLiteralDeclaration(literal);
             }
 
-            if (literals.Length > 0 && functions.Length > 0)
+            if (values.Length > 0)
+            {
+                if (literals.Length > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < values.Length; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitTopLevelValueDeclaration(values[index]);
+                }
+            }
+
+            if (literalExportAliases.Count > 0)
+            {
+                if (literals.Length > 0 || values.Length > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < literalExportAliases.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitLiteralExportAlias(literalExportAliases[index]);
+                }
+            }
+
+            if (valueExportAliases.Count > 0)
+            {
+                if (literals.Length > 0 || values.Length > 0 || literalExportAliases.Count > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < valueExportAliases.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitValueExportAlias(valueExportAliases[index]);
+                }
+            }
+
+            if (valueImportAliases.Count > 0)
+            {
+                if (literals.Length > 0 || values.Length > 0 || literalExportAliases.Count > 0 || valueExportAliases.Count > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < valueImportAliases.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitValueImportAlias(valueImportAliases[index]);
+                }
+            }
+
+            if (valueReExports.Count > 0)
+            {
+                if (literals.Length > 0 || values.Length > 0 || literalExportAliases.Count > 0 || valueExportAliases.Count > 0 || valueImportAliases.Count > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < valueReExports.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitValueReExport(valueReExports[index]);
+                }
+            }
+
+            if (functionImportAliases.Count > 0)
+            {
+                if (literals.Length > 0 || values.Length > 0 || literalExportAliases.Count > 0 || valueExportAliases.Count > 0 || valueImportAliases.Count > 0 || valueReExports.Count > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < functionImportAliases.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitFunctionImportAlias(functionImportAliases[index]);
+                }
+            }
+
+            if ((literals.Length > 0 || values.Length > 0 || literalExportAliases.Count > 0 || valueExportAliases.Count > 0 || valueImportAliases.Count > 0 || valueReExports.Count > 0 || functionImportAliases.Count > 0) && functions.Length > 0)
             {
                 _builder.AppendLine();
             }
@@ -158,6 +344,24 @@ public static class CSharpSourceBackend
                 }
 
                 EmitFunction(functions[index], isStatic: true);
+            }
+
+            if (functionReExports.Count > 0)
+            {
+                if (literals.Length > 0 || values.Length > 0 || literalExportAliases.Count > 0 || valueExportAliases.Count > 0 || valueImportAliases.Count > 0 || valueReExports.Count > 0 || functionImportAliases.Count > 0 || functions.Length > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                for (var index = 0; index < functionReExports.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        _builder.AppendLine();
+                    }
+
+                    EmitFunctionReExport(functionReExports[index]);
+                }
             }
 
             _builder.AppendLine("    }");
@@ -192,6 +396,12 @@ public static class CSharpSourceBackend
                 EmitInterfaceDeclaration(interfaceDeclaration);
             }
 
+            for (var index = 0; index < extensionDeclarations.Length; index++)
+            {
+                _builder.AppendLine();
+                EmitExtensionDeclaration(extensionDeclarations[index], index);
+            }
+
             _builder.AppendLine("}");
             return _builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
         }
@@ -213,7 +423,40 @@ public static class CSharpSourceBackend
         {
             var name = GetTypeAliasDeclarationName(node);
             var target = node.Children.LastOrDefault(child => !child.IsToken);
-            if (name.Length == 0 || target?.Kind != SyntaxKind.UnionType)
+            if (name.Length == 0 || target is null)
+            {
+                return;
+            }
+
+            if (target.Kind is SyntaxKind.UnionType or SyntaxKind.RecordShapeType or SyntaxKind.IntersectionType or SyntaxKind.KeyofType or SyntaxKind.IndexedAccessType or SyntaxKind.LiteralType)
+            {
+                _compileTimeOnlyTypeAliases.Add(name);
+            }
+
+            if (target.Kind == SyntaxKind.RecordShapeType)
+            {
+                _structuralShapes[name] = GetStructuralShape(name, target);
+            }
+            else if (target.Kind == SyntaxKind.IntersectionType &&
+                TryGetIntersectionStructuralShape(name, target, out var intersectionShape))
+            {
+                _structuralShapes[name] = intersectionShape;
+            }
+
+            if (target.Kind == SyntaxKind.KeyofType)
+            {
+                _compileTimeOnlyTypeAliasRuntimeTypes[name] = "string";
+            }
+            else if (target.Kind == SyntaxKind.IndexedAccessType)
+            {
+                _compileTimeOnlyTypeAliasRuntimeTypes[name] = MapType(target);
+            }
+            else if (target.Kind == SyntaxKind.LiteralType)
+            {
+                _compileTimeOnlyTypeAliasRuntimeTypes[name] = MapType(target);
+            }
+
+            if (target.Kind != SyntaxKind.UnionType)
             {
                 return;
             }
@@ -314,12 +557,27 @@ public static class CSharpSourceBackend
                             importedNames.Add(specifier.LocalName);
                         }
 
-                        if (specifier.IsAlias &&
-                            !IsRelativeSpecifier(namespaceName) &&
-                            namespaceName.Length > 0 &&
+                        CSharpSourceImportTarget? aliasSourceImport = null;
+                        var shouldEmitRelativeTypeAlias = isRelativeSourceImport &&
+                            sourceImports.TryGetValue(namespaceName, out aliasSourceImport) &&
+                            (child.Kind == SyntaxKind.ImportTypeDeclaration
+                                ? specifier.IsAlias || aliasSourceImport.HasExportedTypeTarget(specifier.ImportedName)
+                                : specifier.IsAlias && aliasSourceImport.HasExportedTypeTarget(specifier.ImportedName));
+                        var shouldEmitRelativeModuleAlias = isRelativeSourceImport &&
+                            child.Kind == SyntaxKind.ImportNamedDeclaration &&
+                            specifier.IsAlias &&
+                            (aliasSourceImport is not null || sourceImports.TryGetValue(namespaceName, out aliasSourceImport)) &&
+                            aliasSourceImport.HasExportedModuleTarget(specifier.ImportedName);
+                        if (namespaceName.Length > 0 &&
+                            ((!isRelativeSourceImport && specifier.IsAlias) || shouldEmitRelativeTypeAlias || shouldEmitRelativeModuleAlias) &&
                             seenAliases.Add(specifier.LocalName))
                         {
-                            aliases.Add(new CSharpImportAlias(specifier.LocalName, $"{namespaceName}.{specifier.ImportedName}"));
+                            var qualifiedName = shouldEmitRelativeTypeAlias
+                                ? aliasSourceImport!.ResolveExportedTypeQualifiedName(specifier.ImportedName)
+                                : shouldEmitRelativeModuleAlias
+                                    ? aliasSourceImport!.ResolveExportedModuleQualifiedName(specifier.ImportedName)
+                                : $"{namespaceName}.{specifier.ImportedName}";
+                            aliases.Add(new CSharpImportAlias(specifier.LocalName, qualifiedName));
                         }
                     }
 
@@ -699,6 +957,33 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    }");
         }
 
+        private void EmitExtensionDeclaration(SyntaxNode node, int index)
+        {
+            var visibility = GetNamespaceTypeVisibility(node);
+            var receiverTypeNode = GetExtensionReceiverTypeNode(node);
+            var receiverType = MapType(receiverTypeNode);
+            var className = GetExtensionClassName(receiverTypeNode, index);
+
+            _builder.AppendLine($"    {visibility} static class {className}");
+            _builder.AppendLine("    {");
+
+            var functions = node.Children
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
+                .ToArray();
+
+            for (var functionIndex = 0; functionIndex < functions.Length; functionIndex++)
+            {
+                if (functionIndex > 0)
+                {
+                    _builder.AppendLine();
+                }
+
+                EmitExtensionFunction(functions[functionIndex], receiverType);
+            }
+
+            _builder.AppendLine("    }");
+        }
+
         private void EmitLiteralDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
@@ -708,6 +993,75 @@ public static class CSharpSourceBackend
             var storage = CanEmitConstLiteral(type, initializer) ? "const" : "static readonly";
 
             _builder.AppendLine($"        {visibility} {storage} {type} {name} = {EmitExpression(initializer)};");
+        }
+
+        private void EmitTopLevelValueDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetLocalDeclarationName(node);
+            var initializer = GetInitializerExpression(node);
+            var type = GetValueDeclarationType(node, initializer);
+            var storage = IsMutableValueDeclaration(node) ? "static" : "static readonly";
+            var value = initializer is null ? EmitDefaultValue(type) : EmitExpression(initializer, type);
+
+            _builder.AppendLine($"        {visibility} {storage} {type} {name} = {value};");
+        }
+
+        private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
+        {
+            var targetName = GetLiteralDeclarationName(exportAlias.Literal);
+            var initializer = GetInitializerExpression(exportAlias.Literal);
+            var type = GetLiteralType(exportAlias.Literal, initializer);
+            var storage = CanEmitConstLiteral(type, initializer) ? "const" : "static readonly";
+
+            _builder.AppendLine($"        public {storage} {type} {exportAlias.ExportedName} = {targetName};");
+        }
+
+        private void EmitValueExportAlias(CSharpSourceValueExportAlias exportAlias)
+        {
+            var targetName = GetLocalDeclarationName(exportAlias.Value);
+            var initializer = GetInitializerExpression(exportAlias.Value);
+            var type = GetValueDeclarationType(exportAlias.Value, initializer);
+
+            _builder.AppendLine($"        public static {type} {exportAlias.ExportedName}");
+            _builder.AppendLine("        {");
+            _builder.AppendLine($"            get {{ return {targetName}; }}");
+            if (IsMutableValueDeclaration(exportAlias.Value))
+            {
+                _builder.AppendLine($"            set {{ {targetName} = value; }}");
+            }
+
+            _builder.AppendLine("        }");
+        }
+
+        private void EmitValueImportAlias(CSharpSourceValueImportAlias importAlias)
+        {
+            var target = $"{importAlias.QualifiedModuleContainer}.{importAlias.TargetMemberName}";
+
+            _builder.AppendLine($"        private static {importAlias.Type} {importAlias.LocalName}");
+            _builder.AppendLine("        {");
+            _builder.AppendLine($"            get {{ return {target}; }}");
+            if (importAlias.IsMutable)
+            {
+                _builder.AppendLine($"            set {{ {target} = value; }}");
+            }
+
+            _builder.AppendLine("        }");
+        }
+
+        private void EmitValueReExport(CSharpSourceValueReExport reExport)
+        {
+            var target = $"{reExport.QualifiedModuleContainer}.{reExport.TargetMemberName}";
+
+            _builder.AppendLine($"        public static {reExport.Type} {reExport.ExportedName}");
+            _builder.AppendLine("        {");
+            _builder.AppendLine($"            get {{ return {target}; }}");
+            if (reExport.IsMutable)
+            {
+                _builder.AppendLine($"            set {{ {target} = value; }}");
+            }
+
+            _builder.AppendLine("        }");
         }
 
         private void EmitFunction(SyntaxNode node, bool isStatic)
@@ -832,6 +1186,19 @@ public static class CSharpSourceBackend
 
         private static string FormatParameters(IReadOnlyList<CSharpParameter> parameters) =>
             string.Join(", ", parameters.Select(parameter => $"{parameter.Type} {parameter.Name}"));
+
+        private static string FormatExtensionParameters(IReadOnlyList<CSharpParameter> parameters, string receiverType)
+        {
+            if (parameters.Count == 0)
+            {
+                return $"this {receiverType} receiver";
+            }
+
+            var first = parameters[0];
+            var formatted = new List<string> { $"this {receiverType} {first.Name}" };
+            formatted.AddRange(parameters.Skip(1).Select(parameter => $"{parameter.Type} {parameter.Name}"));
+            return string.Join(", ", formatted);
+        }
 
         private static string FormatArgumentNames(IReadOnlyList<CSharpParameter> parameters) =>
             string.Join(", ", parameters.Select(parameter => parameter.Name));
@@ -958,9 +1325,14 @@ public static class CSharpSourceBackend
             return new CSharpParameter(MapType(typeNode), !string.IsNullOrWhiteSpace(name) ? name : "_", GetSourceTypeName(typeNode));
         }
 
-        private void EmitBlock(SyntaxNode node, string? expectedType = null)
+        private void EmitBlock(
+            SyntaxNode node,
+            string? expectedType = null,
+            string indent = "            ",
+            bool returnsLastExpression = true)
         {
             var statements = node.Children.Where(child => !child.IsToken).ToArray();
+            var hasYield = statements.Any(statement => statement.Kind == SyntaxKind.YieldExpression);
             for (var index = 0; index < statements.Length; index++)
             {
                 var statement = statements[index];
@@ -968,7 +1340,19 @@ public static class CSharpSourceBackend
 
                 if (statement.Kind == SyntaxKind.ValueDeclaration)
                 {
-                    EmitLocalDeclaration(statement);
+                    EmitLocalDeclaration(statement, indent);
+                    continue;
+                }
+
+                if (statement.Kind == SyntaxKind.YieldExpression)
+                {
+                    EmitYieldExpression(statement, indent);
+                    continue;
+                }
+
+                if (statement.Kind == SyntaxKind.LockStatement)
+                {
+                    EmitLockStatement(statement, indent);
                     continue;
                 }
 
@@ -976,18 +1360,80 @@ public static class CSharpSourceBackend
                     ? statement.Children.FirstOrDefault(child => !child.IsToken)
                     : statement;
 
-                if (isLast)
+                if (isLast && returnsLastExpression && !hasYield)
                 {
-                    _builder.AppendLine($"            return {EmitExpression(expression, expectedType)};");
+                    _builder.AppendLine($"{indent}return {EmitExpression(expression, expectedType)};");
                 }
                 else
                 {
-                    _builder.AppendLine($"            {EmitExpression(expression)};");
+                    _builder.AppendLine($"{indent}{EmitExpression(expression)};");
                 }
             }
         }
 
-        private void EmitLocalDeclaration(SyntaxNode node)
+        private void EmitExtensionFunction(SyntaxNode node, string receiverType)
+        {
+            var visibility = GetVisibility(node);
+            var asyncModifier = IsAsyncFunction(node) ? " async" : string.Empty;
+            var name = GetDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+            var parameters = GetParameters(node);
+            var returnType = GetReturnType(node);
+            var body = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.FunctionBody);
+            var expression = body?.Children.LastOrDefault(child => !child.IsToken);
+
+            var previousValueTypes = _valueTypes;
+            _valueTypes = new Dictionary<string, string>(previousValueTypes, StringComparer.Ordinal);
+            foreach (var parameter in parameters)
+            {
+                _valueTypes[parameter.Name] = parameter.SourceType;
+            }
+
+            try
+            {
+                _builder.AppendLine($"        {visibility} static{asyncModifier} {returnType} {name}{typeParameters}({FormatExtensionParameters(parameters, receiverType)})");
+                EmitWhereClauses(node, "        ");
+                _builder.AppendLine("        {");
+                if (expression?.Kind == SyntaxKind.BlockExpression)
+                {
+                    EmitBlock(expression, returnType);
+                }
+                else
+                {
+                    _builder.AppendLine($"            return {EmitExpression(expression, returnType)};");
+                }
+
+                _builder.AppendLine("        }");
+            }
+            finally
+            {
+                _valueTypes = previousValueTypes;
+            }
+        }
+
+        private void EmitYieldExpression(SyntaxNode node, string indent)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            _builder.AppendLine($"{indent}yield return {EmitExpression(expression)};");
+        }
+
+        private void EmitLockStatement(SyntaxNode node, string indent)
+        {
+            var children = node.Children.Where(child => !child.IsToken).ToArray();
+            var gateExpression = children.FirstOrDefault(child => child.Kind != SyntaxKind.BlockExpression);
+            var body = children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+
+            _builder.AppendLine($"{indent}lock ({EmitExpression(gateExpression)})");
+            _builder.AppendLine($"{indent}{{");
+            if (body is not null)
+            {
+                EmitBlock(body, indent: $"{indent}    ", returnsLastExpression: false);
+            }
+
+            _builder.AppendLine($"{indent}}}");
+        }
+
+        private void EmitLocalDeclaration(SyntaxNode node, string indent = "            ")
         {
             var name = GetLocalDeclarationName(node);
             var expectedType = TryGetDirectTypeAnnotation(node, out var annotation)
@@ -998,11 +1444,25 @@ public static class CSharpSourceBackend
                 .Children
                 .FirstOrDefault(child => !child.IsToken);
 
-            _builder.AppendLine($"            var {name} = {EmitExpression(initializer, expectedType)};");
+            var declarationType = HasFunctionTypeAnnotation(node) && expectedType is not null
+                ? expectedType
+                : "var";
+            _builder.AppendLine($"{indent}{declarationType} {name} = {EmitExpression(initializer, expectedType)};");
             if (TryGetDirectTypeAnnotation(node, out var sourceAnnotation))
             {
                 _valueTypes[name] = GetSourceTypeName(sourceAnnotation);
             }
+        }
+
+        private void RegisterTopLevelValue(SyntaxNode node)
+        {
+            var name = GetLocalDeclarationName(node);
+            if (name.Length == 0)
+            {
+                return;
+            }
+
+            _valueTypes[name] = GetValueDeclarationSourceType(node, GetInitializerExpression(node));
         }
 
         private string EmitExpression(SyntaxNode? node, string? expectedType = null)
@@ -1018,12 +1478,14 @@ public static class CSharpSourceBackend
                 SyntaxKind.IdentifierExpression => EmitIdentifier(node),
                 SyntaxKind.MemberAccessExpression => EmitMemberAccess(node),
                 SyntaxKind.IndexerExpression => EmitIndexer(node),
+                SyntaxKind.GenericNameExpression => EmitGenericName(node),
                 SyntaxKind.CallExpression => EmitCall(node),
                 SyntaxKind.NamedArgument => EmitNamedArgument(node),
                 SyntaxKind.OutArgument => EmitOutArgument(node),
                 SyntaxKind.InArgument => EmitInArgument(node),
                 SyntaxKind.RefArgument => EmitRefArgument(node),
                 SyntaxKind.LambdaExpression => EmitLambda(node),
+                SyntaxKind.SpreadElement => EmitSpreadElement(node),
                 SyntaxKind.BinaryExpression => EmitBinary(node),
                 SyntaxKind.AssignmentExpression => EmitAssignment(node),
                 SyntaxKind.RecordExpression => EmitRecordExpression(node, expectedType),
@@ -1031,6 +1493,9 @@ public static class CSharpSourceBackend
                 SyntaxKind.MatchExpression => EmitMatch(node, expectedType ?? "object"),
                 SyntaxKind.AwaitExpression => EmitAwait(node),
                 SyntaxKind.CollectionExpression => EmitCollection(node, expectedType),
+                SyntaxKind.SatisfiesExpression => EmitSatisfiesExpression(node),
+                SyntaxKind.NameofExpression => EmitNameof(node),
+                SyntaxKind.CheckedExpression => EmitCheckedExpression(node),
                 _ => "default(object)"
             };
         }
@@ -1067,6 +1532,94 @@ public static class CSharpSourceBackend
             }
 
             return $"{EmitExpression(expressions[0])}[{EmitExpression(expressions[1])}]";
+        }
+
+        private string EmitNameof(SyntaxNode node)
+        {
+            var target = node.Children.FirstOrDefault(child => !child.IsToken);
+            return target is null ? "nameof" : $"nameof({EmitExpression(target)})";
+        }
+
+        private string EmitSatisfiesExpression(SyntaxNode node)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            return EmitExpression(expression);
+        }
+
+        private string EmitCheckedExpression(SyntaxNode node)
+        {
+            var keyword = node.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.CheckedKeyword or SyntaxKind.UncheckedKeyword)?.Text ?? "checked";
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            return $"{keyword}({EmitExpression(expression)})";
+        }
+
+        private void EmitFunctionImportAlias(CSharpSourceFunctionImportAlias importAlias)
+        {
+            var node = importAlias.Function;
+            var name = importAlias.LocalName;
+            var targetName = GetDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+            var parameters = GetParameters(node);
+            var returnType = GetReturnType(node);
+            var invocation = $"{importAlias.QualifiedModuleContainer}.{targetName}{typeParameters}({FormatArgumentNames(parameters)})";
+
+            _builder.AppendLine($"        private static {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
+            EmitWhereClauses(node, "        ");
+            _builder.AppendLine("        {");
+            if (string.Equals(returnType, "void", StringComparison.Ordinal))
+            {
+                _builder.AppendLine($"            {invocation};");
+            }
+            else
+            {
+                _builder.AppendLine($"            return {invocation};");
+            }
+
+            _builder.AppendLine("        }");
+        }
+
+        private void EmitFunctionReExport(CSharpSourceFunctionReExport reExport)
+        {
+            var node = reExport.Function;
+            var name = reExport.ExportedName;
+            var targetName = GetDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+            var parameters = GetParameters(node);
+            var returnType = GetReturnType(node);
+            var invocation = $"{reExport.QualifiedModuleContainer}.{targetName}{typeParameters}({FormatArgumentNames(parameters)})";
+
+            _builder.AppendLine($"        public static {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
+            EmitWhereClauses(node, "        ");
+            _builder.AppendLine("        {");
+            if (string.Equals(returnType, "void", StringComparison.Ordinal))
+            {
+                _builder.AppendLine($"            {invocation};");
+            }
+            else
+            {
+                _builder.AppendLine($"            return {invocation};");
+            }
+
+            _builder.AppendLine("        }");
+        }
+
+        private string EmitGenericName(SyntaxNode node)
+        {
+            var target = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.TypeArgumentList);
+            var argumentList = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeArgumentList);
+            if (target is null || argumentList is null)
+            {
+                return EmitExpression(target);
+            }
+
+            var arguments = argumentList.Children
+                .Where(child => !child.IsToken)
+                .Select(MapType)
+                .ToArray();
+
+            return arguments.Length == 0
+                ? EmitExpression(target)
+                : $"{EmitExpression(target)}<{string.Join(", ", arguments)}>";
         }
 
         private string EmitCall(SyntaxNode node)
@@ -1142,9 +1695,20 @@ public static class CSharpSourceBackend
             return $"{parameter} => {EmitExpression(body)}";
         }
 
+        private string EmitSpreadElement(SyntaxNode node)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            return EmitExpression(expression);
+        }
+
         private string EmitCollection(SyntaxNode node, string? expectedType)
         {
             var elements = node.Children.Where(child => !child.IsToken).ToArray();
+            if (elements.Any(element => element.Kind == SyntaxKind.SpreadElement))
+            {
+                return EmitSpreadCollection(elements, expectedType);
+            }
+
             var initializer = FormatCollectionInitializer(elements);
             if (TryGetListCollectionType(expectedType, out var listType))
             {
@@ -1166,6 +1730,82 @@ public static class CSharpSourceBackend
             return elements.Length == 0
                 ? "new object[] { }"
                 : $"new[] {initializer}";
+        }
+
+        private string EmitSpreadCollection(IReadOnlyList<SyntaxNode> elements, string? expectedType)
+        {
+            var elementType = GetCollectionElementType(expectedType);
+            if (elementType.Length == 0)
+            {
+                elementType = InferCollectionElementType(elements);
+            }
+
+            if (elementType.Length == 0)
+            {
+                elementType = "object";
+            }
+
+            var segments = BuildCollectionSegments(elements);
+            var sequence = EmitCollectionSequence(segments, elementType);
+            if (TryGetListCollectionType(expectedType, out var listType))
+            {
+                return $"new {listType}({sequence})";
+            }
+
+            return $"System.Linq.Enumerable.ToArray<{elementType}>({sequence})";
+        }
+
+        private string EmitCollectionSequence(IReadOnlyList<CollectionSegment> segments, string elementType)
+        {
+            if (segments.Count == 0)
+            {
+                return $"new {elementType}[] {{ }}";
+            }
+
+            var sequence = EmitCollectionSegment(segments[0], elementType);
+            foreach (var segment in segments.Skip(1))
+            {
+                sequence = $"System.Linq.Enumerable.Concat<{elementType}>({sequence}, {EmitCollectionSegment(segment, elementType)})";
+            }
+
+            return sequence;
+        }
+
+        private string EmitCollectionSegment(CollectionSegment segment, string elementType) =>
+            segment.IsSpread
+                ? EmitExpression(segment.Expression)
+                : $"new {elementType}[] {FormatCollectionInitializer(segment.Elements)}";
+
+        private static IReadOnlyList<CollectionSegment> BuildCollectionSegments(IReadOnlyList<SyntaxNode> elements)
+        {
+            var segments = new List<CollectionSegment>();
+            var run = new List<SyntaxNode>();
+            foreach (var element in elements)
+            {
+                if (element.Kind == SyntaxKind.SpreadElement)
+                {
+                    AddCollectionElementRun(segments, run);
+                    var expression = element.Children.FirstOrDefault(child => !child.IsToken);
+                    segments.Add(new CollectionSegment(IsSpread: true, [], expression));
+                    continue;
+                }
+
+                run.Add(element);
+            }
+
+            AddCollectionElementRun(segments, run);
+            return segments;
+        }
+
+        private static void AddCollectionElementRun(List<CollectionSegment> segments, List<SyntaxNode> run)
+        {
+            if (run.Count == 0)
+            {
+                return;
+            }
+
+            segments.Add(new CollectionSegment(IsSpread: false, run.ToArray(), null));
+            run.Clear();
         }
 
         private string EmitAssignment(SyntaxNode node)
@@ -1204,6 +1844,11 @@ public static class CSharpSourceBackend
                 return EmitPipeline(expressions[0], expressions[1]);
             }
 
+            if (TryGetCompositionDirection(node, out var direction))
+            {
+                return EmitComposition(expressions[0], expressions[1], direction);
+            }
+
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
         }
 
@@ -1229,6 +1874,84 @@ public static class CSharpSourceBackend
                 .Prepend(pipedExpression);
 
             return EmitInvocation(callee, arguments);
+        }
+
+        private string EmitComposition(SyntaxNode left, SyntaxNode right, CompositionDirection direction)
+        {
+            var parameterName = $"__compose{_temporaryIndex++}";
+            var body = direction == CompositionDirection.Forward
+                ? EmitComposedApplication(right, EmitComposedApplication(left, parameterName))
+                : EmitComposedApplication(left, EmitComposedApplication(right, parameterName));
+
+            return $"{parameterName} => {body}";
+        }
+
+        private string EmitComposedApplication(SyntaxNode target, string argument)
+        {
+            if (TryGetCompositionExpression(target, out var left, out var right, out var direction))
+            {
+                return direction == CompositionDirection.Forward
+                    ? EmitComposedApplication(right, EmitComposedApplication(left, argument))
+                    : EmitComposedApplication(left, EmitComposedApplication(right, argument));
+            }
+
+            return EmitInvocation(target, [argument]);
+        }
+
+        private static bool TryGetCompositionExpression(
+            SyntaxNode node,
+            out SyntaxNode left,
+            out SyntaxNode right,
+            out CompositionDirection direction)
+        {
+            left = null!;
+            right = null!;
+            direction = CompositionDirection.Forward;
+
+            if (node.Kind != SyntaxKind.BinaryExpression ||
+                !TryGetCompositionDirection(node, out direction))
+            {
+                return false;
+            }
+
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2)
+            {
+                return false;
+            }
+
+            left = expressions[0];
+            right = expressions[1];
+            return true;
+        }
+
+        private static bool TryGetCompositionDirection(SyntaxNode node, out CompositionDirection direction)
+        {
+            direction = CompositionDirection.Forward;
+            var children = node.Children;
+            for (var index = 0; index < children.Count - 1; index++)
+            {
+                if (!children[index].IsToken || !children[index + 1].IsToken)
+                {
+                    continue;
+                }
+
+                if (children[index].Kind == SyntaxKind.GreaterToken &&
+                    children[index + 1].Kind == SyntaxKind.GreaterToken)
+                {
+                    direction = CompositionDirection.Forward;
+                    return true;
+                }
+
+                if (children[index].Kind == SyntaxKind.LessToken &&
+                    children[index + 1].Kind == SyntaxKind.LessToken)
+                {
+                    direction = CompositionDirection.Backward;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private string EmitMatch(SyntaxNode node, string resultType)
@@ -1348,7 +2071,7 @@ public static class CSharpSourceBackend
             }
 
             var receiverExpression = EmitExpression(receiver);
-            var updatedFields = GetRecordFieldExpressions(update);
+            var updatedFields = GetRecordFieldExpressions(update, record);
             var arguments = record.Parameters
                 .Select(parameter => updatedFields.TryGetValue(parameter.Name, out var updatedValue)
                     ? updatedValue
@@ -1364,7 +2087,7 @@ public static class CSharpSourceBackend
                 return "default(object)";
             }
 
-            var fields = GetRecordFieldExpressions(node);
+            var fields = GetRecordFieldExpressions(node, record);
             var arguments = record.Parameters.Select(parameter =>
                 fields.TryGetValue(parameter.Name, out var expression)
                     ? expression
@@ -1373,11 +2096,17 @@ public static class CSharpSourceBackend
             return $"new {record.Name}({string.Join(", ", arguments)})";
         }
 
-        private Dictionary<string, string> GetRecordFieldExpressions(SyntaxNode recordExpression)
+        private Dictionary<string, string> GetRecordFieldExpressions(SyntaxNode recordExpression, RecordShape? expectedRecord = null)
         {
             var fields = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var field in recordExpression.Children.Where(child => child.Kind == SyntaxKind.RecordField))
+            foreach (var field in recordExpression.Children.Where(child => child.Kind is SyntaxKind.RecordField or SyntaxKind.RecordSpreadField))
             {
+                if (field.Kind == SyntaxKind.RecordSpreadField)
+                {
+                    AddRecordSpreadFieldExpressions(field, expectedRecord, fields);
+                    continue;
+                }
+
                 var name = field.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
                 if (name.Length == 0)
                 {
@@ -1389,6 +2118,29 @@ public static class CSharpSourceBackend
             }
 
             return fields;
+        }
+
+        private void AddRecordSpreadFieldExpressions(
+            SyntaxNode spreadField,
+            RecordShape? expectedRecord,
+            Dictionary<string, string> fields)
+        {
+            if (!expectedRecord.HasValue)
+            {
+                return;
+            }
+
+            var expression = spreadField.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is null)
+            {
+                return;
+            }
+
+            var spreadExpression = EmitExpression(expression);
+            foreach (var parameter in expectedRecord.Value.Parameters)
+            {
+                fields[parameter.Name] = $"{spreadExpression}.{parameter.Name}";
+            }
         }
 
         private bool TryGetRecordShape(SyntaxNode receiver, out RecordShape record)
@@ -1555,7 +2307,12 @@ public static class CSharpSourceBackend
                 }
 
                 var name = GetQualifiedName(node);
-                if (_typeLevelUnions.ContainsKey(name))
+                if (_compileTimeOnlyTypeAliasRuntimeTypes.TryGetValue(name, out var runtimeType))
+                {
+                    return runtimeType;
+                }
+
+                if (_typeLevelUnions.ContainsKey(name) || _compileTimeOnlyTypeAliases.Contains(name))
                 {
                     return "object";
                 }
@@ -1588,12 +2345,245 @@ public static class CSharpSourceBackend
                 return $"{MapType(elementType)}[]";
             }
 
-            if (node.Kind is SyntaxKind.UnionType or SyntaxKind.RecordShapeType)
+            if (node.Kind == SyntaxKind.FunctionType)
+            {
+                return MapFunctionType(node);
+            }
+
+            if (node.Kind == SyntaxKind.LiteralType)
+            {
+                return MapLiteralRuntimeType(node);
+            }
+
+            if (node.Kind == SyntaxKind.KeyofType)
+            {
+                return "string";
+            }
+
+            if (node.Kind == SyntaxKind.IndexedAccessType)
+            {
+                return TryMapIndexedAccessType(node, out var indexedAccessType)
+                    ? indexedAccessType
+                    : "object";
+            }
+
+            if (node.Kind is SyntaxKind.UnionType or SyntaxKind.IntersectionType or SyntaxKind.RecordShapeType)
             {
                 return "object";
             }
 
             return "object";
+        }
+
+        private bool TryMapIndexedAccessType(SyntaxNode node, out string mappedType)
+        {
+            mappedType = "object";
+            var typeNodes = node.Children.Where(child => !child.IsToken).ToArray();
+            if (typeNodes.Length < 2)
+            {
+                return false;
+            }
+
+            var targetName = GetSourceTypeName(typeNodes[0]);
+            if (!TryGetKnownShape(targetName, out var shape) ||
+                !TryGetIndexedAccessKeyNames(typeNodes[1], out var keyNames))
+            {
+                return false;
+            }
+
+            var mappedTypes = new List<string>();
+            foreach (var keyName in keyNames.Distinct(StringComparer.Ordinal))
+            {
+                var parameter = shape.Parameters.FirstOrDefault(candidate => string.Equals(candidate.Name, keyName, StringComparison.Ordinal));
+                if (parameter.Name.Length == 0 || parameter.Type.Length == 0)
+                {
+                    return false;
+                }
+
+                mappedTypes.Add(parameter.Type);
+            }
+
+            var distinctTypes = mappedTypes.Distinct(StringComparer.Ordinal).ToArray();
+            if (distinctTypes.Length != 1)
+            {
+                return false;
+            }
+
+            mappedType = distinctTypes[0];
+            return true;
+        }
+
+        private bool TryGetIndexedAccessKeyNames(SyntaxNode node, out IReadOnlyList<string> keyNames)
+        {
+            var keys = new List<string>();
+            if (node.Kind == SyntaxKind.UnionType)
+            {
+                foreach (var memberNode in node.Children.Where(child => !child.IsToken))
+                {
+                    if (!TryGetIndexedAccessKeyNames(memberNode, out var memberKeys))
+                    {
+                        keyNames = [];
+                        return false;
+                    }
+
+                    keys.AddRange(memberKeys);
+                }
+
+                keyNames = keys.Distinct(StringComparer.Ordinal).ToArray();
+                return keys.Count > 0;
+            }
+
+            if (node.Kind == SyntaxKind.KeyofType)
+            {
+                var target = node.Children.FirstOrDefault(child => !child.IsToken);
+                var targetName = GetSourceTypeName(target);
+                if (!TryGetKnownShape(targetName, out var shape))
+                {
+                    keyNames = [];
+                    return false;
+                }
+
+                keyNames = shape.Parameters.Select(parameter => parameter.Name).Where(name => name.Length > 0).Distinct(StringComparer.Ordinal).ToArray();
+                return keyNames.Count > 0;
+            }
+
+            if (node.Kind == SyntaxKind.TypeName)
+            {
+                var name = GetQualifiedName(node);
+                if (!_typeLevelUnions.TryGetValue(name, out var typeLevelUnion))
+                {
+                    keyNames = [];
+                    return false;
+                }
+
+                foreach (var member in typeLevelUnion.Members)
+                {
+                    if (!TryUnquoteStringLiteral(member.SourceType, out var keyName))
+                    {
+                        keyNames = [];
+                        return false;
+                    }
+
+                    keys.Add(keyName);
+                }
+
+                keyNames = keys.Distinct(StringComparer.Ordinal).ToArray();
+                return keys.Count > 0;
+            }
+
+            if (node.Kind == SyntaxKind.LiteralType &&
+                TryUnquoteStringLiteral(node.Children.FirstOrDefault(child => child.IsToken)?.Text, out var directKey))
+            {
+                keyNames = [directKey];
+                return true;
+            }
+
+            keyNames = [];
+            return false;
+        }
+
+        private bool TryGetKnownShape(string name, out RecordShape shape)
+        {
+            if (_records.TryGetValue(name, out shape))
+            {
+                return true;
+            }
+
+            return _structuralShapes.TryGetValue(name, out shape);
+        }
+
+        private RecordShape GetStructuralShape(string name, SyntaxNode node)
+        {
+            var members = new List<CSharpParameter>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var member in node.Children.Where(child => child.Kind == SyntaxKind.ShapeMember))
+            {
+                var memberName = member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+                var memberType = member.Children.LastOrDefault(child => !child.IsToken);
+                if (memberName.Length == 0 || memberType is null || !seen.Add(memberName))
+                {
+                    continue;
+                }
+
+                members.Add(new CSharpParameter(MapType(memberType), memberName, GetSourceTypeName(memberType)));
+            }
+
+            return new RecordShape(name, members);
+        }
+
+        private bool TryGetIntersectionStructuralShape(string name, SyntaxNode node, out RecordShape shape)
+        {
+            var members = new List<CSharpParameter>();
+            var memberIndexes = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var memberNode in node.Children.Where(child => !child.IsToken))
+            {
+                var memberShapeName = GetSourceTypeName(memberNode);
+                if (!TryGetKnownShape(memberShapeName, out var memberShape))
+                {
+                    shape = default;
+                    return false;
+                }
+
+                foreach (var member in memberShape.Parameters)
+                {
+                    if (memberIndexes.TryGetValue(member.Name, out var existingIndex))
+                    {
+                        if (!string.Equals(members[existingIndex].Type, member.Type, StringComparison.Ordinal))
+                        {
+                            shape = default;
+                            return false;
+                        }
+
+                        continue;
+                    }
+
+                    memberIndexes[member.Name] = members.Count;
+                    members.Add(member);
+                }
+            }
+
+            if (members.Count == 0)
+            {
+                shape = default;
+                return false;
+            }
+
+            shape = new RecordShape(name, members);
+            return true;
+        }
+
+        private string MapFunctionType(SyntaxNode node)
+        {
+            var types = node.Children.Where(child => !child.IsToken).ToArray();
+            if (types.Length < 2)
+            {
+                return "System.Func<object>";
+            }
+
+            var parameterType = MapType(types[0]);
+            var returnType = MapType(types[1]);
+            if (string.Equals(parameterType, "void", StringComparison.Ordinal))
+            {
+                return string.Equals(returnType, "void", StringComparison.Ordinal)
+                    ? "System.Action"
+                    : $"System.Func<{returnType}>";
+            }
+
+            return string.Equals(returnType, "void", StringComparison.Ordinal)
+                ? $"System.Action<{parameterType}>"
+                : $"System.Func<{parameterType}, {returnType}>";
+        }
+
+        private static string MapLiteralRuntimeType(SyntaxNode node)
+        {
+            var token = node.Children.FirstOrDefault(child => child.IsToken);
+            return token?.Kind switch
+            {
+                SyntaxKind.StringLiteralToken => "string",
+                SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword => "bool",
+                SyntaxKind.NumericLiteralToken => (token.Text ?? string.Empty).Contains('.', StringComparison.Ordinal) ? "double" : "int",
+                _ => "object"
+            };
         }
 
         private bool TryGetGenericType(SyntaxNode node, out string type)
@@ -1627,6 +2617,44 @@ public static class CSharpSourceBackend
             if (typeNode is not null)
             {
                 return MapType(typeNode);
+            }
+
+            return InferLiteralType(initializer);
+        }
+
+        private string GetValueDeclarationType(SyntaxNode value, SyntaxNode? initializer)
+        {
+            if (TryGetDirectTypeAnnotation(value, out var annotation))
+            {
+                return MapType(annotation.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (initializer?.Kind == SyntaxKind.CollectionExpression)
+            {
+                var elementType = InferCollectionElementType(initializer.Children.Where(child => !child.IsToken).ToArray());
+                if (elementType.Length > 0)
+                {
+                    return $"{elementType}[]";
+                }
+            }
+
+            return InferLiteralType(initializer);
+        }
+
+        private string GetValueDeclarationSourceType(SyntaxNode value, SyntaxNode? initializer)
+        {
+            if (TryGetDirectTypeAnnotation(value, out var annotation))
+            {
+                return GetSourceTypeName(annotation);
+            }
+
+            if (initializer?.Kind == SyntaxKind.CollectionExpression)
+            {
+                var elementType = InferCollectionElementType(initializer.Children.Where(child => !child.IsToken).ToArray());
+                if (elementType.Length > 0)
+                {
+                    return $"{elementType}[]";
+                }
             }
 
             return InferLiteralType(initializer);
@@ -1672,6 +2700,14 @@ public static class CSharpSourceBackend
 
         private string InferCollectionElementType(SyntaxNode element)
         {
+            if (element.Kind == SyntaxKind.SpreadElement)
+            {
+                var expression = element.Children.FirstOrDefault(child => !child.IsToken);
+                return expression is not null && TryGetExpressionType(expression, out var collectionTypeName)
+                    ? GetCollectionElementType(MapSourceTypeName(collectionTypeName))
+                    : string.Empty;
+            }
+
             if (element.Kind == SyntaxKind.LiteralExpression)
             {
                 return InferLiteralType(element);
@@ -1702,6 +2738,19 @@ public static class CSharpSourceBackend
             return typeName[..^2];
         }
 
+        private static string GetCollectionElementType(string? typeName)
+        {
+            var arrayElementType = GetArrayElementType(typeName);
+            if (arrayElementType.Length > 0)
+            {
+                return arrayElementType;
+            }
+
+            return TryGetListCollectionElementType(typeName, out var listElementType)
+                ? listElementType
+                : string.Empty;
+        }
+
         private static bool TryGetListCollectionType(string? typeName, out string listType)
         {
             listType = string.Empty;
@@ -1724,6 +2773,30 @@ public static class CSharpSourceBackend
 
             listType = trimmed;
             return true;
+        }
+
+        private static bool TryGetListCollectionElementType(string? typeName, out string elementType)
+        {
+            elementType = string.Empty;
+            if (string.IsNullOrWhiteSpace(typeName))
+            {
+                return false;
+            }
+
+            var trimmed = typeName.Trim();
+            if (!TryGetSingleGenericArgument(trimmed, out var genericName, out var argument))
+            {
+                return false;
+            }
+
+            if (!string.Equals(genericName, "List", StringComparison.Ordinal) &&
+                !string.Equals(genericName, "System.Collections.Generic.List", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            elementType = argument;
+            return elementType.Length > 0;
         }
 
         private static string MapSourceTypeName(string sourceType) =>
@@ -1772,6 +2845,11 @@ public static class CSharpSourceBackend
                 return $"{GetSourceTypeName(node.Children.FirstOrDefault(child => !child.IsToken))}[]";
             }
 
+            if (node.Kind == SyntaxKind.FunctionType)
+            {
+                return GetSourceFunctionTypeName(node);
+            }
+
             if (node.Kind == SyntaxKind.TypeName)
             {
                 if (TryGetSourceGenericType(node, out var genericType))
@@ -1783,6 +2861,28 @@ public static class CSharpSourceBackend
             }
 
             return "object";
+        }
+
+        private static string GetSourceFunctionTypeName(SyntaxNode node)
+        {
+            var types = node.Children.Where(child => !child.IsToken).ToArray();
+            if (types.Length < 2)
+            {
+                return "System.Func<object>";
+            }
+
+            var parameterType = MapSourceTypeName(GetSourceTypeName(types[0]));
+            var returnType = MapSourceTypeName(GetSourceTypeName(types[1]));
+            if (string.Equals(parameterType, "void", StringComparison.Ordinal))
+            {
+                return string.Equals(returnType, "void", StringComparison.Ordinal)
+                    ? "System.Action"
+                    : $"System.Func<{returnType}>";
+            }
+
+            return string.Equals(returnType, "void", StringComparison.Ordinal)
+                ? $"System.Action<{parameterType}>"
+                : $"System.Func<{parameterType}, {returnType}>";
         }
 
         private static bool TryGetSourceGenericType(SyntaxNode node, out string type)
@@ -1866,6 +2966,35 @@ public static class CSharpSourceBackend
                 or "ushort";
         }
 
+        private static bool IsMutableValueDeclaration(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
+
+        private static bool CanLowerTopLevelValueDeclaration(SyntaxNode node) =>
+            !IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node);
+
+        private static bool IsFunctionValueDeclaration(SyntaxNode node)
+        {
+            var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            if (annotation?.Children.Any(child => child.Kind == SyntaxKind.FunctionType) == true)
+            {
+                return true;
+            }
+
+            return node.Children
+                .Where(child => child.Kind == SyntaxKind.Initializer)
+                .SelectMany(child => child.Children)
+                .Any(child => child.Kind == SyntaxKind.LambdaExpression);
+        }
+
+        private static bool HasFunctionTypeAnnotation(SyntaxNode node) =>
+            node.Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)?
+                .Children
+                .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
+
+        private static string EmitDefaultValue(string type) =>
+            string.IsNullOrWhiteSpace(type) ? "default(object)" : $"default({type})";
+
         private static SyntaxNode? GetInitializerExpression(SyntaxNode node)
         {
             return node.Children
@@ -1879,6 +3008,18 @@ public static class CSharpSourceBackend
             annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)!;
             return annotation is not null;
         }
+
+        private static bool IsTypeSyntax(SyntaxKind kind) =>
+            kind is SyntaxKind.TypeName
+                or SyntaxKind.ArrayType
+                or SyntaxKind.NullableType
+                or SyntaxKind.FunctionType
+                or SyntaxKind.UnionType
+                or SyntaxKind.IntersectionType
+                or SyntaxKind.KeyofType
+                or SyntaxKind.IndexedAccessType
+                or SyntaxKind.LiteralType
+                or SyntaxKind.RecordShapeType;
 
         private string GetVisibility(SyntaxNode node)
         {
@@ -1898,13 +3039,39 @@ public static class CSharpSourceBackend
                 : "internal";
         }
 
+        private string GetNamespaceTypeVisibility(SyntaxNode node) =>
+            string.Equals(GetVisibility(node), "public", StringComparison.Ordinal)
+                ? "public"
+                : "internal";
+
         private static HashSet<string> CollectLocalExportedNames(SyntaxNode root)
         {
             var names = new HashSet<string>(StringComparer.Ordinal);
+            var declaredTypes = root.Children
+                .Where(child => child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration)
+                .Select(GetLocalTypeDeclarationName)
+                .Where(name => name.Length > 0)
+                .ToHashSet(StringComparer.Ordinal);
             foreach (var exportDeclaration in root.Children.Where(child => child.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration))
             {
-                if (HasFromSpecifier(exportDeclaration) || HasExportAlias(exportDeclaration))
+                if (HasFromSpecifier(exportDeclaration))
                 {
+                    continue;
+                }
+
+                if (HasExportAlias(exportDeclaration))
+                {
+                    if (exportDeclaration.Kind == SyntaxKind.ExportTypeDeclaration)
+                    {
+                        foreach (var exportSpecifier in GetNamedImportSpecifiers(exportDeclaration))
+                        {
+                            if (exportSpecifier.IsAlias && declaredTypes.Contains(exportSpecifier.ImportedName))
+                            {
+                                names.Add(exportSpecifier.ImportedName);
+                            }
+                        }
+                    }
+
                     continue;
                 }
 
@@ -1916,6 +3083,85 @@ public static class CSharpSourceBackend
 
             return names;
         }
+
+        private static IReadOnlyList<CSharpSourceLiteralExportAlias> CollectLocalLiteralExportAliases(SyntaxNode root)
+        {
+            var declaredLiterals = root.Children
+                .Where(child => child.Kind == SyntaxKind.LiteralDeclaration && !IsAmbientDeclaration(child))
+                .Select(literal => new
+                {
+                    Name = GetLiteralDeclarationName(literal),
+                    Literal = literal
+                })
+                .Where(literal => literal.Name.Length > 0)
+                .ToDictionary(literal => literal.Name, literal => literal.Literal, StringComparer.Ordinal);
+            if (declaredLiterals.Count == 0)
+            {
+                return [];
+            }
+
+            var aliases = new List<CSharpSourceLiteralExportAlias>();
+            foreach (var exportDeclaration in root.Children.Where(child =>
+                child.Kind == SyntaxKind.ExportNamedDeclaration &&
+                !HasFromSpecifier(child) &&
+                HasExportAlias(child)))
+            {
+                foreach (var exportSpecifier in GetNamedImportSpecifiers(exportDeclaration).Where(specifier => specifier.IsAlias))
+                {
+                    if (declaredLiterals.TryGetValue(exportSpecifier.ImportedName, out var literal))
+                    {
+                        aliases.Add(new CSharpSourceLiteralExportAlias(exportSpecifier.LocalName, literal));
+                    }
+                }
+            }
+
+            return aliases;
+        }
+
+        private static IReadOnlyList<CSharpSourceValueExportAlias> CollectLocalValueExportAliases(SyntaxNode root)
+        {
+            var declaredValues = root.Children
+                .Where(child => child.Kind == SyntaxKind.ValueDeclaration && !IsAmbientDeclaration(child) && CanLowerTopLevelValueDeclaration(child))
+                .Select(value => new
+                {
+                    Name = GetLocalDeclarationName(value),
+                    Value = value
+                })
+                .Where(value => value.Name.Length > 0)
+                .ToDictionary(value => value.Name, value => value.Value, StringComparer.Ordinal);
+            if (declaredValues.Count == 0)
+            {
+                return [];
+            }
+
+            var aliases = new List<CSharpSourceValueExportAlias>();
+            foreach (var exportDeclaration in root.Children.Where(child =>
+                child.Kind == SyntaxKind.ExportNamedDeclaration &&
+                !HasFromSpecifier(child) &&
+                HasExportAlias(child)))
+            {
+                foreach (var exportSpecifier in GetNamedImportSpecifiers(exportDeclaration).Where(specifier => specifier.IsAlias))
+                {
+                    if (declaredValues.TryGetValue(exportSpecifier.ImportedName, out var value))
+                    {
+                        aliases.Add(new CSharpSourceValueExportAlias(exportSpecifier.LocalName, value));
+                    }
+                }
+            }
+
+            return aliases;
+        }
+
+        private static string GetLocalTypeDeclarationName(SyntaxNode node) =>
+            node.Kind switch
+            {
+                SyntaxKind.TypeAliasDeclaration => GetTypeAliasDeclarationName(node),
+                SyntaxKind.RecordDeclaration => GetRecordDeclarationName(node),
+                SyntaxKind.UnionDeclaration => GetUnionDeclarationName(node),
+                SyntaxKind.ClassDeclaration => GetClassDeclarationName(node),
+                SyntaxKind.InterfaceDeclaration => GetInterfaceDeclarationName(node),
+                _ => string.Empty
+            };
 
         private static bool TryGetLocalExportableDeclarationName(SyntaxNode node, out string name)
         {
@@ -2105,6 +3351,23 @@ public static class CSharpSourceBackend
             return "Generated";
         }
 
+        private static SyntaxNode? GetExtensionReceiverTypeNode(SyntaxNode node) =>
+            node.Children.FirstOrDefault(child => IsTypeSyntax(child.Kind));
+
+        private static string GetExtensionClassName(SyntaxNode? receiverTypeNode, int index)
+        {
+            var sourceName = GetSourceTypeName(receiverTypeNode);
+            var normalized = new string(sourceName.Where(char.IsLetterOrDigit).ToArray());
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                normalized = "Generated";
+            }
+
+            var prefix = char.ToUpperInvariant(normalized[0]) + normalized[1..];
+            var suffix = index == 0 ? string.Empty : index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return $"{prefix}{suffix}Extensions";
+        }
+
         private static string GetLocalDeclarationName(SyntaxNode node)
         {
             var seenLetKeyword = false;
@@ -2146,6 +3409,24 @@ public static class CSharpSourceBackend
         private bool TryGetConstructorName(SyntaxNode callee, out string constructorName)
         {
             constructorName = string.Empty;
+            if (callee.Kind == SyntaxKind.GenericNameExpression)
+            {
+                var target = callee.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.TypeArgumentList);
+                if (target?.Kind != SyntaxKind.IdentifierExpression)
+                {
+                    return false;
+                }
+
+                var genericConstructorName = GetIdentifierText(target);
+                if (!_constructorCandidateNames.Contains(genericConstructorName))
+                {
+                    return false;
+                }
+
+                constructorName = EmitGenericName(callee);
+                return constructorName.Length > 0;
+            }
+
             if (callee.Kind != SyntaxKind.IdentifierExpression)
             {
                 return false;
@@ -2342,5 +3623,11 @@ public static class CSharpSourceBackend
             string ClassName,
             int Tag,
             IReadOnlyList<CSharpParameter> Parameters);
+
+        private enum CompositionDirection
+        {
+            Forward,
+            Backward
+        }
     }
 }

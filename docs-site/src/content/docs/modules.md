@@ -61,12 +61,37 @@ Relative specifiers are resolved against the source module graph.
 import { helper } from "./Feature/Helper"
 ```
 
-Missing relative modules report `TS0112`. Resolved relative imports are tracked by the source module graph. Some source import lowering remains active implementation work, so unsupported forms report `TS0113` rather than producing partial generated C#.
+Missing relative modules report `TS0112`. Resolved relative imports are tracked by the source module graph. Future unsupported source import forms report `TS0113` rather than producing partial generated C#.
 
 Unaliased named source imports lower through a generated C# `using static` directive for the target source module container:
 
 ```text
 import { helper } from "./Feature/Helper"
+```
+
+Relative named function import aliases lower through a generated private forwarding method in the importing module container:
+
+```text
+import { helper as runHelper } from "./Feature/Helper"
+```
+
+Relative top-level value import aliases lower through a generated private property in the importing module container:
+
+```text
+import { PublicName as ImportedName } from "./Feature/Helper"
+```
+
+Relative type import aliases, including regular named aliases for exported source types, lower through generated C# `using` aliases:
+
+```text
+import type { Customer as Model } from "./Feature/Models"
+import { Customer as NamedModel } from "./Feature/Models"
+```
+
+Relative named module import aliases lower through generated C# type aliases:
+
+```text
+import { Tools as HelperTools } from "./Feature/Helper"
 ```
 
 Namespace source imports lower to a generated C# alias for the target source module container:
@@ -75,7 +100,7 @@ Namespace source imports lower to a generated C# alias for the target source mod
 import * as Helper from "./Feature/Helper"
 ```
 
-Named source import aliases such as `import { helper as h } from "./Feature/Helper"` remain unsupported and report `TS0113`.
+Relative named and type imports must refer to names exported by the target source module. Namespace alias member access, such as `Helper.hidden()`, must also reference exported target members. Missing exports report `TS0114` before generated C# emission.
 
 ## Export Surface
 
@@ -96,6 +121,45 @@ export type { Customer }
 export { greet }
 ```
 
+Local named function export aliases also contribute public surface and emit forwarding methods:
+
+```text
+fun helper(): string = "helper"
+export { helper as publicHelper }
+```
+
+Local literal export aliases contribute public surface and emit public constant or static readonly fields:
+
+```text
+literal InternalVersion: string = "1.0"
+export { InternalVersion as PublicVersion }
+```
+
+Local top-level value export aliases contribute public surface and emit a public property backed by the generated field:
+
+```text
+let InternalName: string = "Ada"
+export { InternalName as PublicName }
+```
+
+Explicitly annotated function-valued top-level `let` declarations lower to generated C# delegate values, and local aliases for those declarations emit forwarding properties:
+
+```text
+export let Transform: string -> string = text => text
+
+let internalTransform: string -> string = text => text
+export { internalTransform as PublicTransform }
+```
+
+Local type export aliases contribute source module public surface and relative type imports lower to the original generated C# type:
+
+```text
+record Customer(Name: string)
+export type { Customer as Model }
+```
+
+Duplicate names in local export lists report `TS2004`. Relative named/type source imports and namespace alias member access use this export surface; importing or accessing a non-exported target name reports `TS0114`.
+
 Forwarding exports are parser-visible:
 
 ```text
@@ -104,7 +168,39 @@ export type { CustomerShape } from "./Models"
 export * from "./Models"
 ```
 
-The current compiler reports `TS2003` for forwarding exports and renamed export specifiers until module graph public-surface lowering and alias lowering are implemented.
+The current compiler lowers relative named function re-exports and top-level value re-exports, including aliases, for example:
+
+```text
+export { helper } from "./Feature/Helper"
+export { helper as publicHelper } from "./Feature/Helper"
+export { PublicName } from "./Feature/Helper"
+```
+
+The re-exporting module contributes `helper`, `publicHelper`, or `PublicName` to its export surface and emits a generated C# forwarding method or property in its module container. The target must already export the function or top-level value; missing targets report `TS0114`.
+
+Relative type-only re-exports also contribute to the source module type surface:
+
+```text
+export type { VisibleModel as PublicModel } from "./Feature/Models"
+```
+
+Downstream `import type { PublicModel as Model } from "./Barrel"` lowers to a generated C# `using` alias for the original target type. The target must already export the type; missing targets report `TS0114`.
+
+Relative module re-export aliases also contribute to the source module surface:
+
+```text
+export { Tools as PublicTools } from "./Feature/Helper"
+```
+
+Downstream `import { PublicTools as HelperTools } from "./Barrel"` lowers to a generated C# type alias for the original module type.
+
+Relative star re-exports forward the currently lowerable function, top-level value, and type surface from the target module:
+
+```text
+export * from "./Feature/Helper"
+```
+
+Unannotated lambda-valued `export let`, non-relative forwarding, and non-lowerable forwarding forms still report `TS2003`.
 
 ## Related Pages
 

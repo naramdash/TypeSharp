@@ -33,15 +33,19 @@ public static class TypeSharpMetadataReader
                 continue;
             }
 
-            var types = reference.Kind == ResolvedReferenceKind.LocalAssembly
-                ? ReadLocalPublicTypes(reference, diagnostics)
+            var metadataReference = reference.Kind == ResolvedReferenceKind.FrameworkAssembly
+                ? ResolveFrameworkMetadataReference(reference)
+                : reference;
+
+            var types = !string.IsNullOrWhiteSpace(metadataReference.Path)
+                ? ReadPublicTypes(metadataReference, diagnostics)
                 : [];
 
             assemblies.Add(new MetadataAssemblySymbol(
                 reference.Identity,
                 reference.Kind,
                 reference.OriginalText,
-                reference.Path,
+                metadataReference.Path,
                 reference.RelativePath)
             {
                 Types = types
@@ -51,7 +55,7 @@ public static class TypeSharpMetadataReader
         return assemblies;
     }
 
-    private static IReadOnlyList<MetadataTypeSymbol> ReadLocalPublicTypes(
+    private static IReadOnlyList<MetadataTypeSymbol> ReadPublicTypes(
         ResolvedReference reference,
         List<Diagnostic> diagnostics)
     {
@@ -85,12 +89,23 @@ public static class TypeSharpMetadataReader
                     continue;
                 }
 
+                var baseTypeName = GetMetadataTypeName(reader, type.BaseType);
                 types.Add(new MetadataTypeSymbol(
                     reader.GetString(type.Namespace),
                     reader.GetString(type.Name),
                     ReadPublicMethods(reader, type, assemblyHasNullableMetadata),
                     ReadPublicProperties(reader, type),
-                    ReadPublicFields(reader, type)));
+                    ReadPublicFields(reader, type),
+                    ReadPublicEvents(reader, type))
+                {
+                    BaseTypeName = baseTypeName,
+                    Constructors = ReadPublicConstructors(reader, type, assemblyHasNullableMetadata),
+                    HasPublicParameterlessConstructor = HasPublicParameterlessConstructor(reader, type),
+                    InterfaceNames = ReadInterfaceNames(reader, type),
+                    IsInterface = type.Attributes.HasFlag(System.Reflection.TypeAttributes.Interface),
+                    IsValueType = string.Equals(baseTypeName, "System.ValueType", StringComparison.Ordinal) ||
+                        string.Equals(baseTypeName, "System.Enum", StringComparison.Ordinal)
+                });
             }
         }
         catch (BadImageFormatException)
@@ -102,6 +117,72 @@ public static class TypeSharpMetadataReader
         }
 
         return types;
+    }
+
+    private static IReadOnlyList<MetadataMethodSymbol> ReadPublicConstructors(
+        MetadataReader reader,
+        TypeDefinition type,
+        bool assemblyHasNullableMetadata)
+    {
+        var constructors = new List<MetadataMethodSymbol>();
+        foreach (var handle in type.GetMethods())
+        {
+            var method = reader.GetMethodDefinition(handle);
+            if (!method.Attributes.HasFlag(System.Reflection.MethodAttributes.Public) ||
+                method.Attributes.HasFlag(System.Reflection.MethodAttributes.Static) ||
+                !method.Attributes.HasFlag(System.Reflection.MethodAttributes.SpecialName) ||
+                !string.Equals(reader.GetString(method.Name), ".ctor", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            constructors.Add(ReadMethod(reader, type, method, assemblyHasNullableMetadata));
+        }
+
+        return constructors;
+    }
+
+    private static ResolvedReference ResolveFrameworkMetadataReference(ResolvedReference reference)
+    {
+        var assemblyFileName = reference.Identity.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+            ? reference.Identity
+            : $"{reference.Identity}.dll";
+
+        foreach (var candidateRoot in GetFrameworkReferenceAssemblyRoots())
+        {
+            var candidatePath = Path.Combine(candidateRoot, assemblyFileName);
+            if (File.Exists(candidatePath))
+            {
+                return reference with { Path = candidatePath };
+            }
+        }
+
+        return reference;
+    }
+
+    private static IEnumerable<string> GetFrameworkReferenceAssemblyRoots()
+    {
+        foreach (var programFiles in new[]
+        {
+            Environment.GetEnvironmentVariable("ProgramFiles(x86)"),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            Environment.GetEnvironmentVariable("ProgramFiles"),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)
+        })
+        {
+            if (string.IsNullOrWhiteSpace(programFiles))
+            {
+                continue;
+            }
+
+            yield return Path.Combine(
+                programFiles,
+                "Reference Assemblies",
+                "Microsoft",
+                "Framework",
+                ".NETFramework",
+                "v4.8");
+        }
     }
 
     private static IReadOnlyList<MetadataMethodSymbol> ReadPublicMethods(
@@ -151,11 +232,45 @@ public static class TypeSharpMetadataReader
                 IsOptionalWithDefault(parameter)));
         }
 
+        var genericParameters = ReadGenericParameters(reader, method.GetGenericParameters());
         return new MetadataMethodSymbol(
             reader.GetString(method.Name),
             signature.ReturnType.Name,
             GetReturnNullability(reader, declaringType, method, signature.ReturnType, parameterDefinitions, assemblyHasNullableMetadata),
-            parameters);
+            parameters,
+            method.Attributes.HasFlag(System.Reflection.MethodAttributes.Static),
+            genericParameters.Count,
+            HasCustomAttribute(reader, method.GetCustomAttributes(), "System.Runtime.CompilerServices.ExtensionAttribute"))
+        {
+            GenericParameters = genericParameters
+        };
+    }
+
+    private static IReadOnlyList<MetadataGenericParameterSymbol> ReadGenericParameters(
+        MetadataReader reader,
+        GenericParameterHandleCollection handles)
+    {
+        var parameters = new List<MetadataGenericParameterSymbol>();
+        foreach (var handle in handles)
+        {
+            var parameter = reader.GetGenericParameter(handle);
+            var attributes = parameter.Attributes;
+            var constraints = parameter.GetConstraints()
+                .Select(constraintHandle => reader.GetGenericParameterConstraint(constraintHandle))
+                .Select(constraint => GetMetadataTypeName(reader, constraint.Type))
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name!)
+                .ToArray();
+
+            parameters.Add(new MetadataGenericParameterSymbol(
+                reader.GetString(parameter.Name),
+                attributes.HasFlag(System.Reflection.GenericParameterAttributes.ReferenceTypeConstraint),
+                attributes.HasFlag(System.Reflection.GenericParameterAttributes.NotNullableValueTypeConstraint),
+                attributes.HasFlag(System.Reflection.GenericParameterAttributes.DefaultConstructorConstraint),
+                constraints));
+        }
+
+        return parameters;
     }
 
     private static IReadOnlyList<MetadataPropertySymbol> ReadPublicProperties(MetadataReader reader, TypeDefinition type)
@@ -165,13 +280,23 @@ public static class TypeSharpMetadataReader
         {
             var property = reader.GetPropertyDefinition(handle);
             var accessors = property.GetAccessors();
-            if (IsPublicAccessor(reader, accessors.Getter) || IsPublicAccessor(reader, accessors.Setter))
+            var hasPublicGetter = IsPublicAccessor(reader, accessors.Getter);
+            var hasPublicSetter = IsPublicAccessor(reader, accessors.Setter);
+            if (hasPublicGetter || hasPublicSetter)
             {
                 var provider = new SimpleSignatureTypeProvider();
                 var signature = property.DecodeSignature(provider, genericContext: null);
                 properties.Add(new MetadataPropertySymbol(
                     reader.GetString(property.Name),
-                    signature.ReturnType.Name));
+                    signature.ReturnType.Name,
+                    IsStaticAccessor(reader, accessors.Getter) || IsStaticAccessor(reader, accessors.Setter),
+                    hasPublicGetter,
+                    hasPublicSetter,
+                    signature.ParameterTypes.Length > 0,
+                    signature.ParameterTypes.Length)
+                {
+                    ParameterTypes = signature.ParameterTypes.Select(type => type.Name).ToArray()
+                });
             }
         }
 
@@ -195,10 +320,34 @@ public static class TypeSharpMetadataReader
                 reader.GetString(field.Name),
                 signature.Name,
                 field.Attributes.HasFlag(System.Reflection.FieldAttributes.Static),
-                field.Attributes.HasFlag(System.Reflection.FieldAttributes.Literal)));
+                field.Attributes.HasFlag(System.Reflection.FieldAttributes.Literal),
+                field.Attributes.HasFlag(System.Reflection.FieldAttributes.InitOnly)));
         }
 
         return fields;
+    }
+
+    private static IReadOnlyList<MetadataEventSymbol> ReadPublicEvents(MetadataReader reader, TypeDefinition type)
+    {
+        var events = new List<MetadataEventSymbol>();
+        foreach (var handle in type.GetEvents())
+        {
+            var eventDefinition = reader.GetEventDefinition(handle);
+            var accessors = eventDefinition.GetAccessors();
+            var hasPublicAdder = IsPublicAccessor(reader, accessors.Adder);
+            var hasPublicRemover = IsPublicAccessor(reader, accessors.Remover);
+            if (hasPublicAdder || hasPublicRemover)
+            {
+                events.Add(new MetadataEventSymbol(
+                    reader.GetString(eventDefinition.Name),
+                    GetEventTypeName(reader, eventDefinition.Type),
+                    IsStaticAccessor(reader, accessors.Adder) || IsStaticAccessor(reader, accessors.Remover),
+                    hasPublicAdder,
+                    hasPublicRemover));
+            }
+        }
+
+        return events;
     }
 
     private static bool IsPublicAccessor(MetadataReader reader, MethodDefinitionHandle handle)
@@ -209,6 +358,16 @@ public static class TypeSharpMetadataReader
         }
 
         return reader.GetMethodDefinition(handle).Attributes.HasFlag(System.Reflection.MethodAttributes.Public);
+    }
+
+    private static bool IsStaticAccessor(MetadataReader reader, MethodDefinitionHandle handle)
+    {
+        if (handle.IsNil)
+        {
+            return false;
+        }
+
+        return reader.GetMethodDefinition(handle).Attributes.HasFlag(System.Reflection.MethodAttributes.Static);
     }
 
     private static bool IsPublicTopLevelType(System.Reflection.TypeAttributes attributes) =>
@@ -301,6 +460,74 @@ public static class TypeSharpMetadataReader
     {
         var type = reader.GetTypeReference(handle);
         return QualifiedName(reader, type.Namespace, type.Name);
+    }
+
+    private static string GetEventTypeName(MetadataReader reader, EntityHandle handle)
+    {
+        var provider = new SimpleSignatureTypeProvider();
+        return handle.Kind switch
+        {
+            HandleKind.TypeDefinition => GetTypeDefinitionName(reader, (TypeDefinitionHandle)handle),
+            HandleKind.TypeReference => GetTypeReferenceName(reader, (TypeReferenceHandle)handle),
+            HandleKind.TypeSpecification => reader.GetTypeSpecification((TypeSpecificationHandle)handle).DecodeSignature(provider, genericContext: null).Name,
+            _ => string.Empty
+        };
+    }
+
+    private static string? GetMetadataTypeName(MetadataReader reader, EntityHandle handle)
+    {
+        if (handle.IsNil)
+        {
+            return null;
+        }
+
+        var provider = new SimpleSignatureTypeProvider();
+        return handle.Kind switch
+        {
+            HandleKind.TypeDefinition => GetTypeDefinitionName(reader, (TypeDefinitionHandle)handle),
+            HandleKind.TypeReference => GetTypeReferenceName(reader, (TypeReferenceHandle)handle),
+            HandleKind.TypeSpecification => reader.GetTypeSpecification((TypeSpecificationHandle)handle).DecodeSignature(provider, genericContext: null).Name,
+            _ => null
+        };
+    }
+
+    private static IReadOnlyList<string> ReadInterfaceNames(MetadataReader reader, TypeDefinition type)
+    {
+        var names = new List<string>();
+        foreach (var handle in type.GetInterfaceImplementations())
+        {
+            var implementation = reader.GetInterfaceImplementation(handle);
+            var name = GetMetadataTypeName(reader, implementation.Interface);
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                names.Add(name);
+            }
+        }
+
+        return names;
+    }
+
+    private static bool HasPublicParameterlessConstructor(MetadataReader reader, TypeDefinition type)
+    {
+        foreach (var handle in type.GetMethods())
+        {
+            var method = reader.GetMethodDefinition(handle);
+            if (!method.Attributes.HasFlag(System.Reflection.MethodAttributes.Public) ||
+                !method.Attributes.HasFlag(System.Reflection.MethodAttributes.SpecialName) ||
+                !string.Equals(reader.GetString(method.Name), ".ctor", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var provider = new SimpleSignatureTypeProvider();
+            var signature = method.DecodeSignature(provider, genericContext: null);
+            if (signature.ParameterTypes.Length == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string QualifiedName(MetadataReader reader, StringHandle namespaceHandle, StringHandle nameHandle)

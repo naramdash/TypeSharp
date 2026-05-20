@@ -9,7 +9,7 @@ These tutorials point at runnable examples that are checked by the repository sm
 
 Goal: create and build a `net48` console program.
 
-Use: [`docs/examples/runnable/console-hello`](https://github.com/naramdash/TypeSharp/tree/main/docs/examples/runnable/console-hello)
+Use: [`examples/runnable/console-hello`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/console-hello)
 
 Core commands:
 
@@ -25,7 +25,7 @@ Status: implemented and smoke-tested. Antivirus can block generated `.exe` launc
 
 Goal: build a TypeSharp library whose generated assembly can be consumed from C#.
 
-Use: [`docs/examples/runnable/library-public-api`](https://github.com/naramdash/TypeSharp/tree/main/docs/examples/runnable/library-public-api)
+Use: [`examples/runnable/library-public-api`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/library-public-api)
 
 You will see public records, classes, and functions lowered to C#-friendly metadata.
 
@@ -35,7 +35,7 @@ Status: implemented and smoke-tested.
 
 Goal: build a local `net48` C# class library, reference its DLL from TypeSharp, and call it.
 
-Use: [`docs/examples/runnable/csharp-interop`](https://github.com/naramdash/TypeSharp/tree/main/docs/examples/runnable/csharp-interop)
+Use: [`examples/runnable/csharp-interop`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/csharp-interop)
 
 Core flow:
 
@@ -51,7 +51,7 @@ Status: implemented for local DLL references, constructors, static/instance memb
 
 Goal: read TypeSharp diagnostics as text or JSON and fix nullability errors.
 
-Use: [`docs/examples/runnable/diagnostics-null-safety`](https://github.com/naramdash/TypeSharp/tree/main/docs/examples/runnable/diagnostics-null-safety)
+Use: [`examples/runnable/diagnostics-null-safety`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/diagnostics-null-safety)
 
 Core command:
 
@@ -75,7 +75,7 @@ Goal: see how generated TypeSharp assemblies can be referenced by ASP.NET/WCF-st
 
 Use:
 
-- [`docs/examples/runnable/host-aspnet-wcf`](https://github.com/naramdash/TypeSharp/tree/main/docs/examples/runnable/host-aspnet-wcf)
-- [`docs/examples/runnable/host-worker`](https://github.com/naramdash/TypeSharp/tree/main/docs/examples/runnable/host-worker)
+- [`examples/runnable/host-aspnet-wcf`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/host-aspnet-wcf)
+- [`examples/runnable/host-worker`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/host-worker)
 
 Status: host reference shape is smoke-tested. Project template generation and packaging automation remain backlog.

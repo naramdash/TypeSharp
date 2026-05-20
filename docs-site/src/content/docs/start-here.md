@@ -40,8 +40,8 @@ TypeSharp borrows from expression-oriented and functional programming, but emits
 
 TypeSharp uses structural shape checking and type-level union ideas, but public .NET metadata must be nominal. Learn:
 
-- [Language Tour](../language-tour/) for structural shapes, type-level unions, and public boundary rules.
-- [Type System](../type-system/) for `unknown`, `dynamic`, narrowing, structural shapes, and nominal public API.
+- [Language Tour](../language-tour/) for structural shapes, intersection aliases, type-level unions, and public boundary rules.
+- [Type System](../type-system/) for `unknown`, `dynamic`, narrowing, structural shapes, intersection aliases, and nominal public API.
 - [Modules And Imports](../modules/) for TypeScript-style source files, relative module paths, imports, and exports.
 - [Fundamentals](../fundamentals/) for structural shapes versus nominal public API.
 - [Diagnostics](../diagnostics/) for public boundary and nullability errors.
@@ -53,12 +53,14 @@ Start with:
 
 - [Advanced Topics](../advanced/) for compiler pipeline, lowering, metadata, diagnostics, LSP, and regression strategy.
 - [Project Configuration](../project-configuration/) for manifest, generated output, source roots, references, and build shape.
+- [Project Requirements](../requirements/) for platform, language, compiler, interop, tooling, quality, and security constraints.
+- [Feature Status](../feature-status/) for MVP, backlog, preview, experimental, and rejected feature buckets.
 - [Grammar And Language Reference](../reference/) for syntax and public ABI rules.
 - [Core Goal](../goal/) for the project constraints.
 
 ## Current Maturity
 
-Implemented features are backed by smoke tests or fixtures. Planned and backlog items are documented separately and should not be treated as production guarantees. The canonical status map is [feature-map.md](https://github.com/naramdash/TypeSharp/blob/main/docs/feature-map.md).
+Implemented features are backed by smoke tests or fixtures. Planned and backlog items are documented separately and should not be treated as production guarantees. Use [Feature Status](../feature-status/) for the canonical status map. After task `0251`, [Document Ownership](../document-ownership/) tracks remaining bridge sources.
 
 ## Fast First Command
 

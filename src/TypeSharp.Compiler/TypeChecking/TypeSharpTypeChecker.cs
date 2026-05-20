@@ -1,4 +1,5 @@
 using TypeSharp.Compiler.Diagnostics;
+using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Parsing;
 
 namespace TypeSharp.Compiler.TypeChecking;
@@ -7,7 +8,16 @@ public static class TypeSharpTypeChecker
 {
     public static TypeCheckResult Check(SyntaxNode root, string file)
     {
-        var checker = new Checker(file);
+        var checker = new Checker(file, []);
+        return checker.Check(root);
+    }
+
+    public static TypeCheckResult Check(
+        SyntaxNode root,
+        string file,
+        IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies)
+    {
+        var checker = new Checker(file, metadataAssemblies);
         return checker.Check(root);
     }
 
@@ -38,13 +48,15 @@ public static class TypeSharpTypeChecker
         };
 
         private readonly string _file;
+        private readonly IReadOnlyList<MetadataAssemblySymbol> _metadataAssemblies;
         private readonly List<Diagnostic> _diagnostics = [];
         private readonly TypeSharpInferenceEngine _inference = new();
         private HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
 
-        public Checker(string file)
+        public Checker(string file, IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies)
         {
             _file = file;
+            _metadataAssemblies = metadataAssemblies;
         }
 
         public TypeCheckResult Check(SyntaxNode root)
@@ -115,12 +127,32 @@ public static class TypeSharpTypeChecker
                                     scope.DeclareCompileTimeOnlyType(aliasName, aliasKind);
                                 }
 
-                                if (TryGetTypeLevelUnion(aliasName, aliasTarget, out var typeLevelUnion))
+                                var declaredTypeLevelUnion = false;
+                                if (TryGetIndexedAccessTypeLevelUnion(aliasName, aliasTarget, scope, out var indexedAccessUnion))
+                                {
+                                    scope.DeclareTypeLevelUnion(aliasName, indexedAccessUnion.Members);
+                                    declaredTypeLevelUnion = true;
+                                }
+                                else if (TryGetKeyofTypeLevelUnion(aliasName, aliasTarget, scope, out var keyofUnion))
+                                {
+                                    scope.DeclareTypeLevelUnion(aliasName, keyofUnion.Members);
+                                    declaredTypeLevelUnion = true;
+                                }
+                                else if (TryGetTypeLevelUnion(aliasName, aliasTarget, out var typeLevelUnion))
                                 {
                                     scope.DeclareTypeLevelUnion(aliasName, typeLevelUnion.Members);
+                                    declaredTypeLevelUnion = true;
                                 }
 
-                                if (TryGetStructuralShape(aliasName, aliasTarget, out var structuralShape))
+                                if (!declaredTypeLevelUnion &&
+                                    aliasTarget.Kind == SyntaxKind.IndexedAccessType &&
+                                    TryGetIndexedAccessType(aliasTarget, scope, out var indexedAccessType) &&
+                                    indexedAccessType.IsKnown)
+                                {
+                                    scope.DeclareTypeAlias(aliasName, indexedAccessType);
+                                }
+
+                                if (TryGetStructuralShape(aliasName, aliasTarget, scope, out var structuralShape))
                                 {
                                     scope.DeclareStructuralShape(aliasName, structuralShape.Members);
                                 }
@@ -153,7 +185,7 @@ public static class TypeSharpTypeChecker
                     case SyntaxKind.FunctionDeclaration:
                         if (TryGetDeclarationName(child, out var functionName) &&
                             TryGetDirectTypeAnnotation(child, out var functionReturnTypeNode) &&
-                            TryGetType(functionReturnTypeNode, out var functionReturnType))
+                            TryGetType(functionReturnTypeNode, scope, out var functionReturnType))
                         {
                             scope.DeclareFunction(functionName, functionReturnType, GetFunctionCapabilities(child));
                         }
@@ -168,7 +200,7 @@ public static class TypeSharpTypeChecker
                         }
 
                         if (TryGetDirectTypeAnnotation(child, out var valueTypeNode) &&
-                            TryGetType(valueTypeNode, out var valueType))
+                            TryGetType(valueTypeNode, scope, out var valueType))
                         {
                             scope.DeclareValue(valueName, valueType);
                             if (TryGetFunctionReturnType(valueTypeNode, out var valueFunctionReturnType))
@@ -218,6 +250,10 @@ public static class TypeSharpTypeChecker
                     }
                     break;
 
+                case SyntaxKind.ExtensionDeclaration:
+                    CheckExtensionDeclaration(node, scope);
+                    break;
+
                 case SyntaxKind.ModuleDeclaration:
                     CheckModuleDeclaration(node, scope);
                     break;
@@ -261,7 +297,7 @@ public static class TypeSharpTypeChecker
             {
                 if (TryGetFirstIdentifier(parameter, out var parameterIdentifier) &&
                     TryGetDirectTypeAnnotation(parameter, out var parameterTypeNode) &&
-                    TryGetType(parameterTypeNode, out var parameterType))
+                    TryGetType(parameterTypeNode, scope, out var parameterType))
                 {
                     scope.DeclareValue(parameterIdentifier.Text ?? string.Empty, parameterType);
                 }
@@ -275,7 +311,7 @@ public static class TypeSharpTypeChecker
             var expectedReturnType = SimpleType.Unknown;
             var expectedReturnTypeKnown =
                 TryGetDirectTypeAnnotation(node, out var returnTypeNode) &&
-                TryGetType(returnTypeNode, out expectedReturnType);
+                TryGetType(returnTypeNode, scope, out expectedReturnType);
             var comparisonReturnType = expectedReturnType;
             if (expectedReturnTypeKnown && IsAsyncFunction(node) && TryGetTaskResultType(expectedReturnType, out var asyncResultType))
             {
@@ -303,6 +339,41 @@ public static class TypeSharpTypeChecker
                         body,
                         $"Cannot return expression of type '{actualReturnType}' from function returning '{expectedReturnType}'.");
                 }
+            }
+        }
+
+        private void CheckExtensionDeclaration(SyntaxNode node, TypeScope scope)
+        {
+            var receiverTypeNode = node.Children.FirstOrDefault(child => IsTypeSyntax(child.Kind));
+            _ = receiverTypeNode is not null && TryGetType(receiverTypeNode, scope, out var receiverType);
+
+            foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
+            {
+                var firstParameter = function.Children
+                    .Where(child => child.Kind == SyntaxKind.ParameterList)
+                    .SelectMany(child => child.Children)
+                    .FirstOrDefault(child => child.Kind == SyntaxKind.Parameter);
+
+                if (receiverTypeNode is null || !TryGetType(receiverTypeNode, scope, out receiverType))
+                {
+                    ReportMismatch(node, "Extension declaration requires a receiver type.");
+                }
+                else if (firstParameter is null ||
+                    !TryGetDirectTypeAnnotation(firstParameter, out var parameterTypeNode) ||
+                    !TryGetType(parameterTypeNode, scope, out var parameterType))
+                {
+                    ReportMismatch(function, $"Extension method requires a first receiver parameter of type '{receiverType}'.");
+                }
+                else if (parameterType.IsKnown &&
+                    receiverType.IsKnown &&
+                    (!string.Equals(parameterType.Name, receiverType.Name, StringComparison.Ordinal) ||
+                        parameterType.IsNullable != receiverType.IsNullable ||
+                        parameterType.IsNull != receiverType.IsNull))
+                {
+                    ReportMismatch(function, $"Extension method first parameter must match receiver type '{receiverType}', but found '{parameterType}'.");
+                }
+
+                CheckFunction(function, scope);
             }
         }
 
@@ -390,6 +461,19 @@ public static class TypeSharpTypeChecker
                     continue;
                 }
 
+                if (child.Kind == SyntaxKind.YieldExpression)
+                {
+                    lastExpressionType = CheckYieldExpression(child, scope, expectedType);
+                    continue;
+                }
+
+                if (child.Kind == SyntaxKind.LockStatement)
+                {
+                    CheckLockStatement(child, scope);
+                    lastExpressionType = SimpleType.Unknown;
+                    continue;
+                }
+
                 if (child.Kind == SyntaxKind.ExpressionStatement)
                 {
                     var expression = child.Children.FirstOrDefault(grandchild => !grandchild.IsToken);
@@ -410,7 +494,7 @@ public static class TypeSharpTypeChecker
             var expectedType = SimpleType.Unknown;
             var annotationKnown =
                 TryGetDirectTypeAnnotation(node, out var typeNode) &&
-                TryGetType(typeNode, out expectedType);
+                TryGetType(typeNode, scope, out expectedType);
             if (annotationKnown && !scope.AllowsDynamic && ContainsDynamicType(typeNode))
             {
                 ReportDynamicCapabilityRequired(typeNode);
@@ -463,6 +547,16 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckExpressionWithExpected(SyntaxNode node, TypeScope scope, SimpleType? expectedType)
         {
+            if (expectedType.HasValue &&
+                expectedType.Value.IsKnown &&
+                ((scope.ResolveTypeLevelUnion(expectedType.Value.Name, out var expectedUnion) &&
+                    expectedUnion.Members.Any(member => TryGetLiteralRuntimeType(member.Type, out _))) ||
+                    TryGetLiteralRuntimeType(expectedType.Value, out _)) &&
+                TryGetLiteralExpressionType(node, out var literalType))
+            {
+                return literalType;
+            }
+
             if (expectedType.HasValue && node.Kind == SyntaxKind.RecordExpression)
             {
                 return CheckRecordExpression(node, scope, expectedType.Value);
@@ -479,6 +573,11 @@ public static class TypeSharpTypeChecker
         private SimpleType CheckExpression(SyntaxNode node, TypeScope scope)
         {
             CheckCapabilityCall(node, scope);
+
+            if (node.Kind == SyntaxKind.SatisfiesExpression)
+            {
+                return CheckSatisfiesExpression(node, scope);
+            }
 
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
@@ -498,6 +597,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.IndexerExpression => InferIndexer(node, scope),
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
                 SyntaxKind.CollectionExpression => InferCollection(node, scope),
+                SyntaxKind.SpreadElement => CheckSpreadElement(node, scope),
                 SyntaxKind.RecordExpression => CheckRecordExpression(node, scope, SimpleType.Unknown),
                 _ => CheckChildrenForSideEffects(node, scope)
             };
@@ -572,15 +672,22 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckRecordExpression(SyntaxNode node, TypeScope scope, SimpleType expectedType)
         {
-            var fields = GetRecordExpressionFieldTypes(node, scope);
-            if (!expectedType.IsKnown || expectedType.IsNull || !scope.ResolveShape(expectedType.Name, out var shape))
+            ShapeInfo? expectedShape = null;
+            if (expectedType.IsKnown && !expectedType.IsNull && scope.ResolveShape(expectedType.Name, out var resolvedShape))
+            {
+                expectedShape = resolvedShape;
+            }
+
+            var fields = GetRecordExpressionFieldTypes(node, scope, expectedShape);
+            if (!expectedShape.HasValue)
             {
                 return SimpleType.Unknown;
             }
 
+            var shape = expectedShape.Value;
             foreach (var member in shape.Members.Where(member => !member.IsOptional))
             {
-                if (!fields.ContainsKey(member.Name))
+                if (!fields.TryGetValue(member.Name, out var field) || field.IsOptional)
                 {
                     ReportMismatch(
                         node,
@@ -610,11 +717,17 @@ public static class TypeSharpTypeChecker
             return expectedType;
         }
 
-        private Dictionary<string, RecordExpressionFieldInfo> GetRecordExpressionFieldTypes(SyntaxNode node, TypeScope scope)
+        private Dictionary<string, RecordExpressionFieldInfo> GetRecordExpressionFieldTypes(SyntaxNode node, TypeScope scope, ShapeInfo? expectedShape)
         {
             var fields = new Dictionary<string, RecordExpressionFieldInfo>(StringComparer.Ordinal);
-            foreach (var field in node.Children.Where(child => child.Kind == SyntaxKind.RecordField))
+            foreach (var field in node.Children.Where(child => child.Kind is SyntaxKind.RecordField or SyntaxKind.RecordSpreadField))
             {
+                if (field.Kind == SyntaxKind.RecordSpreadField)
+                {
+                    AddRecordSpreadFields(field, scope, expectedShape, fields);
+                    continue;
+                }
+
                 var name = field.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
                 if (name.Length == 0)
                 {
@@ -625,10 +738,141 @@ public static class TypeSharpTypeChecker
                 var type = expression is null
                     ? scope.ResolveValue(name, out var valueType) ? valueType : SimpleType.Unknown
                     : CheckExpression(expression, scope);
-                fields[name] = new RecordExpressionFieldInfo(field, type);
+                fields[name] = new RecordExpressionFieldInfo(field, type, IsOptional: false);
             }
 
             return fields;
+        }
+
+        private void AddRecordSpreadFields(
+            SyntaxNode spreadField,
+            TypeScope scope,
+            ShapeInfo? expectedShape,
+            Dictionary<string, RecordExpressionFieldInfo> fields)
+        {
+            var expression = spreadField.Children.FirstOrDefault(child => !child.IsToken);
+            var spreadType = expression is null ? SimpleType.Unknown : CheckExpression(expression, scope);
+            if (!spreadType.IsKnown)
+            {
+                if (expectedShape.HasValue)
+                {
+                    ReportMismatch(spreadField, "Record spread expects a nominal record value, but found 'unknown'.");
+                }
+
+                return;
+            }
+
+            if (!scope.ResolveRecordShape(spreadType.Name, out var spreadShape))
+            {
+                if (expectedShape.HasValue)
+                {
+                    ReportMismatch(spreadField, $"Record spread expects a nominal record value, but found '{spreadType}'.");
+                }
+
+                return;
+            }
+
+            var expectedMembers = expectedShape.HasValue
+                ? new HashSet<string>(expectedShape.Value.Members.Select(member => member.Name), StringComparer.Ordinal)
+                : null;
+
+            foreach (var member in spreadShape.Members)
+            {
+                if (expectedMembers is not null && !expectedMembers.Contains(member.Name))
+                {
+                    continue;
+                }
+
+                fields[member.Name] = new RecordExpressionFieldInfo(spreadField, member.Type, member.IsOptional);
+            }
+        }
+
+        private SimpleType CheckSatisfiesExpression(SyntaxNode node, TypeScope scope)
+        {
+            var children = node.Children.Where(child => !child.IsToken).ToArray();
+            var expression = children.FirstOrDefault();
+            var targetTypeNode = children.Length > 1 ? children[^1] : null;
+            var expressionType = expression is null ? SimpleType.Unknown : CheckExpression(expression, scope);
+
+            if (targetTypeNode is null ||
+                !TryGetType(targetTypeNode, scope, out var targetType) ||
+                !targetType.IsKnown ||
+                !expressionType.IsKnown)
+            {
+                return expressionType;
+            }
+
+            if (IsNullabilityViolation(targetType, expressionType))
+            {
+                ReportNullabilityViolation(
+                    node,
+                    $"Expression of type '{expressionType}' does not satisfy non-null type '{targetType}'.");
+            }
+            else if (TryGetStructuralAssignmentDiagnostic(scope, targetType, expressionType, out var message))
+            {
+                ReportMismatch(node, message);
+            }
+            else if (!CanAssign(scope, targetType, expressionType))
+            {
+                ReportMismatch(node, $"Expression of type '{expressionType}' does not satisfy '{targetType}'.");
+            }
+
+            return expressionType;
+        }
+
+        private SimpleType CheckYieldExpression(SyntaxNode node, TypeScope scope, SimpleType? expectedType)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            var actualType = expression is null ? SimpleType.Unknown : CheckExpression(expression, scope);
+            if (!expectedType.HasValue)
+            {
+                return SimpleType.Unknown;
+            }
+
+            if (!TryGetIteratorElementType(expectedType.Value, out var elementType))
+            {
+                ReportMismatch(node, "Yield expression requires a function returning 'IEnumerable<T>' or 'IEnumerator<T>'.");
+                return SimpleType.Unknown;
+            }
+
+            if (actualType.IsKnown && IsNullabilityViolation(elementType, actualType))
+            {
+                ReportNullabilityViolation(
+                    node,
+                    actualType.IsNull
+                        ? $"Cannot yield null for iterator element type '{elementType}'."
+                        : $"Cannot yield nullable expression of type '{actualType}' for iterator element type '{elementType}'.");
+            }
+            else if (actualType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, elementType, actualType, out var structuralMessage))
+            {
+                ReportMismatch(node, structuralMessage);
+            }
+            else if (actualType.IsKnown && !CanAssign(scope, elementType, actualType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Yield expression of type '{actualType}' is not assignable to iterator element type '{elementType}'.");
+            }
+
+            return expectedType.Value;
+        }
+
+        private void CheckLockStatement(SyntaxNode node, TypeScope scope)
+        {
+            var children = node.Children.Where(child => !child.IsToken).ToArray();
+            var gateExpression = children.FirstOrDefault(child => child.Kind != SyntaxKind.BlockExpression);
+            var body = children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+            var gateType = gateExpression is null ? SimpleType.Unknown : CheckExpression(gateExpression, scope);
+
+            if (gateType.IsKnown && !IsLockableType(gateType))
+            {
+                ReportMismatch(node, $"Lock expression requires a non-null reference type, but found '{gateType}'.");
+            }
+
+            if (body is not null)
+            {
+                CheckBlock(body, new TypeScope(scope));
+            }
         }
 
         private SimpleType InferCollection(SyntaxNode node, TypeScope scope, SimpleType? expectedType = null)
@@ -636,7 +880,7 @@ public static class TypeSharpTypeChecker
             var elementTypes = new List<SimpleType>();
             foreach (var element in node.Children.Where(child => !child.IsToken))
             {
-                elementTypes.Add(CheckExpression(element, scope));
+                elementTypes.Add(CheckCollectionElement(element, scope));
             }
 
             var knownElementTypes = elementTypes.Where(type => type.IsKnown).ToArray();
@@ -684,6 +928,29 @@ public static class TypeSharpTypeChecker
             return SimpleType.Named($"{elementType.Name}[]");
         }
 
+        private SimpleType CheckCollectionElement(SyntaxNode element, TypeScope scope) =>
+            element.Kind == SyntaxKind.SpreadElement
+                ? CheckSpreadElement(element, scope)
+                : CheckExpression(element, scope);
+
+        private SimpleType CheckSpreadElement(SyntaxNode node, TypeScope scope)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            var spreadType = expression is null ? SimpleType.Unknown : CheckExpression(expression, scope);
+            if (!spreadType.IsKnown)
+            {
+                return SimpleType.Unknown;
+            }
+
+            if (!TryGetCollectionElementType(spreadType, out var elementType))
+            {
+                ReportMismatch(node, $"Spread element expects an array or List<T>, but found '{spreadType}'.");
+                return SimpleType.Unknown;
+            }
+
+            return elementType;
+        }
+
         private static bool TryGetCollectionElementType(SimpleType collectionType, out SimpleType elementType)
         {
             elementType = SimpleType.Unknown;
@@ -702,11 +969,76 @@ public static class TypeSharpTypeChecker
                 (string.Equals(typeName, "List", StringComparison.Ordinal) ||
                  string.Equals(typeName, "System.Collections.Generic.List", StringComparison.Ordinal)))
             {
-                elementType = SimpleType.Named(argument);
+                elementType = GetTypeFromGenericArgument(argument);
                 return true;
             }
 
             return false;
+        }
+
+        private static bool TryGetIteratorElementType(SimpleType iteratorType, out SimpleType elementType)
+        {
+            elementType = SimpleType.Unknown;
+            if (!iteratorType.IsKnown || iteratorType.IsNull)
+            {
+                return false;
+            }
+
+            if (!TryGetSingleGenericArgument(iteratorType.Name, out var typeName, out var argument))
+            {
+                return false;
+            }
+
+            var unqualifiedTypeName = GetUnqualifiedTypeName(typeName);
+            if (!string.Equals(unqualifiedTypeName, "IEnumerable", StringComparison.Ordinal) &&
+                !string.Equals(unqualifiedTypeName, "IEnumerator", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            elementType = GetTypeFromGenericArgument(argument);
+            return elementType.IsKnown;
+        }
+
+        private static SimpleType GetTypeFromGenericArgument(string argument)
+        {
+            var trimmed = argument.Trim();
+            if (trimmed.Length == 0)
+            {
+                return SimpleType.Unknown;
+            }
+
+            if (trimmed.EndsWith("?", StringComparison.Ordinal))
+            {
+                return SimpleType.Named(trimmed[..^1]).AsNullable();
+            }
+
+            return SimpleType.Named(trimmed);
+        }
+
+        private static bool IsLockableType(SimpleType type)
+        {
+            if (!type.IsKnown || type.IsNull || type.IsNullable)
+            {
+                return false;
+            }
+
+            return type.Name is not (
+                "bool" or
+                "byte" or
+                "char" or
+                "decimal" or
+                "double" or
+                "float" or
+                "int" or
+                "long" or
+                "sbyte" or
+                "short" or
+                "uint" or
+                "ulong" or
+                "ushort" or
+                "unit" or
+                "void");
         }
 
         private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
@@ -879,10 +1211,10 @@ public static class TypeSharpTypeChecker
             return SimpleType.Unknown;
         }
 
-        private static bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual) =>
+        private bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual) =>
             CanAssign(scope, expected, actual, new HashSet<string>(StringComparer.Ordinal));
 
-        private static bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual, HashSet<string> visited)
+        private bool CanAssign(TypeScope scope, SimpleType expected, SimpleType actual, HashSet<string> visited)
         {
             if (!expected.IsKnown || !actual.IsKnown)
             {
@@ -899,8 +1231,40 @@ public static class TypeSharpTypeChecker
                 return expected.IsNullable;
             }
 
+            if (scope.ResolveTypeAlias(expected.Name, out var expectedAliasType))
+            {
+                var key = $"expected:{expected.Name}";
+                if (visited.Add(key))
+                {
+                    var resolvedExpected = expected.IsNullable ? expectedAliasType.AsNullable() : expectedAliasType;
+                    return CanAssign(scope, resolvedExpected, actual, visited);
+                }
+            }
+
+            if (scope.ResolveTypeAlias(actual.Name, out var actualAliasType))
+            {
+                var key = $"actual:{actual.Name}";
+                if (visited.Add(key))
+                {
+                    var resolvedActual = actual.IsNullable ? actualAliasType.AsNullable() : actualAliasType;
+                    return CanAssign(scope, expected, resolvedActual, visited);
+                }
+            }
+
+            if (TryGetLiteralRuntimeType(actual, out var actualLiteralRuntime) &&
+                expected.Name == actualLiteralRuntime.Name)
+            {
+                return expected.IsNullable || !actual.IsNullable;
+            }
+
             if (scope.ResolveTypeLevelUnion(expected.Name, out var typeLevelUnion) &&
-                typeLevelUnion.Members.Any(member => member.Type.Name == actual.Name && (member.Type.IsNullable || !actual.IsNullable)))
+                typeLevelUnion.Members.Any(member => CanAssign(scope, member.Type, actual, visited)))
+            {
+                return true;
+            }
+
+            if (scope.ResolveTypeLevelUnion(actual.Name, out var actualTypeLevelUnion) &&
+                actualTypeLevelUnion.Members.All(member => CanAssign(scope, expected, member.Type, visited)))
             {
                 return true;
             }
@@ -908,6 +1272,11 @@ public static class TypeSharpTypeChecker
             if (scope.ResolveStructuralShape(expected.Name, out var expectedShape))
             {
                 return CanAssignToShape(scope, expected, expectedShape, actual, visited);
+            }
+
+            if (CanAssignMetadataType(expected, actual))
+            {
+                return expected.IsNullable || !actual.IsNullable;
             }
 
             if (expected.Name != actual.Name)
@@ -918,7 +1287,7 @@ public static class TypeSharpTypeChecker
             return expected.IsNullable || !actual.IsNullable;
         }
 
-        private static bool CanAssignToShape(TypeScope scope, SimpleType expected, ShapeInfo expectedShape, SimpleType actual, HashSet<string> visited)
+        private bool CanAssignToShape(TypeScope scope, SimpleType expected, ShapeInfo expectedShape, SimpleType actual, HashSet<string> visited)
         {
             if (!actual.IsKnown || actual.IsNull || (actual.IsNullable && !expected.IsNullable))
             {
@@ -963,7 +1332,103 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
-        private static bool TryGetStructuralAssignmentDiagnostic(TypeScope scope, SimpleType expected, SimpleType actual, out string message)
+        private bool CanAssignMetadataType(SimpleType expected, SimpleType actual)
+        {
+            if (_metadataAssemblies.Count == 0 ||
+                expected.IsNull ||
+                actual.IsNull ||
+                (actual.IsNullable && !expected.IsNullable))
+            {
+                return false;
+            }
+
+            var expectedTypes = FindMetadataTypes(expected.Name);
+            var actualTypes = FindMetadataTypes(actual.Name);
+            if (expectedTypes.Count == 0 || actualTypes.Count == 0)
+            {
+                return false;
+            }
+
+            return actualTypes.Any(actualType => expectedTypes.Any(expectedType =>
+                TypeSymbolSatisfiesMetadataRelation(
+                    actualType,
+                    expectedType,
+                    new HashSet<string>(StringComparer.Ordinal))));
+        }
+
+        private bool TypeSymbolSatisfiesMetadataRelation(
+            MetadataTypeSymbol actualType,
+            MetadataTypeSymbol expectedType,
+            HashSet<string> visited)
+        {
+            if (MetadataTypeNameMatches(actualType.FullName, expectedType.FullName) ||
+                MetadataTypeNameMatches(actualType.Name, expectedType.FullName) ||
+                MetadataTypeNameMatches(actualType.BaseTypeName, expectedType.FullName) ||
+                actualType.InterfaceNames.Any(interfaceName => MetadataTypeNameMatches(interfaceName, expectedType.FullName)))
+            {
+                return true;
+            }
+
+            if (!visited.Add(actualType.FullName))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(actualType.BaseTypeName) &&
+                FindMetadataTypes(actualType.BaseTypeName)
+                    .Any(baseType => TypeSymbolSatisfiesMetadataRelation(baseType, expectedType, visited)))
+            {
+                return true;
+            }
+
+            foreach (var interfaceName in actualType.InterfaceNames)
+            {
+                if (FindMetadataTypes(interfaceName)
+                    .Any(interfaceType => TypeSymbolSatisfiesMetadataRelation(interfaceType, expectedType, visited)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private IReadOnlyList<MetadataTypeSymbol> FindMetadataTypes(string typeName) =>
+            _metadataAssemblies
+                .SelectMany(assembly => assembly.Types)
+                .Where(type =>
+                    string.Equals(type.FullName, typeName, StringComparison.Ordinal) ||
+                    MetadataTypeNameMatches(type.FullName, typeName) ||
+                    MetadataTypeNameMatches(type.Name, typeName))
+                .ToArray();
+
+        private static bool MetadataTypeNameMatches(string? actual, string expected)
+        {
+            if (string.IsNullOrWhiteSpace(actual) || string.IsNullOrWhiteSpace(expected))
+            {
+                return false;
+            }
+
+            return string.Equals(actual, expected, StringComparison.Ordinal) ||
+                string.Equals(GetUnqualifiedTypeName(actual), expected, StringComparison.Ordinal) ||
+                string.Equals(actual, GetUnqualifiedTypeName(expected), StringComparison.Ordinal) ||
+                string.Equals(StripGenericArity(actual), StripGenericArity(expected), StringComparison.Ordinal) ||
+                string.Equals(GetUnqualifiedTypeName(StripGenericArity(actual)), GetUnqualifiedTypeName(StripGenericArity(expected)), StringComparison.Ordinal);
+        }
+
+        private static string GetUnqualifiedTypeName(string name)
+        {
+            var index = name.LastIndexOf('.');
+            return index < 0 ? name : name[(index + 1)..];
+        }
+
+        private static string StripGenericArity(string name)
+        {
+            var index = name.IndexOf('`', StringComparison.Ordinal);
+            return index < 0 ? name : name[..index];
+        }
+
+        private bool TryGetStructuralAssignmentDiagnostic(TypeScope scope, SimpleType expected, SimpleType actual, out string message)
         {
             message = string.Empty;
             if (!expected.IsKnown ||
@@ -1206,6 +1671,18 @@ public static class TypeSharpTypeChecker
                 return true;
             }
 
+            if (node.Kind == SyntaxKind.IntersectionType)
+            {
+                kind = CompileTimeOnlyTypeKind.IntersectionType;
+                return true;
+            }
+
+            if (node.Kind is SyntaxKind.KeyofType or SyntaxKind.IndexedAccessType or SyntaxKind.LiteralType)
+            {
+                kind = CompileTimeOnlyTypeKind.TypeLevelUnion;
+                return true;
+            }
+
             if (node.Kind == SyntaxKind.TypeName &&
                 TryGetSimpleTypeName(node, out var name) &&
                 scope.ResolveCompileTimeOnlyType(name, out kind))
@@ -1230,10 +1707,60 @@ public static class TypeSharpTypeChecker
         private static HashSet<string> CollectLocalExportedNames(SyntaxNode root)
         {
             var names = new HashSet<string>(StringComparer.Ordinal);
+            var declaredFunctions = root.Children
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && TryGetDeclarationName(child, out _))
+                .Select(child => TryGetDeclarationName(child, out var name) ? name : string.Empty)
+                .Where(name => name.Length > 0)
+                .ToHashSet(StringComparer.Ordinal);
+            var declaredValues = root.Children
+                .Where(child =>
+                    (child.Kind is SyntaxKind.ValueDeclaration or SyntaxKind.LiteralDeclaration) &&
+                    (child.Kind != SyntaxKind.ValueDeclaration || !IsFunctionValueDeclaration(child) || HasFunctionTypeAnnotation(child)) &&
+                    TryGetDeclarationName(child, out _))
+                .Select(child => TryGetDeclarationName(child, out var name) ? name : string.Empty)
+                .Where(name => name.Length > 0)
+                .ToHashSet(StringComparer.Ordinal);
+            var declaredTypes = root.Children
+                .Where(child =>
+                    (child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration or SyntaxKind.DelegateDeclaration) &&
+                    TryGetDeclarationName(child, out _))
+                .Select(child => TryGetDeclarationName(child, out var name) ? name : string.Empty)
+                .Where(name => name.Length > 0)
+                .ToHashSet(StringComparer.Ordinal);
             foreach (var exportDeclaration in root.Children.Where(child => child.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration))
             {
-                if (HasFromSpecifier(exportDeclaration) || HasExportAlias(exportDeclaration))
+                if (HasFromSpecifier(exportDeclaration))
                 {
+                    continue;
+                }
+
+                if (HasExportAlias(exportDeclaration))
+                {
+                    if (exportDeclaration.Kind == SyntaxKind.ExportNamedDeclaration)
+                    {
+                        foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+                        {
+                            if (exportSpecifier.IsAlias && declaredFunctions.Contains(exportSpecifier.TargetName))
+                            {
+                                names.Add(exportSpecifier.TargetName);
+                            }
+                            else if (exportSpecifier.IsAlias && declaredValues.Contains(exportSpecifier.TargetName))
+                            {
+                                names.Add(exportSpecifier.TargetName);
+                            }
+                        }
+                    }
+                    else if (exportDeclaration.Kind == SyntaxKind.ExportTypeDeclaration)
+                    {
+                        foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+                        {
+                            if (exportSpecifier.IsAlias && declaredTypes.Contains(exportSpecifier.TargetName))
+                            {
+                                names.Add(exportSpecifier.TargetName);
+                            }
+                        }
+                    }
+
                     continue;
                 }
 
@@ -1292,6 +1819,26 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        private static bool IsFunctionValueDeclaration(SyntaxNode node)
+        {
+            var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            if (annotation?.Children.Any(child => child.Kind == SyntaxKind.FunctionType) == true)
+            {
+                return true;
+            }
+
+            return node.Children
+                .Where(child => child.Kind == SyntaxKind.Initializer)
+                .SelectMany(child => child.Children)
+                .Any(child => child.Kind == SyntaxKind.LambdaExpression);
+        }
+
+        private static bool HasFunctionTypeAnnotation(SyntaxNode node) =>
+            node.Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)?
+                .Children
+                .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
+
         private static IEnumerable<string> GetExportedIdentifierTexts(SyntaxNode node)
         {
             var insideBraces = false;
@@ -1313,6 +1860,48 @@ public static class TypeSharpTypeChecker
                     yield return name;
                 }
             }
+        }
+
+        private static IEnumerable<NamedExportSpecifier> GetNamedExportSpecifiers(SyntaxNode node)
+        {
+            var insideBraces = false;
+            for (var index = 0; index < node.Children.Count; index++)
+            {
+                var child = node.Children[index];
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    insideBraces = true;
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+                {
+                    yield break;
+                }
+
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } name)
+                {
+                    if (index + 2 < node.Children.Count &&
+                        node.Children[index + 1].IsToken &&
+                        node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                        node.Children[index + 2].IsToken &&
+                        node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                        node.Children[index + 2].Text is { Length: > 0 } alias)
+                    {
+                        yield return new NamedExportSpecifier(name, alias);
+                        index += 2;
+                    }
+                    else
+                    {
+                        yield return new NamedExportSpecifier(name, name);
+                    }
+                }
+            }
+        }
+
+        private readonly record struct NamedExportSpecifier(string TargetName, string ExportedName)
+        {
+            public bool IsAlias => !string.Equals(TargetName, ExportedName, StringComparison.Ordinal);
         }
 
         private static bool IsAsyncFunction(SyntaxNode node) =>
@@ -1343,20 +1932,37 @@ public static class TypeSharpTypeChecker
             return annotation.Kind == SyntaxKind.TypeAnnotation;
         }
 
+        private static bool IsTypeSyntax(SyntaxKind kind) =>
+            kind is SyntaxKind.TypeName
+                or SyntaxKind.ArrayType
+                or SyntaxKind.NullableType
+                or SyntaxKind.FunctionType
+                or SyntaxKind.UnionType
+                or SyntaxKind.IntersectionType
+                or SyntaxKind.KeyofType
+                or SyntaxKind.IndexedAccessType
+                or SyntaxKind.LiteralType
+                or SyntaxKind.RecordShapeType;
+
         private static bool TryGetType(SyntaxNode node, out SimpleType type)
+        {
+            return TryGetType(node, scope: null, out type);
+        }
+
+        private static bool TryGetType(SyntaxNode node, TypeScope? scope, out SimpleType type)
         {
             type = SimpleType.Unknown;
 
             if (node.Kind == SyntaxKind.TypeAnnotation)
             {
                 var typeNode = node.Children.FirstOrDefault(child => !child.IsToken);
-                return typeNode is not null && TryGetType(typeNode, out type);
+                return typeNode is not null && TryGetType(typeNode, scope, out type);
             }
 
             if (node.Kind == SyntaxKind.NullableType)
             {
                 var inner = node.Children.FirstOrDefault(child => !child.IsToken);
-                if (inner is not null && TryGetType(inner, out var innerType))
+                if (inner is not null && TryGetType(inner, scope, out var innerType))
                 {
                     type = innerType.AsNullable();
                     return true;
@@ -1366,16 +1972,46 @@ public static class TypeSharpTypeChecker
             if (node.Kind == SyntaxKind.ArrayType)
             {
                 var inner = node.Children.FirstOrDefault(child => !child.IsToken);
-                if (inner is not null && TryGetType(inner, out var innerType))
+                if (inner is not null && TryGetType(inner, scope, out var innerType))
                 {
                     type = SimpleType.Named($"{innerType.Name}[]");
                     return true;
                 }
             }
 
+            if (node.Kind == SyntaxKind.KeyofType)
+            {
+                var target = node.Children.FirstOrDefault(child => !child.IsToken);
+                if (target is not null && TryGetType(target, scope, out var targetType) && targetType.IsKnown)
+                {
+                    var keyofName = GetKeyofTypeName(targetType.Name);
+                    type = SimpleType.Named(keyofName);
+                    if (scope is not null &&
+                        !scope.ResolveTypeLevelUnion(keyofName, out _) &&
+                        TryGetKeyofTypeLevelUnion(keyofName, node, scope, out var keyofUnion))
+                    {
+                        scope.DeclareType(keyofName);
+                        scope.DeclareCompileTimeOnlyType(keyofName, CompileTimeOnlyTypeKind.TypeLevelUnion);
+                        scope.DeclareTypeLevelUnion(keyofName, keyofUnion.Members);
+                    }
+
+                    return true;
+                }
+            }
+
+            if (node.Kind == SyntaxKind.IndexedAccessType)
+            {
+                return TryGetIndexedAccessType(node, scope, out type);
+            }
+
+            if (node.Kind == SyntaxKind.LiteralType)
+            {
+                return TryGetLiteralType(node, out type);
+            }
+
             if (node.Kind == SyntaxKind.TypeName)
             {
-                if (TryGetGenericType(node, out type))
+                if (TryGetGenericType(node, scope, out type))
                 {
                     return true;
                 }
@@ -1391,6 +2027,76 @@ public static class TypeSharpTypeChecker
 
             return false;
         }
+
+        private static bool TryGetLiteralExpressionType(SyntaxNode node, out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            if (node.Kind != SyntaxKind.LiteralExpression)
+            {
+                return false;
+            }
+
+            return TryGetLiteralTokenType(node.Children.FirstOrDefault(child => child.IsToken), out type);
+        }
+
+        private static bool TryGetLiteralType(SyntaxNode node, out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            if (node.Kind != SyntaxKind.LiteralType)
+            {
+                return false;
+            }
+
+            return TryGetLiteralTokenType(node.Children.FirstOrDefault(child => child.IsToken), out type);
+        }
+
+        private static bool TryGetLiteralTokenType(SyntaxNode? token, out SimpleType type)
+        {
+            type = token?.Kind switch
+            {
+                SyntaxKind.StringLiteralToken => SimpleType.Named(token.Text ?? "\"\""),
+                SyntaxKind.NumericLiteralToken => SimpleType.Named(token.Text ?? "0"),
+                SyntaxKind.TrueKeyword => SimpleType.Named("true"),
+                SyntaxKind.FalseKeyword => SimpleType.Named("false"),
+                _ => SimpleType.Unknown
+            };
+
+            return type.IsKnown;
+        }
+
+        private static bool TryGetLiteralRuntimeType(SimpleType literalType, out SimpleType runtimeType)
+        {
+            runtimeType = SimpleType.Unknown;
+            if (!literalType.IsKnown || literalType.IsNull)
+            {
+                return false;
+            }
+
+            if (literalType.Name.StartsWith("\"", StringComparison.Ordinal) &&
+                literalType.Name.EndsWith("\"", StringComparison.Ordinal))
+            {
+                runtimeType = SimpleType.Named("string");
+                return true;
+            }
+
+            if (literalType.Name is "true" or "false")
+            {
+                runtimeType = SimpleType.Named("bool");
+                return true;
+            }
+
+            if (literalType.Name.Length > 0 && char.IsDigit(literalType.Name[0]))
+            {
+                runtimeType = literalType.Name.Contains('.', StringComparison.Ordinal)
+                    ? SimpleType.Named("double")
+                    : SimpleType.Named("int");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string GetKeyofTypeName(string targetTypeName) => $"keyof {targetTypeName}";
 
         private static bool ContainsDynamicType(SyntaxNode node)
         {
@@ -1462,9 +2168,237 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
-        private static bool TryGetStructuralShape(string name, SyntaxNode node, out ShapeInfo shape)
+        private static bool TryGetKeyofTypeLevelUnion(string name, SyntaxNode node, TypeScope scope, out TypeLevelUnionInfo union)
+        {
+            union = default;
+            if (node.Kind != SyntaxKind.KeyofType)
+            {
+                return false;
+            }
+
+            var target = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (target is null || !TryGetKeyofShape(target, scope, out var shape))
+            {
+                return false;
+            }
+
+            var members = shape.Members
+                .Select(member => member.Name)
+                .Where(memberName => memberName.Length > 0)
+                .Distinct(StringComparer.Ordinal)
+                .Select(memberName => new TypeLevelUnionMemberInfo(SimpleType.Named(ToStringLiteralTypeName(memberName))))
+                .ToArray();
+            if (members.Length == 0)
+            {
+                return false;
+            }
+
+            union = new TypeLevelUnionInfo(name, members);
+            return true;
+        }
+
+        private static bool TryGetIndexedAccessTypeLevelUnion(string name, SyntaxNode node, TypeScope scope, out TypeLevelUnionInfo union)
+        {
+            union = default;
+            if (!TryGetIndexedAccessMemberTypes(node, scope, out var memberTypes))
+            {
+                return false;
+            }
+
+            var members = memberTypes
+                .Distinct()
+                .Select(type => new TypeLevelUnionMemberInfo(type))
+                .ToArray();
+            if (members.Length < 2)
+            {
+                return false;
+            }
+
+            union = new TypeLevelUnionInfo(name, members);
+            return true;
+        }
+
+        private static bool TryGetIndexedAccessType(SyntaxNode node, TypeScope? scope, out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            if (scope is null || !TryGetIndexedAccessMemberTypes(node, scope, out var memberTypes))
+            {
+                return false;
+            }
+
+            var distinctTypes = memberTypes.Distinct().ToArray();
+            if (distinctTypes.Length == 1)
+            {
+                type = distinctTypes[0];
+                return true;
+            }
+
+            if (!TryGetIndexedAccessParts(node, out var targetTypeNode, out var keyTypeNode) ||
+                !TryGetType(targetTypeNode, scope, out var targetType) ||
+                !TryGetIndexedAccessKeyNames(keyTypeNode, scope, out var keyNames))
+            {
+                return false;
+            }
+
+            var indexedAccessName = GetIndexedAccessTypeName(targetType.Name, keyNames);
+            type = SimpleType.Named(indexedAccessName);
+            if (!scope.ResolveTypeLevelUnion(indexedAccessName, out _))
+            {
+                scope.DeclareType(indexedAccessName);
+                scope.DeclareCompileTimeOnlyType(indexedAccessName, CompileTimeOnlyTypeKind.TypeLevelUnion);
+                scope.DeclareTypeLevelUnion(
+                    indexedAccessName,
+                    distinctTypes.Select(memberType => new TypeLevelUnionMemberInfo(memberType)).ToArray());
+            }
+
+            return true;
+        }
+
+        private static bool TryGetIndexedAccessMemberTypes(SyntaxNode node, TypeScope scope, out IReadOnlyList<SimpleType> memberTypes)
+        {
+            memberTypes = [];
+            if (!TryGetIndexedAccessParts(node, out var targetTypeNode, out var keyTypeNode) ||
+                !TryGetKeyofShape(targetTypeNode, scope, out var shape) ||
+                !TryGetIndexedAccessKeyNames(keyTypeNode, scope, out var keyNames))
+            {
+                return false;
+            }
+
+            var members = new List<SimpleType>();
+            foreach (var keyName in keyNames.Distinct(StringComparer.Ordinal))
+            {
+                var member = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, keyName, StringComparison.Ordinal));
+                if (member.Name.Length == 0 || !member.Type.IsKnown)
+                {
+                    return false;
+                }
+
+                members.Add(member.Type);
+            }
+
+            memberTypes = members;
+            return members.Count > 0;
+        }
+
+        private static bool TryGetIndexedAccessParts(SyntaxNode node, out SyntaxNode targetTypeNode, out SyntaxNode keyTypeNode)
+        {
+            targetTypeNode = node;
+            keyTypeNode = node;
+            if (node.Kind != SyntaxKind.IndexedAccessType)
+            {
+                return false;
+            }
+
+            var typeNodes = node.Children.Where(child => !child.IsToken).ToArray();
+            if (typeNodes.Length < 2)
+            {
+                return false;
+            }
+
+            targetTypeNode = typeNodes[0];
+            keyTypeNode = typeNodes[1];
+            return true;
+        }
+
+        private static bool TryGetIndexedAccessKeyNames(SyntaxNode node, TypeScope scope, out IReadOnlyList<string> keyNames)
+        {
+            var keys = new List<string>();
+            if (node.Kind == SyntaxKind.UnionType)
+            {
+                foreach (var memberNode in node.Children.Where(child => !child.IsToken))
+                {
+                    if (!TryGetIndexedAccessKeyNames(memberNode, scope, out var memberKeys))
+                    {
+                        keyNames = [];
+                        return false;
+                    }
+
+                    keys.AddRange(memberKeys);
+                }
+
+                keyNames = keys.Distinct(StringComparer.Ordinal).ToArray();
+                return keys.Count > 0;
+            }
+
+            if (!TryGetType(node, scope, out var keyType) || !keyType.IsKnown)
+            {
+                keyNames = [];
+                return false;
+            }
+
+            if (TryGetStringLiteralTypeValue(keyType, out var directKey))
+            {
+                keyNames = [directKey];
+                return true;
+            }
+
+            if (scope.ResolveTypeLevelUnion(keyType.Name, out var typeLevelUnion))
+            {
+                foreach (var member in typeLevelUnion.Members)
+                {
+                    if (!TryGetStringLiteralTypeValue(member.Type, out var keyName))
+                    {
+                        keyNames = [];
+                        return false;
+                    }
+
+                    keys.Add(keyName);
+                }
+
+                keyNames = keys.Distinct(StringComparer.Ordinal).ToArray();
+                return keys.Count > 0;
+            }
+
+            keyNames = [];
+            return false;
+        }
+
+        private static bool TryGetStringLiteralTypeValue(SimpleType type, out string value)
+        {
+            value = string.Empty;
+            if (!type.IsKnown ||
+                type.Name.Length < 2 ||
+                !type.Name.StartsWith("\"", StringComparison.Ordinal) ||
+                !type.Name.EndsWith("\"", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            value = type.Name[1..^1];
+            return value.Length > 0;
+        }
+
+        private static string GetIndexedAccessTypeName(string targetTypeName, IReadOnlyList<string> keyNames) =>
+            $"{targetTypeName}[{string.Join("|", keyNames.Select(ToStringLiteralTypeName))}]";
+
+        private static bool TryGetKeyofShape(SyntaxNode node, TypeScope scope, out ShapeInfo shape)
+        {
+            if (node.Kind == SyntaxKind.RecordShapeType)
+            {
+                return TryGetStructuralShape(GetKeyofTypeName("anonymous"), node, scope, out shape);
+            }
+
+            if (TryGetType(node, scope, out var targetType) &&
+                targetType.IsKnown &&
+                scope.ResolveShape(targetType.Name, out shape))
+            {
+                return true;
+            }
+
+            shape = default;
+            return false;
+        }
+
+        private static string ToStringLiteralTypeName(string value) => $"\"{value}\"";
+
+        private static bool TryGetStructuralShape(string name, SyntaxNode node, TypeScope scope, out ShapeInfo shape)
         {
             shape = default;
+            if (node.Kind == SyntaxKind.IntersectionType)
+            {
+                return TryGetIntersectionStructuralShape(name, node, scope, out shape);
+            }
+
             if (node.Kind != SyntaxKind.RecordShapeType)
             {
                 return false;
@@ -1481,7 +2415,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 var typeNode = member.Children.LastOrDefault(child => !child.IsToken);
-                if (typeNode is null || !TryGetType(typeNode, out var memberType) || !memberType.IsKnown)
+                if (typeNode is null || !TryGetType(typeNode, scope, out var memberType) || !memberType.IsKnown)
                 {
                     return false;
                 }
@@ -1494,12 +2428,62 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
+        private static bool TryGetIntersectionStructuralShape(string name, SyntaxNode node, TypeScope scope, out ShapeInfo shape)
+        {
+            shape = default;
+            var members = new List<ShapeMemberInfo>();
+            var memberIndexes = new Dictionary<string, int>(StringComparer.Ordinal);
+
+            foreach (var memberNode in node.Children.Where(child => !child.IsToken))
+            {
+                if (!TryGetType(memberNode, scope, out var memberType) ||
+                    !memberType.IsKnown ||
+                    !scope.ResolveShape(memberType.Name, out var memberShape))
+                {
+                    return false;
+                }
+
+                foreach (var member in memberShape.Members)
+                {
+                    if (memberIndexes.TryGetValue(member.Name, out var existingIndex))
+                    {
+                        var existing = members[existingIndex];
+                        if (!string.Equals(existing.Type.Name, member.Type.Name, StringComparison.Ordinal) ||
+                            existing.Type.IsNullable != member.Type.IsNullable ||
+                            existing.Type.IsNull != member.Type.IsNull ||
+                            existing.IsOptional != member.IsOptional)
+                        {
+                            return false;
+                        }
+
+                        continue;
+                    }
+
+                    memberIndexes[member.Name] = members.Count;
+                    members.Add(member);
+                }
+            }
+
+            if (members.Count == 0)
+            {
+                return false;
+            }
+
+            shape = new ShapeInfo(name, members);
+            return true;
+        }
+
         private static bool TryGetGenericType(SyntaxNode node, out SimpleType type)
+        {
+            return TryGetGenericType(node, scope: null, out type);
+        }
+
+        private static bool TryGetGenericType(SyntaxNode node, TypeScope? scope, out SimpleType type)
         {
             type = SimpleType.Unknown;
             var baseType = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeName);
             var argumentList = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeArgumentList);
-            if (baseType is null || argumentList is null || !TryGetType(baseType, out var genericType))
+            if (baseType is null || argumentList is null || !TryGetType(baseType, scope, out var genericType))
             {
                 return false;
             }
@@ -1507,7 +2491,7 @@ public static class TypeSharpTypeChecker
             var arguments = new List<string>();
             foreach (var argument in argumentList.Children.Where(child => !child.IsToken))
             {
-                if (!TryGetType(argument, out var argumentType))
+                if (!TryGetType(argument, scope, out var argumentType))
                 {
                     return false;
                 }
@@ -1902,6 +2886,7 @@ public static class TypeSharpTypeChecker
         private readonly FunctionCapabilities _allowedCapabilities;
         private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, FunctionInfo> _functions = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, SimpleType> _typeAliases = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, TypeLevelUnionInfo> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionInfo> _unions = new(StringComparer.Ordinal);
@@ -1930,6 +2915,8 @@ public static class TypeSharpTypeChecker
         public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities);
 
         public void DeclareType(string name) => _types.Add(name);
+
+        public void DeclareTypeAlias(string name, SimpleType type) => _typeAliases[name] = type;
 
         public void DeclareCompileTimeOnlyType(string name, CompileTimeOnlyTypeKind kind) => _compileTimeOnlyTypes[name] = kind;
 
@@ -2003,6 +2990,22 @@ public static class TypeSharpTypeChecker
             }
 
             kind = CompileTimeOnlyTypeKind.None;
+            return false;
+        }
+
+        public bool ResolveTypeAlias(string name, out SimpleType type)
+        {
+            if (_typeAliases.TryGetValue(name, out type))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveTypeAlias(name, out type);
+            }
+
+            type = SimpleType.Unknown;
             return false;
         }
 
@@ -2097,7 +3100,7 @@ public static class TypeSharpTypeChecker
 
     private readonly record struct ShapeMemberInfo(string Name, SimpleType Type, bool IsOptional);
 
-    private readonly record struct RecordExpressionFieldInfo(SyntaxNode Node, SimpleType Type);
+    private readonly record struct RecordExpressionFieldInfo(SyntaxNode Node, SimpleType Type, bool IsOptional);
 
     private readonly record struct FunctionInfo(SimpleType ReturnType, FunctionCapabilities Capabilities);
 
@@ -2111,7 +3114,8 @@ public static class TypeSharpTypeChecker
     {
         None,
         TypeLevelUnion,
-        StructuralShape
+        StructuralShape,
+        IntersectionType
     }
 
 }

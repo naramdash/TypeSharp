@@ -1,0 +1,7 @@
+namespace Samples.Intersections.Negative
+
+type Named = { Name: string }
+type Aged = { Age: int }
+type PersonLike = Named & Aged
+
+export fun leak(value: PersonLike): PersonLike = value

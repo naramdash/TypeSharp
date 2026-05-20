@@ -16,6 +16,8 @@ Current editor features:
 - basic completion,
 - document formatting for the CLI formatter MVP whitespace rules.
 
+Formatting behavior follows the canonical [CLI](../cli/) formatting convention. Diagnostic codes, descriptor metadata, and source spans follow [Diagnostics](../diagnostics/).
+
 The extension can use a bundled `server/TypeSharp.LanguageServer.dll`, a repository development build, or explicit settings under `typesharp.languageServer.*`.
 
 Smoke-tested commands:

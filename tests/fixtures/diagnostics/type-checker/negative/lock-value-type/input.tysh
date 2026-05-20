@@ -1,0 +1,8 @@
+namespace Samples.Lock.Negative
+
+fun broken(): string {
+  lock 42 {
+    "ignored"
+  }
+  "done"
+}

@@ -52,7 +52,10 @@ public static class TypeSharpChecker
             diagnostics.AddRange(bindingResult.Diagnostics);
             if (!bindingResult.HasErrors)
             {
-                diagnostics.AddRange(TypeSharpTypeChecker.Check(parsedSource.Root, parsedSource.SourceFile.RelativePath).Diagnostics);
+                diagnostics.AddRange(TypeSharpTypeChecker.Check(
+                    parsedSource.Root,
+                    parsedSource.SourceFile.RelativePath,
+                    metadataResult.Assemblies).Diagnostics);
             }
         }
 

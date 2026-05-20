@@ -76,14 +76,31 @@
 - [x] namespace 없는 source file의 manifest root namespace fallback 규칙이 있다.
 - [x] source root 상대 module path가 중복되면 `TS0111`로 보고된다.
 - [x] relative source module specifier가 module graph edge로 수집되고 unresolved target은 `TS0112`로 보고된다.
-- [x] unaliased relative named source import와 relative namespace source import가 generated C# container using/alias로 낮아진다.
-- [x] 아직 지원하지 않는 relative source import form은 `TS0113`으로 emission 전에 중단된다.
+- [x] unaliased relative named source import, relative named function source import alias, relative named top-level value source import alias, relative type source import alias including regular named exported type aliases, relative named module source import alias, relative namespace source import가 generated C# container using/function-forwarder/property-forwarder/type-alias/container-alias로 낮아진다.
+- [x] 향후 추가되는 unsupported relative source import form은 `TS0113`으로 emission 전에 중단된다.
+- [x] relative named/type source import가 target module의 exported name을 요구하고 missing export는 `TS0114`로 emission 전에 중단된다.
+- [x] relative namespace source import member access가 target module의 exported member를 요구하고 missing export는 `TS0114`로 emission 전에 중단된다.
+- [x] relative named function re-export와 `as` alias가 target module의 exported function을 요구하고 missing re-export target은 `TS0114`로 emission 전에 중단된다.
+- [x] relative type-only re-export와 `as` alias가 target module의 exported type을 요구하고 downstream `import type`에서 generated C# type alias로 remap된다.
+- [x] relative named top-level value re-export와 `as` alias가 target module의 exported value를 요구하고 generated C# forwarding property로 낮아진다.
+- [x] relative named module re-export와 `as` alias가 target module의 exported module을 요구하고 downstream named module import alias에서 generated C# type alias로 remap된다.
+- [x] relative star re-export가 target module의 currently lowerable function/value/type surface를 re-exporting module surface로 제공한다.
 - [x] named import alias 문법과 C# alias using lowering 규칙이 있다.
 - [x] namespace import alias 문법과 C# namespace alias using lowering 규칙이 있다.
 - [x] import alias same-file conflict는 `TS2002` duplicate symbol diagnostic으로 보고된다.
 - [x] export specifier/re-export 문법 parser fixture가 있다.
 - [x] local export list가 같은 파일 선언을 generated C# public surface로 표시한다.
-- [x] re-export/renamed export specifier 사용은 `TS2003`으로 emission 전에 중단된다.
+- [x] local named function export alias가 source module export surface에 alias를 제공한다.
+- [x] local named function export alias가 generated C# forwarding method로 낮아진다.
+- [x] local literal export alias가 source module export surface에 alias를 제공하고 generated C# public constant/static readonly field로 낮아진다.
+- [x] local top-level value export alias가 source module export surface에 alias를 제공하고 generated C# public property로 낮아진다.
+- [x] local type export alias가 source module export surface에 alias를 제공하고 relative type import가 원래 generated C# type으로 낮아진다.
+- [x] explicitly annotated function-valued top-level `let` export와 local export alias가 source module value surface에 alias를 제공하고 generated C# `System.Func`/`System.Action` value 또는 forwarding property로 낮아진다.
+- [x] relative named function re-export와 alias가 generated C# forwarding method로 낮아진다.
+- [x] relative named function re-export alias가 target module의 exported function을 exported alias surface로 제공한다.
+- [x] unannotated lambda-valued `export let`와 non-relative/non-lowerable export forwarding 사용은 `TS2003`으로 emission 전에 중단된다.
+- [x] duplicate local export specifier는 `TS2004`로 emission 전에 중단된다.
+- [x] explicit generic method invocation type argument parser fixture가 있다.
 - [x] root-level open declaration 문법과 lowering 규칙이 있다.
 - [x] ambient function signature 문법 초안과 parser fixture가 있다.
 - [x] 이름 해석 규칙 초안이 있다.
@@ -121,26 +138,64 @@
 - [x] `Result<T, E>`
 - [x] nominal closed union type
 - [x] type-level union alias
+- [x] intersection type alias parser and structural shape composition
+- [x] limited `keyof` type operator over known record/shape types
+- [x] limited indexed access type operator over known record/shape member keys
 - [x] union narrowing
 - [x] `unknown` member/indexer access narrowing diagnostic
 - [x] pattern matching
 - [x] pipeline expression lowering
 - [x] nominal record expression construction lowering
+- [x] nominal record spread expression parsing, type checking, and C# lowering
 - [x] null safety
 - [x] basic structural type checking
+- [x] structural intersection alias checking
+- [x] TypeScript-style `satisfies` expression parsing, structural checking, and C# erasure lowering
 - [x] `Task`/`Task<T>` async interop
+- [x] iterator `yield` parsing, element type checking, and C# `yield return` lowering
+- [x] block-level `lock` statement parsing, reference-type checking, and C# `lock` lowering
+- [x] explicit-receiver `extension` method parsing, receiver checking, and C# extension method lowering
+- [x] F#-style `>>`/`<<` unary function composition lowering
 - [x] simple homogeneous collection expression to array lowering
 - [x] explicit target `List<T>` collection expression lowering
+- [x] collection spread element parsing, type checking, and C# lowering
 - [x] indexer expression lowering
+- [x] `nameof` intrinsic expression parsing and C# `nameof(...)` lowering
+- [x] `checked(...)`/`unchecked(...)` expression parsing and C# overflow-context lowering
 - [x] C# assembly reference
 - [x] C# local DLL reference
 - [x] C# constructor/static/instance member call
+- [x] C# imported parameter instance member call
+- [x] C# imported alias instance member call
+- [x] C# assigned instance member call smoke tests
 - [x] C# imported interface reference compile smoke
+- [x] C# imported interface implementation relation validation smoke
 - [x] C# imported field access compile smoke
 - [x] C# imported indexer access compile smoke
+- [x] C# imported indexer numeric literal conversion compile smoke
+- [x] C# imported overloaded indexer exact match compile smoke
 - [x] C# attribute reference interop compile smoke
 - [x] C# generic type reference interop compile smoke
+- [x] C# generic type constructor interop compile smoke
+- [x] C# constructor optional/named/params interop compile smoke
+- [x] C# constructor argument mismatch no-emission smoke
+- [x] C# generic constructor argument mismatch no-emission smoke
+- [x] C# ambiguous constructor diagnostic smoke
 - [x] C# generic method interop compile smoke
+- [x] C# explicit generic method type argument interop compile smoke
+- [x] C# explicit generic method constraint interop compile smoke
+- [x] C# inferred generic method constraint validation smoke
+- [x] C# inferred constructed generic method constraint validation smoke
+- [x] C# delegate lambda overload arity validation smoke
+- [x] C# delegate lambda overload return validation smoke
+- [x] C# delegate lambda parameter return overload validation smoke
+- [x] C# delegate lambda return overload ranking smoke
+- [x] C# delegate lambda member return overload validation smoke
+- [x] C# delegate lambda chained member return overload validation smoke
+- [x] C# delegate lambda method return overload validation smoke
+- [x] C# delegate lambda extension method return overload validation smoke
+- [x] C# delegate lambda static method return overload validation smoke
+- [x] C# delegate lambda binary return overload validation smoke
 - [x] C# `ref`/`out`/`in`/`params` interop
 - [x] C# `params` interop compile smoke
 - [x] C# `out` interop compile smoke
@@ -166,19 +221,86 @@
 - [x] binder/name resolution skeleton
 - [x] metadata reader
 - [x] C# metadata reader skeleton
+- [x] C# metadata reader framework public symbol index
 - [x] C# metadata reader local public symbol index
 - [x] C# metadata reader public field symbol index
+- [x] C# metadata reader readonly field marker index
+- [x] C# metadata reader static method/property marker index
+- [x] C# metadata reader extension method marker index
+- [x] C# metadata reader property accessor marker index
+- [x] C# metadata reader indexer property marker index
+- [x] C# metadata reader indexer parameter type index
 - [x] C# metadata reader generic method signature placeholder index
+- [x] C# metadata reader generic method arity index
+- [x] C# metadata reader generic method constraint index
 - [x] C# metadata reader params parameter flag
 - [x] C# reference resolver skeleton
 - [x] C# metadata diagnostics pipeline integration
 - [x] C# invalid byref interop diagnostic smoke
 - [x] C# ambiguous overload diagnostic smoke
+- [x] C# no matching overload diagnostic smoke
+- [x] C# known argument type overload applicability diagnostic smoke
+- [x] C# numeric literal overload conversion diagnostic smoke
+- [x] C# imported metadata argument overload applicability diagnostic smoke
+- [x] C# null literal overload applicability diagnostic smoke
+- [x] C# no matching constructor diagnostic smoke
+- [x] C# no matching generic constructor diagnostic smoke
+- [x] C# ambiguous constructor diagnostic smoke
+- [x] C# missing method diagnostic smoke
+- [x] C# missing imported type diagnostic smoke
+- [x] C# missing framework imported type diagnostic smoke
+- [x] C# missing framework method diagnostic smoke
+- [x] C# missing static member diagnostic smoke
+- [x] C# missing framework static member diagnostic smoke
+- [x] C# missing instance member diagnostic smoke
+- [x] C# missing parameter instance member diagnostic smoke
+- [x] C# missing alias instance member diagnostic smoke
+- [x] C# assigned instance member diagnostic smoke
+- [x] C# missing instance indexer diagnostic smoke
+- [x] C# mismatched instance indexer argument diagnostic smoke
+- [x] C# mismatched instance indexer numeric literal diagnostic smoke
+- [x] C# ambiguous instance indexer diagnostic smoke
+- [x] C# missing instance property setter diagnostic smoke
+- [x] C# missing parameter instance property setter diagnostic smoke
+- [x] C# missing annotated local instance property setter diagnostic smoke
+- [x] C# readonly instance field assignment diagnostic smoke
+- [x] C# missing static property setter diagnostic smoke
+- [x] C# readonly static field assignment diagnostic smoke
+- [x] C# missing instance event diagnostic smoke
 - [x] C# unsupported NuGet package reference diagnostic smoke
 - [x] C# exact overload match smoke
+- [x] C# object overload fallback for known argument type smoke
+- [x] C# null literal overload reference match smoke
+- [x] C# null literal metadata relationship overload ranking smoke
+- [x] C# numeric literal constant conversion smoke
+- [x] C# imported metadata overload match smoke
+- [x] C# imported metadata relationship overload ranking smoke
+- [x] C# imported indexer numeric literal conversion smoke
+- [x] C# overloaded indexer exact match smoke
+- [x] C# overloaded indexer metadata relationship ranking smoke
 - [x] C# expanded params overload validation smoke
 - [x] C# optional parameter overload validation smoke
 - [x] C# named argument overload validation smoke
+- [x] C# explicit generic method arity overload validation smoke
+- [x] C# delegate lambda overload arity validation smoke
+- [x] C# delegate lambda overload return validation smoke
+- [x] C# delegate lambda parameter return overload validation smoke
+- [x] C# delegate lambda return overload ranking smoke
+- [x] C# delegate lambda member return overload validation smoke
+- [x] C# delegate lambda chained member return overload validation smoke
+- [x] C# delegate lambda method return overload validation smoke
+- [x] C# delegate lambda extension method return overload validation smoke
+- [x] C# delegate lambda static method return overload validation smoke
+- [x] C# delegate lambda binary return overload validation smoke
+- [x] C# explicit generic method constraint validation smoke
+- [x] C# inferred generic method constraint validation smoke
+- [x] C# inferred constructed generic method constraint validation smoke
+- [x] C# framework explicit generic method constraint validation smoke
+- [x] C# transitive generic type constraint validation smoke
+- [x] C# imported extension method instance syntax validation smoke
+- [x] C# imported extension receiver metadata relationship ranking smoke
+- [x] C# imported extension receiver object fallback smoke
+- [x] C# imported extension method argument diagnostic smoke
 - [x] C# unknown nullability diagnostic smoke
 - [x] dynamic capability marker diagnostic smoke
 - [x] dynamic call capability propagation diagnostic smoke
@@ -214,29 +336,60 @@
 - [x] generated C# local DLL static member call build smoke
 - [x] generated C# pipeline expression build smoke
 - [x] generated C# imported constructor and instance member call build smoke
+- [x] generated C# imported constructor optional/named/params build smoke
+- [x] generated C# imported parameter instance member call build smoke
+- [x] generated C# imported alias instance member call build smoke
+- [x] generated C# imported assigned instance member call build smoke
 - [x] generated C# imported interface reference build smoke
+- [x] generated C# imported interface implementation return build smoke
 - [x] generated C# imported property access build smoke
+- [x] generated C# imported property assignment build smoke
 - [x] generated C# imported field access build smoke
+- [x] generated C# imported field assignment build smoke
+- [x] generated C# imported static property assignment build smoke
+- [x] generated C# imported static field assignment build smoke
 - [x] generated C# imported indexer access build smoke
 - [x] generated C# imported `params` call build smoke
 - [x] generated C# imported `out` call build smoke
 - [x] generated C# imported `in` call build smoke
 - [x] generated C# imported `ref` call build smoke
 - [x] generated C# imported delegate lambda call build smoke
+- [x] generated C# imported delegate lambda overload arity build smoke
+- [x] generated C# imported delegate lambda overload return build smoke
+- [x] generated C# imported delegate lambda overload parameter return build smoke
+- [x] generated C# imported delegate lambda overload return ranking build smoke
+- [x] generated C# imported delegate lambda overload member return build smoke
+- [x] generated C# imported delegate lambda overload chained member return build smoke
+- [x] generated C# imported delegate lambda overload method return build smoke
+- [x] generated C# imported delegate lambda overload extension method return build smoke
+- [x] generated C# imported delegate lambda overload static method return build smoke
+- [x] generated C# imported delegate lambda overload binary return build smoke
 - [x] generated C# imported event add/remove build smoke
 - [x] generated C# imported generic method call build smoke
+- [x] generated C# imported explicit generic method type argument call build smoke
+- [x] generated C# imported explicit generic method constraint call build smoke
+- [x] generated C# imported framework explicit generic method constraint call build smoke
+- [x] generated C# imported inferred generic method constraint call build smoke
+- [x] generated C# imported inferred constructed generic method constraint call build smoke
+- [x] generated C# imported extension method instance call build smoke
 - [x] generated C# imported attribute reference build smoke
 - [x] generated C# imported generic type reference build smoke
+- [x] generated C# imported generic type constructor call build smoke
 - [x] generated C# generic constraint build smoke
 - [x] generated C# partial declaration lowering smoke
 - [x] generated C# multi-source module path container smoke
+- [x] generated C# relative source import/re-export forwarding build smoke, including aliases
 - [x] generated C# named import alias using lowering smoke
 - [x] generated C# namespace import alias using lowering smoke
 - [x] generated C# open declaration using lowering smoke
 - [x] generated C# ambient function no-emission smoke
 - [x] generated C# collection expression array lowering smoke
 - [x] generated C# explicit target `List<T>` collection expression lowering smoke
+- [x] generated C# collection spread lowering smoke
+- [x] generated C# `>>`/`<<` composition expression lowering smoke
 - [x] generated C# indexer expression lowering smoke
+- [x] generated C# `nameof` intrinsic lowering smoke
+- [x] generated C# `checked(...)`/`unchecked(...)` expression lowering smoke
 - [x] generated C# record expression construction smoke
 - [x] IL backend abstraction seam
 - [x] diagnostics system
@@ -310,6 +463,7 @@
 ## 테스트
 
 - [x] parser positive fixtures
+- [x] parser intersection type alias fixture
 - [x] parser negative fixtures
 - [x] parser modules/records positive fixture
 - [x] parser unions/patterns positive fixture
@@ -330,10 +484,17 @@
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
 - [x] duplicate source module path diagnostic smoke tests
-- [x] source module graph relative import diagnostic smoke tests
+- [x] source module graph relative import alias and diagnostic smoke tests
+- [x] source module graph missing export diagnostic smoke tests
+- [x] source module graph local export alias, relative re-export alias surface, and missing target diagnostic smoke tests
+- [x] source module graph namespace import member export diagnostic smoke tests
 - [x] CLI new console/library project templates
 - [x] CLI check parse diagnostics smoke tests
 - [x] CLI check type checker diagnostics smoke tests
+- [x] CLI check duplicate local export diagnostics smoke tests
+- [x] CLI check missing source module export diagnostics smoke tests
+- [x] CLI check missing source module re-export diagnostics smoke tests
+- [x] CLI check missing source module namespace member diagnostics smoke tests
 - [x] CLI common option parsing smoke tests
 - [x] CLI preview option acceptance and unknown project option rejection smoke tests
 - [x] CLI warnings-as-errors smoke tests
@@ -343,9 +504,11 @@
 - [x] binder duplicate symbol diagnostics
 - [x] binder import alias conflict diagnostics
 - [x] binder unsupported export forwarding diagnostics
+- [x] binder duplicate local export diagnostics
 - [x] type checker basic mismatch smoke tests
 - [x] binder fixtures
 - [x] type checker positive fixtures
+- [x] type checker structural intersection alias fixture
 - [x] type checker negative fixtures
 - [x] diagnostic golden tests
 - [x] C# source backend golden fixture
@@ -365,16 +528,93 @@
 - [x] TypeSharp.Core Option/Result behavior smoke tests
 - [x] C# reference resolver smoke tests
 - [x] C# metadata reader smoke tests
+- [x] C# metadata reader framework public symbol index smoke tests
+- [x] C# metadata reader framework generic method constraint smoke tests
 - [x] C# metadata reader local public symbol index smoke tests
+- [x] C# metadata reader local/framework extension method marker smoke tests
 - [x] C# metadata reader params parameter flag smoke tests
 - [x] C# metadata pipeline diagnostics smoke tests
 - [x] C# invalid byref interop diagnostic smoke tests
+- [x] C# explicit generic byref interop diagnostic smoke tests
 - [x] C# ambiguous overload diagnostic smoke tests
+- [x] C# no matching overload diagnostic smoke tests
+- [x] C# missing method diagnostic smoke tests
+- [x] C# missing imported type diagnostic smoke tests
+- [x] C# missing framework imported type diagnostic smoke tests
+- [x] C# missing framework method diagnostic smoke tests
+- [x] C# missing static member diagnostic smoke tests
+- [x] C# missing framework static member diagnostic smoke tests
+- [x] C# missing instance member diagnostic smoke tests
+- [x] C# missing parameter instance member diagnostic smoke tests
+- [x] C# missing alias instance member diagnostic smoke tests
+- [x] C# assigned instance member diagnostic smoke
+- [x] C# missing instance indexer diagnostic smoke tests
+- [x] C# mismatched instance indexer numeric literal diagnostic smoke tests
+- [x] C# ambiguous instance indexer diagnostic smoke tests
+- [x] C# missing instance property setter diagnostic smoke tests
+- [x] C# missing parameter instance property setter diagnostic smoke tests
+- [x] C# missing annotated local instance property setter diagnostic smoke tests
+- [x] C# readonly instance field assignment diagnostic smoke tests
+- [x] C# missing static property setter diagnostic smoke tests
+- [x] C# readonly static field assignment diagnostic smoke tests
+- [x] C# missing instance event diagnostic smoke tests
 - [x] C# unsupported NuGet package reference diagnostic smoke tests
 - [x] C# exact overload match smoke tests
+- [x] C# object overload fallback for known argument type smoke tests
+- [x] C# null literal overload reference match smoke tests
+- [x] C# null literal metadata relationship overload ranking smoke tests
+- [x] C# numeric literal constant conversion smoke tests
+- [x] C# imported metadata overload match smoke tests
+- [x] C# imported metadata relationship overload ranking smoke tests
 - [x] C# expanded params overload validation smoke tests
 - [x] C# optional parameter overload validation smoke tests
 - [x] C# named argument overload validation smoke tests
+- [x] CLI build no-emission smoke for duplicate local export diagnostics
+- [x] CLI build no-emission smoke for missing source module export diagnostics
+- [x] CLI build no-emission smoke for missing source module re-export diagnostics
+- [x] CLI build no-emission smoke for missing source module namespace member diagnostics
+- [x] CLI build no-emission smoke for no matching C# overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda parameter return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda member return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda chained member return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda method return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda extension method return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda static method return overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# delegate lambda binary return overload diagnostics
+- [x] CLI build no-emission smoke for known argument type C# overload diagnostics
+- [x] CLI build no-emission smoke for numeric literal C# overload diagnostics
+- [x] CLI build no-emission smoke for imported metadata argument C# overload diagnostics
+- [x] CLI build no-emission smoke for null literal C# overload diagnostics
+- [x] CLI build no-emission smoke for no matching C# constructor diagnostics
+- [x] CLI build no-emission smoke for no matching C# generic constructor diagnostics
+- [x] CLI build no-emission smoke for ambiguous C# constructor diagnostics
+- [x] CLI build no-emission smoke for unsatisfied C# generic constraint diagnostics
+- [x] CLI build no-emission smoke for unsatisfied framework C# generic constraint diagnostics
+- [x] CLI build no-emission smoke for unsatisfied inferred C# generic constraint diagnostics
+- [x] CLI build no-emission smoke for unsatisfied inferred constructed C# generic constraint diagnostics
+- [x] CLI build no-emission smoke for missing C# method diagnostics
+- [x] CLI build no-emission smoke for missing C# type diagnostics
+- [x] CLI build no-emission smoke for missing framework C# type diagnostics
+- [x] CLI build no-emission smoke for missing framework C# method diagnostics
+- [x] CLI build no-emission smoke for missing C# static member diagnostics
+- [x] CLI build no-emission smoke for missing framework C# static member diagnostics
+- [x] CLI build no-emission smoke for missing C# instance member diagnostics
+- [x] CLI build no-emission smoke for missing C# parameter instance member diagnostics
+- [x] CLI build no-emission smoke for missing C# alias instance member diagnostics
+- [x] CLI build no-emission smoke for missing C# assigned instance member diagnostics
+- [x] CLI build no-emission smoke for no matching C# extension overload diagnostics
+- [x] CLI build no-emission smoke for missing C# instance indexer diagnostics
+- [x] CLI build no-emission smoke for mismatched C# instance indexer diagnostics
+- [x] CLI build no-emission smoke for mismatched C# instance indexer numeric literal diagnostics
+- [x] CLI build no-emission smoke for ambiguous C# instance indexer diagnostics
+- [x] CLI build no-emission smoke for missing C# instance property setter diagnostics
+- [x] CLI build no-emission smoke for readonly C# instance field assignment diagnostics
+- [x] CLI build no-emission smoke for missing C# static property setter diagnostics
+- [x] CLI build no-emission smoke for readonly C# static field assignment diagnostics
+- [x] CLI build no-emission smoke for missing C# instance event diagnostics
+- [x] CLI build no-emission smoke for unsatisfied imported C# interface implementation diagnostics
 - [x] C# unknown nullability diagnostic smoke tests
 - [x] dynamic capability marker diagnostic smoke tests
 - [x] dynamic call capability propagation diagnostic smoke tests
@@ -385,25 +625,79 @@
 - [x] C# framework static member call smoke tests
 - [x] C# local DLL static member call smoke tests
 - [x] C# constructor and instance member call smoke tests
+- [x] C# constructor optional/named/params smoke tests
+- [x] C# parameter instance member call smoke tests
+- [x] C# alias instance member call smoke tests
+- [x] C# assigned instance member call smoke tests
 - [x] C# interface reference smoke tests
+- [x] C# imported interface implementation relation smoke tests
 - [x] C# property access smoke tests
+- [x] C# property assignment smoke tests
 - [x] C# field access smoke tests
+- [x] C# field assignment smoke tests
+- [x] C# static property assignment smoke tests
+- [x] C# static field assignment smoke tests
 - [x] C# indexer access smoke tests
+- [x] C# mismatched indexer argument smoke tests
+- [x] C# imported indexer numeric literal conversion smoke tests
+- [x] C# imported overloaded indexer exact match smoke tests
+- [x] C# imported overloaded indexer metadata relationship ranking smoke tests
 - [x] C# `params` call smoke tests
 - [x] C# `out` call smoke tests
 - [x] C# `in` call smoke tests
 - [x] C# `ref` call smoke tests
 - [x] C# event add/remove call smoke tests
 - [x] C# generic method call smoke tests
+- [x] C# explicit generic method type argument call smoke tests
+- [x] C# explicit generic method arity validation smoke tests
+- [x] C# delegate lambda overload arity validation smoke tests
+- [x] C# delegate lambda overload return validation smoke tests
+- [x] C# delegate lambda parameter return overload validation smoke tests
+- [x] C# delegate lambda overload return ranking smoke tests
+- [x] C# delegate lambda member return overload validation smoke tests
+- [x] C# delegate lambda chained member return overload validation smoke tests
+- [x] C# delegate lambda method return overload validation smoke tests
+- [x] C# delegate lambda extension method return overload validation smoke tests
+- [x] C# delegate lambda static method return overload validation smoke tests
+- [x] C# delegate lambda binary return overload validation smoke tests
+- [x] C# explicit generic method constraint validation smoke tests
+- [x] C# inferred generic method constraint validation smoke tests
+- [x] C# inferred constructed generic method constraint validation smoke tests
+- [x] C# framework explicit generic method constraint validation smoke tests
+- [x] C# transitive generic type constraint validation smoke tests
+- [x] C# imported extension method instance syntax smoke tests
+- [x] C# imported extension receiver metadata relationship ranking smoke tests
+- [x] C# imported extension receiver object fallback smoke tests
+- [x] C# imported extension method no-matching overload smoke tests
 - [x] C# attribute reference smoke tests
 - [x] C# generic type reference smoke tests
+- [x] C# generic type constructor call smoke tests
+- [x] C# no matching constructor diagnostic smoke tests
+- [x] C# no matching generic constructor diagnostic smoke tests
+- [x] C# ambiguous constructor diagnostic smoke tests
 - [x] generic constraint lowering smoke tests
+- [x] imported C# generic constraint validation smoke tests
+- [x] imported framework C# generic constraint validation smoke tests
+- [x] imported C# transitive generic constraint build smoke tests
 - [x] pipeline lowering smoke tests
+- [x] composition lowering parser/backend/CLI smoke tests
+- [x] `satisfies` parser/backend/type-checker/CLI smoke tests
+- [x] `yield` parser/backend/type-checker/CLI smoke tests
+- [x] `lock` parser/backend/type-checker/CLI smoke tests
+- [x] `extension` method parser/backend/type-checker/CLI smoke tests
 - [x] collection expression lowering smoke tests
+- [x] collection spread parser/backend/type-checker/CLI smoke tests
 - [x] indexer expression lowering smoke tests
+- [x] `nameof` intrinsic parser/backend/CLI smoke tests
+- [x] `checked(...)`/`unchecked(...)` parser/backend/CLI smoke tests
 - [x] record expression construction smoke tests
+- [x] record spread parser/backend/type-checker/CLI smoke tests
+- [x] `keyof` parser/backend/type-checker/CLI smoke tests
+- [x] indexed access type parser/backend/type-checker/CLI smoke tests
 - [x] record expression mismatch diagnostic fixture
+- [x] record spread non-record diagnostic fixture
 - [x] collection expression mismatch diagnostic fixture
+- [x] collection spread non-collection diagnostic fixture
 - [x] ASP.NET/WCF/worker-style `net48` host compatibility smoke tests
 - [x] `net48` runtime dependency compatibility audit smoke tests
 - [x] CLI run generated `net48` executable smoke tests

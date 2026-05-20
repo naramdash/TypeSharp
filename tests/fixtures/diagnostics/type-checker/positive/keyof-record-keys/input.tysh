@@ -1,0 +1,14 @@
+namespace Samples.Keyof
+
+record Customer(Name: string, Age: int)
+
+type CustomerKey = keyof Customer
+
+fun nameKey(): CustomerKey = "Name"
+
+fun ageKey(): CustomerKey = "Age"
+
+fun keyAsString(): string {
+  let key: CustomerKey = "Name"
+  key
+}

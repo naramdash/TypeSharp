@@ -17,6 +17,8 @@ internal sealed class TypeSharpInferenceEngine
         type = node.Kind switch
         {
             SyntaxKind.LiteralExpression => InferLiteral(node),
+            SyntaxKind.NameofExpression => SimpleType.Named("string"),
+            SyntaxKind.CheckedExpression => InferCheckedExpression(node, inferNested),
             SyntaxKind.IdentifierExpression => InferIdentifier(node, scope),
             SyntaxKind.CallExpression => InferCall(node, scope, inferNested),
             SyntaxKind.BinaryExpression => InferBinary(node, scope, inferNested),
@@ -25,6 +27,8 @@ internal sealed class TypeSharpInferenceEngine
 
         return type.IsKnown || node.Kind is
             SyntaxKind.LiteralExpression or
+            SyntaxKind.NameofExpression or
+            SyntaxKind.CheckedExpression or
             SyntaxKind.IdentifierExpression or
             SyntaxKind.CallExpression or
             SyntaxKind.BinaryExpression;
@@ -53,6 +57,14 @@ internal sealed class TypeSharpInferenceEngine
         return scope.ResolveValue(identifier.Text ?? string.Empty, out var type)
             ? type
             : SimpleType.Unknown;
+    }
+
+    private static SimpleType InferCheckedExpression(
+        SyntaxNode node,
+        Func<SyntaxNode, SimpleType> inferNested)
+    {
+        var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+        return expression is null ? SimpleType.Unknown : inferNested(expression);
     }
 
     private static SimpleType InferCall(
@@ -97,6 +109,16 @@ internal sealed class TypeSharpInferenceEngine
     {
         var children = node.Children;
         var expressions = children.Where(child => !child.IsToken).ToArray();
+        if (IsCompositionExpression(children))
+        {
+            foreach (var child in expressions)
+            {
+                inferNested(child);
+            }
+
+            return SimpleType.Unknown;
+        }
+
         if (children.Any(child => child.IsToken && child.Kind == SyntaxKind.PipeGreaterToken) &&
             expressions.Length >= 2)
         {
@@ -142,6 +164,22 @@ internal sealed class TypeSharpInferenceEngine
 
         inferNested(target);
         return SimpleType.Unknown;
+    }
+
+    private static bool IsCompositionExpression(IReadOnlyList<SyntaxNode> children)
+    {
+        for (var index = 0; index < children.Count - 1; index++)
+        {
+            if (children[index].IsToken &&
+                children[index + 1].IsToken &&
+                ((children[index].Kind == SyntaxKind.GreaterToken && children[index + 1].Kind == SyntaxKind.GreaterToken) ||
+                 (children[index].Kind == SyntaxKind.LessToken && children[index + 1].Kind == SyntaxKind.LessToken)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static SimpleType InferNumericLiteral(string text)

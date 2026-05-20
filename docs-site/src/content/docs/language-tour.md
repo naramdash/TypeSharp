@@ -110,9 +110,12 @@ Structural shapes describe required members for compile-time checks.
 
 ```text
 type Named = { Name: string }
+
+fun keep(customer: Customer): Customer =
+  customer satisfies Named
 ```
 
-Use structural shapes inside TypeSharp code when you need shape-based checking. Do not expose structural shapes directly through public .NET APIs; use a named record, class, or interface instead.
+Use structural shapes inside TypeSharp code when you need shape-based checking. `satisfies` verifies that a value fits a named shape while preserving the value's original type and erasing to that value in generated C#. Named shapes can be composed locally with `A & B` intersection aliases. Do not expose structural shapes or intersection aliases directly through public .NET APIs; use a named record, class, or interface instead.
 
 ## Type-Level Unions
 
@@ -126,7 +129,7 @@ They are useful for local logic, but public boundaries must use CLR-visible alte
 
 ## Collections And Indexers
 
-Simple homogeneous collection expressions lower to arrays by default. If the target type is `List<T>`, they lower to a C# collection initializer.
+Simple homogeneous collection expressions lower to arrays by default. If the target type is `List<T>`, they lower to a C# collection initializer. `...` spread elements can merge known arrays or `List<T>` values and lower through C# 7.3-compatible LINQ concatenation.
 
 ```text
 let numbers: int[] = [1, 2, 3]
@@ -135,16 +138,60 @@ let first = numbers[0]
 
 Indexer expressions are preserved as C#-compatible array or indexer access.
 
+## Record Expressions
+
+Expected nominal record expressions lower to constructor calls. A record expression can spread another nominal record value and then override copied fields explicitly.
+
+```text
+export fun older(customer: Customer): Customer =
+  { ...customer, Age: customer.Age + 1 }
+```
+
+Iterator functions can use block-level `yield` when the return type is an explicit CLR enumerable.
+
+```text
+import { IEnumerable } from "System.Collections.Generic"
+
+export fun names(): IEnumerable<string> {
+  yield "Ada"
+  yield "Grace"
+}
+```
+
+Each yielded expression is checked against the enumerable element type and lowers to C# `yield return`.
+
+Block-level `lock` statements lower to C# `lock` blocks and require a non-null reference gate when the gate type is known.
+
+Extension methods use an explicit receiver parameter and lower to C# extension methods for C# consumers.
+
 ## Pipelines
 
-Pipeline expressions pass a value into a function call.
+Pipeline expressions pass a value into a function call. Composition expressions build unary delegate values from callable targets.
 
 ```text
 export fun total(): int =
   [1, 2, 3] |> sum
+
+export let formatAfterIncrement: int -> string = increment >> format
 ```
 
-The current lowering rewrites pipelines to nested function calls that generated C# can compile.
+The current lowering rewrites pipelines to nested function calls and composition to C# delegate lambdas that generated `net48` projects can compile.
+
+## Nameof
+
+`nameof` keeps C#-style name references refactoring-safe while still lowering to C# 7.3-compatible source.
+
+```text
+export fun fieldName(): string = nameof(Customer.Name)
+```
+
+## Checked And Unchecked
+
+Overflow context expressions preserve the inner expression type and lower directly to C# `checked(...)` or `unchecked(...)`.
+
+```text
+export fun checkedAdd(value: int): int = checked(value + 1)
+```
 
 ## Async And Tasks
 

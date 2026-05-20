@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2204",
+      "severity": "error",
+      "message": "Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 24 },
+      "end": { "line": 7, "column": 34 }
+    },
+    {
+      "code": "TS2204",
+      "severity": "error",
+      "message": "Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 37 },
+      "end": { "line": 7, "column": 47 }
+    }
+  ]
+}

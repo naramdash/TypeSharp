@@ -1,0 +1,8 @@
+namespace Samples.Lock
+
+export fun pulse(gate: object): string {
+  lock gate {
+    gate.ToString()
+  }
+  "done"
+}

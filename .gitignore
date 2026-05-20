@@ -8,8 +8,8 @@ node_modules/
 docs-site/.astro/
 docs-site/dist/
 vscode/typesharp/server/
-docs/examples/runnable/**/generated/
-docs/examples/runnable/**/lib/
+examples/runnable/**/generated/
+examples/runnable/**/lib/
 *.user
 *.suo
 *.userosscache

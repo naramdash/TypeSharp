@@ -1,0 +1,7 @@
+namespace Samples.Intersections
+
+type Named = { Name: string }
+type Aged = { Age: int }
+type PersonLike = Named & Aged
+
+fun label(value: PersonLike): string = value.Name

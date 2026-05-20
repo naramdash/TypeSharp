@@ -37,6 +37,7 @@ public sealed class TypeSharpLexer
         ["interface"] = SyntaxKind.InterfaceKeyword,
         ["delegate"] = SyntaxKind.DelegateKeyword,
         ["event"] = SyntaxKind.EventKeyword,
+        ["extension"] = SyntaxKind.ExtensionKeyword,
         ["mut"] = SyntaxKind.MutKeyword,
         ["get"] = SyntaxKind.GetKeyword,
         ["set"] = SyntaxKind.SetKeyword,
@@ -46,6 +47,13 @@ public sealed class TypeSharpLexer
         ["ref"] = SyntaxKind.RefKeyword,
         ["if"] = SyntaxKind.IfKeyword,
         ["else"] = SyntaxKind.ElseKeyword,
+        ["satisfies"] = SyntaxKind.SatisfiesKeyword,
+        ["yield"] = SyntaxKind.YieldKeyword,
+        ["lock"] = SyntaxKind.LockKeyword,
+        ["nameof"] = SyntaxKind.NameofKeyword,
+        ["checked"] = SyntaxKind.CheckedKeyword,
+        ["unchecked"] = SyntaxKind.UncheckedKeyword,
+        ["keyof"] = SyntaxKind.KeyofKeyword,
         ["null"] = SyntaxKind.NullKeyword,
         ["true"] = SyntaxKind.TrueKeyword,
         ["false"] = SyntaxKind.FalseKeyword
@@ -143,6 +151,7 @@ public sealed class TypeSharpLexer
             '/' => SyntaxKind.SlashToken,
             '%' => SyntaxKind.PercentToken,
             '|' => SyntaxKind.PipeToken,
+            '&' => SyntaxKind.AmpersandToken,
             _ => SyntaxKind.UnknownToken
         };
 
@@ -384,6 +393,7 @@ public sealed class TypeSharpLexer
 
     private static readonly (string Text, SyntaxKind Kind)[] MultiCharacterTokens =
     [
+        ("...", SyntaxKind.DotDotDotToken),
         ("??", SyntaxKind.NullCoalescingToken),
         ("=>", SyntaxKind.EqualsGreaterToken),
         ("->", SyntaxKind.ArrowToken),

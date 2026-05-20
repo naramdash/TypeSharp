@@ -55,6 +55,26 @@ var tests = new (string Name, Action Body)[]
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
     ("source discovery reports duplicate module paths", SourceDiscoveryReportsDuplicateModulePaths),
     ("source module graph collects relative import dependencies", SourceModuleGraphCollectsRelativeImportDependencies),
+    ("source module graph collects relative import alias dependencies", SourceModuleGraphCollectsRelativeImportAliasDependencies),
+    ("source module graph collects relative value import alias dependencies", SourceModuleGraphCollectsRelativeValueImportAliasDependencies),
+    ("source module graph collects relative type import alias dependencies", SourceModuleGraphCollectsRelativeTypeImportAliasDependencies),
+    ("source module graph collects relative named type import alias dependencies", SourceModuleGraphCollectsRelativeNamedTypeImportAliasDependencies),
+    ("source module graph collects relative module import alias dependencies", SourceModuleGraphCollectsRelativeModuleImportAliasDependencies),
+    ("source module graph collects local export alias surface", SourceModuleGraphCollectsLocalExportAliasSurface),
+    ("source module graph collects local literal export alias surface", SourceModuleGraphCollectsLocalLiteralExportAliasSurface),
+    ("source module graph collects local value export alias surface", SourceModuleGraphCollectsLocalValueExportAliasSurface),
+    ("source module graph collects function value export surface", SourceModuleGraphCollectsFunctionValueExportSurface),
+    ("source module graph collects local type export alias surface", SourceModuleGraphCollectsLocalTypeExportAliasSurface),
+    ("source module graph collects relative re-export surface", SourceModuleGraphCollectsRelativeReExportSurface),
+    ("source module graph collects relative re-export alias surface", SourceModuleGraphCollectsRelativeReExportAliasSurface),
+    ("source module graph collects relative module re-export alias surface", SourceModuleGraphCollectsRelativeModuleReExportAliasSurface),
+    ("source module graph collects relative value re-export surface", SourceModuleGraphCollectsRelativeValueReExportSurface),
+    ("source module graph collects relative type re-export surface", SourceModuleGraphCollectsRelativeTypeReExportSurface),
+    ("source module graph collects relative star re-export surface", SourceModuleGraphCollectsRelativeStarReExportSurface),
+    ("source module graph reports missing named exports", SourceModuleGraphReportsMissingNamedExports),
+    ("source module graph reports missing re-exported names", SourceModuleGraphReportsMissingReExportedNames),
+    ("source module graph reports missing type re-exported names", SourceModuleGraphReportsMissingTypeReExportedNames),
+    ("source module graph reports missing namespace import members", SourceModuleGraphReportsMissingNamespaceImportMembers),
     ("runtime project targets net48", RuntimeProjectTargetsNet48),
     ("core project targets net48", CoreProjectTargetsNet48),
     ("runtime ABI constants are aligned", RuntimeAbiConstantsAreAligned),
@@ -68,35 +88,156 @@ var tests = new (string Name, Action Body)[]
     ("reference resolver normalizes local DLL paths", ReferenceResolverNormalizesLocalDllPaths),
     ("reference resolver reports missing local DLL diagnostics", ReferenceResolverReportsMissingLocalDllDiagnostics),
     ("reference resolver reports unsupported package diagnostics", ReferenceResolverReportsUnsupportedPackageDiagnostics),
-    ("metadata reader creates framework assembly placeholders", MetadataReaderCreatesFrameworkAssemblyPlaceholders),
+    ("metadata reader indexes framework assembly public symbols", MetadataReaderIndexesFrameworkAssemblyPublicSymbols),
     ("metadata reader creates local assembly placeholders", MetadataReaderCreatesLocalAssemblyPlaceholders),
     ("metadata reader indexes local public symbols", MetadataReaderIndexesLocalPublicSymbols),
     ("metadata reader preserves reference resolution diagnostics", MetadataReaderPreservesReferenceResolutionDiagnostics),
     ("metadata reader reports missing local metadata inputs", MetadataReaderReportsMissingLocalMetadataInputs),
     ("checker reports missing reference diagnostics", CheckerReportsMissingReferenceDiagnostics),
     ("checker reports invalid byref interop diagnostics", CheckerReportsInvalidByRefInteropDiagnostics),
+    ("checker reports explicit generic byref interop diagnostics", CheckerReportsExplicitGenericByRefInteropDiagnostics),
+    ("checker reports unsatisfied C# generic constraint diagnostics", CheckerReportsUnsatisfiedCSharpGenericConstraintDiagnostics),
+    ("checker reports unsatisfied framework C# generic constraint diagnostics", CheckerReportsUnsatisfiedFrameworkCSharpGenericConstraintDiagnostics),
+    ("checker accepts transitive C# generic type constraints", CheckerAcceptsTransitiveCSharpGenericTypeConstraints),
+    ("checker accepts inferred C# generic type constraints", CheckerAcceptsInferredCSharpGenericTypeConstraints),
+    ("checker reports unsatisfied inferred C# generic constraint diagnostics", CheckerReportsUnsatisfiedInferredCSharpGenericConstraintDiagnostics),
+    ("checker reports unsatisfied inferred constructed C# generic constraint diagnostics", CheckerReportsUnsatisfiedInferredConstructedCSharpGenericConstraintDiagnostics),
+    ("checker accepts imported C# interface implementation relation", CheckerAcceptsImportedCSharpInterfaceImplementationRelation),
+    ("checker reports no matching C# overload diagnostics", CheckerReportsNoMatchingCSharpOverloadDiagnostics),
+    ("checker reports no matching C# overload for known argument type diagnostics", CheckerReportsNoMatchingCSharpOverloadForKnownArgumentTypeDiagnostics),
+    ("checker reports no matching C# overload for numeric literal conversion diagnostics", CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDiagnostics),
+    ("checker reports no matching C# overload for imported metadata argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForImportedMetadataArgumentDiagnostics),
+    ("checker reports no matching C# overload for null literal diagnostics", CheckerReportsNoMatchingCSharpOverloadForNullLiteralDiagnostics),
+    ("checker reports no matching C# constructor diagnostics", CheckerReportsNoMatchingCSharpConstructorDiagnostics),
+    ("checker reports no matching C# generic constructor diagnostics", CheckerReportsNoMatchingCSharpGenericConstructorDiagnostics),
+    ("checker reports ambiguous C# constructor diagnostics", CheckerReportsAmbiguousCSharpConstructorDiagnostics),
+    ("checker reports missing C# method diagnostics", CheckerReportsMissingCSharpMethodDiagnostics),
+    ("checker reports missing C# type diagnostics", CheckerReportsMissingCSharpTypeDiagnostics),
+    ("checker reports missing framework C# type diagnostics", CheckerReportsMissingFrameworkCSharpTypeDiagnostics),
+    ("checker reports missing framework C# method diagnostics", CheckerReportsMissingFrameworkCSharpMethodDiagnostics),
+    ("checker reports missing C# static member diagnostics", CheckerReportsMissingCSharpStaticMemberDiagnostics),
+    ("checker reports missing framework C# static member diagnostics", CheckerReportsMissingFrameworkCSharpStaticMemberDiagnostics),
+    ("checker reports missing C# instance member diagnostics", CheckerReportsMissingCSharpInstanceMemberDiagnostics),
+    ("checker reports missing C# parameter instance member diagnostics", CheckerReportsMissingCSharpParameterInstanceMemberDiagnostics),
+    ("checker reports missing C# alias instance member diagnostics", CheckerReportsMissingCSharpAliasInstanceMemberDiagnostics),
+    ("checker reports missing C# assigned instance member diagnostics", CheckerReportsMissingCSharpAssignedInstanceMemberDiagnostics),
+    ("checker accepts imported C# extension method instance syntax", CheckerAcceptsImportedCSharpExtensionMethodInstanceSyntax),
+    ("checker accepts imported C# extension receiver relationship ranking", CheckerAcceptsImportedCSharpExtensionReceiverRelationshipRanking),
+    ("checker accepts imported C# extension receiver object fallback", CheckerAcceptsImportedCSharpExtensionReceiverObjectFallback),
+    ("checker reports no matching C# extension overload diagnostics", CheckerReportsNoMatchingCSharpExtensionOverloadDiagnostics),
+    ("checker reports missing C# instance indexer diagnostics", CheckerReportsMissingCSharpInstanceIndexerDiagnostics),
+    ("checker reports mismatched C# instance indexer diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerDiagnostics),
+    ("checker reports mismatched C# instance indexer numeric literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnostics),
+    ("checker reports ambiguous C# instance indexer diagnostics", CheckerReportsAmbiguousCSharpInstanceIndexerDiagnostics),
+    ("checker accepts imported C# indexer metadata relationship ranking", CheckerAcceptsImportedCSharpIndexerMetadataRelationshipRanking),
+    ("checker reports missing C# instance property setter diagnostics", CheckerReportsMissingCSharpInstancePropertySetterDiagnostics),
+    ("checker reports missing C# parameter instance property setter diagnostics", CheckerReportsMissingCSharpParameterInstancePropertySetterDiagnostics),
+    ("checker reports missing C# annotated local instance property setter diagnostics", CheckerReportsMissingCSharpAnnotatedLocalInstancePropertySetterDiagnostics),
+    ("checker reports readonly C# instance field assignment diagnostics", CheckerReportsReadOnlyCSharpInstanceFieldAssignmentDiagnostics),
+    ("checker reports missing C# static property setter diagnostics", CheckerReportsMissingCSharpStaticPropertySetterDiagnostics),
+    ("checker reports readonly C# static field assignment diagnostics", CheckerReportsReadOnlyCSharpStaticFieldAssignmentDiagnostics),
+    ("checker reports missing C# instance event diagnostics", CheckerReportsMissingCSharpInstanceEventDiagnostics),
     ("checker reports ambiguous C# overload diagnostics", CheckerReportsAmbiguousCSharpOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda parameter return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaParameterReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda member return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaMemberReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda chained member return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaChainedMemberReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda method return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaMethodReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda extension method return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaExtensionMethodReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda static method return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaStaticMethodReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda binary return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaBinaryReturnOverloadDiagnostics),
     ("C# overload resolver selects exact literal match", CSharpOverloadResolverSelectsExactLiteralMatch),
+    ("C# overload resolver filters known argument type mismatch", CSharpOverloadResolverFiltersKnownArgumentTypeMismatch),
+    ("C# overload resolver filters numeric literal conversion mismatch", CSharpOverloadResolverFiltersNumericLiteralConversionMismatch),
+    ("C# overload resolver ranks null literal reference match", CSharpOverloadResolverRanksNullLiteralReferenceMatch),
+    ("C# overload resolver ranks null literal nearest metadata reference", CSharpOverloadResolverRanksNullLiteralNearestMetadataReference),
+    ("C# overload resolver ranks nearest metadata relationship", CSharpOverloadResolverRanksNearestMetadataRelationship),
+    ("C# overload resolver filters explicit generic arity", CSharpOverloadResolverFiltersExplicitGenericArity),
+    ("C# overload resolver filters lambda delegate arity", CSharpOverloadResolverFiltersLambdaDelegateArity),
+    ("C# overload resolver filters lambda delegate return type", CSharpOverloadResolverFiltersLambdaDelegateReturnType),
+    ("C# overload resolver filters lambda delegate parameter return type", CSharpOverloadResolverFiltersLambdaDelegateParameterReturnType),
+    ("C# overload resolver filters lambda delegate member return type", CSharpOverloadResolverFiltersLambdaDelegateMemberReturnType),
+    ("C# overload resolver filters lambda delegate chained member return type", CSharpOverloadResolverFiltersLambdaDelegateChainedMemberReturnType),
+    ("C# overload resolver filters lambda delegate method return type", CSharpOverloadResolverFiltersLambdaDelegateMethodReturnType),
+    ("C# overload resolver filters lambda delegate extension method return type", CSharpOverloadResolverFiltersLambdaDelegateExtensionMethodReturnType),
+    ("C# overload resolver filters lambda delegate static method return type", CSharpOverloadResolverFiltersLambdaDelegateStaticMethodReturnType),
+    ("C# overload resolver filters lambda delegate binary return type", CSharpOverloadResolverFiltersLambdaDelegateBinaryReturnType),
+    ("C# overload resolver ranks lambda delegate return type", CSharpOverloadResolverRanksLambdaDelegateReturnType),
     ("checker reports ambiguous expanded params overload diagnostics", CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics),
     ("checker reports ambiguous optional overload diagnostics", CheckerReportsAmbiguousOptionalOverloadDiagnostics),
     ("checker reports unknown C# nullability diagnostics", CheckerReportsUnknownCSharpNullabilityDiagnostics),
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI check emits JSON duplicate source module diagnostics", CliCheckEmitsJsonDuplicateSourceModuleDiagnostics),
-    ("CLI check emits JSON unsupported source module import alias diagnostics", CliCheckEmitsJsonUnsupportedSourceModuleImportAliasDiagnostics),
+    ("CLI check accepts relative source module import aliases", CliCheckAcceptsRelativeSourceModuleImportAliases),
     ("CLI check emits JSON unresolved source module diagnostics", CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics),
+    ("CLI check emits JSON missing source module export diagnostics", CliCheckEmitsJsonMissingSourceModuleExportDiagnostics),
+    ("CLI check emits JSON missing source module re-export diagnostics", CliCheckEmitsJsonMissingSourceModuleReExportDiagnostics),
+    ("CLI check emits JSON missing source module namespace member diagnostics", CliCheckEmitsJsonMissingSourceModuleNamespaceMemberDiagnostics),
     ("CLI check emits JSON unsupported package diagnostics", CliCheckEmitsJsonUnsupportedPackageDiagnostics),
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on duplicate source modules", CliBuildStopsBeforeEmissionOnDuplicateSourceModules),
-    ("CLI build stops before emission on unsupported source module import aliases", CliBuildStopsBeforeEmissionOnUnsupportedSourceModuleImportAliases),
+    ("CLI build lowers relative source module import aliases", CliBuildLowersRelativeSourceModuleImportAliases),
+    ("CLI build stops before emission on missing source module exports", CliBuildStopsBeforeEmissionOnMissingSourceModuleExports),
+    ("CLI build stops before emission on missing source module re-exports", CliBuildStopsBeforeEmissionOnMissingSourceModuleReExports),
+    ("CLI build stops before emission on missing source module namespace members", CliBuildStopsBeforeEmissionOnMissingSourceModuleNamespaceMembers),
     ("CLI build stops before emission on package diagnostics", CliBuildStopsBeforeEmissionOnPackageDiagnostics),
     ("CLI build stops before emission on invalid byref interop", CliBuildStopsBeforeEmissionOnInvalidByRefInterop),
+    ("CLI build stops before emission on unsatisfied C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedCSharpGenericConstraint),
+    ("CLI build stops before emission on unsatisfied framework C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedFrameworkCSharpGenericConstraint),
+    ("CLI build stops before emission on unsatisfied inferred C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedInferredCSharpGenericConstraint),
+    ("CLI build stops before emission on unsatisfied inferred constructed C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedInferredConstructedCSharpGenericConstraint),
+    ("CLI build stops before emission on no matching C# overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda parameter return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaParameterReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda member return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaMemberReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda chained member return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaChainedMemberReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda method return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaMethodReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda extension method return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaExtensionMethodReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda static method return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaStaticMethodReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda binary return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBinaryReturnOverload),
+    ("CLI build stops before emission on known argument type C# overload mismatch", CliBuildStopsBeforeEmissionOnKnownArgumentTypeCSharpOverloadMismatch),
+    ("CLI build stops before emission on numeric literal C# overload mismatch", CliBuildStopsBeforeEmissionOnNumericLiteralCSharpOverloadMismatch),
+    ("CLI build stops before emission on imported metadata argument C# overload mismatch", CliBuildStopsBeforeEmissionOnImportedMetadataArgumentCSharpOverloadMismatch),
+    ("CLI build stops before emission on null literal C# overload mismatch", CliBuildStopsBeforeEmissionOnNullLiteralCSharpOverloadMismatch),
+    ("CLI build stops before emission on no matching C# constructor", CliBuildStopsBeforeEmissionOnNoMatchingCSharpConstructor),
+    ("CLI build stops before emission on no matching C# generic constructor", CliBuildStopsBeforeEmissionOnNoMatchingCSharpGenericConstructor),
+    ("CLI build stops before emission on ambiguous C# constructor", CliBuildStopsBeforeEmissionOnAmbiguousCSharpConstructor),
+    ("CLI build stops before emission on missing C# method", CliBuildStopsBeforeEmissionOnMissingCSharpMethod),
+    ("CLI build stops before emission on missing C# type", CliBuildStopsBeforeEmissionOnMissingCSharpType),
+    ("CLI build stops before emission on missing framework C# type", CliBuildStopsBeforeEmissionOnMissingFrameworkCSharpType),
+    ("CLI build stops before emission on missing framework C# method", CliBuildStopsBeforeEmissionOnMissingFrameworkCSharpMethod),
+    ("CLI build stops before emission on missing C# static member", CliBuildStopsBeforeEmissionOnMissingCSharpStaticMember),
+    ("CLI build stops before emission on missing framework C# static member", CliBuildStopsBeforeEmissionOnMissingFrameworkCSharpStaticMember),
+    ("CLI build stops before emission on missing C# instance member", CliBuildStopsBeforeEmissionOnMissingCSharpInstanceMember),
+    ("CLI build stops before emission on missing C# parameter instance member", CliBuildStopsBeforeEmissionOnMissingCSharpParameterInstanceMember),
+    ("CLI build stops before emission on missing C# alias instance member", CliBuildStopsBeforeEmissionOnMissingCSharpAliasInstanceMember),
+    ("CLI build stops before emission on missing C# assigned instance member", CliBuildStopsBeforeEmissionOnMissingCSharpAssignedInstanceMember),
+    ("CLI build stops before emission on no matching C# extension overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpExtensionOverload),
+    ("CLI build stops before emission on missing C# instance indexer", CliBuildStopsBeforeEmissionOnMissingCSharpInstanceIndexer),
+    ("CLI build stops before emission on mismatched C# instance indexer", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexer),
+    ("CLI build stops before emission on mismatched C# instance indexer numeric literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericLiteral),
+    ("CLI build stops before emission on ambiguous C# instance indexer", CliBuildStopsBeforeEmissionOnAmbiguousCSharpInstanceIndexer),
+    ("CLI build stops before emission on missing C# instance property setter", CliBuildStopsBeforeEmissionOnMissingCSharpInstancePropertySetter),
+    ("CLI build stops before emission on readonly C# instance field assignment", CliBuildStopsBeforeEmissionOnReadOnlyCSharpInstanceFieldAssignment),
+    ("CLI build stops before emission on missing C# static property setter", CliBuildStopsBeforeEmissionOnMissingCSharpStaticPropertySetter),
+    ("CLI build stops before emission on readonly C# static field assignment", CliBuildStopsBeforeEmissionOnReadOnlyCSharpStaticFieldAssignment),
+    ("CLI build stops before emission on missing C# instance event", CliBuildStopsBeforeEmissionOnMissingCSharpInstanceEvent),
     ("CLI build stops before emission on ambiguous C# overload", CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload),
     ("CLI build stops before emission on type checker diagnostics", CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics),
+    ("CLI build stops before emission on unsatisfied imported C# interface implementation", CliBuildStopsBeforeEmissionOnUnsatisfiedImportedCSharpInterfaceImplementation),
     ("CLI build stops before emission on nullability diagnostics", CliBuildStopsBeforeEmissionOnNullabilityDiagnostics),
     ("CLI build stops before emission on public boundary diagnostics", CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics),
     ("CLI build stops before emission on non-exhaustive match", CliBuildStopsBeforeEmissionOnNonExhaustiveMatch),
     ("CLI build stops before emission on unsupported export forwarding", CliBuildStopsBeforeEmissionOnUnsupportedExportForwarding),
+    ("CLI build stops before emission on duplicate local export", CliBuildStopsBeforeEmissionOnDuplicateLocalExport),
     ("CLI build uses local export lists for public surface", CliBuildUsesLocalExportListsForPublicSurface),
+    ("CLI build lowers local function export aliases", CliBuildLowersLocalFunctionExportAliases),
+    ("CLI build lowers local literal export aliases", CliBuildLowersLocalLiteralExportAliases),
+    ("CLI build lowers local value export aliases", CliBuildLowersLocalValueExportAliases),
+    ("CLI build lowers function value exports", CliBuildLowersFunctionValueExports),
+    ("CLI build lowers local type export aliases", CliBuildLowersLocalTypeExportAliases),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
@@ -123,6 +264,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports duplicate symbol diagnostics", CheckerReportsDuplicateSymbolDiagnostics),
     ("checker reports import alias conflict diagnostics", CheckerReportsImportAliasConflictDiagnostics),
     ("checker reports unsupported export forwarding diagnostics", CheckerReportsUnsupportedExportForwardingDiagnostics),
+    ("checker reports duplicate local export diagnostics", CheckerReportsDuplicateLocalExportDiagnostics),
     ("checker reports unresolved local export list diagnostics", CheckerReportsUnresolvedLocalExportListDiagnostics),
     ("type checker accepts basic annotations", TypeCheckerAcceptsBasicAnnotations),
     ("inference engine infers local expression graph", InferenceEngineInfersLocalExpressionGraph),
@@ -137,6 +279,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON duplicate symbol diagnostics", CliCheckEmitsJsonDuplicateSymbolDiagnostics),
     ("CLI check emits JSON import alias conflict diagnostics", CliCheckEmitsJsonImportAliasConflictDiagnostics),
     ("CLI check emits JSON unsupported export forwarding diagnostics", CliCheckEmitsJsonUnsupportedExportForwardingDiagnostics),
+    ("CLI check emits JSON duplicate local export diagnostics", CliCheckEmitsJsonDuplicateLocalExportDiagnostics),
     ("CLI check emits JSON unsupported generic constraint diagnostics", CliCheckEmitsJsonUnsupportedGenericConstraintDiagnostics),
     ("CLI check emits JSON dynamic capability diagnostics", CliCheckEmitsJsonDynamicCapabilityDiagnostics),
     ("CLI check emits JSON dynamic call capability diagnostics", CliCheckEmitsJsonDynamicCallCapabilityDiagnostics),
@@ -162,7 +305,17 @@ var tests = new (string Name, Action Body)[]
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
     ("CLI build uses module path containers for multiple sources", CliBuildUsesModulePathContainersForMultipleSources),
     ("CLI build lowers relative source named imports", CliBuildLowersRelativeSourceNamedImports),
+    ("CLI build lowers relative source named import aliases", CliBuildLowersRelativeSourceNamedImportAliases),
+    ("CLI build lowers relative source value import aliases", CliBuildLowersRelativeSourceValueImportAliases),
+    ("CLI build lowers relative source type import aliases", CliBuildLowersRelativeSourceTypeImportAliases),
+    ("CLI build lowers relative source named type import aliases", CliBuildLowersRelativeSourceNamedTypeImportAliases),
     ("CLI build lowers relative source namespace imports", CliBuildLowersRelativeSourceNamespaceImports),
+    ("CLI build lowers relative source re-exports", CliBuildLowersRelativeSourceReExports),
+    ("CLI build lowers relative source re-export aliases", CliBuildLowersRelativeSourceReExportAliases),
+    ("CLI build lowers relative source module re-export aliases", CliBuildLowersRelativeSourceModuleReExportAliases),
+    ("CLI build lowers relative source value re-exports", CliBuildLowersRelativeSourceValueReExports),
+    ("CLI build lowers relative source type re-exports", CliBuildLowersRelativeSourceTypeReExports),
+    ("CLI build lowers relative source star re-exports", CliBuildLowersRelativeSourceStarReExports),
     ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
@@ -173,22 +326,60 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles framework static member call", CliBuildCompilesFrameworkStaticMemberCall),
     ("CLI build compiles local DLL static member call", CliBuildCompilesLocalDllStaticMemberCall),
     ("CLI build compiles imported constructor and instance member call", CliBuildCompilesImportedConstructorAndInstanceMemberCall),
+    ("CLI build compiles imported constructor named optional params calls", CliBuildCompilesImportedConstructorNamedOptionalParamsCalls),
+    ("CLI build compiles imported parameter instance member call", CliBuildCompilesImportedParameterInstanceMemberCall),
+    ("CLI build compiles imported alias instance member call", CliBuildCompilesImportedAliasInstanceMemberCall),
+    ("CLI build compiles imported assigned instance member call", CliBuildCompilesImportedAssignedInstanceMemberCall),
     ("CLI build compiles imported property access", CliBuildCompilesImportedPropertyAccess),
+    ("CLI build compiles imported property assignment", CliBuildCompilesImportedPropertyAssignment),
     ("CLI build compiles imported field access", CliBuildCompilesImportedFieldAccess),
+    ("CLI build compiles imported field assignment", CliBuildCompilesImportedFieldAssignment),
+    ("CLI build compiles imported static property assignment", CliBuildCompilesImportedStaticPropertyAssignment),
+    ("CLI build compiles imported static field assignment", CliBuildCompilesImportedStaticFieldAssignment),
     ("CLI build compiles imported indexer access", CliBuildCompilesImportedIndexerAccess),
+    ("CLI build compiles imported indexer numeric literal conversion", CliBuildCompilesImportedIndexerNumericLiteralConversion),
+    ("CLI build compiles imported overloaded indexer exact match", CliBuildCompilesImportedOverloadedIndexerExactMatch),
+    ("CLI build compiles imported indexer metadata relationship match", CliBuildCompilesImportedIndexerMetadataRelationshipMatch),
     ("CLI build compiles imported params call", CliBuildCompilesImportedParamsCall),
     ("CLI build compiles imported out call", CliBuildCompilesImportedOutCall),
     ("CLI build compiles imported in call", CliBuildCompilesImportedInCall),
     ("CLI build compiles imported ref call", CliBuildCompilesImportedRefCall),
     ("CLI build compiles exact overload match", CliBuildCompilesExactOverloadMatch),
+    ("CLI build compiles object overload fallback for known argument type", CliBuildCompilesObjectOverloadFallbackForKnownArgumentType),
+    ("CLI build compiles null literal reference overload match", CliBuildCompilesNullLiteralReferenceOverloadMatch),
+    ("CLI build compiles null literal metadata relationship overload match", CliBuildCompilesNullLiteralMetadataRelationshipOverloadMatch),
+    ("CLI build compiles imported metadata overload match", CliBuildCompilesImportedMetadataOverloadMatch),
+    ("CLI build compiles imported metadata relationship overload match", CliBuildCompilesImportedMetadataRelationshipOverloadMatch),
+    ("CLI build compiles numeric literal constant conversion", CliBuildCompilesNumericLiteralConstantConversion),
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
+    ("CLI build compiles imported delegate lambda overload arity match", CliBuildCompilesImportedDelegateLambdaOverloadArityMatch),
+    ("CLI build compiles imported delegate lambda overload return match", CliBuildCompilesImportedDelegateLambdaOverloadReturnMatch),
+    ("CLI build compiles imported delegate lambda overload parameter return match", CliBuildCompilesImportedDelegateLambdaOverloadParameterReturnMatch),
+    ("CLI build compiles imported delegate lambda overload return ranking", CliBuildCompilesImportedDelegateLambdaOverloadReturnRanking),
+    ("CLI build compiles imported delegate lambda overload member return match", CliBuildCompilesImportedDelegateLambdaOverloadMemberReturnMatch),
+    ("CLI build compiles imported delegate lambda overload chained member return match", CliBuildCompilesImportedDelegateLambdaOverloadChainedMemberReturnMatch),
+    ("CLI build compiles imported delegate lambda overload method return match", CliBuildCompilesImportedDelegateLambdaOverloadMethodReturnMatch),
+    ("CLI build compiles imported delegate lambda overload extension method return match", CliBuildCompilesImportedDelegateLambdaOverloadExtensionMethodReturnMatch),
+    ("CLI build compiles imported delegate lambda overload static method return match", CliBuildCompilesImportedDelegateLambdaOverloadStaticMethodReturnMatch),
+    ("CLI build compiles imported delegate lambda overload binary return match", CliBuildCompilesImportedDelegateLambdaOverloadBinaryReturnMatch),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
+    ("CLI build compiles imported extension method instance call", CliBuildCompilesImportedExtensionMethodInstanceCall),
+    ("CLI build compiles imported extension receiver relationship match", CliBuildCompilesImportedExtensionReceiverRelationshipMatch),
+    ("CLI build compiles imported extension receiver object fallback", CliBuildCompilesImportedExtensionReceiverObjectFallback),
     ("CLI build compiles imported generic method call", CliBuildCompilesImportedGenericMethodCall),
+    ("CLI build compiles imported explicit generic method call", CliBuildCompilesImportedExplicitGenericMethodCall),
+    ("CLI build compiles imported generic constraint call", CliBuildCompilesImportedGenericConstraintCall),
+    ("CLI build compiles imported framework generic constraint call", CliBuildCompilesImportedFrameworkGenericConstraintCall),
+    ("CLI build compiles imported transitive generic constraint call", CliBuildCompilesImportedTransitiveGenericConstraintCall),
+    ("CLI build compiles imported inferred generic constraint call", CliBuildCompilesImportedInferredGenericConstraintCall),
+    ("CLI build compiles imported inferred constructed generic constraint call", CliBuildCompilesImportedInferredConstructedGenericConstraintCall),
     ("CLI build compiles imported interface reference", CliBuildCompilesImportedInterfaceReference),
+    ("CLI build compiles imported interface implementation return", CliBuildCompilesImportedInterfaceImplementationReturn),
     ("CLI build compiles imported attribute and generic type references", CliBuildCompilesImportedAttributeAndGenericTypeReferences),
+    ("CLI build compiles imported generic type constructor call", CliBuildCompilesImportedGenericTypeConstructorCall),
     ("CLI build compiles basic semantics", CliBuildCompilesBasicSemantics),
     ("CLI build compiles module namespace", CliBuildCompilesModuleNamespace),
     ("CLI build compiles core option result APIs", CliBuildCompilesCoreOptionResultApis),
@@ -201,12 +392,21 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles immutable record API", CliBuildCompilesImmutableRecordApi),
     ("CLI build compiles record update lowering", CliBuildCompilesRecordUpdateLowering),
     ("CLI build compiles record expression construction", CliBuildCompilesRecordExpressionConstruction),
+    ("CLI build compiles keyof type operator", CliBuildCompilesKeyofTypeOperator),
+    ("CLI build compiles indexed access type operator", CliBuildCompilesIndexedAccessTypeOperator),
     ("CLI build compiles nominal union API", CliBuildCompilesNominalUnionApi),
     ("CLI build compiles nominal union match lowering", CliBuildCompilesNominalUnionMatchLowering),
     ("CLI build compiles type-level union narrowing", CliBuildCompilesTypeLevelUnionNarrowing),
     ("CLI build compiles async Task interop", CliBuildCompilesAsyncTaskInterop),
     ("CLI build compiles collection expression lowering", CliBuildCompilesCollectionExpressionLowering),
     ("CLI build compiles pipeline lowering", CliBuildCompilesPipelineLowering),
+    ("CLI build compiles composition lowering", CliBuildCompilesCompositionLowering),
+    ("CLI build compiles satisfies expression", CliBuildCompilesSatisfiesExpression),
+    ("CLI build compiles yield iterator lowering", CliBuildCompilesYieldIteratorLowering),
+    ("CLI build compiles lock statement lowering", CliBuildCompilesLockStatementLowering),
+    ("CLI build compiles extension method lowering", CliBuildCompilesExtensionMethodLowering),
+    ("CLI build compiles nameof intrinsic", CliBuildCompilesNameofIntrinsic),
+    ("CLI build compiles checked unchecked expressions", CliBuildCompilesCheckedUncheckedExpressions),
     ("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
     ("CLI build emits generated net48 assembly", CliBuildEmitsGeneratedNet48Assembly),
     ("generated net48 assembly public ABI snapshot is stable", GeneratedNet48AssemblyPublicAbiSnapshotIsStable),
@@ -274,6 +474,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS0111",
             "TS0112",
             "TS0113",
+            "TS0114",
             "TS1000",
             "TS1001",
             "TS1002",
@@ -282,6 +483,7 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2001",
             "TS2002",
             "TS2003",
+            "TS2004",
             "TS2201",
             "TS2202",
             "TS2203",
@@ -296,6 +498,18 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2403",
             "TS2404",
             "TS2405",
+            "TS2406",
+            "TS2407",
+            "TS2408",
+            "TS2409",
+            "TS2410",
+            "TS2411",
+            "TS2412",
+            "TS2413",
+            "TS2414",
+            "TS2415",
+            "TS2416",
+            "TS2417",
             "TS3500",
             "TS3501"
         ],
@@ -574,8 +788,8 @@ static void CliExplainPrintsDiagnosticDescriptorMetadata()
     AssertContains("TS2204: Compile-time type leaked through public boundary", output.ToString());
     AssertContains("Severity: error", output.ToString());
     AssertContains("Category: TypeChecking", output.ToString());
-    AssertContains("Message: Type-level union cannot appear in public API. Use a nominal union or interface.", output.ToString());
-    AssertContains("Explanation: Type-level unions and structural shapes are compile-time TypeSharp types", output.ToString());
+    AssertContains("Message: Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.", output.ToString());
+    AssertContains("Explanation: Type-level unions, intersections, and structural shapes are compile-time TypeSharp types", output.ToString());
     AssertContains("Suggested action: Replace the public type with a nominal union", output.ToString());
 }
 
@@ -932,7 +1146,7 @@ static void SourceModuleGraphCollectsRelativeImportDependencies()
         WriteFile(root, "src/Feature/Main.tysh", """
             namespace Samples.SourceGraph
 
-            import { Helper } from "./Helper"
+            import { keep } from "./Helper"
             """);
         WriteFile(root, "src/Feature/Helper.tysh", """
             namespace Samples.SourceGraph
@@ -959,6 +1173,822 @@ static void SourceModuleGraphCollectsRelativeImportDependencies()
         AssertEqual("Feature/Helper", dependency.ToModulePath);
         AssertEqual("./Helper", dependency.Specifier);
         AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeImportAliasDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphImportAlias"));
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraphImportAlias
+
+            import { keep as keepHelper } from "./Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphImportAlias
+
+            export fun keep(): string = "ok"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source function import aliases should be recorded without blocking diagnostics.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeValueImportAliasDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphValueImportAlias"));
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraphValueImportAlias
+
+            import { PublicName as ImportedName } from "./Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphValueImportAlias
+
+            let InternalName: string = "Ada"
+            export { InternalName as PublicName }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source value import aliases should be recorded without blocking diagnostics.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeTypeImportAliasDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphTypeImportAlias"));
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraphTypeImportAlias
+
+            import type { VisibleModel as Model } from "./Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphTypeImportAlias
+
+            export record VisibleModel(Name: string)
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source type import aliases should be recorded without blocking diagnostics.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeNamedTypeImportAliasDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphNamedTypeImportAlias"));
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraphNamedTypeImportAlias
+
+            import { VisibleModel as Model } from "./Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphNamedTypeImportAlias
+
+            export record VisibleModel(Name: string)
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative named source type import aliases should be recorded without blocking diagnostics.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeModuleImportAliasDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphModuleImportAlias"));
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraphModuleImportAlias
+
+            import { Tools as HelperTools } from "./Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphModuleImportAlias
+
+            export module Tools {
+              export fun keep(): string = "ok"
+            }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source module import aliases should be recorded without blocking diagnostics.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsLocalExportAliasSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphLocalExportAlias"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphLocalExportAlias
+
+            import { publicKeep } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphLocalExportAlias
+
+            fun keep(): string = "ok"
+            export { keep as publicKeep }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Local function export aliases should contribute their alias to the source module export surface.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Main", dependency.FromModulePath);
+        AssertEqual("Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsLocalLiteralExportAliasSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphLocalLiteralExportAlias"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphLocalLiteralExportAlias
+
+            import { PublicVersion } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphLocalLiteralExportAlias
+
+            literal InternalVersion: string = "1.0"
+            export { InternalVersion as PublicVersion }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Local literal export aliases should contribute their alias to the source module export surface.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Main", dependency.FromModulePath);
+        AssertEqual("Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsLocalValueExportAliasSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphLocalValueExportAlias"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphLocalValueExportAlias
+
+            import { PublicName } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphLocalValueExportAlias
+
+            let InternalName: string = "Ada"
+            export { InternalName as PublicName }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Local top-level value export aliases should contribute their alias to the source module export surface.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Main", dependency.FromModulePath);
+        AssertEqual("Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsFunctionValueExportSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphFunctionValueExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphFunctionValueExport
+
+            import { Transform, PublicTransform } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphFunctionValueExport
+
+            export let Transform: string -> string = text => text
+
+            let internalTransform: string -> string = text => text
+            export { internalTransform as PublicTransform }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Annotated function-valued top-level let exports should contribute to the value export surface.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Main", dependency.FromModulePath);
+        AssertEqual("Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsLocalTypeExportAliasSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphLocalTypeExportAlias"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphLocalTypeExportAlias
+
+            import type { Model } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphLocalTypeExportAlias
+
+            record VisibleModel(Name: string)
+            export type { VisibleModel as Model }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Local type export aliases should contribute their alias to the source module export surface.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Main", dependency.FromModulePath);
+        AssertEqual("Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeReExportSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphReExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphReExport
+
+            import { keep } from "./Barrel"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphReExport
+
+            export { keep } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphReExport
+
+            export fun keep(): string = "ok"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Unaliased relative source re-exports should contribute to the importing module export surface.");
+        AssertEqual(2, graph.Dependencies.Count);
+        AssertTrue(graph.Dependencies.Any(dependency =>
+            dependency.Kind == SourceModuleDependencyKind.Import &&
+            dependency.FromModulePath == "Main" &&
+            dependency.ToModulePath == "Barrel" &&
+            dependency.Specifier == "./Barrel"), "Main should depend on the barrel module import.");
+        AssertTrue(graph.Dependencies.Any(dependency =>
+            dependency.Kind == SourceModuleDependencyKind.Export &&
+            dependency.FromModulePath == "Barrel" &&
+            dependency.ToModulePath == "Helper" &&
+            dependency.Specifier == "./Helper"), "Barrel should depend on the re-export target module.");
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeReExportAliasSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphReExportAlias"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphReExportAlias
+
+            import { publicKeep } from "./Barrel"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphReExportAlias
+
+            export { keep as publicKeep } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphReExportAlias
+
+            export fun keep(): string = "ok"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source re-export aliases should contribute their exported alias to the importing module export surface.");
+        AssertEqual(2, graph.Dependencies.Count);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeModuleReExportAliasSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphModuleReExportAlias"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphModuleReExportAlias
+
+            import { PublicTools as HelperTools } from "./Barrel"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphModuleReExportAlias
+
+            export { Tools as PublicTools } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphModuleReExportAlias
+
+            export module Tools {
+              export fun keep(): string = "ok"
+            }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source module re-export aliases should contribute their exported alias to the importing module export surface.");
+        AssertEqual(2, graph.Dependencies.Count);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeValueReExportSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphValueReExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphValueReExport
+
+            import { PublicName } from "./Barrel"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphValueReExport
+
+            export { PublicName } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphValueReExport
+
+            let InternalName: string = "Ada"
+            export { InternalName as PublicName }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source top-level value re-exports should contribute to the importing module value export surface.");
+        AssertEqual(2, graph.Dependencies.Count);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeTypeReExportSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphTypeReExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphTypeReExport
+
+            import type { PublicModel as Model } from "./Barrel"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphTypeReExport
+
+            export type { VisibleModel as PublicModel } from "./Models"
+            """);
+        WriteFile(root, "src/Models.tysh", """
+            namespace Samples.SourceGraphTypeReExport
+
+            export record VisibleModel(Name: string)
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source type re-exports should contribute their exported alias to the importing module type export surface.");
+        AssertEqual(2, graph.Dependencies.Count);
+        AssertTrue(graph.Dependencies.Any(dependency =>
+            dependency.Kind == SourceModuleDependencyKind.Import &&
+            dependency.FromModulePath == "Main" &&
+            dependency.ToModulePath == "Barrel" &&
+            dependency.Specifier == "./Barrel"), "Main should depend on the barrel module type import.");
+        AssertTrue(graph.Dependencies.Any(dependency =>
+            dependency.Kind == SourceModuleDependencyKind.Export &&
+            dependency.FromModulePath == "Barrel" &&
+            dependency.ToModulePath == "Models" &&
+            dependency.Specifier == "./Models"), "Barrel should depend on the type re-export target module.");
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsRelativeStarReExportSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphStarReExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphStarReExport
+
+            import { helper, PublicName } from "./Barrel"
+            import type { VisibleModel } from "./Barrel"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphStarReExport
+
+            export * from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphStarReExport
+
+            export fun helper(): string = "helper"
+            export let PublicName: string = "Ada"
+            export record VisibleModel(Name: string)
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Relative source star re-exports should forward the lowerable function/value/type export surface.");
+        AssertEqual(3, graph.Dependencies.Count);
+        AssertTrue(graph.Dependencies.Any(dependency =>
+            dependency.Kind == SourceModuleDependencyKind.Import &&
+            dependency.FromModulePath == "Main" &&
+            dependency.ToModulePath == "Barrel" &&
+            dependency.Specifier == "./Barrel"), "Main should depend on the barrel module imports.");
+        AssertTrue(graph.Dependencies.Any(dependency =>
+            dependency.Kind == SourceModuleDependencyKind.Export &&
+            dependency.FromModulePath == "Barrel" &&
+            dependency.ToModulePath == "Helper" &&
+            dependency.Specifier == "./Helper"), "Barrel should depend on the star re-export target module.");
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphReportsMissingNamedExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphExports"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphExports
+
+            import { hidden, VisibleModel } from "./Helper"
+            import type { HiddenModel } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphExports
+
+            fun hidden(): string = "hidden"
+
+            record HiddenModel(Name: string)
+            record VisibleModel(Name: string)
+
+            export type { VisibleModel }
+            export fun shown(): string = "shown"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertTrue(graph.HasErrors, "Relative source named imports should be limited to the target module export surface.");
+        AssertEqual(2, graph.Diagnostics.Count);
+        AssertEqual("TS0114", graph.Diagnostics[0].Code);
+        AssertContains("exported name 'hidden' was not found", graph.Diagnostics[0].Message);
+        AssertEqual("TS0114", graph.Diagnostics[1].Code);
+        AssertContains("exported type 'HiddenModel' was not found", graph.Diagnostics[1].Message);
+    });
+}
+
+static void SourceModuleGraphReportsMissingReExportedNames()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphMissingReExport"));
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphMissingReExport
+
+            export { hidden } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphMissingReExport
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertTrue(graph.HasErrors, "Relative source re-exports should be limited to the target module export surface.");
+        var diagnostic = graph.Diagnostics.Single();
+        AssertEqual("TS0114", diagnostic.Code);
+        AssertContains("Source module re-export './Helper' resolves to 'Helper', but exported function, top-level value, or module 'hidden' was not found.", diagnostic.Message);
+        AssertEqual("src/Barrel.tysh", diagnostic.File);
+    });
+}
+
+static void SourceModuleGraphReportsMissingTypeReExportedNames()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphMissingTypeReExport"));
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.SourceGraphMissingTypeReExport
+
+            export type { HiddenModel } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphMissingTypeReExport
+
+            record HiddenModel(Name: string)
+            export record VisibleModel(Name: string)
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertTrue(graph.HasErrors, "Relative source type re-exports should be limited to the target module type export surface.");
+        var diagnostic = graph.Diagnostics.Single();
+        AssertEqual("TS0114", diagnostic.Code);
+        AssertContains("Source module re-export './Helper' resolves to 'Helper', but exported type 'HiddenModel' was not found.", diagnostic.Message);
+        AssertEqual("src/Barrel.tysh", diagnostic.File);
+    });
+}
+
+static void SourceModuleGraphReportsMissingNamespaceImportMembers()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphNamespaceExports"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphNamespaceExports
+
+            import * as Helper from "./Helper"
+
+            export fun mainValue(): string = Helper.hidden()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphNamespaceExports
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertTrue(graph.HasErrors, "Relative source namespace imports should expose only the target module export surface.");
+        var diagnostic = graph.Diagnostics.Single();
+        AssertEqual("TS0114", diagnostic.Code);
+        AssertContains("exported member 'hidden' was not found", diagnostic.Message);
     });
 }
 
@@ -1222,7 +2252,7 @@ static void ReferenceResolverReportsUnsupportedPackageDiagnostics()
     });
 }
 
-static void MetadataReaderCreatesFrameworkAssemblyPlaceholders()
+static void MetadataReaderIndexesFrameworkAssemblyPublicSymbols()
 {
     WithWorkspace(root =>
     {
@@ -1232,8 +2262,9 @@ static void MetadataReaderCreatesFrameworkAssemblyPlaceholders()
 
             [references]
             assemblies = [
-              "System.Core",
-              "System"
+              "mscorlib",
+              "System",
+              "System.Core"
             ]
             """);
 
@@ -1241,13 +2272,40 @@ static void MetadataReaderCreatesFrameworkAssemblyPlaceholders()
         var references = TypeSharpReferenceResolver.Resolve(manifest);
         var metadata = TypeSharpMetadataReader.Read(references);
 
-        AssertFalse(metadata.HasErrors, "Framework metadata placeholders should not produce diagnostics.");
-        AssertSequence(["System.Core", "System"], metadata.Assemblies.Select(assembly => assembly.Identity).ToArray());
+        AssertFalse(metadata.HasErrors, "Framework metadata indexing should not produce diagnostics.");
+        AssertSequence(["mscorlib", "System", "System.Core"], metadata.Assemblies.Select(assembly => assembly.Identity).ToArray());
         AssertSequence(
-            [ResolvedReferenceKind.FrameworkAssembly, ResolvedReferenceKind.FrameworkAssembly],
+            [ResolvedReferenceKind.FrameworkAssembly, ResolvedReferenceKind.FrameworkAssembly, ResolvedReferenceKind.FrameworkAssembly],
             metadata.Assemblies.Select(assembly => assembly.ReferenceKind).ToArray());
-        AssertTrue(metadata.Assemblies.All(assembly => assembly.IsFrameworkAssembly), "Framework placeholders should report framework kind.");
-        AssertTrue(metadata.Assemblies.All(assembly => assembly.Path is null), "Framework placeholders should not have local paths.");
+        AssertTrue(metadata.Assemblies.All(assembly => assembly.IsFrameworkAssembly), "Framework metadata entries should report framework kind.");
+        AssertTrue(metadata.Assemblies.All(assembly => assembly.Path is not null && File.Exists(assembly.Path)), "Framework metadata entries should point at readable net48 reference assemblies when available.");
+
+        var stringType = metadata.Assemblies
+            .Single(assembly => assembly.Identity == "mscorlib")
+            .Types
+            .Single(type => type.FullName == "System.String");
+        AssertTrue(stringType.Methods.Any(method => method.IsStatic && method.Name == "Concat"), "Framework metadata should index public static methods from mscorlib.");
+        AssertTrue(stringType.Fields.Any(field => field.IsStatic && field.Name == "Empty"), "Framework metadata should index public static fields from mscorlib.");
+        var nullableType = metadata.Assemblies
+            .Single(assembly => assembly.Identity == "mscorlib")
+            .Types
+            .Single(type => type.FullName == "System.Nullable");
+        var compare = Require(nullableType.Methods.SingleOrDefault(method => method.Name == "Compare"), "Nullable.Compare<T> metadata should be present.");
+        AssertTrue(compare.GenericParameters.Single().HasNotNullableValueTypeConstraint, "Nullable.Compare<T> should preserve the struct constraint.");
+        AssertTrue(compare.GenericParameters.Single().HasDefaultConstructorConstraint, "Nullable.Compare<T> should preserve the value-type default constructor constraint.");
+        AssertSequence(["System.ValueType"], compare.GenericParameters.Single().TypeConstraints.ToArray());
+
+        var uriType = metadata.Assemblies
+            .Single(assembly => assembly.Identity == "System")
+            .Types
+            .Single(type => type.FullName == "System.Uri");
+        AssertTrue(uriType.Properties.Any(property => property.Name == "Host" && property.HasPublicGetter), "Framework metadata should index public properties from System.dll.");
+
+        var enumerableType = metadata.Assemblies
+            .Single(assembly => assembly.Identity == "System.Core")
+            .Types
+            .Single(type => type.FullName == "System.Linq.Enumerable");
+        AssertTrue(enumerableType.Methods.Any(method => method.Name == "Where" && method.IsExtension), "Framework metadata should mark public extension methods from System.Core.");
     });
 }
 
@@ -1306,7 +2364,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.LegacyNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -1317,6 +2375,27 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence([MetadataByRefKind.None], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.ByRefKind).ToArray());
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsParams).ToArray());
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsOptional).ToArray());
+        AssertFalse(legacyApi.Methods.Single().IsExtension, "Normal static methods should not be marked as extension methods.");
+
+        var legacyExtensions = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyExtensions"), "LegacyExtensions metadata should be present.");
+        var shout = Require(legacyExtensions.Methods.SingleOrDefault(method => method.Name == "Shout"), "LegacyExtensions.Shout metadata should be present.");
+        AssertTrue(shout.IsStatic, "Extension methods should remain static metadata methods.");
+        AssertTrue(shout.IsExtension, "Extension methods should preserve the ExtensionAttribute marker.");
+        var describe = Require(legacyExtensions.Methods.SingleOrDefault(method => method.Name == "Describe"), "LegacyExtensions.Describe metadata should be present.");
+        AssertTrue(describe.IsExtension, "Extension methods over imported metadata receivers should preserve the ExtensionAttribute marker.");
+        AssertEqual("string", describe.ReturnType);
+        AssertSequence(["Legacy.Tools.ILegacyNamed"], describe.Parameters.Select(parameter => parameter.Type).ToArray());
+        var describeObjectOnly = Require(legacyExtensions.Methods.SingleOrDefault(method => method.Name == "DescribeObjectOnly"), "LegacyExtensions.DescribeObjectOnly metadata should be present.");
+        AssertTrue(describeObjectOnly.IsExtension, "Object fallback extension methods should preserve the ExtensionAttribute marker.");
+        AssertSequence(["object"], describeObjectOnly.Parameters.Select(parameter => parameter.Type).ToArray());
+        var describeSpecific = legacyExtensions.Methods.Where(method => method.Name == "DescribeSpecific").ToArray();
+        AssertEqual(3, describeSpecific.Length);
+        AssertTrue(describeSpecific.All(method => method.IsExtension), "Overloaded extension methods should preserve the ExtensionAttribute marker.");
+        AssertSequence(
+            ["Legacy.Tools.ILegacyNamed", "Legacy.Tools.LegacyBaseNamed", "object"],
+            describeSpecific.Select(method => method.Parameters.Single().Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        AssertSequence(["value"], shout.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string"], shout.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyParams = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyParams"), "LegacyParams metadata should be present.");
         var join = Require(legacyParams.Methods.SingleOrDefault(method => method.Name == "Join"), "Join metadata should be present.");
@@ -1332,8 +2411,64 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence([false, true], format.Parameters.Select(parameter => parameter.IsOptional).ToArray());
 
         var legacyFormatter = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFormatter"), "LegacyFormatter metadata should be present.");
-        AssertSequence(["Item", "Prefix"], legacyFormatter.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["Item", "MutablePrefix", "Prefix"], legacyFormatter.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence([false, false, false], legacyFormatter.Properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property => property.IsStatic).ToArray());
+        var prefix = Require(legacyFormatter.Properties.SingleOrDefault(property => property.Name == "Prefix"), "LegacyFormatter.Prefix metadata should be present.");
+        AssertTrue(prefix.HasPublicGetter, "LegacyFormatter.Prefix should expose a public getter.");
+        AssertFalse(prefix.HasPublicSetter, "LegacyFormatter.Prefix should not expose a public setter.");
+        var mutablePrefix = Require(legacyFormatter.Properties.SingleOrDefault(property => property.Name == "MutablePrefix"), "LegacyFormatter.MutablePrefix metadata should be present.");
+        AssertTrue(mutablePrefix.HasPublicGetter, "LegacyFormatter.MutablePrefix should expose a public getter.");
+        AssertTrue(mutablePrefix.HasPublicSetter, "LegacyFormatter.MutablePrefix should expose a public setter.");
+        var item = Require(legacyFormatter.Properties.SingleOrDefault(property => property.Name == "Item"), "LegacyFormatter indexer metadata should be present.");
+        AssertTrue(item.IsIndexer, "LegacyFormatter.Item should be marked as an indexer.");
+        AssertEqual(1, item.ParameterCount);
+        AssertSequence(["int"], item.ParameterTypes.ToArray());
         AssertSequence(["Format"], legacyFormatter.Methods.Select(method => method.Name).ToArray());
+        AssertFalse(legacyFormatter.Methods.Single(method => method.Name == "Format").IsStatic, "LegacyFormatter.Format should be marked instance.");
+        var legacyFormatterConstructor = Require(legacyFormatter.Constructors.SingleOrDefault(), "LegacyFormatter public constructor metadata should be present.");
+        AssertSequence(["prefix"], legacyFormatterConstructor.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string"], legacyFormatterConstructor.Parameters.Select(parameter => parameter.Type).ToArray());
+
+        var legacyFlexibleConstructor = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFlexibleConstructor"), "LegacyFlexibleConstructor metadata should be present.");
+        var flexibleConstructor = Require(legacyFlexibleConstructor.Constructors.SingleOrDefault(), "LegacyFlexibleConstructor public constructor metadata should be present.");
+        AssertSequence(["prefix", "value"], flexibleConstructor.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "string"], flexibleConstructor.Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertSequence([false, true], flexibleConstructor.Parameters.Select(parameter => parameter.IsOptional).ToArray());
+        AssertSequence([false, false], flexibleConstructor.Parameters.Select(parameter => parameter.IsParams).ToArray());
+
+        var legacyParamsConstructor = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyParamsConstructor"), "LegacyParamsConstructor metadata should be present.");
+        var paramsConstructor = Require(legacyParamsConstructor.Constructors.SingleOrDefault(), "LegacyParamsConstructor public constructor metadata should be present.");
+        AssertSequence(["separator", "values"], paramsConstructor.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "string[]"], paramsConstructor.Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertSequence([false, true], paramsConstructor.Parameters.Select(parameter => parameter.IsParams).ToArray());
+
+        var legacyAmbiguousConstructor = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyAmbiguousConstructor"), "LegacyAmbiguousConstructor metadata should be present.");
+        var ambiguousConstructors = legacyAmbiguousConstructor.Constructors.ToArray();
+        AssertEqual(2, ambiguousConstructors.Length);
+        AssertSequence(
+            ["Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged"],
+            ambiguousConstructors.Select(constructor => constructor.Parameters.Single().Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+
+        var legacyByteIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByteIndexer"), "LegacyByteIndexer metadata should be present.");
+        var byteItem = Require(legacyByteIndexer.Properties.SingleOrDefault(property => property.Name == "Item"), "LegacyByteIndexer indexer metadata should be present.");
+        AssertTrue(byteItem.IsIndexer, "LegacyByteIndexer.Item should be marked as an indexer.");
+        AssertEqual(1, byteItem.ParameterCount);
+        AssertSequence(["byte"], byteItem.ParameterTypes.ToArray());
+
+        var legacyOverloadedIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyOverloadedIndexer"), "LegacyOverloadedIndexer metadata should be present.");
+        var overloadedItems = legacyOverloadedIndexer.Properties.Where(property => property.Name == "Item").ToArray();
+        AssertEqual(2, overloadedItems.Length);
+        AssertSequence(["int", "object"], overloadedItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+
+        var legacyAmbiguousIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyAmbiguousIndexer"), "LegacyAmbiguousIndexer metadata should be present.");
+        var ambiguousItems = legacyAmbiguousIndexer.Properties.Where(property => property.Name == "Item").ToArray();
+        AssertEqual(2, ambiguousItems.Length);
+        AssertSequence(["Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged"], ambiguousItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+
+        var legacyRelationshipIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyRelationshipIndexer"), "LegacyRelationshipIndexer metadata should be present.");
+        var relationshipItems = legacyRelationshipIndexer.Properties.Where(property => property.Name == "Item").ToArray();
+        AssertEqual(3, relationshipItems.Length);
+        AssertSequence(["Legacy.Tools.ILegacyNamed", "Legacy.Tools.LegacyBaseNamed", "object"], relationshipItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
 
         var legacyByRef = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByRef"), "LegacyByRef metadata should be present.");
         var tryParse = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "TryParseCount"), "TryParseCount metadata should be present.");
@@ -1352,36 +2487,186 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(["value", "transform"], apply.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string", "System.Func`2<string, string>"], apply.Parameters.Select(parameter => parameter.Type).ToArray());
 
+        var legacyDelegateOverloads = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyDelegateOverloads"), "LegacyDelegateOverloads metadata should be present.");
+        var delegatePicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "Pick").ToArray();
+        AssertEqual(2, delegatePicks.Length);
+        AssertSequence(
+            ["System.Func`2<string, string>", "System.Func`3<string, string, string>"],
+            delegatePicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickReturn").ToArray();
+        AssertEqual(2, delegateReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<string, int>", "System.Func`2<string, string>"],
+            delegateReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateReturnWideningPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickReturnWidening").ToArray();
+        AssertEqual(2, delegateReturnWideningPicks.Length);
+        AssertSequence(
+            ["System.Func`2<string, int>", "System.Func`2<string, long>"],
+            delegateReturnWideningPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateMemberReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickMemberReturn").ToArray();
+        AssertEqual(2, delegateMemberReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamed, int>", "System.Func`2<Legacy.Tools.LegacyNamed, string>"],
+            delegateMemberReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateChainedMemberReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickChainedMemberReturn").ToArray();
+        AssertEqual(2, delegateChainedMemberReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamedOwner, int>", "System.Func`2<Legacy.Tools.LegacyNamedOwner, string>"],
+            delegateChainedMemberReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateMethodReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickMethodReturn").ToArray();
+        AssertEqual(2, delegateMethodReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamedOwner, int>", "System.Func`2<Legacy.Tools.LegacyNamedOwner, string>"],
+            delegateMethodReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateExtensionMethodReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickExtensionMethodReturn").ToArray();
+        AssertEqual(2, delegateExtensionMethodReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamed, int>", "System.Func`2<Legacy.Tools.LegacyNamed, string>"],
+            delegateExtensionMethodReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateStaticMethodReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickStaticMethodReturn").ToArray();
+        AssertEqual(2, delegateStaticMethodReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamed, int>", "System.Func`2<Legacy.Tools.LegacyNamed, string>"],
+            delegateStaticMethodReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateBinaryReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickBinaryReturn").ToArray();
+        AssertEqual(2, delegateBinaryReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamed, bool>", "System.Func`2<Legacy.Tools.LegacyNamed, string>"],
+            delegateBinaryReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateIdentityReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickIdentityReturn").ToArray();
+        AssertEqual(2, delegateIdentityReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<string, int>", "System.Func`2<string, string>"],
+            delegateIdentityReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var requiresBinary = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresBinary"), "RequiresBinary metadata should be present.");
+        AssertSequence(["value", "combine"], requiresBinary.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "System.Func`3<string, string, string>"], requiresBinary.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresString = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresString"), "RequiresString metadata should be present.");
+        AssertSequence(["value", "transform"], requiresString.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "System.Func`2<string, string>"], requiresString.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresIntReturn = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresIntReturn"), "RequiresIntReturn metadata should be present.");
+        AssertSequence(["value", "transform"], requiresIntReturn.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "System.Func`2<string, int>"], requiresIntReturn.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresMemberInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresMemberInt"), "RequiresMemberInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresMemberInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, int>"], requiresMemberInt.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresNestedMemberInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresNestedMemberInt"), "RequiresNestedMemberInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresNestedMemberInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamedOwner", "System.Func`2<Legacy.Tools.LegacyNamedOwner, int>"], requiresNestedMemberInt.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresMethodInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresMethodInt"), "RequiresMethodInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresMethodInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamedOwner", "System.Func`2<Legacy.Tools.LegacyNamedOwner, int>"], requiresMethodInt.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresExtensionMethodInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresExtensionMethodInt"), "RequiresExtensionMethodInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresExtensionMethodInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, int>"], requiresExtensionMethodInt.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresStaticMethodInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresStaticMethodInt"), "RequiresStaticMethodInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresStaticMethodInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, int>"], requiresStaticMethodInt.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresBinaryReturnString = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresBinaryReturnString"), "RequiresBinaryReturnString metadata should be present.");
+        AssertSequence(["value", "transform"], requiresBinaryReturnString.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, string>"], requiresBinaryReturnString.Parameters.Select(parameter => parameter.Type).ToArray());
+
         var legacyEvents = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyEvents"), "LegacyEvents metadata should be present.");
         AssertTrue(legacyEvents.Methods.Any(method => method.Name == "Raise"), "LegacyEvents public methods should include Raise while event accessors remain special-name metadata.");
+        var transform = Require(legacyEvents.Events.SingleOrDefault(eventSymbol => eventSymbol.Name == "Transform"), "LegacyEvents.Transform event metadata should be present.");
+        AssertEqual("System.Func`2<string, string>", transform.Type);
+        AssertFalse(transform.IsStatic, "LegacyEvents.Transform should be marked instance.");
+        AssertTrue(transform.HasPublicAdder, "LegacyEvents.Transform should expose a public add accessor.");
+        AssertTrue(transform.HasPublicRemover, "LegacyEvents.Transform should expose a public remove accessor.");
 
         var legacyMarkerAttribute = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyMarkerAttribute"), "LegacyMarkerAttribute metadata should be present.");
         AssertSequence(["Name"], legacyMarkerAttribute.Properties.Select(property => property.Name).ToArray());
 
         var legacyBox = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyBox`1"), "LegacyBox<T> metadata should be present.");
         AssertSequence(["Value"], legacyBox.Properties.Select(property => property.Name).ToArray());
+        var legacyBoxConstructor = Require(legacyBox.Constructors.SingleOrDefault(), "LegacyBox<T> public constructor metadata should be present.");
+        AssertSequence(["value"], legacyBoxConstructor.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["!0"], legacyBoxConstructor.Parameters.Select(parameter => parameter.Type).ToArray());
+
+        var legacyNamedOwner = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNamedOwner"), "LegacyNamedOwner metadata should be present.");
+        var owner = Require(legacyNamedOwner.Properties.SingleOrDefault(property => property.Name == "Owner"), "LegacyNamedOwner.Owner metadata should be present.");
+        AssertFalse(owner.IsStatic, "LegacyNamedOwner.Owner should be an instance property.");
+        AssertTrue(owner.HasPublicGetter, "LegacyNamedOwner.Owner should expose a public getter.");
+        AssertEqual("Legacy.Tools.LegacyNamed", owner.Type);
+        var legacyNamedForDisplay = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNamed"), "LegacyNamed metadata should be present.");
+        var display = Require(legacyNamedForDisplay.Methods.SingleOrDefault(method => method.Name == "Display"), "LegacyNamed.Display metadata should be present.");
+        AssertFalse(display.IsStatic, "LegacyNamed.Display should be an instance method.");
+        AssertEqual("string", display.ReturnType);
+        AssertSequence(Array.Empty<string>(), display.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyFields = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFields"), "LegacyFields metadata should be present.");
-        AssertSequence(["InstanceCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        var staticName = Require(legacyFields.Properties.SingleOrDefault(property => property.Name == "StaticName"), "StaticName property metadata should be present.");
+        AssertTrue(staticName.IsStatic, "StaticName should be marked static.");
+        AssertTrue(staticName.HasPublicGetter, "StaticName should expose a public getter.");
+        AssertFalse(staticName.HasPublicSetter, "StaticName should not expose a public setter.");
+        var mutableStaticName = Require(legacyFields.Properties.SingleOrDefault(property => property.Name == "MutableStaticName"), "MutableStaticName property metadata should be present.");
+        AssertTrue(mutableStaticName.IsStatic, "MutableStaticName should be marked static.");
+        AssertTrue(mutableStaticName.HasPublicGetter, "MutableStaticName should expose a public getter.");
+        AssertTrue(mutableStaticName.HasPublicSetter, "MutableStaticName should expose a public setter.");
+        AssertSequence(["InstanceCode", "MutableCode", "MutableStaticCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "StaticCode"), "StaticCode field metadata should be present.");
         AssertEqual("string", staticCode.Type);
         AssertTrue(staticCode.IsStatic, "StaticCode should be marked static.");
         AssertTrue(staticCode.IsLiteral, "StaticCode should be marked literal.");
+        AssertFalse(staticCode.IsReadOnly, "StaticCode should not be marked readonly.");
+        var mutableStaticCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "MutableStaticCode"), "MutableStaticCode field metadata should be present.");
+        AssertEqual("string", mutableStaticCode.Type);
+        AssertTrue(mutableStaticCode.IsStatic, "MutableStaticCode should be marked static.");
+        AssertFalse(mutableStaticCode.IsLiteral, "MutableStaticCode should not be marked literal.");
+        AssertFalse(mutableStaticCode.IsReadOnly, "MutableStaticCode should not be marked readonly.");
         var instanceCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "InstanceCode"), "InstanceCode field metadata should be present.");
         AssertEqual("string", instanceCode.Type);
         AssertFalse(instanceCode.IsStatic, "InstanceCode should not be marked static.");
         AssertFalse(instanceCode.IsLiteral, "InstanceCode should not be marked literal.");
+        AssertTrue(instanceCode.IsReadOnly, "InstanceCode should be marked readonly.");
+        var mutableCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "MutableCode"), "MutableCode field metadata should be present.");
+        AssertEqual("string", mutableCode.Type);
+        AssertFalse(mutableCode.IsStatic, "MutableCode should not be marked static.");
+        AssertFalse(mutableCode.IsLiteral, "MutableCode should not be marked literal.");
+        AssertFalse(mutableCode.IsReadOnly, "MutableCode should not be marked readonly.");
 
         var legacyGenericMethods = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyGenericMethods"), "LegacyGenericMethods metadata should be present.");
         var identity = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "Identity"), "Identity<T> metadata should be present.");
         AssertEqual("!!0", identity.ReturnType);
+        AssertTrue(identity.IsStatic, "Identity<T> should be marked static.");
+        AssertEqual(1, identity.GenericParameterCount);
         AssertSequence(["value"], identity.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["!!0"], identity.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requireClass = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireClass"), "RequireClass<T> metadata should be present.");
+        AssertEqual(1, requireClass.GenericParameters.Count);
+        AssertTrue(requireClass.GenericParameters.Single().HasReferenceTypeConstraint, "RequireClass<T> should preserve the class constraint.");
+        var requireStruct = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireStruct"), "RequireStruct<T> metadata should be present.");
+        AssertEqual(1, requireStruct.GenericParameters.Count);
+        AssertTrue(requireStruct.GenericParameters.Single().HasNotNullableValueTypeConstraint, "RequireStruct<T> should preserve the struct constraint.");
+        var create = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "Create"), "Create<T> metadata should be present.");
+        AssertTrue(create.GenericParameters.Single().HasDefaultConstructorConstraint, "Create<T> should preserve the new() constraint.");
+        var requireNamed = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireNamed"), "RequireNamed<T> metadata should be present.");
+        AssertSequence(["Legacy.Tools.ILegacyNamed"], requireNamed.GenericParameters.Single().TypeConstraints.ToArray());
+        var requireBaseNamed = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireBaseNamed"), "RequireBaseNamed<T> metadata should be present.");
+        AssertSequence(["Legacy.Tools.LegacyBaseNamed"], requireBaseNamed.GenericParameters.Single().TypeConstraints.ToArray());
+        var requireBoxedNamed = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireBoxedNamed"), "RequireBoxedNamed<T> metadata should be present.");
+        AssertSequence(["box"], requireBoxedNamed.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyBox`1<!!0>"], requireBoxedNamed.Parameters.Select(parameter => parameter.Type).ToArray());
+        AssertSequence(["Legacy.Tools.ILegacyNamed"], requireBoxedNamed.GenericParameters.Single().TypeConstraints.ToArray());
+
+        var legacyDefaultConstructible = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyDefaultConstructible"), "LegacyDefaultConstructible metadata should be present.");
+        AssertTrue(legacyDefaultConstructible.HasPublicParameterlessConstructor, "LegacyDefaultConstructible should expose a public parameterless constructor.");
+        AssertTrue(legacyDefaultConstructible.Constructors.Any(constructor => constructor.Parameters.Count == 0), "LegacyDefaultConstructible parameterless constructor metadata should be present.");
 
         var legacyNamedInterface = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.ILegacyNamed"), "ILegacyNamed metadata should be present.");
         AssertSequence(["Name"], legacyNamedInterface.Properties.Select(property => property.Name).ToArray());
+        AssertTrue(legacyNamedInterface.IsInterface, "ILegacyNamed should be marked as an interface.");
         var legacyNamed = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNamed"), "LegacyNamed metadata should be present.");
         AssertSequence(["Name"], legacyNamed.Properties.Select(property => property.Name).ToArray());
+        AssertSequence(["Legacy.Tools.ILegacyNamed"], legacyNamed.InterfaceNames.ToArray());
+        var legacyBaseNamed = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyBaseNamed"), "LegacyBaseNamed metadata should be present.");
+        AssertSequence(["Name"], legacyBaseNamed.Properties.Select(property => property.Name).ToArray());
+        AssertSequence(["Legacy.Tools.ILegacyNamed"], legacyBaseNamed.InterfaceNames.ToArray());
+        var legacyIntermediateNamed = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyIntermediateNamed"), "LegacyIntermediateNamed metadata should be present.");
+        AssertEqual("Legacy.Tools.LegacyBaseNamed", legacyIntermediateNamed.BaseTypeName);
+        var legacyDerivedNamed = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyDerivedNamed"), "LegacyDerivedNamed metadata should be present.");
+        AssertEqual("Legacy.Tools.LegacyIntermediateNamed", legacyDerivedNamed.BaseTypeName);
     });
 }
 
@@ -1499,6 +2784,1527 @@ static void CheckerReportsInvalidByRefInteropDiagnostics()
     });
 }
 
+static void CheckerReportsExplicitGenericByRefInteropDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ExplicitGenericByRef"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ExplicitGenericByRef"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ExplicitGenericByRef
+
+            import { LegacyGenericByRefMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericByRefMethods.Echo<string>("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Explicit generic C# call should use generic overload metadata for byref diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2403");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools.LegacyGenericByRefMethods.Echo", diagnostic.Message);
+        AssertContains("expects parameter 'value' to be passed with 'ref'", diagnostic.Message);
+        AssertContains("but the argument uses no byref modifier", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsUnsatisfiedCSharpGenericConstraintDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedCSharpGenericConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedCSharpGenericConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedCSharpGenericConstraint
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): int =
+              LegacyGenericMethods.RequireClass<int>(42)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsatisfied C# generic constraint should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2417");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireClass", diagnostic.Message);
+        AssertContains("Type argument 'int'", diagnostic.Message);
+        AssertContains("must satisfy the C# 'class' constraint", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsUnsatisfiedFrameworkCSharpGenericConstraintDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedFrameworkCSharpGenericConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedFrameworkCSharpGenericConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["mscorlib"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedFrameworkCSharpGenericConstraint
+
+            import { Nullable } from "System"
+
+            export fun broken(): int =
+              Nullable.Compare<string>(null, null)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsatisfied framework C# generic constraint should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2417");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("System.Nullable.Compare", diagnostic.Message);
+        AssertContains("Type argument 'string'", diagnostic.Message);
+        AssertContains("must satisfy the C# 'struct' constraint", diagnostic.Message);
+    });
+}
+
+static void CheckerAcceptsTransitiveCSharpGenericTypeConstraints()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "TransitiveCSharpGenericConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.TransitiveCSharpGenericConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.TransitiveCSharpGenericConstraint
+
+            import { LegacyGenericMethods, LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun keep(): string {
+              let named = LegacyGenericMethods.RequireNamed<LegacyDerivedNamed>(LegacyDerivedNamed("Ada"))
+              let baseNamed = LegacyGenericMethods.RequireBaseNamed<LegacyDerivedNamed>(named)
+              baseNamed.Name
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2417"), "Transitive C# base/interface constraints should satisfy imported generic constraints.");
+    });
+}
+
+static void CheckerAcceptsInferredCSharpGenericTypeConstraints()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InferredCSharpGenericConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InferredCSharpGenericConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InferredCSharpGenericConstraint
+
+            import { LegacyGenericMethods, LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun keepClass(): string =
+              LegacyGenericMethods.RequireClass("value")
+
+            export fun keepStruct(): int =
+              LegacyGenericMethods.RequireStruct(42)
+
+            export fun keepNamed(): LegacyDerivedNamed =
+              LegacyGenericMethods.RequireNamed(LegacyDerivedNamed("Ada"))
+
+            export fun keepTracked(value: LegacyDerivedNamed): LegacyDerivedNamed =
+              LegacyGenericMethods.RequireBaseNamed(value)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.HasErrors, "Inferred C# generic constraints should pass for compatible literal and imported constructor arguments.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2417"), "Compatible inferred C# generic constraints should not produce TS2417.");
+    });
+}
+
+static void CheckerReportsUnsatisfiedInferredCSharpGenericConstraintDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedInferredCSharpGenericConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedInferredCSharpGenericConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedInferredCSharpGenericConstraint
+
+            import { LegacyFormatter, LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): LegacyFormatter =
+              LegacyGenericMethods.RequireNamed(LegacyFormatter("legacy:"))
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsatisfied inferred C# generic constraint should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2417");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireNamed", diagnostic.Message);
+        AssertContains("Type argument 'Legacy.Tools.LegacyFormatter'", diagnostic.Message);
+        AssertContains("must satisfy the C# type constraint 'Legacy.Tools.ILegacyNamed'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsUnsatisfiedInferredConstructedCSharpGenericConstraintDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedInferredConstructedCSharpGenericConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedInferredConstructedCSharpGenericConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedInferredConstructedCSharpGenericConstraint
+
+            import { LegacyBox, LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.RequireBoxedNamed(LegacyBox<string>("Ada"))
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsatisfied inferred constructed C# generic constraint should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2417");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireBoxedNamed", diagnostic.Message);
+        AssertContains("Type argument 'string'", diagnostic.Message);
+        AssertContains("must satisfy the C# type constraint 'Legacy.Tools.ILegacyNamed'", diagnostic.Message);
+    });
+}
+
+static void CheckerAcceptsImportedCSharpExtensionMethodInstanceSyntax()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExtensionMethodInstanceSyntax"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExtensionMethodInstanceSyntax"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExtensionMethodInstanceSyntax
+
+            import { LegacyNamed } from "Legacy.Tools"
+
+            export fun describe(): string {
+              let named = LegacyNamed("Ada")
+              named.Describe()
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2410"), "Applicable C# extension methods should satisfy imported instance call syntax before emission.");
+    });
+}
+
+static void CheckerAcceptsImportedCSharpExtensionReceiverRelationshipRanking()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExtensionReceiverRelationshipRanking"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExtensionReceiverRelationshipRanking"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExtensionReceiverRelationshipRanking
+
+            import { LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun describe(): string {
+              let derived = LegacyDerivedNamed("Ada")
+              derived.DescribeSpecific()
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2402"), "Extension receiver metadata relationship ranking should avoid ambiguous overload diagnostics.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2406"), "Extension receiver metadata relationship ranking should keep the nearest receiver overload applicable.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2410"), "Applicable ranked C# extension methods should satisfy imported instance call syntax before emission.");
+    });
+}
+
+static void CheckerAcceptsImportedCSharpExtensionReceiverObjectFallback()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExtensionReceiverObjectFallback"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExtensionReceiverObjectFallback"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExtensionReceiverObjectFallback
+
+            import { LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun describe(): string {
+              let derived = LegacyDerivedNamed("Ada")
+              derived.DescribeObjectOnly()
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2406"), "Object receiver fallback should keep the extension overload applicable.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2410"), "Object fallback C# extension methods should satisfy imported instance call syntax before emission.");
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpExtensionOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingExtensionOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingExtensionOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingExtensionOverload
+
+            import { LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let named = LegacyNamed("Ada")
+              named.Describe(true)
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "No matching C# extension overload should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("named.Describe", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerAcceptsImportedCSharpInterfaceImplementationRelation()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInterfaceImplementationRelation"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInterfaceImplementationRelation"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInterfaceImplementationRelation
+
+            import { ILegacyNamed, LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun create(): ILegacyNamed =
+              LegacyDerivedNamed("Ada")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2201"), "Imported C# class-to-interface metadata relations should satisfy TypeSharp assignment checks.");
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingOverload
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.Identity<string, int>("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "No matching C# overload should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyGenericMethods.Identity", diagnostic.Message);
+        AssertContains("2 explicit generic type argument", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpOverloadForKnownArgumentTypeDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingKnownArgumentTypeOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingKnownArgumentTypeOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingKnownArgumentTypeOverload
+
+            import { LegacyApi } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyApi.Echo(true)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Known argument type C# overload mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyApi.Echo", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingNumericLiteralOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingNumericLiteralOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingNumericLiteralOverload
+
+            import { LegacyNumeric } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyNumeric.FormatInt(1.5)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Impossible numeric literal C# overload conversion should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyNumeric.FormatInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpOverloadForImportedMetadataArgumentDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingImportedMetadataArgumentOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingImportedMetadataArgumentOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingImportedMetadataArgumentOverload
+
+            import { LegacyFormatter, LegacyOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyOverloads.NeedNamed(LegacyFormatter("legacy:"))
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Imported metadata argument C# overload mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyOverloads.NeedNamed", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpOverloadForNullLiteralDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingNullLiteralOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingNullLiteralOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingNullLiteralOverload
+
+            import { LegacyNullOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyNullOverloads.OnlyInt(null)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Null literal C# overload mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyNullOverloads.OnlyInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpConstructorDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingConstructor"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingConstructor"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingConstructor
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): LegacyFormatter =
+              LegacyFormatter(42)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "No matching C# constructor should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("C# constructor 'LegacyFormatter'", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpGenericConstructorDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingGenericConstructor"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingGenericConstructor"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingGenericConstructor
+
+            import { LegacyBox, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): LegacyBox<LegacyNamed> =
+              LegacyBox<LegacyNamed>("Ada")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "No matching C# generic type constructor should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("C# constructor 'LegacyBox'", diagnostic.Message);
+        AssertContains("1 explicit generic type argument", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsAmbiguousCSharpConstructorDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousConstructor"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousConstructor"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousConstructor
+
+            import { LegacyAmbiguousConstructor, LegacyDualNamed } from "Legacy.Tools"
+
+            export fun broken(): LegacyAmbiguousConstructor =
+              LegacyAmbiguousConstructor(LegacyDualNamed("Ada"))
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Ambiguous C# constructor should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("C# constructor 'LegacyAmbiguousConstructor'", diagnostic.Message);
+        AssertContains("matches 2 overload candidates", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpMethodDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpMethod"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpMethod"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpMethod
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.DoesNotExist("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# method should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2407");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyGenericMethods", diagnostic.Message);
+        AssertContains("does not contain a public static method named 'DoesNotExist'", diagnostic.Message);
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2409"), "Missing method calls should not also report missing static member diagnostics.");
+    });
+}
+
+static void CheckerReportsMissingCSharpTypeDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpType"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpType"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpType
+
+            import { LegacyMissing } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyMissing.Echo("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# type import should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2408");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools", diagnostic.Message);
+        AssertContains("does not contain a public type named 'LegacyMissing'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingFrameworkCSharpTypeDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingFrameworkCSharpType"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingFrameworkCSharpType"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["System"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingFrameworkCSharpType
+
+            import { DefinitelyMissing } from "System"
+
+            export fun broken(): string =
+              DefinitelyMissing.Echo("value")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing framework C# type import should produce diagnostics when framework metadata is available.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2408");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("System", diagnostic.Message);
+        AssertContains("does not contain a public type named 'DefinitelyMissing'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingFrameworkCSharpMethodDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingFrameworkCSharpMethod"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingFrameworkCSharpMethod"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["System"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingFrameworkCSharpMethod
+
+            import { Uri } from "System"
+
+            export fun broken(): string =
+              Uri.DoesNotExist("https://example.com")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing framework C# method should produce diagnostics when framework metadata is available.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2407");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Uri", diagnostic.Message);
+        AssertContains("does not contain a public static method named 'DoesNotExist'", diagnostic.Message);
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2409"), "Missing framework method calls should not also report missing static member diagnostics.");
+    });
+}
+
+static void CheckerReportsMissingCSharpStaticMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpStaticMember"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpStaticMember"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpStaticMember
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyFields.MissingCode
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# static member should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2409");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyFields", diagnostic.Message);
+        AssertContains("does not contain a public static member named 'MissingCode'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingFrameworkCSharpStaticMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingFrameworkCSharpStaticMember"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingFrameworkCSharpStaticMember"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["System"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingFrameworkCSharpStaticMember
+
+            import { Uri } from "System"
+
+            export fun broken(): string =
+              Uri.MissingValue
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing framework C# static member should produce diagnostics when framework metadata is available.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2409");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Uri", diagnostic.Message);
+        AssertContains("does not contain a public static member named 'MissingValue'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpInstanceMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstanceMember"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstanceMember"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstanceMember
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter.MissingValue
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# instance member should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2410");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance member named 'MissingValue'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpParameterInstanceMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpParameterInstanceMember"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpParameterInstanceMember"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpParameterInstanceMember
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string =
+              formatter.MissingValue
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# parameter instance member should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2410");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance member named 'MissingValue'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpAliasInstanceMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpAliasInstanceMember"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpAliasInstanceMember"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpAliasInstanceMember
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string {
+              let alias = formatter
+              alias.MissingValue
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# alias instance member should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2410");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("alias", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance member named 'MissingValue'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpAssignedInstanceMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpAssignedInstanceMember"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpAssignedInstanceMember"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpAssignedInstanceMember
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string {
+              let mut alias = "placeholder"
+              alias = formatter
+              alias.MissingValue
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# assigned instance member should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2410");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("alias", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance member named 'MissingValue'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpInstanceIndexerDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstanceIndexer"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstanceIndexer"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstanceIndexer
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let fields = LegacyFields()
+              fields[0]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# instance indexer should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2411");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("fields", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFields", diagnostic.Message);
+        AssertContains("does not contain a public instance indexer with 1 argument", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMismatchedCSharpInstanceIndexerDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexer"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexer"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexer
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[true]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Mismatched C# instance indexer argument should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2411");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'bool'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerNumericLiteral"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerNumericLiteral"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerNumericLiteral
+
+            import { LegacyByteIndexer } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let indexer = LegacyByteIndexer()
+              indexer[1.5]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Mismatched C# instance indexer numeric literal argument should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2411");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("indexer", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyByteIndexer", diagnostic.Message);
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'double'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsAmbiguousCSharpInstanceIndexerDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousCSharpInstanceIndexer"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousCSharpInstanceIndexer"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousCSharpInstanceIndexer
+
+            import { LegacyAmbiguousIndexer, LegacyDualNamed } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let indexer = LegacyAmbiguousIndexer()
+              indexer[LegacyDualNamed("value")]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Ambiguous C# instance indexer should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2402");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("indexer", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyAmbiguousIndexer", diagnostic.Message);
+        AssertContains("matches 2 indexer candidates", diagnostic.Message);
+        AssertContains("make the indexer access unambiguous", diagnostic.Message);
+    });
+}
+
+static void CheckerAcceptsImportedCSharpIndexerMetadataRelationshipRanking()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerMetadataRelationshipRanking"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerMetadataRelationshipRanking"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerMetadataRelationshipRanking
+
+            import { LegacyDerivedNamed, LegacyRelationshipIndexer } from "Legacy.Tools"
+
+            export fun pick(): string {
+              let indexer = LegacyRelationshipIndexer()
+              indexer[LegacyDerivedNamed("Ada")]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2402"), "Imported C# indexer metadata relationship ranking should avoid ambiguous indexer diagnostics.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2411"), "Imported C# indexer metadata relationship ranking should keep the indexer applicable.");
+    });
+}
+
+static void CheckerReportsMissingCSharpInstancePropertySetterDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstancePropertySetter"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstancePropertySetter"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstancePropertySetter
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter.Prefix = "updated"
+              formatter.Prefix
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# instance property setter should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2412");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance setter for property 'Prefix'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpParameterInstancePropertySetterDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpParameterInstancePropertySetter"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpParameterInstancePropertySetter"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpParameterInstancePropertySetter
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string {
+              formatter.Prefix = "updated"
+              formatter.Prefix
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# parameter instance property setter should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2412");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance setter for property 'Prefix'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpAnnotatedLocalInstancePropertySetterDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpAnnotatedLocalInstancePropertySetter"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpAnnotatedLocalInstancePropertySetter"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpAnnotatedLocalInstancePropertySetter
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string {
+              let alias: LegacyFormatter = formatter
+              alias.Prefix = "updated"
+              alias.Prefix
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# annotated local instance property setter should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2412");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("alias", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance setter for property 'Prefix'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsReadOnlyCSharpInstanceFieldAssignmentDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ReadOnlyCSharpInstanceFieldAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ReadOnlyCSharpInstanceFieldAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ReadOnlyCSharpInstanceFieldAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let fields = LegacyFields()
+              fields.InstanceCode = "updated"
+              fields.InstanceCode
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Readonly C# instance field assignment should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2413");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("fields", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFields", diagnostic.Message);
+        AssertContains("cannot assign to readonly instance field 'InstanceCode'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpStaticPropertySetterDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpStaticPropertySetter"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpStaticPropertySetter"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpStaticPropertySetter
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              LegacyFields.StaticName = "updated"
+              LegacyFields.StaticName
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# static property setter should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2414");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyFields", diagnostic.Message);
+        AssertContains("does not contain a public static setter for property 'StaticName'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsReadOnlyCSharpStaticFieldAssignmentDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ReadOnlyCSharpStaticFieldAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ReadOnlyCSharpStaticFieldAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ReadOnlyCSharpStaticFieldAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              LegacyFields.StaticCode = "updated"
+              LegacyFields.StaticCode
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Readonly C# static field assignment should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2415");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyFields", diagnostic.Message);
+        AssertContains("cannot assign to read-only static field 'StaticCode'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMissingCSharpInstanceEventDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstanceEvent"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstanceEvent"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstanceEvent
+
+            import { LegacyEvents } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let source = LegacyEvents()
+              source.Missing += text => text
+              source.Raise("value")
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Missing C# instance event should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2416");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("source", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyEvents", diagnostic.Message);
+        AssertContains("does not contain a public instance event named 'Missing' with public add accessor", diagnostic.Message);
+    });
+}
+
 static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
 {
     WithWorkspace(root =>
@@ -1518,9 +4324,9 @@ static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.AmbiguousOverload
 
-            import { LegacyOverloads } from "Legacy.Tools"
+            import { LegacyNullOverloads } from "Legacy.Tools"
 
-            export fun choose(): string = LegacyOverloads.Pick(null)
+            export fun choose(): string = LegacyNullOverloads.Ambiguous(null)
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -1530,6 +4336,321 @@ static void CheckerReportsAmbiguousCSharpOverloadDiagnostics()
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertContains("matches 2 overload candidates", diagnostic.Message);
         AssertContains("make the call unambiguous", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaOverload
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBinary("Ada", text => text)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda overload arity mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresBinary", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaReturnOverload
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresString("Ada", text => 42)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresString", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaParameterReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaParameterReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaParameterReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaParameterReturnOverload
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresIntReturn("Ada", text => text)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda parameter return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresIntReturn", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaMemberReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaMemberReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaMemberReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaMemberReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresMemberInt(LegacyNamed("Ada"), item => item.Name)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda member return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresMemberInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaChainedMemberReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaChainedMemberReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaChainedMemberReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaChainedMemberReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamedOwner } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresNestedMemberInt(LegacyNamedOwner("Ada"), item => item.Owner.Name)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda chained member return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresNestedMemberInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaMethodReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaMethodReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaMethodReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaMethodReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamedOwner } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresMethodInt(LegacyNamedOwner("Ada"), item => item.Owner.Display())
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda method return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresMethodInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaExtensionMethodReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaExtensionMethodReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaExtensionMethodReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaExtensionMethodReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresExtensionMethodInt(LegacyNamed("Ada"), item => item.Describe())
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda extension method return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresExtensionMethodInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaStaticMethodReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaStaticMethodReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaStaticMethodReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaStaticMethodReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamed, LegacyOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresStaticMethodInt(LegacyNamed("Ada"), item => LegacyOverloads.Describe(item))
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda static method return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresStaticMethodInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpDelegateLambdaBinaryReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaBinaryReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaBinaryReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaBinaryReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBinaryReturnString(LegacyNamed("Ada"), item => item.Name == "Ada")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda binary return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresBinaryReturnString", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
     });
 }
 
@@ -1556,8 +4677,9 @@ static void CSharpOverloadResolverSelectsExactLiteralMatch()
                 "Pick",
                 "string",
                 MetadataNullabilityKind.NotApplicable,
-                [new MetadataParameterSymbol("value", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
         ],
+        [],
         [],
         []);
 
@@ -1569,6 +4691,936 @@ static void CSharpOverloadResolverSelectsExactLiteralMatch()
     AssertFalse(resolution.IsAmbiguous, "Exact literal type match should narrow overload candidates.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select one overload candidate.");
     AssertEqual("string", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverFiltersKnownArgumentTypeMismatch()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyOverloads.Pick(true)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Known argument type mismatches should be removed from applicable overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible overload candidate.");
+    AssertEqual("object", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverFiltersNumericLiteralConversionMismatch()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun broken(): string = LegacyNumeric.FormatInt(1.5)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNumeric",
+        [
+            new MetadataMethodSymbol(
+                "FormatInt",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(0, resolution.ApplicableCandidates.Count);
+    AssertTrue(resolution.SelectedCandidate is null, "Resolver should not select an impossible numeric conversion candidate.");
+
+    parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun ok(): string = LegacyNumeric.FormatByte(42)
+        """);
+    root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNumeric",
+        [
+            new MetadataMethodSymbol(
+                "FormatByte",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "byte", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+
+    resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Integral constants that fit a smaller numeric parameter should remain applicable.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible numeric conversion candidate.");
+    AssertEqual("byte", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverRanksNullLiteralReferenceMatch()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyNullOverloads.Pick(null)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNullOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(2, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Null literal reference overload should outrank object fallback and reject value-type parameters.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible reference overload candidate.");
+    AssertEqual("string", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverRanksNullLiteralNearestMetadataReference()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyNullOverloads.DescribeNamed(null)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNullOverloads",
+        [
+            new MetadataMethodSymbol(
+                "DescribeNamed",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.LegacyBaseNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "DescribeNamed",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.LegacyDerivedNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "DescribeNamed",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+    var metadata = new MetadataAssemblySymbol(
+        "Legacy.Tools",
+        ResolvedReferenceKind.LocalAssembly,
+        "Legacy.Tools",
+        Path: null,
+        RelativePath: null)
+    {
+        Types =
+        [
+            metadataType,
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyBaseNamed", [], [], [], []),
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyDerivedNamed", [], [], [], [])
+            {
+                BaseTypeName = "Legacy.Tools.LegacyBaseNamed"
+            }
+        ]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [metadata]);
+
+    AssertEqual(3, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Null literal metadata reference overload should choose the most specific metadata target.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the nearest null literal metadata reference overload candidate.");
+    AssertEqual("Legacy.Tools.LegacyDerivedNamed", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverRanksNearestMetadataRelationship()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyOverloads.DescribeSpecific(LegacyDerivedNamed("Ada"))
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyOverloads",
+        [
+            new MetadataMethodSymbol(
+                "DescribeSpecific",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.ILegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "DescribeSpecific",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.LegacyBaseNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "DescribeSpecific",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+    var metadata = new MetadataAssemblySymbol(
+        "Legacy.Tools",
+        ResolvedReferenceKind.LocalAssembly,
+        "Legacy.Tools",
+        Path: null,
+        RelativePath: null)
+    {
+        Types =
+        [
+            metadataType,
+            new MetadataTypeSymbol("Legacy.Tools", "ILegacyNamed", [], [], [], [])
+            {
+                IsInterface = true
+            },
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyBaseNamed", [], [], [], [])
+            {
+                InterfaceNames = ["Legacy.Tools.ILegacyNamed"]
+            },
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyIntermediateNamed", [], [], [], [])
+            {
+                BaseTypeName = "Legacy.Tools.LegacyBaseNamed"
+            },
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyDerivedNamed", [], [], [], [])
+            {
+                BaseTypeName = "Legacy.Tools.LegacyIntermediateNamed"
+            }
+        ]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [metadata]);
+
+    AssertEqual(3, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Nearest metadata relationship should outrank farther interface and object candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the nearest metadata relationship overload candidate.");
+    AssertEqual("Legacy.Tools.LegacyBaseNamed", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverFiltersExplicitGenericArity()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyGenericOverloads.Pick<string>("value")
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyGenericOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "!!0",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "!!0", MetadataByRefKind.None, IsParams: false, IsOptional: false)],
+                GenericParameterCount: 1)
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        explicitGenericTypeArgumentCount: 1);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Explicit generic type arguments should filter non-generic overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select one overload candidate.");
+    AssertEqual(1, selected.Method.GenericParameterCount);
+    AssertEqual("!!0", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateArity()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.Pick("Ada", text => text)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("combine", "System.Func`3<string, string, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda parameter count should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate overload candidate.");
+    AssertEqual("System.Func`2<string, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickReturn("Ada", text => 42)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda body return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate return overload candidate.");
+    AssertEqual("System.Func`2<string, int>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateParameterReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickIdentityReturn("Ada", text => text)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickIdentityReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickIdentityReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda parameter return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate parameter return overload candidate.");
+    AssertEqual("System.Func`2<string, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateMemberReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickMemberReturn(LegacyNamed("Ada"), item => item.Name)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [],
+        [new MetadataPropertySymbol("Name", "string", IsStatic: false, HasPublicGetter: true, HasPublicSetter: false)],
+        [],
+        []);
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickMemberReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickMemberReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda member return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate member return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamed, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateChainedMemberReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickChainedMemberReturn(LegacyNamedOwner("Ada"), item => item.Owner.Name)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [],
+        [new MetadataPropertySymbol("Name", "string", IsStatic: false, HasPublicGetter: true, HasPublicSetter: false)],
+        [],
+        []);
+    var legacyNamedOwner = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamedOwner",
+        [],
+        [new MetadataPropertySymbol("Owner", "Legacy.Tools.LegacyNamed", IsStatic: false, HasPublicGetter: true, HasPublicSetter: false)],
+        [],
+        []);
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickChainedMemberReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamedOwner", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamedOwner, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickChainedMemberReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamedOwner", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamedOwner, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, legacyNamedOwner, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda chained member return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate chained member return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamedOwner, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateMethodReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickMethodReturn(LegacyNamedOwner("Ada"), item => item.Owner.Display())
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [
+            new MetadataMethodSymbol(
+                "Display",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [],
+                IsStatic: false)
+        ],
+        [],
+        [],
+        []);
+    var legacyNamedOwner = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamedOwner",
+        [],
+        [new MetadataPropertySymbol("Owner", "Legacy.Tools.LegacyNamed", IsStatic: false, HasPublicGetter: true, HasPublicSetter: false)],
+        [],
+        []);
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickMethodReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamedOwner", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamedOwner, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickMethodReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamedOwner", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamedOwner, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, legacyNamedOwner, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda method return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate method return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamedOwner, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateExtensionMethodReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickExtensionMethodReturn(LegacyNamed("Ada"), item => item.Describe())
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [],
+        [],
+        [],
+        []);
+    var legacyExtensions = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyExtensions",
+        [
+            new MetadataMethodSymbol(
+                "Describe",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.ILegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)],
+                IsStatic: true,
+                IsExtension: true)
+        ],
+        [],
+        [],
+        []);
+    var legacyNamedInterface = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "ILegacyNamed",
+        [],
+        [],
+        [],
+        [])
+    {
+        IsInterface = true
+    };
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickExtensionMethodReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickExtensionMethodReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    legacyNamed = legacyNamed with
+    {
+        InterfaceNames = ["Legacy.Tools.ILegacyNamed"]
+    };
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, legacyNamedInterface, legacyExtensions, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly],
+        extensionNamespaces: ["Legacy.Tools"]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda extension method return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate extension method return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamed, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateStaticMethodReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickStaticMethodReturn(LegacyNamed("Ada"), item => LegacyOverloads.Describe(item))
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [],
+        [],
+        [],
+        []);
+    var legacyNamedInterface = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "ILegacyNamed",
+        [],
+        [],
+        [],
+        [])
+    {
+        IsInterface = true
+    };
+    var legacyOverloads = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Describe",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.ILegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)],
+                IsStatic: true),
+            new MetadataMethodSymbol(
+                "Describe",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)],
+                IsStatic: true)
+        ],
+        [],
+        [],
+        []);
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickStaticMethodReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickStaticMethodReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    legacyNamed = legacyNamed with
+    {
+        InterfaceNames = ["Legacy.Tools.ILegacyNamed"]
+    };
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, legacyNamedInterface, legacyOverloads, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda static method return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate static method return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamed, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateBinaryReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickBinaryReturn(LegacyNamed("Ada"), item => item.Name == "Ada")
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [],
+        [new MetadataPropertySymbol("Name", "string", IsStatic: false, HasPublicGetter: true, HasPublicSetter: false)],
+        [],
+        []);
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickBinaryReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, bool>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickBinaryReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda binary expression return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate binary return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamed, bool>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverRanksLambdaDelegateReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickReturnWidening("Ada", text => 42)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickReturnWidening",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, long>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickReturnWidening",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(2, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Exact lambda body return type should outrank numeric delegate return conversions.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the exact delegate return overload candidate.");
+    AssertEqual("System.Func`2<string, int>", selected.Method.Parameters[1].Type);
 }
 
 static void CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics()
@@ -1590,9 +5642,9 @@ static void CheckerReportsAmbiguousExpandedParamsOverloadDiagnostics()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.AmbiguousExpandedParamsOverload
 
-            import { LegacyParamsOverloads } from "Legacy.Tools"
+            import { LegacyParamsAmbiguousOverloads } from "Legacy.Tools"
 
-            export fun choose(): string = LegacyParamsOverloads.Pick(",", null, null)
+            export fun choose(): string = LegacyParamsAmbiguousOverloads.Pick(",", null, null)
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -1730,31 +5782,33 @@ static void CliCheckEmitsJsonDuplicateSourceModuleDiagnostics()
     });
 }
 
-static void CliCheckEmitsJsonUnsupportedSourceModuleImportAliasDiagnostics()
+static void CliCheckAcceptsRelativeSourceModuleImportAliases()
 {
     WithWorkspace(root =>
     {
-        var manifestPath = WriteManifest(root, MinimalManifest("SourceImportJson"));
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceModuleImportAliasJson"));
         WriteFile(root, "src/Main.tysh", """
-            namespace Samples.SourceImportJson
+            namespace Samples.SourceModuleImportAliasJson
 
-            import { keep as keepHelper } from "./Helper"
+            import { Tools as HelperTools } from "./Helper"
+
+            export fun read(): string = HelperTools.keep()
             """);
         WriteFile(root, "src/Helper.tysh", """
-            namespace Samples.SourceImportJson
+            namespace Samples.SourceModuleImportAliasJson
 
-            export fun keep(): string = "ok"
+            export module Tools {
+              export fun keep(): string = "ok"
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
 
         var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
 
-        AssertEqual(1, exitCode);
-        AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS0113\"", error.ToString());
-        AssertContains("Source module import './Helper' resolves to 'Helper', but this import form is not implemented yet.", error.ToString());
-        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+        AssertEqual(0, exitCode);
+        AssertContains("\"diagnostics\": []", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
     });
 }
 
@@ -1777,6 +5831,95 @@ static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS0112\"", error.ToString());
         AssertContains("Source module specifier './Missing' could not be resolved from module 'Main'.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonMissingSourceModuleExportDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("MissingSourceExportJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingSourceExportJson
+
+            import { hidden } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.MissingSourceExportJson
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module import './Helper' resolves to 'Helper', but exported name 'hidden' was not found.", error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonMissingSourceModuleReExportDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("MissingSourceReExportJson"));
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.MissingSourceReExportJson
+
+            export { hidden } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.MissingSourceReExportJson
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module re-export './Helper' resolves to 'Helper', but exported function, top-level value, or module 'hidden' was not found.", error.ToString());
+        AssertContains("\"file\": \"src/Barrel.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonMissingSourceModuleNamespaceMemberDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("MissingSourceNamespaceMemberJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingSourceNamespaceMemberJson
+
+            import * as Helper from "./Helper"
+
+            export fun mainValue(): string = Helper.hidden()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.MissingSourceNamespaceMemberJson
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module namespace import './Helper' resolves to 'Helper', but exported member 'hidden' was not found.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
@@ -1871,24 +6014,68 @@ static void CliBuildStopsBeforeEmissionOnDuplicateSourceModules()
     });
 }
 
-static void CliBuildStopsBeforeEmissionOnUnsupportedSourceModuleImportAliases()
+static void CliBuildLowersRelativeSourceModuleImportAliases()
 {
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, """
             [project]
-            name = "BuildSourceImportAliases"
+            name = "RelativeSourceModuleAlias"
             generatedOutputRoot = "generated"
             """);
         WriteFile(root, "src/Main.tysh", """
-            namespace Samples.BuildSourceImportAliases
+            namespace Samples.RelativeSourceModuleAlias
 
-            import { keep as keepHelper } from "./Helper"
+            import { Tools as HelperTools } from "./Helper"
+
+            export fun read(): string = HelperTools.keep()
             """);
         WriteFile(root, "src/Helper.tysh", """
-            namespace Samples.BuildSourceImportAliases
+            namespace Samples.RelativeSourceModuleAlias
 
-            export fun keep(): string = "ok"
+            export module Tools {
+              export fun keep(): string = "ok"
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceModuleAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceModuleAlias;", generatedMain);
+        AssertContains("using static Samples.RelativeSourceModuleAlias.ModuleHelper;", generatedMain);
+        AssertContains("using HelperTools = Samples.RelativeSourceModuleAlias.Tools;", generatedMain);
+        AssertContains("return HelperTools.keep();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceModuleAlias.dll")), "Generated relative source module import alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingSourceModuleExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildMissingSourceExports"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BuildMissingSourceExports
+
+            import { hidden } from "./Helper"
+
+            export fun mainValue(): string = hidden()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.BuildMissingSourceExports
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -1897,11 +6084,83 @@ static void CliBuildStopsBeforeEmissionOnUnsupportedSourceModuleImportAliases()
 
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS0113\"", error.ToString());
-        AssertContains("Source module import './Helper' resolves to 'Helper', but this import form is not implemented yet.", error.ToString());
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when source module import aliases are unsupported.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildSourceImportAliases.Generated.csproj")), "Build should not emit generated project when source module import aliases are unsupported.");
-        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildSourceImportAliases.dll")), "Build should not emit generated assembly when source module import aliases are unsupported.");
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module import './Helper' resolves to 'Helper', but exported name 'hidden' was not found.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when source module imports non-exported names.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildMissingSourceExports.Generated.csproj")), "Build should not emit generated project when source module imports non-exported names.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildMissingSourceExports.dll")), "Build should not emit generated assembly when source module imports non-exported names.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingSourceModuleReExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildMissingSourceReExports"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.BuildMissingSourceReExports
+
+            export { hidden } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.BuildMissingSourceReExports
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module re-export './Helper' resolves to 'Helper', but exported function, top-level value, or module 'hidden' was not found.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Barrel.g.cs")), "Build should not emit generated C# when source module re-exports non-exported names.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildMissingSourceReExports.Generated.csproj")), "Build should not emit generated project when source module re-exports non-exported names.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildMissingSourceReExports.dll")), "Build should not emit generated assembly when source module re-exports non-exported names.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingSourceModuleNamespaceMembers()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BuildMissingSourceNamespaceMembers"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BuildMissingSourceNamespaceMembers
+
+            import * as Helper from "./Helper"
+
+            export fun mainValue(): string = Helper.hidden()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.BuildMissingSourceNamespaceMembers
+
+            fun hidden(): string = "hidden"
+            export fun shown(): string = "shown"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module namespace import './Helper' resolves to 'Helper', but exported member 'hidden' was not found.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when source namespace import uses non-exported members.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildMissingSourceNamespaceMembers.Generated.csproj")), "Build should not emit generated project when source namespace import uses non-exported members.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildMissingSourceNamespaceMembers.dll")), "Build should not emit generated assembly when source namespace import uses non-exported members.");
     });
 }
 
@@ -1980,6 +6239,1660 @@ static void CliBuildStopsBeforeEmissionOnInvalidByRefInterop()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnUnsatisfiedCSharpGenericConstraint()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedCSharpGenericConstraintBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedCSharpGenericConstraintBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedCSharpGenericConstraintBuild
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.RequireNamed<string>("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2417\"", error.ToString());
+        AssertContains("must satisfy the C# type constraint", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsatisfied C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedCSharpGenericConstraintBuild.Generated.csproj")), "Build should not emit generated project when unsatisfied C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedCSharpGenericConstraintBuild.dll")), "Build should not emit generated assembly when unsatisfied C# generic constraint diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnUnsatisfiedFrameworkCSharpGenericConstraint()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedFrameworkCSharpGenericConstraintBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedFrameworkCSharpGenericConstraintBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["mscorlib"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedFrameworkCSharpGenericConstraintBuild
+
+            import { Nullable } from "System"
+
+            export fun broken(): int =
+              Nullable.Compare<string>(null, null)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2417\"", error.ToString());
+        AssertContains("System.Nullable.Compare", error.ToString());
+        AssertContains("must satisfy the C# 'struct' constraint", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsatisfied framework C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedFrameworkCSharpGenericConstraintBuild.Generated.csproj")), "Build should not emit generated project when unsatisfied framework C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedFrameworkCSharpGenericConstraintBuild.dll")), "Build should not emit generated assembly when unsatisfied framework C# generic constraint diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnUnsatisfiedInferredCSharpGenericConstraint()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedInferredCSharpGenericConstraintBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedInferredCSharpGenericConstraintBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedInferredCSharpGenericConstraintBuild
+
+            import { LegacyFormatter, LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): LegacyFormatter =
+              LegacyGenericMethods.RequireNamed(LegacyFormatter("legacy:"))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2417\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireNamed", error.ToString());
+        AssertContains("Legacy.Tools.LegacyFormatter", error.ToString());
+        AssertContains("must satisfy the C# type constraint", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsatisfied inferred C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedInferredCSharpGenericConstraintBuild.Generated.csproj")), "Build should not emit generated project when unsatisfied inferred C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedInferredCSharpGenericConstraintBuild.dll")), "Build should not emit generated assembly when unsatisfied inferred C# generic constraint diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnUnsatisfiedInferredConstructedCSharpGenericConstraint()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedInferredConstructedCSharpGenericConstraintBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedInferredConstructedCSharpGenericConstraintBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedInferredConstructedCSharpGenericConstraintBuild
+
+            import { LegacyBox, LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.RequireBoxedNamed(LegacyBox<string>("Ada"))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2417\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireBoxedNamed", error.ToString());
+        AssertContains("Type argument 'string'", error.ToString());
+        AssertContains("must satisfy the C# type constraint", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsatisfied inferred constructed C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedInferredConstructedCSharpGenericConstraintBuild.Generated.csproj")), "Build should not emit generated project when unsatisfied inferred constructed C# generic constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedInferredConstructedCSharpGenericConstraintBuild.dll")), "Build should not emit generated assembly when unsatisfied inferred constructed C# generic constraint diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingOverloadBuild
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.Identity<string, int>("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingOverloadBuild.dll")), "Build should not emit generated assembly when no matching C# overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaOverloadBuild
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBinary("Ada", text => text)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresBinary", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaReturnOverloadBuild
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresString("Ada", text => 42)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresString", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaParameterReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaParameterReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaParameterReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaParameterReturnOverloadBuild
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresIntReturn("Ada", text => text)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresIntReturn", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda parameter return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaParameterReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda parameter return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaParameterReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda parameter return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaMemberReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaMemberReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaMemberReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaMemberReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresMemberInt(LegacyNamed("Ada"), item => item.Name)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresMemberInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda member return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaMemberReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda member return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaMemberReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda member return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaChainedMemberReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaChainedMemberReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaChainedMemberReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaChainedMemberReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamedOwner } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresNestedMemberInt(LegacyNamedOwner("Ada"), item => item.Owner.Name)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresNestedMemberInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda chained member return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaChainedMemberReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda chained member return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaChainedMemberReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda chained member return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaMethodReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaMethodReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaMethodReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaMethodReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamedOwner } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresMethodInt(LegacyNamedOwner("Ada"), item => item.Owner.Display())
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresMethodInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda method return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaMethodReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda method return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaMethodReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda method return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaExtensionMethodReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaExtensionMethodReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaExtensionMethodReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaExtensionMethodReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresExtensionMethodInt(LegacyNamed("Ada"), item => item.Describe())
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresExtensionMethodInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda extension method return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaExtensionMethodReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda extension method return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaExtensionMethodReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda extension method return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaStaticMethodReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaStaticMethodReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaStaticMethodReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaStaticMethodReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamed, LegacyOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresStaticMethodInt(LegacyNamed("Ada"), item => LegacyOverloads.Describe(item))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresStaticMethodInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda static method return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaStaticMethodReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda static method return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaStaticMethodReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda static method return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBinaryReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaBinaryReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaBinaryReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaBinaryReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBinaryReturnString(LegacyNamed("Ada"), item => item.Name == "Ada")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresBinaryReturnString", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda binary return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaBinaryReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda binary return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaBinaryReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda binary return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnKnownArgumentTypeCSharpOverloadMismatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "KnownArgumentTypeOverloadMismatchBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.KnownArgumentTypeOverloadMismatchBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.KnownArgumentTypeOverloadMismatchBuild
+
+            import { LegacyApi } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyApi.Echo(true)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyApi.Echo", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when known argument type C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "KnownArgumentTypeOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when known argument type C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "KnownArgumentTypeOverloadMismatchBuild.dll")), "Build should not emit generated assembly when known argument type C# overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNumericLiteralCSharpOverloadMismatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NumericLiteralOverloadMismatchBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NumericLiteralOverloadMismatchBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NumericLiteralOverloadMismatchBuild
+
+            import { LegacyNumeric } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyNumeric.FormatInt(1.5)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyNumeric.FormatInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when numeric literal C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NumericLiteralOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when numeric literal C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NumericLiteralOverloadMismatchBuild.dll")), "Build should not emit generated assembly when numeric literal C# overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnImportedMetadataArgumentCSharpOverloadMismatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedMetadataArgumentOverloadMismatchBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedMetadataArgumentOverloadMismatchBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedMetadataArgumentOverloadMismatchBuild
+
+            import { LegacyFormatter, LegacyOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyOverloads.NeedNamed(LegacyFormatter("legacy:"))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyOverloads.NeedNamed", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when imported metadata argument C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "ImportedMetadataArgumentOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when imported metadata argument C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMetadataArgumentOverloadMismatchBuild.dll")), "Build should not emit generated assembly when imported metadata argument C# overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNullLiteralCSharpOverloadMismatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullLiteralOverloadMismatchBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullLiteralOverloadMismatchBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullLiteralOverloadMismatchBuild
+
+            import { LegacyNullOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyNullOverloads.OnlyInt(null)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyNullOverloads.OnlyInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when null literal C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NullLiteralOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when null literal C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NullLiteralOverloadMismatchBuild.dll")), "Build should not emit generated assembly when null literal C# overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpConstructor()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingConstructorBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingConstructorBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingConstructorBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): LegacyFormatter =
+              LegacyFormatter(42)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("C# constructor", error.ToString());
+        AssertContains("LegacyFormatter", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching C# constructor diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingConstructorBuild.Generated.csproj")), "Build should not emit generated project when no matching C# constructor diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingConstructorBuild.dll")), "Build should not emit generated assembly when no matching C# constructor diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpGenericConstructor()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingGenericConstructorBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingGenericConstructorBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingGenericConstructorBuild
+
+            import { LegacyBox, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): LegacyBox<LegacyNamed> =
+              LegacyBox<LegacyNamed>("Ada")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("C# constructor", error.ToString());
+        AssertContains("LegacyBox", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching C# generic constructor diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingGenericConstructorBuild.Generated.csproj")), "Build should not emit generated project when no matching C# generic constructor diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingGenericConstructorBuild.dll")), "Build should not emit generated assembly when no matching C# generic constructor diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpConstructor()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousConstructorBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousConstructorBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousConstructorBuild
+
+            import { LegacyAmbiguousConstructor, LegacyDualNamed } from "Legacy.Tools"
+
+            export fun broken(): LegacyAmbiguousConstructor =
+              LegacyAmbiguousConstructor(LegacyDualNamed("Ada"))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2402\"", error.ToString());
+        AssertContains("C# constructor", error.ToString());
+        AssertContains("LegacyAmbiguousConstructor", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when ambiguous C# constructor diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "AmbiguousConstructorBuild.Generated.csproj")), "Build should not emit generated project when ambiguous C# constructor diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AmbiguousConstructorBuild.dll")), "Build should not emit generated assembly when ambiguous C# constructor diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpMethod()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpMethodBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpMethodBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpMethodBuild
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyGenericMethods.DoesNotExist("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2407\"", error.ToString());
+        AssertContains("does not contain a public static method named", error.ToString());
+        AssertFalse(error.ToString().Contains("\"code\": \"TS2409\"", StringComparison.Ordinal), "Missing method calls should not also emit TS2409.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# method diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpMethodBuild.Generated.csproj")), "Build should not emit generated project when missing C# method diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpMethodBuild.dll")), "Build should not emit generated assembly when missing C# method diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpType()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpTypeBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpTypeBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpTypeBuild
+
+            import { LegacyMissing } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyMissing.Echo("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2408\"", error.ToString());
+        AssertContains("does not contain a public type named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# type diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpTypeBuild.Generated.csproj")), "Build should not emit generated project when missing C# type diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpTypeBuild.dll")), "Build should not emit generated assembly when missing C# type diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingFrameworkCSharpType()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingFrameworkCSharpTypeBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingFrameworkCSharpTypeBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["System"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingFrameworkCSharpTypeBuild
+
+            import { DefinitelyMissing } from "System"
+
+            export fun broken(): string =
+              DefinitelyMissing.Echo("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2408\"", error.ToString());
+        AssertContains("System", error.ToString());
+        AssertContains("does not contain a public type named 'DefinitelyMissing'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing framework C# type diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingFrameworkCSharpTypeBuild.Generated.csproj")), "Build should not emit generated project when missing framework C# type diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingFrameworkCSharpTypeBuild.dll")), "Build should not emit generated assembly when missing framework C# type diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingFrameworkCSharpMethod()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingFrameworkCSharpMethodBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingFrameworkCSharpMethodBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["System"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingFrameworkCSharpMethodBuild
+
+            import { Uri } from "System"
+
+            export fun broken(): string =
+              Uri.DoesNotExist("https://example.com")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2407\"", error.ToString());
+        AssertContains("Uri", error.ToString());
+        AssertContains("does not contain a public static method named 'DoesNotExist'", error.ToString());
+        AssertFalse(error.ToString().Contains("\"code\": \"TS2409\"", StringComparison.Ordinal), "Missing framework method calls should not also emit TS2409.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing framework C# method diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingFrameworkCSharpMethodBuild.Generated.csproj")), "Build should not emit generated project when missing framework C# method diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingFrameworkCSharpMethodBuild.dll")), "Build should not emit generated assembly when missing framework C# method diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpStaticMember()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpStaticMemberBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpStaticMemberBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpStaticMemberBuild
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyFields.MissingCode
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2409\"", error.ToString());
+        AssertContains("does not contain a public static member named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# static member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpStaticMemberBuild.Generated.csproj")), "Build should not emit generated project when missing C# static member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpStaticMemberBuild.dll")), "Build should not emit generated assembly when missing C# static member diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingFrameworkCSharpStaticMember()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingFrameworkCSharpStaticMemberBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingFrameworkCSharpStaticMemberBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["System"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingFrameworkCSharpStaticMemberBuild
+
+            import { Uri } from "System"
+
+            export fun broken(): string =
+              Uri.MissingValue
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2409\"", error.ToString());
+        AssertContains("Uri", error.ToString());
+        AssertContains("does not contain a public static member named 'MissingValue'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing framework C# static member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingFrameworkCSharpStaticMemberBuild.Generated.csproj")), "Build should not emit generated project when missing framework C# static member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingFrameworkCSharpStaticMemberBuild.dll")), "Build should not emit generated assembly when missing framework C# static member diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpInstanceMember()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstanceMemberBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstanceMemberBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstanceMemberBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter.MissingValue
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2410\"", error.ToString());
+        AssertContains("does not contain a public instance member named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpInstanceMemberBuild.Generated.csproj")), "Build should not emit generated project when missing C# instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpInstanceMemberBuild.dll")), "Build should not emit generated assembly when missing C# instance member diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpParameterInstanceMember()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpParameterInstanceMemberBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpParameterInstanceMemberBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpParameterInstanceMemberBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string =
+              formatter.MissingValue
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2410\"", error.ToString());
+        AssertContains("does not contain a public instance member named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# parameter instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpParameterInstanceMemberBuild.Generated.csproj")), "Build should not emit generated project when missing C# parameter instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpParameterInstanceMemberBuild.dll")), "Build should not emit generated assembly when missing C# parameter instance member diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpAliasInstanceMember()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpAliasInstanceMemberBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpAliasInstanceMemberBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpAliasInstanceMemberBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string {
+              let alias = formatter
+              alias.MissingValue
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2410\"", error.ToString());
+        AssertContains("does not contain a public instance member named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# alias instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpAliasInstanceMemberBuild.Generated.csproj")), "Build should not emit generated project when missing C# alias instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpAliasInstanceMemberBuild.dll")), "Build should not emit generated assembly when missing C# alias instance member diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpAssignedInstanceMember()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpAssignedInstanceMemberBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpAssignedInstanceMemberBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpAssignedInstanceMemberBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(formatter: LegacyFormatter): string {
+              let mut alias = "placeholder"
+              alias = formatter
+              alias.MissingValue
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2410\"", error.ToString());
+        AssertContains("does not contain a public instance member named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# assigned instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpAssignedInstanceMemberBuild.Generated.csproj")), "Build should not emit generated project when missing C# assigned instance member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpAssignedInstanceMemberBuild.dll")), "Build should not emit generated assembly when missing C# assigned instance member diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpExtensionOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingExtensionOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingExtensionOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingExtensionOverloadBuild
+
+            import { LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let named = LegacyNamed("Ada")
+              named.Describe(true)
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("named.Describe", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching C# extension overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingExtensionOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching C# extension overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingExtensionOverloadBuild.dll")), "Build should not emit generated assembly when no matching C# extension overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpInstanceIndexer()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstanceIndexerBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstanceIndexerBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstanceIndexerBuild
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let fields = LegacyFields()
+              fields[0]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2411\"", error.ToString());
+        AssertContains("does not contain a public instance indexer", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpInstanceIndexerBuild.Generated.csproj")), "Build should not emit generated project when missing C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpInstanceIndexerBuild.dll")), "Build should not emit generated assembly when missing C# instance indexer diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexer()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[true]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2411\"", error.ToString());
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'bool'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerBuild.Generated.csproj")), "Build should not emit generated project when mismatched C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerBuild.dll")), "Build should not emit generated assembly when mismatched C# instance indexer diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericLiteral()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerNumericLiteralBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerNumericLiteralBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerNumericLiteralBuild
+
+            import { LegacyByteIndexer } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let indexer = LegacyByteIndexer()
+              indexer[1.5]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2411\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyByteIndexer", error.ToString());
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'double'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched C# instance indexer numeric literal diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerNumericLiteralBuild.Generated.csproj")), "Build should not emit generated project when mismatched C# instance indexer numeric literal diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerNumericLiteralBuild.dll")), "Build should not emit generated assembly when mismatched C# instance indexer numeric literal diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpInstanceIndexer()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AmbiguousCSharpInstanceIndexerBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.AmbiguousCSharpInstanceIndexerBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AmbiguousCSharpInstanceIndexerBuild
+
+            import { LegacyAmbiguousIndexer, LegacyDualNamed } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let indexer = LegacyAmbiguousIndexer()
+              indexer[LegacyDualNamed("value")]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2402\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyAmbiguousIndexer", error.ToString());
+        AssertContains("matches 2 indexer candidates", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when ambiguous C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "AmbiguousCSharpInstanceIndexerBuild.Generated.csproj")), "Build should not emit generated project when ambiguous C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AmbiguousCSharpInstanceIndexerBuild.dll")), "Build should not emit generated assembly when ambiguous C# instance indexer diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpInstancePropertySetter()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstancePropertySetterBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstancePropertySetterBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstancePropertySetterBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter.Prefix = "updated"
+              formatter.Prefix
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2412\"", error.ToString());
+        AssertContains("does not contain a public instance setter for property", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# instance property setter diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpInstancePropertySetterBuild.Generated.csproj")), "Build should not emit generated project when missing C# instance property setter diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpInstancePropertySetterBuild.dll")), "Build should not emit generated assembly when missing C# instance property setter diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnReadOnlyCSharpInstanceFieldAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ReadOnlyCSharpInstanceFieldAssignmentBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ReadOnlyCSharpInstanceFieldAssignmentBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ReadOnlyCSharpInstanceFieldAssignmentBuild
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let fields = LegacyFields()
+              fields.InstanceCode = "updated"
+              fields.InstanceCode
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2413\"", error.ToString());
+        AssertContains("cannot assign to readonly instance field", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when readonly C# instance field assignment diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "ReadOnlyCSharpInstanceFieldAssignmentBuild.Generated.csproj")), "Build should not emit generated project when readonly C# instance field assignment diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ReadOnlyCSharpInstanceFieldAssignmentBuild.dll")), "Build should not emit generated assembly when readonly C# instance field assignment diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpStaticPropertySetter()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpStaticPropertySetterBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpStaticPropertySetterBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpStaticPropertySetterBuild
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              LegacyFields.StaticName = "updated"
+              LegacyFields.StaticName
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2414\"", error.ToString());
+        AssertContains("does not contain a public static setter for property", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# static property setter diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpStaticPropertySetterBuild.Generated.csproj")), "Build should not emit generated project when missing C# static property setter diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpStaticPropertySetterBuild.dll")), "Build should not emit generated assembly when missing C# static property setter diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnReadOnlyCSharpStaticFieldAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ReadOnlyCSharpStaticFieldAssignmentBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ReadOnlyCSharpStaticFieldAssignmentBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ReadOnlyCSharpStaticFieldAssignmentBuild
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun broken(): string {
+              LegacyFields.StaticCode = "updated"
+              LegacyFields.StaticCode
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2415\"", error.ToString());
+        AssertContains("cannot assign to read-only static field", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when readonly C# static field assignment diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "ReadOnlyCSharpStaticFieldAssignmentBuild.Generated.csproj")), "Build should not emit generated project when readonly C# static field assignment diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ReadOnlyCSharpStaticFieldAssignmentBuild.dll")), "Build should not emit generated assembly when readonly C# static field assignment diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMissingCSharpInstanceEvent()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MissingCSharpInstanceEventBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MissingCSharpInstanceEventBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MissingCSharpInstanceEventBuild
+
+            import { LegacyEvents } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let source = LegacyEvents()
+              source.Missing -= text => text
+              source.Raise("value")
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2416\"", error.ToString());
+        AssertContains("does not contain a public instance event named", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when missing C# instance event diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MissingCSharpInstanceEventBuild.Generated.csproj")), "Build should not emit generated project when missing C# instance event diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MissingCSharpInstanceEventBuild.dll")), "Build should not emit generated assembly when missing C# instance event diagnostics contain errors.");
+    });
+}
+
 static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
 {
     WithWorkspace(root =>
@@ -1999,9 +7912,9 @@ static void CliBuildStopsBeforeEmissionOnAmbiguousCSharpOverload()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.AmbiguousOverloadBuild
 
-            import { LegacyOverloads } from "Legacy.Tools"
+            import { LegacyNullOverloads } from "Legacy.Tools"
 
-            export fun choose(): string = LegacyOverloads.Pick(null)
+            export fun choose(): string = LegacyNullOverloads.Ambiguous(null)
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -2044,6 +7957,45 @@ static void CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when type checker diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildTypeDiagnostics.Generated.csproj")), "Build should not emit generated project when type checker diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "BuildTypeDiagnostics.dll")), "Build should not emit generated assembly when type checker diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnUnsatisfiedImportedCSharpInterfaceImplementation()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedImportedInterfaceImplementation"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedImportedInterfaceImplementation"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedImportedInterfaceImplementation
+
+            import { ILegacyNamed, LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): ILegacyNamed =
+              LegacyFormatter("legacy:")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("Cannot return expression of type 'LegacyFormatter' from function returning 'ILegacyNamed'.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when imported C# interface implementation diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedImportedInterfaceImplementation.Generated.csproj")), "Build should not emit generated project when imported C# interface implementation diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedImportedInterfaceImplementation.dll")), "Build should not emit generated assembly when imported C# interface implementation diagnostics contain errors.");
     });
 }
 
@@ -2100,7 +8052,7 @@ static void CliBuildStopsBeforeEmissionOnPublicBoundaryDiagnostics()
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2204\"", error.ToString());
-        AssertContains("Type-level union cannot appear in public API. Use a nominal union or interface.", error.ToString());
+        AssertContains("Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when public boundary diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "PublicBoundaryBuild.Generated.csproj")), "Build should not emit generated project when public boundary diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "PublicBoundaryBuild.dll")), "Build should not emit generated assembly when public boundary diagnostics contain errors.");
@@ -2176,6 +8128,38 @@ static void CliBuildStopsBeforeEmissionOnUnsupportedExportForwarding()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnDuplicateLocalExport()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "DuplicateLocalExportBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DuplicateLocalExportBuild
+
+            fun keep(): string = "ok"
+
+            export { keep }
+            export { keep }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2004\"", error.ToString());
+        AssertContains("Duplicate export 'keep'.", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when duplicate local export diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "DuplicateLocalExportBuild.Generated.csproj")), "Build should not emit generated project when duplicate local export diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "DuplicateLocalExportBuild.dll")), "Build should not emit generated assembly when duplicate local export diagnostics contain errors.");
+    });
+}
+
 static void CliBuildUsesLocalExportListsForPublicSurface()
 {
     WithWorkspace(root =>
@@ -2211,6 +8195,223 @@ static void CliBuildUsesLocalExportListsForPublicSurface()
         AssertContains("internal static string hidden()", generatedSource);
         AssertContains("public sealed class Customer", generatedSource);
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalExportListBuild.dll")), "Generated project with local export lists should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersLocalFunctionExportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LocalExportAliasBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.LocalExportAliasBuild
+
+            import { publicKeep } from "./Helper"
+
+            export fun mainValue(): string = publicKeep()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.LocalExportAliasBuild
+
+            fun keep(): string = "ok"
+
+            export { keep as publicKeep }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LocalExportAliasBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.LocalExportAliasBuild.ModuleHelper;", generatedMain);
+        AssertContains("return publicKeep();", generatedMain);
+        AssertContains("internal static string keep()", generatedHelper);
+        AssertContains("public static string publicKeep()", generatedHelper);
+        AssertContains("return Samples.LocalExportAliasBuild.ModuleHelper.keep();", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalExportAliasBuild.dll")), "Generated project with local function export aliases should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersLocalLiteralExportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LocalLiteralExportAliasBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.LocalLiteralExportAliasBuild
+
+            import { PublicVersion } from "./Helper"
+
+            export fun version(): string = PublicVersion
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.LocalLiteralExportAliasBuild
+
+            literal InternalVersion: string = "1.0"
+
+            export { InternalVersion as PublicVersion }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LocalLiteralExportAliasBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.LocalLiteralExportAliasBuild.ModuleHelper;", generatedMain);
+        AssertContains("return PublicVersion;", generatedMain);
+        AssertContains("internal const string InternalVersion = \"1.0\";", generatedHelper);
+        AssertContains("public const string PublicVersion = InternalVersion;", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalLiteralExportAliasBuild.dll")), "Generated project with local literal export aliases should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersLocalValueExportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LocalValueExportAliasBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.LocalValueExportAliasBuild
+
+            import { PublicName } from "./Helper"
+
+            export fun name(): string = PublicName
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.LocalValueExportAliasBuild
+
+            let InternalName: string = "Ada"
+
+            export { InternalName as PublicName }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LocalValueExportAliasBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.LocalValueExportAliasBuild.ModuleHelper;", generatedMain);
+        AssertContains("return PublicName;", generatedMain);
+        AssertContains("internal static readonly string InternalName = \"Ada\";", generatedHelper);
+        AssertContains("public static string PublicName", generatedHelper);
+        AssertContains("get { return InternalName; }", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalValueExportAliasBuild.dll")), "Generated project with local value export aliases should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersFunctionValueExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "FunctionValueExportBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.FunctionValueExportBuild
+
+            import { Transform, PublicTransform } from "./Helper"
+
+            export fun name(): string =
+              Transform("Ada") + PublicTransform(" Lovelace")
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.FunctionValueExportBuild
+
+            export let Transform: string -> string = text => text
+
+            let internalTransform: string -> string = text => text
+            export { internalTransform as PublicTransform }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/FunctionValueExportBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.FunctionValueExportBuild.ModuleHelper;", generatedMain);
+        AssertContains("return Transform(\"Ada\") + PublicTransform(\" Lovelace\");", generatedMain);
+        AssertContains("public static readonly System.Func<string, string> Transform = text => text;", generatedHelper);
+        AssertContains("internal static readonly System.Func<string, string> internalTransform = text => text;", generatedHelper);
+        AssertContains("public static System.Func<string, string> PublicTransform", generatedHelper);
+        AssertContains("get { return internalTransform; }", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "FunctionValueExportBuild.dll")), "Generated project with function-valued let exports should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersLocalTypeExportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LocalTypeExportAliasBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.LocalTypeExportAliasBuild
+
+            import type { Model } from "./Helper"
+
+            export fun pass(model: Model): Model = model
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.LocalTypeExportAliasBuild
+
+            record VisibleModel(Name: string)
+
+            export type { VisibleModel as Model }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LocalTypeExportAliasBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.LocalTypeExportAliasBuild;", generatedMain);
+        AssertContains("using Model = Samples.LocalTypeExportAliasBuild.VisibleModel;", generatedMain);
+        AssertContains("public static Model pass(Model model)", generatedMain);
+
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public sealed class VisibleModel", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalTypeExportAliasBuild.dll")), "Generated project with local type export aliases should compile to a net48 DLL.");
     });
 }
 
@@ -2935,7 +9136,13 @@ static void CheckerReportsUnsupportedExportForwardingDiagnostics()
             namespace Samples.ExportForwarding
 
             export fun keep(): string = "ok"
-            export { keep as alias }
+            let functionValueAliasTarget: string -> string = text => text
+            union Choice {
+                Pick(value: string)
+            }
+
+            export { functionValueAliasTarget as alias }
+            export { Pick as PublicPick }
             export type { Customer } from "Models"
             export * from "Prelude"
             """);
@@ -2948,6 +9155,38 @@ static void CheckerReportsUnsupportedExportForwardingDiagnostics()
         AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[0].Message);
         AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[1].Message);
         AssertEqual(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, diagnostics[2].Message);
+        AssertEqual("src/Main.tysh", diagnostics[0].File);
+    });
+}
+
+static void CheckerReportsDuplicateLocalExportDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("DuplicateLocalExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DuplicateLocalExport
+
+            fun keep(): string = "ok"
+
+            record Customer(Name: string)
+
+            export { keep, keep }
+            export type { Customer }
+            export type { Customer }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Checker should report duplicate local export list entries.");
+        var diagnostics = result.Diagnostics
+            .Where(diagnostic => diagnostic.Code == "TS2004")
+            .OrderBy(diagnostic => diagnostic.Span.Start.Line)
+            .ThenBy(diagnostic => diagnostic.Span.Start.Column)
+            .ToArray();
+        AssertEqual(2, diagnostics.Length);
+        AssertEqual("Duplicate export 'keep'.", diagnostics[0].Message);
+        AssertEqual("Duplicate export 'Customer'.", diagnostics[1].Message);
         AssertEqual("src/Main.tysh", diagnostics[0].File);
     });
 }
@@ -3215,7 +9454,7 @@ static void CliCheckEmitsJsonPublicBoundaryDiagnostics()
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2204\"", error.ToString());
-        AssertContains("Type-level union cannot appear in public API. Use a nominal union or interface.", error.ToString());
+        AssertContains("Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
@@ -3288,6 +9527,32 @@ static void CliCheckEmitsJsonUnsupportedExportForwardingDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS2003\"", error.ToString());
         AssertContains(DiagnosticDescriptors.UnsupportedExportForwarding.MessageTemplate, error.ToString());
+        AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonDuplicateLocalExportDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("DuplicateLocalExportJson"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.DuplicateLocalExportJson
+
+            fun keep(): string = "ok"
+
+            export { keep }
+            export { keep }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2004\"", error.ToString());
+        AssertContains("Duplicate export 'keep'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
@@ -3811,7 +10076,7 @@ static void VsCodeExtensionPackageShapeIsStable()
 
 static void RunnableExampleCatalogSmokeMatrixIsStable()
 {
-    var catalogRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs", "examples", "runnable");
+    var catalogRoot = Path.Combine(Directory.GetCurrentDirectory(), "examples", "runnable");
     var catalogReadme = File.ReadAllText(Path.Combine(catalogRoot, "README.md"));
     var projects = new[]
     {
@@ -3849,7 +10114,7 @@ static void RunnableExampleProjectCommandsAreSmokeTested()
 {
     WithWorkspace(root =>
     {
-        var sourceRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs", "examples", "runnable");
+        var sourceRoot = Path.Combine(Directory.GetCurrentDirectory(), "examples", "runnable");
         var examplesRoot = Path.Combine(root, "runnable");
         CopyDirectory(sourceRoot, examplesRoot);
 
@@ -4140,6 +10405,9 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated Containers", modulesPage);
     AssertContains("Relative Source Imports", modulesPage);
     AssertContains("Export Surface", modulesPage);
+    AssertContains("function re-exports", modulesPage);
+    AssertContains("runHelper", modulesPage);
+    AssertContains("publicHelper", modulesPage);
 
     var typeSystemPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "type-system.md"));
     AssertContains("Local Inference", typeSystemPage);
@@ -4181,8 +10449,8 @@ static void DocsSiteContractIsStable()
     AssertContains("npm run test:host", vscodeLspPage);
     AssertContains("diagnostics, hover, go-to-definition, completion, and formatting", vscodeLspPage);
 
-    var docsRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs");
-    var benchmarkPage = File.ReadAllText(Path.Combine(docsRoot, "official-docs-deep-benchmark.md"));
+    var benchmarkRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs-site", "research");
+    var benchmarkPage = File.ReadAllText(Path.Combine(benchmarkRoot, "official-docs-deep-benchmark.md"));
     AssertContains("Official Documentation Deep Benchmark", benchmarkPage);
     AssertContains("Vue.js", benchmarkPage);
     AssertContains("Nuxt", benchmarkPage);
@@ -4193,7 +10461,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Modules And Imports", benchmarkPage);
     AssertContains("Type System", benchmarkPage);
 
-    using var benchmarkInventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(docsRoot, "official-docs-deep-benchmark-inventory.json")));
+    using var benchmarkInventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(benchmarkRoot, "official-docs-deep-benchmark-inventory.json")));
     var benchmarkSources = benchmarkInventory.RootElement.GetProperty("sources");
     AssertEqual(5, benchmarkSources.GetArrayLength());
     AssertTrue(benchmarkSources[0].GetProperty("totalEntries").GetInt32() >= 90, "Vue official docs inventory should include guide/API entries.");
@@ -4397,6 +10665,166 @@ static void CliBuildLowersRelativeSourceNamedImports()
     });
 }
 
+static void CliBuildLowersRelativeSourceNamedImportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceNamedAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceNamedAlias
+
+            import { helper as runHelper } from "./Feature/Helper"
+
+            export fun mainValue(): string = runHelper()
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceNamedAlias
+
+            export fun helper(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceNamedAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceNamedAlias;", generatedMain);
+        AssertContains("using static Samples.RelativeSourceNamedAlias.ModuleFeature_Helper;", generatedMain);
+        AssertContains("private static string runHelper()", generatedMain);
+        AssertContains("return Samples.RelativeSourceNamedAlias.ModuleFeature_Helper.helper();", generatedMain);
+        AssertContains("return runHelper();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceNamedAlias.dll")), "Generated relative source named import alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceValueImportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceValueAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceValueAlias
+
+            import { PublicName as ImportedName } from "./Feature/Helper"
+
+            export fun mainValue(): string = ImportedName
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceValueAlias
+
+            let InternalName: string = "Ada"
+
+            export { InternalName as PublicName }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceValueAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceValueAlias;", generatedMain);
+        AssertContains("using static Samples.RelativeSourceValueAlias.ModuleFeature_Helper;", generatedMain);
+        AssertContains("private static string ImportedName", generatedMain);
+        AssertContains("get { return Samples.RelativeSourceValueAlias.ModuleFeature_Helper.PublicName; }", generatedMain);
+        AssertContains("return ImportedName;", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceValueAlias.dll")), "Generated relative source value import alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceTypeImportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceTypeAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceTypeAlias
+
+            import type { VisibleModel as Model } from "./Feature/Models"
+
+            export fun pass(model: Model): Model = model
+            """);
+        WriteFile(root, "src/Feature/Models.tysh", """
+            namespace Samples.RelativeSourceTypeAlias
+
+            export record VisibleModel(Name: string)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceTypeAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceTypeAlias;", generatedMain);
+        AssertContains("using Model = Samples.RelativeSourceTypeAlias.VisibleModel;", generatedMain);
+        AssertFalse(generatedMain.Contains("using static Samples.RelativeSourceTypeAlias.ModuleFeature_Models;", StringComparison.Ordinal), "Type-only source import aliases should not add source module static usings.");
+        AssertContains("public static Model pass(Model model)", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceTypeAlias.dll")), "Generated relative source type import alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceNamedTypeImportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceNamedTypeAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceNamedTypeAlias
+
+            import { VisibleModel as Model } from "./Feature/Models"
+
+            export fun pass(model: Model): Model = model
+            """);
+        WriteFile(root, "src/Feature/Models.tysh", """
+            namespace Samples.RelativeSourceNamedTypeAlias
+
+            export record VisibleModel(Name: string)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceNamedTypeAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceNamedTypeAlias;", generatedMain);
+        AssertContains("using Model = Samples.RelativeSourceNamedTypeAlias.VisibleModel;", generatedMain);
+        AssertContains("using static Samples.RelativeSourceNamedTypeAlias.ModuleFeature_Models;", generatedMain);
+        AssertContains("public static Model pass(Model model)", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceNamedTypeAlias.dll")), "Generated relative source named type import alias project should compile to a net48 DLL.");
+    });
+}
+
 static void CliBuildLowersRelativeSourceNamespaceImports()
 {
     WithWorkspace(root =>
@@ -4432,6 +10860,284 @@ static void CliBuildLowersRelativeSourceNamespaceImports()
         AssertContains("public static class ModuleMain", generatedMain);
         AssertContains("return Helper.helper();", generatedMain);
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceNamespace.dll")), "Generated relative source namespace import project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceReExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceReExport"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceReExport
+
+            import { helper } from "./Barrel"
+
+            export fun mainValue(): string = helper()
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.RelativeSourceReExport
+
+            export { helper } from "./Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceReExport
+
+            export fun helper(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedBarrel = File.ReadAllText(Path.Combine(root, "generated", "src", "Barrel.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.RelativeSourceReExport.ModuleBarrel;", generatedMain);
+        AssertContains("return helper();", generatedMain);
+        AssertContains("public static class ModuleBarrel", generatedBarrel);
+        AssertContains("public static string helper()", generatedBarrel);
+        AssertContains("return Samples.RelativeSourceReExport.ModuleFeature_Helper.helper();", generatedBarrel);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceReExport.dll")), "Generated relative source re-export project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceReExportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceReExportAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceReExportAlias
+
+            import { publicHelper } from "./Barrel"
+
+            export fun mainValue(): string = publicHelper()
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.RelativeSourceReExportAlias
+
+            export { helper as publicHelper } from "./Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceReExportAlias
+
+            export fun helper(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceReExportAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedBarrel = File.ReadAllText(Path.Combine(root, "generated", "src", "Barrel.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.RelativeSourceReExportAlias.ModuleBarrel;", generatedMain);
+        AssertContains("return publicHelper();", generatedMain);
+        AssertContains("public static class ModuleBarrel", generatedBarrel);
+        AssertContains("public static string publicHelper()", generatedBarrel);
+        AssertContains("return Samples.RelativeSourceReExportAlias.ModuleFeature_Helper.helper();", generatedBarrel);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceReExportAlias.dll")), "Generated relative source re-export alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceModuleReExportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceModuleReExportAlias"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceModuleReExportAlias
+
+            import { PublicTools as HelperTools } from "./Barrel"
+
+            export fun mainValue(): string = HelperTools.keep()
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.RelativeSourceModuleReExportAlias
+
+            export { Tools as PublicTools } from "./Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceModuleReExportAlias
+
+            export module Tools {
+              export fun keep(): string = "helper"
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceModuleReExportAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.RelativeSourceModuleReExportAlias.ModuleBarrel;", generatedMain);
+        AssertContains("using HelperTools = Samples.RelativeSourceModuleReExportAlias.Tools;", generatedMain);
+        AssertContains("return HelperTools.keep();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceModuleReExportAlias.dll")), "Generated relative source module re-export alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceValueReExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceValueReExport"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceValueReExport
+
+            import { PublicName } from "./Barrel"
+
+            export fun mainValue(): string = PublicName
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.RelativeSourceValueReExport
+
+            export { PublicName } from "./Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceValueReExport
+
+            let InternalName: string = "Ada"
+            export { InternalName as PublicName }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceValueReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedBarrel = File.ReadAllText(Path.Combine(root, "generated", "src", "Barrel.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.RelativeSourceValueReExport.ModuleBarrel;", generatedMain);
+        AssertContains("return PublicName;", generatedMain);
+        AssertContains("public static string PublicName", generatedBarrel);
+        AssertContains("get { return Samples.RelativeSourceValueReExport.ModuleFeature_Helper.PublicName; }", generatedBarrel);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceValueReExport.dll")), "Generated relative source value re-export project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceTypeReExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceTypeReExport"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceTypeReExport.App
+
+            import type { PublicModel as Model } from "./Barrel"
+
+            export fun pass(model: Model): Model = model
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.RelativeSourceTypeReExport.Barrel
+
+            export type { VisibleModel as PublicModel } from "./Models"
+            """);
+        WriteFile(root, "src/Models.tysh", """
+            namespace Samples.RelativeSourceTypeReExport.Models
+
+            export record VisibleModel(Name: string)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceTypeReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.RelativeSourceTypeReExport.Barrel;", generatedMain);
+        AssertContains("using Model = Samples.RelativeSourceTypeReExport.Models.VisibleModel;", generatedMain);
+        AssertFalse(generatedMain.Contains("using static Samples.RelativeSourceTypeReExport.Barrel.ModuleBarrel;", StringComparison.Ordinal), "Type-only source re-export imports should not add source module static usings.");
+        AssertContains("public static Model pass(Model model)", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceTypeReExport.dll")), "Generated relative source type re-export project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersRelativeSourceStarReExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "RelativeSourceStarReExport"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.RelativeSourceStarReExport.App
+
+            import { helper, PublicName } from "./Barrel"
+            import type { VisibleModel as Model } from "./Barrel"
+
+            export fun mainValue(model: Model): string = helper() + PublicName
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.RelativeSourceStarReExport.Barrel
+
+            export * from "./Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.RelativeSourceStarReExport.Feature
+
+            export fun helper(): string = "helper"
+            export let PublicName: string = "Ada"
+            export record VisibleModel(Name: string)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/RelativeSourceStarReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedBarrel = File.ReadAllText(Path.Combine(root, "generated", "src", "Barrel.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.RelativeSourceStarReExport.Barrel.ModuleBarrel;", generatedMain);
+        AssertContains("using Model = Samples.RelativeSourceStarReExport.Feature.VisibleModel;", generatedMain);
+        AssertContains("return helper() + PublicName;", generatedMain);
+        AssertContains("public static string PublicName", generatedBarrel);
+        AssertContains("get { return Samples.RelativeSourceStarReExport.Feature.ModuleFeature_Helper.PublicName; }", generatedBarrel);
+        AssertContains("public static string helper()", generatedBarrel);
+        AssertContains("return Samples.RelativeSourceStarReExport.Feature.ModuleFeature_Helper.helper();", generatedBarrel);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceStarReExport.dll")), "Generated relative source star re-export project should compile to a net48 DLL.");
     });
 }
 
@@ -4830,6 +11536,195 @@ static void CliBuildCompilesImportedConstructorAndInstanceMemberCall()
     });
 }
 
+static void CliBuildCompilesImportedConstructorNamedOptionalParamsCalls()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedConstructorNamedOptionalParams"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedConstructorNamedOptionalParams"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedConstructorNamedOptionalParams
+
+            import { LegacyFlexibleConstructor, LegacyParamsConstructor } from "Legacy.Tools"
+
+            export fun optionalText(): string {
+              let value = LegacyFlexibleConstructor("pre:")
+              value.Text
+            }
+
+            export fun namedText(): string {
+              let value = LegacyFlexibleConstructor(prefix: "pre:", value: "named")
+              value.Text
+            }
+
+            export fun paramsText(): string {
+              let value = LegacyParamsConstructor(",", "a", "b")
+              value.Joined
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedConstructorNamedOptionalParams.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var value = new LegacyFlexibleConstructor(\"pre:\");", generatedSource);
+        AssertContains("var value = new LegacyFlexibleConstructor(prefix: \"pre:\", value: \"named\");", generatedSource);
+        AssertContains("var value = new LegacyParamsConstructor(\",\", \"a\", \"b\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedConstructorNamedOptionalParams.dll")),
+            "Generated project build should compile imported constructor named, optional, and params calls.");
+    });
+}
+
+static void CliBuildCompilesImportedParameterInstanceMemberCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedParameterInstanceCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedParameterInstanceCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedParameterInstanceCall
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun render(formatter: LegacyFormatter): string =
+              formatter.Format("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedParameterInstanceCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("public static string render(LegacyFormatter formatter)", generatedSource);
+        AssertContains("return formatter.Format(\"value\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedParameterInstanceCall.dll")),
+            "Generated project build should compile imported parameter instance member call.");
+    });
+}
+
+static void CliBuildCompilesImportedAliasInstanceMemberCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedAliasInstanceCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedAliasInstanceCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedAliasInstanceCall
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun render(formatter: LegacyFormatter): string {
+              let alias = formatter
+              alias.Format("value")
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedAliasInstanceCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var alias = formatter;", generatedSource);
+        AssertContains("return alias.Format(\"value\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedAliasInstanceCall.dll")),
+            "Generated project build should compile imported alias instance member call.");
+    });
+}
+
+static void CliBuildCompilesImportedAssignedInstanceMemberCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedAssignedInstanceCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedAssignedInstanceCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedAssignedInstanceCall
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun render(primary: LegacyFormatter, secondary: LegacyFormatter): string {
+              let mut alias = primary
+              alias = secondary
+              alias.Format("value")
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedAssignedInstanceCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var alias = primary;", generatedSource);
+        AssertContains("alias = secondary;", generatedSource);
+        AssertContains("return alias.Format(\"value\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedAssignedInstanceCall.dll")),
+            "Generated project build should compile imported assigned instance member call.");
+    });
+}
+
 static void CliBuildCompilesImportedPropertyAccess()
 {
     WithWorkspace(root =>
@@ -4876,6 +11771,52 @@ static void CliBuildCompilesImportedPropertyAccess()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedPropertyAccess.dll")),
             "Generated project build should compile imported property access.");
+    });
+}
+
+static void CliBuildCompilesImportedPropertyAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedPropertyAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedPropertyAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedPropertyAssignment
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun prefix(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter.MutablePrefix = "updated"
+              formatter.MutablePrefix
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedPropertyAssignment.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var formatter = new LegacyFormatter(\"legacy:\");", generatedSource);
+        AssertContains("formatter.MutablePrefix = \"updated\";", generatedSource);
+        AssertContains("return formatter.MutablePrefix;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedPropertyAssignment.dll")),
+            "Generated project build should compile imported property assignment.");
     });
 }
 
@@ -4928,6 +11869,140 @@ static void CliBuildCompilesImportedFieldAccess()
     });
 }
 
+static void CliBuildCompilesImportedFieldAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedFieldAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedFieldAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedFieldAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun code(): string {
+              let fields = LegacyFields()
+              fields.MutableCode = "updated"
+              fields.MutableCode
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedFieldAssignment.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var fields = new LegacyFields();", generatedSource);
+        AssertContains("fields.MutableCode = \"updated\";", generatedSource);
+        AssertContains("return fields.MutableCode;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedFieldAssignment.dll")),
+            "Generated project build should compile imported field assignment.");
+    });
+}
+
+static void CliBuildCompilesImportedStaticPropertyAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedStaticPropertyAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedStaticPropertyAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedStaticPropertyAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun name(): string {
+              LegacyFields.MutableStaticName = "updated"
+              LegacyFields.MutableStaticName
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedStaticPropertyAssignment.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("LegacyFields.MutableStaticName = \"updated\";", generatedSource);
+        AssertContains("return LegacyFields.MutableStaticName;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedStaticPropertyAssignment.dll")),
+            "Generated project build should compile imported static property assignment.");
+    });
+}
+
+static void CliBuildCompilesImportedStaticFieldAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedStaticFieldAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedStaticFieldAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedStaticFieldAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            export fun code(): string {
+              LegacyFields.MutableStaticCode = "updated"
+              LegacyFields.MutableStaticCode
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedStaticFieldAssignment.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("LegacyFields.MutableStaticCode = \"updated\";", generatedSource);
+        AssertContains("return LegacyFields.MutableStaticCode;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedStaticFieldAssignment.dll")),
+            "Generated project build should compile imported static field assignment.");
+    });
+}
+
 static void CliBuildCompilesImportedIndexerAccess()
 {
     WithWorkspace(root =>
@@ -4974,6 +12049,141 @@ static void CliBuildCompilesImportedIndexerAccess()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerAccess.dll")),
             "Generated project build should compile imported indexer access.");
+    });
+}
+
+static void CliBuildCompilesImportedIndexerNumericLiteralConversion()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerNumericLiteralConversion"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerNumericLiteralConversion"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerNumericLiteralConversion
+
+            import { LegacyByteIndexer } from "Legacy.Tools"
+
+            export fun pick(): string {
+              let indexer = LegacyByteIndexer()
+              indexer[42]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedIndexerNumericLiteralConversion.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var indexer = new LegacyByteIndexer();", generatedSource);
+        AssertContains("return indexer[42];", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerNumericLiteralConversion.dll")),
+            "Generated project build should compile imported indexer integral constant conversion.");
+    });
+}
+
+static void CliBuildCompilesImportedOverloadedIndexerExactMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedOverloadedIndexerExactMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedOverloadedIndexerExactMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedOverloadedIndexerExactMatch
+
+            import { LegacyOverloadedIndexer } from "Legacy.Tools"
+
+            export fun pick(): string {
+              let indexer = LegacyOverloadedIndexer()
+              indexer[42]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedOverloadedIndexerExactMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var indexer = new LegacyOverloadedIndexer();", generatedSource);
+        AssertContains("return indexer[42];", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedOverloadedIndexerExactMatch.dll")),
+            "Generated project build should compile exact imported overloaded indexer access.");
+    });
+}
+
+static void CliBuildCompilesImportedIndexerMetadataRelationshipMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerMetadataRelationshipMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerMetadataRelationshipMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerMetadataRelationshipMatch
+
+            import { LegacyDerivedNamed, LegacyRelationshipIndexer } from "Legacy.Tools"
+
+            export fun pick(): string {
+              let indexer = LegacyRelationshipIndexer()
+              indexer[LegacyDerivedNamed("Ada")]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedIndexerMetadataRelationshipMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var indexer = new LegacyRelationshipIndexer();", generatedSource);
+        AssertContains("return indexer[new LegacyDerivedNamed(\"Ada\")];", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerMetadataRelationshipMatch.dll")),
+            "Generated project build should compile imported indexer metadata relationship access.");
     });
 }
 
@@ -5214,6 +12424,263 @@ static void CliBuildCompilesExactOverloadMatch()
     });
 }
 
+static void CliBuildCompilesObjectOverloadFallbackForKnownArgumentType()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ObjectOverloadFallback"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ObjectOverloadFallback"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ObjectOverloadFallback
+
+            import { LegacyOverloads } from "Legacy.Tools"
+
+            export fun pick(): string =
+              LegacyOverloads.Pick(true)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ObjectOverloadFallback.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyOverloads.Pick(true);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ObjectOverloadFallback.dll")),
+            "Generated project build should compile a known argument type object overload fallback.");
+    });
+}
+
+static void CliBuildCompilesNullLiteralReferenceOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullLiteralReferenceOverloadMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullLiteralReferenceOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullLiteralReferenceOverloadMatch
+
+            import { LegacyNullOverloads } from "Legacy.Tools"
+
+            export fun pick(): string =
+              LegacyNullOverloads.Pick(null)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/NullLiteralReferenceOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyNullOverloads.Pick(null);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NullLiteralReferenceOverloadMatch.dll")),
+            "Generated project build should compile a null literal reference overload match.");
+    });
+}
+
+static void CliBuildCompilesNullLiteralMetadataRelationshipOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullLiteralMetadataRelationshipOverloadMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullLiteralMetadataRelationshipOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullLiteralMetadataRelationshipOverloadMatch
+
+            import { LegacyNullOverloads } from "Legacy.Tools"
+
+            export fun choose(): string {
+              LegacyNullOverloads.DescribeNamed(null)
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null literal metadata relationship overload match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullLiteralMetadataRelationshipOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyNullOverloads.DescribeNamed(null);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NullLiteralMetadataRelationshipOverloadMatch.dll")),
+            "Generated project build should compile a null literal metadata relationship overload match.");
+    });
+}
+
+static void CliBuildCompilesImportedMetadataOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedMetadataOverloadMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedMetadataOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedMetadataOverloadMatch
+
+            import { LegacyNamed, LegacyOverloads } from "Legacy.Tools"
+
+            export fun describe(): string =
+              LegacyOverloads.Describe(LegacyNamed("Ada"))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(exitCode == 0, $"Imported metadata overload match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedMetadataOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyOverloads.Describe(new LegacyNamed(\"Ada\"));", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMetadataOverloadMatch.dll")),
+            "Generated project build should compile an imported metadata overload match.");
+    });
+}
+
+static void CliBuildCompilesImportedMetadataRelationshipOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedMetadataRelationshipOverloadMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedMetadataRelationshipOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedMetadataRelationshipOverloadMatch
+
+            import { LegacyDerivedNamed, LegacyOverloads } from "Legacy.Tools"
+
+            export fun describe(): string =
+              LegacyOverloads.DescribeSpecific(LegacyDerivedNamed("Ada"))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported metadata relationship overload match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedMetadataRelationshipOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyOverloads.DescribeSpecific(new LegacyDerivedNamed(\"Ada\"));", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMetadataRelationshipOverloadMatch.dll")),
+            "Generated project build should compile an imported metadata relationship overload match.");
+    });
+}
+
+static void CliBuildCompilesNumericLiteralConstantConversion()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NumericLiteralConstantConversion"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NumericLiteralConstantConversion"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NumericLiteralConstantConversion
+
+            import { LegacyNumeric } from "Legacy.Tools"
+
+            export fun pick(): string =
+              LegacyNumeric.FormatByte(42)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/NumericLiteralConstantConversion.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyNumeric.FormatByte(42);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NumericLiteralConstantConversion.dll")),
+            "Generated project build should compile an integral constant conversion to a smaller C# numeric parameter.");
+    });
+}
+
 static void CliBuildCompilesExactExpandedParamsOverloadMatch()
 {
     WithWorkspace(root =>
@@ -5378,6 +12845,416 @@ static void CliBuildCompilesImportedDelegateLambdaCall()
     });
 }
 
+static void CliBuildCompilesImportedDelegateLambdaOverloadArityMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadArityMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadArityMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadArityMatch
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.Pick("Ada", text => text)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadArityMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.Pick(\"Ada\", text => text);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadArityMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload arity matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadReturnMatch
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickReturn("Ada", text => 42)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickReturn(\"Ada\", text => 42);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadParameterReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadParameterReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadParameterReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadParameterReturnMatch
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickIdentityReturn("Ada", text => text)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadParameterReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickIdentityReturn(\"Ada\", text => text);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadParameterReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload parameter return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadReturnRanking()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadReturnRanking"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadReturnRanking"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadReturnRanking
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickReturnWidening("Ada", text => 42)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadReturnRanking.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickReturnWidening(\"Ada\", text => 42);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadReturnRanking.dll")),
+            "Generated project build should compile imported delegate lambda overload return ranking.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadMemberReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadMemberReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadMemberReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadMemberReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickMemberReturn(LegacyNamed("Ada"), item => item.Name)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadMemberReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickMemberReturn(new LegacyNamed(\"Ada\"), item => item.Name);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadMemberReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload member return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadChainedMemberReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadChainedMemberReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadChainedMemberReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadChainedMemberReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamedOwner } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickChainedMemberReturn(LegacyNamedOwner("Ada"), item => item.Owner.Name)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadChainedMemberReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickChainedMemberReturn(new LegacyNamedOwner(\"Ada\"), item => item.Owner.Name);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadChainedMemberReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload chained member return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadMethodReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadMethodReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadMethodReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadMethodReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamedOwner } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickMethodReturn(LegacyNamedOwner("Ada"), item => item.Owner.Display())
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadMethodReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickMethodReturn(new LegacyNamedOwner(\"Ada\"), item => item.Owner.Display());", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadMethodReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload method return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadExtensionMethodReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadExtensionMethodReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadExtensionMethodReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadExtensionMethodReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickExtensionMethodReturn(LegacyNamed("Ada"), item => item.Describe())
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadExtensionMethodReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickExtensionMethodReturn(new LegacyNamed(\"Ada\"), item => item.Describe());", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadExtensionMethodReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload extension method return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadStaticMethodReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadStaticMethodReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadStaticMethodReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadStaticMethodReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamed, LegacyOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickStaticMethodReturn(LegacyNamed("Ada"), item => LegacyOverloads.Describe(item))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(exitCode == 0, $"Imported delegate lambda overload static method return match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadStaticMethodReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickStaticMethodReturn(new LegacyNamed(\"Ada\"), item => LegacyOverloads.Describe(item));", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadStaticMethodReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload static method return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadBinaryReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadBinaryReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadBinaryReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadBinaryReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickBinaryReturn(LegacyNamed("Ada"), item => item.Name == "Ada")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(exitCode == 0, $"Imported delegate lambda overload binary return match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadBinaryReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickBinaryReturn(new LegacyNamed(\"Ada\"), item => item.Name == \"Ada\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadBinaryReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload binary return matches.");
+    });
+}
+
 static void CliBuildCompilesImportedEventAddRemoveCall()
 {
     WithWorkspace(root =>
@@ -5428,6 +13305,147 @@ static void CliBuildCompilesImportedEventAddRemoveCall()
     });
 }
 
+static void CliBuildCompilesImportedExtensionMethodInstanceCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExtensionMethodInstanceCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExtensionMethodInstanceCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExtensionMethodInstanceCall
+
+            import { LegacyNamed } from "Legacy.Tools"
+
+            export fun describe(): string {
+              let named = LegacyNamed("Ada")
+              named.Describe()
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported extension method instance call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedExtensionMethodInstanceCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var named = new LegacyNamed(\"Ada\");", generatedSource);
+        AssertContains("return named.Describe();", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedExtensionMethodInstanceCall.dll")),
+            "Generated project build should compile imported extension method instance syntax.");
+    });
+}
+
+static void CliBuildCompilesImportedExtensionReceiverRelationshipMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExtensionReceiverRelationshipMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExtensionReceiverRelationshipMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExtensionReceiverRelationshipMatch
+
+            import { LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun describe(): string {
+              let derived = LegacyDerivedNamed("Ada")
+              derived.DescribeSpecific()
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported extension receiver metadata relationship match.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedExtensionReceiverRelationshipMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var derived = new LegacyDerivedNamed(\"Ada\");", generatedSource);
+        AssertContains("return derived.DescribeSpecific();", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedExtensionReceiverRelationshipMatch.dll")),
+            "Generated project build should compile imported extension receiver metadata relationship access.");
+    });
+}
+
+static void CliBuildCompilesImportedExtensionReceiverObjectFallback()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExtensionReceiverObjectFallback"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExtensionReceiverObjectFallback"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExtensionReceiverObjectFallback
+
+            import { LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun describe(): string {
+              let derived = LegacyDerivedNamed("Ada")
+              derived.DescribeObjectOnly()
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported extension receiver object fallback.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedExtensionReceiverObjectFallback.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var derived = new LegacyDerivedNamed(\"Ada\");", generatedSource);
+        AssertContains("return derived.DescribeObjectOnly();", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedExtensionReceiverObjectFallback.dll")),
+            "Generated project build should compile imported extension receiver object fallback.");
+    });
+}
+
 static void CliBuildCompilesImportedGenericMethodCall()
 {
     WithWorkspace(root =>
@@ -5471,6 +13489,287 @@ static void CliBuildCompilesImportedGenericMethodCall()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedGenericMethodCall.dll")),
             "Generated project build should compile imported generic method call.");
+    });
+}
+
+static void CliBuildCompilesImportedExplicitGenericMethodCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedExplicitGenericMethodCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedExplicitGenericMethodCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedExplicitGenericMethodCall
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun echo(): string =
+              LegacyGenericMethods.Identity<string>("value")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedExplicitGenericMethodCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyGenericMethods.Identity<string>(\"value\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedExplicitGenericMethodCall.dll")),
+            "Generated project build should compile imported explicit generic method call.");
+    });
+}
+
+static void CliBuildCompilesImportedGenericConstraintCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedGenericConstraintCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedGenericConstraintCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedGenericConstraintCall
+
+            import { LegacyGenericMethods, LegacyNamed, LegacyDefaultConstructible } from "Legacy.Tools"
+
+            export fun render(): string {
+              let text = LegacyGenericMethods.RequireClass<string>("value")
+              let number = LegacyGenericMethods.RequireStruct<int>(42)
+              let named = LegacyGenericMethods.RequireNamed<LegacyNamed>(LegacyNamed("Ada"))
+              let created = LegacyGenericMethods.Create<LegacyDefaultConstructible>()
+              named.Name
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported generic constraint call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedGenericConstraintCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var text = LegacyGenericMethods.RequireClass<string>(\"value\");", generatedSource);
+        AssertContains("var number = LegacyGenericMethods.RequireStruct<int>(42);", generatedSource);
+        AssertContains("var named = LegacyGenericMethods.RequireNamed<LegacyNamed>(new LegacyNamed(\"Ada\"));", generatedSource);
+        AssertContains("var created = LegacyGenericMethods.Create<LegacyDefaultConstructible>();", generatedSource);
+        AssertContains("return named.Name;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedGenericConstraintCall.dll")),
+            "Generated project build should compile imported generic constraint calls.");
+    });
+}
+
+static void CliBuildCompilesImportedFrameworkGenericConstraintCall()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedFrameworkGenericConstraintCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedFrameworkGenericConstraintCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            assemblies = ["mscorlib"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedFrameworkGenericConstraintCall
+
+            import { Nullable } from "System"
+
+            export fun compare(): int =
+              Nullable.Compare<int>(null, null)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported framework generic constraint call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedFrameworkGenericConstraintCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return Nullable.Compare<int>(null, null);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedFrameworkGenericConstraintCall.dll")),
+            "Generated project build should compile imported framework generic constraint calls.");
+    });
+}
+
+static void CliBuildCompilesImportedTransitiveGenericConstraintCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedTransitiveGenericConstraintCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedTransitiveGenericConstraintCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedTransitiveGenericConstraintCall
+
+            import { LegacyGenericMethods, LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun render(): string {
+              let named = LegacyGenericMethods.RequireNamed<LegacyDerivedNamed>(LegacyDerivedNamed("Ada"))
+              let baseNamed = LegacyGenericMethods.RequireBaseNamed<LegacyDerivedNamed>(named)
+              baseNamed.Name
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported transitive generic constraint call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedTransitiveGenericConstraintCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var named = LegacyGenericMethods.RequireNamed<LegacyDerivedNamed>(new LegacyDerivedNamed(\"Ada\"));", generatedSource);
+        AssertContains("var baseNamed = LegacyGenericMethods.RequireBaseNamed<LegacyDerivedNamed>(named);", generatedSource);
+        AssertContains("return baseNamed.Name;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedTransitiveGenericConstraintCall.dll")),
+            "Generated project build should compile imported transitive generic constraint calls.");
+    });
+}
+
+static void CliBuildCompilesImportedInferredGenericConstraintCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInferredGenericConstraintCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInferredGenericConstraintCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInferredGenericConstraintCall
+
+            import { LegacyDerivedNamed, LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun keepClass(): string =
+              LegacyGenericMethods.RequireClass("value")
+
+            export fun keepStruct(): int =
+              LegacyGenericMethods.RequireStruct(42)
+
+            export fun keepNamed(): LegacyDerivedNamed =
+              LegacyGenericMethods.RequireNamed(LegacyDerivedNamed("Ada"))
+
+            export fun keepTracked(value: LegacyDerivedNamed): LegacyDerivedNamed =
+              LegacyGenericMethods.RequireBaseNamed(value)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported inferred generic constraint call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInferredGenericConstraintCall.dll", output.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return LegacyGenericMethods.RequireClass(\"value\");", generatedSource);
+        AssertContains("return LegacyGenericMethods.RequireStruct(42);", generatedSource);
+        AssertContains("return LegacyGenericMethods.RequireNamed(new LegacyDerivedNamed(\"Ada\"));", generatedSource);
+        AssertContains("return LegacyGenericMethods.RequireBaseNamed(value);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInferredGenericConstraintCall.dll")),
+            "Generated project build should compile imported inferred generic constraint calls.");
+    });
+}
+
+static void CliBuildCompilesImportedInferredConstructedGenericConstraintCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInferredConstructedGenericConstraintCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInferredConstructedGenericConstraintCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInferredConstructedGenericConstraintCall
+
+            import { LegacyBox, LegacyGenericMethods, LegacyNamed } from "Legacy.Tools"
+
+            export fun name(): string =
+              LegacyGenericMethods.RequireBoxedNamed(LegacyBox<LegacyNamed>(LegacyNamed("Ada")))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported inferred constructed generic constraint call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInferredConstructedGenericConstraintCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return LegacyGenericMethods.RequireBoxedNamed(new LegacyBox<LegacyNamed>(new LegacyNamed(\"Ada\")));", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInferredConstructedGenericConstraintCall.dll")),
+            "Generated project build should compile imported inferred constructed generic constraint calls.");
     });
 }
 
@@ -5523,6 +13822,51 @@ static void CliBuildCompilesImportedInterfaceReference()
     });
 }
 
+static void CliBuildCompilesImportedInterfaceImplementationReturn()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInterfaceImplementationReturn"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInterfaceImplementationReturn"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInterfaceImplementationReturn
+
+            import { ILegacyNamed, LegacyDerivedNamed } from "Legacy.Tools"
+
+            export fun create(): ILegacyNamed =
+              LegacyDerivedNamed("Ada")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported interface implementation return should compile.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInterfaceImplementationReturn.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("public static ILegacyNamed create()", generatedSource);
+        AssertContains("return new LegacyDerivedNamed(\"Ada\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInterfaceImplementationReturn.dll")),
+            "Generated project build should compile imported class-to-interface implementation returns.");
+    });
+}
+
 static void CliBuildCompilesImportedAttributeAndGenericTypeReferences()
 {
     WithWorkspace(root =>
@@ -5567,6 +13911,58 @@ static void CliBuildCompilesImportedAttributeAndGenericTypeReferences()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedAttributeGenericType.dll")),
             "Generated project build should compile imported attribute and generic type references.");
+    });
+}
+
+static void CliBuildCompilesImportedGenericTypeConstructorCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedGenericTypeConstructorCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedGenericTypeConstructorCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedGenericTypeConstructorCall
+
+            import { LegacyBox, LegacyNamed } from "Legacy.Tools"
+
+            export fun make(): LegacyBox<LegacyNamed> {
+              LegacyBox<LegacyNamed>(LegacyNamed("Ada"))
+            }
+
+            export fun name(): string {
+              let box = LegacyBox<LegacyNamed>(LegacyNamed("Ada"))
+              box.Value.Name
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported generic type constructor call should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedGenericTypeConstructorCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return new LegacyBox<LegacyNamed>(new LegacyNamed(\"Ada\"));", generatedSource);
+        AssertContains("var box = new LegacyBox<LegacyNamed>(new LegacyNamed(\"Ada\"));", generatedSource);
+        AssertContains("return box.Value.Name;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedGenericTypeConstructorCall.dll")),
+            "Generated project build should compile imported generic type constructor calls.");
     });
 }
 
@@ -6510,6 +14906,8 @@ static void CliBuildCompilesRecordExpressionConstruction()
             public record Customer(Name: string, Age: int)
 
             export fun Create(): Customer = { Name: "Ada", Age: 42 }
+
+            export fun Older(customer: Customer): Customer = { ...customer, Age: customer.Age + 1 }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -6522,6 +14920,7 @@ static void CliBuildCompilesRecordExpressionConstruction()
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("return new Customer(\"Ada\", 42);", generatedSource);
+        AssertContains("return new Customer(customer.Name, customer.Age + 1);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "RecordExpressionApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with record expression construction.");
@@ -6560,7 +14959,8 @@ static void CliBuildCompilesRecordExpressionConstruction()
                     public static string Read()
                     {
                         var customer = Samples.RecordExpressions.Module.Create();
-                        return customer.Name + ":" + customer.Age.ToString();
+                        var older = Samples.RecordExpressions.Module.Older(customer);
+                        return older.Name + ":" + older.Age.ToString();
                     }
                 }
             }
@@ -6571,6 +14971,189 @@ static void CliBuildCompilesRecordExpressionConstruction()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated record expression construction.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesKeyofTypeOperator()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "KeyofApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Keyof"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Keyof
+
+            record Customer(Name: string, Age: int)
+
+            type CustomerKey = keyof Customer
+
+            fun MakeKey(): CustomerKey = "Name"
+
+            fun IsName(key: CustomerKey): bool = key == "Name"
+
+            export fun Check(): bool = IsName(MakeKey())
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/KeyofApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("internal static string MakeKey()", generatedSource);
+        AssertContains("internal static bool IsName(string key)", generatedSource);
+        AssertContains("return IsName(MakeKey());", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "KeyofApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with keyof type operator lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "KeyofConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>KeyofConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="KeyofApi">
+                  <HintPath>../generated/bin/Debug/net48/KeyofApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace KeyofConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.Keyof.Module.Check();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build KeyofConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated keyof lowering.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesIndexedAccessTypeOperator()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "IndexedAccessApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.IndexedAccess"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.IndexedAccess
+
+            record Customer(Name: string, Age: int)
+
+            type CustomerName = Customer["Name"]
+
+            type CustomerAge = Customer["Age"]
+
+            fun MakeName(): CustomerName = "Ada"
+
+            fun MakeAge(): CustomerAge = 42
+
+            fun IsAda(name: CustomerName): bool = name == "Ada"
+
+            export fun Check(): bool = IsAda(MakeName()) && MakeAge() == 42
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/IndexedAccessApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("internal static string MakeName()", generatedSource);
+        AssertContains("internal static int MakeAge()", generatedSource);
+        AssertContains("internal static bool IsAda(string name)", generatedSource);
+        AssertContains("return IsAda(MakeName()) && MakeAge() == 42;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "IndexedAccessApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with indexed access type lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "IndexedAccessConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>IndexedAccessConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="IndexedAccessApi">
+                  <HintPath>../generated/bin/Debug/net48/IndexedAccessApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace IndexedAccessConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.IndexedAccess.Module.Check();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build IndexedAccessConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated indexed access lowering.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -7028,6 +15611,10 @@ static void CliBuildCompilesCollectionExpressionLowering()
               let values: List<int> = [1, 2, 3]
               values
             }
+
+            export fun spreadNumbers(extra: int[]): int[] = [0, ...extra, 4]
+
+            export fun spreadNumberList(extra: int[], more: List<int>): List<int> = [0, ...extra, ...more, 4]
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -7045,6 +15632,8 @@ static void CliBuildCompilesCollectionExpressionLowering()
         AssertContains("return new List<string> { \"Ada\", \"Grace\" };", generatedSource);
         AssertContains("return new List<string> { };", generatedSource);
         AssertContains("var values = new List<int> { 1, 2, 3 };", generatedSource);
+        AssertContains("return System.Linq.Enumerable.ToArray<int>(System.Linq.Enumerable.Concat<int>(System.Linq.Enumerable.Concat<int>(new int[] { 0 }, extra), new int[] { 4 }));", generatedSource);
+        AssertContains("return new List<int>(System.Linq.Enumerable.Concat<int>(System.Linq.Enumerable.Concat<int>(System.Linq.Enumerable.Concat<int>(new int[] { 0 }, extra), more), new int[] { 4 }));", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CollectionExpressions.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with collection expression lowering.");
@@ -7088,6 +15677,10 @@ static void CliBuildCompilesCollectionExpressionLowering()
                         var nameList = Samples.Collections.Module.nameList();
                         var emptyNameList = Samples.Collections.Module.emptyNameList();
                         var numberList = Samples.Collections.Module.numberList();
+                        var spreadNumbers = Samples.Collections.Module.spreadNumbers(new int[] { 1, 2 });
+                        var spreadNumberList = Samples.Collections.Module.spreadNumberList(
+                            new int[] { 1, 2 },
+                            new System.Collections.Generic.List<int> { 3 });
                         return names.Length == 2
                             && names[1] == "Grace"
                             && empty.Length == 0
@@ -7095,7 +15688,11 @@ static void CliBuildCompilesCollectionExpressionLowering()
                             && nameList.Count == 2
                             && nameList[1] == "Grace"
                             && emptyNameList.Count == 0
-                            && numberList[2] == 3;
+                            && numberList[2] == 3
+                            && spreadNumbers.Length == 4
+                            && spreadNumbers[3] == 4
+                            && spreadNumberList.Count == 5
+                            && spreadNumberList[3] == 3;
                     }
                 }
             }
@@ -7197,6 +15794,471 @@ static void CliBuildCompilesPipelineLowering()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated pipeline API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesCompositionLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CompositionLowering"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Composition"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Composition
+
+            export fun increment(value: int): int = value + 1
+
+            export fun format(value: int): string = value.ToString()
+
+            export let formatAfterIncrement: int -> string = increment >> format
+
+            export let formatBeforeIncrement: int -> string = format << increment
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/CompositionLowering.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static readonly System.Func<int, string> formatAfterIncrement = __compose0 => format(increment(__compose0));", generatedSource);
+        AssertContains("public static readonly System.Func<int, string> formatBeforeIncrement = __compose1 => format(increment(__compose1));", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CompositionLowering.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with composition lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "CompositionConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>CompositionConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="CompositionLowering">
+                  <HintPath>../generated/bin/Debug/net48/CompositionLowering.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace CompositionConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.Composition.Module.formatAfterIncrement(1) + Samples.Composition.Module.formatBeforeIncrement(1);
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build CompositionConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated composition API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesSatisfiesExpression()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "SatisfiesExpression"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Satisfies"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Satisfies
+
+            public record Customer(Name: string, Age: int)
+
+            type Named = { Name: string }
+
+            export fun keepCustomer(customer: Customer): Customer =
+              customer satisfies Named
+
+            export fun nextAge(customer: Customer): int =
+              customer.Age + 1 satisfies int
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/SatisfiesExpression.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return customer;", generatedSource);
+        AssertContains("return customer.Age + 1;", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "SatisfiesExpression.dll")),
+            "Generated project build should compile satisfies expression lowering.");
+    });
+}
+
+static void CliBuildCompilesYieldIteratorLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "YieldIterator"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Yield"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Yield
+
+            import { IEnumerable } from "System.Collections.Generic"
+
+            export fun names(): IEnumerable<string> {
+              yield "Ada"
+              yield "Grace"
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/YieldIterator.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static IEnumerable<string> names()", generatedSource);
+        AssertContains("yield return \"Ada\";", generatedSource);
+        AssertContains("yield return \"Grace\";", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "YieldIterator.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with yield iterator lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "YieldConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>YieldConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="YieldIterator">
+                  <HintPath>../generated/bin/Debug/net48/YieldIterator.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace YieldConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return string.Join(",", Samples.Yield.Module.names());
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build YieldConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated yield iterator API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesLockStatementLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "LockStatement"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Lock"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Lock
+
+            export fun pulse(gate: object): string {
+              lock gate {
+                gate.ToString()
+              }
+              "done"
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/LockStatement.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("lock (gate)", generatedSource);
+        AssertContains("gate.ToString();", generatedSource);
+        AssertContains("return \"done\";", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "LockStatement.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with lock statement lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "LockConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>LockConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="LockStatement">
+                  <HintPath>../generated/bin/Debug/net48/LockStatement.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace LockConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.Lock.Module.pulse(new object());
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build LockConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated lock statement API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesExtensionMethodLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ExtensionMethod"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Extensions"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Extensions
+
+            public extension string {
+              public fun HasPrefix(text: string, prefix: string): bool =
+                text.StartsWith(prefix)
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ExtensionMethod.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static class StringExtensions", generatedSource);
+        AssertContains("public static bool HasPrefix(this string text, string prefix)", generatedSource);
+        AssertContains("return text.StartsWith(prefix);", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ExtensionMethod.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with extension method lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ExtensionConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ExtensionConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ExtensionMethod">
+                  <HintPath>../generated/bin/Debug/net48/ExtensionMethod.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            using Samples.Extensions;
+
+            namespace ExtensionConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return "legacy".HasPrefix("leg");
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ExtensionConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated extension method API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesNameofIntrinsic()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NameofIntrinsic"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NameofIntrinsic"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NameofIntrinsic
+
+            public record Customer(Name: string)
+
+            export fun propertyName(): string = nameof(Customer.Name)
+
+            export fun parameterName(value: string): string =
+              nameof(value)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/NameofIntrinsic.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return nameof(Customer.Name);", generatedSource);
+        AssertContains("return nameof(value);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NameofIntrinsic.dll")),
+            "Generated project build should compile nameof intrinsic lowering.");
+    });
+}
+
+static void CliBuildCompilesCheckedUncheckedExpressions()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CheckedUncheckedExpressions"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.CheckedUncheckedExpressions"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.CheckedUncheckedExpressions
+
+            export fun checkedAdd(value: int): int = checked(value + 1)
+
+            export fun uncheckedAdd(value: int): int =
+              unchecked(value + 1)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/CheckedUncheckedExpressions.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return checked(value + 1);", generatedSource);
+        AssertContains("return unchecked(value + 1);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "CheckedUncheckedExpressions.dll")),
+            "Generated project build should compile checked/unchecked expression lowering.");
     });
 }
 
@@ -7869,6 +16931,8 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
         </configuration>
         """);
     WriteFile(projectRoot, "LegacyApi.cs", """
+        using System.Runtime.CompilerServices;
+
         namespace Legacy.Tools
         {
             public static class LegacyApi
@@ -7916,6 +16980,92 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 {
                     return value == null ? string.Empty : value.ToString();
                 }
+
+                public static string Describe(ILegacyNamed value)
+                {
+                    return value.Name;
+                }
+
+                public static string Describe(object value)
+                {
+                    return value == null ? string.Empty : value.ToString();
+                }
+
+                public static string NeedNamed(ILegacyNamed value)
+                {
+                    return value.Name;
+                }
+
+                public static string DescribeSpecific(ILegacyNamed value)
+                {
+                    return "interface:" + value.Name;
+                }
+
+                public static string DescribeSpecific(LegacyBaseNamed value)
+                {
+                    return "base:" + value.Name;
+                }
+
+                public static string DescribeSpecific(object value)
+                {
+                    return "object:" + (value == null ? string.Empty : value.ToString());
+                }
+            }
+
+            public static class LegacyNullOverloads
+            {
+                public static string Pick(string value)
+                {
+                    return value == null ? "string:null" : value;
+                }
+
+                public static string Pick(object value)
+                {
+                    return value == null ? "object:null" : value.ToString();
+                }
+
+                public static string DescribeNamed(LegacyBaseNamed value)
+                {
+                    return value == null ? "base:null" : value.Name;
+                }
+
+                public static string DescribeNamed(LegacyDerivedNamed value)
+                {
+                    return value == null ? "derived:null" : value.Name;
+                }
+
+                public static string DescribeNamed(object value)
+                {
+                    return value == null ? "object:null" : value.ToString();
+                }
+
+                public static string OnlyInt(int value)
+                {
+                    return value.ToString();
+                }
+
+                public static string Ambiguous(string value)
+                {
+                    return value;
+                }
+
+                public static string Ambiguous(System.Uri value)
+                {
+                    return value == null ? string.Empty : value.ToString();
+                }
+            }
+
+            public static class LegacyNumeric
+            {
+                public static string FormatInt(int value)
+                {
+                    return value.ToString();
+                }
+
+                public static string FormatByte(byte value)
+                {
+                    return value.ToString();
+                }
             }
 
             public static class LegacyParamsOverloads
@@ -7928,6 +17078,19 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Pick(string separator, params object[] values)
                 {
                     return string.Join(separator, values);
+                }
+            }
+
+            public static class LegacyParamsAmbiguousOverloads
+            {
+                public static string Pick(string separator, params ILegacyNamed[] values)
+                {
+                    return separator;
+                }
+
+                public static string Pick(string separator, params ILegacyTagged[] values)
+                {
+                    return separator;
                 }
             }
 
@@ -7973,6 +17136,154 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
             }
 
+            public static class LegacyDelegateOverloads
+            {
+                public static string Pick(string value, System.Func<string, string> transform)
+                {
+                    return "one:" + transform(value);
+                }
+
+                public static string Pick(string value, System.Func<string, string, string> combine)
+                {
+                    return "two:" + combine(value, value);
+                }
+
+                public static string PickReturn(string value, System.Func<string, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickReturn(string value, System.Func<string, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickReturnWidening(string value, System.Func<string, long> transform)
+                {
+                    return "long:" + transform(value).ToString();
+                }
+
+                public static string PickReturnWidening(string value, System.Func<string, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickMemberReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickMemberReturn(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickChainedMemberReturn(LegacyNamedOwner value, System.Func<LegacyNamedOwner, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickChainedMemberReturn(LegacyNamedOwner value, System.Func<LegacyNamedOwner, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickMethodReturn(LegacyNamedOwner value, System.Func<LegacyNamedOwner, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickMethodReturn(LegacyNamedOwner value, System.Func<LegacyNamedOwner, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickExtensionMethodReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickExtensionMethodReturn(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickStaticMethodReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickStaticMethodReturn(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string PickBinaryReturn(LegacyNamed value, System.Func<LegacyNamed, bool> transform)
+                {
+                    return transform(value) ? "true" : "false";
+                }
+
+                public static string PickBinaryReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickIdentityReturn(string value, System.Func<string, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickIdentityReturn(string value, System.Func<string, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
+                public static string RequiresBinary(string value, System.Func<string, string, string> combine)
+                {
+                    return combine(value, value);
+                }
+
+                public static string RequiresString(string value, System.Func<string, string> transform)
+                {
+                    return transform(value);
+                }
+
+                public static string RequiresIntReturn(string value, System.Func<string, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresMemberInt(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresNestedMemberInt(LegacyNamedOwner value, System.Func<LegacyNamedOwner, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresMethodInt(LegacyNamedOwner value, System.Func<LegacyNamedOwner, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresExtensionMethodInt(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresStaticMethodInt(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresBinaryReturnString(LegacyNamed value, System.Func<LegacyNamed, string> transform)
+                {
+                    return transform(value);
+                }
+            }
+
             public sealed class LegacyEvents
             {
                 public event System.Func<string, string> Transform;
@@ -8004,6 +17315,16 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public T Value { get; }
             }
 
+            public sealed class LegacyDefaultConstructible
+            {
+                public LegacyDefaultConstructible()
+                {
+                    Name = "default";
+                }
+
+                public string Name { get; }
+            }
+
             public sealed class LegacyFormatter
             {
                 private readonly string prefix;
@@ -8018,6 +17339,8 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                     get { return prefix; }
                 }
 
+                public string MutablePrefix { get; set; }
+
                 public string this[int index]
                 {
                     get { return prefix + index.ToString(); }
@@ -8029,16 +17352,190 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
             }
 
+            public sealed class LegacyFlexibleConstructor
+            {
+                public LegacyFlexibleConstructor(string prefix, string value = "default")
+                {
+                    Text = prefix + value;
+                }
+
+                public string Text { get; }
+            }
+
+            public sealed class LegacyParamsConstructor
+            {
+                public LegacyParamsConstructor(string separator, params string[] values)
+                {
+                    Joined = string.Join(separator, values);
+                }
+
+                public string Joined { get; }
+            }
+
+            public sealed class LegacyAmbiguousConstructor
+            {
+                public LegacyAmbiguousConstructor(ILegacyNamed value)
+                {
+                    Value = value.Name;
+                }
+
+                public LegacyAmbiguousConstructor(ILegacyTagged value)
+                {
+                    Value = value.Tag;
+                }
+
+                public string Value { get; }
+            }
+
+            public sealed class LegacyByteIndexer
+            {
+                public string this[byte index]
+                {
+                    get { return index.ToString(); }
+                }
+            }
+
+            public sealed class LegacyOverloadedIndexer
+            {
+                public string this[int index]
+                {
+                    get { return "int:" + index.ToString(); }
+                }
+
+                public string this[object value]
+                {
+                    get { return "object:" + value.ToString(); }
+                }
+            }
+
+            public sealed class LegacyAmbiguousIndexer
+            {
+                public string this[ILegacyNamed value]
+                {
+                    get { return value.Name; }
+                }
+
+                public string this[ILegacyTagged value]
+                {
+                    get { return value.Tag; }
+                }
+            }
+
+            public sealed class LegacyRelationshipIndexer
+            {
+                public string this[ILegacyNamed value]
+                {
+                    get { return "interface:" + value.Name; }
+                }
+
+                public string this[LegacyBaseNamed value]
+                {
+                    get { return "base:" + value.Name; }
+                }
+
+                public string this[object value]
+                {
+                    get { return "object:" + (value == null ? string.Empty : value.ToString()); }
+                }
+            }
+
             public sealed class LegacyFields
             {
                 public const string StaticCode = "static";
 
+                public static string StaticName
+                {
+                    get { return "property"; }
+                }
+
+                public static string MutableStaticName { get; set; }
+
+                public static string MutableStaticCode = "mutable-static";
+
                 public readonly string InstanceCode = "instance";
+
+                public string MutableCode = "mutable";
+            }
+
+            public static class LegacyExtensions
+            {
+                public static string Shout(this string value)
+                {
+                    return value.ToUpperInvariant();
+                }
+
+                public static string Describe(this ILegacyNamed value)
+                {
+                    return value.Name;
+                }
+
+                public static string DescribeObjectOnly(this object value)
+                {
+                    return "object-only";
+                }
+
+                public static string DescribeSpecific(this ILegacyNamed value)
+                {
+                    return "interface:" + value.Name;
+                }
+
+                public static string DescribeSpecific(this LegacyBaseNamed value)
+                {
+                    return "base:" + value.Name;
+                }
+
+                public static string DescribeSpecific(this object value)
+                {
+                    return "object";
+                }
             }
 
             public static class LegacyGenericMethods
             {
                 public static T Identity<T>(T value)
+                {
+                    return value;
+                }
+
+                public static T RequireClass<T>(T value) where T : class
+                {
+                    return value;
+                }
+
+                public static T RequireStruct<T>(T value) where T : struct
+                {
+                    return value;
+                }
+
+                public static T Create<T>() where T : new()
+                {
+                    return new T();
+                }
+
+                public static T RequireNamed<T>(T value) where T : ILegacyNamed
+                {
+                    return value;
+                }
+
+                public static T RequireBaseNamed<T>(T value) where T : LegacyBaseNamed
+                {
+                    return value;
+                }
+
+                public static string RequireBoxedNamed<T>(LegacyBox<T> box) where T : ILegacyNamed
+                {
+                    return box.Value.Name;
+                }
+            }
+
+            public static class LegacyGenericByRefMethods
+            {
+                public static string Echo(string value)
+                {
+                    return value;
+                }
+
+                public static T Echo<T>(ref T value)
                 {
                     return value;
                 }
@@ -8049,6 +17546,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 string Name { get; }
             }
 
+            public interface ILegacyTagged
+            {
+                string Tag { get; }
+            }
+
             public sealed class LegacyNamed : ILegacyNamed
             {
                 public LegacyNamed(string name)
@@ -8057,6 +17559,60 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
 
                 public string Name { get; }
+
+                public string Display()
+                {
+                    return Name;
+                }
+            }
+
+            public sealed class LegacyNamedOwner
+            {
+                public LegacyNamedOwner(string name)
+                {
+                    Owner = new LegacyNamed(name);
+                }
+
+                public LegacyNamed Owner { get; }
+            }
+
+            public sealed class LegacyDualNamed : ILegacyNamed, ILegacyTagged
+            {
+                public LegacyDualNamed(string value)
+                {
+                    Name = value;
+                    Tag = value;
+                }
+
+                public string Name { get; }
+
+                public string Tag { get; }
+            }
+
+            public class LegacyBaseNamed : ILegacyNamed
+            {
+                public LegacyBaseNamed(string name)
+                {
+                    Name = name;
+                }
+
+                public string Name { get; }
+            }
+
+            public class LegacyIntermediateNamed : LegacyBaseNamed
+            {
+                public LegacyIntermediateNamed(string name)
+                    : base(name)
+                {
+                }
+            }
+
+            public sealed class LegacyDerivedNamed : LegacyIntermediateNamed
+            {
+                public LegacyDerivedNamed(string name)
+                    : base(name)
+                {
+                }
             }
         }
         """);

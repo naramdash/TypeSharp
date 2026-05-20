@@ -1,0 +1,9 @@
+namespace Samples.IndexedAccess
+
+record Customer(Name: string, Age: int)
+
+type CustomerName = Customer["Name"]
+
+fun invalid(): CustomerName = 42
+
+export fun leak(): CustomerName = "Ada"

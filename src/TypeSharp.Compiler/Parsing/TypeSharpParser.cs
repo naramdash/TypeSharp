@@ -53,6 +53,7 @@ public sealed class TypeSharpParser
                 SyntaxKind.ClassKeyword => ParseClassDeclaration(),
                 SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(),
                 SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
+                SyntaxKind.ExtensionKeyword => ParseExtensionDeclaration(),
                 SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(),
                 SyntaxKind.LetKeyword => ParseValueDeclaration(),
                 _ => ParseSkippedToken()
@@ -106,6 +107,7 @@ public sealed class TypeSharpParser
             SyntaxKind.ClassKeyword => ParseClassDeclaration(),
             SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
+            SyntaxKind.ExtensionKeyword => ParseExtensionDeclaration(),
             SyntaxKind.EventKeyword => ParseEventDeclaration(),
             SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(),
             SyntaxKind.LetKeyword => ParseValueDeclaration(),
@@ -179,6 +181,7 @@ public sealed class TypeSharpParser
             SyntaxKind.ClassKeyword => ParseClassDeclaration(children),
             SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(children),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(children),
+            SyntaxKind.ExtensionKeyword => ParseExtensionDeclaration(children),
             SyntaxKind.EventKeyword => ParseEventDeclaration(children),
             SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(children),
             SyntaxKind.LetKeyword => ParseValueDeclaration(children),
@@ -338,6 +341,7 @@ public sealed class TypeSharpParser
             SyntaxKind.ClassKeyword => ParseClassDeclaration(declarationChildren),
             SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(declarationChildren),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(declarationChildren),
+            SyntaxKind.ExtensionKeyword => ParseExtensionDeclaration(declarationChildren),
             SyntaxKind.LiteralKeyword => ParseLiteralDeclaration(declarationChildren),
             SyntaxKind.LetKeyword => ParseValueDeclaration(declarationChildren),
             _ => Node(SyntaxKind.SkippedToken, [..declarationChildren, ParseSkippedToken()])
@@ -567,6 +571,14 @@ public sealed class TypeSharpParser
             {
                 children.Add(ParseValueDeclaration());
             }
+            else if (Current.Kind == SyntaxKind.YieldKeyword)
+            {
+                children.Add(ParseYieldExpression());
+            }
+            else if (Current.Kind == SyntaxKind.LockKeyword)
+            {
+                children.Add(ParseLockStatement());
+            }
             else
             {
                 var expression = ParseExpression();
@@ -577,6 +589,12 @@ public sealed class TypeSharpParser
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
         return Node(SyntaxKind.BlockExpression, children);
     }
+
+    private SyntaxNode ParseYieldExpression() =>
+        Node(SyntaxKind.YieldExpression, [TokenNode(Expect(SyntaxKind.YieldKeyword)), ParseExpression()]);
+
+    private SyntaxNode ParseLockStatement() =>
+        Node(SyntaxKind.LockStatement, [TokenNode(Expect(SyntaxKind.LockKeyword)), ParseExpression(), ParseBlockExpression()]);
 
     private SyntaxNode? _lastExpression;
 
@@ -659,6 +677,26 @@ public sealed class TypeSharpParser
             SyntaxKind.EventKeyword => ParseEventDeclaration(children),
             _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
         };
+    }
+
+    private SyntaxNode ParseExtensionDeclaration(List<SyntaxNode>? prefixChildren = null)
+    {
+        var children = prefixChildren ?? [];
+        children.Add(TokenNode(Expect(SyntaxKind.ExtensionKeyword)));
+        children.Add(ParseType());
+        children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
+
+        while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
+        {
+            var memberPrefix = ParseDeclarationPrefix();
+            children.Add(
+                IsFunctionDeclarationStart(Current)
+                    ? ParseFunctionDeclaration(memberPrefix)
+                    : Node(SyntaxKind.SkippedToken, [..memberPrefix, ParseSkippedToken()]));
+        }
+
+        children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
+        return Node(SyntaxKind.ExtensionDeclaration, children);
     }
 
     private SyntaxNode ParseDelegateDeclaration(List<SyntaxNode>? prefixChildren = null)
@@ -875,6 +913,56 @@ public sealed class TypeSharpParser
 
     private SyntaxNode ParseType()
     {
+        var result = ParseUnionType();
+
+        if (Current.Kind == SyntaxKind.ArrowToken)
+        {
+            result = Node(SyntaxKind.FunctionType, [result, TokenNode(NextToken()), ParseType()]);
+        }
+
+        return result;
+    }
+
+    private SyntaxNode ParseUnionType()
+    {
+        var result = ParseIntersectionType();
+
+        if (Current.Kind == SyntaxKind.PipeToken)
+        {
+            var unionChildren = new List<SyntaxNode> { result };
+            while (Current.Kind == SyntaxKind.PipeToken)
+            {
+                unionChildren.Add(TokenNode(NextToken()));
+                unionChildren.Add(ParseIntersectionType());
+            }
+
+            result = Node(SyntaxKind.UnionType, unionChildren);
+        }
+
+        return result;
+    }
+
+    private SyntaxNode ParseIntersectionType()
+    {
+        var result = ParsePostfixType();
+
+        if (Current.Kind == SyntaxKind.AmpersandToken)
+        {
+            var intersectionChildren = new List<SyntaxNode> { result };
+            while (Current.Kind == SyntaxKind.AmpersandToken)
+            {
+                intersectionChildren.Add(TokenNode(NextToken()));
+                intersectionChildren.Add(ParsePostfixType());
+            }
+
+            result = Node(SyntaxKind.IntersectionType, intersectionChildren);
+        }
+
+        return result;
+    }
+
+    private SyntaxNode ParsePostfixType()
+    {
         var result = ParsePrimaryType();
 
         if (Current.Kind == SyntaxKind.LessToken)
@@ -890,6 +978,12 @@ public sealed class TypeSharpParser
                 continue;
             }
 
+            if (Current.Kind == SyntaxKind.OpenBracketToken)
+            {
+                result = Node(SyntaxKind.IndexedAccessType, [result, TokenNode(NextToken()), ParseType(), TokenNode(Expect(SyntaxKind.CloseBracketToken))]);
+                continue;
+            }
+
             if (Current.Kind == SyntaxKind.QuestionToken)
             {
                 result = Node(SyntaxKind.NullableType, [result, TokenNode(NextToken())]);
@@ -899,28 +993,21 @@ public sealed class TypeSharpParser
             break;
         }
 
-        if (Current.Kind == SyntaxKind.ArrowToken)
-        {
-            result = Node(SyntaxKind.FunctionType, [result, TokenNode(NextToken()), ParseType()]);
-        }
-
-        if (Current.Kind == SyntaxKind.PipeToken)
-        {
-            var unionChildren = new List<SyntaxNode> { result };
-            while (Current.Kind == SyntaxKind.PipeToken)
-            {
-                unionChildren.Add(TokenNode(NextToken()));
-                unionChildren.Add(ParsePrimaryType());
-            }
-
-            result = Node(SyntaxKind.UnionType, unionChildren);
-        }
-
         return result;
     }
 
     private SyntaxNode ParsePrimaryType()
     {
+        if (Current.Kind == SyntaxKind.KeyofKeyword)
+        {
+            return Node(SyntaxKind.KeyofType, [TokenNode(NextToken()), ParsePrimaryType()]);
+        }
+
+        if (Current.Kind is SyntaxKind.StringLiteralToken or SyntaxKind.NumericLiteralToken or SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword)
+        {
+            return Node(SyntaxKind.LiteralType, [TokenNode(NextToken())]);
+        }
+
         if (Current.Kind == SyntaxKind.OpenBraceToken)
         {
             return ParseRecordShapeType();
@@ -1035,15 +1122,23 @@ public sealed class TypeSharpParser
 
         while (true)
         {
-            var precedence = GetBinaryPrecedence(Current.Kind);
+            var precedence = GetCurrentBinaryPrecedence();
             if (precedence == 0 || precedence <= parentPrecedence)
             {
                 break;
             }
 
-            var operatorToken = TokenNode(NextToken());
+            var operatorTokens = ParseBinaryOperatorTokens();
             var right = ParseExpression(precedence);
-            left = Node(SyntaxKind.BinaryExpression, [left, operatorToken, right]);
+            var children = new List<SyntaxNode> { left };
+            children.AddRange(operatorTokens);
+            children.Add(right);
+            left = Node(SyntaxKind.BinaryExpression, children);
+        }
+
+        if (parentPrecedence == 0 && Current.Kind == SyntaxKind.SatisfiesKeyword)
+        {
+            left = Node(SyntaxKind.SatisfiesExpression, [left, TokenNode(NextToken()), ParseType()]);
         }
 
         if (IsAssignmentOperator(Current.Kind))
@@ -1293,6 +1388,14 @@ public sealed class TypeSharpParser
                 continue;
             }
 
+            if (Current.Kind == SyntaxKind.LessToken &&
+                Current.LeadingTriviaSummary.Length == 0 &&
+                IsGenericInvocationTypeArgumentList())
+            {
+                expression = Node(SyntaxKind.GenericNameExpression, [expression, ParseTypeArgumentList()]);
+                continue;
+            }
+
             if (Current.Kind == SyntaxKind.OpenParenToken)
             {
                 expression = ParseCallExpression(expression);
@@ -1341,8 +1444,48 @@ public sealed class TypeSharpParser
             SyntaxKind.OpenBraceToken => IsRecordExpressionStart() ? ParseRecordExpression() : ParseBlockExpression(),
             SyntaxKind.OpenBracketToken => ParseCollectionExpression(),
             SyntaxKind.OpenParenToken => ParseParenthesizedExpression(),
+            SyntaxKind.NameofKeyword => ParseNameofExpression(),
+            SyntaxKind.CheckedKeyword or SyntaxKind.UncheckedKeyword => ParseCheckedExpression(),
             _ => ParseMissingExpression()
         };
+    }
+
+    private SyntaxNode ParseNameofExpression()
+    {
+        var children = new List<SyntaxNode>
+        {
+            TokenNode(Expect(SyntaxKind.NameofKeyword)),
+            TokenNode(Expect(SyntaxKind.OpenParenToken)),
+            ParseNameReferenceExpression(),
+            TokenNode(Expect(SyntaxKind.CloseParenToken))
+        };
+
+        return Node(SyntaxKind.NameofExpression, children);
+    }
+
+    private SyntaxNode ParseCheckedExpression()
+    {
+        var keywordKind = Current.Kind;
+        var children = new List<SyntaxNode>
+        {
+            TokenNode(Expect(keywordKind)),
+            TokenNode(Expect(SyntaxKind.OpenParenToken)),
+            ParseExpression(),
+            TokenNode(Expect(SyntaxKind.CloseParenToken))
+        };
+
+        return Node(SyntaxKind.CheckedExpression, children);
+    }
+
+    private SyntaxNode ParseNameReferenceExpression()
+    {
+        SyntaxNode expression = Node(SyntaxKind.IdentifierExpression, [TokenNode(Expect(SyntaxKind.IdentifierToken))]);
+        while (Current.Kind == SyntaxKind.DotToken)
+        {
+            expression = Node(SyntaxKind.MemberAccessExpression, [expression, TokenNode(NextToken()), TokenNode(Expect(SyntaxKind.IdentifierToken))]);
+        }
+
+        return expression;
     }
 
     private SyntaxNode ParseRecordExpression()
@@ -1354,18 +1497,7 @@ public sealed class TypeSharpParser
 
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
-            var fieldChildren = new List<SyntaxNode>
-            {
-                TokenNode(Expect(SyntaxKind.IdentifierToken))
-            };
-
-            if (Current.Kind == SyntaxKind.ColonToken)
-            {
-                fieldChildren.Add(TokenNode(NextToken()));
-                fieldChildren.Add(ParseExpression());
-            }
-
-            children.Add(Node(SyntaxKind.RecordField, fieldChildren));
+            children.Add(ParseRecordExpressionField());
 
             if (Current.Kind == SyntaxKind.CommaToken)
             {
@@ -1381,6 +1513,27 @@ public sealed class TypeSharpParser
         return Node(SyntaxKind.RecordExpression, children);
     }
 
+    private SyntaxNode ParseRecordExpressionField()
+    {
+        if (Current.Kind == SyntaxKind.DotDotDotToken)
+        {
+            return Node(SyntaxKind.RecordSpreadField, [TokenNode(NextToken()), ParseExpression()]);
+        }
+
+        var fieldChildren = new List<SyntaxNode>
+        {
+            TokenNode(Expect(SyntaxKind.IdentifierToken))
+        };
+
+        if (Current.Kind == SyntaxKind.ColonToken)
+        {
+            fieldChildren.Add(TokenNode(NextToken()));
+            fieldChildren.Add(ParseExpression());
+        }
+
+        return Node(SyntaxKind.RecordField, fieldChildren);
+    }
+
     private bool IsRecordExpressionStart()
     {
         if (Current.Kind != SyntaxKind.OpenBraceToken)
@@ -1390,6 +1543,11 @@ public sealed class TypeSharpParser
 
         var first = Peek(1);
         if (first.Kind == SyntaxKind.CloseBraceToken)
+        {
+            return true;
+        }
+
+        if (first.Kind == SyntaxKind.DotDotDotToken)
         {
             return true;
         }
@@ -1441,17 +1599,27 @@ public sealed class TypeSharpParser
 
         if (Current.Kind != SyntaxKind.CloseBracketToken)
         {
-            children.Add(ParseExpression());
+            children.Add(ParseCollectionElement());
             while (Current.Kind == SyntaxKind.CommaToken)
             {
                 children.Add(TokenNode(NextToken()));
-                children.Add(ParseExpression());
+                if (Current.Kind == SyntaxKind.CloseBracketToken)
+                {
+                    break;
+                }
+
+                children.Add(ParseCollectionElement());
             }
         }
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBracketToken)));
         return Node(SyntaxKind.CollectionExpression, children);
     }
+
+    private SyntaxNode ParseCollectionElement() =>
+        Current.Kind == SyntaxKind.DotDotDotToken
+            ? Node(SyntaxKind.SpreadElement, [TokenNode(NextToken()), ParseExpression()])
+            : ParseExpression();
 
     private SyntaxNode ParseParenthesizedExpression()
     {
@@ -1554,6 +1722,39 @@ public sealed class TypeSharpParser
         return int.TryParse(text, out var count) && count > 0;
     }
 
+    private bool IsGenericInvocationTypeArgumentList()
+    {
+        var depth = 0;
+        for (var offset = 0; ; offset++)
+        {
+            var token = Peek(offset);
+            if (token.Kind == SyntaxKind.EndOfFileToken)
+            {
+                return false;
+            }
+
+            if (token.Kind == SyntaxKind.LessToken)
+            {
+                depth++;
+                continue;
+            }
+
+            if (token.Kind != SyntaxKind.GreaterToken)
+            {
+                continue;
+            }
+
+            depth--;
+            if (depth != 0)
+            {
+                continue;
+            }
+
+            var next = Peek(offset + 1);
+            return next.Kind == SyntaxKind.OpenParenToken && !HasLeadingNewline(next);
+        }
+    }
+
     private static bool IsFunctionDeclarationStart(SyntaxToken token) =>
         token.Kind == SyntaxKind.FunKeyword || IsFunctionModifier(token);
 
@@ -1592,6 +1793,26 @@ public sealed class TypeSharpParser
             SyntaxKind.PipeGreaterToken => 1,
             _ => 0
         };
+
+    private int GetCurrentBinaryPrecedence() =>
+        IsCompositionOperatorStart(Current, Peek(1))
+            ? 1
+            : GetBinaryPrecedence(Current.Kind);
+
+    private IReadOnlyList<SyntaxNode> ParseBinaryOperatorTokens()
+    {
+        if (IsCompositionOperatorStart(Current, Peek(1)))
+        {
+            return [TokenNode(NextToken()), TokenNode(NextToken())];
+        }
+
+        return [TokenNode(NextToken())];
+    }
+
+    private static bool IsCompositionOperatorStart(SyntaxToken current, SyntaxToken next) =>
+        !HasLeadingNewline(next) &&
+        ((current.Kind == SyntaxKind.GreaterToken && next.Kind == SyntaxKind.GreaterToken) ||
+         (current.Kind == SyntaxKind.LessToken && next.Kind == SyntaxKind.LessToken));
 
     private static bool IsAssignmentOperator(SyntaxKind kind) =>
         kind is SyntaxKind.EqualsToken or SyntaxKind.PlusEqualsToken or SyntaxKind.MinusEqualsToken;

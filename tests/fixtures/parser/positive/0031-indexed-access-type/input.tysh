@@ -1,0 +1,9 @@
+namespace Samples.IndexedAccess
+
+record Customer(Name: string, Age: int)
+
+type CustomerName = Customer["Name"]
+
+type CustomerValue = Customer[keyof Customer]
+
+fun echo(name: CustomerName): CustomerName = name

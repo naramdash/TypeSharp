@@ -37,7 +37,7 @@ Important boundaries:
 
 - TypeSharp currently emits C# 7.3-compatible generated source for `net48`.
 - Public TypeSharp APIs must become CLR-visible metadata that C# can understand.
-- Structural shapes and type-level unions are compile-time-only and cannot be exposed directly as public .NET signatures.
+- Structural shapes, intersection aliases, and type-level unions are compile-time-only and cannot be exposed directly as public .NET signatures.
 - `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` must be deployed with generated assemblies when their public helpers are used.
 
 ## TypeScript User
@@ -54,7 +54,7 @@ Goal: understand where TypeSharp is intentionally similar to TypeScript and wher
 Translate expectations carefully:
 
 - TypeSharp can use structural ideas inside compilation, but public .NET API shape is nominal.
-- Type-level unions are useful for local narrowing, but public boundaries need records, classes, interfaces, or nominal unions.
+- Type-level unions and intersection aliases are useful for local checking, but public boundaries need records, classes, interfaces, or nominal unions.
 - Module and namespace choices affect generated C# names.
 
 ## F# Or Functional Programming User
@@ -81,7 +81,7 @@ Goal: evaluate TypeSharp as a language, compiler, tooling, or hosting technology
 2. Read [Advanced Topics](../advanced/) for compiler pipeline, lowering, metadata, diagnostics, LSP, and regression strategy.
 3. Read [Grammar And Language Reference](../reference/) and [Grammar](../grammar/) for syntax coverage.
 4. Read [API And CLI Reference](../api/) and [CLI](../cli/) for tooling contracts.
-5. Follow source-of-truth design docs linked from those pages when you need implementation detail.
+5. Follow docs-site canonical pages and linked task packets when you need implementation detail.
 
 Good first questions:
 

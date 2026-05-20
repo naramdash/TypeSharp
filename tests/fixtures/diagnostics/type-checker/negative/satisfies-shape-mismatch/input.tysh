@@ -1,0 +1,8 @@
+namespace Samples.Satisfies.Negative
+
+record HasAge(Age: int)
+
+type Named = { Name: string }
+
+fun invalid(value: HasAge): HasAge =
+  value satisfies Named

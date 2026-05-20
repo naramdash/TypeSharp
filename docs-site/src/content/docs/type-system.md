@@ -44,9 +44,32 @@ Structural shapes let TypeSharp code describe required members without introduci
 
 ```text
 type Named = { Name: string }
+
+fun keep(customer: Customer): Customer =
+  customer satisfies Named
 ```
 
+The `satisfies` expression checks the proof and then keeps the original expression type. Generated C# emits only the left-hand expression.
+
 Structural shapes are compile-time tools. They must not leak directly through public .NET boundaries. Public APIs should expose records, classes, interfaces, wrappers, or nominal unions.
+
+Intersection aliases compose named structural shapes locally:
+
+```text
+type Named = { Name: string }
+type Aged = { Age: int }
+type PersonLike = Named & Aged
+```
+
+Limited `keyof` can derive a local string literal union from a known record or named structural shape:
+
+```text
+record Customer(Name: string, Age: int)
+type CustomerKey = keyof Customer
+type CustomerName = Customer["Name"]
+```
+
+Limited indexed access types can read a known record or shape member type by string literal key. A `keyof`-derived key union produces a local type-level union of the selected member types.
 
 ## Nominal Public API
 
@@ -57,11 +80,28 @@ C# consumers see generated CLR metadata. That means public TypeSharp APIs need s
 - `delegate` for callback interop.
 - nominal `union` for closed domain alternatives.
 
-If a compile-time-only type-level union or structural shape appears in a public boundary, the compiler reports a public ABI diagnostic.
+If a compile-time-only type-level union, intersection alias, or structural shape appears in a public boundary, the compiler reports a public ABI diagnostic.
 
 ## Type-Level And Nominal Unions
 
 Type-level unions are useful for local inference, narrowing, and overload reasoning. Nominal unions are the public domain-modeling feature.
+
+`TypeSharp.Core.Option<T>` and `TypeSharp.Core.Result<T,E>` are the standard nominal union types for explicit absence and success/failure modeling. `TypeSharp.Core.Unit` is the standard value representation for `unit` in value or generic position; return-position `unit` lowers to C# `void`.
+
+Use [API And CLI Reference](../api/) for the canonical standard library namespace and helper policy, and [.NET Interop](../dotnet-interop/) for public ABI/runtime ABI rules.
+
+## Iterator Element Checks
+
+Iterator functions use explicit CLR enumerable return types. A block-level `yield` expression is checked against the `IEnumerable<T>` or `IEnumerator<T>` element type before generated C# emission.
+
+```text
+import { IEnumerable } from "System.Collections.Generic"
+
+export fun names(): IEnumerable<string> {
+  yield "Ada"
+  yield "Grace"
+}
+```
 
 ```text
 export union LookupResult {

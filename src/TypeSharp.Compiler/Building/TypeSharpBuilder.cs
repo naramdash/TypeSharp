@@ -59,7 +59,10 @@ public static class TypeSharpBuilder
             diagnostics.AddRange(bindingResult.Diagnostics);
             if (!bindingResult.HasErrors)
             {
-                diagnostics.AddRange(TypeSharpTypeChecker.Check(parseResult.Root, sourceFile.RelativePath).Diagnostics);
+                diagnostics.AddRange(TypeSharpTypeChecker.Check(
+                    parseResult.Root,
+                    sourceFile.RelativePath,
+                    metadataResult.Assemblies).Diagnostics);
             }
 
             parsedSources.Add((sourceFile, parseResult.Root));
@@ -94,8 +97,14 @@ public static class TypeSharpBuilder
             var outputPath = Path.Combine(outputRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
             var moduleContainerName = GeneratedModuleContainerNaming.GetContainerName(sourceFile, parsedSources.Count);
             var sourceImports = BuildSourceImports(sourceFile, sourceModuleGraph, sourceModuleTargets);
+            var valueImportAliases = BuildSourceValueImportAliases(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources);
+            var valueReExports = BuildSourceValueReExports(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources);
+            var functionImportAliases = BuildSourceFunctionImportAliases(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources);
+            var functionReExports = BuildLocalFunctionExportAliases(sourceFile, root, sourceModuleTargets)
+                .Concat(BuildSourceFunctionReExports(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources))
+                .ToArray();
             var artifact = backend is CSharpSourceBackendAdapter csharpBackend
-                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports)
+                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, functionImportAliases, functionReExports)
                 : backend.Emit(root);
             if (artifact.Kind != TypeSharpBackendArtifactKind.SourceText)
             {
@@ -302,6 +311,312 @@ public static class TypeSharpBuilder
         return imports;
     }
 
+    private static IReadOnlyList<CSharpSourceValueImportAlias> BuildSourceValueImportAliases(
+        SourceFile sourceFile,
+        SyntaxNode root,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
+    {
+        var importAliases = new List<CSharpSourceValueImportAlias>();
+        foreach (var importDeclaration in root.Children.Where(IsRelativeNamedSourceImport))
+        {
+            if (!TryGetModuleSpecifier(importDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Import &&
+                string.Equals(candidate.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var importSpecifier in GetNamedImportSpecifiers(importDeclaration).Where(specifier => specifier.IsAlias))
+            {
+                if (TryResolveSourceValueExport(
+                    dependency.ToModulePath,
+                    importSpecifier.ImportedName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    out var valueTarget))
+                {
+                    importAliases.Add(new CSharpSourceValueImportAlias(
+                        valueTarget.QualifiedModuleContainer,
+                        importSpecifier.LocalName,
+                        valueTarget.TargetMemberName,
+                        valueTarget.Type,
+                        valueTarget.IsMutable));
+                }
+            }
+        }
+
+        return importAliases;
+    }
+
+    private static IReadOnlyList<CSharpSourceValueReExport> BuildSourceValueReExports(
+        SourceFile sourceFile,
+        SyntaxNode root,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
+    {
+        var reExports = new List<CSharpSourceValueReExport>();
+        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (TryResolveSourceValueExport(
+                    dependency.ToModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    out var valueTarget))
+                {
+                    reExports.Add(new CSharpSourceValueReExport(
+                        valueTarget.QualifiedModuleContainer,
+                        exportSpecifier.ExportedName,
+                        valueTarget.TargetMemberName,
+                        valueTarget.Type,
+                        valueTarget.IsMutable));
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var exportName in CollectSourceValueExportNames(
+                dependency.ToModulePath,
+                sourceModuleGraph,
+                parsedSources,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase)))
+            {
+                if (TryResolveSourceValueExport(
+                    dependency.ToModulePath,
+                    exportName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    out var valueTarget))
+                {
+                    reExports.Add(new CSharpSourceValueReExport(
+                        valueTarget.QualifiedModuleContainer,
+                        exportName,
+                        valueTarget.TargetMemberName,
+                        valueTarget.Type,
+                        valueTarget.IsMutable));
+                }
+            }
+        }
+
+        return reExports
+            .GroupBy(reExport => reExport.ExportedName, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
+    private static IReadOnlyList<CSharpSourceFunctionImportAlias> BuildSourceFunctionImportAliases(
+        SourceFile sourceFile,
+        SyntaxNode root,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
+    {
+        var importAliases = new List<CSharpSourceFunctionImportAlias>();
+        foreach (var importDeclaration in root.Children.Where(IsRelativeNamedSourceImport))
+        {
+            if (!TryGetModuleSpecifier(importDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Import &&
+                string.Equals(candidate.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var importSpecifier in GetNamedImportSpecifiers(importDeclaration).Where(specifier => specifier.IsAlias))
+            {
+                if (TryResolveSourceFunctionExport(
+                    dependency.ToModulePath,
+                    importSpecifier.ImportedName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    out var functionTarget))
+                {
+                    importAliases.Add(new CSharpSourceFunctionImportAlias(
+                        functionTarget.QualifiedModuleContainer,
+                        importSpecifier.LocalName,
+                        functionTarget.Function));
+                }
+            }
+        }
+
+        return importAliases;
+    }
+
+    private static IReadOnlyList<CSharpSourceFunctionReExport> BuildLocalFunctionExportAliases(
+        SourceFile sourceFile,
+        SyntaxNode root,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets)
+    {
+        if (!sourceModuleTargets.TryGetValue(sourceFile.ModulePath, out var target))
+        {
+            return [];
+        }
+
+        var exportAliases = new List<CSharpSourceFunctionReExport>();
+        foreach (var exportDeclaration in root.Children.Where(IsLocalNamedExportAlias))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration).Where(specifier => specifier.IsAlias))
+            {
+                var targetFunction = root.Children.FirstOrDefault(child =>
+                    child.Kind == SyntaxKind.FunctionDeclaration &&
+                    !IsAmbientDeclaration(child) &&
+                    string.Equals(GetDeclarationName(child), exportSpecifier.TargetName, StringComparison.Ordinal));
+                if (targetFunction is not null)
+                {
+                    exportAliases.Add(new CSharpSourceFunctionReExport(
+                        target.QualifiedModuleContainer,
+                        exportSpecifier.ExportedName,
+                        targetFunction));
+                }
+            }
+        }
+
+        return exportAliases;
+    }
+
+    private static IReadOnlyList<CSharpSourceFunctionReExport> BuildSourceFunctionReExports(
+        SourceFile sourceFile,
+        SyntaxNode root,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
+    {
+        var reExports = new List<CSharpSourceFunctionReExport>();
+        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (TryResolveSourceFunctionExport(
+                    dependency.ToModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    out var functionTarget))
+                {
+                    reExports.Add(new CSharpSourceFunctionReExport(
+                        functionTarget.QualifiedModuleContainer,
+                        exportSpecifier.ExportedName,
+                        functionTarget.Function));
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, sourceFile.ModulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var exportName in CollectSourceFunctionExportNames(
+                dependency.ToModulePath,
+                sourceModuleGraph,
+                parsedSources,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase)))
+            {
+                if (TryResolveSourceFunctionExport(
+                    dependency.ToModulePath,
+                    exportName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    out var functionTarget))
+                {
+                    reExports.Add(new CSharpSourceFunctionReExport(
+                        functionTarget.QualifiedModuleContainer,
+                        exportName,
+                        functionTarget.Function));
+                }
+            }
+        }
+
+        return reExports
+            .GroupBy(reExport => reExport.ExportedName, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
     private static IReadOnlyDictionary<string, CSharpSourceImportTarget> BuildSourceModuleTargets(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         string defaultNamespace)
@@ -315,8 +630,1110 @@ public static class TypeSharpBuilder
                 GeneratedModuleContainerNaming.GetContainerName(sourceFile, parsedSources.Count));
         }
 
+        var typeExportTargetCache = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        var moduleExportTargetCache = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (sourceFile, _) in parsedSources)
+        {
+            targets[sourceFile.ModulePath] = targets[sourceFile.ModulePath] with
+            {
+                TypeExportTargets = CollectTypeExportTargets(
+                    sourceFile.ModulePath,
+                    targets,
+                    parsedSources,
+                    typeExportTargetCache,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase)),
+                ModuleExportTargets = CollectModuleExportTargets(
+                    sourceFile.ModulePath,
+                    targets,
+                    parsedSources,
+                    moduleExportTargetCache,
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase))
+            };
+        }
+
         return targets;
     }
+
+    private static IReadOnlyDictionary<string, string> CollectTypeExportTargets(
+        string modulePath,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        Dictionary<string, IReadOnlyDictionary<string, string>> cache,
+        HashSet<string> visiting)
+    {
+        if (cache.TryGetValue(modulePath, out var cached))
+        {
+            return cached;
+        }
+
+        var visitKey = $"{modulePath}\0<types>";
+        if (!visiting.Add(visitKey))
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null ||
+            !sourceModuleTargets.TryGetValue(modulePath, out var target))
+        {
+            visiting.Remove(visitKey);
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        var typeExportTargets = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var exportTarget in CollectLocalTypeExportTargets(source.Root, target.NamespaceName))
+        {
+            typeExportTargets[exportTarget.Key] = exportTarget.Value;
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeTypeReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (TryResolveSourceTypeExport(
+                    resolvedModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleTargets,
+                    parsedSources,
+                    cache,
+                    visiting,
+                    out var qualifiedTypeName))
+                {
+                    typeExportTargets[exportSpecifier.ExportedName] = qualifiedTypeName;
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var targetTypeExportTargets = CollectTypeExportTargets(
+                resolvedModulePath,
+                sourceModuleTargets,
+                parsedSources,
+                cache,
+                visiting);
+            foreach (var exportTarget in targetTypeExportTargets)
+            {
+                typeExportTargets[exportTarget.Key] = exportTarget.Value;
+            }
+        }
+
+        cache[modulePath] = typeExportTargets;
+        visiting.Remove(visitKey);
+        return typeExportTargets;
+    }
+
+    private static IReadOnlyDictionary<string, string> CollectLocalTypeExportTargets(SyntaxNode root, string namespaceName)
+    {
+        var declaredTypes = root.Children
+            .Where(child => child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration or SyntaxKind.DelegateDeclaration)
+            .Select(GetTypeDeclarationName)
+            .Where(name => name.Length > 0)
+            .ToHashSet(StringComparer.Ordinal);
+        var typeExportTargets = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var typeDeclaration in root.Children.Where(IsSourceTypeDeclaration))
+        {
+            var name = GetTypeDeclarationName(typeDeclaration);
+            if (name.Length > 0 &&
+                (HasModifier(typeDeclaration, SyntaxKind.ExportModifier) ||
+                    GetLocalExportedIdentifiers(root).Contains(name, StringComparer.Ordinal)))
+            {
+                typeExportTargets[name] = $"{namespaceName}.{name}";
+            }
+        }
+
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ExportTypeDeclaration && !TryGetModuleSpecifier(child, out _)))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration).Where(specifier => specifier.IsAlias))
+            {
+                if (declaredTypes.Contains(exportSpecifier.TargetName))
+                {
+                    typeExportTargets[exportSpecifier.ExportedName] = $"{namespaceName}.{exportSpecifier.TargetName}";
+                }
+            }
+        }
+
+        return typeExportTargets;
+    }
+
+    private static IReadOnlyDictionary<string, string> CollectModuleExportTargets(
+        string modulePath,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        Dictionary<string, IReadOnlyDictionary<string, string>> cache,
+        HashSet<string> visiting)
+    {
+        if (cache.TryGetValue(modulePath, out var cached))
+        {
+            return cached;
+        }
+
+        var visitKey = $"{modulePath}\0<modules>";
+        if (!visiting.Add(visitKey))
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null ||
+            !sourceModuleTargets.TryGetValue(modulePath, out var target))
+        {
+            visiting.Remove(visitKey);
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        var moduleExportTargets = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var exportTarget in CollectLocalModuleExportTargets(source.Root, target.NamespaceName))
+        {
+            moduleExportTargets[exportTarget.Key] = exportTarget.Value;
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (TryResolveSourceModuleExport(
+                    resolvedModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleTargets,
+                    parsedSources,
+                    cache,
+                    visiting,
+                    out var qualifiedModuleName))
+                {
+                    moduleExportTargets[exportSpecifier.ExportedName] = qualifiedModuleName;
+                }
+            }
+        }
+
+        cache[modulePath] = moduleExportTargets;
+        visiting.Remove(visitKey);
+        return moduleExportTargets;
+    }
+
+    private static IReadOnlyDictionary<string, string> CollectLocalModuleExportTargets(SyntaxNode root, string namespaceName)
+    {
+        var declaredModules = root.Children
+            .Where(child => child.Kind == SyntaxKind.ModuleDeclaration)
+            .Select(GetModuleDeclarationName)
+            .Where(name => name.Length > 0)
+            .ToHashSet(StringComparer.Ordinal);
+        var moduleExportTargets = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var moduleDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ModuleDeclaration))
+        {
+            var name = GetModuleDeclarationName(moduleDeclaration);
+            if (name.Length > 0 &&
+                (HasModifier(moduleDeclaration, SyntaxKind.ExportModifier) ||
+                    GetLocalExportedIdentifiers(root).Contains(name, StringComparer.Ordinal)))
+            {
+                moduleExportTargets[name] = $"{namespaceName}.{name}";
+            }
+        }
+
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration && !TryGetModuleSpecifier(child, out _)))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration).Where(specifier => specifier.IsAlias))
+            {
+                if (declaredModules.Contains(exportSpecifier.TargetName))
+                {
+                    moduleExportTargets[exportSpecifier.ExportedName] = $"{namespaceName}.{exportSpecifier.TargetName}";
+                }
+            }
+        }
+
+        return moduleExportTargets;
+    }
+
+    private static string GetTypeDeclarationName(SyntaxNode node)
+    {
+        var seenDeclarationKeyword = false;
+        foreach (var child in node.Children)
+        {
+            if (child.IsToken && child.Kind is SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.InterfaceKeyword or SyntaxKind.DelegateKeyword)
+            {
+                seenDeclarationKeyword = true;
+                continue;
+            }
+
+            if (seenDeclarationKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+            {
+                return child.Text ?? string.Empty;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetModuleDeclarationName(SyntaxNode node)
+    {
+        var seenModuleKeyword = false;
+        foreach (var child in node.Children)
+        {
+            if (child.IsToken && child.Kind == SyntaxKind.ModuleKeyword)
+            {
+                seenModuleKeyword = true;
+                continue;
+            }
+
+            if (seenModuleKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+            {
+                return child.Text ?? string.Empty;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static bool TryResolveSourceModuleExport(
+        string modulePath,
+        string exportedName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        Dictionary<string, IReadOnlyDictionary<string, string>> cache,
+        HashSet<string> visiting,
+        out string qualifiedModuleName)
+    {
+        qualifiedModuleName = string.Empty;
+        var visitKey = $"{modulePath}\0<module>\0{exportedName}";
+        if (!visiting.Add(visitKey))
+        {
+            return false;
+        }
+
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null ||
+            !sourceModuleTargets.TryGetValue(modulePath, out var target))
+        {
+            visiting.Remove(visitKey);
+            return false;
+        }
+
+        foreach (var localTarget in CollectLocalModuleExportTargets(source.Root, target.NamespaceName))
+        {
+            if (string.Equals(localTarget.Key, exportedName, StringComparison.Ordinal))
+            {
+                qualifiedModuleName = localTarget.Value;
+                visiting.Remove(visitKey);
+                return true;
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (TryResolveSourceModuleExport(
+                    resolvedModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleTargets,
+                    parsedSources,
+                    cache,
+                    visiting,
+                    out qualifiedModuleName))
+                {
+                    visiting.Remove(visitKey);
+                    return true;
+                }
+            }
+        }
+
+        if (cache.TryGetValue(modulePath, out var cached) &&
+            cached.TryGetValue(exportedName, out var cachedQualifiedModuleName))
+        {
+            qualifiedModuleName = cachedQualifiedModuleName;
+            visiting.Remove(visitKey);
+            return true;
+        }
+
+        visiting.Remove(visitKey);
+        return false;
+    }
+
+    private static bool TryResolveSourceTypeExport(
+        string modulePath,
+        string exportedName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        Dictionary<string, IReadOnlyDictionary<string, string>> cache,
+        HashSet<string> visiting,
+        out string qualifiedTypeName)
+    {
+        qualifiedTypeName = string.Empty;
+        var visitKey = $"{modulePath}\0{exportedName}";
+        if (!visiting.Add(visitKey))
+        {
+            return false;
+        }
+
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null ||
+            !sourceModuleTargets.TryGetValue(modulePath, out var target))
+        {
+            visiting.Remove(visitKey);
+            return false;
+        }
+
+        var directType = source.Root.Children.FirstOrDefault(child =>
+            IsSourceTypeDeclaration(child) &&
+            string.Equals(GetTypeDeclarationName(child), exportedName, StringComparison.Ordinal) &&
+            IsDirectTypeExported(source.Root, child, exportedName));
+        if (directType is not null)
+        {
+            qualifiedTypeName = $"{target.NamespaceName}.{exportedName}";
+            visiting.Remove(visitKey);
+            return true;
+        }
+
+        foreach (var localTarget in CollectLocalTypeExportTargets(source.Root, target.NamespaceName))
+        {
+            if (string.Equals(localTarget.Key, exportedName, StringComparison.Ordinal))
+            {
+                qualifiedTypeName = localTarget.Value;
+                visiting.Remove(visitKey);
+                return true;
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeTypeReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (TryResolveSourceTypeExport(
+                    resolvedModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleTargets,
+                    parsedSources,
+                    cache,
+                    visiting,
+                    out qualifiedTypeName))
+                {
+                    visiting.Remove(visitKey);
+                    return true;
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            if (TryResolveSourceTypeExport(
+                resolvedModulePath,
+                exportedName,
+                sourceModuleTargets,
+                parsedSources,
+                cache,
+                visiting,
+                out qualifiedTypeName))
+            {
+                visiting.Remove(visitKey);
+                return true;
+            }
+        }
+
+        if (cache.TryGetValue(modulePath, out var cached) &&
+            cached.TryGetValue(exportedName, out var cachedQualifiedTypeName))
+        {
+            qualifiedTypeName = cachedQualifiedTypeName;
+            visiting.Remove(visitKey);
+            return true;
+        }
+
+        visiting.Remove(visitKey);
+        return false;
+    }
+
+    private static bool TryResolveSourceFunctionExport(
+        string modulePath,
+        string exportedName,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        HashSet<string> visiting,
+        out ResolvedSourceFunction functionTarget)
+    {
+        functionTarget = default;
+        var visitKey = $"{modulePath}\0{exportedName}";
+        if (!visiting.Add(visitKey))
+        {
+            return false;
+        }
+
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null)
+        {
+            visiting.Remove(visitKey);
+            return false;
+        }
+
+        if (sourceModuleTargets.TryGetValue(modulePath, out var target))
+        {
+            var directFunction = source.Root.Children.FirstOrDefault(child =>
+                child.Kind == SyntaxKind.FunctionDeclaration &&
+                !IsAmbientDeclaration(child) &&
+                string.Equals(GetDeclarationName(child), exportedName, StringComparison.Ordinal) &&
+                IsDirectFunctionExported(source.Root, child, exportedName));
+            if (directFunction is not null)
+            {
+                functionTarget = new ResolvedSourceFunction(target.QualifiedModuleContainer, directFunction);
+                visiting.Remove(visitKey);
+                return true;
+            }
+        }
+
+        if (sourceModuleTargets.TryGetValue(modulePath, out var localAliasTarget))
+        {
+            foreach (var exportDeclaration in source.Root.Children.Where(IsLocalNamedExportAlias))
+            {
+                foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+                {
+                    if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    var targetFunction = source.Root.Children.FirstOrDefault(child =>
+                        child.Kind == SyntaxKind.FunctionDeclaration &&
+                        !IsAmbientDeclaration(child) &&
+                        string.Equals(GetDeclarationName(child), exportSpecifier.TargetName, StringComparison.Ordinal));
+                    if (targetFunction is not null)
+                    {
+                        functionTarget = new ResolvedSourceFunction(localAliasTarget.QualifiedModuleContainer, targetFunction);
+                        visiting.Remove(visitKey);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (TryResolveSourceFunctionExport(
+                    dependency.ToModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    visiting,
+                    out functionTarget))
+                {
+                    visiting.Remove(visitKey);
+                    return true;
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            if (TryResolveSourceFunctionExport(
+                dependency.ToModulePath,
+                exportedName,
+                sourceModuleGraph,
+                sourceModuleTargets,
+                parsedSources,
+                visiting,
+                out functionTarget))
+            {
+                visiting.Remove(visitKey);
+                return true;
+            }
+        }
+
+        visiting.Remove(visitKey);
+        return false;
+    }
+
+    private static bool TryResolveSourceValueExport(
+        string modulePath,
+        string exportedName,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        HashSet<string> visiting,
+        out ResolvedSourceValue valueTarget)
+    {
+        valueTarget = default;
+        var visitKey = $"{modulePath}\0{exportedName}";
+        if (!visiting.Add(visitKey))
+        {
+            return false;
+        }
+
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null ||
+            !sourceModuleTargets.TryGetValue(modulePath, out var target))
+        {
+            visiting.Remove(visitKey);
+            return false;
+        }
+
+        var directValue = source.Root.Children.FirstOrDefault(child =>
+            IsSourceValueImportAliasTarget(child) &&
+            string.Equals(GetValueDeclarationName(child), exportedName, StringComparison.Ordinal) &&
+            IsDirectValueExported(source.Root, child, exportedName));
+        if (directValue is not null)
+        {
+            valueTarget = new ResolvedSourceValue(
+                target.QualifiedModuleContainer,
+                exportedName,
+                GetValueAliasType(directValue),
+                IsMutableValueDeclaration(directValue));
+            visiting.Remove(visitKey);
+            return true;
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsLocalNamedExportAlias))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var localValue = source.Root.Children.FirstOrDefault(child =>
+                    IsSourceValueImportAliasTarget(child) &&
+                    string.Equals(GetValueDeclarationName(child), exportSpecifier.TargetName, StringComparison.Ordinal));
+                if (localValue is not null)
+                {
+                    valueTarget = new ResolvedSourceValue(
+                        target.QualifiedModuleContainer,
+                        exportedName,
+                        GetValueAliasType(localValue),
+                        IsMutableValueDeclaration(localValue));
+                    visiting.Remove(visitKey);
+                    return true;
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (TryResolveSourceValueExport(
+                    dependency.ToModulePath,
+                    exportSpecifier.TargetName,
+                    sourceModuleGraph,
+                    sourceModuleTargets,
+                    parsedSources,
+                    visiting,
+                    out valueTarget))
+                {
+                    visiting.Remove(visitKey);
+                    return true;
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            if (TryResolveSourceValueExport(
+                dependency.ToModulePath,
+                exportedName,
+                sourceModuleGraph,
+                sourceModuleTargets,
+                parsedSources,
+                visiting,
+                out valueTarget))
+            {
+                visiting.Remove(visitKey);
+                return true;
+            }
+        }
+
+        visiting.Remove(visitKey);
+        return false;
+    }
+
+    private static IReadOnlyList<string> CollectSourceFunctionExportNames(
+        string modulePath,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        HashSet<string> visiting)
+    {
+        if (!visiting.Add(modulePath))
+        {
+            return [];
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null)
+        {
+            visiting.Remove(modulePath);
+            return names.ToArray();
+        }
+
+        foreach (var function in source.Root.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child)))
+        {
+            var name = GetDeclarationName(function);
+            if (name.Length > 0 && IsDirectFunctionExported(source.Root, function, name))
+            {
+                names.Add(name);
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsLocalNamedExportAlias))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (source.Root.Children.Any(child =>
+                    child.Kind == SyntaxKind.FunctionDeclaration &&
+                    !IsAmbientDeclaration(child) &&
+                    string.Equals(GetDeclarationName(child), exportSpecifier.TargetName, StringComparison.Ordinal)))
+                {
+                    names.Add(exportSpecifier.ExportedName);
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                names.Add(exportSpecifier.ExportedName);
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var name in CollectSourceFunctionExportNames(dependency.ToModulePath, sourceModuleGraph, parsedSources, visiting))
+            {
+                names.Add(name);
+            }
+        }
+
+        visiting.Remove(modulePath);
+        return names.ToArray();
+    }
+
+    private static IReadOnlyList<string> CollectSourceValueExportNames(
+        string modulePath,
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
+        HashSet<string> visiting)
+    {
+        if (!visiting.Add(modulePath))
+        {
+            return [];
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var source = parsedSources.FirstOrDefault(candidate =>
+            string.Equals(candidate.SourceFile.ModulePath, modulePath, StringComparison.OrdinalIgnoreCase));
+        if (source.Root is null)
+        {
+            visiting.Remove(modulePath);
+            return names.ToArray();
+        }
+
+        foreach (var value in source.Root.Children.Where(child => IsSourceValueImportAliasTarget(child)))
+        {
+            var name = GetValueDeclarationName(value);
+            if (name.Length > 0 && IsDirectValueExported(source.Root, value, name))
+            {
+                names.Add(name);
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsLocalNamedExportAlias))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                if (source.Root.Children.Any(child =>
+                    IsSourceValueImportAliasTarget(child) &&
+                    string.Equals(GetValueDeclarationName(child), exportSpecifier.TargetName, StringComparison.Ordinal)))
+                {
+                    names.Add(exportSpecifier.ExportedName);
+                }
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                names.Add(exportSpecifier.ExportedName);
+            }
+        }
+
+        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
+            {
+                continue;
+            }
+
+            var dependency = sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+                candidate.Kind == SourceModuleDependencyKind.Export &&
+                string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+            if (dependency is null)
+            {
+                continue;
+            }
+
+            foreach (var name in CollectSourceValueExportNames(dependency.ToModulePath, sourceModuleGraph, parsedSources, visiting))
+            {
+                names.Add(name);
+            }
+        }
+
+        visiting.Remove(modulePath);
+        return names.ToArray();
+    }
+
+    private static bool IsDirectFunctionExported(SyntaxNode root, SyntaxNode function, string name) =>
+        HasModifier(function, SyntaxKind.ExportModifier) ||
+        GetLocalExportedIdentifiers(root).Contains(name, StringComparer.Ordinal);
+
+    private static bool IsDirectValueExported(SyntaxNode root, SyntaxNode value, string name) =>
+        HasModifier(value, SyntaxKind.ExportModifier) ||
+        GetLocalExportedIdentifiers(root).Contains(name, StringComparer.Ordinal);
+
+    private static bool IsDirectTypeExported(SyntaxNode root, SyntaxNode type, string name) =>
+        HasModifier(type, SyntaxKind.ExportModifier) ||
+        GetLocalExportedIdentifiers(root).Contains(name, StringComparer.Ordinal);
+
+    private static IEnumerable<string> GetLocalExportedIdentifiers(SyntaxNode root)
+    {
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration))
+        {
+            if (TryGetModuleSpecifier(exportDeclaration, out _) ||
+                GetNamedExportSpecifiers(exportDeclaration).Any(specifier => specifier.IsAlias))
+            {
+                continue;
+            }
+
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
+            {
+                yield return exportSpecifier.ExportedName;
+            }
+        }
+    }
+
+    private static bool IsSourceValueImportAliasTarget(SyntaxNode node) =>
+        node.Kind == SyntaxKind.LiteralDeclaration ||
+        (node.Kind == SyntaxKind.ValueDeclaration && (!IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node)));
+
+    private static bool IsSourceTypeDeclaration(SyntaxNode node) =>
+        node.Kind is
+            SyntaxKind.TypeAliasDeclaration or
+            SyntaxKind.RecordDeclaration or
+            SyntaxKind.UnionDeclaration or
+            SyntaxKind.ClassDeclaration or
+            SyntaxKind.InterfaceDeclaration or
+            SyntaxKind.DelegateDeclaration;
+
+    private static bool IsFunctionValueDeclaration(SyntaxNode node)
+    {
+        var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+        if (annotation?.Children.Any(child => child.Kind == SyntaxKind.FunctionType) == true)
+        {
+            return true;
+        }
+
+        return node.Children
+            .Where(child => child.Kind == SyntaxKind.Initializer)
+            .SelectMany(child => child.Children)
+            .Any(child => child.Kind == SyntaxKind.LambdaExpression);
+    }
+
+    private static bool HasFunctionTypeAnnotation(SyntaxNode node) =>
+        node.Children
+            .FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)?
+            .Children
+            .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
+
+    private static bool IsMutableValueDeclaration(SyntaxNode node) =>
+        node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
+
+    private static string GetValueAliasType(SyntaxNode node)
+    {
+        if (TryGetDirectTypeAnnotation(node, out var annotation))
+        {
+            return MapType(annotation.Children.FirstOrDefault(child => !child.IsToken));
+        }
+
+        var initializer = GetInitializerExpression(node);
+        if (initializer?.Kind == SyntaxKind.CollectionExpression)
+        {
+            var elementType = InferCollectionElementType(initializer.Children.Where(child => !child.IsToken).ToArray());
+            if (elementType.Length > 0)
+            {
+                return $"{elementType}[]";
+            }
+        }
+
+        return InferLiteralType(initializer);
+    }
+
+    private static bool TryGetDirectTypeAnnotation(SyntaxNode node, out SyntaxNode annotation)
+    {
+        annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)!;
+        return annotation is not null;
+    }
+
+    private static SyntaxNode? GetInitializerExpression(SyntaxNode node) =>
+        node.Children
+            .FirstOrDefault(child => child.Kind == SyntaxKind.Initializer)?
+            .Children
+            .FirstOrDefault(child => !child.IsToken);
+
+    private static string InferCollectionElementType(IReadOnlyList<SyntaxNode> elements)
+    {
+        if (elements.Any(element => element.Kind == SyntaxKind.SpreadElement))
+        {
+            return string.Empty;
+        }
+
+        var inferredTypes = elements
+            .Select(InferLiteralType)
+            .Where(type => type.Length > 0 && !string.Equals(type, "object", StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        return inferredTypes.Length == 1 ? inferredTypes[0] : string.Empty;
+    }
+
+    private static string InferLiteralType(SyntaxNode? initializer)
+    {
+        if (initializer?.Kind != SyntaxKind.LiteralExpression)
+        {
+            return "object";
+        }
+
+        var token = initializer.Children.FirstOrDefault(child => child.IsToken);
+        return token?.Kind switch
+        {
+            SyntaxKind.StringLiteralToken or SyntaxKind.InterpolatedStringLiteralToken => "string",
+            SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword => "bool",
+            SyntaxKind.NumericLiteralToken => InferNumericLiteralType(token.Text ?? string.Empty),
+            _ => "object"
+        };
+    }
+
+    private static string InferNumericLiteralType(string text)
+    {
+        if (text.EndsWith("m", StringComparison.OrdinalIgnoreCase))
+        {
+            return "decimal";
+        }
+
+        return text.Contains('.', StringComparison.Ordinal) ? "double" : "int";
+    }
+
+    private static string MapType(SyntaxNode? node)
+    {
+        if (node is null)
+        {
+            return "object";
+        }
+
+        if (node.Kind == SyntaxKind.TypeAnnotation)
+        {
+            return MapType(node.Children.FirstOrDefault(child => !child.IsToken));
+        }
+
+        if (node.Kind == SyntaxKind.NullableType)
+        {
+            return MapType(node.Children.FirstOrDefault(child => !child.IsToken));
+        }
+
+        if (node.Kind == SyntaxKind.ArrayType)
+        {
+            return $"{MapType(node.Children.FirstOrDefault(child => !child.IsToken))}[]";
+        }
+
+        if (node.Kind == SyntaxKind.FunctionType)
+        {
+            return MapFunctionType(node);
+        }
+
+        if (node.Kind == SyntaxKind.TypeName)
+        {
+            return GetQualifiedName(node) switch
+            {
+                "bool" => "bool",
+                "byte" => "byte",
+                "char" => "char",
+                "decimal" => "decimal",
+                "double" => "double",
+                "float" => "float",
+                "int" => "int",
+                "long" => "long",
+                "object" => "object",
+                "sbyte" => "sbyte",
+                "short" => "short",
+                "string" => "string",
+                "uint" => "uint",
+                "ulong" => "ulong",
+                "ushort" => "ushort",
+                "void" or "unit" => "void",
+                _ => GetQualifiedName(node)
+            };
+        }
+
+        return "object";
+    }
+
+    private static string MapFunctionType(SyntaxNode node)
+    {
+        var types = node.Children.Where(child => !child.IsToken).ToArray();
+        if (types.Length < 2)
+        {
+            return "System.Func<object>";
+        }
+
+        var parameterType = MapType(types[0]);
+        var returnType = MapType(types[1]);
+        if (string.Equals(parameterType, "void", StringComparison.Ordinal))
+        {
+            return string.Equals(returnType, "void", StringComparison.Ordinal)
+                ? "System.Action"
+                : $"System.Func<{returnType}>";
+        }
+
+        return string.Equals(returnType, "void", StringComparison.Ordinal)
+            ? $"System.Action<{parameterType}>"
+            : $"System.Func<{parameterType}, {returnType}>";
+    }
+
+    private static bool HasModifier(SyntaxNode node, SyntaxKind modifier) =>
+        node.Children.Any(child => child.Kind == modifier);
 
     private static string GetMainInvocationArguments(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
@@ -573,6 +1990,192 @@ public static class TypeSharpBuilder
         return namespaceName.Length > 0 ? namespaceName : defaultNamespace;
     }
 
+    private static bool IsSupportedRelativeNamedReExport(SyntaxNode node) =>
+        node.Kind == SyntaxKind.ExportNamedDeclaration &&
+        TryGetModuleSpecifier(node, out var specifier) &&
+        IsRelativeSpecifier(specifier);
+
+    private static bool IsSupportedRelativeTypeReExport(SyntaxNode node) =>
+        node.Kind == SyntaxKind.ExportTypeDeclaration &&
+        TryGetModuleSpecifier(node, out var specifier) &&
+        IsRelativeSpecifier(specifier);
+
+    private static bool IsSupportedRelativeStarReExport(SyntaxNode node) =>
+        node.Kind == SyntaxKind.ExportStarDeclaration &&
+        TryGetModuleSpecifier(node, out var specifier) &&
+        IsRelativeSpecifier(specifier);
+
+    private static bool IsRelativeNamedSourceImport(SyntaxNode node) =>
+        node.Kind == SyntaxKind.ImportNamedDeclaration &&
+        TryGetModuleSpecifier(node, out var specifier) &&
+        IsRelativeSpecifier(specifier);
+
+    private static bool IsLocalNamedExportAlias(SyntaxNode node) =>
+        node.Kind == SyntaxKind.ExportNamedDeclaration &&
+        !TryGetModuleSpecifier(node, out _) &&
+        GetNamedExportSpecifiers(node).Any(specifier => specifier.IsAlias);
+
+    private static bool TryGetModuleSpecifier(SyntaxNode node, out string specifier)
+    {
+        for (var index = 0; index < node.Children.Count - 1; index++)
+        {
+            if (node.Children[index].Kind == SyntaxKind.FromKeyword &&
+                node.Children[index + 1].Kind == SyntaxKind.StringLiteralToken &&
+                TryUnquoteStringLiteral(node.Children[index + 1].Text, out specifier))
+            {
+                return true;
+            }
+        }
+
+        specifier = string.Empty;
+        return false;
+    }
+
+    private static bool TryUnquoteStringLiteral(string? text, out string value)
+    {
+        value = string.Empty;
+        if (string.IsNullOrEmpty(text) || text.Length < 2 || text[0] != '"' || text[^1] != '"')
+        {
+            return false;
+        }
+
+        value = text[1..^1];
+        return value.Length > 0;
+    }
+
+    private static bool IsRelativeSpecifier(string specifier) =>
+        specifier == "." ||
+        specifier == ".." ||
+        specifier.StartsWith("./", StringComparison.Ordinal) ||
+        specifier.StartsWith("../", StringComparison.Ordinal);
+
+    private static string ResolveRelativeModulePath(string fromModulePath, string specifier)
+    {
+        var parts = new List<string>();
+        var lastSlash = fromModulePath.LastIndexOf('/');
+        if (lastSlash >= 0)
+        {
+            parts.AddRange(fromModulePath[..lastSlash].Split('/', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        foreach (var part in specifier.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part == ".")
+            {
+                continue;
+            }
+
+            if (part == "..")
+            {
+                if (parts.Count > 0)
+                {
+                    parts.RemoveAt(parts.Count - 1);
+                }
+
+                continue;
+            }
+
+            parts.Add(part);
+        }
+
+        var resolved = string.Join("/", parts);
+        return resolved.EndsWith(".tysh", StringComparison.OrdinalIgnoreCase)
+            ? resolved[..^".tysh".Length]
+            : resolved;
+    }
+
+    private static IEnumerable<NamedExportSpecifier> GetNamedExportSpecifiers(SyntaxNode node)
+    {
+        var insideBraces = false;
+        for (var index = 0; index < node.Children.Count; index++)
+        {
+            var child = node.Children[index];
+            if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+            {
+                insideBraces = true;
+                continue;
+            }
+
+            if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+            {
+                yield break;
+            }
+
+            if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } name)
+            {
+                if (index + 2 < node.Children.Count &&
+                    node.Children[index + 1].IsToken &&
+                    node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                    node.Children[index + 2].IsToken &&
+                    node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                    node.Children[index + 2].Text is { Length: > 0 } alias)
+                {
+                    yield return new NamedExportSpecifier(name, alias);
+                    index += 2;
+                }
+                else
+                {
+                    yield return new NamedExportSpecifier(name, name);
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<NamedImportSpecifier> GetNamedImportSpecifiers(SyntaxNode node)
+    {
+        var insideBraces = false;
+        for (var index = 0; index < node.Children.Count; index++)
+        {
+            var child = node.Children[index];
+            if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+            {
+                insideBraces = true;
+                continue;
+            }
+
+            if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+            {
+                yield break;
+            }
+
+            if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } name)
+            {
+                if (index + 2 < node.Children.Count &&
+                    node.Children[index + 1].IsToken &&
+                    node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                    node.Children[index + 2].IsToken &&
+                    node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                    node.Children[index + 2].Text is { Length: > 0 } alias)
+                {
+                    yield return new NamedImportSpecifier(name, alias);
+                    index += 2;
+                }
+                else
+                {
+                    yield return new NamedImportSpecifier(name, name);
+                }
+            }
+        }
+    }
+
+    private readonly record struct NamedImportSpecifier(string ImportedName, string LocalName)
+    {
+        public bool IsAlias => !string.Equals(ImportedName, LocalName, StringComparison.Ordinal);
+    }
+
+    private readonly record struct NamedExportSpecifier(string TargetName, string ExportedName)
+    {
+        public bool IsAlias => !string.Equals(TargetName, ExportedName, StringComparison.Ordinal);
+    }
+
+    private readonly record struct ResolvedSourceFunction(string QualifiedModuleContainer, SyntaxNode Function);
+
+    private readonly record struct ResolvedSourceValue(
+        string QualifiedModuleContainer,
+        string TargetMemberName,
+        string Type,
+        bool IsMutable);
+
     private static string GetDeclarationName(SyntaxNode node)
     {
         var seenFunctionKeyword = false;
@@ -585,6 +2188,26 @@ public static class TypeSharpBuilder
             }
 
             if (seenFunctionKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+            {
+                return child.Text ?? string.Empty;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetValueDeclarationName(SyntaxNode node)
+    {
+        var seenValueKeyword = false;
+        foreach (var child in node.Children)
+        {
+            if (child.IsToken && child.Kind is SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
+            {
+                seenValueKeyword = true;
+                continue;
+            }
+
+            if (seenValueKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
             {
                 return child.Text ?? string.Empty;
             }

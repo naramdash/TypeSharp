@@ -21,17 +21,39 @@ The stable workflow is:
 
 `typesharp check` stops before emission. `typesharp build` runs the same diagnostics path before generated output is written.
 
+Use [Project Policy](../project-policy/) for the full architecture, backend, dependency, target framework, regression, parser fixture, feature review, and release policy ledger.
+
+## Feasibility Boundaries
+
+TypeSharp is feasible because the implementation scope is deliberately constrained around `.NET Framework 4.8` generated outputs and a C# 7.3 source backend.
+
+Required feasibility decisions:
+
+- Generated artifacts and TypeSharp runtime/core libraries target `net48`.
+- Compiler, CLI, and language-server hosts may use a modern .NET LTS runtime.
+- The MVP backend emits C# 7.3-compatible source and then builds a generated `net48` project.
+- Direct IL emission is a future backend, not the first stable emitter.
+- Type-level unions and structural shapes are compile-time tools and are rejected at public .NET ABI boundaries.
+- Nominal closed unions lower through a reference-type class hierarchy for the MVP representation.
+- Advanced TypeScript-style mapped, conditional, template-literal, and high-complexity type computation remains outside the MVP.
+- Managed `net48` framework and local DLL metadata interop is the initial C# interop scope.
+- ASP.NET/WCF/worker compatibility is proven through generated `net48` library ABI and host reference/build smokes, not through host template or deployment automation in the MVP.
+
+Implementation order follows those boundaries: manifest and source discovery, parser, CLI check, metadata reader, binder/type checker, C# source backend, unions/patterns, interop smoke tests, then VS Code diagnostics and navigation.
+
+Use [Project Requirements](../requirements/) for the full requirement ledger and [Feature Status](../feature-status/) for the feature bucket map.
+
 ## Public ABI Contract
 
 TypeSharp public API must be understandable to C# and CLR metadata consumers. That rule drives several design choices:
 
 - Public declarations should be explicit.
-- Compile-time-only structural shapes cannot leak into public signatures.
+- Compile-time-only structural shapes and intersection aliases cannot leak into public signatures.
 - Type-level unions must be represented through nominal public alternatives.
 - Nullability contracts should be enforced before generated C# is emitted.
 - Runtime helper types must remain stable enough for generated assemblies and C# consumers.
 
-Use [Runtime ABI](https://github.com/naramdash/TypeSharp/blob/main/docs/runtime-abi.md) for the source-of-truth policy.
+Use [.NET Interop](../dotnet-interop/) for the canonical public ABI and runtime ABI policy, including ABI version fields, covered surfaces, change rules, and compatibility gates. Use [Project Requirements](../requirements/) and [Feature Status](../feature-status/) for the wider platform and maturity policy. `docs/runtime-abi.md` remains a short transition bridge after task `0251`.
 
 ## Lowering
 
@@ -50,11 +72,13 @@ Lowering turns TypeSharp syntax and semantic constructs into C# 7.3-compatible s
 - record expression construction,
 - C# imports and calls.
 
-Use [lowering.md](https://github.com/naramdash/TypeSharp/blob/main/docs/lowering.md) for concrete source-to-C# examples and fixture links.
+Use [Lowering](../lowering/) for the canonical docs-site lowering contract, generated shape map, runtime-helper boundaries, and fixture evidence. `docs/lowering.md` remains a transition bridge after task `0251`.
 
 ## Metadata Reader And Interop Validation
 
-The metadata reader indexes selected public metadata from framework and local `net48` C# assemblies. Interop validation uses that metadata to catch missing references, invalid byref calls, ambiguous overloads, unsupported package references, and unknown nullability.
+The metadata reader indexes selected public metadata from framework and local `net48` C# assemblies, including base/interface relations and extension method markers. Interop validation uses that metadata to catch missing references, missing imported framework/local types, missing framework/local static methods or static members, missing imported instance members while accepting applicable extension methods with receiver relationship ranking and `object` fallback, invalid byref calls, ambiguous overloads, explicit and simple inferred generic constraint violations including inherited base/interface satisfaction, unsupported package references, and unknown nullability. Manifest-based check/build also uses those metadata relations for imported C# assignment and return compatibility.
+
+Use [.NET Interop](../dotnet-interop/) for the canonical reference model, import model, supported metadata shape, type mapping, overload policy, capability boundaries, host compatibility, and interop smoke policy. `docs/csharp-interop.md` remains a short transition bridge after task `0251`.
 
 Current scope is intentionally narrower than full CLR metadata:
 
@@ -98,6 +122,8 @@ Feature work should usually include one or more of:
 
 The wider the user-facing behavior, the more important it is to include both success and failure coverage.
 
+Use [Project Policy](../project-policy/) for the canonical regression evidence matrix, parser fixture policy, snapshot update rules, and feature review gate.
+
 ## Feature Maturity
 
 Do not infer support from a design note alone. A feature becomes user-facing only when implementation, docs, and verification align.
@@ -111,4 +137,4 @@ Do not infer support from a design note alone. A feature becomes user-facing onl
 | Preview watch | Tracked because related languages or .NET are moving. |
 | Rejected | Intentionally not part of the current language direction. |
 
-Use task packets and traceability docs when deciding whether a feature is safe to rely on.
+Use [Feature Status](../feature-status/), [Project Policy](../project-policy/), task packets, and traceability bridge docs when deciding whether a feature is safe to rely on.

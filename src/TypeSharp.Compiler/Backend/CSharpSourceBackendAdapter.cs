@@ -31,4 +31,23 @@ public sealed class CSharpSourceBackendAdapter : ITypeSharpBackend
         string moduleContainerName,
         IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports) =>
         TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root, defaultNamespace, moduleContainerName, sourceImports));
+
+    public TypeSharpBackendArtifact Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports) =>
+        TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root, defaultNamespace, moduleContainerName, sourceImports, functionReExports));
+
+    public TypeSharpBackendArtifact Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
+        IReadOnlyList<CSharpSourceValueReExport> valueReExports,
+        IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports) =>
+        TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, functionImportAliases, functionReExports));
 }

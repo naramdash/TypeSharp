@@ -1,6 +1,6 @@
 # TypeSharp 목표
 
-문서 기준일: 2026-05-19
+문서 기준일: 2026-05-20
 
 ## 한 문장 과제
 
@@ -158,14 +158,14 @@ TypeSharp는 다음 네 가지 성향을 동시에 만족하는 언어를 목표
 
 | 축 | 기준 | TypeSharp에서의 의미 |
 | --- | --- | --- |
-| 실행 타깃 | .NET Framework 4.8 | 생성 산출물과 표준 런타임 라이브러리는 `net48` 호환이어야 한다. compiler/CLI/LSP host는 [feasibility.md](feasibility.md)에 따라 현대 .NET LTS 기반을 허용한다. |
+| 실행 타깃 | .NET Framework 4.8 | 생성 산출물과 표준 런타임 라이브러리는 `net48` 호환이어야 한다. compiler/CLI/LSP host는 docs-site [Advanced Topics](../docs-site/src/content/docs/advanced.md)와 [Project Policy](../docs-site/src/content/docs/project-policy.md)에 따라 현대 .NET LTS 기반을 허용한다. |
 | C# 안정 기능 | C# 14 | 확장 멤버, null 조건부 대입, `field` 지원 프로퍼티, 람다 매개변수 modifier, 부분 생성자/이벤트 등에서 언어 설계 아이디어를 가져온다. |
 | C# 프리뷰 추적 | C# 15 | 컬렉션 표현식 인자와 union type은 프리뷰로 추적하되 안정화 전까지 핵심 호환성 계약으로 삼지 않는다. |
 | F# 안정 기능 | F# 10 | 옵션/ValueOption, computation expression/task 동시 바인딩, 명확한 모듈 구조, 정밀한 경고 제어, 컴파일 성능 방향성을 반영한다. |
 | TypeScript 안정 기능 | TypeScript 6.0 | 구조적 타입, 엄격한 기본값, 명시적 ambient type 관리, ECMAScript 최신 타깃 추적, 7.0 전환 준비 철학을 반영한다. |
 | TypeScript 프리뷰 추적 | TypeScript 7.0 beta | native compiler, 병렬 타입 검사, 더 엄격한 기본값은 구현 전략과 장기 도구 전략에서 추적한다. |
 
-장비 벤더 호환성 배포 profile에서는 `net48`을 기본 호환성 기준으로 둔다. `net481`은 최신 .NET Framework profile로 추적하되, Windows 10/초기 Windows 11 장비, vendor qualification, offline 운용을 고려한 타깃 선택 근거는 [framework-targeting.md](framework-targeting.md)에 기록한다.
+장비 벤더 호환성 배포 profile에서는 `net48`을 기본 호환성 기준으로 둔다. `net481`은 최신 .NET Framework profile로 추적하되, Windows 10/초기 Windows 11 장비, vendor qualification, offline 운용을 고려한 타깃 선택 근거는 docs-site [Project Policy](../docs-site/src/content/docs/project-policy.md)와 [Project Configuration](../docs-site/src/content/docs/project-configuration.md)에 기록한다.
 
 ## Union 설계 결정
 
@@ -192,15 +192,15 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - 에이전트 지침: `/goal` 기반 장기 작업에서 Codex가 목표를 잊지 않고 반복 실행할 수 있도록 [agent.md](../agent.md)를 유지한다.
 - 장기 실행 계약: Ralph mode, Goal mode, `/goal` 세션이 같은 방식으로 작업을 고르고 검증하고 인계하도록 [agentic-execution.md](agentic-execution.md)를 유지한다.
 - 작업 패킷: 한 세션보다 긴 작업은 [tasks/README.md](tasks/README.md)의 규칙에 따라 task packet으로 남긴다.
-- 문법 사양: [grammar/README.md](grammar/README.md)를 중심으로 lexical, module, declaration, type, expression, pattern, interop, name resolution 문법을 설명한다.
-- 문법 커버리지: [grammar/coverage.md](grammar/coverage.md)에서 TypeScript, F#, C# 기능을 Direct, Equivalent, Replacement, Planned, Experimental, Rejected 중 하나로 계속 분류한다.
-- 실현 가능성 검토: [feasibility.md](feasibility.md)에 MVP 범위, 낮춘 범위, backend/host 결정을 유지한다.
-- 언어 사양: 타입 시스템, 이름 해석, 모듈 시스템, 표준 라이브러리, .NET 상호 운용 규칙을 설명한다.
-- C# library interop: [csharp-interop.md](csharp-interop.md)에 기존 `net48` C# assembly 참조, metadata symbol, overload, nullable, public ABI 경계 규칙을 유지한다.
+- 문법 사양: docs-site [Grammar](../docs-site/src/content/docs/grammar.md)와 [Grammar And Language Reference](../docs-site/src/content/docs/reference.md)를 중심으로 lexical, module, declaration, type, expression, pattern, interop, name resolution 문법을 설명한다. `docs/grammar/`는 남아 있는 bridge stub만 유지한다.
+- 문법 커버리지: docs-site [Feature Status](../docs-site/src/content/docs/feature-status.md), [Grammar](../docs-site/src/content/docs/grammar.md), [Grammar And Language Reference](../docs-site/src/content/docs/reference.md)에서 TypeScript, F#, C# 기능을 Direct, Equivalent, Replacement, Planned, Experimental, Rejected 중 하나로 계속 분류한다.
+- 실현 가능성 검토: docs-site [Advanced Topics](../docs-site/src/content/docs/advanced.md), [Feature Status](../docs-site/src/content/docs/feature-status.md), [Project Policy](../docs-site/src/content/docs/project-policy.md)에 MVP 범위, 낮춘 범위, backend/host 결정을 유지한다.
+- 언어 사양: docs-site [Grammar And Language Reference](../docs-site/src/content/docs/reference.md), [Type System](../docs-site/src/content/docs/type-system.md), [Modules](../docs-site/src/content/docs/modules.md), [API And CLI Reference](../docs-site/src/content/docs/api.md), [.NET Interop](../docs-site/src/content/docs/dotnet-interop.md)가 타입 시스템, 이름 해석, 모듈 시스템, 표준 라이브러리, .NET 상호 운용 규칙을 설명한다.
+- C# library interop: docs-site [.NET Interop](../docs-site/src/content/docs/dotnet-interop.md)에 기존 `net48` C# assembly 참조, metadata symbol, overload, nullable, public ABI 경계 규칙을 유지한다.
 - 컴파일러: TypeSharp 소스를 파싱, 바인딩, 타입 검사, lowering, emit까지 처리한다.
 - 런타임 라이브러리: `TypeSharp.Core.Option<T>`, `TypeSharp.Core.Result<T, E>`, nominal union representation, structural helper, async/workflow helper처럼 생성 코드가 의존하는 최소 라이브러리를 제공한다.
-- 표준 라이브러리 namespace: 사용자 코드가 직접 참조하는 핵심 타입은 [standard-library.md](standard-library.md)의 `TypeSharp.Core`, `TypeSharp.Collections` 정책을 따른다.
-- CLI: [cli.md](cli.md)의 계약에 따라 `typesharp build`, `typesharp check`, `typesharp run`, `typesharp format`의 초기 형태를 제공한다.
+- 표준 라이브러리 namespace: 사용자 코드가 직접 참조하는 핵심 타입은 docs-site [API And CLI Reference](../docs-site/src/content/docs/api.md)의 `TypeSharp.Core`, `TypeSharp.Collections` 정책을 따른다.
+- CLI: docs-site [CLI](../docs-site/src/content/docs/cli.md)의 계약에 따라 `typesharp build`, `typesharp check`, `typesharp run`, `typesharp format`의 초기 형태를 제공한다.
 - VS Code extension: syntax highlighting, diagnostics, hover, go-to-definition, basic completion을 제공하고 Language Server Protocol을 통해 compiler semantic model을 재사용한다. Extension host에서 LSP client를 실제 활성화하고 배포 가능한 extension package 기준을 둔다.
 - 공식 문서 사이트: GitHub Pages에 배포 가능한 Astro Starlight 기반 문서 사이트를 제공하고, 목표/문법/CLI/진단/VS Code/예제/마이그레이션 문서를 탐색 가능한 구조로 묶는다.
 - 실행 예제 프로젝트: 실제 `typesharp` 명령으로 검사, 빌드, 실행할 수 있는 console/library/interop/host-style 예제 프로젝트들을 제공한다.
@@ -247,7 +247,7 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 - TypeScript식 type-level union을 local inference, literal union, structural narrowing에 활용하되 public .NET ABI로 직접 새지 않게 진단한다.
 - VS Code에서 syntax highlighting, diagnostics, hover, go-to-definition의 최소 기능을 제공한다.
 - CLI에서 `typesharp check`, `typesharp build`, `typesharp run`, `typesharp version`을 제공한다.
-- [grammar/coverage.md](grammar/coverage.md)가 TypeScript, F#, C#의 주요 실용 기능을 직접 문법, 동등 기능, 대체 기능, 계획, 실험, 거절 중 하나로 분류한다.
+- docs-site [Feature Status](../docs-site/src/content/docs/feature-status.md), [Grammar](../docs-site/src/content/docs/grammar.md), [Grammar And Language Reference](../docs-site/src/content/docs/reference.md)가 TypeScript, F#, C#의 주요 실용 기능을 직접 문법, 동등 기능, 대체 기능, 계획, 실험, 거절 중 하나로 분류한다.
 - stable grammar로 분류한 기능은 syntax 예제와 parser가 읽을 수 있는 문법 초안을 가진다.
 - 구조적 object type 또는 interface-like shape 검사를 최소 MVP 범위에서 지원한다.
 - async/task 기반 코드를 .NET Framework의 `Task`/`Task<T>`와 호환되게 낮춘다.
@@ -269,9 +269,9 @@ TypeSharp의 union 설계는 F#과 TypeScript 중 하나를 고르는 방식이 
 ### M0: 언어 핵심 결정
 
 - 이름 해석, 파일/모듈 구조, 기본 타입, 함수/메서드/프로퍼티 선언을 정의한다.
-- [grammar/](grammar/README.md)에 lexical, module, declaration, type, expression, pattern, interop, name resolution 문법 초안을 둔다.
-- [grammar/coverage.md](grammar/coverage.md)에 TypeScript, F#, C# 기능의 포괄/대체/거절 상태를 추적한다.
-- `net48` 산출물 타깃, 패키징 방식, compiler host 요구사항을 [feasibility.md](feasibility.md)의 결정에 맞춰 확정한다.
+- docs-site [Grammar](../docs-site/src/content/docs/grammar.md)와 [Grammar And Language Reference](../docs-site/src/content/docs/reference.md)에 lexical, module, declaration, type, expression, pattern, interop, name resolution 문법 초안을 둔다.
+- docs-site [Feature Status](../docs-site/src/content/docs/feature-status.md)에 TypeScript, F#, C# 기능의 포괄/대체/거절 상태를 추적한다.
+- `net48` 산출물 타깃, 패키징 방식, compiler host 요구사항을 docs-site [Advanced Topics](../docs-site/src/content/docs/advanced.md)와 [Project Policy](../docs-site/src/content/docs/project-policy.md)의 결정에 맞춰 확정한다.
 - MVP 기능과 프리뷰 추적 기능을 분리한다.
 - CLI command surface와 VS Code extension/LSP 최소 범위를 확정한다.
 

@@ -1,0 +1,11 @@
+namespace Samples.Satisfies
+
+public record Customer(Name: string, Age: int)
+
+type Named = { Name: string }
+
+export fun keepCustomer(customer: Customer): Customer =
+  customer satisfies Named
+
+export fun nextAge(customer: Customer): int =
+  customer.Age + 1 satisfies int

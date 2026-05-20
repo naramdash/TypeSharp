@@ -1,6 +1,6 @@
 # Agentic Execution Contract
 
-문서 기준일: 2026-05-19
+문서 기준일: 2026-05-20
 
 이 문서는 Ralph mode, Goal mode, Codex `/goal`처럼 장기 작업을 이어가는 에이전트가 TypeSharp 과제를 안정적으로 수행하기 위해 필요한 실행 계약을 정의한다. 특정 도구의 내부 구현에 의존하지 않고, 어떤 장기 실행 모드에서도 같은 목표, 같은 우선순위, 같은 완료 기준으로 움직이게 만드는 것이 목적이다.
 
@@ -23,6 +23,16 @@
 | Ralph mode | 작업 큐, 상태 요약, 다음 행동, 검증 방식, 인계 포맷 | 이 문서, [checklist.md](checklist.md), [traceability.md](traceability.md) |
 | 일반 Codex 세션 | 현재 요청, 관련 문서, 변경 범위, 검증 명령 | [README.md](README.md), [agent.md](../agent.md), 관련 사양 문서 |
 
+## 문서 표면 분리
+
+Task `0251-docs-site-canonical-language-ledger` 이후 표준 언어/프로젝트 원장의 canonical surface는 [../docs-site](../docs-site)다. 이 `docs/` 디렉터리는 active task, handoff, checklist/traceability bridge, and agentic execution control 같은 temporary operating documents만 남긴다.
+
+규칙:
+- 작업 선택, 완료 판단, task 상태는 [checklist.md](checklist.md), [tasks/README.md](tasks/README.md), [traceability.md](traceability.md), 관련 task rollup이 결정한다.
+- docs-site의 [Document Ownership](../docs-site/src/content/docs/document-ownership.md), [Project Ledger](../docs-site/src/content/docs/project-ledger.md), [Work Ledger](../docs-site/src/content/docs/work-ledger.md), [Agentic Workflow](../docs-site/src/content/docs/agentic-workflow.md)는 표준 원장의 canonical 웹 표면이다.
+- goal 실행 중 docs-site와 `docs/` bridge 문서가 충돌하면 [Document Ownership](../docs-site/src/content/docs/document-ownership.md)의 target owner를 기준으로 삼고, 같은 작업에서 bridge 문서를 맞춘다.
+- docs-site navigation을 바꿔도 아래 부트스트랩 순서는 바꾸지 않는다.
+
 ## 부트스트랩 순서
 
 장기 실행 모드는 새 반복을 시작할 때 아래 순서로 읽는다.
@@ -30,12 +40,14 @@
 1. [../agent.md](../agent.md)
 2. [goal.md](goal.md)
 3. [agentic-execution.md](agentic-execution.md)
-4. [progress.md](progress.md)
+4. [tasks/README.md](tasks/README.md)
 5. [checklist.md](checklist.md)
 6. [traceability.md](traceability.md)
-7. [feasibility.md](feasibility.md)
-8. [architecture.md](architecture.md)
-9. 현재 작업과 직접 관련된 문서
+7. [../docs-site/src/content/docs/document-ownership.md](../docs-site/src/content/docs/document-ownership.md)
+8. [../docs-site/src/content/docs/project-ledger.md](../docs-site/src/content/docs/project-ledger.md)
+9. [../docs-site/src/content/docs/work-ledger.md](../docs-site/src/content/docs/work-ledger.md)
+10. [../docs-site/src/content/docs/agentic-workflow.md](../docs-site/src/content/docs/agentic-workflow.md)
+11. 현재 작업과 직접 관련된 docs-site canonical 문서 또는 `docs/` temporary work 문서
 
 이 순서는 세 가지 질문에 답하기 위한 것이다.
 
@@ -83,8 +95,8 @@
 - Q0가 있으면 Q0를 먼저 처리한다.
 - 구현이 없는 영역에서는 문서만 더 늘리지 말고 skeleton 또는 fixture를 만든다.
 - 사양 없이 구현하면 안 되는 영역은 먼저 좁은 사양과 acceptance test를 만든다.
-- 새 기능은 [grammar/coverage.md](grammar/coverage.md)에 분류가 있어야 한다.
-- 큰 결정을 내리면 [goal.md](goal.md), [feasibility.md](feasibility.md), [traceability.md](traceability.md), [checklist.md](checklist.md) 중 필요한 곳에 연결한다.
+- 새 기능은 docs-site [Feature Status](../docs-site/src/content/docs/feature-status.md)와 필요 시 [Grammar](../docs-site/src/content/docs/grammar.md), [Grammar And Language Reference](../docs-site/src/content/docs/reference.md)에 분류가 있어야 한다.
+- 큰 결정을 내리면 docs-site canonical page와 [goal.md](goal.md), [traceability.md](traceability.md), [checklist.md](checklist.md) 중 필요한 곳에 연결한다.
 
 ## 반복 루프
 
@@ -113,6 +125,7 @@
    - 남은 항목, 막힌 결정, 검증하지 못한 내용을 남긴다.
    - task가 `Done`이면 관련 변경을 커밋하고 원격 브랜치로 push한다.
    - 진행 기록은 [progress.md](progress.md)의 task packet, rollup, commit, 인계 정책을 따른다.
+   - goal, checklist, traceability, task rollup 같은 원장성 정보가 바뀌면 docs-site의 Project Ledger, Work Ledger, Agentic Workflow 중 해당 웹 원장을 함께 갱신한다.
 
 ## Task Packet Template
 
@@ -200,10 +213,6 @@ Task packet 압축 기준:
 
 ## 현재 권장 다음 작업
 
-현 시점의 다음 작업은 문서 확장보다 구현 준비에 가깝다.
+현재 작업은 고정 목록으로 복사하지 않는다. 먼저 [tasks/README.md](tasks/README.md)의 active task를 이어가고, active task가 없으면 [checklist.md](checklist.md)의 미완료 항목을 고른다.
 
-1. C# library interop 구현 범위 확정
-2. C# metadata-backed interop validation fixture
-3. C# 7.3 source backend 구현 확대
-
-이 목록은 [checklist.md](checklist.md)의 미완료 항목을 줄이는 방향으로 갱신한다.
+2026-05-20 기준 checklist에 미완료 checkbox가 없으면 [traceability.md](traceability.md)의 다음 반복 입력에서 Q0-Q5 규칙으로 하나를 선택한다. 후보 예시는 direct IL backend 도입 시점, 새 TypeScript/F#/C# 기능 분류, type-level union public boundary guide refinement, manifest/MSBuild 통합 전략, VS Code extension/LSP packaging, CLI manifest validation이다.

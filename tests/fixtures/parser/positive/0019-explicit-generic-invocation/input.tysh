@@ -1,0 +1,6 @@
+namespace Samples.GenericInvocation
+
+import { LegacyGenericMethods } from "Legacy.Tools"
+
+export fun echo(): string =
+  LegacyGenericMethods.Identity<string>("value")

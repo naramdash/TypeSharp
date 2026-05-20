@@ -1,0 +1,6 @@
+namespace Samples.Extensions
+
+public extension string {
+  public fun HasPrefix(text: string, prefix: string): bool =
+    text.StartsWith(prefix)
+}

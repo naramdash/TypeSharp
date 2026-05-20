@@ -1,0 +1,9 @@
+namespace Samples.Keyof
+
+record Customer(Name: string, Age: int)
+
+type CustomerKey = keyof Customer
+
+type LiteralKey = "Name" | "Age"
+
+fun echo(key: CustomerKey): CustomerKey = key

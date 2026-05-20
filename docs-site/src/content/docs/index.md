@@ -7,7 +7,7 @@ TypeSharp targets generated `.NET Framework 4.8` artifacts while bringing modern
 
 TypeSharp is currently a preview project. The compiler, CLI, generated C# backend, runtime libraries, VS Code extension, and smoke-tested examples are in the repository, but the language is still being built and stabilized.
 
-This site is the human-facing publishing surface for the repository documentation. The source-of-truth design documents remain in `docs/`, but the pages here explain the concepts directly before linking to the canonical documents and verified examples.
+This site is the canonical publishing surface for standard language and project ledger documentation since task `0251-docs-site-canonical-language-ledger`. The `docs/` directory remains the temporary operating area for agentic goal work, bridge files, task packets, rollups, and handoff state.
 
 ## Start Here
 
@@ -18,14 +18,21 @@ This site is the human-facing publishing surface for the repository documentatio
 - [Guides](guides/) explains everyday project, CLI, interop, and modeling tasks.
 - [Project Configuration](project-configuration/) explains `TypeSharp.toml`, source roots, generated output, references, and build shape.
 - [Modules And Imports](modules/) explains source module paths, imports, exports, namespaces, and generated containers.
-- [Type System](type-system/) explains inference, null safety, `unknown`, `dynamic`, structural shapes, unions, generics, and public ABI boundaries.
+- [Type System](type-system/) explains inference, null safety, `unknown`, `dynamic`, structural shapes, intersection aliases, unions, generics, and public ABI boundaries.
+- [Feature Status](feature-status/) maps implemented, MVP, backlog, preview, experimental, and rejected language/tooling areas.
 - [.NET Interop](dotnet-interop/) covers `net48`, local C# DLLs, generated assemblies, and host compatibility.
 - [Cookbook](cookbook/) gives short recipes for common actions.
 - [Fundamentals](fundamentals/) summarizes values, modules, types, records, unions, async, and diagnostics.
 - [Grammar](grammar/) links the stable grammar surface and coverage matrix.
+- [Lowering](lowering/) explains the C# 7.3 source backend contract, generated shapes, runtime helper boundaries, and fixture evidence.
 - [API And CLI Reference](api/) collects CLI, manifest, runtime/core, generated assembly, and VS Code reference material.
 - [Advanced Topics](advanced/) connects lowering, public ABI, metadata, diagnostics, LSP, and regression strategy.
 - [Troubleshooting](troubleshooting/) maps common failures to diagnostics and checks.
+- [Project Ledger](project-ledger/) groups the canonical project records and transition bridge files.
+- [Project Requirements](requirements/) lists required platform, language, compiler, interop, tooling, quality, and security constraints.
+- [Document Ownership](document-ownership/) tracks which legacy `docs/` files are docs-site canonical, temporary agentic files, or archive/remove candidates.
+- [Work Ledger](work-ledger/) shows the current long-running task state and compressed completed-work rollup.
+- [Agentic Workflow](agentic-workflow/) explains how Codex CLI goal and long-running agents should use the canonical records without treating the website as the task queue.
 
 ## Fastest Safe Check
 

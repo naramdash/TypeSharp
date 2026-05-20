@@ -1,0 +1,14 @@
+namespace Samples.Intersections
+
+record Person(Name: string, Age: int)
+
+type Named = { Name: string }
+type Aged = { Age: int }
+type PersonLike = Named & Aged
+
+fun label(value: PersonLike): string = value.Name
+
+fun acceptsIntersection(): string {
+  let person: PersonLike = Person("Ada", 36)
+  label(person)
+}

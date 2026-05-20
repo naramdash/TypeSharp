@@ -1,0 +1,8 @@
+namespace Samples.Nameof
+
+public record Customer(Name: string)
+
+export fun propertyName(): string = nameof(Customer.Name)
+
+export fun parameterName(value: string): string =
+  nameof(value)

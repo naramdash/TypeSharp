@@ -1,0 +1,30 @@
+namespace Samples.IndexedAccess
+
+record Customer(Name: string, Age: int)
+
+type Named = { Name: string }
+
+type CustomerName = Customer["Name"]
+
+type CustomerAge = Customer["Age"]
+
+type CustomerKey = keyof Customer
+
+type CustomerValue = Customer[CustomerKey]
+
+type ShapeName = Named["Name"]
+
+fun name(): CustomerName = "Ada"
+
+fun age(): CustomerAge = 42
+
+fun nameAsString(): string {
+  let name: CustomerName = "Ada"
+  name
+}
+
+fun unionValueFromName(): CustomerValue = "Ada"
+
+fun unionValueFromAge(): CustomerValue = 42
+
+fun shapeName(): ShapeName = "Grace"

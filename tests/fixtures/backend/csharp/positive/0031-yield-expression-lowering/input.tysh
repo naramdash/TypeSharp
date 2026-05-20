@@ -1,0 +1,8 @@
+namespace Samples.Yield
+
+import { IEnumerable } from "System.Collections.Generic"
+
+export fun names(): IEnumerable<string> {
+  yield "Ada"
+  yield "Grace"
+}

@@ -1,0 +1,9 @@
+namespace Samples.Keyof
+
+record Customer(Name: string, Age: int)
+
+type CustomerKey = keyof Customer
+
+fun invalid(): CustomerKey = "Tier"
+
+export fun leak(): CustomerKey = "Name"

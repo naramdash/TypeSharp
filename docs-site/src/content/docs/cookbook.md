@@ -38,7 +38,7 @@ export fun describe(customer: Customer): string =
   customer.Name
 ```
 
-Avoid exposing structural shapes or type-level unions directly in public API; use records, classes, interfaces, or nominal unions.
+Avoid exposing structural shapes, intersection aliases, or type-level unions directly in public API; use records, classes, interfaces, or nominal unions.
 
 ## Model Nullable Input Safely
 

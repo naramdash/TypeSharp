@@ -40,22 +40,34 @@ Structural shapes are useful inside TypeSharp code:
 
 ```text
 type Named = { Name: string }
+
+fun keep(customer: Customer): Customer =
+  customer satisfies Named
 ```
 
-Public .NET metadata must be nominal. Expose a record, class, interface, wrapper, or nominal union instead of a compile-time-only structural shape or type-level union.
+`satisfies` checks that a value fits a named shape while keeping the value's original type. Intersection aliases such as `Named & Aged` can compose named structural shapes for local checking, limited `keyof` can derive local member-name string literal unions from known records or shapes, and limited indexed access types such as `Customer["Name"]` can read known member types. Public .NET metadata must be nominal. Expose a record, class, interface, wrapper, or nominal union instead of a compile-time-only structural shape, intersection alias, `keyof` alias, indexed access alias, or type-level union.
 
 ## Records, Classes, Interfaces, And Delegates
 
-Records are immutable-first data types. Classes and interfaces lower to C#-friendly public shapes for the implemented subset. Delegate declarations and delegate-typed interop are supported in smoke tests.
+Records are immutable-first data types. Expected nominal record expressions can construct records directly and can spread another nominal record value before explicit overrides. Classes and interfaces lower to C#-friendly public shapes for the implemented subset. Delegate declarations and delegate-typed interop are supported in smoke tests.
 
 ## Collections, Pipelines, And Async
 
-Simple homogeneous collection expressions lower to arrays by default, or to `List<T>` when an explicit target type is present. Pipeline expressions lower to nested function calls.
+Simple homogeneous collection expressions lower to arrays by default, or to `List<T>` when an explicit target type is present. Collection spread elements merge known arrays or `List<T>` values while still lowering to C# 7.3-compatible code. Iterator functions can use block-level `yield` with an explicit `IEnumerable<T>` return type, block-level `lock` statements lower to C# monitor locks, and explicit-receiver `extension` methods lower to C# extension methods. Pipeline expressions lower to nested function calls, composition expressions lower to delegate lambdas, `satisfies` erases after type checking, `nameof` lowers to C# `nameof(...)`, and `checked(...)`/`unchecked(...)` lower to C# overflow-context expressions.
 
 ```text
 export fun total(): int {
   let values: int[] = [1, 2, 3]
   values[0]
+}
+```
+
+```text
+import { IEnumerable } from "System.Collections.Generic"
+
+export fun names(): IEnumerable<string> {
+  yield "Ada"
+  yield "Grace"
 }
 ```
 

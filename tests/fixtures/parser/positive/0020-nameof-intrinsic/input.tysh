@@ -1,0 +1,6 @@
+namespace Samples.Nameof
+
+export fun memberName(): string = nameof(Customer.Name)
+
+export fun parameterName(value: string): string =
+  nameof(value)

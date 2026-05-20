@@ -1,0 +1,19 @@
+namespace Samples.IndexedAccess
+
+record Customer(Name: string, Age: int)
+
+type Named = { Name: string }
+
+type CustomerName = Customer["Name"]
+
+type CustomerAge = Customer["Age"]
+
+type ShapeName = Named["Name"]
+
+fun name(): CustomerName = "Ada"
+
+fun age(): CustomerAge = 42
+
+fun shapeName(): ShapeName = "Grace"
+
+fun isAda(name: CustomerName): bool = name == "Ada"

@@ -1,0 +1,7 @@
+namespace Samples.Yield.Negative
+
+import { IEnumerable } from "System.Collections.Generic"
+
+fun broken(): IEnumerable<string> {
+  yield 42
+}

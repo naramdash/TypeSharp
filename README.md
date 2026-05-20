@@ -67,22 +67,22 @@ Human-facing docs:
 
 - GitHub Pages documentation: https://typesharp.github.io/TypeSharp/
 - Docs source: [docs-site](docs-site)
-- CLI contract: [docs/cli.md](docs/cli.md)
+- CLI contract: [docs-site/src/content/docs/cli.md](docs-site/src/content/docs/cli.md)
 - VS Code and LSP contract: [docs-site/src/content/docs/vscode-lsp.md](docs-site/src/content/docs/vscode-lsp.md)
-- Runnable examples: [docs/examples/runnable](docs/examples/runnable)
-- Migration guide: [docs/migration-guide.md](docs/migration-guide.md)
-- Diagnostics guide: [docs/diagnostics.md](docs/diagnostics.md)
+- Runnable examples: [examples/runnable](examples/runnable)
+- Migration guide: [docs-site/src/content/docs/migration.md](docs-site/src/content/docs/migration.md)
+- Diagnostics guide: [docs-site/src/content/docs/diagnostics.md](docs-site/src/content/docs/diagnostics.md)
 
 Design and implementation docs:
 
-- Project goal: [docs/goal.md](docs/goal.md)
-- Language grammar: [docs/grammar/README.md](docs/grammar/README.md)
-- C# interop: [docs/csharp-interop.md](docs/csharp-interop.md)
-- Lowering reference: [docs/lowering.md](docs/lowering.md)
-- Feature map: [docs/feature-map.md](docs/feature-map.md)
+- Project goal: [docs-site/src/content/docs/goal.md](docs-site/src/content/docs/goal.md)
+- Language grammar: [docs-site/src/content/docs/grammar.md](docs-site/src/content/docs/grammar.md)
+- C# interop: [docs-site/src/content/docs/dotnet-interop.md](docs-site/src/content/docs/dotnet-interop.md)
+- Lowering reference: [docs-site/src/content/docs/lowering.md](docs-site/src/content/docs/lowering.md)
+- Feature status: [docs-site/src/content/docs/feature-status.md](docs-site/src/content/docs/feature-status.md)
 - Traceability: [docs/traceability.md](docs/traceability.md)
 
-Internal long-running work notes live under [docs/tasks](docs/tasks). They are useful for contributors and agents, but they are not the best starting point for new users.
+The [docs](docs) folder is now the temporary agentic work surface for task packets, handoff, traceability, and bridge files. It is useful for contributors and agents, but it is not the best starting point for new users.
 
 ## Repository Map
 
@@ -90,9 +90,9 @@ Internal long-running work notes live under [docs/tasks](docs/tasks). They are u
 | --- | --- |
 | [src](src) | compiler, CLI, language server, runtime, and core library projects |
 | [tests](tests) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |
-| [docs](docs) | canonical design, grammar, CLI, diagnostics, migration, and traceability documents |
-| [docs-site](docs-site) | Astro Starlight GitHub Pages documentation site |
-| [docs/examples](docs/examples) | single-file examples and runnable adoption projects |
+| [docs](docs) | temporary agentic work surface, task packets, traceability, and bridge files |
+| [docs-site](docs-site) | canonical Astro Starlight GitHub Pages documentation site |
+| [examples](examples) | single-file examples and runnable adoption projects |
 | [vscode/typesharp](vscode/typesharp) | VS Code extension package, syntax, formatter, and LSP client |
 
 ## Development Checks
@@ -115,6 +115,6 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 
 ## Project Governance
 
-The project is being developed against the goal and success criteria in [docs/goal.md](docs/goal.md). Work is tracked in small task packets under [docs/tasks](docs/tasks), and completed behavior is connected back to requirements through [docs/traceability.md](docs/traceability.md).
+The project is being developed against the goal and success criteria in [docs-site Core Goal](docs-site/src/content/docs/goal.md). Work is tracked in small task packets under [docs/tasks](docs/tasks), and completed behavior is connected back to requirements through [docs/traceability.md](docs/traceability.md).
 
 If you are here to use or evaluate TypeSharp, start with the quickstart above and the GitHub Pages docs. If you are here to continue implementation work, read [agent.md](agent.md), [docs/agentic-execution.md](docs/agentic-execution.md), and the latest entries in [docs/tasks](docs/tasks).

@@ -40,6 +40,7 @@ public static class TypeSharpBinder
         private readonly string _file;
         private readonly List<Diagnostic> _diagnostics = [];
         private readonly List<BoundSymbol> _symbols = [];
+        private readonly HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
         private bool _hasStaticImport;
 
         public Binder(string file)
@@ -122,7 +123,11 @@ public static class TypeSharpBinder
                         break;
 
                     case SyntaxKind.ExportStarDeclaration:
-                        ReportUnsupportedExportForwarding(child);
+                        if (!IsSupportedSourceReExport(child))
+                        {
+                            ReportUnsupportedExportForwarding(child);
+                        }
+
                         break;
 
                     case SyntaxKind.TypeAliasDeclaration:
@@ -158,7 +163,23 @@ public static class TypeSharpBinder
                     case SyntaxKind.LiteralDeclaration:
                         if (TryGetDeclarationName(child, out var valueName, out var valueSpan))
                         {
-                            AddSymbol(scope, valueName, BoundSymbolKind.Value, valueSpan, declareValue: true, declareType: false);
+                            var isFunctionValue = child.Kind == SyntaxKind.ValueDeclaration && IsFunctionValueDeclaration(child);
+                            if (isFunctionValue &&
+                                !HasFunctionTypeAnnotation(child) &&
+                                HasModifier(child, SyntaxKind.ExportModifier))
+                            {
+                                ReportUnsupportedExportForwarding(child);
+                            }
+
+                            AddSymbol(
+                                scope,
+                                valueName,
+                                BoundSymbolKind.Value,
+                                valueSpan,
+                                declareValue: true,
+                                declareType: false,
+                                declareLiteral: child.Kind == SyntaxKind.LiteralDeclaration,
+                                declareExportableValue: !isFunctionValue || HasFunctionTypeAnnotation(child));
                         }
 
                         break;
@@ -179,7 +200,7 @@ public static class TypeSharpBinder
                 var kind = unionCase.Children.Any(child => child.Kind == SyntaxKind.ParameterList)
                     ? BoundSymbolKind.Function
                     : BoundSymbolKind.Value;
-                AddSymbol(scope, identifier.Text ?? string.Empty, kind, identifier.Span, declareValue: true, declareType: false);
+                AddSymbol(scope, identifier.Text ?? string.Empty, kind, identifier.Span, declareValue: true, declareType: false, declareFunction: false);
             }
         }
 
@@ -204,6 +225,10 @@ public static class TypeSharpBinder
                     BindTypeDeclaration(node, scope);
                     break;
 
+                case SyntaxKind.ExtensionDeclaration:
+                    BindExtensionDeclaration(node, scope);
+                    break;
+
                 case SyntaxKind.ValueDeclaration:
                 case SyntaxKind.LiteralDeclaration:
                     BindTypeAnnotations(node, scope);
@@ -222,14 +247,26 @@ public static class TypeSharpBinder
 
         private void BindLocalExportNamedDeclaration(SyntaxNode node, BindingScope scope)
         {
+            if (IsSupportedSourceReExport(node))
+            {
+                return;
+            }
+
             if (IsUnsupportedExportSpecifierDeclaration(node))
             {
+                return;
+            }
+
+            if (HasExportAlias(node))
+            {
+                BindLocalValueExportAliases(node, scope);
                 return;
             }
 
             foreach (var exportName in GetExportedIdentifiers(node))
             {
                 var name = exportName.Text ?? string.Empty;
+                CheckDuplicateExport(exportName, name);
                 if (!scope.ResolveValue(name) && !scope.ResolveType(name))
                 {
                     ReportUnresolved(exportName, name);
@@ -239,17 +276,57 @@ public static class TypeSharpBinder
 
         private void BindLocalExportTypeDeclaration(SyntaxNode node, BindingScope scope)
         {
+            if (IsSupportedSourceReExport(node))
+            {
+                return;
+            }
+
             if (IsUnsupportedExportSpecifierDeclaration(node))
             {
+                return;
+            }
+
+            if (HasExportAlias(node))
+            {
+                foreach (var exportSpecifier in GetNamedExportSpecifiers(node))
+                {
+                    CheckDuplicateExport(exportSpecifier.ExportedIdentifier, exportSpecifier.ExportedName);
+                    if (!scope.ResolveType(exportSpecifier.TargetName))
+                    {
+                        ReportUnresolved(exportSpecifier.TargetIdentifier, exportSpecifier.TargetName);
+                    }
+                }
+
                 return;
             }
 
             foreach (var exportName in GetExportedIdentifiers(node))
             {
                 var name = exportName.Text ?? string.Empty;
+                CheckDuplicateExport(exportName, name);
                 if (!scope.ResolveType(name))
                 {
                     ReportUnresolved(exportName, name);
+                }
+            }
+        }
+
+        private void BindLocalValueExportAliases(SyntaxNode node, BindingScope scope)
+        {
+            foreach (var exportSpecifier in GetNamedExportSpecifiers(node))
+            {
+                CheckDuplicateExport(exportSpecifier.ExportedIdentifier, exportSpecifier.ExportedName);
+                if (!scope.ResolveValue(exportSpecifier.TargetName) && !scope.ResolveType(exportSpecifier.TargetName))
+                {
+                    ReportUnresolved(exportSpecifier.TargetIdentifier, exportSpecifier.TargetName);
+                    continue;
+                }
+
+                if (!scope.ResolveFunction(exportSpecifier.TargetName) &&
+                    !scope.ResolveLiteral(exportSpecifier.TargetName) &&
+                    !scope.ResolveExportableValue(exportSpecifier.TargetName))
+                {
+                    ReportUnsupportedExportForwarding(exportSpecifier.TargetIdentifier);
                 }
             }
         }
@@ -271,6 +348,20 @@ public static class TypeSharpBinder
             DeclareTypeParameters(node, scope);
             BindTypeAnnotations(node, scope);
             BindInitializers(node, scope);
+
+            foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
+            {
+                BindFunctionDeclaration(function, scope);
+            }
+        }
+
+        private void BindExtensionDeclaration(SyntaxNode node, BindingScope parentScope)
+        {
+            var scope = new BindingScope(parentScope);
+            if (node.Children.FirstOrDefault(child => IsTypeSyntax(child.Kind)) is { } receiverType)
+            {
+                BindTypeNode(receiverType, scope);
+            }
 
             foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
             {
@@ -368,6 +459,26 @@ public static class TypeSharpBinder
                     BindLambdaExpression(node, scope);
                     break;
 
+                case SyntaxKind.NameofExpression:
+                    BindNameofExpression(node, scope);
+                    break;
+
+                case SyntaxKind.SatisfiesExpression:
+                    BindSatisfiesExpression(node, scope);
+                    break;
+
+                case SyntaxKind.YieldExpression:
+                    foreach (var child in node.Children.Where(child => !child.IsToken))
+                    {
+                        BindNode(child, scope);
+                    }
+
+                    break;
+
+                case SyntaxKind.LockStatement:
+                    BindLockStatement(node, scope);
+                    break;
+
                 case SyntaxKind.ForExpression:
                     BindForExpression(node, scope);
                     break;
@@ -377,9 +488,19 @@ public static class TypeSharpBinder
                     break;
 
                 case SyntaxKind.RecordExpression:
-                    foreach (var child in node.Children.Where(child => child.Kind == SyntaxKind.RecordField))
+                    foreach (var child in node.Children.Where(child => child.Kind is SyntaxKind.RecordField or SyntaxKind.RecordSpreadField))
                     {
-                        BindRecordField(child, scope);
+                        if (child.Kind == SyntaxKind.RecordField)
+                        {
+                            BindRecordField(child, scope);
+                        }
+                        else
+                        {
+                            foreach (var expression in child.Children.Where(grandchild => !grandchild.IsToken))
+                            {
+                                BindNode(expression, scope);
+                            }
+                        }
                     }
 
                     break;
@@ -390,6 +511,10 @@ public static class TypeSharpBinder
                 case SyntaxKind.NullableType:
                 case SyntaxKind.FunctionType:
                 case SyntaxKind.UnionType:
+                case SyntaxKind.IntersectionType:
+                case SyntaxKind.KeyofType:
+                case SyntaxKind.IndexedAccessType:
+                case SyntaxKind.LiteralType:
                 case SyntaxKind.RecordShapeType:
                 case SyntaxKind.ShapeMember:
                 case SyntaxKind.TypeArgumentList:
@@ -450,6 +575,34 @@ public static class TypeSharpBinder
             foreach (var child in node.Children.Skip(1).Where(child => !child.IsToken))
             {
                 BindNode(child, scope);
+            }
+        }
+
+        private void BindSatisfiesExpression(SyntaxNode node, BindingScope scope)
+        {
+            var children = node.Children.Where(child => !child.IsToken).ToArray();
+            if (children.Length > 0)
+            {
+                BindNode(children[0], scope);
+            }
+
+            if (children.Length > 1)
+            {
+                BindTypeNode(children[^1], scope);
+            }
+        }
+
+        private void BindLockStatement(SyntaxNode node, BindingScope scope)
+        {
+            var children = node.Children.Where(child => !child.IsToken).ToArray();
+            if (children.Length > 0)
+            {
+                BindNode(children[0], scope);
+            }
+
+            foreach (var block in children.Skip(1).Where(child => child.Kind == SyntaxKind.BlockExpression))
+            {
+                BindNode(block, scope);
             }
         }
 
@@ -619,6 +772,23 @@ public static class TypeSharpBinder
             }
         }
 
+        private void BindNameofExpression(SyntaxNode node, BindingScope scope)
+        {
+            var target = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (target is null || !TryGetNameReferenceRootIdentifier(target, out var identifier))
+            {
+                return;
+            }
+
+            var name = identifier.Text ?? string.Empty;
+            if (scope.ResolveValue(name) || scope.ResolveType(name))
+            {
+                return;
+            }
+
+            ReportUnresolved(identifier, name);
+        }
+
         private void ResolveValue(SyntaxNode identifier, BindingScope scope, bool allowTypeSymbol, bool allowExternalStaticCall)
         {
             var name = identifier.Text ?? string.Empty;
@@ -671,11 +841,59 @@ public static class TypeSharpBinder
                 node.Span));
         }
 
+        private void CheckDuplicateExport(SyntaxNode identifier, string name)
+        {
+            if (!_localExportedNames.Add(name))
+            {
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.DuplicateExport.Code,
+                    DiagnosticDescriptors.DuplicateExport.DefaultSeverity,
+                    $"Duplicate export '{name}'.",
+                    _file,
+                    identifier.Span));
+            }
+        }
+
         private static bool IsUnsupportedExportSpecifierDeclaration(SyntaxNode node) =>
-            HasFromSpecifier(node) || HasExportAlias(node);
+            HasFromSpecifier(node) && !IsSupportedSourceReExport(node);
+
+        private static bool IsSupportedSourceReExport(SyntaxNode node) =>
+            node.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration or SyntaxKind.ExportStarDeclaration &&
+            HasFromSpecifier(node) &&
+            HasRelativeFromSpecifier(node);
 
         private static bool HasFromSpecifier(SyntaxNode node) =>
             node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.FromKeyword);
+
+        private static bool HasRelativeFromSpecifier(SyntaxNode node)
+        {
+            for (var index = 0; index < node.Children.Count - 1; index++)
+            {
+                if (node.Children[index].Kind != SyntaxKind.FromKeyword ||
+                    node.Children[index + 1].Kind != SyntaxKind.StringLiteralToken)
+                {
+                    continue;
+                }
+
+                var specifier = Unquote(node.Children[index + 1].Text ?? string.Empty);
+                return specifier == "." ||
+                    specifier == ".." ||
+                    specifier.StartsWith("./", StringComparison.Ordinal) ||
+                    specifier.StartsWith("../", StringComparison.Ordinal);
+            }
+
+            return false;
+        }
+
+        private static string Unquote(string text)
+        {
+            if (text.Length >= 2 && text[0] == '"' && text[^1] == '"')
+            {
+                return text[1..^1];
+            }
+
+            return text;
+        }
 
         private static bool HasExportAlias(SyntaxNode node)
         {
@@ -702,6 +920,41 @@ public static class TypeSharpBinder
             return false;
         }
 
+        private static bool HasModifier(SyntaxNode node, SyntaxKind modifierKind) =>
+            node.Children.Any(child => child.Kind == modifierKind);
+
+        private static bool IsFunctionValueDeclaration(SyntaxNode node)
+        {
+            var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            if (annotation?.Children.Any(child => child.Kind == SyntaxKind.FunctionType) == true)
+            {
+                return true;
+            }
+
+            return node.Children
+                .Where(child => child.Kind == SyntaxKind.Initializer)
+                .SelectMany(child => child.Children)
+                .Any(child => child.Kind == SyntaxKind.LambdaExpression);
+        }
+
+        private static bool HasFunctionTypeAnnotation(SyntaxNode node) =>
+            node.Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)?
+                .Children
+                .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
+
+        private static bool IsTypeSyntax(SyntaxKind kind) =>
+            kind is SyntaxKind.TypeName
+                or SyntaxKind.ArrayType
+                or SyntaxKind.NullableType
+                or SyntaxKind.FunctionType
+                or SyntaxKind.UnionType
+                or SyntaxKind.IntersectionType
+                or SyntaxKind.KeyofType
+                or SyntaxKind.IndexedAccessType
+                or SyntaxKind.LiteralType
+                or SyntaxKind.RecordShapeType;
+
         private static IEnumerable<SyntaxNode> GetExportedIdentifiers(SyntaxNode node)
         {
             var insideBraces = false;
@@ -725,13 +978,53 @@ public static class TypeSharpBinder
             }
         }
 
+        private static IEnumerable<NamedExportSpecifier> GetNamedExportSpecifiers(SyntaxNode node)
+        {
+            var insideBraces = false;
+            for (var index = 0; index < node.Children.Count; index++)
+            {
+                var child = node.Children[index];
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    insideBraces = true;
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.CloseBraceToken)
+                {
+                    yield break;
+                }
+
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } name)
+                {
+                    if (index + 2 < node.Children.Count &&
+                        node.Children[index + 1].IsToken &&
+                        node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
+                        node.Children[index + 2].IsToken &&
+                        node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                        node.Children[index + 2].Text is { Length: > 0 } alias)
+                    {
+                        yield return new NamedExportSpecifier(name, alias, child, node.Children[index + 2]);
+                        index += 2;
+                    }
+                    else
+                    {
+                        yield return new NamedExportSpecifier(name, name, child, child);
+                    }
+                }
+            }
+        }
+
         private void AddSymbol(
             BindingScope scope,
             string name,
             BoundSymbolKind kind,
             SourceSpan span,
             bool declareValue,
-            bool declareType)
+            bool declareType,
+            bool declareFunction = true,
+            bool declareLiteral = false,
+            bool declareExportableValue = false)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -747,6 +1040,21 @@ public static class TypeSharpBinder
             if (declareValue)
             {
                 scope.DeclareValue(name);
+            }
+
+            if (kind == BoundSymbolKind.Function && declareFunction)
+            {
+                scope.DeclareFunction(name);
+            }
+
+            if (declareLiteral)
+            {
+                scope.DeclareLiteral(name);
+            }
+
+            if (declareExportableValue)
+            {
+                scope.DeclareExportableValue(name);
             }
 
             if (declareType)
@@ -788,6 +1096,17 @@ public static class TypeSharpBinder
         {
             identifier = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken) ?? node;
             return identifier.IsToken && identifier.Kind == SyntaxKind.IdentifierToken;
+        }
+
+        private static bool TryGetNameReferenceRootIdentifier(SyntaxNode node, out SyntaxNode identifier)
+        {
+            if (node.Kind == SyntaxKind.MemberAccessExpression &&
+                node.Children.FirstOrDefault(child => !child.IsToken) is { } receiver)
+            {
+                return TryGetNameReferenceRootIdentifier(receiver, out identifier);
+            }
+
+            return TryGetFirstIdentifier(node, out identifier);
         }
 
         private static IEnumerable<SyntaxNode> GetNamedImportIdentifiers(SyntaxNode node)
@@ -873,6 +1192,12 @@ public static class TypeSharpBinder
             name = string.Join(".", parts);
             return parts.Length > 0;
         }
+
+        private readonly record struct NamedExportSpecifier(
+            string TargetName,
+            string ExportedName,
+            SyntaxNode TargetIdentifier,
+            SyntaxNode ExportedIdentifier);
     }
 
     private sealed class BindingScope
@@ -880,6 +1205,9 @@ public static class TypeSharpBinder
         private readonly BindingScope? _parent;
         private readonly HashSet<string> _values = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _functions = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _literals = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _exportableValues = new(StringComparer.Ordinal);
 
         public BindingScope(BindingScope? parent)
         {
@@ -894,8 +1222,20 @@ public static class TypeSharpBinder
 
         public void DeclareType(string name) => _types.Add(name);
 
+        public void DeclareFunction(string name) => _functions.Add(name);
+
+        public void DeclareLiteral(string name) => _literals.Add(name);
+
+        public void DeclareExportableValue(string name) => _exportableValues.Add(name);
+
         public bool ResolveValue(string name) => _values.Contains(name) || (_parent?.ResolveValue(name) ?? false);
 
         public bool ResolveType(string name) => _types.Contains(name) || (_parent?.ResolveType(name) ?? false);
+
+        public bool ResolveFunction(string name) => _functions.Contains(name) || (_parent?.ResolveFunction(name) ?? false);
+
+        public bool ResolveLiteral(string name) => _literals.Contains(name) || (_parent?.ResolveLiteral(name) ?? false);
+
+        public bool ResolveExportableValue(string name) => _exportableValues.Contains(name) || (_parent?.ResolveExportableValue(name) ?? false);
     }
 }

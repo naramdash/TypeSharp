@@ -1,0 +1,8 @@
+namespace Samples.RecordSpread
+
+public record Customer(Name: string, Age: int)
+public record ExtendedCustomer(Name: string, Age: int, Tier: string)
+
+export fun older(customer: Customer): Customer = { ...customer, Age: 43 }
+
+export fun fromExtended(customer: ExtendedCustomer): Customer = { ...customer }

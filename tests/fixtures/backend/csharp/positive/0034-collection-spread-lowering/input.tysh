@@ -1,0 +1,7 @@
+namespace Samples.CollectionSpread
+
+import { List } from "System.Collections.Generic"
+
+export fun combined(xs: int[], ys: int[]): int[] = [0, ...xs, ...ys, 4]
+
+export fun listCombined(xs: int[], ys: List<int>): List<int> = [0, ...xs, ...ys, 4]
