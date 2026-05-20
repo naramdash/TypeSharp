@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0261                          |
+| Completed range    | 0001-0262                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -37,7 +37,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 - [x] Task 수행 및 프로젝트 코드들 병렬로 수행할 수 있는 구간을 찾아 최적화하기
 - [x] docs package.json deps 최신화하기
 - [x] docs 에 쓰이는 javascript는 최대한 typescript로 바꾸기, typescript로 바꿀 수 없는 부분은 명확하게 주석으로 설명하기
-- [ ] VSCode Syntax Highlighting Extension 만들고 설치 방법 설명하기, 사용자의 개입이 필요할 경우 사용자를 위해 marketplace에 extension을 올리는 방법 설명하는 임시 가이드 만들기
+- [x] VSCode Syntax Highlighting Extension 만들고 설치 방법 설명하기, 사용자의 개입이 필요할 경우 사용자를 위해 marketplace에 extension을 올리는 방법 설명하는 임시 가이드 만들기
 - [ ] `docs` 폴더의 tysh 코드 예제 표시가 syntax highlight 될 수 있도록 하기
 - [ ] docs에 tysh 프로젝트가 실제로 어떻게 net48 런타임 아티펙트를 구성하는지 아키텍처 & 원리를 설명하는 문서 남기기, 적절하게 mermaid 다이어그램을 사용해서 tysh 프로젝트의 아키텍처 설명하기
 - [ ] [Vue Docs Writing Guide](https://github.com/vuejs/docs/blob/main/.github/contributing/writing-guide.md)를 확인해서 이 프로젝트에 맞게 문서 작성 가이드라인 만들기, 특히 tysh 예제 프로젝트 코드에 대한 문서 작성 가이드라인 만들기, 이모지를 적절하게 활용해서 가독성 높이기
@@ -51,6 +51,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                        | Packet                                                                                                         | Notes                                                                                                                                     |
 | -------- | ------ | -------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Q4       | Done   | User directive | VS Code syntax highlighting extension install guide | [tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide](tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide) | Completed VS Code TextMate grammar/package coverage, local VSIX install instructions, and temporary Marketplace publishing guide. |
 | Q5       | Done   | User directive | Docs TypeScript config conversion | [tasks-rollup.md#task-0261-docs-typescript-config-conversion](tasks-rollup.md#task-0261-docs-typescript-config-conversion) | Converted the docs Astro config from JavaScript to TypeScript and added a contract check that docs-owned source has no JavaScript config/source files. |
 | Q5       | Done   | User directive | Docs dependency update      | [tasks-rollup.md#task-0260-docs-dependency-update](tasks-rollup.md#task-0260-docs-dependency-update)           | Updated `docs` package and lockfile to current npm registry latest tags for Astro, Starlight, and TypeScript; refreshed docs package contract coverage. |
 | Q2       | Done   | User directive | Parallel execution optimization | [tasks-rollup.md#task-0259-parallel-execution-optimization](tasks-rollup.md#task-0259-parallel-execution-optimization) | Parallelized source-file parse and semantic validation while preserving deterministic diagnostics; documented agent and compiler parallelism rules. |

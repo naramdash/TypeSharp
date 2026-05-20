@@ -303,6 +303,7 @@ var tests = new (string Name, Action Body)[]
     ("VS Code extension activation smoke runs in mocked extension host", VsCodeExtensionActivationSmokeRunsInMockedExtensionHost),
     ("VS Code extension live smoke runs against bundled language server", VsCodeExtensionLiveSmokeRunsAgainstBundledLanguageServer),
     ("VS Code extension package shape is stable", VsCodeExtensionPackageShapeIsStable),
+    ("VS Code syntax grammar covers stable TypeSharp tokens", VsCodeSyntaxGrammarCoversStableTypeSharpTokens),
     ("runnable example catalog smoke matrix is stable", RunnableExampleCatalogSmokeMatrixIsStable),
     ("runnable example project commands are smoke-tested", RunnableExampleProjectCommandsAreSmokeTested),
     ("docs site contract is stable", DocsSiteContractIsStable),
@@ -10209,8 +10210,12 @@ static void VsCodeExtensionPackageShapeIsStable()
     var extensionRoot = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp");
     using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(extensionRoot, "package.json")));
     var root = packageJson.RootElement;
+    var repository = root.GetProperty("repository");
 
     var scripts = root.GetProperty("scripts");
+    AssertEqual("git", repository.GetProperty("type").GetString());
+    AssertEqual("https://github.com/naramdash/TypeSharp.git", repository.GetProperty("url").GetString());
+    AssertEqual("vscode/typesharp", repository.GetProperty("directory").GetString());
     AssertEqual("node --check extension.js", scripts.GetProperty("check").GetString());
     AssertEqual("node --check test/extension-smoke.js", scripts.GetProperty("check:smoke").GetString());
     AssertEqual("node --check test/extension-live-smoke.js", scripts.GetProperty("check:live").GetString());
@@ -10218,10 +10223,12 @@ static void VsCodeExtensionPackageShapeIsStable()
     AssertEqual("node test/extension-smoke.js", scripts.GetProperty("test:smoke").GetString());
     AssertEqual("node test/extension-live-smoke.js", scripts.GetProperty("test:live").GetString());
     AssertEqual("node test/run-extension-host-smoke.js", scripts.GetProperty("test:host").GetString());
+    AssertEqual("npx --yes @vscode/vsce package", scripts.GetProperty("package:vsix").GetString());
     AssertEqual(
         "dotnet publish ../../src/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo",
         scripts.GetProperty("prepare:server").GetString());
     AssertTrue(File.Exists(Path.Combine(extensionRoot, "extension.js")), "VS Code extension entrypoint should exist.");
+    AssertTrue(File.Exists(Path.Combine(extensionRoot, "MARKETPLACE.md")), "VS Code Marketplace publishing guide should exist.");
     AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "extension-smoke.js")), "VS Code mocked extension host smoke should exist.");
     AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "extension-live-smoke.js")), "VS Code live extension smoke should exist.");
     AssertTrue(File.Exists(Path.Combine(extensionRoot, "test", "extension-host-smoke.js")), "VS Code Extension Host smoke should exist.");
@@ -10239,10 +10246,59 @@ static void VsCodeExtensionPackageShapeIsStable()
     AssertTrue(files.Contains("language-configuration.json"), "VS Code package should include language configuration.");
     AssertTrue(files.Contains("syntaxes/**"), "VS Code package should include TextMate grammar assets.");
     AssertTrue(files.Contains("server/**"), "VS Code package should reserve bundled language server assets.");
+    AssertTrue(files.Contains("MARKETPLACE.md"), "VS Code package should include the temporary Marketplace publishing guide.");
     AssertFalse(root.TryGetProperty("dependencies", out var dependencies) && dependencies.EnumerateObject().Any(), "VS Code extension should remain dependency-free for the current package smoke.");
+
+    var readme = File.ReadAllText(Path.Combine(extensionRoot, "README.md"));
+    AssertContains("npm run package:vsix", readme);
+    AssertContains("code --install-extension", readme);
+    AssertContains("MARKETPLACE.md", readme);
+
+    var marketplace = File.ReadAllText(Path.Combine(extensionRoot, "MARKETPLACE.md"));
+    AssertContains("Marketplace Manage", marketplace);
+    AssertContains("npx --yes @vscode/vsce login", marketplace);
+    AssertContains("npx --yes @vscode/vsce publish", marketplace);
 
     var gitignore = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), ".gitignore"));
     AssertContains("vscode/typesharp/server/", gitignore);
+}
+
+static void VsCodeSyntaxGrammarCoversStableTypeSharpTokens()
+{
+    var grammarPath = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp", "syntaxes", "typesharp.tmLanguage.json");
+    using var grammarJson = JsonDocument.Parse(File.ReadAllText(grammarPath));
+    var root = grammarJson.RootElement;
+    var grammarText = File.ReadAllText(grammarPath);
+
+    AssertEqual("source.typesharp", root.GetProperty("scopeName").GetString());
+    AssertTrue(
+        root.GetProperty("fileTypes").EnumerateArray().Any(value => value.GetString() == "tysh"),
+        "TypeSharp TextMate grammar should map .tysh source files.");
+    AssertContains("keyword.operator.expression.typesharp", grammarText);
+    AssertContains("keyword.operator.type.typesharp", grammarText);
+    AssertContains("support.function.intrinsic.typesharp", grammarText);
+
+    foreach (var token in new[]
+    {
+        "ambient",
+        "async",
+        "checked",
+        "extension",
+        "keyof",
+        "literal",
+        "lock",
+        "match",
+        "nameof",
+        "open",
+        "satisfies",
+        "unchecked",
+        "union",
+        "unknown",
+        "yield"
+    })
+    {
+        AssertContains(token, grammarText);
+    }
 }
 
 static void RunnableExampleCatalogSmokeMatrixIsStable()
@@ -10633,9 +10689,13 @@ static void DocsSiteContractIsStable()
     AssertContains("npm run check", vscodeLspPage);
     AssertContains("npm run check:live", vscodeLspPage);
     AssertContains("npm run prepare:server", vscodeLspPage);
+    AssertContains("npm run package:vsix", vscodeLspPage);
+    AssertContains("code --install-extension", vscodeLspPage);
     AssertContains("npm run test:live", vscodeLspPage);
     AssertContains("npm run test:host", vscodeLspPage);
     AssertContains("diagnostics, hover, go-to-definition, completion, and formatting", vscodeLspPage);
+    AssertContains("MARKETPLACE.md", vscodeLspPage);
+    AssertContains("@vscode/vsce", vscodeLspPage);
 
     var benchmarkRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs", "research");
     var benchmarkPage = File.ReadAllText(Path.Combine(benchmarkRoot, "official-docs-deep-benchmark.md"));

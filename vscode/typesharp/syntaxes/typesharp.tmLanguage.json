@@ -126,15 +126,27 @@
       "patterns": [
         {
           "name": "keyword.control.typesharp",
-          "match": "\\b(?:as|await|break|case|catch|continue|do|elif|else|finally|for|from|if|in|is|match|return|throw|try|using|when|where|while|with|yield)\\b"
+          "match": "\\b(?:await|break|catch|continue|else|finally|if|in|lock|match|return|throw|try|using|when|where|with|yield)\\b"
         },
         {
           "name": "storage.type.typesharp",
           "match": "\\b(?:class|delegate|enum|extension|interface|module|namespace|record|struct|type|union)\\b"
         },
         {
+          "name": "keyword.operator.expression.typesharp",
+          "match": "\\b(?:as|is|satisfies)\\b"
+        },
+        {
+          "name": "keyword.operator.type.typesharp",
+          "match": "\\b(?:keyof)\\b"
+        },
+        {
+          "name": "support.function.intrinsic.typesharp",
+          "match": "\\b(?:checked|nameof|unchecked)\\b"
+        },
+        {
           "name": "storage.modifier.typesharp",
-          "match": "\\b(?:abstract|ambient|async|checked|default|dynamic|event|explicit|extern|field|get|global|implicit|init|inline|internal|interop|operator|override|params|partial|private|protected|public|readonly|ref|reflect|required|sealed|set|static|throws|unchecked|unsafe|virtual)\\b"
+          "match": "\\b(?:abstract|ambient|async|default|dynamic|event|explicit|extern|field|get|global|implicit|init|inline|internal|interop|operator|override|params|partial|private|protected|public|readonly|ref|reflect|required|sealed|set|static|throws|unsafe|virtual)\\b"
         },
         {
           "name": "keyword.declaration.typesharp",

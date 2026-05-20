@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-20 23:46:22 +09:00
+End Time: 2026-05-21 00:06:00 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0261. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0262. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0261 |
+| Completed work covered | 0001-0262 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -304,6 +304,40 @@ Primary evidence:
 - `docs/astro.config.ts`
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0262 VS Code Syntax Highlighting Extension Install Guide
+
+Completed VS Code syntax highlighting and install-guide work established:
+
+- The `vscode/typesharp` extension package now exposes `npm run package:vsix`, repository metadata for Marketplace link rewriting, and includes `MARKETPLACE.md` in the VSIX package files.
+- The TextMate grammar now explicitly covers stable TypeSharp tokens and scopes for `satisfies`, `keyof`, `nameof`, `checked`, `unchecked`, and block-level `lock`.
+- `vscode/typesharp/README.md` documents local VSIX installation with `code --install-extension` and points user-owned Marketplace publishing work to `MARKETPLACE.md`.
+- `vscode/typesharp/MARKETPLACE.md` records the temporary publishing guide for PAT, publisher id, `@vscode/vsce` login, package, manual upload, and publish flows.
+- [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md) documents syntax highlighting extension packaging, local install, smoke commands, and the temporary Marketplace guide.
+- The regression suite now checks the package shape, install/publishing docs, and stable grammar token coverage.
+
+Verification:
+
+```powershell
+npm run check          # in vscode/typesharp
+npm run test:smoke     # in vscode/typesharp
+npm run package:vsix   # in vscode/typesharp
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code extension package shape"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code syntax grammar"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `vscode/typesharp/package.json`
+- `vscode/typesharp/syntaxes/typesharp.tmLanguage.json`
+- `vscode/typesharp/README.md`
+- `vscode/typesharp/MARKETPLACE.md`
+- [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -328,7 +362,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0261 is compressed here.
+- Completed historical work through task 0262 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
