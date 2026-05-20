@@ -877,7 +877,26 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaNameofExpressionType(body, out type))
+        {
+            return true;
+        }
+
         return TryInferArgumentType(body, out type, assemblies, localInstances);
+    }
+
+    private static bool TryInferLambdaNameofExpressionType(
+        SyntaxNode body,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.NameofExpression)
+        {
+            return false;
+        }
+
+        type = new InferredArgumentType("string");
+        return true;
     }
 
     private static bool TryGetLambdaParameterCount(SyntaxNode argument, out int parameterCount)

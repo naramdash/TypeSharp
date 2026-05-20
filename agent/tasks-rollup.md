@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 02:55:38 +09:00
+End Time: 2026-05-21 03:09:25 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0275. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0276. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0275 |
+| Completed work covered | 0001-0276 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -764,6 +764,33 @@ Primary evidence:
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 - `test/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0276 Lambda Nameof Overload Inference
+
+Completed C# interop work established:
+
+- C# delegate overload filtering now infers lambda body return types for `nameof` expressions such as `item => nameof(item.Name)`.
+- `nameof` lambda bodies return `string` for delegate return filtering/ranking, so incompatible `Func<T, int>` targets report `TS2406` before generated C# emission.
+- The local legacy metadata fixture now includes string/int delegate overloads for `PickNameofReturn` and an int-only negative target.
+- .NET interop and C# members docs now list `nameof` lambda body return inference as part of the implemented contextual delegate subset.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters lambda delegate nameof return type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# delegate lambda nameof return overload diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported delegate lambda overload nameof return match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on no matching C# delegate lambda nameof return overload"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -788,7 +815,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0275 is compressed here.
+- Completed historical work through task 0276 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

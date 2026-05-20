@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0275                          |
+| Completed range    | 0001-0276                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -52,6 +52,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | Done   | Work ledger future area | Lambda nameof overload inference                   | [tasks-rollup.md#task-0276-lambda-nameof-overload-inference](tasks-rollup.md#task-0276-lambda-nameof-overload-inference)                                     | Added `nameof` lambda body return inference for C# delegate overload filtering/ranking, including diagnostics and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda binary value overload inference             | [tasks-rollup.md#task-0275-lambda-binary-value-overload-inference](tasks-rollup.md#task-0275-lambda-binary-value-overload-inference)                         | Added contextual lambda binary value return inference for C# delegate overload filtering/ranking, including string concatenation, numeric arithmetic, diagnostics, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda indexer overload inference                  | [tasks-rollup.md#task-0274-lambda-indexer-overload-inference](tasks-rollup.md#task-0274-lambda-indexer-overload-inference)                                   | Added metadata-backed lambda indexer-expression return inference for C# delegate overload filtering/ranking, including imported C# indexer return metadata, diagnostics, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda null-coalescing overload inference          | [tasks-rollup.md#task-0273-lambda-null-coalescing-overload-inference](tasks-rollup.md#task-0273-lambda-null-coalescing-overload-inference)                   | Added metadata-backed `??` lambda body return inference for C# delegate overload filtering/ranking, with checker diagnostics, resolver coverage, and `net48` CLI build smokes. |
