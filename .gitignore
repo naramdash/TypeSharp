@@ -5,8 +5,8 @@ tests/tmp/
 TestResults/
 artifacts/
 node_modules/
-docs-site/.astro/
-docs-site/dist/
+docs/.astro/
+docs/dist/
 vscode/typesharp/server/
 examples/runnable/**/generated/
 examples/runnable/**/lib/

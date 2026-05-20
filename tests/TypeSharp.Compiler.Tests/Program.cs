@@ -10433,11 +10433,11 @@ static void SmokeDiagnosticsNullSafetyExample(string projectRoot)
 
 static void DocsSiteContractIsStable()
 {
-    var siteRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs-site");
+    var siteRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs");
     using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(siteRoot, "package.json")));
     var root = packageJson.RootElement;
 
-    AssertEqual("typesharp-docs-site", root.GetProperty("name").GetString());
+    AssertEqual("typesharp-docs", root.GetProperty("name").GetString());
     AssertEqual("astro build", root.GetProperty("scripts").GetProperty("build").GetString());
     AssertEqual("6.3.5", root.GetProperty("dependencies").GetProperty("astro").GetString());
     AssertEqual("0.39.2", root.GetProperty("dependencies").GetProperty("@astrojs/starlight").GetString());
@@ -10501,7 +10501,11 @@ static void DocsSiteContractIsStable()
         "advanced",
         "vscode-lsp",
         "troubleshooting",
-        "goal"
+        "goal",
+        "document-ownership",
+        "project-ledger",
+        "work-ledger",
+        "agentic-workflow"
     })
     {
         AssertTrue(
@@ -10619,7 +10623,7 @@ static void DocsSiteContractIsStable()
     AssertContains("npm run test:host", vscodeLspPage);
     AssertContains("diagnostics, hover, go-to-definition, completion, and formatting", vscodeLspPage);
 
-    var benchmarkRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs-site", "research");
+    var benchmarkRoot = Path.Combine(Directory.GetCurrentDirectory(), "docs", "research");
     var benchmarkPage = File.ReadAllText(Path.Combine(benchmarkRoot, "official-docs-deep-benchmark.md"));
     AssertContains("Official Documentation Deep Benchmark", benchmarkPage);
     AssertContains("Vue.js", benchmarkPage);
@@ -10654,14 +10658,18 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("uses: actions/checkout@v5", workflow);
     AssertContains("uses: actions/setup-node@v5", workflow);
     AssertContains("node-version: 24", workflow);
-    AssertContains("cache-dependency-path: docs-site/package-lock.json", workflow);
+    AssertContains("cache-dependency-path: docs/package-lock.json", workflow);
+    AssertContains("- 'docs/**'", workflow);
+    AssertContains("- 'agent/**'", workflow);
     AssertContains("run: npm ci", workflow);
     AssertContains("run: npm run build", workflow);
+    AssertContains("working-directory: docs", workflow);
     AssertContains("uses: actions/configure-pages@v5", workflow);
     AssertContains("uses: actions/upload-pages-artifact@v5", workflow);
-    AssertContains("path: docs-site/dist", workflow);
+    AssertContains("path: docs/dist", workflow);
     AssertContains("uses: actions/deploy-pages@v5", workflow);
     AssertContains("if: github.event_name != 'pull_request'", workflow);
+    AssertFalse(workflow.Contains("docs-site", StringComparison.Ordinal), "Docs workflow should no longer reference the former docs-site path.");
 }
 
 static void RunCliCommand(string[] args, int expectedExitCode)
