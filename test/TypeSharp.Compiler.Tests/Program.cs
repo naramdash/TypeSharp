@@ -109,6 +109,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports no matching C# overload diagnostics", CheckerReportsNoMatchingCSharpOverloadDiagnostics),
     ("checker reports no matching C# overload for known argument type diagnostics", CheckerReportsNoMatchingCSharpOverloadForKnownArgumentTypeDiagnostics),
     ("checker reports no matching C# overload for numeric literal conversion diagnostics", CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDiagnostics),
+    ("checker reports no matching C# overload for collection expression argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForCollectionExpressionArgumentDiagnostics),
     ("checker reports no matching C# overload for imported metadata argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForImportedMetadataArgumentDiagnostics),
     ("checker reports no matching C# overload for null literal diagnostics", CheckerReportsNoMatchingCSharpOverloadForNullLiteralDiagnostics),
     ("checker reports no matching C# constructor diagnostics", CheckerReportsNoMatchingCSharpConstructorDiagnostics),
@@ -165,6 +166,7 @@ var tests = new (string Name, Action Body)[]
     ("C# overload resolver selects exact literal match", CSharpOverloadResolverSelectsExactLiteralMatch),
     ("C# overload resolver filters known argument type mismatch", CSharpOverloadResolverFiltersKnownArgumentTypeMismatch),
     ("C# overload resolver filters numeric literal conversion mismatch", CSharpOverloadResolverFiltersNumericLiteralConversionMismatch),
+    ("C# overload resolver filters collection expression argument type", CSharpOverloadResolverFiltersCollectionExpressionArgumentType),
     ("C# overload resolver ranks null literal reference match", CSharpOverloadResolverRanksNullLiteralReferenceMatch),
     ("C# overload resolver ranks null literal nearest metadata reference", CSharpOverloadResolverRanksNullLiteralNearestMetadataReference),
     ("C# overload resolver ranks nearest metadata relationship", CSharpOverloadResolverRanksNearestMetadataRelationship),
@@ -239,6 +241,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on no matching C# delegate lambda indexer return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaIndexerReturnOverload),
     ("CLI build stops before emission on known argument type C# overload mismatch", CliBuildStopsBeforeEmissionOnKnownArgumentTypeCSharpOverloadMismatch),
     ("CLI build stops before emission on numeric literal C# overload mismatch", CliBuildStopsBeforeEmissionOnNumericLiteralCSharpOverloadMismatch),
+    ("CLI build stops before emission on collection expression C# overload mismatch", CliBuildStopsBeforeEmissionOnCollectionExpressionCSharpOverloadMismatch),
     ("CLI build stops before emission on imported metadata argument C# overload mismatch", CliBuildStopsBeforeEmissionOnImportedMetadataArgumentCSharpOverloadMismatch),
     ("CLI build stops before emission on null literal C# overload mismatch", CliBuildStopsBeforeEmissionOnNullLiteralCSharpOverloadMismatch),
     ("CLI build stops before emission on no matching C# constructor", CliBuildStopsBeforeEmissionOnNoMatchingCSharpConstructor),
@@ -400,6 +403,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles null literal metadata relationship overload match", CliBuildCompilesNullLiteralMetadataRelationshipOverloadMatch),
     ("CLI build compiles imported metadata overload match", CliBuildCompilesImportedMetadataOverloadMatch),
     ("CLI build compiles imported metadata relationship overload match", CliBuildCompilesImportedMetadataRelationshipOverloadMatch),
+    ("CLI build compiles imported collection expression overload match", CliBuildCompilesImportedCollectionExpressionOverloadMatch),
     ("CLI build compiles numeric literal constant conversion", CliBuildCompilesNumericLiteralConstantConversion),
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
@@ -2543,7 +2547,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -2845,6 +2849,16 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var requiresIndexerReturnInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresIndexerReturnInt"), "RequiresIndexerReturnInt metadata should be present.");
         AssertSequence(["value", "transform"], requiresIndexerReturnInt.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["Legacy.Tools.LegacyFormatter", "System.Func`2<Legacy.Tools.LegacyFormatter, int>"], requiresIndexerReturnInt.Parameters.Select(parameter => parameter.Type).ToArray());
+
+        var legacyCollectionOverloads = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyCollectionOverloads"), "LegacyCollectionOverloads metadata should be present.");
+        var collectionPicks = legacyCollectionOverloads.Methods.Where(method => method.Name == "PickValues").ToArray();
+        AssertEqual(2, collectionPicks.Length);
+        AssertSequence(
+            ["int[]", "string[]"],
+            collectionPicks.Select(method => method.Parameters[0].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var requiresStringArray = Require(legacyCollectionOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresStringArray"), "RequiresStringArray metadata should be present.");
+        AssertSequence(["values"], requiresStringArray.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string[]"], requiresStringArray.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyEvents = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyEvents"), "LegacyEvents metadata should be present.");
         AssertTrue(legacyEvents.Methods.Any(method => method.Name == "Raise"), "LegacyEvents public methods should include Raise while event accessors remain special-name metadata.");
@@ -3590,6 +3604,41 @@ static void CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDia
         var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertContains("LegacyNumeric.FormatInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsNoMatchingCSharpOverloadForCollectionExpressionArgumentDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingCollectionArgumentOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingCollectionArgumentOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingCollectionArgumentOverload
+
+            import { LegacyCollectionOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyCollectionOverloads.RequiresStringArray([1])
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Collection expression C# overload mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyCollectionOverloads.RequiresStringArray", diagnostic.Message);
         AssertContains("matches no overload candidate", diagnostic.Message);
     });
 }
@@ -5493,6 +5542,45 @@ static void CSharpOverloadResolverFiltersNumericLiteralConversionMismatch()
     AssertFalse(resolution.IsAmbiguous, "Integral constants that fit a smaller numeric parameter should remain applicable.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible numeric conversion candidate.");
     AssertEqual("byte", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverFiltersCollectionExpressionArgumentType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyCollectionOverloads.PickValues(["Ada"])
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyCollectionOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickValues",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("values", "string[]", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "PickValues",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("values", "int[]", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Collection expression element type should remove incompatible array overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible collection expression overload candidate.");
+    AssertEqual("string[]", selected.Method.Parameters[0].Type);
 }
 
 static void CSharpOverloadResolverRanksNullLiteralReferenceMatch()
@@ -8684,6 +8772,46 @@ static void CliBuildStopsBeforeEmissionOnNumericLiteralCSharpOverloadMismatch()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when numeric literal C# overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "NumericLiteralOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when numeric literal C# overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NumericLiteralOverloadMismatchBuild.dll")), "Build should not emit generated assembly when numeric literal C# overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnCollectionExpressionCSharpOverloadMismatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "CollectionExpressionOverloadMismatchBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.CollectionExpressionOverloadMismatchBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.CollectionExpressionOverloadMismatchBuild
+
+            import { LegacyCollectionOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyCollectionOverloads.RequiresStringArray([1])
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyCollectionOverloads.RequiresStringArray", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when collection expression C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "CollectionExpressionOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when collection expression C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "CollectionExpressionOverloadMismatchBuild.dll")), "Build should not emit generated assembly when collection expression C# overload diagnostics contain errors.");
     });
 }
 
@@ -15122,6 +15250,50 @@ static void CliBuildCompilesImportedMetadataRelationshipOverloadMatch()
     });
 }
 
+static void CliBuildCompilesImportedCollectionExpressionOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedCollectionExpressionOverloadMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedCollectionExpressionOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedCollectionExpressionOverloadMatch
+
+            import { LegacyCollectionOverloads } from "Legacy.Tools"
+
+            export fun pick(): string =
+              LegacyCollectionOverloads.PickValues(["Ada"])
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported collection expression overload match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedCollectionExpressionOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyCollectionOverloads.PickValues(new string[] { \"Ada\" });", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedCollectionExpressionOverloadMatch.dll")),
+            "Generated project build should compile an imported collection expression overload match.");
+    });
+}
+
 static void CliBuildCompilesNumericLiteralConstantConversion()
 {
     WithWorkspace(root =>
@@ -20221,6 +20393,24 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string Pick(string separator, params ILegacyTagged[] values)
                 {
                     return separator;
+                }
+            }
+
+            public static class LegacyCollectionOverloads
+            {
+                public static string PickValues(string[] values)
+                {
+                    return "text:" + string.Join(",", values);
+                }
+
+                public static string PickValues(int[] values)
+                {
+                    return "int:" + string.Join(",", values);
+                }
+
+                public static string RequiresStringArray(string[] values)
+                {
+                    return string.Join(",", values);
                 }
             }
 

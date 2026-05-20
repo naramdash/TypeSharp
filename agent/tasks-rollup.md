@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 05:47:37 +09:00
+End Time: 2026-05-21 06:05:55 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0284. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0285. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0284 |
+| Completed work covered | 0001-0285 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -1079,6 +1079,39 @@ Primary evidence:
 - [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0285 Collection Argument Overload Inference
+
+Completed C# interop work established:
+
+- Homogeneous collection expression arguments now infer array argument types for imported C# overload filtering/ranking.
+- Incompatible collection expression array targets report `TS2406` before generated C# emission.
+- The local legacy metadata fixture now includes `LegacyCollectionOverloads.PickValues` string/int array overloads and a string-array-only negative target.
+- CLI build coverage proves `LegacyCollectionOverloads.PickValues(["Ada"])` emits and compiles as a `net48` imported C# call.
+- Grammar, lowering, .NET interop, and C# members docs now list collection expression array argument overload inference as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# overload for collection expression argument diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters collection expression argument type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on collection expression C# overload mismatch"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported collection expression overload match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1103,7 +1136,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0284 is compressed here.
+- Completed historical work through task 0285 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

@@ -161,7 +161,7 @@ Evidence:
 
 ## Collections, Indexers, Intrinsics, And Extensions
 
-Collection expressions lower to C# 7.3-compatible array creation or `List<T>` initializers. Spread elements over known arrays or `List<T>` lower through `System.Linq.Enumerable.Concat<T>` with target-specific array/list materialization.
+Collection expressions lower to C# 7.3-compatible array creation or `List<T>` initializers. Spread elements over known arrays or `List<T>` lower through `System.Linq.Enumerable.Concat<T>` with target-specific array/list materialization. Homogeneous collection expression arguments to imported C# array overloads participate in metadata-backed overload filtering before emission.
 
 Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known.
 
@@ -179,6 +179,7 @@ Evidence:
 - `test/TypeSharp.Compiler.Tests/Program.cs` unary numeric lambda delegate and inferred function-valued export CLI build smokes
 - `test/fixtures/backend/csharp/positive/0033-extension-method-lowering`
 - `test/fixtures/backend/csharp/positive/0034-collection-spread-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs` imported collection expression overload CLI build smoke
 
 ## Async And .NET Interop Lowering
 

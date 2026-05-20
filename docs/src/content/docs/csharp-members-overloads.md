@@ -83,7 +83,7 @@ Current ranking prefers:
 1. arity and named argument match,
 2. exact nominal type match,
 3. nullable compatibility,
-4. known literal and fitting numeric conversions,
+4. known literal, homogeneous collection expression array arguments, and fitting numeric conversions,
 5. imported metadata relationship distance,
 6. generic inference and constraint satisfaction in implemented positions,
 7. delegate/lambda contextual checks,
@@ -91,6 +91,8 @@ Current ranking prefers:
 9. explicit `dynamic` boundary.
 
 If two candidates remain equally plausible, TypeSharp reports ambiguity instead of relying on generated C# compilation.
+
+Homogeneous collection expression arguments such as `["Ada"]` infer an array argument type for imported C# overload filtering and ranking. Incompatible array element targets report `TS2406` before generated C# emission instead of falling through to a C# compiler error.
 
 ## Named, Optional, And Params Arguments
 

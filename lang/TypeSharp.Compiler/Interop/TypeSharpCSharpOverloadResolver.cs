@@ -558,6 +558,12 @@ public static class TypeSharpCSharpOverloadResolver
             }
         }
 
+        if (argument.Kind == SyntaxKind.CollectionExpression &&
+            TryInferCollectionArgumentType(argument, out type, assemblies, localInstances))
+        {
+            return true;
+        }
+
         if (argument.Kind == SyntaxKind.IdentifierExpression &&
             localInstances is not null &&
             TryGetIdentifier(argument, out var name) &&
@@ -578,6 +584,39 @@ public static class TypeSharpCSharpOverloadResolver
 
         type = default;
         return false;
+    }
+
+    private static bool TryInferCollectionArgumentType(
+        SyntaxNode argument,
+        out InferredArgumentType type,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances)
+    {
+        type = default;
+        var elements = argument.Children.Where(child => !child.IsToken).ToArray();
+        if (elements.Length == 0 || elements.Any(element => element.Kind == SyntaxKind.SpreadElement))
+        {
+            return false;
+        }
+
+        var elementTypes = new List<InferredArgumentType>();
+        foreach (var element in elements)
+        {
+            if (!TryInferArgumentType(element, out var elementType, assemblies, localInstances))
+            {
+                return false;
+            }
+
+            elementTypes.Add(elementType);
+        }
+
+        if (!TryMergeBranchTypes(elementTypes, out var mergedElementType))
+        {
+            return false;
+        }
+
+        type = new InferredArgumentType($"{NormalizePrimitiveTypeName(mergedElementType.Name)}[]");
+        return true;
     }
 
     private static bool TryInferLocalInstanceMemberAccessArgumentType(
