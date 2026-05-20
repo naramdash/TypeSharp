@@ -50,7 +50,9 @@ The agent should:
 
 - re-read `agent/tasks.md` at each loop and check `State`, `User Task Inbox`, and `Agent Task Queue`;
 - continue an `In Progress` task packet when one exists and the current request does not override it;
+- treat `User Task Inbox` as user-owned and editable at any time during a run;
 - otherwise promote unchecked user inbox items before choosing agent-owned queue work;
+- keep `Agent Task Queue` to the latest five visible rows, with older completed work in `agent/tasks-rollup.md`;
 - if the task sections are empty, choose from unchecked `agent/checklist.md` items using the queue rules in `agent/agentic-execution.md`;
 - create or update a task packet for work that will outlive one session;
 - record verification results before marking a task `Done`;

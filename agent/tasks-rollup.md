@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 07:26:47 +09:00
+End Time: 2026-05-21 07:46:30 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0290. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0291. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0290 |
+| Completed work covered | 0001-0291 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -97,6 +97,7 @@ Completed docs/adoption work established:
 - Official docs benchmark artifacts moved to `docs/research`.
 - Root README became the human entry point.
 - Agent workflow now requires task-end commit/push handoff and compressed task history.
+- `agent/tasks.md` now keeps `User Task Inbox` user-editable at any time and limits the visible `Agent Task Queue` to the latest five rows.
 - Docs package dependencies are pinned to the current npm registry latest tags for Astro, Starlight, and TypeScript, with package contract coverage.
 - Docs-owned site configuration is TypeScript and the docs contract rejects committed docs-owned JavaScript source/config files.
 - TypeSharp source examples in docs use `tysh` code fences, and Starlight/Shiki reuses the VS Code TextMate grammar for syntax highlighting.
@@ -1276,6 +1277,30 @@ Primary evidence:
 - [Lowering](../docs/src/content/docs/lowering.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0291 Task Queue Retention Policy
+
+Completed agent workflow work established:
+
+- `agent/tasks.md` now states that users may edit `User Task Inbox` at any time during agent execution.
+- `agent/tasks.md` now keeps only the latest five visible `Agent Task Queue` rows.
+- Older completed queue rows remain available through this compressed rollup instead of staying in the active task index.
+- `agent/agentic-execution.md` and docs Agentic Workflow now define the same inbox ownership and queue retention rules.
+- Docs Work Ledger now reports completed work through task 0291 and no active task selected.
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [tasks.md](tasks.md)
+- [agentic-execution.md](agentic-execution.md)
+- [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1300,7 +1325,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0290 is compressed here.
+- Completed historical work through task 0291 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

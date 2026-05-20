@@ -1,6 +1,6 @@
 # Agentic Execution Contract
 
-문서 기준일: 2026-05-20
+문서 기준일: 2026-05-21
 
 이 문서는 TypeSharp 장기 작업 세션이 어떤 파일을 읽고, 어떻게 작업을 고르고, 어떤 상태를 남겨야 하는지만 정의한다. 목표와 표준 사양의 owner는 docs canonical pages다.
 
@@ -37,11 +37,13 @@
 
 1. Re-read [tasks.md](tasks.md) at the start of every loop.
 2. If [tasks.md](tasks.md) has an active task, continue it unless a newer user request explicitly interrupts or supersedes it.
-3. If there is no active task, promote the first unchecked item from `User Task Inbox` into `Agent Task Queue`.
-4. If the user inbox is empty, choose the highest-priority `Requested` or `Ready` item from `Agent Task Queue`.
-5. If both task sections are empty, choose the first unchecked item in [checklist.md](checklist.md).
-6. If the work is too large for one turn, create `agent/NNNN-short-name.md`, set it as the active task in [tasks.md](tasks.md), and mark its agent queue row `In Progress`.
-7. Use Q0-Q5 to order queue items:
+3. Treat `User Task Inbox` as user-owned and editable at any time during agent execution.
+4. If there is no active task, promote the first unchecked item from `User Task Inbox` into `Agent Task Queue`.
+5. Keep `Agent Task Queue` to the latest five visible rows; older completed work belongs in [tasks-rollup.md](tasks-rollup.md).
+6. If the user inbox is empty, choose the highest-priority `Requested` or `Ready` item from `Agent Task Queue`.
+7. If both task sections are empty, choose the first unchecked item in [checklist.md](checklist.md).
+8. If the work is too large for one turn, create `agent/NNNN-short-name.md`, set it as the active task in [tasks.md](tasks.md), and mark its agent queue row `In Progress`.
+9. Use Q0-Q5 to order queue items:
 
 | Queue | Meaning |
 | --- | --- |
@@ -105,7 +107,7 @@ Blocked:
 - docs canonical pages must be updated for standard language/project reference changes.
 - `agent/` operational files must be updated for task state, `User Task Inbox`, `Agent Task Queue`, checklist, traceability, or agent workflow changes.
 - Completed active packets are summarized in [tasks-rollup.md](tasks-rollup.md), then removed.
-- [tasks.md](tasks.md) must point to the next active task or `None`, and the queue row must be `Done`, `Blocked`, `Dropped`, or still explicitly pending.
+- [tasks.md](tasks.md) must point to the next active task or `None`, and the queue row must be `Done`, `Blocked`, `Dropped`, or still explicitly pending within the latest five visible queue rows.
 - Run relevant verification and `git diff --check`. For docs changes, run `npm run build` in `docs`.
 
 ## Parallel Work Rules
