@@ -21,19 +21,16 @@
 11. [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
 12. 작업과 직접 관련된 docs canonical page 또는 repo source
 
-Codex skill이 필요한 작업에서만 [codex-skills.md](codex-skills.md)를 읽고, 설치된 skill 본문은 사용자 Codex home의 해당 `SKILL.md`에서 확인한다.
+프로젝트-local Codex skill이 필요한 작업에서만 `.codex/skills/<skill>/SKILL.md`를 읽는다.
 
 ## Stable Baseline
 
 | Area | Rule |
 | --- | --- |
-| Generated target | Generated assemblies and runtime/core libraries must support `net48`. |
-| Compiler/CLI/LSP host | Modern .NET host is allowed. |
-| Backend | MVP backend is C# 7.3-compatible source generation. |
-| Source extension | `.tysh` |
-| Manifest | `TypeSharp.toml` |
-| Public ABI | Structural shapes, type-level unions, and anonymous object shapes must not leak directly as public .NET ABI. |
-| Interop | C#/.NET Framework library interop is a first-class goal. |
+| Generated artifacts | Support `net48`; backend output stays C# 7.3-compatible unless canonical docs change. |
+| Tool host | Compiler, CLI, LSP, and tests may use modern .NET. |
+| Source shape | Source extension is `.tysh`; manifest is `TypeSharp.toml`. |
+| Language/.NET details | Use `typesharp-language-engineering` and `typesharp-dotnet` for parser/type-system/lowering/public ABI/interop specifics. |
 | Non-goal | No JS runtime compatibility, macro system, or .NET 10/11 runtime requirement as a default target. |
 
 ## Work Selection
@@ -116,7 +113,7 @@ Blocked:
 - Parallelize read-only repository inspection and independent verification commands when their output paths do not overlap.
 - Do not run two commands in parallel when they both write the same generated output, package folder, `tests/tmp` child, VS Code server folder, docs build output, or git index.
 - Keep file edits serialized through one patch at a time.
-- For compiler code, preserve deterministic source-order diagnostics when using source-file parallelism.
+- For compiler code, follow `typesharp-language-engineering` for deterministic diagnostics and fixture expectations.
 
 ## Handoff
 

@@ -13,6 +13,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 | --- | --- | --- |
 | `docs/` | Canonical standard language, project ledger, reference, guide, and user-facing documentation. | Update first for standard language and project reference decisions. |
 | `agent/` | Temporary agentic goal work, active task packets, `tasks-rollup.md`, checklist, traceability, handoff state, and execution-control files. | Keep operational and short; do not add long-lived language reference here. |
+| `.codex/skills/` | Project-local Codex skill packages selected for TypeSharp goal work. | Add, update, or remove skill folders only when a concrete project task needs them. |
 | `agent.md` | Codex CLI goal bootstrap and long-running agent instructions. | Keep concise and operational. |
 
 ## Project Record Pages
@@ -53,7 +54,6 @@ These are the only `agent/` records that should remain:
 - [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md): current active task index and completed range pointer.
 - [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md): compressed completed task history.
 - [`agent/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/traceability.md): goal, requirements, features, checklist, and evidence connections.
-- [`agent/codex-skills.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/codex-skills.md): Codex skill selection and install status for TypeSharp goal work.
 - [`agent/adr.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/adr.md): architecture decision record format.
 
 ## Change Discipline

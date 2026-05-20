@@ -1,0 +1,4 @@
+interface:
+  display_name: "TypeSharp .NET"
+  short_description: "Keep TypeSharp .NET and net48 behavior aligned"
+  default_prompt: "Use $typesharp-dotnet to update this .NET-facing TypeSharp work while preserving net48, C# lowering, and repository verification constraints."

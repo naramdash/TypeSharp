@@ -35,6 +35,6 @@
 
 - 이 작업은 [Core Goal](../docs/src/content/docs/goal.md)에 직접 기여하는가?
 - docs canonical 문서와 `agent/` 운영 문서 중 어느 표면이 owner인가?
-- 이 변경이 .NET Framework 4.8 또는 generated C# 7.3 compatibility를 깨뜨릴 수 있는가?
-- public .NET ABI, lowering, diagnostics, CLI/LSP contract, fixture snapshots 중 갱신해야 할 것이 있는가?
+- 언어/compiler 변경이면 `typesharp-language-engineering`을 적용했는가?
+- .NET/runtime/interop/build 변경이면 `typesharp-dotnet`을 적용했는가?
 - 테스트가 positive/negative 양쪽을 충분히 포함하는가?

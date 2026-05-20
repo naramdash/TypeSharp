@@ -1,7 +1,9 @@
 bin/
 obj/
 .vs/
-.codex/
+.codex/*
+!.codex/skills/
+!.codex/skills/**
 tests/tmp/
 TestResults/
 artifacts/

@@ -38,7 +38,7 @@ Use the goal text in `agent.md`. Then the agent should read:
 12. this Agentic Workflow page
 13. the docs canonical page or `agent/` temporary work file directly related to the chosen task
 
-If a task explicitly needs a Codex skill, read `agent/codex-skills.md` and the matching installed skill `SKILL.md` in the user Codex home.
+If a task explicitly needs a project-local Codex skill, read the matching `.codex/skills/<skill>/SKILL.md`.
 
 This order keeps the running goal stable even when docs navigation changes.
 
@@ -65,8 +65,7 @@ Do not let the website and agent records become competing authorities.
 | --- | --- |
 | Goal, non-goal, success criteria | [Core Goal](../goal/), [Project Ledger](../project-ledger/), and `agent.md` |
 | Task state or rollup | `agent/tasks.md`, active task packet, `agent/tasks-rollup.md`, [Work Ledger](../work-ledger/), [Project Ledger](../project-ledger/) if categories change |
-| CLI, VS Code, diagnostics, or examples | matching docs page, ownership listed in [Document Ownership](../document-ownership/), smoke commands |
-| Grammar or lowering | [Grammar](../grammar/), [Grammar And Language Reference](../reference/), [Advanced Topics](../advanced/), and ownership listed in [Document Ownership](../document-ownership/) |
+| Language/compiler or .NET behavior | matching project-local skill, matching docs page, ownership listed in [Document Ownership](../document-ownership/), smoke commands |
 
 ## Verification
 

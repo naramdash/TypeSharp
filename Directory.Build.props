@@ -1,4 +1,9 @@
 <Project>
+  <!--
+    Defaults for the modern SDK-hosted compiler, CLI, LSP, and test projects.
+    net48 runtime/core/example/generated projects must override language and
+    nullable settings locally to preserve C# 7.3-compatible artifacts.
+  -->
   <PropertyGroup>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

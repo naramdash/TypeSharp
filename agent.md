@@ -39,31 +39,22 @@ TypeSharp 장기 작업을 시작할 때는 agent/agentic-execution.md의 부트
 9. [Docs Project Ledger](docs/src/content/docs/project-ledger.md)
 10. [Docs Work Ledger](docs/src/content/docs/work-ledger.md)
 11. [Docs Agentic Workflow](docs/src/content/docs/agentic-workflow.md)
-12. [Docs Grammar](docs/src/content/docs/grammar.md)
-13. [Grammar And Language Reference](docs/src/content/docs/reference.md)
-14. [Docs Feature Status](docs/src/content/docs/feature-status.md)
-15. 현재 작업과 직접 관련된 `docs/` canonical 문서 또는 `agent/` temporary work 문서
+12. 현재 작업과 직접 관련된 `docs/` canonical 문서 또는 `agent/` temporary work 문서
 
-Codex skill이 필요한 작업에서만 [agent/codex-skills.md](agent/codex-skills.md)를 읽고, 설치된 skill 본문은 사용자 Codex home의 해당 `SKILL.md`에서 확인한다.
+프로젝트-local Codex skill이 필요한 작업에서만 `.codex/skills/<skill>/SKILL.md`를 읽는다. 언어/compiler 작업은 `typesharp-language-engineering`, .NET/runtime/interop/build 작업은 `typesharp-dotnet`에 세부 체크를 위임한다.
 
 표준 언어/프로젝트 문서를 바꾸는 작업이라면 [Document Ownership](docs/src/content/docs/document-ownership.md)의 target owner를 먼저 확인하고 docs canonical page를 갱신한다. task 상태, checklist/traceability, goal/agent 규칙처럼 agentic 운영 정보가 바뀌면 `agent/` temporary work 문서와 [Project Ledger](docs/src/content/docs/project-ledger.md), [Work Ledger](docs/src/content/docs/work-ledger.md), [Agentic Workflow](docs/src/content/docs/agentic-workflow.md)를 함께 갱신할 필요가 있는지 확인한다.
 
 읽은 뒤에는 다음 질문에 답한 다음 움직인다.
 
 - 지금 작업은 [Docs Core Goal](docs/src/content/docs/goal.md)의 한 문장 과제에 직접 기여하는가?
+- 지금 작업은 Windows 10 기본 설정에 `dotnet`과 `node`가 설치된 상태만으로 수행 가능한가?
 - 지금 작업은 VS Code와 CLI만으로 개발 가능한 TypeSharp 개발 루프를 진전시키는가?
 - 지금 작업은 TypeScript식 유연성, TypeScript식 module graph, F#식 함수형 일관성, C#식 편의성 중 어느 축을 진전시키는가?
-- 문법 관련 작업이라면 TypeScript/F#/C#의 어떤 기능을 Direct, Equivalent, Replacement, Planned, Experimental, Rejected 중 하나로 분류했는가?
-- 새 문법을 추가했다면 [Docs Grammar](docs/src/content/docs/grammar.md)의 공통 기호 규칙과 [Grammar And Language Reference](docs/src/content/docs/reference.md)의 stable syntax 계약을 먼저 만족하는가?
-- 표준 라이브러리 타입이나 helper를 사용한다면 [API And CLI Reference](docs/src/content/docs/api.md), [Type System](docs/src/content/docs/type-system.md), [Lowering](docs/src/content/docs/lowering.md)의 namespace/helper 정책을 따르는가?
-- C# library interop를 건드린다면 [Docs .NET Interop](docs/src/content/docs/dotnet-interop.md)의 reference, overload, nullable, public ABI 계약을 따르는가?
-- CLI나 개발 루프를 건드린다면 [Docs CLI](docs/src/content/docs/cli.md)의 command, manifest, diagnostics 계약을 따르는가?
-- 구현 범위를 늘린다면 [Advanced Topics](docs/src/content/docs/advanced.md), [Feature Status](docs/src/content/docs/feature-status.md), [Project Policy](docs/src/content/docs/project-policy.md)의 MVP, Stable Backlog, Preview Watch, Experimental, Rejected 경계와 충돌하지 않는가?
-- union 관련 작업이라면 F#식 nominal closed union을 런타임/도메인 모델로, TS식 type-level union을 compile-time 표현과 narrowing으로 분리했는가?
+- 언어/compiler 변경이면 `typesharp-language-engineering`을 적용했는가?
+- .NET/runtime/interop/build 변경이면 `typesharp-dotnet`을 적용했는가?
 - 지금 작업은 체크리스트의 어떤 미완료 항목을 줄이는가?
 - 장기 실행 작업이라면 [agent/agentic-execution.md](agent/agentic-execution.md)의 queue, task packet, Done 기준 중 무엇에 해당하는가?
-- 지금 작업이 .NET Framework 4.8 호환성을 깨뜨릴 가능성이 있는가?
-- 지금 작업이 기존 .NET Framework ASP.NET, WCF, Windows Service, worker-style host에서 일반 `net48` library처럼 참조/배포/로드되는 계약을 깨뜨릴 가능성이 있는가?
 - 최신 C#, F#, TypeScript 기능을 언급한다면 안정 기능과 preview 기능을 분리했는가?
 
 ## 반복 실행 규칙
@@ -82,8 +73,8 @@ Codex skill이 필요한 작업에서만 [agent/codex-skills.md](agent/codex-ski
 
 4. 설계 또는 구현
    - 문서가 부족하면 문서를 먼저 구체화한다.
-   - 문법이 부족하면 [Docs Grammar](docs/src/content/docs/grammar.md)와 [Grammar And Language Reference](docs/src/content/docs/reference.md)를 먼저 갱신한다.
-   - 표준 라이브러리 이름이나 helper가 필요하면 [API And CLI Reference](docs/src/content/docs/api.md), [Type System](docs/src/content/docs/type-system.md), [Lowering](docs/src/content/docs/lowering.md) 중 target owner를 먼저 갱신한다.
+   - 언어/compiler 작업은 `typesharp-language-engineering`이 지시하는 canonical docs와 fixture 기준을 따른다.
+   - .NET/runtime/interop/build 작업은 `typesharp-dotnet`이 지시하는 target framework, ABI, lowering, verification 기준을 따른다.
    - 구현이 가능하면 코드, 테스트, 샘플을 만든다.
    - 설계 결정이 막히면 선택지, 장단점, 권장안을 문서화한다.
 
@@ -116,6 +107,8 @@ Codex skill이 필요한 작업에서만 [agent/codex-skills.md](agent/codex-ski
 ## 에이전트가 지켜야 할 금지선
 
 - .NET 10/11 전용 런타임 기능을 TypeSharp 기본 요구사항으로 만들지 않는다.
+- Python 관련 행위나 작업을 하지 않는다. Python 스크립트 작성/실행, `python`/`py`/`pip`/`venv`/Python 기반 도구 사용, Python 의존성 추가, Python 워크플로 문서화를 하지 않는다.
+- Windows 10 기본 설정과 이미 설치된 `dotnet`, `node`만으로 가능한 작업 경로를 선택한다. 새 언어 런타임이나 별도 전역 도구 설치를 전제로 설계하거나 검증하지 않는다.
 - C#, F#, TypeScript 기능을 이름만 보고 1:1로 복제하지 않는다.
 - `net48` 호환성 검증 없이 dependency를 추가하지 않는다.
 - 문서와 체크리스트를 갱신하지 않고 큰 설계 결정을 숨기지 않는다.

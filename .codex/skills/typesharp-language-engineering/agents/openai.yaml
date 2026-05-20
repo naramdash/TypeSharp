@@ -1,0 +1,4 @@
+interface:
+  display_name: "TypeSharp Language Engineering"
+  short_description: "Design and implement TypeSharp language features"
+  default_prompt: "Use $typesharp-language-engineering to design or implement this TypeSharp language/compiler change with docs and verification aligned."

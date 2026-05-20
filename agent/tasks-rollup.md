@@ -199,23 +199,25 @@ Primary evidence:
 
 Completed Codex skill configuration work established:
 
-- Installed `playwright`, `gh-fix-ci`, and `security-threat-model` into `C:\Users\juho_\.codex\skills`.
-- Kept [codex-skills.md](codex-skills.md) as the minimal project skill selection and session restart note.
+- Vendored `playwright`, `gh-fix-ci`, `security-threat-model`, `typesharp-dotnet`, and `typesharp-language-engineering` into `.codex/skills`.
+- Adapted `gh-fix-ci` to use `gh` directly without a project-local helper script runtime.
+- Removed the redundant skill index document; `.codex/skills/*/SKILL.md` is the project-local skill source of truth.
 
 Verification:
 
 ```powershell
-Get-ChildItem -Directory C:\Users\juho_\.codex\skills
+Get-ChildItem -Directory .codex\skills
 npm run build          # in docs
 git diff --check
 ```
 
 Primary evidence:
 
-- [codex-skills.md](codex-skills.md)
-- `C:\Users\juho_\.codex\skills\playwright`
-- `C:\Users\juho_\.codex\skills\gh-fix-ci`
-- `C:\Users\juho_\.codex\skills\security-threat-model`
+- `.codex/skills/playwright`
+- `.codex/skills/gh-fix-ci`
+- `.codex/skills/security-threat-model`
+- `.codex/skills/typesharp-dotnet`
+- `.codex/skills/typesharp-language-engineering`
 
 ## Task 0259 Parallel Execution Optimization
 
@@ -226,7 +228,7 @@ Completed parallel execution work established:
 - Both paths use ordered parallel processing so diagnostics remain appended in source discovery order.
 - The test suite now includes a source-order diagnostic regression covering parallel checker diagnostics.
 - Project Policy records the compiler parallel execution boundary, and Agentic Execution records safe parallel task execution rules for future goal work.
-- `.gitignore` now excludes accidental repo-local `.codex/` skill copies; installed skills remain in the user Codex home.
+- `.gitignore` ignores miscellaneous `.codex` state while allowing `.codex/skills` to be tracked as the project-local skill source.
 
 Verification:
 
