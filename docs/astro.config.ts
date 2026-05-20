@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import { defineConfig } from 'astro/config';
+import mermaid from 'astro-mermaid';
 import starlight from '@astrojs/starlight';
 
 const require = createRequire(import.meta.url);
@@ -25,6 +26,10 @@ export default defineConfig({
   site,
   base,
   integrations: [
+    mermaid({
+      autoTheme: true,
+      enableLog: false,
+    }),
     starlight({
       title: 'TypeSharp',
       description: '.NET Framework 4.8-compatible static language design, compiler, CLI, and VS Code tooling.',
@@ -55,6 +60,7 @@ export default defineConfig({
           items: [
             { label: 'Guides', slug: 'guides' },
             { label: 'Project Configuration', slug: 'project-configuration' },
+            { label: 'Runtime Artifacts', slug: 'runtime-artifacts' },
             { label: '.NET Interop', slug: 'dotnet-interop' },
             { label: 'Cookbook', slug: 'cookbook' },
             { label: 'Examples', slug: 'examples' },

@@ -206,6 +206,7 @@ Generated assemblies can reference:
 - `TypeSharp.Runtime.dll` for lowering/runtime helper behavior.
 
 Host projects that consume generated assemblies must deploy the generated assembly and required TypeSharp runtime/core assemblies together.
+Use [Runtime Artifacts](../runtime-artifacts/) for the generated project layout, manifest reference flow, and host deployment set.
 
 ## Runtime ABI Policy
 

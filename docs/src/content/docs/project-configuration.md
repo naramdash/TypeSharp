@@ -82,6 +82,7 @@ typesharp run TypeSharp.toml --configuration Debug --target net48
 Keep `net48` as the default TypeSharp compatibility target unless a documented compatibility profile says otherwise.
 
 Use [Project Policy](../project-policy/) for the canonical dependency inventory, future dependency gate, target-framework profile rules, and release baseline policy.
+Use [Runtime Artifacts](../runtime-artifacts/) for the generated C# project shape, Core/Runtime reference model, and deployable `net48` artifact set.
 
 ## Language And Tooling Options
 
@@ -93,6 +94,7 @@ Use [Project Policy](../project-policy/) for the canonical dependency inventory,
 
 - [Modules And Imports](../modules/)
 - [CLI](../cli/)
+- [Runtime Artifacts](../runtime-artifacts/)
 - [.NET Interop](../dotnet-interop/)
 - [Project Policy](../project-policy/)
 - [Troubleshooting](../troubleshooting/)

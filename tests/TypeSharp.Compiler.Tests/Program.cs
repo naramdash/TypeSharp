@@ -10498,6 +10498,8 @@ static void DocsSiteContractIsStable()
     AssertEqual("astro build", root.GetProperty("scripts").GetProperty("build").GetString());
     AssertEqual("6.3.6", root.GetProperty("dependencies").GetProperty("astro").GetString());
     AssertEqual("0.39.2", root.GetProperty("dependencies").GetProperty("@astrojs/starlight").GetString());
+    AssertEqual("2.0.1", root.GetProperty("dependencies").GetProperty("astro-mermaid").GetString());
+    AssertEqual("11.15.0", root.GetProperty("dependencies").GetProperty("mermaid").GetString());
     AssertEqual("6.0.3", root.GetProperty("devDependencies").GetProperty("typescript").GetString());
     AssertTrue(File.Exists(Path.Combine(siteRoot, "package-lock.json")), "Docs site should have a committed npm lockfile.");
 
@@ -10515,6 +10517,8 @@ static void DocsSiteContractIsStable()
 
     var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.ts"));
     AssertContains("starlight({", astroConfig);
+    AssertContains("import mermaid from 'astro-mermaid'", astroConfig);
+    AssertContains("mermaid({", astroConfig);
     AssertContains("title: 'TypeSharp'", astroConfig);
     AssertContains("../vscode/typesharp/syntaxes/typesharp.tmLanguage.json", astroConfig);
     AssertContains("expressiveCode:", astroConfig);
@@ -10533,6 +10537,7 @@ static void DocsSiteContractIsStable()
     AssertContains("slug: 'fundamentals'", astroConfig);
     AssertContains("slug: 'guides'", astroConfig);
     AssertContains("slug: 'project-configuration'", astroConfig);
+    AssertContains("slug: 'runtime-artifacts'", astroConfig);
     AssertContains("slug: 'dotnet-interop'", astroConfig);
     AssertContains("slug: 'cookbook'", astroConfig);
     AssertContains("slug: 'goal'", astroConfig);
@@ -10563,6 +10568,7 @@ static void DocsSiteContractIsStable()
         "fundamentals",
         "guides",
         "project-configuration",
+        "runtime-artifacts",
         "dotnet-interop",
         "cookbook",
         "examples",
@@ -10640,6 +10646,17 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated Output", projectConfigurationPage);
     AssertContains("References", projectConfigurationPage);
     AssertContains("Configuration And Target Overrides", projectConfigurationPage);
+
+    var runtimeArtifactsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "runtime-artifacts.md"));
+    AssertContains("Artifact Boundary", runtimeArtifactsPage);
+    AssertContains("Build Pipeline", runtimeArtifactsPage);
+    AssertContains("Generated Project Shape", runtimeArtifactsPage);
+    AssertContains("Deployment Set", runtimeArtifactsPage);
+    AssertEqual(3, CountOccurrences(runtimeArtifactsPage, "```mermaid"));
+    AssertContains("TypeSharp.Core.dll", runtimeArtifactsPage);
+    AssertContains("TypeSharp.Runtime.dll", runtimeArtifactsPage);
+    AssertContains("bin/<Configuration>/net48", runtimeArtifactsPage);
+    AssertContains("Current preview builds require these assemblies to be available as local `net48` DLL references", runtimeArtifactsPage);
 
     var dotnetInteropPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "dotnet-interop.md"));
     AssertContains("Generated Target", dotnetInteropPage);

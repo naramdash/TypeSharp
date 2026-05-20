@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 00:17:00 +09:00
+End Time: 2026-05-21 00:25:47 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0263. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0264. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0263 |
+| Completed work covered | 0001-0264 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -44,6 +44,7 @@ Completed backend/runtime work established:
 
 - `TypeSharp.Core` and `TypeSharp.Runtime` `net48` libraries with `Option<T>`, `Result<T,E>`, `Unit`, async/equality/pattern/union helpers.
 - C# 7.3 source backend, generated project scaffold, runtime import lowering, generated `net48` compile smoke, generated project reference propagation.
+- Runtime artifact architecture docs now explain the tool-host/runtime-artifact boundary, generated project layout, Core/Runtime reference flow, and host deployment set with Mermaid diagrams.
 - Lowering and fixture coverage for functions, blocks, imports, modules/namespaces, public API, classes/interfaces/records, generic types/functions/constraints, immutable records, nominal unions, pattern matching, type-level union narrowing, async `Task`, pipeline/composition, collection expressions and spread, indexer, `nameof`, checked/unchecked, `satisfies`, `yield`, `lock`, extension methods, record construction/spread, limited `keyof`, and limited indexed access.
 
 Primary evidence:
@@ -99,6 +100,7 @@ Completed docs/adoption work established:
 - Docs package dependencies are pinned to the current npm registry latest tags for Astro, Starlight, and TypeScript, with package contract coverage.
 - Docs-owned site configuration is TypeScript and the docs contract rejects committed docs-owned JavaScript source/config files.
 - TypeSharp source examples in docs use `tysh` code fences, and Starlight/Shiki reuses the VS Code TextMate grammar for syntax highlighting.
+- Docs Mermaid rendering is enabled for architecture pages through docs-only `astro-mermaid` and `mermaid` dependencies.
 
 Primary evidence:
 
@@ -366,6 +368,39 @@ Primary evidence:
 - `vscode/typesharp/syntaxes/typesharp.tmLanguage.json`
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0264 Runtime Artifact Architecture Docs
+
+Completed runtime artifact documentation work established:
+
+- Added the [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md) docs page to explain how a TypeSharp project becomes generated C# source, a generated SDK-style `net48` project, and a deployable `.dll` or `.exe`.
+- Added three Mermaid diagrams covering the modern tool-host versus `net48` artifact boundary, the `typesharp build` sequence, and the host deployment set.
+- Documented that the current preview uses manifest `references.paths` for `TypeSharp.Core.dll`, `TypeSharp.Runtime.dll`, and local `net48` DLLs rather than hidden package restore.
+- Connected Runtime Artifacts from the Starlight sidebar, Project Ledger, Project Configuration, and .NET Interop pages.
+- Enabled docs-only Mermaid rendering with `astro-mermaid@2.0.1` and `mermaid@11.15.0`, pinned in `docs/package.json` and `docs/package-lock.json`.
+- Strengthened the docs site contract so the new page, sidebar entry, Mermaid integration, dependencies, and key artifact invariants are checked.
+
+Verification:
+
+```powershell
+npm install --save-exact astro-mermaid@2.0.1 mermaid@11.15.0  # in docs
+npm run build                                                  # in docs
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+```
+
+Notes:
+
+- `npm install` reported `found 0 vulnerabilities`.
+- `npm run build` completed and generated 33 pages; Vite emitted a non-fatal chunk-size warning after adding Mermaid's client renderer.
+
+Primary evidence:
+
+- `docs/src/content/docs/runtime-artifacts.md`
+- `docs/astro.config.ts`
+- `docs/package.json`
+- `docs/package-lock.json`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -390,7 +425,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0263 is compressed here.
+- Completed historical work through task 0264 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

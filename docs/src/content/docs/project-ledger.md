@@ -32,6 +32,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [Modules And Imports](../modules/): source module paths, imports, exports, and generated containers.
 - [Type System](../type-system/): inference, null safety, `unknown`, `dynamic`, structural shapes, intersections, unions, and public ABI boundaries.
 - [Lowering](../lowering/): TypeSharp-to-C# 7.3 lowering contract and fixture evidence.
+- [Runtime Artifacts](../runtime-artifacts/): generated C# project shape, `net48` assembly layout, Core/Runtime references, and deployment set.
 - [.NET Interop](../dotnet-interop/): C#/.NET Framework interop, runtime ABI, public ABI, and host compatibility.
 - [API And CLI Reference](../api/): manifest, runtime/core libraries, generated assembly layout, and API reference entry points.
 
