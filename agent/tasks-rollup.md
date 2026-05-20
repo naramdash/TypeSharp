@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0269. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0271. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0269 |
+| Completed work covered | 0001-0271 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -604,6 +604,46 @@ Primary evidence:
 - `test/TypeSharp.Compiler.Tests/Program.cs`
 - `docs/src/content/docs/project-ledger.md`
 
+## Task 0271 VS Code LSP Feedback
+
+Completed VS Code/LSP feedback work established:
+
+- The language server now advertises `textDocumentSync` with `openClose: true` and full-document change sync instead of only the numeric sync mode.
+- The server handles `textDocument/didClose`, removes the closed URI from the open-document cache, and publishes an empty diagnostic set so stale editor diagnostics are cleared.
+- Closed documents no longer answer hover requests from stale cached text; semantic hover, definition, completion, and diagnostics continue to use the current open document text.
+- The VS Code client smoke now verifies close notification forwarding and diagnostic collection deletion in addition to diagnostics, hover, go-to-definition, completion, formatting, and shutdown.
+- Public VS Code/LSP docs and the extension README now document document lifecycle synchronization and stale diagnostic clearing as part of the LSP-backed editor loop.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "language server clears diagnostics on didClose"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "language server publishes diagnostics on didOpen"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "language server returns hover"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "language server returns definition"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "language server returns completion"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code extension activates LSP client"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run check          # in vscode/typesharp
+npm run check:smoke    # in vscode/typesharp
+npm run check:live     # in vscode/typesharp
+npm run check:host     # in vscode/typesharp
+npm run test:smoke     # in vscode/typesharp
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.LanguageServer/TypeSharpLanguageServer.cs`
+- `vscode/typesharp/extension.js`
+- `vscode/typesharp/test/extension-smoke.js`
+- `vscode/typesharp/README.md`
+- [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -628,7 +668,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0270 is compressed here.
+- Completed historical work through task 0271 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

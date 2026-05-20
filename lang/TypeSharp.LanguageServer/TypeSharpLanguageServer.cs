@@ -49,6 +49,10 @@ public static class TypeSharpLanguageServer
                     PublishDidChangeDiagnostics(root, output, openDocuments, workspaceRoot);
                     break;
 
+                case "textDocument/didClose":
+                    PublishDidCloseDiagnostics(root, output, openDocuments);
+                    break;
+
                 case "textDocument/hover":
                     if (hasId)
                     {
@@ -118,6 +122,20 @@ public static class TypeSharpLanguageServer
         PublishDiagnostics(output, uri, text, workspaceRoot);
     }
 
+    private static void PublishDidCloseDiagnostics(
+        JsonElement root,
+        Stream output,
+        IDictionary<string, string> openDocuments)
+    {
+        if (!TryGetTextDocumentUri(root, out var uri))
+        {
+            return;
+        }
+
+        openDocuments.Remove(uri);
+        WritePublishDiagnostics(output, uri, Array.Empty<Diagnostic>());
+    }
+
     private static void PublishDiagnostics(Stream output, string uri, string text, string workspaceRoot)
     {
         var fileName = ToFileName(uri, workspaceRoot);
@@ -145,6 +163,22 @@ public static class TypeSharpLanguageServer
         return true;
     }
 
+    private static bool TryGetTextDocumentUri(JsonElement root, out string uri)
+    {
+        uri = string.Empty;
+
+        if (!root.TryGetProperty("params", out var parameters)
+            || !parameters.TryGetProperty("textDocument", out var textDocument)
+            || !textDocument.TryGetProperty("uri", out var uriElement)
+            || uriElement.GetString() is not { Length: > 0 } documentUri)
+        {
+            return false;
+        }
+
+        uri = documentUri;
+        return true;
+    }
+
     private static void WriteInitializeResponse(Stream output, JsonElement id)
     {
         using var payload = new MemoryStream();
@@ -158,7 +192,11 @@ public static class TypeSharpLanguageServer
             writer.WriteStartObject();
             writer.WritePropertyName("capabilities");
             writer.WriteStartObject();
-            writer.WriteNumber("textDocumentSync", 1);
+            writer.WritePropertyName("textDocumentSync");
+            writer.WriteStartObject();
+            writer.WriteBoolean("openClose", true);
+            writer.WriteNumber("change", 1);
+            writer.WriteEndObject();
             writer.WriteBoolean("hoverProvider", true);
             writer.WriteBoolean("definitionProvider", true);
             writer.WritePropertyName("completionProvider");

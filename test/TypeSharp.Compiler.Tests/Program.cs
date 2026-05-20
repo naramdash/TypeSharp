@@ -296,6 +296,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI lsp rejects unknown options", CliLspRejectsUnknownOptions),
     ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
+    ("language server clears diagnostics on didClose", LanguageServerClearsDiagnosticsOnDidClose),
     ("language server returns hover for bound symbols", LanguageServerReturnsHoverForBoundSymbols),
     ("language server returns definition for bound symbols", LanguageServerReturnsDefinitionForBoundSymbols),
     ("language server returns completion items", LanguageServerReturnsCompletionItems),
@@ -9921,7 +9922,7 @@ static void CliLspRunsLanguageServerProtocol()
         AssertEqual(string.Empty, output.ToString());
         AssertEqual(string.Empty, error.ToString());
         var response = Encoding.UTF8.GetString(protocolOutput.ToArray());
-        AssertContains("\"textDocumentSync\":1", response);
+        AssertContains("\"textDocumentSync\":{\"openClose\":true,\"change\":1}", response);
         AssertContains("\"hoverProvider\":true", response);
         AssertContains("\"definitionProvider\":true", response);
         AssertContains("\"completionProvider\"", response);
@@ -9989,13 +9990,59 @@ static void LanguageServerPublishesDiagnosticsOnDidOpen()
         TypeSharpLanguageServer.Run(input, output, root);
 
         var response = Encoding.UTF8.GetString(output.ToArray());
-        AssertContains("\"textDocumentSync\":1", response);
+        AssertContains("\"textDocumentSync\":{\"openClose\":true,\"change\":1}", response);
         AssertContains("\"method\":\"textDocument/publishDiagnostics\"", response);
         AssertContains("\"uri\":\"" + uri + "\"", response);
         AssertContains("\"severity\":1", response);
         AssertContains("\"source\":\"typesharp\"", response);
         AssertContains("\"code\":\"TS2201\"", response);
         AssertContains("Cannot return expression of type", response);
+    });
+}
+
+static void LanguageServerClearsDiagnosticsOnDidClose()
+{
+    WithWorkspace(root =>
+    {
+        var sourcePath = Path.Combine(root, "src", "Main.tysh");
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath) ?? root);
+        var uri = new Uri(sourcePath).AbsoluteUri;
+        var source = """
+            namespace Samples.Lsp
+
+            export fun broken(): string = 42
+            """;
+
+        using var input = new MemoryStream();
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(uri)
+                + ",\"languageId\":\"typesharp\",\"version\":1,\"text\":"
+                + JsonSerializer.Serialize(source)
+                + "}}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didClose\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(uri)
+                + "}}}");
+        WriteLspFrame(
+            input,
+            "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"textDocument/hover\",\"params\":{\"textDocument\":{\"uri\":"
+                + JsonSerializer.Serialize(uri)
+                + "},\"position\":{\"line\":2,\"character\":11}}}");
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"method\":\"exit\"}");
+        input.Position = 0;
+
+        using var output = new MemoryStream();
+        TypeSharpLanguageServer.Run(input, output, root);
+
+        var response = Encoding.UTF8.GetString(output.ToArray());
+        AssertContains("\"openClose\":true", response);
+        AssertContains("\"code\":\"TS2201\"", response);
+        AssertContains("\"diagnostics\":[]", response);
+        AssertContains("\"id\":2,\"result\":null", response);
     });
 }
 
@@ -10176,6 +10223,7 @@ static void VsCodeExtensionActivatesLspClient()
     AssertContains("childProcess.spawn", extensionSource);
     AssertContains("textDocument/didOpen", extensionSource);
     AssertContains("textDocument/didChange", extensionSource);
+    AssertContains("textDocument/didClose", extensionSource);
     AssertContains("textDocument/publishDiagnostics", extensionSource);
     AssertContains("textDocument/hover", extensionSource);
     AssertContains("textDocument/definition", extensionSource);
@@ -10892,13 +10940,16 @@ static void DocsSiteContractIsStable()
 
     var vscodeLspPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "vscode-lsp.md"));
     AssertContains("npm run check", vscodeLspPage);
+    AssertContains("npm run check:smoke", vscodeLspPage);
     AssertContains("npm run check:live", vscodeLspPage);
     AssertContains("npm run prepare:server", vscodeLspPage);
     AssertContains("npm run package:vsix", vscodeLspPage);
     AssertContains("code --install-extension", vscodeLspPage);
+    AssertContains("npm run test:smoke", vscodeLspPage);
     AssertContains("npm run test:live", vscodeLspPage);
     AssertContains("npm run test:host", vscodeLspPage);
     AssertContains("diagnostics, hover, go-to-definition, completion, and formatting", vscodeLspPage);
+    AssertContains("stale diagnostic clearing", vscodeLspPage);
     AssertContains("MARKETPLACE.md", vscodeLspPage);
     AssertContains("@vscode/vsce", vscodeLspPage);
 

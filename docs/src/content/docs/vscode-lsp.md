@@ -10,7 +10,9 @@ Current editor features:
 - `.tysh` language registration and TextMate syntax highlighting,
 - extension activation on `typesharp` documents,
 - stdio LSP client launch,
+- open/change/close document synchronization,
 - diagnostics from compiler parser, binder, and type checker,
+- stale diagnostic clearing when a `.tysh` document closes,
 - hover,
 - go-to-definition,
 - basic completion,
@@ -45,13 +47,15 @@ Smoke-tested commands:
 ```text
 cd vscode/typesharp
 npm run check
+npm run check:smoke
 npm run check:live
+npm run test:smoke
 npm run prepare:server
 npm run test:live
 npm run test:host
 ```
 
-`npm run test:live` starts the bundled language server over stdio and verifies diagnostics, hover, go-to-definition, completion, and formatting through the extension client. `npm run test:host` launches a real VS Code Extension Host and exercises the same editor-facing commands against `.tysh` documents in a temporary workspace.
+`npm run test:smoke` verifies the extension client forwards document lifecycle notifications, maps diagnostics, clears closed-document diagnostics, and forwards hover, go-to-definition, completion, and formatting requests. `npm run test:live` starts the bundled language server over stdio and verifies diagnostics, hover, go-to-definition, completion, and formatting through the extension client. `npm run test:host` launches a real VS Code Extension Host and exercises the same editor-facing commands against `.tysh` documents in a temporary workspace.
 
 ## Temporary Marketplace Publishing Guide
 

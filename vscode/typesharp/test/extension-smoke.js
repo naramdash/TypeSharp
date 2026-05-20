@@ -9,12 +9,16 @@ const sentChunks = [];
 const outputLines = [];
 const providers = {};
 const registrations = [];
+const workspaceEvents = {};
 const diagnostics = {
   calls: [],
+  deleted: [],
   set(uri, items) {
     this.calls.push({ uri, items });
   },
-  delete() {},
+  delete(uri) {
+    this.deleted.push(uri);
+  },
   dispose() {},
 };
 let spawnedProcess;
@@ -159,13 +163,16 @@ const vscodeStub = {
         },
       };
     },
-    onDidOpenTextDocument() {
+    onDidOpenTextDocument(listener) {
+      workspaceEvents.open = listener;
       return disposable("open");
     },
-    onDidChangeTextDocument() {
+    onDidChangeTextDocument(listener) {
+      workspaceEvents.change = listener;
       return disposable("change");
     },
-    onDidCloseTextDocument() {
+    onDidCloseTextDocument(listener) {
+      workspaceEvents.close = listener;
       return disposable("close");
     },
   },
@@ -350,6 +357,12 @@ async function main() {
   const formattingEdits = providers.formatting.provider.provideDocumentFormattingEdits(unformattedDocument);
   assert.strictEqual(formattingEdits.length, 1);
   assert.strictEqual(formattingEdits[0].newText, "namespace Samples\n\nexport fun greeting(): string = \"Hello\"\n");
+
+  assert.ok(workspaceEvents.close, "close listener should be registered");
+  await workspaceEvents.close(document);
+  const didClose = await waitFor(() => findNotification("textDocument/didClose"), "didClose notification");
+  assert.strictEqual(didClose.params.textDocument.uri, documentUri.toString());
+  assert.strictEqual(diagnostics.deleted.at(-1).toString(), documentUri.toString());
 
   const deactivatePromise = extension.deactivate();
   const shutdown = await waitFor(() => findLastRequest("shutdown"), "shutdown request");

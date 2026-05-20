@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0270                          |
+| Completed range    | 0001-0271                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -46,12 +46,13 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 - [x] tysh 예제 프로젝트 코드 현실성 있게 작성하기, 실제로 실행 가능한 코드로 작성하기
 - [x] tysh 예제 프로젝트 코드에 대한 설명 추가하기, 각 코드 블록마다 설명을 추가해서 사용자가 이해하기 쉽게 만들기
 - [x] 이 레포가 모노레포임을 감안하여 폴더 구조 과감하게 최적화하기. cli, test, docs, lang, agent 등으로 폴더 구조를 명확하게 나누고, 각 폴더에 README.md 파일을 추가해서 해당 폴더의 목적과 내용을 설명하기
-- [ ] vscode extension이 LSP 서버로서의 역할을 제대로 할 수 있도록 개선하기. 현재는 단순한 syntax highlighting 수준이지만, 실제로 코드 분석과 피드백을 줄 수 있는 수준으로 개선하기
+- [x] vscode extension이 LSP 서버로서의 역할을 제대로 할 수 있도록 개선하기. 현재는 단순한 syntax highlighting 수준이지만, 실제로 코드 분석과 피드백을 줄 수 있는 수준으로 개선하기
 
 ## Agent Task Queue
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q4       | Done   | User directive | VS Code LSP feedback                                | [tasks-rollup.md#task-0271-vs-code-lsp-feedback](tasks-rollup.md#task-0271-vs-code-lsp-feedback)                                                               | Advertised LSP open/change/close sync, cleared stale diagnostics on `didClose`, kept semantic diagnostics/hover/definition/completion/formatting covered by server and extension smokes. |
 | Q5       | Done   | User directive | Monorepo folder structure                           | [tasks-rollup.md#task-0270-monorepo-folder-structure](tasks-rollup.md#task-0270-monorepo-folder-structure)                                                     | Split product, language, test, docs, agent, examples, and VS Code ownership into explicit top-level folders with README contracts and updated path references. |
 | Q5       | Done   | User directive | Runnable example code explanations                 | [tasks-rollup.md#task-0269-runnable-example-code-explanations](tasks-rollup.md#task-0269-runnable-example-code-explanations)                                   | Added guided README explanations before every command, output, TypeSharp, C#, and XML code block in runnable example projects and strengthened docs/test contracts. |
 | Q5       | Done   | User directive | Realistic runnable tysh examples                   | [tasks-rollup.md#task-0268-realistic-runnable-tysh-examples](tasks-rollup.md#task-0268-realistic-runnable-tysh-examples)                                       | Reworked runnable TypeSharp projects into invoice, public API, local C# billing interop, ASP.NET/WCF, worker, and null-safety scenarios with smoke-tested commands. |

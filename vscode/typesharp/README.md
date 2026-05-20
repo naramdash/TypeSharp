@@ -9,7 +9,9 @@ Current scope:
 - contributes a TextMate grammar based on `docs/src/content/docs/grammar.md`
 - activates on `onLanguage:typesharp`
 - starts the TypeSharp language server over stdio
+- synchronizes document open, change, and close notifications with the server
 - publishes LSP diagnostics into VS Code diagnostics
+- clears closed-document diagnostics so VS Code does not keep stale feedback
 - forwards hover, go-to-definition, and basic completion requests to the language server
 - provides a document formatter that mirrors the CLI formatter MVP whitespace normalization
 - defines package metadata for the extension JS, TextMate grammar, language configuration, and bundled server folder
@@ -45,6 +47,7 @@ The same VSIX can be installed from VS Code with Extensions: Install from VSIX. 
 
 - `npm run test:host` launches the installed VS Code executable with `--extensionDevelopmentPath` and `--extensionTestsPath`
 - the smoke opens `.tysh` files in a temporary workspace and verifies diagnostics, hover, go-to-definition, completion, and document formatting through VS Code commands
+- `npm run test:smoke` verifies the dependency-free client path, including `didOpen`, `didChange`, `didClose`, diagnostics mapping, and stale diagnostic deletion
 - set `VSCODE_BIN` to a VS Code executable path if `Code.exe` or `code` is not discoverable
 
 ## Marketplace Publishing
