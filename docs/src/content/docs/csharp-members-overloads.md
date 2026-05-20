@@ -172,6 +172,7 @@ The checker validates:
 - binary predicate bodies that return `bool`,
 - binary value bodies that return known string concatenation or numeric arithmetic types,
 - `nameof` bodies that return `string`,
+- `checked(...)` and `unchecked(...)` bodies that preserve the inner expression type,
 - null-coalescing bodies with known fallback or receiver-side types,
 - indexer-expression bodies with known array or metadata-backed indexer return types.
 
