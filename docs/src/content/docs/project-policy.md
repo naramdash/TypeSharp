@@ -209,6 +209,16 @@ Release integrity and security:
 - new dependencies require license and vulnerability review,
 - generated projects remain offline-friendly by default.
 
+Release automation:
+
+- `.github/workflows/release-artifacts.yml` runs on `v*.*.*` tag pushes and manual dispatch for an existing tag.
+- The release job runs on `windows-latest` because `TypeSharp.Core`, `TypeSharp.Runtime`, generated projects, and host smoke tests must preserve the `net48` artifact path.
+- The workflow publishes `typesharp-cli-dotnet-<tag>.zip`, `typesharp-runtime-net48-<tag>.zip`, `typesharp-vscode-<tag>.vsix`, `SHA256SUMS.txt`, and generated release notes to the GitHub Release.
+- The CLI asset is framework-dependent and uses `UseAppHost=false`; it is a modern .NET tool-host artifact, not a generated `net48` runtime artifact.
+- The runtime asset contains the package-free `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` `net48` libraries used by generated or host projects.
+- The workflow also uploads the same release folder as a GitHub Actions workflow artifact for run-level inspection before or after release publication.
+- Release publication uses `GITHUB_TOKEN` with `contents: write`; all other release integrity requirements still come from this policy.
+
 Release note template:
 
 ```text

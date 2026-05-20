@@ -11,6 +11,7 @@ node_modules/
 docs/.astro/
 docs/dist/
 vscode/typesharp/server/
+vscode/typesharp/*.vsix
 examples/runnable/**/generated/
 examples/runnable/**/lib/
 *.user

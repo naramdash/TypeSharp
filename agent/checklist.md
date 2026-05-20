@@ -29,7 +29,7 @@
 - [x] `agent/`는 agent work 운영 표면으로 축소되었고 하위 폴더 없이 flat file 구조를 가진다.
 - [x] [agent.md](../agent.md), [agentic-execution.md](agentic-execution.md), [progress.md](progress.md), [tasks.md](tasks.md), and [tasks-rollup.md](tasks-rollup.md) define the long-running agent workflow.
 - [x] Parser, binder, type checker, backend, CLI, VS Code/LSP, runtime/core, .NET interop, host compatibility, docs build, runnable examples, and regression smoke coverage exist.
-- [x] Completed task evidence through task 0265 is compressed in [tasks-rollup.md](tasks-rollup.md).
+- [x] Completed task evidence through task 0266 is compressed in [tasks-rollup.md](tasks-rollup.md).
 
 ## 반복 검토 질문
 

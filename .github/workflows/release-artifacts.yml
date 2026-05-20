@@ -1,0 +1,239 @@
+name: Release Artifacts
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to publish, for example v0.1.0-preview.1'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-artifacts-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  CONFIGURATION: Release
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '24'
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  package:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Validate release tag
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
+            throw "Release tag '$env:RELEASE_TAG' must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-preview.N."
+          }
+
+          git fetch --force --tags
+          git rev-parse "refs/tags/$env:RELEASE_TAG" | Out-Null
+
+      - name: Prepare artifact directories
+        run: |
+          Remove-Item -Recurse -Force artifacts\release, artifacts\staging -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force artifacts\release, artifacts\staging | Out-Null
+
+      - name: Restore .NET projects
+        run: dotnet restore tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+
+      - name: Build .NET projects
+        run: dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-restore
+
+      - name: Run release smoke tests
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $tests = @(
+            "runtime project targets net48",
+            "core project targets net48",
+            "net48 runtime artifacts avoid external package dependencies",
+            "generated C# compiles in net48 project",
+            "runnable example project commands are smoke-tested",
+            "VS Code extension package shape is stable"
+          )
+
+          foreach ($test in $tests) {
+            dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-build $test
+          }
+
+      - name: Publish CLI host
+        run: >
+          dotnet publish src\TypeSharp.Cli\TypeSharp.Cli.csproj
+          -c $env:CONFIGURATION
+          --no-restore
+          -p:UseAppHost=false
+          -o artifacts\staging\typesharp-cli-dotnet
+
+      - name: Build net48 runtime libraries
+        run: |
+          dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj -c $env:CONFIGURATION
+          dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj -c $env:CONFIGURATION
+
+      - name: Package VS Code extension
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          Push-Location vscode\typesharp
+          npm run check
+          npm run check:smoke
+          npm run prepare:server
+          npm run package:vsix
+          Pop-Location
+
+      - name: Assemble release assets
+        run: |
+          $releaseRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\release'
+          $stagingRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\staging'
+          $tag = $env:RELEASE_TAG
+
+          $cliRoot = Join-Path $stagingRoot 'typesharp-cli-dotnet'
+          $cliZip = Join-Path $releaseRoot "typesharp-cli-dotnet-$tag.zip"
+          Compress-Archive -Path (Join-Path $cliRoot '*') -DestinationPath $cliZip -Force
+
+          $runtimeRoot = Join-Path $stagingRoot 'typesharp-runtime-net48'
+          $runtimeLibRoot = Join-Path $runtimeRoot 'lib\net48'
+          New-Item -ItemType Directory -Force $runtimeLibRoot | Out-Null
+          Copy-Item -LiteralPath "src\TypeSharp.Core\bin\$env:CONFIGURATION\net48\TypeSharp.Core.dll" -Destination $runtimeLibRoot
+          Copy-Item -LiteralPath "src\TypeSharp.Runtime\bin\$env:CONFIGURATION\net48\TypeSharp.Runtime.dll" -Destination $runtimeLibRoot
+
+          @(
+            "# TypeSharp Runtime $tag",
+            '',
+            'This archive contains the package-free net48 runtime libraries that generated TypeSharp assemblies may need beside host or consumer projects.',
+            '',
+            '- lib/net48/TypeSharp.Core.dll',
+            '- lib/net48/TypeSharp.Runtime.dll'
+          ) | Set-Content -Encoding utf8 -Path (Join-Path $runtimeRoot 'README.md')
+
+          $runtimeZip = Join-Path $releaseRoot "typesharp-runtime-net48-$tag.zip"
+          Compress-Archive -Path (Join-Path $runtimeRoot '*') -DestinationPath $runtimeZip -Force
+
+          $vsix = Get-ChildItem -Path vscode\typesharp -Filter '*.vsix' |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+          if ($null -eq $vsix) {
+            throw 'VS Code extension packaging did not produce a .vsix file.'
+          }
+          Copy-Item -LiteralPath $vsix.FullName -Destination (Join-Path $releaseRoot "typesharp-vscode-$tag.vsix")
+
+          $channel = if ($tag -like 'v0.*' -or $tag -like '*-*') { 'Preview' } else { 'Stable' }
+          $releaseDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
+          @(
+            "# TypeSharp $tag",
+            '',
+            "Date: $releaseDate",
+            "Channel: $channel",
+            'Runtime ABI: 0',
+            'Default target framework: net48',
+            '',
+            '## Artifacts',
+            '',
+            "- typesharp-cli-dotnet-$tag.zip: framework-dependent modern .NET CLI host.",
+            "- typesharp-runtime-net48-$tag.zip: TypeSharp.Core and TypeSharp.Runtime net48 libraries.",
+            "- typesharp-vscode-$tag.vsix: VS Code extension with bundled language server.",
+            '- SHA256SUMS.txt: SHA-256 manifest for release assets.',
+            '',
+            '## Verification',
+            '',
+            'Use SHA256SUMS.txt to verify downloaded release assets.'
+          ) | Set-Content -Encoding utf8 -Path (Join-Path $releaseRoot 'RELEASE_NOTES.md')
+
+          $checksumPath = Join-Path $releaseRoot 'SHA256SUMS.txt'
+          Get-ChildItem -Path $releaseRoot -File |
+            Where-Object { $_.Name -ne 'SHA256SUMS.txt' -and $_.Name -ne 'RELEASE_NOTES.md' } |
+            Sort-Object Name |
+            ForEach-Object {
+              '{0}  {1}' -f (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash.ToLowerInvariant(), $_.Name
+            } |
+            Set-Content -Encoding ascii -Path $checksumPath
+
+          Get-Content $checksumPath
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: typesharp-release-artifacts-${{ env.RELEASE_TAG }}
+          path: artifacts/release
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $releaseRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\release'
+          $notesPath = Join-Path $releaseRoot 'RELEASE_NOTES.md'
+          $assetPaths = @(
+            Get-ChildItem -Path $releaseRoot -File |
+              Where-Object { $_.Name -ne 'RELEASE_NOTES.md' } |
+              Sort-Object Name |
+              ForEach-Object { $_.FullName }
+          )
+
+          if ($assetPaths.Count -eq 0) {
+            throw 'No release assets were produced.'
+          }
+
+          & gh release view $env:RELEASE_TAG *> $null
+          $releaseExists = $LASTEXITCODE -eq 0
+
+          if ($releaseExists) {
+            & gh release upload $env:RELEASE_TAG @assetPaths --clobber
+            & gh release edit $env:RELEASE_TAG --notes-file $notesPath
+          }
+          else {
+            $createArgs = @(
+              'release',
+              'create',
+              $env:RELEASE_TAG
+            ) + $assetPaths + @(
+              '--title',
+              "TypeSharp $env:RELEASE_TAG",
+              '--notes-file',
+              $notesPath
+            )
+
+            if ($env:RELEASE_TAG -like 'v0.*' -or $env:RELEASE_TAG -like '*-*') {
+              $createArgs += '--prerelease'
+            }
+
+            & gh @createArgs
+          }

@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 00:34:23 +09:00
+End Time: 2026-05-21 00:48:40 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0265. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0266. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0265 |
+| Completed work covered | 0001-0266 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -102,10 +102,12 @@ Completed docs/adoption work established:
 - TypeSharp source examples in docs use `tysh` code fences, and Starlight/Shiki reuses the VS Code TextMate grammar for syntax highlighting.
 - Docs Mermaid rendering is enabled for architecture pages through docs-only `astro-mermaid` and `mermaid` dependencies.
 - The Writing Guide adapts the Vue Docs Writing Guide into TypeSharp-specific authoring rules, `tysh` example project guidance, emoji usage, and review checks.
+- Release artifact automation publishes tagged CLI, `net48` runtime library, VSIX, release notes, and SHA-256 manifest assets to GitHub Releases.
 
 Primary evidence:
 
 - `docs/src/content/docs`
+- `.github/workflows/release-artifacts.yml`
 - [Writing Guide](../docs/src/content/docs/writing-guide.md)
 - `docs/research`
 - [agent.md](../agent.md)
@@ -433,6 +435,39 @@ Primary evidence:
 - `docs/src/content/docs/examples.md`
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0266 Release Artifacts Workflow
+
+Completed release workflow work established:
+
+- Added `.github/workflows/release-artifacts.yml` to publish release assets on `v*.*.*` tag pushes or manual dispatch for an existing tag.
+- The workflow runs on `windows-latest`, sets up .NET `10.0.x` and Node `24`, validates release tags, builds the test project, and runs release-focused smoke tests for `net48`, runnable examples, and VS Code package shape.
+- Release assets include `typesharp-cli-dotnet-<tag>.zip`, `typesharp-runtime-net48-<tag>.zip`, `typesharp-vscode-<tag>.vsix`, generated release notes, and `SHA256SUMS.txt`.
+- The runtime zip contains package-free `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` `net48` libraries; the CLI zip is framework-dependent with `UseAppHost=false` so it stays a modern tool-host artifact.
+- The workflow uploads the release folder as a run artifact and publishes or updates the GitHub Release with `GITHUB_TOKEN` and `contents: write`.
+- Project Policy now records the release automation surface and checksum requirements, and `.gitignore` ignores locally packaged VSIX files.
+- The workflow contract test now covers the release workflow and updates the existing GitHub Pages workflow contract to current checked-in action versions.
+
+Verification:
+
+```powershell
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "release artifacts workflow contract"
+npm run build          # in docs
+git diff --check
+```
+
+Notes:
+
+- `npm run build` completed and generated 34 pages; Vite emitted the existing non-fatal chunk-size warning from the Mermaid client bundle.
+
+Primary evidence:
+
+- `.github/workflows/release-artifacts.yml`
+- `.gitignore`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -457,7 +492,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0265 is compressed here.
+- Completed historical work through task 0266 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

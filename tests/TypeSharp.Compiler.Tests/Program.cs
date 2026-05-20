@@ -308,6 +308,7 @@ var tests = new (string Name, Action Body)[]
     ("runnable example project commands are smoke-tested", RunnableExampleProjectCommandsAreSmokeTested),
     ("docs site contract is stable", DocsSiteContractIsStable),
     ("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
+    ("release artifacts workflow contract is stable", ReleaseArtifactsWorkflowContractIsStable),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
     ("CLI build uses module path containers for multiple sources", CliBuildUsesModulePathContainersForMultipleSources),
@@ -10778,8 +10779,8 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("- main", workflow);
     AssertContains("pages: write", workflow);
     AssertContains("id-token: write", workflow);
-    AssertContains("uses: actions/checkout@v5", workflow);
-    AssertContains("uses: actions/setup-node@v5", workflow);
+    AssertContains("uses: actions/checkout@v6", workflow);
+    AssertContains("uses: actions/setup-node@v6", workflow);
     AssertContains("node-version: 24", workflow);
     AssertContains("cache-dependency-path: docs/package-lock.json", workflow);
     AssertContains("- 'docs/**'", workflow);
@@ -10787,12 +10788,69 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("run: npm ci", workflow);
     AssertContains("run: npm run build", workflow);
     AssertContains("working-directory: docs", workflow);
-    AssertContains("uses: actions/configure-pages@v5", workflow);
+    AssertContains("uses: actions/configure-pages@v6", workflow);
     AssertContains("uses: actions/upload-pages-artifact@v5", workflow);
     AssertContains("path: docs/dist", workflow);
     AssertContains("uses: actions/deploy-pages@v5", workflow);
     AssertContains("if: github.event_name != 'pull_request'", workflow);
     AssertFalse(workflow.Contains("docs-site", StringComparison.Ordinal), "Docs workflow should no longer reference the former docs-site path.");
+}
+
+static void ReleaseArtifactsWorkflowContractIsStable()
+{
+    var workflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "release-artifacts.yml");
+    var workflow = File.ReadAllText(workflowPath);
+
+    AssertContains("name: Release Artifacts", workflow);
+    AssertContains("tags:", workflow);
+    AssertContains("- 'v*.*.*'", workflow);
+    AssertContains("workflow_dispatch:", workflow);
+    AssertContains("tag:", workflow);
+    AssertContains("contents: write", workflow);
+    AssertContains("concurrency:", workflow);
+    AssertContains("$PSNativeCommandUseErrorActionPreference = $true", workflow);
+    AssertContains("runs-on: windows-latest", workflow);
+    AssertContains("uses: actions/checkout@v6", workflow);
+    AssertContains("fetch-depth: 0", workflow);
+    AssertContains("uses: actions/setup-dotnet@v5", workflow);
+    AssertContains("dotnet-version: ${{ env.DOTNET_VERSION }}", workflow);
+    AssertContains("DOTNET_VERSION: '10.0.x'", workflow);
+    AssertContains("uses: actions/setup-node@v6", workflow);
+    AssertContains("NODE_VERSION: '24'", workflow);
+    AssertContains("dotnet restore tests\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj", workflow);
+    AssertContains("dotnet build tests\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-restore", workflow);
+    AssertContains("generated C# compiles in net48 project", workflow);
+    AssertContains("net48 runtime artifacts avoid external package dependencies", workflow);
+    AssertContains("runnable example project commands are smoke-tested", workflow);
+    AssertContains("VS Code extension package shape is stable", workflow);
+    AssertContains("dotnet publish src\\TypeSharp.Cli\\TypeSharp.Cli.csproj", workflow);
+    AssertContains("-p:UseAppHost=false", workflow);
+    AssertContains("src\\TypeSharp.Core\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Core.dll", workflow);
+    AssertContains("src\\TypeSharp.Runtime\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Runtime.dll", workflow);
+    AssertContains("npm run prepare:server", workflow);
+    AssertContains("npm run package:vsix", workflow);
+    AssertContains("Compress-Archive", workflow);
+    AssertContains("Get-FileHash -Algorithm SHA256", workflow);
+    AssertContains("SHA256SUMS.txt", workflow);
+    AssertContains("typesharp-cli-dotnet-$tag.zip", workflow);
+    AssertContains("typesharp-runtime-net48-$tag.zip", workflow);
+    AssertContains("typesharp-vscode-$tag.vsix", workflow);
+    AssertContains("uses: actions/upload-artifact@v5", workflow);
+    AssertContains("if-no-files-found: error", workflow);
+    AssertContains("GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}", workflow);
+    AssertContains("'release',", workflow);
+    AssertContains("'create',", workflow);
+    AssertContains("gh release upload", workflow);
+    AssertFalse(workflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Release workflow should not introduce Python.");
+
+    var projectPolicyPage = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "src", "content", "docs", "project-policy.md"));
+    AssertContains("Release automation", projectPolicyPage);
+    AssertContains(".github/workflows/release-artifacts.yml", projectPolicyPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", projectPolicyPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", projectPolicyPage);
+    AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
+    AssertContains("SHA256SUMS.txt", projectPolicyPage);
+    AssertContains("contents: write", projectPolicyPage);
 }
 
 static void RunCliCommand(string[] args, int expectedExitCode)
