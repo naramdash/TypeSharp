@@ -10333,6 +10333,10 @@ static void RunnableExampleCatalogSmokeMatrixIsStable()
     AssertContains("typesharp run", catalogReadme);
     AssertContains("dotnet build legacy-src", catalogReadme);
     AssertContains("dotnet build host", catalogReadme);
+    AssertContains("invoice-style", catalogReadme);
+    AssertContains("billing account", catalogReadme);
+    AssertContains("named/optional/params/out interop calls", catalogReadme);
+    AssertContains("billing work-item", catalogReadme);
     AssertContains("ASP.NET", catalogReadme);
     AssertContains("WCF", catalogReadme);
     AssertContains("TS2202", catalogReadme);
@@ -10360,13 +10364,18 @@ static void SmokeConsoleHelloExample(string projectRoot)
     var manifestPath = Path.Combine(projectRoot, TypeSharpManifestLocator.ManifestFileName);
     RunCliCommand(["check", manifestPath], expectedExitCode: 0);
     RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+    var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+    AssertContains("public record InvoiceLine", source);
+    AssertContains("public record InvoiceDraft", source);
+    AssertContains("StringBuilder", source);
+    AssertContains("invoiceTotal", source);
 
     var output = new StringWriter();
     var error = new StringWriter();
     var runExitCode = TypeSharpCli.Run(["run", manifestPath], output, error);
     if (runExitCode == 0)
     {
-        AssertEqual($"Hello, TypeSharp{Environment.NewLine}", output.ToString());
+        AssertEqual($"Invoice Contoso Billing: MIG-48=900, SUP-12=300, total=1200{Environment.NewLine}", output.ToString());
         AssertEqual(string.Empty, error.ToString());
         return;
     }
@@ -10386,6 +10395,25 @@ static void SmokeLibraryPublicApiExample(string projectRoot)
     AssertTrue(
         File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "LibraryPublicApi.dll")),
         "Library public API example should build a generated net48 assembly.");
+    CopyRuntimeDependenciesToExample(projectRoot);
+    var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+    AssertContains("public record BillingAccount", source);
+    AssertContains("public record InvoiceQuote", source);
+    AssertContains("public record InvoiceDecision", source);
+    AssertContains("public class InvoiceCalculator", source);
+    var hostSource = File.ReadAllText(Path.Combine(projectRoot, "host", "LibraryConsumerSmoke.cs"));
+    AssertContains("new BillingAccount", hostSource);
+    AssertContains("new InvoiceQuote", hostSource);
+    AssertContains("new InvoiceCalculator", hostSource);
+    AssertContains("TypeSharp.Runtime.TypeSharpRuntimeInfo.TargetFramework", hostSource);
+
+    var hostBuild = RunProcess(
+        "dotnet",
+        "build host/LibraryConsumerSmoke.csproj --nologo --verbosity quiet --ignore-failed-sources",
+        projectRoot);
+    AssertTrue(
+        hostBuild.ExitCode == 0,
+        $"Library public API host example should compile after TypeSharp build.\nSTDOUT:\n{hostBuild.StandardOutput}\nSTDERR:\n{hostBuild.StandardError}");
 }
 
 static void SmokeCSharpInteropExample(string projectRoot)
@@ -10407,6 +10435,15 @@ static void SmokeCSharpInteropExample(string projectRoot)
     AssertTrue(
         File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "CSharpInterop.dll")),
         "C# interop example should build a generated net48 assembly.");
+    var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+    AssertContains("LegacyCustomerRepository.Load", source);
+    AssertContains("LegacyInvoiceRules.CalculateRenewalTotal", source);
+    AssertContains("LegacyInvoiceRules.TryGetCreditLimit", source);
+    AssertContains("LegacyBatchFormatter.Join", source);
+    var legacySource = File.ReadAllText(Path.Combine(projectRoot, "legacy-src", "LegacyApi.cs"));
+    AssertContains("LegacyCustomerSnapshot", legacySource);
+    AssertContains("supportFee = 250", legacySource);
+    AssertContains("out int creditLimit", legacySource);
 }
 
 static void SmokeHostWorkerExample(string projectRoot)
@@ -10420,6 +10457,11 @@ static void SmokeHostWorkerExample(string projectRoot)
     var hostSource = File.ReadAllText(Path.Combine(projectRoot, "host", "WorkerSmoke.cs"));
     AssertContains("TypeSharp.Core.Result<string, string>", hostSource);
     AssertContains("TypeSharp.Runtime.TypeSharpRuntimeInfo.RuntimeAbiVersion", hostSource);
+    AssertContains("nextRunLabel()", hostSource);
+    var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+    AssertContains("public record WorkItem", source);
+    AssertContains("public record WorkDecision", source);
+    AssertContains("classify", source);
 
     var hostBuild = RunProcess(
         "dotnet",
@@ -10449,6 +10491,9 @@ static void SmokeHostAspNetWcfExample(string projectRoot)
     AssertContains("Channel.GetGreeting()", hostSource);
     AssertContains("TypeSharp.Core.Option<string>", hostSource);
     AssertContains("TypeSharp.Runtime.TypeSharpRuntimeInfo.TargetFramework", hostSource);
+    var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+    AssertContains("public record GreetingRequest", source);
+    AssertContains("renderGreeting", source);
     var webConfig = File.ReadAllText(Path.Combine(projectRoot, "host", "web.config"));
     AssertContains("<basicHttpBinding>", webConfig);
     AssertContains("<client>", webConfig);
@@ -10487,6 +10532,10 @@ static void SmokeDiagnosticsNullSafetyExample(string projectRoot)
     AssertEqual(1, exitCode);
     AssertEqual(string.Empty, output.ToString());
     AssertContains("\"code\": \"TS2202\"", error.ToString());
+    var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+    AssertContains("public record CustomerProfile", source);
+    AssertContains("loadProfile(): CustomerProfile?", source);
+    AssertContains("renderWelcomeEmail(): CustomerProfile", source);
 }
 
 static void DocsSiteContractIsStable()
@@ -10633,9 +10682,13 @@ static void DocsSiteContractIsStable()
 
     var tutorialsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "tutorials.md"));
     AssertContains("Hello Project", tutorialsPage);
+    AssertContains("nominal invoice records", tutorialsPage);
     AssertContains("Library Public API", tutorialsPage);
+    AssertContains("consumed from a C# host smoke project", tutorialsPage);
     AssertContains("C# Interop", tutorialsPage);
+    AssertContains("realistic billing APIs", tutorialsPage);
     AssertContains("Diagnostics Workflow", tutorialsPage);
+    AssertContains("customer profile boundary", tutorialsPage);
     AssertContains("VS Code And LSP Workflow", tutorialsPage);
     AssertContains("Host Compatibility Overview", tutorialsPage);
 
@@ -10708,6 +10761,14 @@ static void DocsSiteContractIsStable()
     AssertContains("function re-exports", modulesPage);
     AssertContains("runHelper", modulesPage);
     AssertContains("publicHelper", modulesPage);
+
+    var examplesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "examples.md"));
+    AssertContains("invoice-style", examplesPage);
+    AssertContains("billing API", examplesPage);
+    AssertContains("C# host smoke project", examplesPage);
+    AssertContains("named/optional/params/out calls", examplesPage);
+    AssertContains("billing work-item", examplesPage);
+    AssertContains("nullable customer profile flow", examplesPage);
 
     var typeSystemPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "type-system.md"));
     AssertContains("Local Inference", typeSystemPage);

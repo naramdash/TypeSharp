@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 00:58:39 +09:00
+End Time: 2026-05-21 01:12:02 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0267. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0268. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0267 |
+| Completed work covered | 0001-0268 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -104,10 +104,12 @@ Completed docs/adoption work established:
 - The Writing Guide adapts the Vue Docs Writing Guide into TypeSharp-specific authoring rules, `tysh` example project guidance, emoji usage, and review checks.
 - Release artifact automation publishes tagged CLI, `net48` runtime library, VSIX, release notes, and SHA-256 manifest assets to GitHub Releases.
 - Microsoft Learn C#-style detailed TypeSharp reference pages now explain CLR type mapping, value/reference/nullability/generic public type rules, member lookup, overload ranking, byref calls, delegates, events, extension methods, exception boundaries, and interop diagnostics.
+- Runnable TypeSharp example projects now use realistic invoice, billing public API, local C# billing interop, ASP.NET/WCF greeting, worker work-item, and nullable customer profile scenarios, with smoke-tested commands and host compilation where applicable.
 
 Primary evidence:
 
 - `docs/src/content/docs`
+- `examples/runnable`
 - `.github/workflows/release-artifacts.yml`
 - [Writing Guide](../docs/src/content/docs/writing-guide.md)
 - [C# And CLR Type Model](../docs/src/content/docs/csharp-type-model.md)
@@ -501,6 +503,36 @@ Primary evidence:
 - `docs/astro.config.ts`
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0268 Realistic Runnable Tysh Examples
+
+Completed runnable example realism work established:
+
+- Reworked `examples/runnable/console-hello` from a one-line greeting into an invoice-style `net48` console project with `InvoiceLine`, `InvoiceDraft`, total calculation, `System.Text.StringBuilder` rendering, and verified `typesharp run` output.
+- Reworked `examples/runnable/library-public-api` into a C#-friendly billing API with public account, quote, decision, and calculator types; added a C# `net48` host smoke project that references the generated TypeSharp assembly plus Core/Runtime dependencies.
+- Reworked `examples/runnable/csharp-interop` into a local legacy billing DLL scenario covering customer repository metadata, named optional arguments, `params`, and `out` interop calls from TypeSharp.
+- Reworked host examples so ASP.NET/WCF calls a generated greeting request renderer and the worker host calls a generated billing work-item label.
+- Reworked `diagnostics-null-safety` into a nullable customer profile boundary example that still emits `TS2202` JSON diagnostics.
+- Updated runnable catalog docs and docs tutorials so the public examples page describes the smoke-tested realistic scenarios instead of toy examples.
+- Strengthened the C# test contract so the catalog, example source contents, local C# DLL, C# host consumers, docs examples page, and docs tutorial references are checked.
+
+Verification:
+
+```powershell
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example project commands"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example catalog"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `examples/runnable`
+- `docs/src/content/docs/examples.md`
+- `docs/src/content/docs/tutorials.md`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -525,7 +557,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0267 is compressed here.
+- Completed historical work through task 0268 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

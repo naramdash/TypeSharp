@@ -21,12 +21,12 @@ Rationale:
 
 The smoke-tested runnable catalog currently lives in [`examples/runnable/`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable):
 
-- `console-hello`: `typesharp check`, `build`, and `run` workflow.
-- `library-public-api`: generated `net48` library with public record/class API.
-- `csharp-interop`: TypeSharp consuming a local `net48` C# DLL.
+- `console-hello`: invoice-style `typesharp check`, `build`, and `run` workflow with records and framework `StringBuilder` rendering.
+- `library-public-api`: generated `net48` billing API with public account, quote, decision, and calculator types consumed by a C# host smoke project.
+- `csharp-interop`: TypeSharp consuming a local `net48` C# billing DLL through named/optional/params/out calls.
 - `host-aspnet-wcf`: ASP.NET Web Forms-style, WCF service, and WCF client/proxy-shaped `net48` host code referencing a generated TypeSharp library plus Core/Runtime DLLs.
-- `host-worker`: worker-style `net48` host referencing a generated TypeSharp library plus Core/Runtime DLLs.
-- `diagnostics-null-safety`: expected `TS2202` JSON diagnostics workflow.
+- `host-worker`: worker-style `net48` host referencing a generated billing work-item library plus Core/Runtime DLLs.
+- `diagnostics-null-safety`: expected `TS2202` JSON diagnostics workflow for nullable customer profile flow.
 
 Additional CLI starter example:
 
@@ -61,7 +61,7 @@ Feature-oriented single-file examples currently live in [`examples/*.tysh`](http
 | `Result<T,E>`, exception interop, `Task<T>` async lowering | `05-async-result-interop.tysh` |
 | C# consumer-friendly public ABI, property, delegate, event | `06-public-api.tysh`, `10-public-boundary-contract.tysh` |
 | pipeline, lambda, local inference, collection expression | `07-pipeline-collections.tysh` |
-| framework assembly import, constructor/member call, named args, `out` | `08-csharp-library-interop.tysh`, `csharp-interop` |
+| framework assembly import, constructor/member call, named args, optional args, `params`, `out` | `08-csharp-library-interop.tysh`, `csharp-interop` |
 | `literal`, public metadata constant, .NET attribute | `09-literals-attributes.tysh` |
 | `dynamic`, `reflect`, `interop` capability boundaries | `11-capability-boundaries.tysh` |
 

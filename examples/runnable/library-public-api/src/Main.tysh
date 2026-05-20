@@ -1,9 +1,32 @@
 namespace Samples.Runnable.PublicApi
 
-public record Customer(Name: string, Age: int)
+public record BillingAccount(AccountId: string, DisplayName: string)
 
-public class CustomerService {
-  public fun Keep(customer: Customer): Customer = customer
+public record InvoiceQuote(Account: BillingAccount, LicenseFee: int, SupportFee: int)
+
+public record InvoiceDecision(Quote: InvoiceQuote, Approved: bool, Total: int)
+
+public class InvoiceCalculator {
+  public fun Total(quote: InvoiceQuote): int =
+    quote.LicenseFee + quote.SupportFee
+
+  public fun Approve(quote: InvoiceQuote): InvoiceDecision =
+    { Quote: quote, Approved: true, Total: quote.LicenseFee + quote.SupportFee }
+
+  public fun Render(decision: InvoiceDecision): string =
+    decision.Quote.Account.DisplayName + ":" + decision.Total.ToString()
 }
 
-export fun libraryName(): string = "LibraryPublicApi"
+fun quoteTotal(quote: InvoiceQuote): int =
+  quote.LicenseFee + quote.SupportFee
+
+export fun sampleDecision(): InvoiceDecision {
+  let account: BillingAccount = { AccountId: "CUST-1001", DisplayName: "Contoso Billing" }
+  let quote: InvoiceQuote = { Account: account, LicenseFee: 900, SupportFee: 300 }
+  InvoiceDecision(quote, true, quoteTotal(quote))
+}
+
+export fun sampleLabel(): string {
+  let decision = sampleDecision()
+  decision.Quote.Account.DisplayName + ":" + decision.Total.ToString()
+}

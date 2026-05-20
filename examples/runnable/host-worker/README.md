@@ -1,6 +1,6 @@
 # Host Worker
 
-Worker-style `net48` host project that references a generated TypeSharp library.
+Worker-style `net48` host project that references a generated TypeSharp library. The TypeSharp code models a queued billing work item and a nominal processing decision, while the C# worker-style host calls `nextRunLabel()` from the generated assembly.
 
 ```powershell
 typesharp build

@@ -1,3 +1,14 @@
 namespace Samples.Runnable.HostWorker
 
-export fun greeting(): string = "Hello from worker host"
+public record WorkItem(Id: string, Queue: string, Attempts: int)
+
+public record WorkDecision(Message: string, Delayed: bool)
+
+export fun classify(item: WorkItem): WorkDecision =
+  WorkDecision(item.Queue + ":" + item.Id + ":attempts=" + item.Attempts.ToString(), false)
+
+export fun nextRunLabel(): string {
+  let item: WorkItem = { Id: "renewal-0042", Queue: "billing-renewals", Attempts: 1 }
+  let decision = classify(item)
+  "processed:" + decision.Message
+}

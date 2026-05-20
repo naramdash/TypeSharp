@@ -1,3 +1,34 @@
 namespace Samples.Runnable.ConsoleHello
 
-export fun main(): string = "Hello, TypeSharp"
+import { StringBuilder } from "System.Text"
+
+public record InvoiceLine(Sku: string, Description: string, Amount: int)
+
+public record InvoiceDraft(Customer: string, Primary: InvoiceLine, Support: InvoiceLine)
+
+fun lineText(line: InvoiceLine): string =
+  line.Sku + "=" + line.Amount.ToString()
+
+fun invoiceTotal(draft: InvoiceDraft): int =
+  draft.Primary.Amount + draft.Support.Amount
+
+fun renderInvoice(draft: InvoiceDraft): string {
+  let total: int = invoiceTotal(draft)
+  let builder = StringBuilder()
+  builder.Append("Invoice ")
+  builder.Append(draft.Customer)
+  builder.Append(": ")
+  builder.Append(lineText(draft.Primary))
+  builder.Append(", ")
+  builder.Append(lineText(draft.Support))
+  builder.Append(", total=")
+  builder.Append(total.ToString())
+  builder.ToString()
+}
+
+export fun main(): string {
+  let migration: InvoiceLine = { Sku: "MIG-48", Description: "Legacy migration review", Amount: 900 }
+  let support: InvoiceLine = { Sku: "SUP-12", Description: "Twelve month support retainer", Amount: 300 }
+  let draft: InvoiceDraft = { Customer: "Contoso Billing", Primary: migration, Support: support }
+  renderInvoice(draft)
+}

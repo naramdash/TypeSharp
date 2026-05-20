@@ -1,8 +1,20 @@
 namespace Samples.Runnable.CSharpInterop
 
-import { LegacyApi } from "Legacy.Tools"
-import { LegacyParams } from "Legacy.Tools"
+import { LegacyBatchFormatter } from "Legacy.Tools"
+import { LegacyCustomerRepository } from "Legacy.Tools"
+import { LegacyInvoiceRules } from "Legacy.Tools"
 
-export fun echo(): string = LegacyApi.Echo("from local C#")
+export fun renewalSummary(): string {
+  let customer = LegacyCustomerRepository.Load(42)
+  let total = LegacyInvoiceRules.CalculateRenewalTotal(baseLicenseFee: customer.BaseLicenseFee, supportFee: 300)
+  LegacyBatchFormatter.Join(" | ", customer.AccountId, customer.DisplayName, total.ToString())
+}
 
-export fun join(): string = LegacyParams.Join(",", "a", "b", "c")
+export fun creditLimit(): int {
+  let mut limit: int = 0
+  LegacyInvoiceRules.TryGetCreditLimit("CUST-0042", out limit)
+  limit
+}
+
+export fun batchLine(): string =
+  LegacyBatchFormatter.Join(",", renewalSummary(), creditLimit().ToString())

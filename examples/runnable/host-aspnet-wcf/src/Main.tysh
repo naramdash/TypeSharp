@@ -1,3 +1,11 @@
 namespace Samples.Runnable.HostAspNetWcf
 
-export fun greeting(): string = "Hello from ASP.NET and WCF host"
+public record GreetingRequest(UserName: string, Tenant: string)
+
+export fun renderGreeting(request: GreetingRequest): string =
+  "Hello " + request.UserName + " from " + request.Tenant
+
+export fun greeting(): string {
+  let request: GreetingRequest = { UserName: "Ada", Tenant: "LegacyPortal" }
+  renderGreeting(request)
+}

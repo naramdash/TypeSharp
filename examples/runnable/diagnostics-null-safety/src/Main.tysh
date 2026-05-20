@@ -1,5 +1,7 @@
 namespace Samples.Runnable.Diagnostics
 
-fun maybe(): string? = null
+public record CustomerProfile(DisplayName: string, Email: string)
 
-export fun broken(): string = maybe()
+fun loadProfile(): CustomerProfile? = null
+
+export fun renderWelcomeEmail(): CustomerProfile = loadProfile()

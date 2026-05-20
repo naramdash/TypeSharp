@@ -1,6 +1,6 @@
-# Console Hello
+# Console Invoice
 
-Minimal `net48` executable project for the CLI run workflow.
+Small `net48` executable project for the CLI run workflow. It builds a realistic invoice draft from nominal records, computes a total, renders text with a framework `StringBuilder`, then returns the rendered line from `main`.
 
 ```powershell
 typesharp check
@@ -11,6 +11,6 @@ typesharp run
 Expected run output:
 
 ```text
-Hello, TypeSharp
+Invoice Contoso Billing: MIG-48=900, SUP-12=300, total=1200
 ```
 

@@ -1,6 +1,6 @@
 # ASP.NET and WCF Host Example
 
-This example builds a generated TypeSharp `net48` library, then compiles a C# host project that references it from ASP.NET Web Forms-style, WCF service, and WCF client/proxy-shaped code.
+This example builds a generated TypeSharp `net48` library, then compiles a C# host project that references it from ASP.NET Web Forms-style, WCF service, and WCF client/proxy-shaped code. The TypeSharp code models a greeting request and renderer that the host calls from each application shape.
 
 ## Commands
 

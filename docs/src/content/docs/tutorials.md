@@ -7,7 +7,7 @@ These tutorials point at runnable examples that are checked by the repository sm
 
 ## 1. Hello Project
 
-Goal: create and build a `net48` console program.
+Goal: create and build a `net48` console program with nominal invoice records, a small calculation, and framework rendering.
 
 Use: [`examples/runnable/console-hello`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/console-hello)
 
@@ -27,13 +27,13 @@ Goal: build a TypeSharp library whose generated assembly can be consumed from C#
 
 Use: [`examples/runnable/library-public-api`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/library-public-api)
 
-You will see public records, classes, and functions lowered to C#-friendly metadata.
+You will see public account, quote, decision, and calculator types lowered to C#-friendly metadata and consumed from a C# host smoke project.
 
 Status: implemented and smoke-tested.
 
 ## 3. C# Interop
 
-Goal: build a local `net48` C# class library, reference its DLL from TypeSharp, and call it.
+Goal: build a local `net48` C# class library, reference its DLL from TypeSharp, and call realistic billing APIs.
 
 Use: [`examples/runnable/csharp-interop`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/csharp-interop)
 
@@ -49,7 +49,7 @@ Status: implemented for local DLL references, constructors, static/instance memb
 
 ## 4. Diagnostics Workflow
 
-Goal: read TypeSharp diagnostics as text or JSON and fix nullability errors.
+Goal: read TypeSharp diagnostics as text or JSON and fix nullability errors at a customer profile boundary.
 
 Use: [`examples/runnable/diagnostics-null-safety`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/diagnostics-null-safety)
 

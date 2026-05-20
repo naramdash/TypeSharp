@@ -6,7 +6,7 @@ namespace Samples.Runnable.HostWorker.Host
     {
         public string RunOnce()
         {
-            var result = TypeSharp.Core.Result<string, string>.Ok(Samples.Runnable.HostWorker.Module.greeting());
+            var result = TypeSharp.Core.Result<string, string>.Ok(Samples.Runnable.HostWorker.Module.nextRunLabel());
             return result.Value + ":" + TypeSharp.Runtime.TypeSharpRuntimeInfo.RuntimeAbiVersion.ToString();
         }
     }
