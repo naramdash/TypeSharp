@@ -887,7 +887,32 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaSatisfiesExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         return TryInferArgumentType(body, out type, assemblies, localInstances);
+    }
+
+    private static bool TryInferLambdaSatisfiesExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.SatisfiesExpression)
+        {
+            return false;
+        }
+
+        var expression = body.Children.FirstOrDefault(child => !child.IsToken);
+        return expression is not null &&
+            TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out type);
     }
 
     private static bool TryInferLambdaCheckedExpressionType(
