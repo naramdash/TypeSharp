@@ -874,6 +874,11 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaIfExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (TryInferLambdaBinaryExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
         {
             return true;
@@ -910,6 +915,114 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         return TryInferArgumentType(body, out type, assemblies, localInstances);
+    }
+
+    private static bool TryInferLambdaIfExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.IfExpression)
+        {
+            return false;
+        }
+
+        var branchTypes = new List<InferredArgumentType>();
+        foreach (var expression in GetIfBranchResultExpressions(body))
+        {
+            if (!TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out var branchType))
+            {
+                return false;
+            }
+
+            branchTypes.Add(branchType);
+        }
+
+        return TryMergeBranchTypes(branchTypes, out type);
+    }
+
+    private static bool TryMergeBranchTypes(IReadOnlyList<InferredArgumentType> branchTypes, out InferredArgumentType type)
+    {
+        type = default;
+        var knownTypes = branchTypes
+            .Where(branchType => !string.IsNullOrEmpty(branchType.Name))
+            .ToArray();
+        if (knownTypes.Length == 0)
+        {
+            return false;
+        }
+
+        var nonNullTypes = knownTypes
+            .Where(branchType => !branchType.IsNullLiteral)
+            .ToArray();
+        if (nonNullTypes.Length == 0)
+        {
+            type = knownTypes[0];
+            return true;
+        }
+
+        var first = NormalizePrimitiveTypeName(nonNullTypes[0].Name);
+        if (nonNullTypes.All(branchType => string.Equals(NormalizePrimitiveTypeName(branchType.Name), first, StringComparison.Ordinal)))
+        {
+            type = new InferredArgumentType(first);
+            return true;
+        }
+
+        if (!nonNullTypes.All(branchType => IsNumericType(NormalizePrimitiveTypeName(branchType.Name))))
+        {
+            return false;
+        }
+
+        var numericType = nonNullTypes[0];
+        foreach (var branchType in nonNullTypes.Skip(1))
+        {
+            if (!TryPromoteKnownNumericBinaryType(numericType, branchType, out var promotedType))
+            {
+                return false;
+            }
+
+            numericType = new InferredArgumentType(promotedType);
+        }
+
+        type = numericType;
+        return true;
+    }
+
+    private static IEnumerable<SyntaxNode> GetIfBranchResultExpressions(SyntaxNode node)
+    {
+        var thenBlock = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+        if (GetBlockResultExpression(thenBlock) is { } thenExpression)
+        {
+            yield return thenExpression;
+        }
+
+        foreach (var elseClause in node.Children.Where(child => child.Kind == SyntaxKind.ElseClause))
+        {
+            if (elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.IfExpression) is { } nestedIf)
+            {
+                yield return nestedIf;
+                continue;
+            }
+
+            var elseBlock = elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+            if (GetBlockResultExpression(elseBlock) is { } elseExpression)
+            {
+                yield return elseExpression;
+            }
+        }
+    }
+
+    private static SyntaxNode? GetBlockResultExpression(SyntaxNode? block)
+    {
+        var result = block?.Children.LastOrDefault(child => !child.IsToken);
+        return result?.Kind == SyntaxKind.ExpressionStatement
+            ? result.Children.FirstOrDefault(child => !child.IsToken)
+            : result;
     }
 
     private static bool TryInferLambdaParenthesizedExpressionType(

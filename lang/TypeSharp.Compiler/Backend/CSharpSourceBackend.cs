@@ -1435,6 +1435,12 @@ public static class CSharpSourceBackend
 
         private void EmitLocalDeclaration(SyntaxNode node, string indent = "            ")
         {
+            _builder.AppendLine($"{indent}{FormatLocalDeclaration(node)};");
+            RegisterLocalDeclarationType(node);
+        }
+
+        private string FormatLocalDeclaration(SyntaxNode node)
+        {
             var name = GetLocalDeclarationName(node);
             var expectedType = TryGetDirectTypeAnnotation(node, out var annotation)
                 ? MapType(annotation.Children.FirstOrDefault(child => !child.IsToken))
@@ -1447,7 +1453,12 @@ public static class CSharpSourceBackend
             var declarationType = HasFunctionTypeAnnotation(node) && expectedType is not null
                 ? expectedType
                 : "var";
-            _builder.AppendLine($"{indent}{declarationType} {name} = {EmitExpression(initializer, expectedType)};");
+            return $"{declarationType} {name} = {EmitExpression(initializer, expectedType)}";
+        }
+
+        private void RegisterLocalDeclarationType(SyntaxNode node)
+        {
+            var name = GetLocalDeclarationName(node);
             if (TryGetDirectTypeAnnotation(node, out var sourceAnnotation))
             {
                 _valueTypes[name] = GetSourceTypeName(sourceAnnotation);
@@ -1490,6 +1501,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.AssignmentExpression => EmitAssignment(node),
                 SyntaxKind.RecordExpression => EmitRecordExpression(node, expectedType),
                 SyntaxKind.RecordUpdateExpression => EmitRecordUpdate(node),
+                SyntaxKind.IfExpression => EmitIfExpression(node, expectedType),
                 SyntaxKind.MatchExpression => EmitMatch(node, expectedType ?? "object"),
                 SyntaxKind.AwaitExpression => EmitAwait(node),
                 SyntaxKind.CollectionExpression => EmitCollection(node, expectedType),
@@ -1559,6 +1571,111 @@ public static class CSharpSourceBackend
             var expression = node.Children.FirstOrDefault(child => !child.IsToken);
             return $"({EmitExpression(expression)})";
         }
+
+        private string EmitIfExpression(SyntaxNode node, string? expectedType)
+        {
+            var returnType = string.IsNullOrWhiteSpace(expectedType) || string.Equals(expectedType, "var", StringComparison.Ordinal)
+                ? InferExpressionType(node)
+                : expectedType;
+            if (string.IsNullOrWhiteSpace(returnType))
+            {
+                returnType = "object";
+            }
+
+            var builder = new StringBuilder();
+            builder.Append($"(new System.Func<{returnType}>(() => ");
+            AppendIfExpressionBody(builder, node, returnType);
+            builder.Append("))()");
+            return builder.ToString();
+        }
+
+        private void AppendIfExpressionBody(StringBuilder builder, SyntaxNode node, string returnType)
+        {
+            builder.Append("{ ");
+            var condition = GetIfCondition(node);
+            var thenBlock = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+            builder.Append($"if ({EmitExpression(condition)}) ");
+            AppendInlineReturnBlock(builder, thenBlock, returnType);
+
+            var hasExhaustiveElse = false;
+            foreach (var elseClause in node.Children.Where(child => child.Kind == SyntaxKind.ElseClause))
+            {
+                var keywordKind = elseClause.Children.FirstOrDefault(child => child.IsToken)?.Kind;
+                if (keywordKind == SyntaxKind.ElifKeyword)
+                {
+                    var elifCondition = elseClause.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.BlockExpression);
+                    var elifBlock = elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+                    builder.Append($" else if ({EmitExpression(elifCondition)}) ");
+                    AppendInlineReturnBlock(builder, elifBlock, returnType);
+                    continue;
+                }
+
+                var nestedIf = elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.IfExpression);
+                if (nestedIf is not null)
+                {
+                    builder.Append(" else ");
+                    AppendIfExpressionBody(builder, nestedIf, returnType);
+                    hasExhaustiveElse = true;
+                    continue;
+                }
+
+                var elseBlock = elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+                builder.Append(" else ");
+                AppendInlineReturnBlock(builder, elseBlock, returnType);
+                hasExhaustiveElse = true;
+            }
+
+            if (!hasExhaustiveElse)
+            {
+                builder.Append($" return default({returnType});");
+            }
+
+            builder.Append(" }");
+        }
+
+        private void AppendInlineReturnBlock(StringBuilder builder, SyntaxNode? block, string returnType)
+        {
+            builder.Append("{ ");
+            var statements = block?.Children.Where(child => !child.IsToken).ToArray() ?? [];
+            if (statements.Length == 0)
+            {
+                builder.Append($"return default({returnType});");
+                builder.Append(" }");
+                return;
+            }
+
+            for (var index = 0; index < statements.Length; index++)
+            {
+                var statement = statements[index];
+                var isLast = index == statements.Length - 1;
+                if (statement.Kind == SyntaxKind.ValueDeclaration)
+                {
+                    builder.Append(FormatLocalDeclaration(statement));
+                    builder.Append("; ");
+                    RegisterLocalDeclarationType(statement);
+                    continue;
+                }
+
+                var expression = statement.Kind == SyntaxKind.ExpressionStatement
+                    ? statement.Children.FirstOrDefault(child => !child.IsToken)
+                    : statement;
+                if (isLast)
+                {
+                    builder.Append($"return {EmitExpression(expression, returnType)};");
+                }
+                else
+                {
+                    builder.Append($"{EmitExpression(expression)}; ");
+                }
+            }
+
+            builder.Append(" }");
+        }
+
+        private static SyntaxNode? GetIfCondition(SyntaxNode node) =>
+            node.Children.FirstOrDefault(child => !child.IsToken &&
+                child.Kind != SyntaxKind.BlockExpression &&
+                child.Kind != SyntaxKind.ElseClause);
 
         private void EmitFunctionImportAlias(CSharpSourceFunctionImportAlias importAlias)
         {
@@ -2728,6 +2845,12 @@ public static class CSharpSourceBackend
                 return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
             }
 
+            if (node.Kind == SyntaxKind.IfExpression &&
+                TryInferIfExpressionType(node, out var ifType))
+            {
+                return ifType;
+            }
+
             if (IsUnaryLogicalNotExpression(node))
             {
                 return "bool";
@@ -2745,6 +2868,50 @@ public static class CSharpSourceBackend
             }
 
             return "object";
+        }
+
+        private static bool TryInferIfExpressionType(SyntaxNode node, out string type)
+        {
+            var branchTypes = GetIfBranchResultExpressions(node)
+                .Select(InferExpressionType)
+                .Where(candidate => !string.Equals(candidate, "object", StringComparison.Ordinal))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+            type = branchTypes.Length == 1 ? branchTypes[0] : string.Empty;
+            return type.Length > 0;
+        }
+
+        private static IEnumerable<SyntaxNode> GetIfBranchResultExpressions(SyntaxNode node)
+        {
+            var thenBlock = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+            if (GetBlockResultExpression(thenBlock) is { } thenExpression)
+            {
+                yield return thenExpression;
+            }
+
+            foreach (var elseClause in node.Children.Where(child => child.Kind == SyntaxKind.ElseClause))
+            {
+                if (elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.IfExpression) is { } nestedIf)
+                {
+                    yield return nestedIf;
+                    continue;
+                }
+
+                var elseBlock = elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+                if (GetBlockResultExpression(elseBlock) is { } elseExpression)
+                {
+                    yield return elseExpression;
+                }
+            }
+        }
+
+        private static SyntaxNode? GetBlockResultExpression(SyntaxNode? block)
+        {
+            var result = block?.Children.LastOrDefault(child => !child.IsToken);
+            return result?.Kind == SyntaxKind.ExpressionStatement
+                ? result.Children.FirstOrDefault(child => !child.IsToken)
+                : result;
         }
 
         private static bool IsUnaryLogicalNotExpression(SyntaxNode node) =>

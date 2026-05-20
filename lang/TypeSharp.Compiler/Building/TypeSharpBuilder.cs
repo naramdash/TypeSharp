@@ -1648,6 +1648,12 @@ public static class TypeSharpBuilder
             return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
         }
 
+        if (node.Kind == SyntaxKind.IfExpression &&
+            TryInferIfExpressionType(node, out var ifType))
+        {
+            return ifType;
+        }
+
         if (IsUnaryLogicalNotExpression(node))
         {
             return "bool";
@@ -1665,6 +1671,50 @@ public static class TypeSharpBuilder
         }
 
         return "object";
+    }
+
+    private static bool TryInferIfExpressionType(SyntaxNode node, out string type)
+    {
+        var branchTypes = GetIfBranchResultExpressions(node)
+            .Select(InferExpressionType)
+            .Where(candidate => !string.Equals(candidate, "object", StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        type = branchTypes.Length == 1 ? branchTypes[0] : string.Empty;
+        return type.Length > 0;
+    }
+
+    private static IEnumerable<SyntaxNode> GetIfBranchResultExpressions(SyntaxNode node)
+    {
+        var thenBlock = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+        if (GetBlockResultExpression(thenBlock) is { } thenExpression)
+        {
+            yield return thenExpression;
+        }
+
+        foreach (var elseClause in node.Children.Where(child => child.Kind == SyntaxKind.ElseClause))
+        {
+            if (elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.IfExpression) is { } nestedIf)
+            {
+                yield return nestedIf;
+                continue;
+            }
+
+            var elseBlock = elseClause.Children.FirstOrDefault(child => child.Kind == SyntaxKind.BlockExpression);
+            if (GetBlockResultExpression(elseBlock) is { } elseExpression)
+            {
+                yield return elseExpression;
+            }
+        }
+    }
+
+    private static SyntaxNode? GetBlockResultExpression(SyntaxNode? block)
+    {
+        var result = block?.Children.LastOrDefault(child => !child.IsToken);
+        return result?.Kind == SyntaxKind.ExpressionStatement
+            ? result.Children.FirstOrDefault(child => !child.IsToken)
+            : result;
     }
 
     private static bool IsUnaryLogicalNotExpression(SyntaxNode node) =>

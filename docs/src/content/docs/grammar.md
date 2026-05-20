@@ -139,6 +139,7 @@ TypeSharp is expression-oriented, but still exposes imperative statement forms n
 Stable expression rules:
 
 - Blocks can return the final expression value; if there is no final expression, the block value is `unit`.
+- `if` is a value-producing expression when branch blocks have a compatible final expression; generated C# uses a C# 7.3-compatible helper delegate shape where an expression position needs a block.
 - Parenthesized expressions group an inner expression and preserve the inner expression type for checking and lowering.
 - Unary logical-not `!expr` is stable for `bool` operands and lowers to C# `!expr`.
 - Unary numeric sign expressions `+expr` and `-expr` are stable for supported numeric operands and lower to C# unary sign operators.

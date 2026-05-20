@@ -39,7 +39,7 @@ Human guide: [Modules And Imports](../modules/)
 
 ## Expressions
 
-Expressions include literals, identifiers, parenthesized grouping expressions, unary logical-not and numeric sign expressions, calls, member access, indexer access, blocks, `if`, `match`, lambdas, collection expressions with array/List spread elements, iterator `yield` statements and `lock` statements in block bodies, pipeline and composition expressions, `satisfies` proof expressions, `nameof`, `checked(...)`, `unchecked(...)`, async/await, and nominal record expressions with spread fields for the implemented subset. Declarations include explicit-receiver `extension` methods that lower to C# extension methods.
+Expressions include literals, identifiers, parenthesized grouping expressions, unary logical-not and numeric sign expressions, calls, member access, indexer access, blocks, value-producing `if`, `match`, lambdas, collection expressions with array/List spread elements, iterator `yield` statements and `lock` statements in block bodies, pipeline and composition expressions, `satisfies` proof expressions, `nameof`, `checked(...)`, `unchecked(...)`, async/await, and nominal record expressions with spread fields for the implemented subset. Declarations include explicit-receiver `extension` methods that lower to C# extension methods.
 
 Canonical pages: [Grammar](../grammar/), [Language Tour](../language-tour/), [Type System](../type-system/)
 

@@ -40,6 +40,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `export` declarations | Public C# surface when the declaration is CLR-representable. |
 | Local `let` | C# local `var`. |
 | Final block expression | `return` when the enclosing function expects a value. |
+| `if` expression | C# `if`/`else` inside an immediately invoked `System.Func<T>` when expression-position lowering needs a value. |
 | Named imports | C# `using` or alias `using` directives. |
 | `import static` | C# `using static`. |
 | Manifest references | Generated project `<Reference>` items. |
@@ -72,7 +73,7 @@ Top-level functions lower to generated static methods. Expression-bodied functio
 
 Named imports from metadata namespaces lower to `using` directives; aliases lower to C# alias directives; manifest references are copied into generated project reference items.
 
-Top-level function-valued `let` declarations lower to generated delegate fields when they have an explicit function type annotation or a lambda initializer. Unannotated lambda-valued exports use a conservative CLR delegate shape: the parameter side is `object`, and simple return bodies infer `TResult` where possible. This keeps the generated API CLR-representable while nudging precise public callback contracts toward explicit annotations.
+Top-level function-valued `let` declarations lower to generated delegate fields when they have an explicit function type annotation or a lambda initializer. Unannotated lambda-valued exports use a conservative CLR delegate shape: the parameter side is `object`, and simple return bodies, including compatible `if` branch bodies, infer `TResult` where possible. This keeps the generated API CLR-representable while nudging precise public callback contracts toward explicit annotations.
 
 Evidence:
 
@@ -131,12 +132,13 @@ becomes equivalent to:
 g(f(value), arg)
 ```
 
-Composition expressions lower to unary delegate lambdas. `yield` lowers to C# iterator statements when the function return type is an explicit `IEnumerable<T>` or `IEnumerator<T>`. `lock` lowers to C# lock statements and requires a non-null reference gate.
+Composition expressions lower to unary delegate lambdas. Value-producing `if` expressions lower to C# 7.3-compatible `if`/`else` blocks inside an immediately invoked `System.Func<T>` when they appear where C# needs an expression value. `yield` lowers to C# iterator statements when the function return type is an explicit `IEnumerable<T>` or `IEnumerator<T>`. `lock` lowers to C# lock statements and requires a non-null reference gate.
 
 Evidence:
 
 - `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`
 - `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs` if-expression lambda delegate and inferred function-valued export CLI build smokes
 - `test/fixtures/backend/csharp/positive/0031-yield-expression-lowering`
 - `test/fixtures/backend/csharp/positive/0032-lock-statement-lowering`
 - `test/fixtures/diagnostics/type-checker/negative/yield-mismatch`
