@@ -1643,6 +1643,11 @@ public static class TypeSharpBuilder
             return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
         }
 
+        if (node.Kind == SyntaxKind.ParenthesizedExpression)
+        {
+            return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
+        }
+
         if (node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
         {

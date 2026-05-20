@@ -1629,7 +1629,7 @@ public sealed class TypeSharpParser
             ParseExpression(),
             TokenNode(Expect(SyntaxKind.CloseParenToken))
         };
-        return Node(SyntaxKind.IdentifierExpression, children);
+        return Node(SyntaxKind.ParenthesizedExpression, children);
     }
 
     private SyntaxNode ParseMissingExpression()

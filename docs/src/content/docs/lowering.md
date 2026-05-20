@@ -51,6 +51,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `async fun` | C# `async` method returning `Task` or `Task<T>`. |
 | `yield` | C# `yield return` inside explicit CLR enumerable functions. |
 | `lock` | C# `lock (expr) { ... }` statement. |
+| Parenthesized expressions | Preserve grouping as C# parentheses. |
 | Pipeline | Nested first-argument calls. |
 | Composition | Unary delegate lambdas. |
 | `satisfies` | Erases to the left expression after compile-time proof. |
@@ -160,7 +161,7 @@ Collection expressions lower to C# 7.3-compatible array creation or `List<T>` in
 
 Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known.
 
-`nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
+Parenthesized expressions preserve grouping in generated C#. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
 
 Evidence:
 
@@ -168,6 +169,7 @@ Evidence:
 - `test/fixtures/backend/csharp/positive/0024-indexer-expression-lowering`
 - `test/fixtures/backend/csharp/positive/0027-nameof-intrinsic`
 - `test/fixtures/backend/csharp/positive/0028-checked-unchecked-expression`
+- `test/TypeSharp.Compiler.Tests/Program.cs` parenthesized expression CLI build smoke
 - `test/fixtures/backend/csharp/positive/0033-extension-method-lowering`
 - `test/fixtures/backend/csharp/positive/0034-collection-spread-lowering`
 

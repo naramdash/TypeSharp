@@ -189,6 +189,7 @@ public enum SyntaxKind
     YieldExpression,
     NameofExpression,
     CheckedExpression,
+    ParenthesizedExpression,
     IdentifierExpression,
     LiteralExpression,
     MissingExpression,

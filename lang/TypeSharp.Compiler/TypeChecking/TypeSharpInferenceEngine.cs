@@ -19,6 +19,7 @@ internal sealed class TypeSharpInferenceEngine
             SyntaxKind.LiteralExpression => InferLiteral(node),
             SyntaxKind.NameofExpression => SimpleType.Named("string"),
             SyntaxKind.CheckedExpression => InferCheckedExpression(node, inferNested),
+            SyntaxKind.ParenthesizedExpression => InferParenthesizedExpression(node, inferNested),
             SyntaxKind.IdentifierExpression => InferIdentifier(node, scope),
             SyntaxKind.CallExpression => InferCall(node, scope, inferNested),
             SyntaxKind.BinaryExpression => InferBinary(node, scope, inferNested),
@@ -29,6 +30,7 @@ internal sealed class TypeSharpInferenceEngine
             SyntaxKind.LiteralExpression or
             SyntaxKind.NameofExpression or
             SyntaxKind.CheckedExpression or
+            SyntaxKind.ParenthesizedExpression or
             SyntaxKind.IdentifierExpression or
             SyntaxKind.CallExpression or
             SyntaxKind.BinaryExpression;
@@ -60,6 +62,14 @@ internal sealed class TypeSharpInferenceEngine
     }
 
     private static SimpleType InferCheckedExpression(
+        SyntaxNode node,
+        Func<SyntaxNode, SimpleType> inferNested)
+    {
+        var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+        return expression is null ? SimpleType.Unknown : inferNested(expression);
+    }
+
+    private static SimpleType InferParenthesizedExpression(
         SyntaxNode node,
         Func<SyntaxNode, SimpleType> inferNested)
     {

@@ -48,7 +48,7 @@ Stable grammar is not just a design note. It should have syntax examples and par
 | Modules | `namespace`, `module`, `import`, `import type`, namespace imports, named import aliases, `open`, ambient function signatures, local and relative exports. |
 | Declarations | `let`, `let mut`, `literal`, `fun`, `record`, `class`, `interface`, `enum`, `delegate`, `event`, `union`, `type`, `partial`, explicit-receiver `extension` methods. |
 | Types | Predefined types, nullable `T?`, arrays `T[]`, generic types, function types `A -> B`, tuple types, structural shapes, intersections, type-level unions, literal types, limited `keyof`, and limited indexed access `T[K]`. |
-| Expressions | Literals, identifiers, calls, member/indexer access, blocks, `if`, `match`, lambdas, collection expressions, spread for known arrays/List targets, pipeline, composition, `satisfies`, `nameof`, `checked`, `unchecked`, async/await, nominal record expressions, block-level `yield`, and block-level `lock`. |
+| Expressions | Literals, identifiers, parenthesized/grouping expressions, calls, member/indexer access, blocks, `if`, `match`, lambdas, collection expressions, spread for known arrays/List targets, pipeline, composition, `satisfies`, `nameof`, `checked`, `unchecked`, async/await, nominal record expressions, block-level `yield`, and block-level `lock`. |
 | Patterns | Wildcard, literal, type, union-case, tuple, record/list pattern direction, `not`, pattern `&`, pattern `\|`, and match guards in the stable design surface. |
 | Interop | C# namespace imports, framework/local DLL references through manifest, attributes, named/optional/params/byref argument shapes, capability markers, and public ABI diagnostics. |
 
@@ -139,6 +139,7 @@ TypeSharp is expression-oriented, but still exposes imperative statement forms n
 Stable expression rules:
 
 - Blocks can return the final expression value; if there is no final expression, the block value is `unit`.
+- Parenthesized expressions group an inner expression and preserve the inner expression type for checking and lowering.
 - Lambdas use `=>` and can be assigned to local or module `let` bindings.
 - `match` arms use `=>`, with optional `when` guards.
 - Pipeline `value |> f(args...)` lowers as `f(value, args...)`.
@@ -215,7 +216,7 @@ Expression precedence, high to low:
 
 | Level | Forms |
 | --- | --- |
-| 1 | Primary: literals, identifiers, `this`, `base`, tuples, record/object expressions, collections, blocks, `await`, `throw`. |
+| 1 | Primary: literals, identifiers, parenthesized grouping, `this`, `base`, tuples, record/object expressions, collections, blocks, `await`, `throw`. |
 | 2 | Postfix: `.`, `?.`, calls, explicit type arguments, indexers, null-forgiving `!`. |
 | 3 | Unary: `!`, unary `-`, unary `+`. |
 | 4-9 | Multiplicative, additive, relational, equality, logical `&&`, logical `||`. |

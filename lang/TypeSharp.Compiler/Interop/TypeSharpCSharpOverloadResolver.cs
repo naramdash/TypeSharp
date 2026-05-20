@@ -513,6 +513,18 @@ public static class TypeSharpCSharpOverloadResolver
             return false;
         }
 
+        if (argument.Kind == SyntaxKind.ParenthesizedExpression)
+        {
+            var expression = argument.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is not null)
+            {
+                return TryInferArgumentType(expression, out type, assemblies, localInstances);
+            }
+
+            type = default;
+            return false;
+        }
+
         if (argument.Kind == SyntaxKind.LiteralExpression)
         {
             var token = argument.Children.FirstOrDefault(child => child.IsToken);
@@ -887,12 +899,37 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaParenthesizedExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (TryInferLambdaSatisfiesExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
         {
             return true;
         }
 
         return TryInferArgumentType(body, out type, assemblies, localInstances);
+    }
+
+    private static bool TryInferLambdaParenthesizedExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.ParenthesizedExpression)
+        {
+            return false;
+        }
+
+        var expression = body.Children.FirstOrDefault(child => !child.IsToken);
+        return expression is not null &&
+            TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out type);
     }
 
     private static bool TryInferLambdaSatisfiesExpressionType(

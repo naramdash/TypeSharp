@@ -1496,6 +1496,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.SatisfiesExpression => EmitSatisfiesExpression(node),
                 SyntaxKind.NameofExpression => EmitNameof(node),
                 SyntaxKind.CheckedExpression => EmitCheckedExpression(node),
+                SyntaxKind.ParenthesizedExpression => EmitParenthesizedExpression(node),
                 _ => "default(object)"
             };
         }
@@ -1551,6 +1552,12 @@ public static class CSharpSourceBackend
             var keyword = node.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.CheckedKeyword or SyntaxKind.UncheckedKeyword)?.Text ?? "checked";
             var expression = node.Children.FirstOrDefault(child => !child.IsToken);
             return $"{keyword}({EmitExpression(expression)})";
+        }
+
+        private string EmitParenthesizedExpression(SyntaxNode node)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            return $"({EmitExpression(expression)})";
         }
 
         private void EmitFunctionImportAlias(CSharpSourceFunctionImportAlias importAlias)
@@ -2250,6 +2257,12 @@ public static class CSharpSourceBackend
         private bool TryGetExpressionType(SyntaxNode node, out string typeName)
         {
             typeName = string.Empty;
+            if (node.Kind == SyntaxKind.ParenthesizedExpression)
+            {
+                var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+                return expression is not null && TryGetExpressionType(expression, out typeName);
+            }
+
             if (node.Kind != SyntaxKind.IdentifierExpression)
             {
                 return false;
@@ -2706,6 +2719,11 @@ public static class CSharpSourceBackend
             }
 
             if (node.Kind == SyntaxKind.CheckedExpression)
+            {
+                return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (node.Kind == SyntaxKind.ParenthesizedExpression)
             {
                 return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
             }
