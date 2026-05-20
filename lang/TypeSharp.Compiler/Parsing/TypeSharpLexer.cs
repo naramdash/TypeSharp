@@ -150,6 +150,7 @@ public sealed class TypeSharpLexer
             '*' => SyntaxKind.StarToken,
             '/' => SyntaxKind.SlashToken,
             '%' => SyntaxKind.PercentToken,
+            '!' => SyntaxKind.BangToken,
             '|' => SyntaxKind.PipeToken,
             '&' => SyntaxKind.AmpersandToken,
             _ => SyntaxKind.UnknownToken

@@ -175,6 +175,7 @@ The checker validates:
 - `checked(...)` and `unchecked(...)` bodies that preserve the inner expression type,
 - `satisfies` bodies that preserve the proved expression type after proof erasure,
 - parenthesized bodies that preserve the enclosed expression type,
+- unary logical-not bodies that return `bool`,
 - null-coalescing bodies with known fallback or receiver-side types,
 - indexer-expression bodies with known array or metadata-backed indexer return types.
 

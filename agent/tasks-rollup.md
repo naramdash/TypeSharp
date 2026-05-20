@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 03:57:55 +09:00
+End Time: 2026-05-21 04:28:22 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0279. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0280. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0279 |
+| Completed work covered | 0001-0280 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -888,6 +888,47 @@ Primary evidence:
 - [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0280 Lambda Logical-Not Overload Inference
+
+Completed parser, lowering, and C# interop work established:
+
+- The lexer now tokenizes standalone `!` as `BangToken` while preserving longest-match lexing for `!=`.
+- The parser treats `!expr` as a unary expression using the existing unary `BinaryExpression` shape.
+- Generated C# emits unary logical-not expressions as `!operand`.
+- Type inference and top-level lambda-valued export inference treat `!boolOperand` bodies as `bool`.
+- C# delegate overload filtering/ranking now treats lambda bodies such as `flag => !flag` as `bool` when the operand is known `bool`, so incompatible delegate return targets report `TS2406` before generated C# emission.
+- The local legacy metadata fixture now includes `PickLogicalNotReturn` overloads and a `RequiresLogicalNotReturnString` negative target.
+- Grammar, reference, lowering, .NET interop, and C# members docs now list unary logical-not lowering and logical-not lambda body return inference as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters lambda delegate logical not return type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# delegate lambda logical not return overload diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported delegate lambda overload logical not return match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on no matching C# delegate lambda logical not return overload"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `test/fixtures/parser/positive/0033-logical-not-expression`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -912,7 +953,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0279 is compressed here.
+- Completed historical work through task 0280 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

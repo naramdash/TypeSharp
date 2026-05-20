@@ -1778,7 +1778,7 @@ public sealed class TypeSharpParser
     }
 
     private static int GetUnaryPrecedence(SyntaxKind kind) =>
-        kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken ? 7 : 0;
+        kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken or SyntaxKind.BangToken ? 7 : 0;
 
     private static int GetBinaryPrecedence(SyntaxKind kind) =>
         kind switch

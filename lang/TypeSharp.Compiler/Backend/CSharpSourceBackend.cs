@@ -2728,6 +2728,11 @@ public static class CSharpSourceBackend
                 return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
             }
 
+            if (IsUnaryLogicalNotExpression(node))
+            {
+                return "bool";
+            }
+
             if (node.Kind == SyntaxKind.BinaryExpression &&
                 node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
             {
@@ -2736,6 +2741,11 @@ public static class CSharpSourceBackend
 
             return "object";
         }
+
+        private static bool IsUnaryLogicalNotExpression(SyntaxNode node) =>
+            node.Kind == SyntaxKind.BinaryExpression &&
+            node.Children.FirstOrDefault(child => child.IsToken)?.Kind == SyntaxKind.BangToken &&
+            node.Children.Count(child => !child.IsToken) == 1;
 
         private static string InferLiteralType(SyntaxNode? initializer)
         {

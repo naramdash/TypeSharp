@@ -80,6 +80,7 @@ public enum SyntaxKind
     StarToken,
     SlashToken,
     PercentToken,
+    BangToken,
     EqualsEqualsToken,
     BangEqualsToken,
     LessToken,

@@ -136,6 +136,12 @@ internal sealed class TypeSharpInferenceEngine
             return InferPipelineTarget(expressions[1], scope, inferNested);
         }
 
+        if (IsUnaryLogicalNotExpression(children) && expressions.Length == 1)
+        {
+            var operandType = inferNested(expressions[0]);
+            return IsBoolType(operandType) ? SimpleType.Named("bool") : SimpleType.Unknown;
+        }
+
         foreach (var child in expressions)
         {
             inferNested(child);
@@ -175,6 +181,17 @@ internal sealed class TypeSharpInferenceEngine
         inferNested(target);
         return SimpleType.Unknown;
     }
+
+    private static bool IsUnaryLogicalNotExpression(IReadOnlyList<SyntaxNode> children) =>
+        children.Count >= 2 &&
+        children[0].IsToken &&
+        children[0].Kind == SyntaxKind.BangToken &&
+        children.Skip(1).Count(child => !child.IsToken) == 1;
+
+    private static bool IsBoolType(SimpleType type) =>
+        type.IsKnown &&
+        !type.IsNull &&
+        string.Equals(type.Name, "bool", StringComparison.Ordinal);
 
     private static bool IsCompositionExpression(IReadOnlyList<SyntaxNode> children)
     {

@@ -1193,6 +1193,11 @@ public static class TypeSharpCSharpOverloadResolver
             return false;
         }
 
+        if (TryInferLambdaUnaryLogicalNotExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (body.Children.Any(child => child.IsToken && IsBinaryPredicateOperator(child.Kind)))
         {
             type = new InferredArgumentType("bool");
@@ -1220,6 +1225,29 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         return false;
+    }
+
+    private static bool TryInferLambdaUnaryLogicalNotExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        var expressions = body.Children.Where(child => !child.IsToken).ToArray();
+        if (expressions.Length != 1 ||
+            body.Children.FirstOrDefault(child => child.IsToken)?.Kind != SyntaxKind.BangToken ||
+            !TryInferLambdaBodyType(argument, expressions[0], delegateSignature, assemblies, localInstances, extensionNamespaces, out var operandType) ||
+            !TryScoreKnownArgumentType(operandType, "bool", assemblies, out _))
+        {
+            return false;
+        }
+
+        type = new InferredArgumentType("bool");
+        return true;
     }
 
     private static bool IsBinaryPredicateOperator(SyntaxKind kind) =>

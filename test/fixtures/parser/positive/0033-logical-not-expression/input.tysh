@@ -1,0 +1,6 @@
+namespace Samples.LogicalNotExpression
+
+export fun inverted(value: bool): bool = !value
+
+export fun grouped(value: bool): bool =
+  !(value)
