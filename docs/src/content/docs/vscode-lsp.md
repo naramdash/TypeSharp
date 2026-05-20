@@ -3,7 +3,7 @@ title: VS Code And LSP
 description: TypeSharp VS Code extension and language server workflow.
 ---
 
-The VS Code extension lives in `vscode/typesharp`, and the language server host lives in `src/TypeSharp.LanguageServer`.
+The VS Code extension lives in `vscode/typesharp`, and the language server host lives in `lang/TypeSharp.LanguageServer`.
 
 Current editor features:
 

@@ -111,7 +111,7 @@ Blocked:
 ## Parallel Work Rules
 
 - Parallelize read-only repository inspection and independent verification commands when their output paths do not overlap.
-- Do not run two commands in parallel when they both write the same generated output, package folder, `tests/tmp` child, VS Code server folder, docs build output, or git index.
+- Do not run two commands in parallel when they both write the same generated output, package folder, `test/tmp` child, VS Code server folder, docs build output, or git index.
 - Keep file edits serialized through one patch at a time.
 - For compiler code, follow `typesharp-language-engineering` for deterministic diagnostics and fixture expectations.
 

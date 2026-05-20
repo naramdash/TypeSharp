@@ -72,11 +72,11 @@ This command block builds the TypeSharp library, prepares the Core/Runtime `net4
 
 ```text
 typesharp build
-dotnet build ../../../../src/TypeSharp.Core/TypeSharp.Core.csproj --nologo --verbosity quiet --ignore-failed-sources
-dotnet build ../../../../src/TypeSharp.Runtime/TypeSharp.Runtime.csproj --nologo --verbosity quiet --ignore-failed-sources
+dotnet build ../../../../lang/TypeSharp.Core/TypeSharp.Core.csproj --nologo --verbosity quiet --ignore-failed-sources
+dotnet build ../../../../lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj --nologo --verbosity quiet --ignore-failed-sources
 mkdir lib
-copy ..\..\..\..\src\TypeSharp.Core\bin\Debug\net48\TypeSharp.Core.dll lib\
-copy ..\..\..\..\src\TypeSharp.Runtime\bin\Debug\net48\TypeSharp.Runtime.dll lib\
+copy ..\..\..\..\lang\TypeSharp.Core\bin\Debug\net48\TypeSharp.Core.dll lib\
+copy ..\..\..\..\lang\TypeSharp.Runtime\bin\Debug\net48\TypeSharp.Runtime.dll lib\
 dotnet build host/AspNetWcfHostSmoke.csproj --nologo --verbosity quiet --ignore-failed-sources
 ```
 

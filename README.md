@@ -37,13 +37,13 @@ From a fresh clone:
 git clone https://github.com/naramdash/TypeSharp.git
 cd TypeSharp
 
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
 
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll check .\scratch\HelloTypeSharp\TypeSharp.toml
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll build .\scratch\HelloTypeSharp\TypeSharp.toml
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll run .\scratch\HelloTypeSharp\TypeSharp.toml
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll check .\scratch\HelloTypeSharp\TypeSharp.toml
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll build .\scratch\HelloTypeSharp\TypeSharp.toml
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll run .\scratch\HelloTypeSharp\TypeSharp.toml
 ```
 
 If a local antivirus blocks a generated short-lived `.exe`, `check` and `build` still validate the compiler path. Only add local exclusions for folders you trust.
@@ -88,20 +88,21 @@ The [docs](docs) folder is the canonical Astro Starlight documentation source. A
 
 | Path | Purpose |
 | --- | --- |
-| [src](src) | compiler, CLI, language server, runtime, and core library projects |
-| [tests](tests) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |
+| [cli](cli) | TypeSharp command-line host and user-facing tool entrypoint |
+| [lang](lang) | compiler, language server, runtime, and core library projects |
+| [test](test) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |
 | [docs](docs) | canonical Astro Starlight GitHub Pages documentation site |
 | [agent](agent) | temporary agentic work surface, task packets, traceability, and execution control |
 | [examples](examples) | single-file examples and runnable adoption projects |
-| [vscode/typesharp](vscode/typesharp) | VS Code extension package, syntax, formatter, and LSP client |
+| [vscode](vscode) | VS Code extension workspace, syntax, formatter, and LSP client |
 
 ## Development Checks
 
 Common local checks:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
 
 cd docs
 npm run build

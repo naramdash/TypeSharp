@@ -309,6 +309,7 @@ var tests = new (string Name, Action Body)[]
     ("docs site contract is stable", DocsSiteContractIsStable),
     ("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
     ("release artifacts workflow contract is stable", ReleaseArtifactsWorkflowContractIsStable),
+    ("repository monorepo layout is stable", RepositoryMonorepoLayoutIsStable),
     ("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
     ("CLI build uses root namespace for namespace-less source", CliBuildUsesRootNamespaceForNamespaceLessSource),
     ("CLI build uses module path containers for multiple sources", CliBuildUsesModulePathContainersForMultipleSources),
@@ -914,9 +915,9 @@ static void ParseResultExposesErrorState()
 
 static void ParserFixtureConventionPathsAreStable()
 {
-    AssertEqual("tests/fixtures/parser", ParserFixtureConventions.Root);
-    AssertEqual("tests/fixtures/parser/positive", ParserFixtureConventions.PositiveRoot);
-    AssertEqual("tests/fixtures/parser/negative", ParserFixtureConventions.NegativeRoot);
+    AssertEqual("test/fixtures/parser", ParserFixtureConventions.Root);
+    AssertEqual("test/fixtures/parser/positive", ParserFixtureConventions.PositiveRoot);
+    AssertEqual("test/fixtures/parser/negative", ParserFixtureConventions.NegativeRoot);
     AssertEqual("input.tysh", ParserFixtureConventions.InputFileName);
     AssertEqual("expected.diagnostics.json", ParserFixtureConventions.ExpectedDiagnosticsFileName);
     AssertEqual("expected.tree", ParserFixtureConventions.ExpectedTreeFileName);
@@ -924,26 +925,26 @@ static void ParserFixtureConventionPathsAreStable()
 
 static void BinderFixtureConventionPathsAreStable()
 {
-    AssertEqual("tests/fixtures/diagnostics/binder", BinderFixtureConventions.Root);
-    AssertEqual("tests/fixtures/diagnostics/binder/positive", BinderFixtureConventions.PositiveRoot);
-    AssertEqual("tests/fixtures/diagnostics/binder/negative", BinderFixtureConventions.NegativeRoot);
+    AssertEqual("test/fixtures/diagnostics/binder", BinderFixtureConventions.Root);
+    AssertEqual("test/fixtures/diagnostics/binder/positive", BinderFixtureConventions.PositiveRoot);
+    AssertEqual("test/fixtures/diagnostics/binder/negative", BinderFixtureConventions.NegativeRoot);
     AssertEqual("input.tysh", BinderFixtureConventions.InputFileName);
     AssertEqual("expected.diagnostics.json", BinderFixtureConventions.ExpectedDiagnosticsFileName);
 }
 
 static void TypeCheckerFixtureConventionPathsAreStable()
 {
-    AssertEqual("tests/fixtures/diagnostics/type-checker", TypeCheckerFixtureConventions.Root);
-    AssertEqual("tests/fixtures/diagnostics/type-checker/positive", TypeCheckerFixtureConventions.PositiveRoot);
-    AssertEqual("tests/fixtures/diagnostics/type-checker/negative", TypeCheckerFixtureConventions.NegativeRoot);
+    AssertEqual("test/fixtures/diagnostics/type-checker", TypeCheckerFixtureConventions.Root);
+    AssertEqual("test/fixtures/diagnostics/type-checker/positive", TypeCheckerFixtureConventions.PositiveRoot);
+    AssertEqual("test/fixtures/diagnostics/type-checker/negative", TypeCheckerFixtureConventions.NegativeRoot);
     AssertEqual("input.tysh", TypeCheckerFixtureConventions.InputFileName);
     AssertEqual("expected.diagnostics.json", TypeCheckerFixtureConventions.ExpectedDiagnosticsFileName);
 }
 
 static void CSharpBackendFixtureConventionPathsAreStable()
 {
-    AssertEqual("tests/fixtures/backend/csharp", CSharpBackendFixtureConventions.Root);
-    AssertEqual("tests/fixtures/backend/csharp/positive", CSharpBackendFixtureConventions.PositiveRoot);
+    AssertEqual("test/fixtures/backend/csharp", CSharpBackendFixtureConventions.Root);
+    AssertEqual("test/fixtures/backend/csharp/positive", CSharpBackendFixtureConventions.PositiveRoot);
     AssertEqual("input.tysh", CSharpBackendFixtureConventions.InputFileName);
     AssertEqual("expected.cs", CSharpBackendFixtureConventions.ExpectedCSharpFileName);
 }
@@ -2077,8 +2078,8 @@ static void SourceModuleGraphReportsMissingNamespaceImportMembers()
 
 static void RuntimeProjectTargetsNet48()
 {
-    var project = File.ReadAllText(Path.Combine("src", "TypeSharp.Runtime", "TypeSharp.Runtime.csproj"));
-    var runtimeInfo = File.ReadAllText(Path.Combine("src", "TypeSharp.Runtime", "TypeSharpRuntimeInfo.cs"));
+    var project = File.ReadAllText(Path.Combine("lang", "TypeSharp.Runtime", "TypeSharp.Runtime.csproj"));
+    var runtimeInfo = File.ReadAllText(Path.Combine("lang", "TypeSharp.Runtime", "TypeSharpRuntimeInfo.cs"));
 
     AssertContains("<TargetFramework>net48</TargetFramework>", project);
     AssertContains("<AssemblyName>TypeSharp.Runtime</AssemblyName>", project);
@@ -2089,10 +2090,10 @@ static void RuntimeProjectTargetsNet48()
 
 static void CoreProjectTargetsNet48()
 {
-    var project = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "TypeSharp.Core.csproj"));
-    var option = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "Option.cs"));
-    var result = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "Result.cs"));
-    var unit = File.ReadAllText(Path.Combine("src", "TypeSharp.Core", "Unit.cs"));
+    var project = File.ReadAllText(Path.Combine("lang", "TypeSharp.Core", "TypeSharp.Core.csproj"));
+    var option = File.ReadAllText(Path.Combine("lang", "TypeSharp.Core", "Option.cs"));
+    var result = File.ReadAllText(Path.Combine("lang", "TypeSharp.Core", "Result.cs"));
+    var unit = File.ReadAllText(Path.Combine("lang", "TypeSharp.Core", "Unit.cs"));
 
     AssertContains("<TargetFramework>net48</TargetFramework>", project);
     AssertContains("<AssemblyName>TypeSharp.Core</AssemblyName>", project);
@@ -2113,11 +2114,11 @@ static void RuntimeAbiConstantsAreAligned()
 
 static void Net48RuntimeArtifactsAvoidExternalPackageDependencies()
 {
-    AssertNet48PackageFreeArtifact("src/TypeSharp.Core/TypeSharp.Core.csproj");
-    AssertNet48PackageFreeArtifact("src/TypeSharp.Runtime/TypeSharp.Runtime.csproj");
+    AssertNet48PackageFreeArtifact("lang/TypeSharp.Core/TypeSharp.Core.csproj");
+    AssertNet48PackageFreeArtifact("lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj");
 
-    AssertNoDisallowedNet5RuntimeApiReferences("src/TypeSharp.Core");
-    AssertNoDisallowedNet5RuntimeApiReferences("src/TypeSharp.Runtime");
+    AssertNoDisallowedNet5RuntimeApiReferences("lang/TypeSharp.Core");
+    AssertNoDisallowedNet5RuntimeApiReferences("lang/TypeSharp.Runtime");
 }
 
 static void CoreOptionAndResultExposeBasicStates()
@@ -8935,7 +8936,7 @@ static void CliBuildHonorsMinimalVerbosity()
 
 static void LexerHandlesHelloFixtureTokens()
 {
-    var input = File.ReadAllText(Path.Combine("tests", "fixtures", "parser", "positive", "0001-hello-cli", "input.tysh"));
+    var input = File.ReadAllText(Path.Combine("test", "fixtures", "parser", "positive", "0001-hello-cli", "input.tysh"));
     var lexer = new TypeSharpLexer(input, "input.tysh");
     var tokens = lexer.Lex();
 
@@ -8952,7 +8953,7 @@ static void LexerHandlesHelloFixtureTokens()
 
 static void ParserParsesHelloFixtureWithoutDiagnostics()
 {
-    var input = File.ReadAllText(Path.Combine("tests", "fixtures", "parser", "positive", "0001-hello-cli", "input.tysh"));
+    var input = File.ReadAllText(Path.Combine("test", "fixtures", "parser", "positive", "0001-hello-cli", "input.tysh"));
     var result = TypeSharpParser.ParseText(input);
 
     AssertFalse(result.HasErrors, "Hello fixture should parse without diagnostics.");
@@ -8980,8 +8981,8 @@ static void ParserFixtureSnapshotsMatch()
 {
     var fixtureRoots = new[]
     {
-        Path.Combine("tests", "fixtures", "parser", "positive"),
-        Path.Combine("tests", "fixtures", "parser", "negative")
+        Path.Combine("test", "fixtures", "parser", "positive"),
+        Path.Combine("test", "fixtures", "parser", "negative")
     };
 
     foreach (var fixtureRoot in fixtureRoots)
@@ -9085,7 +9086,7 @@ static void GeneratedCSharpCompilesInNet48Project()
 {
     WithWorkspace(root =>
     {
-        var inputPath = Path.Combine("tests", "fixtures", "backend", "csharp", "positive", "0004-block-local", CSharpBackendFixtureConventions.InputFileName);
+        var inputPath = Path.Combine("test", "fixtures", "backend", "csharp", "positive", "0004-block-local", CSharpBackendFixtureConventions.InputFileName);
         var parseResult = TypeSharpParser.ParseText(File.ReadAllText(inputPath), CSharpBackendFixtureConventions.InputFileName);
         AssertFalse(parseResult.HasErrors, "Generated C# smoke input should parse without diagnostics.");
         var syntaxRoot = Require(parseResult.Root, "Parser should produce a root syntax node.");
@@ -9462,7 +9463,7 @@ static void CliCheckSucceedsOnParseCleanProject()
     WithWorkspace(root =>
     {
         var manifestPath = WriteManifest(root, MinimalManifest("ParseClean"));
-        WriteFile(root, "src/Main.tysh", File.ReadAllText(Path.Combine("tests", "fixtures", "parser", "positive", "0001-hello-cli", "input.tysh")));
+        WriteFile(root, "src/Main.tysh", File.ReadAllText(Path.Combine("test", "fixtures", "parser", "positive", "0001-hello-cli", "input.tysh")));
         using var output = new StringWriter();
         using var error = new StringWriter();
 
@@ -10226,7 +10227,7 @@ static void VsCodeExtensionPackageShapeIsStable()
     AssertEqual("node test/run-extension-host-smoke.js", scripts.GetProperty("test:host").GetString());
     AssertEqual("npx --yes @vscode/vsce package", scripts.GetProperty("package:vsix").GetString());
     AssertEqual(
-        "dotnet publish ../../src/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo",
+        "dotnet publish ../../lang/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo",
         scripts.GetProperty("prepare:server").GetString());
     AssertTrue(File.Exists(Path.Combine(extensionRoot, "extension.js")), "VS Code extension entrypoint should exist.");
     AssertTrue(File.Exists(Path.Combine(extensionRoot, "MARKETPLACE.md")), "VS Code Marketplace publishing guide should exist.");
@@ -10565,11 +10566,11 @@ static void SmokeHostAspNetWcfExample(string projectRoot)
 static void CopyRuntimeDependenciesToExample(string projectRoot)
 {
     var coreAssemblyPath = BuildRepositoryAssembly(
-        "src/TypeSharp.Core/TypeSharp.Core.csproj",
-        "src/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
+        "lang/TypeSharp.Core/TypeSharp.Core.csproj",
+        "lang/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
     var runtimeAssemblyPath = BuildRepositoryAssembly(
-        "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-        "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+        "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+        "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
     var libRoot = Path.Combine(projectRoot, "lib");
     Directory.CreateDirectory(libRoot);
     File.Copy(coreAssemblyPath, Path.Combine(libRoot, "TypeSharp.Core.dll"), overwrite: true);
@@ -10971,16 +10972,16 @@ static void ReleaseArtifactsWorkflowContractIsStable()
     AssertContains("DOTNET_VERSION: '10.0.x'", workflow);
     AssertContains("uses: actions/setup-node@v6", workflow);
     AssertContains("NODE_VERSION: '24'", workflow);
-    AssertContains("dotnet restore tests\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj", workflow);
-    AssertContains("dotnet build tests\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-restore", workflow);
+    AssertContains("dotnet restore test\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj", workflow);
+    AssertContains("dotnet build test\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-restore", workflow);
     AssertContains("generated C# compiles in net48 project", workflow);
     AssertContains("net48 runtime artifacts avoid external package dependencies", workflow);
     AssertContains("runnable example project commands are smoke-tested", workflow);
     AssertContains("VS Code extension package shape is stable", workflow);
-    AssertContains("dotnet publish src\\TypeSharp.Cli\\TypeSharp.Cli.csproj", workflow);
+    AssertContains("dotnet publish cli\\TypeSharp.Cli\\TypeSharp.Cli.csproj", workflow);
     AssertContains("-p:UseAppHost=false", workflow);
-    AssertContains("src\\TypeSharp.Core\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Core.dll", workflow);
-    AssertContains("src\\TypeSharp.Runtime\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Runtime.dll", workflow);
+    AssertContains("lang\\TypeSharp.Core\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Core.dll", workflow);
+    AssertContains("lang\\TypeSharp.Runtime\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Runtime.dll", workflow);
     AssertContains("npm run prepare:server", workflow);
     AssertContains("npm run package:vsix", workflow);
     AssertContains("Compress-Archive", workflow);
@@ -11005,6 +11006,80 @@ static void ReleaseArtifactsWorkflowContractIsStable()
     AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
     AssertContains("SHA256SUMS.txt", projectPolicyPage);
     AssertContains("contents: write", projectPolicyPage);
+}
+
+static void RepositoryMonorepoLayoutIsStable()
+{
+    var repositoryRoot = Directory.GetCurrentDirectory();
+    var topLevelDirectories = new[]
+    {
+        "agent",
+        "cli",
+        "docs",
+        "examples",
+        "lang",
+        "test",
+        "vscode"
+    };
+
+    foreach (var directory in topLevelDirectories)
+    {
+        AssertTrue(Directory.Exists(Path.Combine(repositoryRoot, directory)), $"Expected top-level '{directory}' directory to exist.");
+        AssertTrue(File.Exists(Path.Combine(repositoryRoot, directory, "README.md")), $"Expected top-level '{directory}' directory to explain its purpose in README.md.");
+    }
+
+    AssertFalse(Directory.Exists(Path.Combine(repositoryRoot, "src")), "Repository implementation projects should be split into cli/ and lang/, not root src/.");
+    AssertFalse(Directory.Exists(Path.Combine(repositoryRoot, "tests")), "Repository tests should live under test/, not root tests/.");
+
+    AssertTrue(File.Exists(Path.Combine(repositoryRoot, "cli", "TypeSharp.Cli", "TypeSharp.Cli.csproj")), "CLI project should live under cli/.");
+    AssertTrue(File.Exists(Path.Combine(repositoryRoot, "lang", "TypeSharp.Compiler", "TypeSharp.Compiler.csproj")), "Compiler project should live under lang/.");
+    AssertTrue(File.Exists(Path.Combine(repositoryRoot, "lang", "TypeSharp.LanguageServer", "TypeSharp.LanguageServer.csproj")), "Language server project should live under lang/.");
+    AssertTrue(File.Exists(Path.Combine(repositoryRoot, "lang", "TypeSharp.Core", "TypeSharp.Core.csproj")), "Core library project should live under lang/.");
+    AssertTrue(File.Exists(Path.Combine(repositoryRoot, "lang", "TypeSharp.Runtime", "TypeSharp.Runtime.csproj")), "Runtime library project should live under lang/.");
+    AssertTrue(File.Exists(Path.Combine(repositoryRoot, "test", "TypeSharp.Compiler.Tests", "TypeSharp.Compiler.Tests.csproj")), "Test project should live under test/.");
+
+    var rootReadme = File.ReadAllText(Path.Combine(repositoryRoot, "README.md"));
+    AssertContains("| [cli](cli) | TypeSharp command-line host", rootReadme);
+    AssertContains("| [lang](lang) | compiler, language server, runtime, and core library projects |", rootReadme);
+    AssertContains("| [test](test) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |", rootReadme);
+    AssertContains("| [docs](docs) | canonical Astro Starlight GitHub Pages documentation site |", rootReadme);
+    AssertContains("| [agent](agent) | temporary agentic work surface", rootReadme);
+    AssertContains("| [examples](examples) | single-file examples and runnable adoption projects |", rootReadme);
+    AssertContains("| [vscode](vscode) | VS Code extension workspace", rootReadme);
+
+    var projectLedger = File.ReadAllText(Path.Combine(repositoryRoot, "docs", "src", "content", "docs", "project-ledger.md"));
+    AssertContains("## Repository Layout", projectLedger);
+    AssertContains("| `cli/` | TypeSharp command-line host", projectLedger);
+    AssertContains("| `lang/` | Compiler, language server", projectLedger);
+    AssertContains("| `test/` | Regression runner", projectLedger);
+    AssertContains("| `vscode/` | VS Code extension workspace", projectLedger);
+
+    var cliProject = File.ReadAllText(Path.Combine(repositoryRoot, "cli", "TypeSharp.Cli", "TypeSharp.Cli.csproj"));
+    AssertContains(@"..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj", cliProject);
+    AssertContains(@"..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj", cliProject);
+
+    var testProject = File.ReadAllText(Path.Combine(repositoryRoot, "test", "TypeSharp.Compiler.Tests", "TypeSharp.Compiler.Tests.csproj"));
+    AssertContains(@"..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj", testProject);
+    AssertContains(@"..\..\cli\TypeSharp.Cli\TypeSharp.Cli.csproj", testProject);
+    AssertContains(@"..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj", testProject);
+    AssertContains(@"..\..\lang\TypeSharp.Core\Option.cs", testProject);
+    AssertContains(@"..\..\lang\TypeSharp.Runtime\TypeSharpRuntimeInfo.cs", testProject);
+
+    var gitignore = File.ReadAllText(Path.Combine(repositoryRoot, ".gitignore"));
+    AssertContains("test/tmp/", gitignore);
+    AssertFalse(gitignore.Contains("tests/tmp/", StringComparison.Ordinal), ".gitignore should not point at the former tests/tmp path.");
+
+    var releaseWorkflow = File.ReadAllText(Path.Combine(repositoryRoot, ".github", "workflows", "release-artifacts.yml"));
+    AssertContains(@"dotnet restore test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj", releaseWorkflow);
+    AssertContains(@"dotnet publish cli\TypeSharp.Cli\TypeSharp.Cli.csproj", releaseWorkflow);
+    AssertContains(@"dotnet build lang\TypeSharp.Core\TypeSharp.Core.csproj", releaseWorkflow);
+    AssertContains(@"dotnet build lang\TypeSharp.Runtime\TypeSharp.Runtime.csproj", releaseWorkflow);
+
+    var extension = File.ReadAllText(Path.Combine(repositoryRoot, "vscode", "typesharp", "extension.js"));
+    AssertContains(@"path.join(repositoryRoot, ""lang"", ""TypeSharp.LanguageServer""", extension);
+    AssertFalse(
+        extension.Contains(@"path.join(repositoryRoot, ""src"", ""TypeSharp.LanguageServer""", StringComparison.Ordinal),
+        "VS Code development fallback should use lang/TypeSharp.LanguageServer.");
 }
 
 static void RunCliCommand(string[] args, int expectedExitCode)
@@ -14624,7 +14699,7 @@ static void CliBuildCompilesCoreOptionResultApis()
     {
         var coreBuild = RunProcess(
             "dotnet",
-            "build src/TypeSharp.Core/TypeSharp.Core.csproj --nologo --verbosity quiet --ignore-failed-sources",
+            "build lang/TypeSharp.Core/TypeSharp.Core.csproj --nologo --verbosity quiet --ignore-failed-sources",
             Directory.GetCurrentDirectory());
         AssertTrue(
             coreBuild.ExitCode == 0,
@@ -14633,7 +14708,7 @@ static void CliBuildCompilesCoreOptionResultApis()
         var libRoot = Path.Combine(root, "lib");
         Directory.CreateDirectory(libRoot);
         File.Copy(
-            Path.Combine(Directory.GetCurrentDirectory(), "src", "TypeSharp.Core", "bin", "Debug", "net48", "TypeSharp.Core.dll"),
+            Path.Combine(Directory.GetCurrentDirectory(), "lang", "TypeSharp.Core", "bin", "Debug", "net48", "TypeSharp.Core.dll"),
             Path.Combine(libRoot, "TypeSharp.Core.dll"));
 
         var manifestPath = WriteManifest(root, """
@@ -14976,8 +15051,8 @@ static void CliBuildCompilesPartialDeclarationApi()
     WithWorkspace(root =>
     {
         var runtimeAssemblyPath = BuildRepositoryAssembly(
-            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+            "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
         var libRoot = Path.Combine(root, "lib");
         Directory.CreateDirectory(libRoot);
         File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"));
@@ -15679,8 +15754,8 @@ static void CliBuildCompilesNominalUnionApi()
     WithWorkspace(root =>
     {
         var runtimeAssemblyPath = BuildRepositoryAssembly(
-            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+            "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
         var libRoot = Path.Combine(root, "lib");
         Directory.CreateDirectory(libRoot);
         File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"));
@@ -15794,8 +15869,8 @@ static void CliBuildCompilesNominalUnionMatchLowering()
     WithWorkspace(root =>
     {
         var runtimeAssemblyPath = BuildRepositoryAssembly(
-            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+            "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
         var libRoot = Path.Combine(root, "lib");
         Directory.CreateDirectory(libRoot);
         File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"));
@@ -15904,8 +15979,8 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
     WithWorkspace(root =>
     {
         var runtimeAssemblyPath = BuildRepositoryAssembly(
-            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+            "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
         var libRoot = Path.Combine(root, "lib");
         Directory.CreateDirectory(libRoot);
         File.Copy(runtimeAssemblyPath, Path.Combine(libRoot, "TypeSharp.Runtime.dll"));
@@ -17138,11 +17213,11 @@ static void Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime()
         AssertTrue(File.Exists(generatedAssemblyPath), "TypeSharp build should produce a generated assembly for host compatibility smokes.");
 
         var coreAssemblyPath = BuildRepositoryAssembly(
-            "src/TypeSharp.Core/TypeSharp.Core.csproj",
-            "src/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
+            "lang/TypeSharp.Core/TypeSharp.Core.csproj",
+            "lang/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
         var runtimeAssemblyPath = BuildRepositoryAssembly(
-            "src/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
-            "src/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+            "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
 
         BuildApplicationModelHostProject(
             root,
@@ -17523,7 +17598,7 @@ static T Require<T>(T? value, string message)
 
 static void WithWorkspace(Action<string> action)
 {
-    var root = Path.Combine(Directory.GetCurrentDirectory(), "tests", "tmp", Guid.NewGuid().ToString("N"));
+    var root = Path.Combine(Directory.GetCurrentDirectory(), "test", "tmp", Guid.NewGuid().ToString("N"));
     Directory.CreateDirectory(root);
 
     try

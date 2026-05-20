@@ -16,6 +16,18 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 | `.codex/skills/` | Project-local Codex skill packages selected for TypeSharp goal work. | Add, update, or remove skill folders only when a concrete project task needs them. |
 | `agent.md` | Codex CLI goal bootstrap and long-running agent instructions. | Keep concise and operational. |
 
+## Repository Layout
+
+| Path | Role |
+| --- | --- |
+| `cli/` | TypeSharp command-line host and user-facing tool entrypoint. |
+| `lang/` | Compiler, language server, package-free `net48` Core library, and package-free `net48` Runtime library. |
+| `test/` | Regression runner, compiler/CLI/runtime/docs/VS Code smokes, and parser/type-checker/backend fixtures. |
+| `docs/` | Canonical public documentation site and web-facing project ledger. |
+| `agent/` | Temporary operational records for agentic task selection, rollup, traceability, and handoff. |
+| `examples/` | Single-file and runnable TypeSharp adoption artifacts used by docs and smoke tests. |
+| `vscode/` | VS Code extension workspace, syntax assets, formatter client, LSP client, and package smoke tests. |
+
 ## Project Record Pages
 
 - [Core Goal](../goal/): project mission, required proof, non-goals, and adoption boundaries.

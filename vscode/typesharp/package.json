@@ -29,7 +29,7 @@
     "test:live": "node test/extension-live-smoke.js",
     "test:host": "node test/run-extension-host-smoke.js",
     "package:vsix": "npx --yes @vscode/vsce package",
-    "prepare:server": "dotnet publish ../../src/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo"
+    "prepare:server": "dotnet publish ../../lang/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj -c Release -o server --nologo"
   },
   "files": [
     "extension.js",

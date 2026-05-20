@@ -127,8 +127,8 @@ Canonical pages:
 
 Implementation notes:
 
-- [`src/TypeSharp.Core/README.md`](https://github.com/naramdash/TypeSharp/blob/main/src/TypeSharp.Core/README.md)
-- [`src/TypeSharp.Runtime/README.md`](https://github.com/naramdash/TypeSharp/blob/main/src/TypeSharp.Runtime/README.md)
+- [`lang/TypeSharp.Core/README.md`](https://github.com/naramdash/TypeSharp/blob/main/lang/TypeSharp.Core/README.md)
+- [`lang/TypeSharp.Runtime/README.md`](https://github.com/naramdash/TypeSharp/blob/main/lang/TypeSharp.Runtime/README.md)
 
 ## Generated Assembly Layout
 

@@ -71,10 +71,10 @@ Named imports from metadata namespaces lower to `using` directives; aliases lowe
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0001-string-return`
-- `tests/fixtures/backend/csharp/positive/0002-import-directives`
-- `tests/fixtures/backend/csharp/positive/0003-call-expression`
-- `tests/fixtures/backend/csharp/positive/0008-basic-semantics`
+- `test/fixtures/backend/csharp/positive/0001-string-return`
+- `test/fixtures/backend/csharp/positive/0002-import-directives`
+- `test/fixtures/backend/csharp/positive/0003-call-expression`
+- `test/fixtures/backend/csharp/positive/0008-basic-semantics`
 - CLI smokes for basic semantics, framework calls, local DLL calls, manifest reference propagation, and module-path containers.
 
 ## Records, Public Types, And Partial Declarations
@@ -85,15 +85,15 @@ Public class, interface, generic type, generic function, and delegate-compatible
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0011-generic-function-api`
-- `tests/fixtures/backend/csharp/positive/0012-class-declaration-api`
-- `tests/fixtures/backend/csharp/positive/0013-interface-declaration-api`
-- `tests/fixtures/backend/csharp/positive/0014-generic-type-declaration-api`
-- `tests/fixtures/backend/csharp/positive/0015-immutable-record-api`
-- `tests/fixtures/backend/csharp/positive/0016-record-update-lowering`
-- `tests/fixtures/backend/csharp/positive/0025-record-expression-construction`
-- `tests/fixtures/backend/csharp/positive/0026-partial-declarations`
-- `tests/fixtures/backend/csharp/positive/0035-record-spread-lowering`
+- `test/fixtures/backend/csharp/positive/0011-generic-function-api`
+- `test/fixtures/backend/csharp/positive/0012-class-declaration-api`
+- `test/fixtures/backend/csharp/positive/0013-interface-declaration-api`
+- `test/fixtures/backend/csharp/positive/0014-generic-type-declaration-api`
+- `test/fixtures/backend/csharp/positive/0015-immutable-record-api`
+- `test/fixtures/backend/csharp/positive/0016-record-update-lowering`
+- `test/fixtures/backend/csharp/positive/0025-record-expression-construction`
+- `test/fixtures/backend/csharp/positive/0026-partial-declarations`
+- `test/fixtures/backend/csharp/positive/0035-record-spread-lowering`
 
 ## Union And Pattern Lowering
 
@@ -105,11 +105,11 @@ Type-level unions are local compile-time constructs. Their matches lower to C# t
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0017-nominal-union-api`
-- `tests/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`
-- `tests/fixtures/backend/csharp/positive/0019-type-level-union-narrowing`
-- `tests/fixtures/diagnostics/type-checker/negative/non-exhaustive-union-match`
-- `tests/fixtures/diagnostics/type-checker/negative/public-boundary-union-alias`
+- `test/fixtures/backend/csharp/positive/0017-nominal-union-api`
+- `test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`
+- `test/fixtures/backend/csharp/positive/0019-type-level-union-narrowing`
+- `test/fixtures/diagnostics/type-checker/negative/non-exhaustive-union-match`
+- `test/fixtures/diagnostics/type-checker/negative/public-boundary-union-alias`
 
 ## Functional And Control Lowering
 
@@ -129,12 +129,12 @@ Composition expressions lower to unary delegate lambdas. `yield` lowers to C# it
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0023-pipeline-lowering`
-- `tests/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
-- `tests/fixtures/backend/csharp/positive/0031-yield-expression-lowering`
-- `tests/fixtures/backend/csharp/positive/0032-lock-statement-lowering`
-- `tests/fixtures/diagnostics/type-checker/negative/yield-mismatch`
-- `tests/fixtures/diagnostics/type-checker/negative/lock-value-type`
+- `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`
+- `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
+- `test/fixtures/backend/csharp/positive/0031-yield-expression-lowering`
+- `test/fixtures/backend/csharp/positive/0032-lock-statement-lowering`
+- `test/fixtures/diagnostics/type-checker/negative/yield-mismatch`
+- `test/fixtures/diagnostics/type-checker/negative/lock-value-type`
 
 ## Structural Proof And Type Operator Lowering
 
@@ -144,12 +144,12 @@ Limited `keyof T` over known records or named shapes is compile-time-only and lo
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0030-satisfies-expression-lowering`
-- `tests/fixtures/backend/csharp/positive/0036-keyof-type-lowering`
-- `tests/fixtures/backend/csharp/positive/0037-indexed-access-type-lowering`
-- `tests/fixtures/diagnostics/type-checker/positive/intersection-structural-shape`
-- `tests/fixtures/diagnostics/type-checker/negative/public-boundary-intersection-alias`
-- `tests/fixtures/diagnostics/type-checker/negative/indexed-access-record-mismatch`
+- `test/fixtures/backend/csharp/positive/0030-satisfies-expression-lowering`
+- `test/fixtures/backend/csharp/positive/0036-keyof-type-lowering`
+- `test/fixtures/backend/csharp/positive/0037-indexed-access-type-lowering`
+- `test/fixtures/diagnostics/type-checker/positive/intersection-structural-shape`
+- `test/fixtures/diagnostics/type-checker/negative/public-boundary-intersection-alias`
+- `test/fixtures/diagnostics/type-checker/negative/indexed-access-record-mismatch`
 
 ## Collections, Indexers, Intrinsics, And Extensions
 
@@ -161,12 +161,12 @@ Indexer expressions preserve C# array or indexer access and validate imported C#
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0022-collection-expression-lowering`
-- `tests/fixtures/backend/csharp/positive/0024-indexer-expression-lowering`
-- `tests/fixtures/backend/csharp/positive/0027-nameof-intrinsic`
-- `tests/fixtures/backend/csharp/positive/0028-checked-unchecked-expression`
-- `tests/fixtures/backend/csharp/positive/0033-extension-method-lowering`
-- `tests/fixtures/backend/csharp/positive/0034-collection-spread-lowering`
+- `test/fixtures/backend/csharp/positive/0022-collection-expression-lowering`
+- `test/fixtures/backend/csharp/positive/0024-indexer-expression-lowering`
+- `test/fixtures/backend/csharp/positive/0027-nameof-intrinsic`
+- `test/fixtures/backend/csharp/positive/0028-checked-unchecked-expression`
+- `test/fixtures/backend/csharp/positive/0033-extension-method-lowering`
+- `test/fixtures/backend/csharp/positive/0034-collection-spread-lowering`
 
 ## Async And .NET Interop Lowering
 
@@ -176,7 +176,7 @@ C# interop lowering preserves supported constructor calls, method calls, member 
 
 Evidence:
 
-- `tests/fixtures/backend/csharp/positive/0020-async-task-interop`
+- `test/fixtures/backend/csharp/positive/0020-async-task-interop`
 - C# interop CLI smokes listed in [Work Ledger](../work-ledger/)
 - [.NET Interop](../dotnet-interop/) for metadata validation boundaries.
 

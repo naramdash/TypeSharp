@@ -4,7 +4,7 @@ obj/
 .codex/*
 !.codex/skills/
 !.codex/skills/**
-tests/tmp/
+test/tmp/
 TestResults/
 artifacts/
 node_modules/

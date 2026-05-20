@@ -34,9 +34,9 @@ Completed foundation work established:
 
 Primary evidence:
 
-- `tests/fixtures/parser`
-- `tests/fixtures/diagnostics`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/fixtures/parser`
+- `test/fixtures/diagnostics`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Runtime Build Backend And Language Lowering
 
@@ -49,10 +49,10 @@ Completed backend/runtime work established:
 
 Primary evidence:
 
-- `tests/fixtures/backend/csharp`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
-- `src/TypeSharp.Core`
-- `src/TypeSharp.Runtime`
+- `test/fixtures/backend/csharp`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- `lang/TypeSharp.Core`
+- `lang/TypeSharp.Runtime`
 
 ## CSharp Interop And Metadata Diagnostics
 
@@ -66,7 +66,7 @@ Completed interop work established:
 
 Primary evidence:
 
-- C# interop tests in `tests/TypeSharp.Compiler.Tests/Program.cs`
+- C# interop tests in `test/TypeSharp.Compiler.Tests/Program.cs`
 - Interop-focused docs pages: [.NET Interop](../docs/src/content/docs/dotnet-interop.md), [Diagnostics](../docs/src/content/docs/diagnostics.md)
 
 ## CLI VSCode And Tooling
@@ -82,7 +82,7 @@ Completed tooling work established:
 
 Primary evidence:
 
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 - `vscode/typesharp`
 - `examples/runnable`
 - [CLI](../docs/src/content/docs/cli.md), [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
@@ -134,8 +134,8 @@ Completed source module/safety work established:
 
 Primary evidence:
 
-- Source module tests in `tests/TypeSharp.Compiler.Tests/Program.cs`
-- Parser/backend/diagnostic fixtures under `tests/fixtures`
+- Source module tests in `test/TypeSharp.Compiler.Tests/Program.cs`
+- Parser/backend/diagnostic fixtures under `test/fixtures`
 - [Modules And Imports](../docs/src/content/docs/modules.md), [Type System](../docs/src/content/docs/type-system.md)
 
 ## Task 0256 Test Suite Quality Audit
@@ -147,7 +147,7 @@ Completed test quality audit work established:
 - Parser, binder, and type-checker diagnostic fixtures now enforce polarity: positive fixtures must keep empty expected diagnostics, and negative fixtures must keep at least one structured diagnostic with code, message, file, and start/end locations.
 - Runnable example CLI smoke helper now requires successful `check` and `build` commands to leave stderr empty.
 - VS Code Extension Host smoke runner now fails on signal termination or null/nonzero exit status instead of converting a signal-terminated process result to success.
-- `tests/tmp` was confirmed ignored and untracked, so generated residue is not part of the regression fixture set.
+- `test/tmp` was confirmed ignored and untracked, so generated residue is not part of the regression fixture set.
 
 Audit inventory result:
 
@@ -164,7 +164,7 @@ Audit inventory result:
 Verification:
 
 ```powershell
-dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
 npm run check          # in vscode/typesharp
 npm run check:smoke    # in vscode/typesharp
 npm run check:live     # in vscode/typesharp
@@ -177,8 +177,8 @@ npm run build          # in docs
 
 Primary evidence:
 
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
-- `tests/fixtures`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- `test/fixtures`
 - `vscode/typesharp/test`
 - `examples/runnable`
 - `docs/src/content/docs`
@@ -198,7 +198,7 @@ Verification:
 ```powershell
 npm ci                 # in docs
 npm run build          # in docs
-dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
 git diff --check
 ```
 
@@ -207,7 +207,7 @@ Primary evidence:
 - `docs`
 - `agent`
 - `.github/workflows/docs.yml`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 - [Document Ownership](../docs/src/content/docs/document-ownership.md)
 
 ## Task 0258 Codex Skills Configuration
@@ -248,20 +248,20 @@ Completed parallel execution work established:
 Verification:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parallel diagnostics"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "compiler check performance"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build uses module path containers"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parallel diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "compiler check performance"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build uses module path containers"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
 npm run build          # in docs
 git diff --check
 ```
 
 Primary evidence:
 
-- `src/TypeSharp.Compiler/Checking/TypeSharpChecker.cs`
-- `src/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `lang/TypeSharp.Compiler/Checking/TypeSharpChecker.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 - [Project Policy](../docs/src/content/docs/project-policy.md)
 - [agentic-execution.md](agentic-execution.md)
 
@@ -283,9 +283,9 @@ npm view typescript version
 npm view @astrojs/starlight peerDependencies --json
 npm install --save-exact astro@6.3.6 @astrojs/starlight@0.39.2 typescript@6.0.3
 npm run build          # in docs
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
 npm outdated --json    # in docs
 ```
 
@@ -293,7 +293,7 @@ Primary evidence:
 
 - `docs/package.json`
 - `docs/package-lock.json`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0261 Docs TypeScript Config Conversion
 
@@ -309,15 +309,15 @@ Verification:
 ```powershell
 npm run build          # in docs
 rg --files docs | rg "\.(mjs|js|cjs|jsx|mjsx)$"
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
 ```
 
 Primary evidence:
 
 - `docs/astro.config.ts`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0262 VS Code Syntax Highlighting Extension Install Guide
 
@@ -336,10 +336,10 @@ Verification:
 npm run check          # in vscode/typesharp
 npm run test:smoke     # in vscode/typesharp
 npm run package:vsix   # in vscode/typesharp
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code extension package shape"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code syntax grammar"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code extension package shape"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code syntax grammar"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
 npm run build          # in docs
 git diff --check
 ```
@@ -351,7 +351,7 @@ Primary evidence:
 - `vscode/typesharp/README.md`
 - `vscode/typesharp/MARKETPLACE.md`
 - [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0263 Docs tysh Syntax Highlighting
 
@@ -369,8 +369,8 @@ Verification:
 ```powershell
 npm run build          # in docs
 rg -F 'data-language="tysh"' docs/dist/language-tour/index.html docs/dist/fundamentals/index.html docs/dist/modules/index.html
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
 ```
 
 Primary evidence:
@@ -378,7 +378,7 @@ Primary evidence:
 - `docs/astro.config.ts`
 - `docs/src/content/docs/*.md`
 - `vscode/typesharp/syntaxes/typesharp.tmLanguage.json`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0264 Runtime Artifact Architecture Docs
 
@@ -396,8 +396,8 @@ Verification:
 ```powershell
 npm install --save-exact astro-mermaid@2.0.1 mermaid@11.15.0  # in docs
 npm run build                                                  # in docs
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
 ```
 
 Notes:
@@ -411,7 +411,7 @@ Primary evidence:
 - `docs/astro.config.ts`
 - `docs/package.json`
 - `docs/package-lock.json`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0265 Docs Writing Guide
 
@@ -427,8 +427,8 @@ Verification:
 
 ```powershell
 npm run build          # in docs
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
 ```
 
 Notes:
@@ -441,7 +441,7 @@ Primary evidence:
 - `docs/astro.config.ts`
 - `docs/src/content/docs/project-ledger.md`
 - `docs/src/content/docs/examples.md`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0266 Release Artifacts Workflow
 
@@ -458,9 +458,9 @@ Completed release workflow work established:
 Verification:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "release artifacts workflow contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "release artifacts workflow contract"
 npm run build          # in docs
 git diff --check
 ```
@@ -474,7 +474,7 @@ Primary evidence:
 - `.github/workflows/release-artifacts.yml`
 - `.gitignore`
 - [Project Policy](../docs/src/content/docs/project-policy.md)
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0267 CSharp Docs Parity Detail
 
@@ -489,8 +489,8 @@ Completed C# documentation parity work established:
 Verification:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
 npm run build          # in docs
 git diff --check
 ```
@@ -504,7 +504,7 @@ Primary evidence:
 - `docs/src/content/docs/csharp-type-model.md`
 - `docs/src/content/docs/csharp-members-overloads.md`
 - `docs/astro.config.ts`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0268 Realistic Runnable Tysh Examples
 
@@ -521,10 +521,10 @@ Completed runnable example realism work established:
 Verification:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example project commands"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example catalog"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example project commands"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example catalog"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
 npm run build          # in docs
 git diff --check
 ```
@@ -534,7 +534,7 @@ Primary evidence:
 - `examples/runnable`
 - `docs/src/content/docs/examples.md`
 - `docs/src/content/docs/tutorials.md`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 ## Task 0269 Runnable Example Code Explanations
 
@@ -552,10 +552,10 @@ Completed runnable example explanation work established:
 Verification:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example catalog"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
-dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example project commands"
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example catalog"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "runnable example project commands"
 npm run build          # in docs
 git diff --check
 ```
@@ -566,15 +566,51 @@ Primary evidence:
 - `examples/runnable/README.md`
 - `docs/src/content/docs/examples.md`
 - `docs/src/content/docs/writing-guide.md`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
+## Task 0270 Monorepo Folder Structure
+
+Completed monorepo layout work established:
+
+- Split repository-owned implementation paths so the CLI host lives under `cli/TypeSharp.Cli`, language/compiler/LSP/runtime projects live under `lang/`, and the regression suite plus fixtures live under `test/`.
+- Removed the root `src/` and `tests/` implementation folders after moving tracked files, while preserving project source-root semantics such as user project `src/Main.tysh`.
+- Added top-level folder README contracts for `cli/`, `lang/`, `test/`, `docs/`, and `vscode/`; existing `agent/` and `examples/` README files continue to describe those folder roles.
+- Updated project references, release workflow commands, VS Code language-server publish and development fallback paths, docs pages, runnable example commands, `.gitignore`, agent records, and project-local Codex skill instructions to the new paths.
+- Added a `repository monorepo layout is stable` regression test that asserts the folder map, README presence, project references, `.gitignore`, release workflow, and VS Code development fallback.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "repository monorepo layout"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "release artifacts workflow contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "VS Code extension package shape"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build          # in docs
+npm run check          # in vscode/typesharp
+git diff --check
+```
+
+Primary evidence:
+
+- `README.md`
+- `cli/README.md`
+- `lang/README.md`
+- `test/README.md`
+- `docs/README.md`
+- `vscode/README.md`
+- `.github/workflows/release-artifacts.yml`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- `docs/src/content/docs/project-ledger.md`
 
 ## Verification Summary
 
 Representative commands used across the completed range:
 
 ```powershell
-dotnet build tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
-dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+dotnet build test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
 npm run build
 git diff --check
 ```
@@ -592,7 +628,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0269 is compressed here.
+- Completed historical work through task 0270 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

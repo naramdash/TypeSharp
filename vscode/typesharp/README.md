@@ -16,7 +16,7 @@ Current scope:
 
 ## Development Launch
 
-- build `src/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj`
+- build `lang/TypeSharp.LanguageServer/TypeSharp.LanguageServer.csproj`
 - open this folder as a VS Code extension development host
 - open a `.tysh` file
 

@@ -67,10 +67,10 @@ jobs:
           New-Item -ItemType Directory -Force artifacts\release, artifacts\staging | Out-Null
 
       - name: Restore .NET projects
-        run: dotnet restore tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+        run: dotnet restore test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
 
       - name: Build .NET projects
-        run: dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-restore
+        run: dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-restore
 
       - name: Run release smoke tests
         run: |
@@ -87,12 +87,12 @@ jobs:
           )
 
           foreach ($test in $tests) {
-            dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-build $test
+            dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -c $env:CONFIGURATION --no-build $test
           }
 
       - name: Publish CLI host
         run: >
-          dotnet publish src\TypeSharp.Cli\TypeSharp.Cli.csproj
+          dotnet publish cli\TypeSharp.Cli\TypeSharp.Cli.csproj
           -c $env:CONFIGURATION
           --no-restore
           -p:UseAppHost=false
@@ -100,8 +100,8 @@ jobs:
 
       - name: Build net48 runtime libraries
         run: |
-          dotnet build src\TypeSharp.Core\TypeSharp.Core.csproj -c $env:CONFIGURATION
-          dotnet build src\TypeSharp.Runtime\TypeSharp.Runtime.csproj -c $env:CONFIGURATION
+          dotnet build lang\TypeSharp.Core\TypeSharp.Core.csproj -c $env:CONFIGURATION
+          dotnet build lang\TypeSharp.Runtime\TypeSharp.Runtime.csproj -c $env:CONFIGURATION
 
       - name: Package VS Code extension
         run: |
@@ -128,8 +128,8 @@ jobs:
           $runtimeRoot = Join-Path $stagingRoot 'typesharp-runtime-net48'
           $runtimeLibRoot = Join-Path $runtimeRoot 'lib\net48'
           New-Item -ItemType Directory -Force $runtimeLibRoot | Out-Null
-          Copy-Item -LiteralPath "src\TypeSharp.Core\bin\$env:CONFIGURATION\net48\TypeSharp.Core.dll" -Destination $runtimeLibRoot
-          Copy-Item -LiteralPath "src\TypeSharp.Runtime\bin\$env:CONFIGURATION\net48\TypeSharp.Runtime.dll" -Destination $runtimeLibRoot
+          Copy-Item -LiteralPath "lang\TypeSharp.Core\bin\$env:CONFIGURATION\net48\TypeSharp.Core.dll" -Destination $runtimeLibRoot
+          Copy-Item -LiteralPath "lang\TypeSharp.Runtime\bin\$env:CONFIGURATION\net48\TypeSharp.Runtime.dll" -Destination $runtimeLibRoot
 
           @(
             "# TypeSharp Runtime $tag",

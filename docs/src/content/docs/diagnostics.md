@@ -141,7 +141,7 @@ Parser fixtures keep `expected.diagnostics.json` next to `expected.tree` because
 Semantic diagnostics use golden fixtures under:
 
 ```text
-tests/fixtures/diagnostics/
+test/fixtures/diagnostics/
   binder/
     positive/
     negative/

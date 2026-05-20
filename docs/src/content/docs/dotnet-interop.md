@@ -259,8 +259,8 @@ The runtime ABI version does not need to change for:
 Before closing a public ABI change:
 
 - verify compiler/runtime ABI version alignment,
-- build `src/TypeSharp.Core/TypeSharp.Core.csproj`,
-- build `src/TypeSharp.Runtime/TypeSharp.Runtime.csproj`,
+- build `lang/TypeSharp.Core/TypeSharp.Core.csproj`,
+- build `lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj`,
 - run generated `net48` assembly smoke tests,
 - run C# `net48` consumer smokes when public surface is observable from C#,
 - run ASP.NET/WCF/worker host compatibility smokes when runtime/core reference shape changes.

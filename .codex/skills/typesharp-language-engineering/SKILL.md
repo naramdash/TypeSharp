@@ -30,10 +30,10 @@ Use this skill when the task is about designing or implementing TypeSharp as a p
    - Can it lower to C# 7.3-compatible source for `net48` artifacts?
    - Does it preserve deterministic diagnostics?
    - Does it keep TypeScript-style compile-time flexibility separate from public .NET ABI?
-4. Implement through the existing compiler shape. Prefer local patterns in `src/TypeSharp.Compiler` and focused fixtures under `tests/fixtures`.
+4. Implement through the existing compiler shape. Prefer local patterns in `lang/TypeSharp.Compiler` and focused fixtures under `test/fixtures`.
 5. Verify with repository-native commands:
-   - `dotnet build tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
-   - `dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
+   - `dotnet build test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
+   - `dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
    - targeted `dotnet run --project ... --no-build "<filter>"` when the existing harness supports it
 
 ## Constraints

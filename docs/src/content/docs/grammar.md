@@ -275,7 +275,7 @@ Coverage status answers whether TypeSharp directly supports a feature, provides 
 
 ## Parser Evidence
 
- Stable syntax should be reflected in parser fixtures under `tests/fixtures/parser/`. Parser fixture layout, snapshot rules, and current parser coverage policy are canonical in [Project Policy](../project-policy/).
+ Stable syntax should be reflected in parser fixtures under `test/fixtures/parser/`. Parser fixture layout, snapshot rules, and current parser coverage policy are canonical in [Project Policy](../project-policy/).
 
 ## Former Sources
 

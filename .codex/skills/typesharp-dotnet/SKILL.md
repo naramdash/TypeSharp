@@ -28,8 +28,8 @@ Keep TypeSharp's .NET surface compatible with Windows 10, .NET Framework 4.8 gen
    - public .NET ABI must not expose anonymous structural shapes or type-level unions directly
    - compiler diagnostics remain deterministic in source discovery order
 4. Prefer repository-native verification:
-   - `dotnet build tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
-   - `dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
+   - `dotnet build test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
+   - `dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj`
    - targeted `dotnet run --project ... --no-build "<filter>"` when the existing harness supports it
 5. For docs changes, use the docs Node workflow:
    - `npm run build` from `docs`

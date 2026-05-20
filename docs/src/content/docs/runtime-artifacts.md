@@ -234,11 +234,11 @@ TypeSharp does not require a custom loader, startup hook, ASP.NET Core migration
 
 Repository evidence for this artifact model lives in:
 
-- `src/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
-- `src/TypeSharp.Compiler/Checking/TypeSharpChecker.cs`
-- `src/TypeSharp.Core/TypeSharp.Core.csproj`
-- `src/TypeSharp.Runtime/TypeSharp.Runtime.csproj`
-- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `lang/TypeSharp.Compiler/Checking/TypeSharpChecker.cs`
+- `lang/TypeSharp.Core/TypeSharp.Core.csproj`
+- `lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
 
 Focused smoke areas include generated C# project scaffold, manifest reference propagation, generated `net48` assembly build, C# `net48` consumer builds, Core/Runtime `net48` builds, and ASP.NET/WCF/worker-style host compatibility builds.
 

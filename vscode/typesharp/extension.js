@@ -66,7 +66,7 @@ class TypeSharpLanguageClient {
   start() {
     const launch = resolveServerLaunch(this.context);
     if (!launch) {
-      this.output.appendLine("TypeSharp language server was not found. Build src/TypeSharp.LanguageServer or configure typesharp.languageServer.command.");
+      this.output.appendLine("TypeSharp language server was not found. Build lang/TypeSharp.LanguageServer or configure typesharp.languageServer.command.");
       return;
     }
 
@@ -416,7 +416,7 @@ function resolveServerLaunch(context) {
   }
 
   const repositoryRoot = path.resolve(context.extensionPath, "..", "..");
-  const developmentDll = path.join(repositoryRoot, "src", "TypeSharp.LanguageServer", "bin", "Debug", "net10.0", "TypeSharp.LanguageServer.dll");
+  const developmentDll = path.join(repositoryRoot, "lang", "TypeSharp.LanguageServer", "bin", "Debug", "net10.0", "TypeSharp.LanguageServer.dll");
   if (fs.existsSync(developmentDll)) {
     return {
       command: "dotnet",
@@ -425,7 +425,7 @@ function resolveServerLaunch(context) {
     };
   }
 
-  const developmentProject = path.join(repositoryRoot, "src", "TypeSharp.LanguageServer", "TypeSharp.LanguageServer.csproj");
+  const developmentProject = path.join(repositoryRoot, "lang", "TypeSharp.LanguageServer", "TypeSharp.LanguageServer.csproj");
   if (fs.existsSync(developmentProject)) {
     return {
       command: "dotnet",

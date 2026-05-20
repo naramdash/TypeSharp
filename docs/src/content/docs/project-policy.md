@@ -33,7 +33,7 @@ Project separation:
 - `TypeSharp.Cli`: manifest loading, commands, generated project build/run orchestration.
 - `TypeSharp.LanguageServer`: LSP host that reuses compiler diagnostics and semantic model.
 - `vscode/typesharp`: VS Code extension, language registration, TextMate grammar, LSP client, formatter integration.
-- `tests/TypeSharp.Compiler.Tests`: compiler, CLI, runtime, interop, backend, diagnostics, host, and docs smoke suite.
+- `test/TypeSharp.Compiler.Tests`: compiler, CLI, runtime, interop, backend, diagnostics, host, and docs smoke suite.
 
 Host target policy:
 
@@ -131,10 +131,10 @@ Snapshot changes are source changes. Parser `expected.tree`, diagnostic JSON, an
 
 ## Parser Fixture Policy
 
-Parser fixtures live under `tests/fixtures/parser/`.
+Parser fixtures live under `test/fixtures/parser/`.
 
 ```text
-tests/fixtures/parser/
+test/fixtures/parser/
   positive/
     0001-hello-cli/
       input.tysh

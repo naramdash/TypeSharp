@@ -6,7 +6,7 @@
     <RootNamespace>TypeSharp.Cli</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
-    <ProjectReference Include="..\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
+    <ProjectReference Include="..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
+    <ProjectReference Include="..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
   </ItemGroup>
 </Project>

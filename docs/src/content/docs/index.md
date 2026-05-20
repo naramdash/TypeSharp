@@ -39,16 +39,16 @@ This site is the canonical publishing surface for standard language and project 
 From the repository root:
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
 ```
 
 Then create a starter project:
 
 ```powershell
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll check .\scratch\HelloTypeSharp\TypeSharp.toml
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll build .\scratch\HelloTypeSharp\TypeSharp.toml
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll check .\scratch\HelloTypeSharp\TypeSharp.toml
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll build .\scratch\HelloTypeSharp\TypeSharp.toml
 ```
 
 `typesharp run` is supported for executable projects. If local antivirus blocks the generated `.exe`, `check` and `build` still prove the compiler path.

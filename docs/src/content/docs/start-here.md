@@ -65,6 +65,6 @@ Implemented features are backed by smoke tests or fixtures. Planned and backlog 
 ## Fast First Command
 
 ```powershell
-dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet src\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
 ```

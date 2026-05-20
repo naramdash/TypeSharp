@@ -10,7 +10,7 @@ The benchmark summarizes structure and page archetypes. It does not copy officia
 
 ## Inventory Method
 
-The inventory was generated with a temporary Node.js script under `tests/tmp/` and recorded in [official-docs-deep-benchmark-inventory.json](official-docs-deep-benchmark-inventory.json). The script was not committed because it was only a one-off crawler for this task.
+The inventory was generated with a temporary Node.js script under `test/tmp/` and recorded in [official-docs-deep-benchmark-inventory.json](official-docs-deep-benchmark-inventory.json). The script was not committed because it was only a one-off crawler for this task.
 
 | Source | Official index used | Inventory scope | Entries | Unique hrefs | Sections |
 | --- | --- | --- | ---: | ---: | ---: |
