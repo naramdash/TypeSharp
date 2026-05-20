@@ -42,7 +42,7 @@ Current boundary:
 | --- | --- | --- |
 | C# 14 extension members, including extension properties and static extension members | Stable Backlog | TypeSharp-authored explicit-receiver extension methods are already MVP limited. Richer extension properties/static extension members need a metadata/lowering design that emits ordinary C# 7.3-compatible extension/static members. |
 | C# 14 null-conditional assignment | Stable Backlog | Useful TypeSharp ergonomics if lowered to explicit null guards in generated C# 7.3. Design must preserve left/right evaluation order and diagnostics before implementation. |
-| C# 14 `nameof` on unbound generic types | Stable Backlog | Low-risk TypeSharp parity candidate because generated C# can lower to a string constant instead of C# 14 syntax. Parser/name-resolution coverage is still required. |
+| C# 14 `nameof` on unbound generic types | MVP | Implemented as TypeSharp `nameof(Generic<>)` and higher-arity `nameof(Generic<,>)` targets with type-root binding and string constant lowering instead of C# 14 syntax. |
 | C# 14 simple lambda parameter modifiers | Stable Backlog | Useful for imported delegate/byref interop. TypeSharp should accept only explicitly modeled `ref`/`out`/`in` lambda boundaries and lower to C# 7.3-compatible typed lambdas. |
 | C# 14 partial constructors and partial events | Stable Backlog | Relevant only after TypeSharp has a broader partial member/public ABI merge policy. Generated code can keep complete members until that policy exists. |
 | C# 14 field-backed properties | Replacement | TypeSharp should keep explicit record/class/property semantics and generate backing fields when needed. It does not need a `field` keyword surface. |
@@ -72,7 +72,7 @@ Current boundary:
 | Record expressions and spread | MVP limited | Expected nominal records lower to constructor calls; nominal record spread copies fields then applies overrides. |
 | Iterator `yield` | MVP limited | Explicit CLR enumerable return types are checked against yielded element values. |
 | `lock` statement | MVP limited | Block-level lock lowers to C# `lock` and requires a non-null reference gate when known. |
-| `nameof` | MVP | Compiler intrinsic preserved as C# `nameof(...)`. |
+| `nameof` | MVP | Ordinary name references preserve C# `nameof(...)`; unbound generic type targets lower to string constants for C# 7.3-compatible generated source. |
 | `checked` and `unchecked` | MVP | Overflow context expressions lower directly to C# checked/unchecked expressions. |
 | Explicit-receiver extension methods | MVP limited | TypeSharp-authored extension methods lower to C# extension methods; richer conversion/conflict rules remain backlog. |
 

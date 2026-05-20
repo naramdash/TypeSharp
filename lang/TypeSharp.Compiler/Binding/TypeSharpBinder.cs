@@ -1099,6 +1099,12 @@ public static class TypeSharpBinder
 
         private static bool TryGetNameReferenceRootIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {
+            if (node.Kind == SyntaxKind.UnboundGenericNameExpression &&
+                node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.UnboundGenericArityList) is { } target)
+            {
+                return TryGetNameReferenceRootIdentifier(target, out identifier);
+            }
+
             if (node.Kind == SyntaxKind.MemberAccessExpression &&
                 node.Children.FirstOrDefault(child => !child.IsToken) is { } receiver)
             {

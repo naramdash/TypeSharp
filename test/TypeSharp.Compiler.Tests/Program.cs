@@ -316,12 +316,15 @@ var tests = new (string Name, Action Body)[]
     ("lexer handles tokens used by hello fixture", LexerHandlesHelloFixtureTokens),
     ("parser parses hello fixture without diagnostics", ParserParsesHelloFixtureWithoutDiagnostics),
     ("parser parses module declaration without diagnostics", ParserParsesModuleDeclarationWithoutDiagnostics),
+    ("parser parses unbound generic nameof without diagnostics", ParserParsesUnboundGenericNameofWithoutDiagnostics),
+    ("parser rejects unbound generic outside nameof", ParserRejectsUnboundGenericOutsideNameof),
     ("parser fixture snapshots match", ParserFixtureSnapshotsMatch),
     ("binder fixture diagnostics match", BinderFixtureDiagnosticsMatch),
     ("type checker fixture diagnostics match", TypeCheckerFixtureDiagnosticsMatch),
     ("C# backend fixture snapshots match", CSharpBackendFixtureSnapshotsMatch),
     ("generated C# compiles in net48 project", GeneratedCSharpCompilesInNet48Project),
     ("binder binds local declarations without diagnostics", BinderBindsLocalDeclarationsWithoutDiagnostics),
+    ("binder reports unresolved unbound generic nameof target", BinderReportsUnresolvedUnboundGenericNameofTarget),
     ("semantic model resolves symbols at source positions", SemanticModelResolvesSymbolsAtSourcePositions),
     ("checker reports unresolved name diagnostics", CheckerReportsUnresolvedNameDiagnostics),
     ("checker reports duplicate symbol diagnostics", CheckerReportsDuplicateSymbolDiagnostics),
@@ -11627,6 +11630,44 @@ static void ParserParsesModuleDeclarationWithoutDiagnostics()
     AssertTrue(root.Children.Any(child => child.Kind == SyntaxKind.ModuleDeclaration), "Parser should produce a module declaration node.");
 }
 
+static void ParserParsesUnboundGenericNameofWithoutDiagnostics()
+{
+    var result = TypeSharpParser.ParseText("""
+        namespace Samples.Nameof
+
+        class Box<T> {
+          public fun keep(value: T): T = value
+        }
+        class Pair<TLeft, TRight> {
+          public fun left(value: TLeft): TLeft = value
+        }
+
+        export fun boxName(): string = nameof(Box<>)
+        export fun pairName(): string = nameof(Pair<,>)
+        """);
+
+    AssertFalse(result.HasErrors, $"Unbound generic nameof should parse cleanly.\n{DiagnosticJsonFormatter.ToJson(result.Diagnostics)}");
+    var root = Require(result.Root, "Parser should produce a root syntax node.");
+    AssertTrue(
+        FindFirstNode(root, SyntaxKind.UnboundGenericNameExpression) is not null,
+        "Parser should produce an unbound generic nameof target node.");
+}
+
+static void ParserRejectsUnboundGenericOutsideNameof()
+{
+    var result = TypeSharpParser.ParseText("""
+        namespace Samples.Nameof
+
+        class Box<T> {
+          public fun keep(value: T): T = value
+        }
+
+        export fun boxName(): string = Box<>
+        """);
+
+    AssertTrue(result.HasErrors, "Unbound generic type names should remain limited to nameof targets.");
+}
+
 static void ParserFixtureSnapshotsMatch()
 {
     var fixtureRoots = new[]
@@ -11797,6 +11838,23 @@ static void BinderBindsLocalDeclarationsWithoutDiagnostics()
     AssertFalse(binding.HasErrors, "Binder should resolve local function, parameter, and let references.");
     AssertTrue(binding.Symbols.Any(symbol => symbol.Kind == BoundSymbolKind.Function && symbol.Name == "identity"), "Binder should expose function symbols.");
     AssertTrue(binding.Symbols.Any(symbol => symbol.Kind == BoundSymbolKind.Local && symbol.Name == "name"), "Binder should expose local let symbols.");
+}
+
+static void BinderReportsUnresolvedUnboundGenericNameofTarget()
+{
+    var result = TypeSharpParser.ParseText("""
+        namespace Samples.Binding
+
+        fun missingName(): string = nameof(Missing<>)
+        """);
+
+    AssertFalse(result.HasErrors, $"Unbound generic nameof should parse before binding.\n{DiagnosticJsonFormatter.ToJson(result.Diagnostics)}");
+    var binding = TypeSharpBinder.Bind(Require(result.Root, "Parser should produce a root syntax node."), "input.tysh");
+
+    var diagnostic = Require(
+        binding.Diagnostics.SingleOrDefault(diagnostic => diagnostic.Code == DiagnosticDescriptors.UnresolvedName.Code),
+        "Binder should report an unresolved type-root name for unbound generic nameof.");
+    AssertEqual("Unresolved name 'Missing'.", diagnostic.Message);
 }
 
 static void SemanticModelResolvesSymbolsAtSourcePositions()
@@ -20375,11 +20433,22 @@ static void CliBuildCompilesNameofIntrinsic()
             namespace Samples.NameofIntrinsic
 
             public record Customer(Name: string)
+            public class Box<T> {
+              public fun keep(value: T): T = value
+            }
+
+            public class Pair<TLeft, TRight> {
+              public fun left(value: TLeft): TLeft = value
+            }
 
             export fun propertyName(): string = nameof(Customer.Name)
 
             export fun parameterName(value: string): string =
               nameof(value)
+
+            export fun boxTypeName(): string = nameof(Box<>)
+
+            export fun pairTypeName(): string = nameof(Pair<,>)
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -20393,6 +20462,10 @@ static void CliBuildCompilesNameofIntrinsic()
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("return nameof(Customer.Name);", generatedSource);
         AssertContains("return nameof(value);", generatedSource);
+        AssertContains("return \"Box\";", generatedSource);
+        AssertContains("return \"Pair\";", generatedSource);
+        AssertFalse(generatedSource.Contains("nameof(Box<>)", StringComparison.Ordinal), "Generated C# should not emit C# 14 unbound generic nameof syntax.");
+        AssertFalse(generatedSource.Contains("nameof(Pair<,>)", StringComparison.Ordinal), "Generated C# should not emit C# 14 unbound generic nameof syntax.");
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NameofIntrinsic.dll")),
             "Generated project build should compile nameof intrinsic lowering.");

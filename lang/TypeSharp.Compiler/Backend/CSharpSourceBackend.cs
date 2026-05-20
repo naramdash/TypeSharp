@@ -1550,8 +1550,43 @@ public static class CSharpSourceBackend
         private string EmitNameof(SyntaxNode node)
         {
             var target = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (target?.Kind == SyntaxKind.UnboundGenericNameExpression)
+            {
+                return EmitStringLiteral(GetUnboundGenericNameofResult(target));
+            }
+
             return target is null ? "nameof" : $"nameof({EmitExpression(target)})";
         }
+
+        private static string GetUnboundGenericNameofResult(SyntaxNode node)
+        {
+            var target = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.UnboundGenericArityList);
+            return GetNameReferenceTerminalIdentifier(target);
+        }
+
+        private static string GetNameReferenceTerminalIdentifier(SyntaxNode? node)
+        {
+            if (node is null)
+            {
+                return string.Empty;
+            }
+
+            if (node.Kind == SyntaxKind.MemberAccessExpression)
+            {
+                return node.Children.LastOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            }
+
+            if (node.Kind == SyntaxKind.UnboundGenericNameExpression)
+            {
+                var target = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.UnboundGenericArityList);
+                return GetNameReferenceTerminalIdentifier(target);
+            }
+
+            return GetIdentifierText(node);
+        }
+
+        private static string EmitStringLiteral(string value) =>
+            $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 
         private string EmitSatisfiesExpression(SyntaxNode node)
         {

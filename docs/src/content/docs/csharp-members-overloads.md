@@ -19,7 +19,7 @@ TypeSharp's rule is conservative: if a C# member interaction cannot be validated
 
 ## C# Release Parity Boundary
 
-TypeSharp tracks current C# releases as design input, but generated `net48` source stays C# 7.3-compatible. C# 14 extension members, null-conditional assignment, unbound generic `nameof`, lambda parameter modifiers, partial events/constructors, and related ergonomics must be expressed as TypeSharp semantics with C# 7.3 lowering rather than by emitting C# 14 syntax. C# 15 collection expression arguments and union types are Preview Watch signals only.
+TypeSharp tracks current C# releases as design input, but generated `net48` source stays C# 7.3-compatible. C# 14 unbound generic `nameof` is implemented through TypeSharp parsing, type-root binding, and string constant lowering; C# 14 extension members, null-conditional assignment, lambda parameter modifiers, partial events/constructors, and related ergonomics must likewise be expressed as TypeSharp semantics with C# 7.3 lowering rather than by emitting newer C# syntax. C# 15 collection expression arguments and union types are Preview Watch signals only.
 
 ## Member Surface
 

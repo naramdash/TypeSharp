@@ -1390,6 +1390,38 @@ Primary evidence:
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 - [tasks.md](tasks.md)
 
+## Task 0298 CSharp Unbound Generic Nameof Parity
+
+Completed language/backend work established:
+
+- Added parser support for unbound generic arity targets inside `nameof`, including `nameof(Box<>)` and higher-arity placeholders such as `nameof(Pair<,>)`.
+- Kept unbound generic syntax unsupported outside `nameof` through parser diagnostics.
+- Extended `nameof` binding so unbound generic targets resolve their type-root name instead of being treated as ordinary value expressions, with unresolved roots still reporting `TS2001`.
+- Lowered unbound generic `nameof` targets to string constants such as `"Box"` and `"Pair"` so generated `net48` source remains C# 7.3-compatible and never emits C# 14 `nameof(Box<>)` syntax.
+- Updated Feature Status, Grammar, Reference, Lowering, C# Members And Overloads, .NET Interop, and Work Ledger docs for the implemented boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "parser parses unbound generic nameof without diagnostics"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "parser rejects unbound generic outside nameof"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "binder reports unresolved unbound generic nameof target"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "CLI build compiles nameof intrinsic"
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpBinder.cs](../lang/TypeSharp.Compiler/Binding/TypeSharpBinder.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [Program.cs](../test/TypeSharp.Compiler.Tests/Program.cs)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

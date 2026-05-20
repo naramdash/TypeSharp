@@ -60,7 +60,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `satisfies` | Erases to the left expression after compile-time proof. |
 | Collection expressions | Array creation, `List<T>` initializer, or LINQ concatenation for supported spreads. |
 | Indexer expressions | C# array or indexer access. |
-| `nameof` | C# `nameof(...)`. |
+| `nameof` | C# `nameof(...)` for ordinary name references; string constants for unbound generic type targets such as `nameof(List<>)`. |
 | `checked` / `unchecked` | C# overflow context expressions. |
 | `keyof` aliases | Local string-based implementation details. |
 | Indexed access type aliases | Selected member runtime type for single-member local aliases; type-level union behavior for multi-member aliases. |
@@ -165,7 +165,7 @@ Collection expressions lower to C# 7.3-compatible array creation or `List<T>` in
 
 Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known. Parenthesized indexer arguments preserve their generated grouping while metadata validation uses the enclosed expression type.
 
-Parenthesized expressions preserve grouping in generated C#. Metadata validation uses the enclosed expression type for implemented imported overload and indexer argument checks. Unary logical-not and numeric sign expressions lower directly to C# `!expr`, `+expr`, or `-expr`. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
+Parenthesized expressions preserve grouping in generated C#. Metadata validation uses the enclosed expression type for implemented imported overload and indexer argument checks. Unary logical-not and numeric sign expressions lower directly to C# `!expr`, `+expr`, or `-expr`. Ordinary `nameof` targets lower to C# `nameof(...)`; unbound generic type targets such as `nameof(Box<>)` and `nameof(Pair<,>)` lower to string constants so generated `net48` source remains C# 7.3-compatible. `checked` and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
 
 Evidence:
 

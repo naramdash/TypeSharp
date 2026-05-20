@@ -1485,7 +1485,28 @@ public sealed class TypeSharpParser
             expression = Node(SyntaxKind.MemberAccessExpression, [expression, TokenNode(NextToken()), TokenNode(Expect(SyntaxKind.IdentifierToken))]);
         }
 
+        if (IsUnboundGenericNameofArityList())
+        {
+            expression = Node(SyntaxKind.UnboundGenericNameExpression, [expression, ParseUnboundGenericArityList()]);
+        }
+
         return expression;
+    }
+
+    private SyntaxNode ParseUnboundGenericArityList()
+    {
+        var children = new List<SyntaxNode>
+        {
+            TokenNode(Expect(SyntaxKind.LessToken))
+        };
+
+        while (Current.Kind == SyntaxKind.CommaToken)
+        {
+            children.Add(TokenNode(NextToken()));
+        }
+
+        children.Add(TokenNode(Expect(SyntaxKind.GreaterToken)));
+        return Node(SyntaxKind.UnboundGenericArityList, children);
     }
 
     private SyntaxNode ParseRecordExpression()
@@ -1753,6 +1774,22 @@ public sealed class TypeSharpParser
             var next = Peek(offset + 1);
             return next.Kind == SyntaxKind.OpenParenToken && !HasLeadingNewline(next);
         }
+    }
+
+    private bool IsUnboundGenericNameofArityList()
+    {
+        if (Current.Kind != SyntaxKind.LessToken)
+        {
+            return false;
+        }
+
+        var offset = 1;
+        while (Peek(offset).Kind == SyntaxKind.CommaToken)
+        {
+            offset++;
+        }
+
+        return Peek(offset).Kind == SyntaxKind.GreaterToken;
     }
 
     private static bool IsFunctionDeclarationStart(SyntaxToken token) =>

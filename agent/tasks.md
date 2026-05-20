@@ -16,8 +16,8 @@
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
-| Active summary     | None                               |
-| Completed range    | 0001-0294                          |
+| Active summary     | None. Next requested Q2 queue item is `0296 F# functional consistency roadmap`. |
+| Completed range    | 0001-0294, 0298                    |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | Requested   | Task 0294 parity review   | 0298 C# unbound generic nameof parity    | Create packet when selected                                              | Implement or design TypeSharp `nameof(List<>)`-style support by lowering to C# 7.3-compatible string constants with parser/name-resolution coverage. |
+| Q2       | Done        | Task 0294 parity review   | 0298 C# unbound generic nameof parity    | [tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity](tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity) | Implemented `nameof(List<>)`-style parsing, type-root binding, and C# 7.3 string constant lowering with positive/negative coverage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |
 | Q2       | Requested   | Task 0293 roadmap refresh | 0296 F# functional consistency roadmap   | Create packet when selected                                              | Plan pattern exhaustiveness, computation/workflow modeling, pipelines/composition, records/unions, async, and result ergonomics from the F# baseline. |
 | Q2       | Requested   | Task 0293 roadmap refresh | 0295 TypeScript structural module roadmap | Create packet when selected                                             | Plan structural type operators, narrowing, declaration/module ergonomics, and project config behavior without leaking structural shapes into public ABI. |

@@ -153,7 +153,7 @@ Stable expression rules:
 - Collection spread is stable for known arrays and `List<T>` targets.
 - Block-level `yield` requires an explicit CLR enumerable return type.
 - Block-level `lock` requires a known non-null reference gate and lowers to C# `lock`.
-- `nameof`, `checked`, and `unchecked` are compiler intrinsics with C# 7.3-compatible lowering.
+- `nameof`, `checked`, and `unchecked` are compiler intrinsics with C# 7.3-compatible lowering. `nameof(Generic<>)` and higher-arity forms such as `nameof(Pair<,>)` are allowed only as `nameof` targets; they lower to string constants for the simple type name.
 
 ### Patterns
 
