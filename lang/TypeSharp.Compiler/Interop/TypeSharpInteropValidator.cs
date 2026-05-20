@@ -1020,6 +1020,17 @@ public static class TypeSharpInteropValidator
             return true;
         }
 
+        if (TryGetGenericMethodArrayParameterIndex(candidateParameterType, out genericParameterIndex))
+        {
+            if (!TryInferGenericArrayElementArgument(argument, assemblies, localInstances, out var genericTypeArgument))
+            {
+                return false;
+            }
+
+            inferred = [new InferredGenericTypeArgument(genericParameterIndex, genericTypeArgument)];
+            return true;
+        }
+
         if (!TryParseConstructedGenericTypeName(
                 candidateParameterType,
                 out var parameterGenericTypeName,
@@ -1080,6 +1091,44 @@ public static class TypeSharpInteropValidator
 
         genericTypeArgument = default;
         return false;
+    }
+
+    private static bool TryInferGenericArrayElementArgument(
+        SyntaxNode argument,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>> localInstances,
+        out GenericTypeArgument genericTypeArgument)
+    {
+        genericTypeArgument = default;
+        var expression = UnwrapArgumentExpression(argument);
+        if (expression.Kind != SyntaxKind.CollectionExpression)
+        {
+            return false;
+        }
+
+        var elements = expression.Children.Where(child => !child.IsToken).ToArray();
+        if (elements.Length == 0 || elements.Any(element => element.Kind == SyntaxKind.SpreadElement))
+        {
+            return false;
+        }
+
+        foreach (var element in elements)
+        {
+            if (!TryInferGenericTypeArgument(element, assemblies, localInstances, out var elementArgument))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(genericTypeArgument.Name) &&
+                !TypeNameMatches(genericTypeArgument.Name, elementArgument.Name))
+            {
+                return false;
+            }
+
+            genericTypeArgument = elementArgument;
+        }
+
+        return !string.IsNullOrEmpty(genericTypeArgument.Name);
     }
 
     private static SyntaxNode UnwrapArgumentExpression(SyntaxNode argument)
@@ -1267,6 +1316,13 @@ public static class TypeSharpInteropValidator
 
         return candidate.StartsWith("!!", StringComparison.Ordinal) &&
             int.TryParse(candidate[2..], out index);
+    }
+
+    private static bool TryGetGenericMethodArrayParameterIndex(string typeName, out int index)
+    {
+        index = 0;
+        return typeName.EndsWith("[]", StringComparison.Ordinal) &&
+            TryGetGenericMethodParameterIndex(typeName[..^2], isParamsParameter: false, out index);
     }
 
     private static string InferNumericType(string text)

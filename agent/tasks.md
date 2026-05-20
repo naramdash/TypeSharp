@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0286                          |
+| Completed range    | 0001-0287                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -52,6 +52,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | Done   | Work ledger future area | Collection generic array inference                 | [tasks-rollup.md#task-0287-collection-generic-array-inference](tasks-rollup.md#task-0287-collection-generic-array-inference)                                   | Added homogeneous collection expression inference for imported C# `T[]` generic method parameters, `TS2417` diagnostics before emission, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Null indexer overload inference                    | [tasks-rollup.md#task-0286-null-indexer-overload-inference](tasks-rollup.md#task-0286-null-indexer-overload-inference)                                       | Added `null` literal filtering/ranking for imported C# instance indexers, `TS2411` diagnostics before emission, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Collection argument overload inference             | [tasks-rollup.md#task-0285-collection-argument-overload-inference](tasks-rollup.md#task-0285-collection-argument-overload-inference)                         | Added homogeneous collection expression array argument filtering/ranking for imported C# overloads, `TS2406` diagnostics before emission, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda collection overload inference               | [tasks-rollup.md#task-0284-lambda-collection-overload-inference](tasks-rollup.md#task-0284-lambda-collection-overload-inference)                             | Added collection expression lambda return filtering/ranking, contextual non-block lambda lowering, diagnostics, function-valued export inference, and `net48` CLI build coverage. |

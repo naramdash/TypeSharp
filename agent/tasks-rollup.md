@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 06:23:15 +09:00
+End Time: 2026-05-21 06:41:24 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0286. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0287. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0286 |
+| Completed work covered | 0001-0287 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -1144,6 +1144,39 @@ Primary evidence:
 - [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0287 Collection Generic Array Inference
+
+Completed C# interop work established:
+
+- Homogeneous collection expression arguments now infer `T` for imported C# generic method parameters shaped like `T[]`.
+- Generic array candidates with metadata parameter `!!0[]` remain applicable when the collection argument infers a known array type.
+- Incompatible inferred `T` constraints such as `RequireClassArray([1])` report `TS2417` before generated C# emission.
+- The local legacy metadata fixture now includes `IdentityArray<T>(T[] values)` and `RequireClassArray<T>(T[] values) where T : class`.
+- CLI build coverage proves `RequireClassArray(["Ada"])` emits and compiles as `new string[] { "Ada" }` in `net48` generated C#.
+- .NET interop and C# members docs now list collection expression generic array inference as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker accepts inferred C# generic array constraints"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports unsatisfied inferred C# generic array constraint diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on unsatisfied inferred C# generic array constraint"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported inferred generic array constraint call"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `lang/TypeSharp.Compiler/Interop/TypeSharpInteropValidator.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1168,7 +1201,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0286 is compressed here.
+- Completed historical work through task 0287 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

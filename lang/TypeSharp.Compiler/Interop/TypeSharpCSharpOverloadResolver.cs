@@ -683,7 +683,8 @@ public static class TypeSharpCSharpOverloadResolver
 
         if (TypeNamesEqual(argumentType.Name, expectedType) ||
             IsObjectType(expectedType) ||
-            IsGenericParameterType(expectedType))
+            IsGenericParameterType(expectedType) ||
+            CanPassGenericArrayArgumentType(argumentType, expectedType))
         {
             return true;
         }
@@ -738,6 +739,12 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         if (IsGenericParameterType(expectedType))
+        {
+            score = GenericFallbackScore;
+            return true;
+        }
+
+        if (CanPassGenericArrayArgumentType(argumentType, expectedType))
         {
             score = GenericFallbackScore;
             return true;
@@ -2296,6 +2303,29 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         return true;
+    }
+
+    private static bool CanPassGenericArrayArgumentType(InferredArgumentType argumentType, string expectedType)
+    {
+        if (!TryGetArrayElementType(argumentType.Name, out _) ||
+            !TryGetArrayElementType(expectedType, out var expectedElementType))
+        {
+            return false;
+        }
+
+        return IsGenericParameterType(expectedElementType);
+    }
+
+    private static bool TryGetArrayElementType(string typeName, out string elementType)
+    {
+        elementType = string.Empty;
+        if (!typeName.EndsWith("[]", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        elementType = typeName.Substring(0, typeName.Length - 2);
+        return elementType.Length > 0;
     }
 
     private static bool IsNumericType(string type) =>

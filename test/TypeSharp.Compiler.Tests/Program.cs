@@ -103,7 +103,9 @@ var tests = new (string Name, Action Body)[]
     ("checker reports unsatisfied framework C# generic constraint diagnostics", CheckerReportsUnsatisfiedFrameworkCSharpGenericConstraintDiagnostics),
     ("checker accepts transitive C# generic type constraints", CheckerAcceptsTransitiveCSharpGenericTypeConstraints),
     ("checker accepts inferred C# generic type constraints", CheckerAcceptsInferredCSharpGenericTypeConstraints),
+    ("checker accepts inferred C# generic array constraints", CheckerAcceptsInferredCSharpGenericArrayConstraints),
     ("checker reports unsatisfied inferred C# generic constraint diagnostics", CheckerReportsUnsatisfiedInferredCSharpGenericConstraintDiagnostics),
+    ("checker reports unsatisfied inferred C# generic array constraint diagnostics", CheckerReportsUnsatisfiedInferredCSharpGenericArrayConstraintDiagnostics),
     ("checker reports unsatisfied inferred constructed C# generic constraint diagnostics", CheckerReportsUnsatisfiedInferredConstructedCSharpGenericConstraintDiagnostics),
     ("checker accepts imported C# interface implementation relation", CheckerAcceptsImportedCSharpInterfaceImplementationRelation),
     ("checker reports no matching C# overload diagnostics", CheckerReportsNoMatchingCSharpOverloadDiagnostics),
@@ -218,6 +220,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on unsatisfied C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedCSharpGenericConstraint),
     ("CLI build stops before emission on unsatisfied framework C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedFrameworkCSharpGenericConstraint),
     ("CLI build stops before emission on unsatisfied inferred C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedInferredCSharpGenericConstraint),
+    ("CLI build stops before emission on unsatisfied inferred C# generic array constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedInferredCSharpGenericArrayConstraint),
     ("CLI build stops before emission on unsatisfied inferred constructed C# generic constraint", CliBuildStopsBeforeEmissionOnUnsatisfiedInferredConstructedCSharpGenericConstraint),
     ("CLI build stops before emission on no matching C# overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpOverload),
     ("CLI build stops before emission on no matching C# delegate lambda overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaOverload),
@@ -445,6 +448,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported framework generic constraint call", CliBuildCompilesImportedFrameworkGenericConstraintCall),
     ("CLI build compiles imported transitive generic constraint call", CliBuildCompilesImportedTransitiveGenericConstraintCall),
     ("CLI build compiles imported inferred generic constraint call", CliBuildCompilesImportedInferredGenericConstraintCall),
+    ("CLI build compiles imported inferred generic array constraint call", CliBuildCompilesImportedInferredGenericArrayConstraintCall),
     ("CLI build compiles imported inferred constructed generic constraint call", CliBuildCompilesImportedInferredConstructedGenericConstraintCall),
     ("CLI build compiles imported interface reference", CliBuildCompilesImportedInterfaceReference),
     ("CLI build compiles imported interface implementation return", CliBuildCompilesImportedInterfaceImplementationReturn),
@@ -2936,9 +2940,19 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertEqual(1, identity.GenericParameterCount);
         AssertSequence(["value"], identity.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["!!0"], identity.Parameters.Select(parameter => parameter.Type).ToArray());
+        var identityArray = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "IdentityArray"), "IdentityArray<T> metadata should be present.");
+        AssertEqual("!!0[]", identityArray.ReturnType);
+        AssertEqual(1, identityArray.GenericParameterCount);
+        AssertSequence(["values"], identityArray.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["!!0[]"], identityArray.Parameters.Select(parameter => parameter.Type).ToArray());
         var requireClass = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireClass"), "RequireClass<T> metadata should be present.");
         AssertEqual(1, requireClass.GenericParameters.Count);
         AssertTrue(requireClass.GenericParameters.Single().HasReferenceTypeConstraint, "RequireClass<T> should preserve the class constraint.");
+        var requireClassArray = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireClassArray"), "RequireClassArray<T> metadata should be present.");
+        AssertEqual("!!0[]", requireClassArray.ReturnType);
+        AssertEqual(1, requireClassArray.GenericParameters.Count);
+        AssertTrue(requireClassArray.GenericParameters.Single().HasReferenceTypeConstraint, "RequireClassArray<T> should preserve the class constraint.");
+        AssertSequence(["!!0[]"], requireClassArray.Parameters.Select(parameter => parameter.Type).ToArray());
         var requireStruct = Require(legacyGenericMethods.Methods.SingleOrDefault(method => method.Name == "RequireStruct"), "RequireStruct<T> metadata should be present.");
         AssertEqual(1, requireStruct.GenericParameters.Count);
         AssertTrue(requireStruct.GenericParameters.Single().HasNotNullableValueTypeConstraint, "RequireStruct<T> should preserve the struct constraint.");
@@ -3269,6 +3283,38 @@ static void CheckerAcceptsInferredCSharpGenericTypeConstraints()
     });
 }
 
+static void CheckerAcceptsInferredCSharpGenericArrayConstraints()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InferredCSharpGenericArrayConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InferredCSharpGenericArrayConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InferredCSharpGenericArrayConstraint
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun keepClassArray(): string[] =
+              LegacyGenericMethods.RequireClassArray(["Ada"])
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.HasErrors, "Inferred C# generic array constraints should pass for compatible homogeneous collection expression arguments.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2417"), "Compatible inferred C# generic array constraints should not produce TS2417.");
+    });
+}
+
 static void CheckerReportsUnsatisfiedInferredCSharpGenericConstraintDiagnostics()
 {
     WithWorkspace(root =>
@@ -3302,6 +3348,42 @@ static void CheckerReportsUnsatisfiedInferredCSharpGenericConstraintDiagnostics(
         AssertContains("Legacy.Tools.LegacyGenericMethods.RequireNamed", diagnostic.Message);
         AssertContains("Type argument 'Legacy.Tools.LegacyFormatter'", diagnostic.Message);
         AssertContains("must satisfy the C# type constraint 'Legacy.Tools.ILegacyNamed'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsUnsatisfiedInferredCSharpGenericArrayConstraintDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedInferredCSharpGenericArrayConstraint"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedInferredCSharpGenericArrayConstraint"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedInferredCSharpGenericArrayConstraint
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): int[] =
+              LegacyGenericMethods.RequireClassArray([1])
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsatisfied inferred C# generic array constraint should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2417");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireClassArray", diagnostic.Message);
+        AssertContains("Type argument 'int'", diagnostic.Message);
+        AssertContains("must satisfy the C# 'class' constraint", diagnostic.Message);
     });
 }
 
@@ -7853,6 +7935,47 @@ static void CliBuildStopsBeforeEmissionOnUnsatisfiedInferredCSharpGenericConstra
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsatisfied inferred C# generic constraint diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedInferredCSharpGenericConstraintBuild.Generated.csproj")), "Build should not emit generated project when unsatisfied inferred C# generic constraint diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedInferredCSharpGenericConstraintBuild.dll")), "Build should not emit generated assembly when unsatisfied inferred C# generic constraint diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnUnsatisfiedInferredCSharpGenericArrayConstraint()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsatisfiedInferredCSharpGenericArrayConstraintBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsatisfiedInferredCSharpGenericArrayConstraintBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsatisfiedInferredCSharpGenericArrayConstraintBuild
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun broken(): int[] =
+              LegacyGenericMethods.RequireClassArray([1])
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2417\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyGenericMethods.RequireClassArray", error.ToString());
+        AssertContains("Type argument 'int'", error.ToString());
+        AssertContains("must satisfy the C# 'class' constraint", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsatisfied inferred C# generic array constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedInferredCSharpGenericArrayConstraintBuild.Generated.csproj")), "Build should not emit generated project when unsatisfied inferred C# generic array constraint diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsatisfiedInferredCSharpGenericArrayConstraintBuild.dll")), "Build should not emit generated assembly when unsatisfied inferred C# generic array constraint diagnostics contain errors.");
     });
 }
 
@@ -17045,6 +17168,49 @@ static void CliBuildCompilesImportedInferredGenericConstraintCall()
     });
 }
 
+static void CliBuildCompilesImportedInferredGenericArrayConstraintCall()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedInferredGenericArrayConstraintCall"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedInferredGenericArrayConstraintCall"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedInferredGenericArrayConstraintCall
+
+            import { LegacyGenericMethods } from "Legacy.Tools"
+
+            export fun keepText(): string[] =
+              LegacyGenericMethods.RequireClassArray(["Ada"])
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Build should compile imported inferred generic array constraint call.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedInferredGenericArrayConstraintCall.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("return LegacyGenericMethods.RequireClassArray(new string[] { \"Ada\" });", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedInferredGenericArrayConstraintCall.dll")),
+            "Generated project build should compile imported inferred generic array constraint calls.");
+    });
+}
+
 static void CliBuildCompilesImportedInferredConstructedGenericConstraintCall()
 {
     WithWorkspace(root =>
@@ -21193,9 +21359,19 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                     return value;
                 }
 
+                public static T[] IdentityArray<T>(T[] values)
+                {
+                    return values;
+                }
+
                 public static T RequireClass<T>(T value) where T : class
                 {
                     return value;
+                }
+
+                public static T[] RequireClassArray<T>(T[] values) where T : class
+                {
+                    return values;
                 }
 
                 public static T RequireStruct<T>(T value) where T : struct
