@@ -61,13 +61,15 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `keyof` aliases | Local string-based implementation details. |
 | Indexed access type aliases | Selected member runtime type for single-member local aliases; type-level union behavior for multi-member aliases. |
 | Explicit-receiver extension methods | C# extension methods with `this` on the receiver parameter. |
-| Function type values | `System.Func` or `System.Action` when arity and return shape are representable. |
+| Function type values | `System.Func` or `System.Action` when arity and return shape are representable; unannotated top-level lambda values use conservative `Func<object, TResult>` inference. |
 
 ## Function, Module, And Import Lowering
 
 Top-level functions lower to generated static methods. Expression-bodied functions become block-bodied C# methods with `return`. Multi-source projects use source-module-path containers so two files in the same namespace do not collide.
 
 Named imports from metadata namespaces lower to `using` directives; aliases lower to C# alias directives; manifest references are copied into generated project reference items.
+
+Top-level function-valued `let` declarations lower to generated delegate fields when they have an explicit function type annotation or a lambda initializer. Unannotated lambda-valued exports use a conservative CLR delegate shape: the parameter side is `object`, and simple return bodies infer `TResult` where possible. This keeps the generated API CLR-representable while nudging precise public callback contracts toward explicit annotations.
 
 Evidence:
 
@@ -76,6 +78,7 @@ Evidence:
 - `test/fixtures/backend/csharp/positive/0003-call-expression`
 - `test/fixtures/backend/csharp/positive/0008-basic-semantics`
 - CLI smokes for basic semantics, framework calls, local DLL calls, manifest reference propagation, and module-path containers.
+- CLI smokes for annotated and inferred function-valued top-level `let` exports.
 
 ## Records, Public Types, And Partial Declarations
 
@@ -188,7 +191,7 @@ These constructs must not appear directly in public CLR metadata:
 - structural shape aliases,
 - structural intersection aliases,
 - anonymous object or record shapes,
-- inferred anonymous function types,
+- unlowered inferred anonymous function types,
 - `unknown`,
 - marker-free `dynamic`.
 

@@ -2629,6 +2629,11 @@ public static class CSharpSourceBackend
                 return MapType(annotation.Children.FirstOrDefault(child => !child.IsToken));
             }
 
+            if (TryInferLambdaFunctionType(initializer, out var lambdaType))
+            {
+                return lambdaType;
+            }
+
             if (initializer?.Kind == SyntaxKind.CollectionExpression)
             {
                 var elementType = InferCollectionElementType(initializer.Children.Where(child => !child.IsToken).ToArray());
@@ -2648,6 +2653,11 @@ public static class CSharpSourceBackend
                 return GetSourceTypeName(annotation);
             }
 
+            if (TryInferLambdaFunctionType(initializer, out var lambdaType))
+            {
+                return lambdaType;
+            }
+
             if (initializer?.Kind == SyntaxKind.CollectionExpression)
             {
                 var elementType = InferCollectionElementType(initializer.Children.Where(child => !child.IsToken).ToArray());
@@ -2658,6 +2668,55 @@ public static class CSharpSourceBackend
             }
 
             return InferLiteralType(initializer);
+        }
+
+        private static bool TryInferLambdaFunctionType(SyntaxNode? initializer, out string type)
+        {
+            type = string.Empty;
+            if (initializer?.Kind != SyntaxKind.LambdaExpression)
+            {
+                return false;
+            }
+
+            type = $"System.Func<object, {InferLambdaReturnType(initializer)}>";
+            return true;
+        }
+
+        private static string InferLambdaReturnType(SyntaxNode lambda)
+        {
+            var body = lambda.Children.LastOrDefault(child => !child.IsToken);
+            return InferExpressionType(body);
+        }
+
+        private static string InferExpressionType(SyntaxNode? node)
+        {
+            if (node is null)
+            {
+                return "object";
+            }
+
+            if (node.Kind == SyntaxKind.LiteralExpression)
+            {
+                return InferLiteralType(node);
+            }
+
+            if (node.Kind == SyntaxKind.NameofExpression)
+            {
+                return "string";
+            }
+
+            if (node.Kind == SyntaxKind.CheckedExpression)
+            {
+                return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (node.Kind == SyntaxKind.BinaryExpression &&
+                node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
+            {
+                return "bool";
+            }
+
+            return "object";
         }
 
         private static string InferLiteralType(SyntaxNode? initializer)
@@ -2970,7 +3029,7 @@ public static class CSharpSourceBackend
             node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
 
         private static bool CanLowerTopLevelValueDeclaration(SyntaxNode node) =>
-            !IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node);
+            !IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node) || HasLambdaInitializer(node);
 
         private static bool IsFunctionValueDeclaration(SyntaxNode node)
         {
@@ -2991,6 +3050,12 @@ public static class CSharpSourceBackend
                 .FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)?
                 .Children
                 .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
+
+        private static bool HasLambdaInitializer(SyntaxNode node) =>
+            node.Children
+                .Where(child => child.Kind == SyntaxKind.Initializer)
+                .SelectMany(child => child.Children)
+                .Any(child => child.Kind == SyntaxKind.LambdaExpression);
 
         private static string EmitDefaultValue(string type) =>
             string.IsNullOrWhiteSpace(type) ? "default(object)" : $"default({type})";

@@ -1715,7 +1715,7 @@ public static class TypeSharpTypeChecker
             var declaredValues = root.Children
                 .Where(child =>
                     (child.Kind is SyntaxKind.ValueDeclaration or SyntaxKind.LiteralDeclaration) &&
-                    (child.Kind != SyntaxKind.ValueDeclaration || !IsFunctionValueDeclaration(child) || HasFunctionTypeAnnotation(child)) &&
+                    (child.Kind != SyntaxKind.ValueDeclaration || !IsFunctionValueDeclaration(child) || HasFunctionTypeAnnotation(child) || HasLambdaInitializer(child)) &&
                     TryGetDeclarationName(child, out _))
                 .Select(child => TryGetDeclarationName(child, out var name) ? name : string.Empty)
                 .Where(name => name.Length > 0)
@@ -1838,6 +1838,12 @@ public static class TypeSharpTypeChecker
                 .FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation)?
                 .Children
                 .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
+
+        private static bool HasLambdaInitializer(SyntaxNode node) =>
+            node.Children
+                .Where(child => child.Kind == SyntaxKind.Initializer)
+                .SelectMany(child => child.Children)
+                .Any(child => child.Kind == SyntaxKind.LambdaExpression);
 
         private static IEnumerable<string> GetExportedIdentifierTexts(SyntaxNode node)
         {

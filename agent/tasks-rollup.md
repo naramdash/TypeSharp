@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0271. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0272. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0271 |
+| Completed work covered | 0001-0272 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -644,6 +644,44 @@ Primary evidence:
 - [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
 - `test/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0272 Inferred Lambda-Valued Export Let
+
+Completed compiler/module work established:
+
+- Unannotated lambda-valued top-level `let` declarations are now exportable and lowerable when used with direct `export`, local export aliases, source module imports, and import aliases.
+- The source module graph now treats lambda-valued top-level values as lowerable export surface, including aliases, so relative imports can validate them instead of reporting `TS0114`.
+- The C# backend now emits conservative delegate fields/properties for unannotated lambda-valued top-level values. The generated CLR shape uses `System.Func<object, TResult>`, with simple return inference for literals, `nameof`, checked expressions, and comparison expressions; identity or otherwise unknown bodies return `object`.
+- Existing explicitly annotated function-valued `let` exports still preserve precise `System.Func<T, TResult>` or `System.Action<T>` metadata.
+- `TS2003` descriptor metadata, Modules, Reference, Grammar, Lowering, and Work Ledger docs now distinguish supported unannotated lambda-valued exports from still-unsupported non-relative and non-lowerable forwarding forms.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "source module graph collects inferred function value export surface"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build lowers inferred function value exports"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "source module graph collects function value export surface"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build lowers function value exports"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports unsupported export forwarding diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI check emits JSON unsupported export forwarding diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic descriptor registry"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Binding/TypeSharpBinder.cs`
+- `lang/TypeSharp.Compiler/Projects/SourceModuleGraph.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/Diagnostics/DiagnosticDescriptors.cs`
+- [Modules And Imports](../docs/src/content/docs/modules.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -668,7 +706,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0271 is compressed here.
+- Completed historical work through task 0272 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

@@ -738,7 +738,7 @@ public sealed record SourceModuleGraph(
         node.Kind == SyntaxKind.LiteralDeclaration || NodeDeclaresLowerableValue(node);
 
     private static bool NodeDeclaresLowerableValue(SyntaxNode node) =>
-        node.Kind == SyntaxKind.ValueDeclaration && (!IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node));
+        node.Kind == SyntaxKind.ValueDeclaration && (!IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node) || HasLambdaInitializer(node));
 
     private static bool TryGetExportableDeclaration(
         SyntaxNode node,
@@ -790,6 +790,12 @@ public sealed record SourceModuleGraph(
             .SelectMany(child => child.Children)
             .Any(child => child.Kind == SyntaxKind.LambdaExpression);
     }
+
+    private static bool HasLambdaInitializer(SyntaxNode node) =>
+        node.Children
+            .Where(child => child.Kind == SyntaxKind.Initializer)
+            .SelectMany(child => child.Children)
+            .Any(child => child.Kind == SyntaxKind.LambdaExpression);
 
     private static bool HasFunctionTypeAnnotation(SyntaxNode node) =>
         node.Children

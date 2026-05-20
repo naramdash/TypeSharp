@@ -1538,7 +1538,7 @@ public static class TypeSharpBuilder
 
     private static bool IsSourceValueImportAliasTarget(SyntaxNode node) =>
         node.Kind == SyntaxKind.LiteralDeclaration ||
-        (node.Kind == SyntaxKind.ValueDeclaration && (!IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node)));
+        (node.Kind == SyntaxKind.ValueDeclaration && (!IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node) || HasLambdaInitializer(node)));
 
     private static bool IsSourceTypeDeclaration(SyntaxNode node) =>
         node.Kind is
@@ -1569,6 +1569,12 @@ public static class TypeSharpBuilder
             .Children
             .Any(child => child.Kind == SyntaxKind.FunctionType) == true;
 
+    private static bool HasLambdaInitializer(SyntaxNode node) =>
+        node.Children
+            .Where(child => child.Kind == SyntaxKind.Initializer)
+            .SelectMany(child => child.Children)
+            .Any(child => child.Kind == SyntaxKind.LambdaExpression);
+
     private static bool IsMutableValueDeclaration(SyntaxNode node) =>
         node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
 
@@ -1580,6 +1586,11 @@ public static class TypeSharpBuilder
         }
 
         var initializer = GetInitializerExpression(node);
+        if (TryInferLambdaFunctionType(initializer, out var lambdaType))
+        {
+            return lambdaType;
+        }
+
         if (initializer?.Kind == SyntaxKind.CollectionExpression)
         {
             var elementType = InferCollectionElementType(initializer.Children.Where(child => !child.IsToken).ToArray());
@@ -1590,6 +1601,55 @@ public static class TypeSharpBuilder
         }
 
         return InferLiteralType(initializer);
+    }
+
+    private static bool TryInferLambdaFunctionType(SyntaxNode? initializer, out string type)
+    {
+        type = string.Empty;
+        if (initializer?.Kind != SyntaxKind.LambdaExpression)
+        {
+            return false;
+        }
+
+        type = $"System.Func<object, {InferLambdaReturnType(initializer)}>";
+        return true;
+    }
+
+    private static string InferLambdaReturnType(SyntaxNode lambda)
+    {
+        var body = lambda.Children.LastOrDefault(child => !child.IsToken);
+        return InferExpressionType(body);
+    }
+
+    private static string InferExpressionType(SyntaxNode? node)
+    {
+        if (node is null)
+        {
+            return "object";
+        }
+
+        if (node.Kind == SyntaxKind.LiteralExpression)
+        {
+            return InferLiteralType(node);
+        }
+
+        if (node.Kind == SyntaxKind.NameofExpression)
+        {
+            return "string";
+        }
+
+        if (node.Kind == SyntaxKind.CheckedExpression)
+        {
+            return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
+        }
+
+        if (node.Kind == SyntaxKind.BinaryExpression &&
+            node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
+        {
+            return "bool";
+        }
+
+        return "object";
     }
 
     private static bool TryGetDirectTypeAnnotation(SyntaxNode node, out SyntaxNode annotation)

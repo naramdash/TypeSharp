@@ -128,7 +128,7 @@ Stable declaration rules:
 - `partial` currently lowers for generated C# type declarations: modules, records, unions, classes, and interfaces.
 - `async` belongs on function declarations and lowers through `Task`/`Task<T>`.
 - `unsafe`, `dynamic`, `reflect`, and `interop` are capability markers, not ordinary type-system escapes.
-- Exported function-valued `let` declarations need explicit function type annotations so generated delegate metadata is clear.
+- Exported function-valued `let` declarations may use explicit function type annotations for precise generated delegate metadata. Unannotated lambda-valued top-level exports lower with conservative `System.Func<object, TResult>` inference for currently supported lambda bodies.
 
 Nominal declarations carry the public ABI surface. Compile-time-only aliases such as type-level unions or structural shapes must not leak through exported declarations.
 

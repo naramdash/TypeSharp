@@ -66,6 +66,7 @@ var tests = new (string Name, Action Body)[]
     ("source module graph collects local literal export alias surface", SourceModuleGraphCollectsLocalLiteralExportAliasSurface),
     ("source module graph collects local value export alias surface", SourceModuleGraphCollectsLocalValueExportAliasSurface),
     ("source module graph collects function value export surface", SourceModuleGraphCollectsFunctionValueExportSurface),
+    ("source module graph collects inferred function value export surface", SourceModuleGraphCollectsInferredFunctionValueExportSurface),
     ("source module graph collects local type export alias surface", SourceModuleGraphCollectsLocalTypeExportAliasSurface),
     ("source module graph collects relative re-export surface", SourceModuleGraphCollectsRelativeReExportSurface),
     ("source module graph collects relative re-export alias surface", SourceModuleGraphCollectsRelativeReExportAliasSurface),
@@ -239,6 +240,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build lowers local literal export aliases", CliBuildLowersLocalLiteralExportAliases),
     ("CLI build lowers local value export aliases", CliBuildLowersLocalValueExportAliases),
     ("CLI build lowers function value exports", CliBuildLowersFunctionValueExports),
+    ("CLI build lowers inferred function value exports", CliBuildLowersInferredFunctionValueExports),
     ("CLI build lowers local type export aliases", CliBuildLowersLocalTypeExportAliases),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
     ("manifest loader rejects invalid option domains", ManifestLoaderRejectsInvalidOptionDomains),
@@ -1603,6 +1605,48 @@ static void SourceModuleGraphCollectsFunctionValueExportSurface()
         var graph = SourceModuleGraph.Build(modules);
 
         AssertFalse(graph.HasErrors, "Annotated function-valued top-level let exports should contribute to the value export surface.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Main", dependency.FromModulePath);
+        AssertEqual("Helper", dependency.ToModulePath);
+        AssertEqual("./Helper", dependency.Specifier);
+        AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsInferredFunctionValueExportSurface()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, MinimalManifest("SourceGraphInferredFunctionValueExport"));
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphInferredFunctionValueExport
+
+            import { Transform as ImportedTransform, PublicTransform, NameFactory } from "./Helper"
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceGraphInferredFunctionValueExport
+
+            export let Transform = text => text
+            export let NameFactory = text => "Ada"
+
+            let internalTransform = text => text
+            export { internalTransform as PublicTransform }
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules);
+
+        AssertFalse(graph.HasErrors, "Unannotated lambda-valued top-level let exports should contribute to the value export surface.");
         var dependency = graph.Dependencies.Single();
         AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
         AssertEqual("Main", dependency.FromModulePath);
@@ -8457,6 +8501,59 @@ static void CliBuildLowersFunctionValueExports()
     });
 }
 
+static void CliBuildLowersInferredFunctionValueExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InferredFunctionValueExportBuild"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InferredFunctionValueExportBuild
+
+            import { Transform as ImportedTransform, PublicTransform, NameFactory } from "./Helper"
+
+            export fun transformed(): object = ImportedTransform("Ada")
+            export fun aliasTransformed(): object = PublicTransform("Lovelace")
+            export fun name(): string = NameFactory("ignored")
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.InferredFunctionValueExportBuild
+
+            export let Transform = text => text
+            export let NameFactory = text => "Ada"
+
+            let internalTransform = text => text
+            export { internalTransform as PublicTransform }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/InferredFunctionValueExportBuild.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.InferredFunctionValueExportBuild.ModuleHelper;", generatedMain);
+        AssertContains("private static System.Func<object, object> ImportedTransform", generatedMain);
+        AssertContains("get { return Samples.InferredFunctionValueExportBuild.ModuleHelper.Transform; }", generatedMain);
+        AssertContains("return ImportedTransform(\"Ada\");", generatedMain);
+        AssertContains("return PublicTransform(\"Lovelace\");", generatedMain);
+        AssertContains("return NameFactory(\"ignored\");", generatedMain);
+        AssertContains("public static readonly System.Func<object, object> Transform = text => text;", generatedHelper);
+        AssertContains("public static readonly System.Func<object, string> NameFactory = text => \"Ada\";", generatedHelper);
+        AssertContains("internal static readonly System.Func<object, object> internalTransform = text => text;", generatedHelper);
+        AssertContains("public static System.Func<object, object> PublicTransform", generatedHelper);
+        AssertContains("get { return internalTransform; }", generatedHelper);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "InferredFunctionValueExportBuild.dll")), "Generated project with inferred function-valued let exports should compile to a net48 DLL.");
+    });
+}
+
 static void CliBuildLowersLocalTypeExportAliases()
 {
     WithWorkspace(root =>
@@ -10866,6 +10963,9 @@ static void DocsSiteContractIsStable()
     AssertContains("function re-exports", modulesPage);
     AssertContains("runHelper", modulesPage);
     AssertContains("publicHelper", modulesPage);
+    AssertContains("conservative delegate inference", modulesPage);
+    AssertContains("export let NameFactory = text => \"Ada\"", modulesPage);
+    AssertContains("Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`", modulesPage);
 
     var examplesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "examples.md"));
     AssertContains("invoice-style", examplesPage);
@@ -10920,6 +11020,11 @@ static void DocsSiteContractIsStable()
     AssertContains("Type System", referencePage);
     AssertContains("C# And CLR Type Model", referencePage);
     AssertContains("C# Members And Overloads", referencePage);
+    AssertContains("System.Func<object, TResult>", referencePage);
+
+    var loweringPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "lowering.md"));
+    AssertContains("Func<object, TResult>", loweringPage);
+    AssertContains("inferred function-valued top-level `let` exports", loweringPage);
 
     var apiPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
     AssertContains("CLI Commands", apiPage);

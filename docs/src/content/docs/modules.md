@@ -151,6 +151,16 @@ let internalTransform: string -> string = text => text
 export { internalTransform as PublicTransform }
 ```
 
+Unannotated lambda-valued top-level `let` exports are also lowerable. The backend uses conservative delegate inference: the parameter type is `object`, and simple literal/name/comparison bodies infer the return side when possible. Add an explicit function type annotation when the public delegate metadata needs precise parameter types:
+
+```tysh
+export let Transform = text => text
+export let NameFactory = text => "Ada"
+
+let internalTransform = text => text
+export { internalTransform as PublicTransform }
+```
+
 Local type export aliases contribute source module public surface and relative type imports lower to the original generated C# type:
 
 ```tysh
@@ -194,13 +204,13 @@ export { Tools as PublicTools } from "./Feature/Helper"
 
 Downstream `import { PublicTools as HelperTools } from "./Barrel"` lowers to a generated C# type alias for the original module type.
 
-Relative star re-exports forward the currently lowerable function, top-level value, and type surface from the target module:
+Relative star re-exports forward the currently lowerable function, top-level value, lambda-valued top-level value, and type surface from the target module:
 
 ```tysh
 export * from "./Feature/Helper"
 ```
 
-Unannotated lambda-valued `export let`, non-relative forwarding, and non-lowerable forwarding forms still report `TS2003`.
+Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`.
 
 ## Related Pages
 

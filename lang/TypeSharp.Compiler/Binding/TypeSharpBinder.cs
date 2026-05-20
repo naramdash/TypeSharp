@@ -164,13 +164,6 @@ public static class TypeSharpBinder
                         if (TryGetDeclarationName(child, out var valueName, out var valueSpan))
                         {
                             var isFunctionValue = child.Kind == SyntaxKind.ValueDeclaration && IsFunctionValueDeclaration(child);
-                            if (isFunctionValue &&
-                                !HasFunctionTypeAnnotation(child) &&
-                                HasModifier(child, SyntaxKind.ExportModifier))
-                            {
-                                ReportUnsupportedExportForwarding(child);
-                            }
-
                             AddSymbol(
                                 scope,
                                 valueName,
@@ -179,7 +172,7 @@ public static class TypeSharpBinder
                                 declareValue: true,
                                 declareType: false,
                                 declareLiteral: child.Kind == SyntaxKind.LiteralDeclaration,
-                                declareExportableValue: !isFunctionValue || HasFunctionTypeAnnotation(child));
+                                declareExportableValue: !isFunctionValue || HasFunctionTypeAnnotation(child) || HasLambdaInitializer(child));
                         }
 
                         break;
@@ -936,6 +929,12 @@ public static class TypeSharpBinder
                 .SelectMany(child => child.Children)
                 .Any(child => child.Kind == SyntaxKind.LambdaExpression);
         }
+
+        private static bool HasLambdaInitializer(SyntaxNode node) =>
+            node.Children
+                .Where(child => child.Kind == SyntaxKind.Initializer)
+                .SelectMany(child => child.Children)
+                .Any(child => child.Kind == SyntaxKind.LambdaExpression);
 
         private static bool HasFunctionTypeAnnotation(SyntaxNode node) =>
             node.Children
