@@ -1815,10 +1815,115 @@ public static class TypeSharpInteropValidator
         }
 
         var bestScore = scoredCandidates.Min(candidate => candidate.Score);
-        var bestCandidateCount = scoredCandidates.Count(candidate => candidate.Score == bestScore);
-        return bestCandidateCount == 1
+        var bestCandidates = scoredCandidates
+            .Where(candidate => candidate.Score == bestScore)
+            .Select(candidate => candidate.Property)
+            .ToArray();
+        bestCandidates = SelectMoreSpecificNullLiteralIndexerTargets(bestCandidates, arguments, assemblies);
+        return bestCandidates.Length == 1
             ? new IndexerResolution(IsApplicable: true, IsAmbiguous: false, CandidateCount: 1)
-            : new IndexerResolution(IsApplicable: false, IsAmbiguous: true, CandidateCount: bestCandidateCount);
+            : new IndexerResolution(IsApplicable: false, IsAmbiguous: true, CandidateCount: bestCandidates.Length);
+    }
+
+    private static MetadataPropertySymbol[] SelectMoreSpecificNullLiteralIndexerTargets(
+        MetadataPropertySymbol[] candidates,
+        IReadOnlyList<SyntaxNode> arguments,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies)
+    {
+        if (candidates.Length <= 1 || !arguments.Any(IsNullLiteralIndexerArgument))
+        {
+            return candidates;
+        }
+
+        var lessSpecific = new bool[candidates.Length];
+        for (var candidateIndex = 0; candidateIndex < candidates.Length; candidateIndex++)
+        {
+            for (var otherIndex = 0; otherIndex < candidates.Length; otherIndex++)
+            {
+                if (candidateIndex == otherIndex)
+                {
+                    continue;
+                }
+
+                if (IsMoreSpecificForNullLiteralIndexerArguments(
+                        candidates[otherIndex],
+                        candidates[candidateIndex],
+                        arguments,
+                        assemblies))
+                {
+                    lessSpecific[candidateIndex] = true;
+                    break;
+                }
+            }
+        }
+
+        var selected = candidates
+            .Where((_, index) => !lessSpecific[index])
+            .ToArray();
+        return selected.Length > 0 ? selected : candidates;
+    }
+
+    private static bool IsMoreSpecificForNullLiteralIndexerArguments(
+        MetadataPropertySymbol better,
+        MetadataPropertySymbol worse,
+        IReadOnlyList<SyntaxNode> arguments,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies)
+    {
+        var foundMoreSpecificTarget = false;
+        for (var index = 0; index < arguments.Count; index++)
+        {
+            if (!IsNullLiteralIndexerArgument(arguments[index]))
+            {
+                continue;
+            }
+
+            var betterType = better.ParameterTypes[index];
+            var worseType = worse.ParameterTypes[index];
+            if (TypeNameMatches(betterType, worseType))
+            {
+                continue;
+            }
+
+            var betterIsMoreSpecific = IsMoreSpecificIndexerReferenceTarget(betterType, worseType, assemblies);
+            var worseIsMoreSpecific = IsMoreSpecificIndexerReferenceTarget(worseType, betterType, assemblies);
+            if (betterIsMoreSpecific && !worseIsMoreSpecific)
+            {
+                foundMoreSpecificTarget = true;
+                continue;
+            }
+
+            return false;
+        }
+
+        return foundMoreSpecificTarget;
+    }
+
+    private static bool IsNullLiteralIndexerArgument(SyntaxNode argument)
+    {
+        var expression = UnwrapArgumentExpression(argument);
+        var token = expression.Kind == SyntaxKind.LiteralExpression
+            ? expression.Children.FirstOrDefault(child => child.IsToken)
+            : null;
+        return token?.Kind == SyntaxKind.NullKeyword;
+    }
+
+    private static bool IsMoreSpecificIndexerReferenceTarget(
+        string candidateType,
+        string otherType,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies)
+    {
+        if (TypeNameMatches(candidateType, otherType))
+        {
+            return false;
+        }
+
+        if (IsObjectIndexerParameter(otherType) && !IsObjectIndexerParameter(candidateType))
+        {
+            return CanPassNullIndexerArgument(candidateType, assemblies);
+        }
+
+        return TryGetBestIndexerMetadataRelationshipDistance(candidateType, otherType, assemblies, out var distance) &&
+            distance > 0;
     }
 
     private static bool IndexerArgumentsMatch(
@@ -1917,6 +2022,7 @@ public static class TypeSharpInteropValidator
             SyntaxKind.StringLiteralToken or SyntaxKind.InterpolatedStringLiteralToken => new InferredIndexerArgumentType("string"),
             SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword => new InferredIndexerArgumentType("bool"),
             SyntaxKind.NumericLiteralToken => new InferredIndexerArgumentType(InferNumericType(token.Text ?? string.Empty), token.Text ?? string.Empty),
+            SyntaxKind.NullKeyword => new InferredIndexerArgumentType("null", IsNullLiteral: true),
             _ => default
         };
 
@@ -1928,6 +2034,11 @@ public static class TypeSharpInteropValidator
         string parameterType,
         IReadOnlyList<MetadataAssemblySymbol> assemblies)
     {
+        if (actualType.IsNullLiteral)
+        {
+            return CanPassNullIndexerArgument(parameterType, assemblies);
+        }
+
         if (IndexerTypeNameMatches(actualType.Name, parameterType))
         {
             return true;
@@ -1987,6 +2098,11 @@ public static class TypeSharpInteropValidator
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         out int score)
     {
+        if (actualType.IsNullLiteral)
+        {
+            return TryScoreNullIndexerArgument(parameterType, assemblies, out score);
+        }
+
         if (IndexerTypeNameMatches(actualType.Name, parameterType))
         {
             score = ExactIndexerMatchScore;
@@ -2135,6 +2251,70 @@ public static class TypeSharpInteropValidator
         return true;
     }
 
+    private static bool CanPassNullIndexerArgument(
+        string parameterType,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies) =>
+        IsNullableIndexerValueType(parameterType) ||
+        IsReferenceIndexerParameter(parameterType, assemblies);
+
+    private static bool TryScoreNullIndexerArgument(
+        string parameterType,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        out int score)
+    {
+        if (IsObjectIndexerParameter(parameterType))
+        {
+            score = ObjectIndexerFallbackScore;
+            return true;
+        }
+
+        if (IsNullableIndexerValueType(parameterType) ||
+            IsReferenceIndexerParameter(parameterType, assemblies))
+        {
+            score = MetadataIndexerRelationScore;
+            return true;
+        }
+
+        score = 0;
+        return false;
+    }
+
+    private static bool IsReferenceIndexerParameter(
+        string parameterType,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies)
+    {
+        var normalized = NormalizePrimitiveTypeName(parameterType);
+        if (IsObjectIndexerParameter(normalized) ||
+            string.Equals(normalized, "string", StringComparison.Ordinal) ||
+            normalized.EndsWith("[]", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (IsKnownNonNullableValueTypeName(normalized))
+        {
+            return false;
+        }
+
+        var metadataTypes = FindMetadataTypes(assemblies, parameterType);
+        if (metadataTypes.Count > 0)
+        {
+            return metadataTypes.Any(type => !type.IsValueType);
+        }
+
+        return normalized.Contains('.', StringComparison.Ordinal) ||
+            normalized.Contains('<', StringComparison.Ordinal);
+    }
+
+    private static bool IsNullableIndexerValueType(string parameterType)
+    {
+        var normalized = StripGenericArity(NormalizePrimitiveTypeName(parameterType));
+        var unqualified = GetUnqualifiedTypeName(normalized);
+        return string.Equals(unqualified, "Nullable", StringComparison.Ordinal) ||
+            normalized.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
+            normalized.StartsWith("Nullable<", StringComparison.Ordinal);
+    }
+
     private static bool CanPassNumericIndexerArgumentType(InferredIndexerArgumentType actualType, string parameterType)
     {
         var actual = NormalizePrimitiveTypeName(actualType.Name);
@@ -2169,6 +2349,13 @@ public static class TypeSharpInteropValidator
 
     private static bool IsNumericType(string type) =>
         NormalizePrimitiveTypeName(type) is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong" or "float" or "double" or "decimal";
+
+    private static bool IsKnownNonNullableValueTypeName(string type)
+    {
+        var normalized = NormalizePrimitiveTypeName(type);
+        return IsNumericType(normalized) ||
+            normalized is "bool" or "char" or "void";
+    }
 
     private static string NormalizePrimitiveTypeName(string type) =>
         type switch
@@ -2661,7 +2848,7 @@ public static class TypeSharpInteropValidator
 
     private readonly record struct InferredGenericTypeArgument(int Index, GenericTypeArgument Argument);
 
-    private readonly record struct InferredIndexerArgumentType(string Name, string? NumericLiteralText = null);
+    private readonly record struct InferredIndexerArgumentType(string Name, string? NumericLiteralText = null, bool IsNullLiteral = false);
 
     private readonly record struct IndexerCandidateScore(MetadataPropertySymbol Property, int Score);
 

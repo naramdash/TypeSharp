@@ -132,8 +132,10 @@ var tests = new (string Name, Action Body)[]
     ("checker reports missing C# instance indexer diagnostics", CheckerReportsMissingCSharpInstanceIndexerDiagnostics),
     ("checker reports mismatched C# instance indexer diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerDiagnostics),
     ("checker reports mismatched C# instance indexer numeric literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnostics),
+    ("checker reports mismatched C# instance indexer null literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNullLiteralDiagnostics),
     ("checker reports ambiguous C# instance indexer diagnostics", CheckerReportsAmbiguousCSharpInstanceIndexerDiagnostics),
     ("checker accepts imported C# indexer metadata relationship ranking", CheckerAcceptsImportedCSharpIndexerMetadataRelationshipRanking),
+    ("checker accepts imported C# indexer null literal ranking", CheckerAcceptsImportedCSharpIndexerNullLiteralRanking),
     ("checker reports missing C# instance property setter diagnostics", CheckerReportsMissingCSharpInstancePropertySetterDiagnostics),
     ("checker reports missing C# parameter instance property setter diagnostics", CheckerReportsMissingCSharpParameterInstancePropertySetterDiagnostics),
     ("checker reports missing C# annotated local instance property setter diagnostics", CheckerReportsMissingCSharpAnnotatedLocalInstancePropertySetterDiagnostics),
@@ -261,6 +263,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on missing C# instance indexer", CliBuildStopsBeforeEmissionOnMissingCSharpInstanceIndexer),
     ("CLI build stops before emission on mismatched C# instance indexer", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexer),
     ("CLI build stops before emission on mismatched C# instance indexer numeric literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericLiteral),
+    ("CLI build stops before emission on mismatched C# instance indexer null literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNullLiteral),
     ("CLI build stops before emission on ambiguous C# instance indexer", CliBuildStopsBeforeEmissionOnAmbiguousCSharpInstanceIndexer),
     ("CLI build stops before emission on missing C# instance property setter", CliBuildStopsBeforeEmissionOnMissingCSharpInstancePropertySetter),
     ("CLI build stops before emission on readonly C# instance field assignment", CliBuildStopsBeforeEmissionOnReadOnlyCSharpInstanceFieldAssignment),
@@ -393,6 +396,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported indexer numeric literal conversion", CliBuildCompilesImportedIndexerNumericLiteralConversion),
     ("CLI build compiles imported overloaded indexer exact match", CliBuildCompilesImportedOverloadedIndexerExactMatch),
     ("CLI build compiles imported indexer metadata relationship match", CliBuildCompilesImportedIndexerMetadataRelationshipMatch),
+    ("CLI build compiles imported indexer null literal match", CliBuildCompilesImportedIndexerNullLiteralMatch),
     ("CLI build compiles imported params call", CliBuildCompilesImportedParamsCall),
     ("CLI build compiles imported out call", CliBuildCompilesImportedOutCall),
     ("CLI build compiles imported in call", CliBuildCompilesImportedInCall),
@@ -2547,7 +2551,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -2652,6 +2656,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var relationshipItems = legacyRelationshipIndexer.Properties.Where(property => property.Name == "Item").ToArray();
         AssertEqual(3, relationshipItems.Length);
         AssertSequence(["Legacy.Tools.ILegacyNamed", "Legacy.Tools.LegacyBaseNamed", "object"], relationshipItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+
+        var legacyNullIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNullIndexer"), "LegacyNullIndexer metadata should be present.");
+        var nullItems = legacyNullIndexer.Properties.Where(property => property.Name == "Item").ToArray();
+        AssertEqual(3, nullItems.Length);
+        AssertSequence(["int", "object", "string"], nullItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
 
         var legacyByRef = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByRef"), "LegacyByRef metadata should be present.");
         var tryParse = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "TryParseCount"), "TryParseCount metadata should be present.");
@@ -4293,6 +4302,44 @@ static void CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnosti
     });
 }
 
+static void CheckerReportsMismatchedCSharpInstanceIndexerNullLiteralDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerNullLiteral"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerNullLiteral"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerNullLiteral
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[null]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Mismatched C# instance indexer null literal argument should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2411");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'null'", diagnostic.Message);
+    });
+}
+
 static void CheckerReportsAmbiguousCSharpInstanceIndexerDiagnostics()
 {
     WithWorkspace(root =>
@@ -4363,6 +4410,40 @@ static void CheckerAcceptsImportedCSharpIndexerMetadataRelationshipRanking()
 
         AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2402"), "Imported C# indexer metadata relationship ranking should avoid ambiguous indexer diagnostics.");
         AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2411"), "Imported C# indexer metadata relationship ranking should keep the indexer applicable.");
+    });
+}
+
+static void CheckerAcceptsImportedCSharpIndexerNullLiteralRanking()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerNullLiteralRanking"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerNullLiteralRanking"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerNullLiteralRanking
+
+            import { LegacyNullIndexer } from "Legacy.Tools"
+
+            export fun pick(): string {
+              let indexer = LegacyNullIndexer()
+              indexer[null]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2402"), "Imported C# indexer null literal ranking should prefer the narrower reference target.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2411"), "Imported C# indexer null literal ranking should keep the indexer applicable.");
     });
 }
 
@@ -9577,6 +9658,48 @@ static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericL
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched C# instance indexer numeric literal diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerNumericLiteralBuild.Generated.csproj")), "Build should not emit generated project when mismatched C# instance indexer numeric literal diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerNumericLiteralBuild.dll")), "Build should not emit generated assembly when mismatched C# instance indexer numeric literal diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNullLiteral()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerNullLiteralBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerNullLiteralBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerNullLiteralBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[null]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2411\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyFormatter", error.ToString());
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'null'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched C# instance indexer null literal diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerNullLiteralBuild.Generated.csproj")), "Build should not emit generated project when mismatched C# instance indexer null literal diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerNullLiteralBuild.dll")), "Build should not emit generated assembly when mismatched C# instance indexer null literal diagnostics contain errors.");
     });
 }
 
@@ -14795,6 +14918,51 @@ static void CliBuildCompilesImportedIndexerMetadataRelationshipMatch()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerMetadataRelationshipMatch.dll")),
             "Generated project build should compile imported indexer metadata relationship access.");
+    });
+}
+
+static void CliBuildCompilesImportedIndexerNullLiteralMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerNullLiteralMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerNullLiteralMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerNullLiteralMatch
+
+            import { LegacyNullIndexer } from "Legacy.Tools"
+
+            export fun pick(): string {
+              let indexer = LegacyNullIndexer()
+              indexer[null]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedIndexerNullLiteralMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var indexer = new LegacyNullIndexer();", generatedSource);
+        AssertContains("return indexer[null];", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerNullLiteralMatch.dll")),
+            "Generated project build should compile imported indexer null literal specificity.");
     });
 }
 
@@ -20946,6 +21114,24 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public string this[object value]
                 {
                     get { return "object:" + (value == null ? string.Empty : value.ToString()); }
+                }
+            }
+
+            public sealed class LegacyNullIndexer
+            {
+                public string this[string value]
+                {
+                    get { return value == null ? "string:null" : "string:" + value; }
+                }
+
+                public string this[object value]
+                {
+                    get { return value == null ? "object:null" : "object:" + value.ToString(); }
+                }
+
+                public string this[int index]
+                {
+                    get { return "int:" + index.ToString(); }
                 }
             }
 

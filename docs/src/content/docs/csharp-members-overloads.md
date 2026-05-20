@@ -149,6 +149,7 @@ Rules:
 - property set requires a setter,
 - readonly fields cannot be assigned,
 - known indexer arguments are checked against available indexers,
+- `null` indexer arguments reject non-nullable value-type indexers and rank concrete reference indexers before `object` fallback,
 - ambiguous indexers report diagnostics.
 
 ## Delegates And Lambdas
