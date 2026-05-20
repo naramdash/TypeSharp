@@ -874,6 +874,11 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaBlockExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (TryInferLambdaIfExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
         {
             return true;
@@ -915,6 +920,26 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         return TryInferArgumentType(body, out type, assemblies, localInstances);
+    }
+
+    private static bool TryInferLambdaBlockExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.BlockExpression)
+        {
+            return false;
+        }
+
+        var expression = GetBlockResultExpression(body);
+        return expression is not null &&
+            TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out type);
     }
 
     private static bool TryInferLambdaIfExpressionType(

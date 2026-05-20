@@ -1648,6 +1648,11 @@ public static class TypeSharpBuilder
             return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
         }
 
+        if (node.Kind == SyntaxKind.BlockExpression)
+        {
+            return InferExpressionType(GetBlockResultExpression(node));
+        }
+
         if (node.Kind == SyntaxKind.IfExpression &&
             TryInferIfExpressionType(node, out var ifType))
         {

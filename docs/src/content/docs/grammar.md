@@ -143,7 +143,7 @@ Stable expression rules:
 - Parenthesized expressions group an inner expression and preserve the inner expression type for checking and lowering.
 - Unary logical-not `!expr` is stable for `bool` operands and lowers to C# `!expr`.
 - Unary numeric sign expressions `+expr` and `-expr` are stable for supported numeric operands and lower to C# unary sign operators.
-- Lambdas use `=>` and can be assigned to local or module `let` bindings.
+- Lambdas use `=>` and can be assigned to local or module `let` bindings. Lambda bodies can be blocks; when the target delegate expects a value, the final block expression is returned.
 - `match` arms use `=>`, with optional `when` guards.
 - Pipeline `value |> f(args...)` lowers as `f(value, args...)`.
 - Composition `f >> g` and `g << f` lower to unary delegate lambdas.

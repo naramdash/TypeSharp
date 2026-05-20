@@ -1495,7 +1495,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.OutArgument => EmitOutArgument(node),
                 SyntaxKind.InArgument => EmitInArgument(node),
                 SyntaxKind.RefArgument => EmitRefArgument(node),
-                SyntaxKind.LambdaExpression => EmitLambda(node),
+                SyntaxKind.LambdaExpression => EmitLambda(node, expectedType),
                 SyntaxKind.SpreadElement => EmitSpreadElement(node),
                 SyntaxKind.BinaryExpression => EmitBinary(node),
                 SyntaxKind.AssignmentExpression => EmitAssignment(node),
@@ -1633,13 +1633,17 @@ public static class CSharpSourceBackend
             builder.Append(" }");
         }
 
-        private void AppendInlineReturnBlock(StringBuilder builder, SyntaxNode? block, string returnType)
+        private void AppendInlineReturnBlock(StringBuilder builder, SyntaxNode? block, string returnType, bool returnsValue = true)
         {
             builder.Append("{ ");
             var statements = block?.Children.Where(child => !child.IsToken).ToArray() ?? [];
             if (statements.Length == 0)
             {
-                builder.Append($"return default({returnType});");
+                if (returnsValue)
+                {
+                    builder.Append($"return default({returnType});");
+                }
+
                 builder.Append(" }");
                 return;
             }
@@ -1659,7 +1663,7 @@ public static class CSharpSourceBackend
                 var expression = statement.Kind == SyntaxKind.ExpressionStatement
                     ? statement.Children.FirstOrDefault(child => !child.IsToken)
                     : statement;
-                if (isLast)
+                if (isLast && returnsValue)
                 {
                     builder.Append($"return {EmitExpression(expression, returnType)};");
                 }
@@ -1812,11 +1816,49 @@ public static class CSharpSourceBackend
             return $"ref {EmitExpression(expression)}";
         }
 
-        private string EmitLambda(SyntaxNode node)
+        private string EmitLambda(SyntaxNode node, string? expectedType)
         {
             var parameter = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "_";
             var body = node.Children.LastOrDefault(child => !child.IsToken);
-            return $"{parameter} => {EmitExpression(body)}";
+            if (body?.Kind != SyntaxKind.BlockExpression)
+            {
+                return $"{parameter} => {EmitExpression(body)}";
+            }
+
+            var returnType = TryGetDelegateSignature(expectedType, out var parameterTypes, out var delegateReturnType)
+                ? delegateReturnType
+                : InferExpressionType(body);
+            if (string.IsNullOrWhiteSpace(returnType) || string.Equals(returnType, "var", StringComparison.Ordinal))
+            {
+                returnType = "object";
+            }
+
+            var previousValueTypes = _valueTypes;
+            _valueTypes = new Dictionary<string, string>(previousValueTypes, StringComparer.Ordinal);
+            if (parameterTypes.Count > 0 && parameter.Length > 0)
+            {
+                _valueTypes[parameter] = parameterTypes[0];
+            }
+
+            try
+            {
+                return $"{parameter} => {EmitLambdaBlockBody(body, returnType)}";
+            }
+            finally
+            {
+                _valueTypes = previousValueTypes;
+            }
+        }
+
+        private string EmitLambdaBlockBody(SyntaxNode block, string returnType)
+        {
+            var builder = new StringBuilder();
+            AppendInlineReturnBlock(
+                builder,
+                block,
+                string.Equals(returnType, "void", StringComparison.Ordinal) ? "object" : returnType,
+                !string.Equals(returnType, "void", StringComparison.Ordinal));
+            return builder.ToString();
         }
 
         private string EmitSpreadElement(SyntaxNode node)
@@ -2704,6 +2746,113 @@ public static class CSharpSourceBackend
                 : $"System.Func<{parameterType}, {returnType}>";
         }
 
+        private static bool TryGetDelegateSignature(string? typeName, out IReadOnlyList<string> parameterTypes, out string returnType)
+        {
+            parameterTypes = [];
+            returnType = string.Empty;
+            if (string.IsNullOrWhiteSpace(typeName))
+            {
+                return false;
+            }
+
+            var trimmed = typeName.Trim();
+            if (string.Equals(trimmed, "System.Action", StringComparison.Ordinal) ||
+                string.Equals(trimmed, "Action", StringComparison.Ordinal))
+            {
+                returnType = "void";
+                return true;
+            }
+
+            if (!TryGetGenericArguments(trimmed, out var genericName, out var arguments))
+            {
+                return false;
+            }
+
+            if (string.Equals(genericName, "System.Action", StringComparison.Ordinal) ||
+                string.Equals(genericName, "Action", StringComparison.Ordinal))
+            {
+                parameterTypes = arguments;
+                returnType = "void";
+                return true;
+            }
+
+            if (string.Equals(genericName, "System.Func", StringComparison.Ordinal) ||
+                string.Equals(genericName, "Func", StringComparison.Ordinal))
+            {
+                returnType = arguments[^1];
+                parameterTypes = arguments.Take(arguments.Count - 1).ToArray();
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryGetGenericArguments(string typeName, out string genericName, out IReadOnlyList<string> arguments)
+        {
+            genericName = string.Empty;
+            arguments = [];
+
+            var open = typeName.IndexOf('<', StringComparison.Ordinal);
+            var close = typeName.LastIndexOf('>');
+            if (open <= 0 || close <= open + 1 || close != typeName.Length - 1)
+            {
+                return false;
+            }
+
+            genericName = typeName[..open].Trim();
+            var inner = typeName.Substring(open + 1, close - open - 1);
+            var parsed = new List<string>();
+            var depth = 0;
+            var start = 0;
+            for (var index = 0; index < inner.Length; index++)
+            {
+                var current = inner[index];
+                if (current == '<')
+                {
+                    depth++;
+                    continue;
+                }
+
+                if (current == '>')
+                {
+                    depth--;
+                    if (depth < 0)
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (current == ',' && depth == 0)
+                {
+                    var argument = inner.Substring(start, index - start).Trim();
+                    if (argument.Length == 0)
+                    {
+                        return false;
+                    }
+
+                    parsed.Add(argument);
+                    start = index + 1;
+                }
+            }
+
+            if (depth != 0)
+            {
+                return false;
+            }
+
+            var last = inner[start..].Trim();
+            if (last.Length == 0)
+            {
+                return false;
+            }
+
+            parsed.Add(last);
+            arguments = parsed;
+            return genericName.Length > 0;
+        }
+
         private static string MapLiteralRuntimeType(SyntaxNode node)
         {
             var token = node.Children.FirstOrDefault(child => child.IsToken);
@@ -2843,6 +2992,11 @@ public static class CSharpSourceBackend
             if (node.Kind == SyntaxKind.ParenthesizedExpression)
             {
                 return InferExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (node.Kind == SyntaxKind.BlockExpression)
+            {
+                return InferExpressionType(GetBlockResultExpression(node));
             }
 
             if (node.Kind == SyntaxKind.IfExpression &&

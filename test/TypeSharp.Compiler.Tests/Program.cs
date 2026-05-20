@@ -158,6 +158,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports no matching C# delegate lambda logical not return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaLogicalNotReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda unary numeric return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaUnaryNumericReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda if return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaIfReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda block return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaBlockReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda coalesce return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaCoalesceReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda indexer return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaIndexerReturnOverloadDiagnostics),
     ("C# overload resolver selects exact literal match", CSharpOverloadResolverSelectsExactLiteralMatch),
@@ -185,6 +186,7 @@ var tests = new (string Name, Action Body)[]
     ("C# overload resolver filters lambda delegate logical not return type", CSharpOverloadResolverFiltersLambdaDelegateLogicalNotReturnType),
     ("C# overload resolver filters lambda delegate unary numeric return type", CSharpOverloadResolverFiltersLambdaDelegateUnaryNumericReturnType),
     ("C# overload resolver filters lambda delegate if return type", CSharpOverloadResolverFiltersLambdaDelegateIfReturnType),
+    ("C# overload resolver filters lambda delegate block return type", CSharpOverloadResolverFiltersLambdaDelegateBlockReturnType),
     ("C# overload resolver filters lambda delegate coalesce return type", CSharpOverloadResolverFiltersLambdaDelegateCoalesceReturnType),
     ("C# overload resolver filters lambda delegate indexer return type", CSharpOverloadResolverFiltersLambdaDelegateIndexerReturnType),
     ("C# overload resolver ranks lambda delegate return type", CSharpOverloadResolverRanksLambdaDelegateReturnType),
@@ -229,6 +231,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on no matching C# delegate lambda logical not return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaLogicalNotReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda unary numeric return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaUnaryNumericReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda if return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaIfReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda block return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBlockReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda coalesce return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaCoalesceReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda indexer return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaIndexerReturnOverload),
     ("CLI build stops before emission on known argument type C# overload mismatch", CliBuildStopsBeforeEmissionOnKnownArgumentTypeCSharpOverloadMismatch),
@@ -417,6 +420,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported delegate lambda overload logical not return match", CliBuildCompilesImportedDelegateLambdaOverloadLogicalNotReturnMatch),
     ("CLI build compiles imported delegate lambda overload unary numeric return match", CliBuildCompilesImportedDelegateLambdaOverloadUnaryNumericReturnMatch),
     ("CLI build compiles imported delegate lambda overload if return match", CliBuildCompilesImportedDelegateLambdaOverloadIfReturnMatch),
+    ("CLI build compiles imported delegate lambda overload block return match", CliBuildCompilesImportedDelegateLambdaOverloadBlockReturnMatch),
     ("CLI build compiles imported delegate lambda overload coalesce return match", CliBuildCompilesImportedDelegateLambdaOverloadCoalesceReturnMatch),
     ("CLI build compiles imported delegate lambda overload indexer return match", CliBuildCompilesImportedDelegateLambdaOverloadIndexerReturnMatch),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
@@ -2749,6 +2753,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(
             ["System.Func`2<string, int>", "System.Func`2<string, string>"],
             delegateIfReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateBlockReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickBlockReturn").ToArray();
+        AssertEqual(2, delegateBlockReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<string, int>", "System.Func`2<string, string>"],
+            delegateBlockReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
         var delegateCoalesceReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickCoalesceReturn").ToArray();
         AssertEqual(2, delegateCoalesceReturnPicks.Length);
         AssertSequence(
@@ -2815,6 +2824,9 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var requiresIfReturnInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresIfReturnInt"), "RequiresIfReturnInt metadata should be present.");
         AssertSequence(["value", "transform"], requiresIfReturnInt.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string", "System.Func`2<string, int>"], requiresIfReturnInt.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresBlockReturnInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresBlockReturnInt"), "RequiresBlockReturnInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresBlockReturnInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["string", "System.Func`2<string, int>"], requiresBlockReturnInt.Parameters.Select(parameter => parameter.Type).ToArray());
         var requiresCoalesceReturnInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresCoalesceReturnInt"), "RequiresCoalesceReturnInt metadata should be present.");
         AssertSequence(["value", "transform"], requiresCoalesceReturnInt.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, int>"], requiresCoalesceReturnInt.Parameters.Select(parameter => parameter.Type).ToArray());
@@ -5190,6 +5202,41 @@ static void CheckerReportsNoMatchingCSharpDelegateLambdaIfReturnOverloadDiagnost
     });
 }
 
+static void CheckerReportsNoMatchingCSharpDelegateLambdaBlockReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaBlockReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaBlockReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaBlockReturnOverload
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBlockReturnInt("Ada", text => { (text) })
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda block return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresBlockReturnInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
 static void CheckerReportsNoMatchingCSharpDelegateLambdaCoalesceReturnOverloadDiagnostics()
 {
     WithWorkspace(root =>
@@ -6603,6 +6650,50 @@ static void CSharpOverloadResolverFiltersLambdaDelegateIfReturnType()
     AssertEqual(1, resolution.ApplicableCandidates.Count);
     AssertFalse(resolution.IsAmbiguous, "Lambda if-expression return type should remove incompatible delegate overload candidates.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate if-expression return overload candidate.");
+    AssertEqual("System.Func`2<string, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateBlockReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickBlockReturn("Ada", text => { (text) })
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickBlockReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickBlockReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda block return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate block return overload candidate.");
     AssertEqual("System.Func`2<string, string>", selected.Method.Parameters[1].Type);
 }
 
@@ -8262,6 +8353,46 @@ static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaIfReturnO
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda if-expression return overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaIfReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda if-expression return overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaIfReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda if-expression return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBlockReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaBlockReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaBlockReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaBlockReturnOverloadBuild
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBlockReturnInt("Ada", text => { (text) })
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresBlockReturnInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda block return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaBlockReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda block return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaBlockReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda block return overload diagnostics contain errors.");
     });
 }
 
@@ -9931,13 +10062,14 @@ static void CliBuildLowersInferredFunctionValueExports()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InferredFunctionValueExportBuild
 
-            import { Transform as ImportedTransform, PublicTransform, NameFactory, Negative, Choice } from "./Helper"
+            import { Transform as ImportedTransform, PublicTransform, NameFactory, Negative, Choice, BlockChoice } from "./Helper"
 
             export fun transformed(): object = ImportedTransform("Ada")
             export fun aliasTransformed(): object = PublicTransform("Lovelace")
             export fun name(): string = NameFactory("ignored")
             export fun negative(): object = Negative("ignored")
             export fun choice(): object = Choice("ignored")
+            export fun blockChoice(): object = BlockChoice("ignored")
             """);
         WriteFile(root, "src/Helper.tysh", """
             namespace Samples.InferredFunctionValueExportBuild
@@ -9946,6 +10078,7 @@ static void CliBuildLowersInferredFunctionValueExports()
             export let NameFactory = text => "Ada"
             export let Negative = text => -1
             export let Choice = text => if true { "yes" } else { "no" }
+            export let BlockChoice = text => { "block" }
 
             let internalTransform = text => text
             export { internalTransform as PublicTransform }
@@ -9969,10 +10102,12 @@ static void CliBuildLowersInferredFunctionValueExports()
         AssertContains("return NameFactory(\"ignored\");", generatedMain);
         AssertContains("return Negative(\"ignored\");", generatedMain);
         AssertContains("return Choice(\"ignored\");", generatedMain);
+        AssertContains("return BlockChoice(\"ignored\");", generatedMain);
         AssertContains("public static readonly System.Func<object, object> Transform = text => text;", generatedHelper);
         AssertContains("public static readonly System.Func<object, string> NameFactory = text => \"Ada\";", generatedHelper);
         AssertContains("public static readonly System.Func<object, int> Negative = text => -1;", generatedHelper);
         AssertContains("public static readonly System.Func<object, string> Choice = text => (new System.Func<string>(() => { if (true) { return \"yes\"; } else { return \"no\"; } }))();", generatedHelper);
+        AssertContains("public static readonly System.Func<object, string> BlockChoice = text => { return \"block\"; };", generatedHelper);
         AssertContains("internal static readonly System.Func<object, object> internalTransform = text => text;", generatedHelper);
         AssertContains("public static System.Func<object, object> PublicTransform", generatedHelper);
         AssertContains("get { return internalTransform; }", generatedHelper);
@@ -15791,6 +15926,47 @@ static void CliBuildCompilesImportedDelegateLambdaOverloadIfReturnMatch()
     });
 }
 
+static void CliBuildCompilesImportedDelegateLambdaOverloadBlockReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadBlockReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadBlockReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadBlockReturnMatch
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickBlockReturn("Ada", text => { (text) })
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(exitCode == 0, $"Imported delegate lambda overload block return match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadBlockReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickBlockReturn(\"Ada\", text => { return (text); });", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadBlockReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload block return matches.");
+    });
+}
+
 static void CliBuildCompilesImportedDelegateLambdaOverloadCoalesceReturnMatch()
 {
     WithWorkspace(root =>
@@ -20091,6 +20267,16 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                     return "int:" + transform(value).ToString();
                 }
 
+                public static string PickBlockReturn(string value, System.Func<string, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickBlockReturn(string value, System.Func<string, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
                 public static string PickCoalesceReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
                 {
                     return "text:" + transform(value);
@@ -20202,6 +20388,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
 
                 public static string RequiresIfReturnInt(string value, System.Func<string, int> transform)
+                {
+                    return transform(value).ToString();
+                }
+
+                public static string RequiresBlockReturnInt(string value, System.Func<string, int> transform)
                 {
                     return transform(value).ToString();
                 }

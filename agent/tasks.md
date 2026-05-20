@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0282                          |
+| Completed range    | 0001-0283                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -52,6 +52,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | Done   | Work ledger future area | Lambda block overload inference                    | [tasks-rollup.md#task-0283-lambda-block-overload-inference](tasks-rollup.md#task-0283-lambda-block-overload-inference)                                       | Added block-bodied lambda lowering plus final-expression return inference for C# delegate overload filtering/ranking, diagnostics, inferred function-value exports, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda if overload inference                       | [tasks-rollup.md#task-0282-lambda-if-overload-inference](tasks-rollup.md#task-0282-lambda-if-overload-inference)                                             | Added value-producing `if` expression lowering and lambda branch return inference for C# delegate overload filtering/ranking, including diagnostics and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda unary numeric overload inference            | [tasks-rollup.md#task-0281-lambda-unary-numeric-overload-inference](tasks-rollup.md#task-0281-lambda-unary-numeric-overload-inference)                       | Added unary numeric sign return inference for top-level lambda values and C# delegate overload filtering/ranking, including diagnostics and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Lambda logical-not overload inference              | [tasks-rollup.md#task-0280-lambda-logical-not-overload-inference](tasks-rollup.md#task-0280-lambda-logical-not-overload-inference)                           | Added unary logical-not token/parser/lowering and lambda body bool return inference for C# delegate overload filtering/ranking, including diagnostics and `net48` CLI build coverage. |

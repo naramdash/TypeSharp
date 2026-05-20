@@ -178,6 +178,7 @@ The checker validates:
 - unary logical-not bodies that return `bool`,
 - unary numeric sign bodies that preserve supported numeric operand types,
 - `if` expression bodies whose branch result expressions merge to one known return type,
+- block bodies whose final expression has a known return type,
 - null-coalescing bodies with known fallback or receiver-side types,
 - indexer-expression bodies with known array or metadata-backed indexer return types.
 
