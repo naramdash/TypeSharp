@@ -37,7 +37,7 @@ Raw benchmark artifacts live under `docs-site/research/`. Source and runnable sa
 
 ## Temporary Agentic Work Surface
 
-| File Or Folder | Target Role |
+| File | Target Role |
 | --- | --- |
 | `docs/README.md` | Short index for the remaining agentic work surface. |
 | `docs/agentic-execution.md` | Execution contract for goal/Ralph/long-running agent runs. |
@@ -45,7 +45,7 @@ Raw benchmark artifacts live under `docs-site/research/`. Source and runnable sa
 | `docs/checklist.md` | Remaining implementation and verification work source. |
 | `docs/traceability.md` | Evidence bridge connecting goal, requirements, features, checklist, and completed behavior. |
 | `docs/tasks.md` | Active task packet index while agentic goal work is running. |
-| `docs/*-task-ledger-rollup.md` | Temporary compressed work history until folded further into docs-site work ledger. |
+| `docs/*-task-ledger-rollup.md` | Temporary compressed work history kept as root-level docs files until folded further into docs-site work ledger. |
 | `docs/adr.md` | ADR authoring template for large decisions. |
 
 ## Maintenance Rule

@@ -50,7 +50,7 @@
 - [x] task packet template이 있다.
 - [x] 문서/구현/설계 결정별 Done 기준이 있다.
 - [x] 세션 인계 기준이 있다.
-- [x] 실제 `docs/` 작업 패킷이 있다.
+- [x] 실제 `docs/tasks.md`와 root-level rollup이 있다.
 - [x] 다음 구현 작업의 첫 task packet이 작성되어 있다.
 - [x] parser fixture format 정책이 있다.
 - [x] 반복 실행 결과를 기록할 progress log 정책이 있다.

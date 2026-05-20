@@ -5,7 +5,7 @@ description: Current long-running TypeSharp task state and completed work rollup
 
 This page is the web-facing view of the long-running task ledger. The compact source record lives in `docs/tasks.md` and `docs/0001-0255-task-ledger-rollup.md`.
 
-Codex CLI goal and other long-running agents should still read the canonical files under `docs/` when selecting work. This page exists so humans can inspect the same state through the docs site.
+Codex CLI goal and other long-running agents should still read the flat canonical files under `docs/` when selecting work. This page exists so humans can inspect the same state through the docs site.
 
 ## Current State
 

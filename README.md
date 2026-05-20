@@ -115,6 +115,6 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 
 ## Project Governance
 
-The project is being developed against the goal and success criteria in [docs-site Core Goal](docs-site/src/content/docs/goal.md). Work is tracked in small task packets under [docs/tasks.md](docs/tasks.md), and completed behavior is connected back to requirements through [docs/traceability.md](docs/traceability.md).
+The project is being developed against the goal and success criteria in [docs-site Core Goal](docs-site/src/content/docs/goal.md). Work is tracked through [docs/tasks.md](docs/tasks.md), and completed behavior is connected back to requirements through [docs/traceability.md](docs/traceability.md).
 
 If you are here to use or evaluate TypeSharp, start with the quickstart above and the GitHub Pages docs. If you are here to continue implementation work, read [agent.md](agent.md), [docs/agentic-execution.md](docs/agentic-execution.md), and the latest entries in [docs/tasks.md](docs/tasks.md).
