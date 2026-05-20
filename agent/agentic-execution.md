@@ -42,8 +42,9 @@
 5. Keep `Agent Task Queue` to the latest five visible rows; older completed work belongs in [tasks-rollup.md](tasks-rollup.md).
 6. If the user inbox is empty, choose the highest-priority `Requested` or `Ready` item from `Agent Task Queue`.
 7. If both task sections are empty, choose the first unchecked item in [checklist.md](checklist.md).
-8. If the work is too large for one turn, create `agent/NNNN-short-name.md`, set it as the active task in [tasks.md](tasks.md), and mark its agent queue row `In Progress`.
-9. Use Q0-Q5 to order queue items:
+8. If `tasks.md` and `checklist.md` have no active, unchecked, requested, or ready work, do not treat the full TypeSharp goal as complete. Create a Q1 roadmap-refresh task that rechecks the official C#/F#/TypeScript/.NET sources listed in Project Policy, compares them with Feature Status and Work Ledger, queues the next bounded latest-five roadmap slice, and continues execution.
+9. If the work is too large for one turn, create `agent/NNNN-short-name.md`, set it as the active task in [tasks.md](tasks.md), and mark its agent queue row `In Progress`.
+10. Use Q0-Q5 to order queue items:
 
 | Queue | Meaning |
 | --- | --- |

@@ -54,6 +54,7 @@ The agent should:
 - otherwise promote unchecked user inbox items before choosing agent-owned queue work;
 - keep `Agent Task Queue` to the latest five visible rows, with older completed work in `agent/tasks-rollup.md`;
 - if the task sections are empty, choose from unchecked `agent/checklist.md` items using the queue rules in `agent/agentic-execution.md`;
+- if `agent/tasks.md` and `agent/checklist.md` have no active, unchecked, requested, or ready work, create a Q1 roadmap-refresh task from the official C#/F#/TypeScript/.NET reference set in [Project Policy](../project-policy/), refill the latest-five roadmap slice, and continue execution instead of treating the whole TypeSharp goal as complete;
 - create or update a task packet for work that will outlive one session;
 - record verification results before marking a task `Done`;
 - update [Work Ledger](../work-ledger/) when task state or `agent/tasks-rollup.md` changes;
