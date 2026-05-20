@@ -91,6 +91,7 @@ export default defineConfig({
             { label: 'Project Requirements', slug: 'requirements' },
             { label: 'Project Policy', slug: 'project-policy' },
             { label: 'Project Ledger', slug: 'project-ledger' },
+            { label: 'Writing Guide', slug: 'writing-guide' },
             { label: 'Work Ledger', slug: 'work-ledger' },
             { label: 'Document Ownership', slug: 'document-ownership' },
             { label: 'Agentic Workflow', slug: 'agentic-workflow' },

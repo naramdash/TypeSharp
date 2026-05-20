@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 00:25:47 +09:00
+End Time: 2026-05-21 00:34:23 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0264. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0265. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0264 |
+| Completed work covered | 0001-0265 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -101,10 +101,12 @@ Completed docs/adoption work established:
 - Docs-owned site configuration is TypeScript and the docs contract rejects committed docs-owned JavaScript source/config files.
 - TypeSharp source examples in docs use `tysh` code fences, and Starlight/Shiki reuses the VS Code TextMate grammar for syntax highlighting.
 - Docs Mermaid rendering is enabled for architecture pages through docs-only `astro-mermaid` and `mermaid` dependencies.
+- The Writing Guide adapts the Vue Docs Writing Guide into TypeSharp-specific authoring rules, `tysh` example project guidance, emoji usage, and review checks.
 
 Primary evidence:
 
 - `docs/src/content/docs`
+- [Writing Guide](../docs/src/content/docs/writing-guide.md)
 - `docs/research`
 - [agent.md](../agent.md)
 - [tasks.md](tasks.md)
@@ -401,6 +403,36 @@ Primary evidence:
 - `docs/package-lock.json`
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0265 Docs Writing Guide
+
+Completed docs writing guide work established:
+
+- Reviewed the upstream Vue Docs Writing Guide and adapted its low-cognitive-load, problem-first, concrete-example guidance to TypeSharp docs.
+- Added [Writing Guide](../docs/src/content/docs/writing-guide.md) with TypeSharp page-type rules, heading/flow guidance, `tysh` example project requirements, emoji usage policy, and review checklist.
+- Documented that runnable `tysh` project examples should include `TypeSharp.toml`, `src/Main.tysh`, `typesharp check`, `typesharp build`, expected artifacts, `net48`, and Core/Runtime references when relevant.
+- Connected the guide from the Starlight sidebar, Project Ledger, and Examples authoring principles.
+- Strengthened the docs site contract so the writing guide, sidebar entry, Vue source attribution, `tysh` fence, manifest, `net48`, Core/Runtime references, emoji policy, and verification commands are checked.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+```
+
+Notes:
+
+- `npm run build` completed and generated 34 pages; Vite emitted the existing non-fatal chunk-size warning from the Mermaid client bundle.
+
+Primary evidence:
+
+- `docs/src/content/docs/writing-guide.md`
+- `docs/astro.config.ts`
+- `docs/src/content/docs/project-ledger.md`
+- `docs/src/content/docs/examples.md`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -425,7 +457,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0264 is compressed here.
+- Completed historical work through task 0265 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

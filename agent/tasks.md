@@ -1,6 +1,6 @@
 # Agentic Tasks
 
-문서 기준일: 2026-05-20
+문서 기준일: 2026-05-21
 
 이 파일은 goal-mode/Ralph/장기 실행 agent와 사용자가 공유하는 task control plane이다. 역할은 네 가지로만 나눈다.
 
@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0264                          |
+| Completed range    | 0001-0265                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -40,7 +40,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 - [x] VSCode Syntax Highlighting Extension 만들고 설치 방법 설명하기, 사용자의 개입이 필요할 경우 사용자를 위해 marketplace에 extension을 올리는 방법 설명하는 임시 가이드 만들기
 - [x] `docs` 폴더의 tysh 코드 예제 표시가 syntax highlight 될 수 있도록 하기
 - [x] docs에 tysh 프로젝트가 실제로 어떻게 net48 런타임 아티펙트를 구성하는지 아키텍처 & 원리를 설명하는 문서 남기기, 적절하게 mermaid 다이어그램을 사용해서 tysh 프로젝트의 아키텍처 설명하기
-- [ ] [Vue Docs Writing Guide](https://github.com/vuejs/docs/blob/main/.github/contributing/writing-guide.md)를 확인해서 이 프로젝트에 맞게 문서 작성 가이드라인 만들기, 특히 tysh 예제 프로젝트 코드에 대한 문서 작성 가이드라인 만들기, 이모지를 적절하게 활용해서 가독성 높이기
+- [x] [Vue Docs Writing Guide](https://github.com/vuejs/docs/blob/main/.github/contributing/writing-guide.md)를 확인해서 이 프로젝트에 맞게 문서 작성 가이드라인 만들기, 특히 tysh 예제 프로젝트 코드에 대한 문서 작성 가이드라인 만들기, 이모지를 적절하게 활용해서 가독성 높이기
 - [ ] GitHub Action 으로 중요한 변경이 있을때마다 실제로 이 언어와 관련된 중요 산출물들을 release를 통해 제공될 수 있게 변경하기
 - [ ] C# 공식문서 확인해서 현재 docs 폴더 내용 구체화하기. 현재 처럼 2단 구성이 아니라 C# 공식문서 만큼 상세하게 설명하기
 - [ ] tysh 예제 프로젝트 코드 현실성 있게 작성하기, 실제로 실행 가능한 코드로 작성하기
@@ -49,17 +49,18 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 ## Agent Task Queue
 
-| Priority | Status | Source         | Task                        | Packet                                                                                                         | Notes                                                                                                                                     |
-| -------- | ------ | -------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Q5       | Done   | User directive | Runtime artifact architecture docs | [tasks-rollup.md#task-0264-runtime-artifact-architecture-docs](tasks-rollup.md#task-0264-runtime-artifact-architecture-docs) | Added Runtime Artifacts docs with Mermaid diagrams for tool/runtime boundaries, build sequence, references, and deployable `net48` artifacts. |
-| Q5       | Done   | User directive | Docs tysh syntax highlighting | [tasks-rollup.md#task-0263-docs-tysh-syntax-highlighting](tasks-rollup.md#task-0263-docs-tysh-syntax-highlighting) | Reused the VS Code TextMate grammar in Starlight/Shiki and converted TypeSharp source examples from `text` to `tysh` fences. |
-| Q4       | Done   | User directive | VS Code syntax highlighting extension install guide | [tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide](tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide) | Completed VS Code TextMate grammar/package coverage, local VSIX install instructions, and temporary Marketplace publishing guide. |
-| Q5       | Done   | User directive | Docs TypeScript config conversion | [tasks-rollup.md#task-0261-docs-typescript-config-conversion](tasks-rollup.md#task-0261-docs-typescript-config-conversion) | Converted the docs Astro config from JavaScript to TypeScript and added a contract check that docs-owned source has no JavaScript config/source files. |
-| Q5       | Done   | User directive | Docs dependency update      | [tasks-rollup.md#task-0260-docs-dependency-update](tasks-rollup.md#task-0260-docs-dependency-update)           | Updated `docs` package and lockfile to current npm registry latest tags for Astro, Starlight, and TypeScript; refreshed docs package contract coverage. |
-| Q2       | Done   | User directive | Parallel execution optimization | [tasks-rollup.md#task-0259-parallel-execution-optimization](tasks-rollup.md#task-0259-parallel-execution-optimization) | Parallelized source-file parse and semantic validation while preserving deterministic diagnostics; documented agent and compiler parallelism rules. |
-| Q0       | Done   | User directive | Codex skills configuration  | [tasks-rollup.md#task-0258-codex-skills-configuration](tasks-rollup.md#task-0258-codex-skills-configuration)   | Vendored project-useful Codex skills under `.codex/skills`, including TypeSharp .NET and language-engineering skills. |
-| Q0       | Done   | User directive | Docs/agent directory rename | [tasks-rollup.md#task-0257-docs-agent-directory-rename](tasks-rollup.md#task-0257-docs-agent-directory-rename) | Renamed the public docs site source to `docs/`, moved temporary agent work records to `agent/`, and updated ownership/workflow contracts. |
-| Q0       | Done   | User directive | Test suite quality audit    | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit)       | Audited repository tests, hardened weak fixture/smoke checks, verified compiler, VS Code, and docs commands.                              |
+| Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
+| -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q5       | Done   | User directive | Docs writing guide                                  | [tasks-rollup.md#task-0265-docs-writing-guide](tasks-rollup.md#task-0265-docs-writing-guide)                                                                   | Adapted the Vue Docs Writing Guide into TypeSharp docs authoring rules, `tysh` example project guidance, emoji policy, and review checks.               |
+| Q5       | Done   | User directive | Runtime artifact architecture docs                  | [tasks-rollup.md#task-0264-runtime-artifact-architecture-docs](tasks-rollup.md#task-0264-runtime-artifact-architecture-docs)                                   | Added Runtime Artifacts docs with Mermaid diagrams for tool/runtime boundaries, build sequence, references, and deployable `net48` artifacts.           |
+| Q5       | Done   | User directive | Docs tysh syntax highlighting                       | [tasks-rollup.md#task-0263-docs-tysh-syntax-highlighting](tasks-rollup.md#task-0263-docs-tysh-syntax-highlighting)                                             | Reused the VS Code TextMate grammar in Starlight/Shiki and converted TypeSharp source examples from `text` to `tysh` fences.                            |
+| Q4       | Done   | User directive | VS Code syntax highlighting extension install guide | [tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide](tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide) | Completed VS Code TextMate grammar/package coverage, local VSIX install instructions, and temporary Marketplace publishing guide.                       |
+| Q5       | Done   | User directive | Docs TypeScript config conversion                   | [tasks-rollup.md#task-0261-docs-typescript-config-conversion](tasks-rollup.md#task-0261-docs-typescript-config-conversion)                                     | Converted the docs Astro config from JavaScript to TypeScript and added a contract check that docs-owned source has no JavaScript config/source files.  |
+| Q5       | Done   | User directive | Docs dependency update                              | [tasks-rollup.md#task-0260-docs-dependency-update](tasks-rollup.md#task-0260-docs-dependency-update)                                                           | Updated `docs` package and lockfile to current npm registry latest tags for Astro, Starlight, and TypeScript; refreshed docs package contract coverage. |
+| Q2       | Done   | User directive | Parallel execution optimization                     | [tasks-rollup.md#task-0259-parallel-execution-optimization](tasks-rollup.md#task-0259-parallel-execution-optimization)                                         | Parallelized source-file parse and semantic validation while preserving deterministic diagnostics; documented agent and compiler parallelism rules.     |
+| Q0       | Done   | User directive | Codex skills configuration                          | [tasks-rollup.md#task-0258-codex-skills-configuration](tasks-rollup.md#task-0258-codex-skills-configuration)                                                   | Vendored project-useful Codex skills under `.codex/skills`, including TypeSharp .NET and language-engineering skills.                                   |
+| Q0       | Done   | User directive | Docs/agent directory rename                         | [tasks-rollup.md#task-0257-docs-agent-directory-rename](tasks-rollup.md#task-0257-docs-agent-directory-rename)                                                 | Renamed the public docs site source to `docs/`, moved temporary agent work records to `agent/`, and updated ownership/workflow contracts.               |
+| Q0       | Done   | User directive | Test suite quality audit                            | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit)                                                       | Audited repository tests, hardened weak fixture/smoke checks, verified compiler, VS Code, and docs commands.                                            |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

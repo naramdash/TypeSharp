@@ -10552,6 +10552,7 @@ static void DocsSiteContractIsStable()
     AssertContains("slug: 'vscode-lsp'", astroConfig);
     AssertContains("slug: 'migration'", astroConfig);
     AssertContains("slug: 'examples'", astroConfig);
+    AssertContains("slug: 'writing-guide'", astroConfig);
     AssertContains("slug: 'troubleshooting'", astroConfig);
 
     var contentConfig = File.ReadAllText(Path.Combine(siteRoot, "src", "content.config.ts"));
@@ -10586,6 +10587,7 @@ static void DocsSiteContractIsStable()
         "goal",
         "document-ownership",
         "project-ledger",
+        "writing-guide",
         "work-ledger",
         "agentic-workflow"
     })
@@ -10657,6 +10659,21 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp.Runtime.dll", runtimeArtifactsPage);
     AssertContains("bin/<Configuration>/net48", runtimeArtifactsPage);
     AssertContains("Current preview builds require these assemblies to be available as local `net48` DLL references", runtimeArtifactsPage);
+
+    var writingGuidePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "writing-guide.md"));
+    AssertContains("Vue Docs Writing Guide", writingGuidePage);
+    AssertContains("Reviewed on 2026-05-21", writingGuidePage);
+    AssertContains("Core Principles", writingGuidePage);
+    AssertContains("tysh Example Project Guidelines", writingGuidePage);
+    AssertContains("Emoji Policy", writingGuidePage);
+    AssertContains("Review Checklist", writingGuidePage);
+    AssertContains("```tysh", writingGuidePage);
+    AssertContains("TypeSharp.toml", writingGuidePage);
+    AssertContains("targetFramework = \"net48\"", writingGuidePage);
+    AssertContains("TypeSharp.Core.dll", writingGuidePage);
+    AssertContains("TypeSharp.Runtime.dll", writingGuidePage);
+    AssertContains("typesharp check", writingGuidePage);
+    AssertContains("typesharp build", writingGuidePage);
 
     var dotnetInteropPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "dotnet-interop.md"));
     AssertContains("Generated Target", dotnetInteropPage);

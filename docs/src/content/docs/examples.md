@@ -67,6 +67,8 @@ Feature-oriented single-file examples currently live in [`examples/*.tysh`](http
 
 ## Authoring Principles
 
+Longer docs authoring rules live in [Writing Guide](../writing-guide/). These local principles are the short checklist for example source and runnable projects.
+
 - Public .NET boundaries use nominal types.
 - Exported/public values prefer explicit types so metadata and module surfaces are stable.
 - Files use namespace, imports/open declarations, then declarations.
@@ -80,6 +82,7 @@ Feature-oriented single-file examples currently live in [`examples/*.tysh`](http
 - Public .NET boundary values close over record/class/interface/union/delegate/framework nominal surfaces.
 - Interop capability boundaries show `interop`, `dynamic`, `reflect`, or `unsafe` markers explicitly.
 - Example CLI behavior follows [CLI](../cli/); syntax and feature status follow [Grammar](../grammar/) and [Feature Status](../feature-status/).
+- Runnable project docs include `TypeSharp.toml`, `src/Main.tysh`, `typesharp check`, `typesharp build`, expected output or artifact paths, and any required `net48` Core/Runtime references.
 
 ## Repository Artifact Location
 

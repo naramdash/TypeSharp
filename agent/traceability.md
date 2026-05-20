@@ -1,6 +1,6 @@
 # TypeSharp Traceability
 
-문서 기준일: 2026-05-20
+문서 기준일: 2026-05-21
 
 이 파일은 agent가 목표, active work, evidence 위치를 빠르게 찾기 위한 운영용 bridge다. 상세 요구사항과 장기 사용자 문서는 docs canonical pages가 owner다.
 
@@ -14,7 +14,7 @@
 | Syntax and language contracts | [Grammar](../docs/src/content/docs/grammar.md), [Grammar And Language Reference](../docs/src/content/docs/reference.md) |
 | Type system, lowering, interop, CLI/API, diagnostics | [Type System](../docs/src/content/docs/type-system.md), [Lowering](../docs/src/content/docs/lowering.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md), [API And CLI Reference](../docs/src/content/docs/api.md), [Diagnostics](../docs/src/content/docs/diagnostics.md) |
 | Architecture, dependencies, fixture policy, regression policy, release policy | [Project Policy](../docs/src/content/docs/project-policy.md) |
-| User-facing tutorials, examples, cookbook, migration | [docs/src/content/docs](../docs/src/content/docs) |
+| User-facing tutorials, examples, cookbook, migration, and docs authoring rules | [docs/src/content/docs](../docs/src/content/docs), [Writing Guide](../docs/src/content/docs/writing-guide.md) |
 
 ## Operational Sources
 
@@ -52,6 +52,7 @@
 | VS Code syntax highlighting extension install guide | [tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide](tasks-rollup.md#task-0262-vs-code-syntax-highlighting-extension-install-guide), `vscode/typesharp`, [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md), `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Docs tysh syntax highlighting | [tasks-rollup.md#task-0263-docs-tysh-syntax-highlighting](tasks-rollup.md#task-0263-docs-tysh-syntax-highlighting), `docs/astro.config.ts`, `docs/src/content/docs`, `vscode/typesharp/syntaxes/typesharp.tmLanguage.json`, `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Runtime artifact architecture docs | [tasks-rollup.md#task-0264-runtime-artifact-architecture-docs](tasks-rollup.md#task-0264-runtime-artifact-architecture-docs), [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md), `docs/astro.config.ts`, `docs/package.json`, `tests/TypeSharp.Compiler.Tests/Program.cs` |
+| Docs writing guide | [tasks-rollup.md#task-0265-docs-writing-guide](tasks-rollup.md#task-0265-docs-writing-guide), [Writing Guide](../docs/src/content/docs/writing-guide.md), [Examples](../docs/src/content/docs/examples.md), `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Modules, imports, exports, safety gates | [tasks-rollup.md#language-safety-modules-and-import-export](tasks-rollup.md#language-safety-modules-and-import-export), source module and diagnostics fixtures |
 | Test suite quality audit | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit), `tests/TypeSharp.Compiler.Tests/Program.cs`, `tests/fixtures`, `vscode/typesharp/test`, `examples/runnable` |
 

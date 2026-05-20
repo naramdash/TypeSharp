@@ -23,6 +23,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [Feature Status](../feature-status/): MVP, stable backlog, preview watch, experimental, and rejected feature classification.
 - [Project Policy](../project-policy/): architecture, dependency, target framework, regression, feature review, parser fixture, release, and official-reference tracking policy.
 - [Document Ownership](../document-ownership/): target owner for each former operational docs source and the remaining temporary agentic files.
+- [Writing Guide](../writing-guide/): docs authoring style, `tysh` example project rules, emoji policy, and review checklist.
 - [Work Ledger](../work-ledger/): active task state and compressed completed-work rollup.
 - [Agentic Workflow](../agentic-workflow/): how Codex CLI goal and long-running agents use the canonical records.
 
@@ -42,7 +43,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [VS Code And LSP](../vscode-lsp/): extension, language server, formatting, diagnostics, hover, definition, and completion workflow.
 - [Diagnostics](../diagnostics/): diagnostic code ranges, descriptor metadata, JSON/text shape, and explanation surface.
 - [Migration](../migration/): incremental .NET Framework/C# adoption guide.
-- [Examples](../examples/), [Tutorials](../tutorials/), and [Cookbook](../cookbook/): runnable examples, learning paths, and recipes.
+- [Examples](../examples/), [Tutorials](../tutorials/), [Cookbook](../cookbook/), and [Writing Guide](../writing-guide/): runnable examples, learning paths, recipes, and authoring rules for future docs changes.
 
 ## Agentic Work Records
 
