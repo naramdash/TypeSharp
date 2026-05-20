@@ -4,7 +4,7 @@
 
 이 문서는 Codex가 `/goal`, Ralph mode, 또는 장기 작업 세션을 통해 TypeSharp 과제를 계속 수행할 때 읽어야 하는 운영 지침이다. 목표의 canonical 원문은 [Docs Core Goal](docs/src/content/docs/goal.md)에 있고, 장기 실행 계약은 [agent/agentic-execution.md](agent/agentic-execution.md)에 있다. 이 문서는 그 목표를 에이전트가 반복 실행 가능한 작업 규칙으로 바꾼다.
 
-Task 0257 이후 `docs/`는 표준 언어/프로젝트 원장의 canonical 표면이고, `agent/`는 agentic goal work를 위한 임시 운영 표면이다. 현재 task 운영 구조는 [agent/tasks.md](agent/tasks.md)가 active task pointer와 다음 우선순위를 들고, [agent/tasks-rollup.md](agent/tasks-rollup.md)가 완료된 task history를 압축 보관하며, 진행 중인 긴 작업만 `agent/NNNN-short-name.md` active packet으로 남기는 방식이다. [Document Ownership](docs/src/content/docs/document-ownership.md)이 어떤 표준 문서를 `docs/` canonical로 둘지와 `agent/`에 어떤 temporary work 문서만 남길지를 정한다. [Project Ledger](docs/src/content/docs/project-ledger.md), [Work Ledger](docs/src/content/docs/work-ledger.md), [Agentic Workflow](docs/src/content/docs/agentic-workflow.md)는 원장성 문서를 웹페이지로 보여준다. Codex CLI goal, Ralph mode, 장기 실행 에이전트가 다음 작업을 고를 때의 운영 입력은 이 파일, [agent/agentic-execution.md](agent/agentic-execution.md), [agent/checklist.md](agent/checklist.md), [agent/tasks.md](agent/tasks.md), [agent/tasks-rollup.md](agent/tasks-rollup.md), [agent/traceability.md](agent/traceability.md), [agent/codex-skills.md](agent/codex-skills.md), 그리고 docs의 Document Ownership/Project Ledger/Work Ledger/Agentic Workflow다.
+Task 0257 이후 `docs/`는 표준 언어/프로젝트 원장의 canonical 표면이고, `agent/`는 agentic goal work를 위한 임시 운영 표면이다. 현재 task 운영 구조는 [agent/tasks.md](agent/tasks.md)가 active task pointer와 다음 우선순위를 들고, [agent/tasks-rollup.md](agent/tasks-rollup.md)가 완료된 task history를 압축 보관하며, 진행 중인 긴 작업만 `agent/NNNN-short-name.md` active packet으로 남기는 방식이다. [Document Ownership](docs/src/content/docs/document-ownership.md)이 어떤 표준 문서를 `docs/` canonical로 둘지와 `agent/`에 어떤 temporary work 문서만 남길지를 정한다. [Project Ledger](docs/src/content/docs/project-ledger.md), [Work Ledger](docs/src/content/docs/work-ledger.md), [Agentic Workflow](docs/src/content/docs/agentic-workflow.md)는 원장성 문서를 웹페이지로 보여준다. Codex CLI goal, Ralph mode, 장기 실행 에이전트가 다음 작업을 고를 때의 운영 입력은 이 파일, [agent/agentic-execution.md](agent/agentic-execution.md), [agent/checklist.md](agent/checklist.md), [agent/tasks.md](agent/tasks.md), [agent/tasks-rollup.md](agent/tasks-rollup.md), [agent/traceability.md](agent/traceability.md), 그리고 docs의 Document Ownership/Project Ledger/Work Ledger/Agentic Workflow다.
 
 ## 에이전트의 최상위 목표
 
@@ -35,15 +35,16 @@ TypeSharp 장기 작업을 시작할 때는 agent/agentic-execution.md의 부트
 5. [agent/tasks-rollup.md](agent/tasks-rollup.md)
 6. [agent/checklist.md](agent/checklist.md)
 7. [agent/traceability.md](agent/traceability.md)
-8. [agent/codex-skills.md](agent/codex-skills.md)
-9. [Docs Document Ownership](docs/src/content/docs/document-ownership.md)
-10. [Docs Project Ledger](docs/src/content/docs/project-ledger.md)
-11. [Docs Work Ledger](docs/src/content/docs/work-ledger.md)
-12. [Docs Agentic Workflow](docs/src/content/docs/agentic-workflow.md)
-13. [Docs Grammar](docs/src/content/docs/grammar.md)
-14. [Grammar And Language Reference](docs/src/content/docs/reference.md)
-15. [Docs Feature Status](docs/src/content/docs/feature-status.md)
-16. 현재 작업과 직접 관련된 `docs/` canonical 문서 또는 `agent/` temporary work 문서
+8. [Docs Document Ownership](docs/src/content/docs/document-ownership.md)
+9. [Docs Project Ledger](docs/src/content/docs/project-ledger.md)
+10. [Docs Work Ledger](docs/src/content/docs/work-ledger.md)
+11. [Docs Agentic Workflow](docs/src/content/docs/agentic-workflow.md)
+12. [Docs Grammar](docs/src/content/docs/grammar.md)
+13. [Grammar And Language Reference](docs/src/content/docs/reference.md)
+14. [Docs Feature Status](docs/src/content/docs/feature-status.md)
+15. 현재 작업과 직접 관련된 `docs/` canonical 문서 또는 `agent/` temporary work 문서
+
+Codex skill이 필요한 작업에서만 [agent/codex-skills.md](agent/codex-skills.md)를 읽고, 설치된 skill 본문은 사용자 Codex home의 해당 `SKILL.md`에서 확인한다.
 
 표준 언어/프로젝트 문서를 바꾸는 작업이라면 [Document Ownership](docs/src/content/docs/document-ownership.md)의 target owner를 먼저 확인하고 docs canonical page를 갱신한다. task 상태, checklist/traceability, goal/agent 규칙처럼 agentic 운영 정보가 바뀌면 `agent/` temporary work 문서와 [Project Ledger](docs/src/content/docs/project-ledger.md), [Work Ledger](docs/src/content/docs/work-ledger.md), [Agentic Workflow](docs/src/content/docs/agentic-workflow.md)를 함께 갱신할 필요가 있는지 확인한다.
 

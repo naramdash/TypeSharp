@@ -418,6 +418,7 @@ var tests = new (string Name, Action Body)[]
     ("generated net48 assembly public ABI snapshot is stable", GeneratedNet48AssemblyPublicAbiSnapshotIsStable),
     ("C# net48 project consumes generated TypeSharp assembly", CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly),
     ("net48 application model hosts reference generated assembly and runtime", Net48ApplicationModelHostsReferenceGeneratedAssemblyAndRuntime),
+    ("compiler check keeps parallel diagnostics in source order", CompilerCheckKeepsParallelDiagnosticsInSourceOrder),
     ("compiler check performance smoke stays bounded", CompilerCheckPerformanceSmokeStaysBounded),
     ("CLI build stops before emission on diagnostics", CliBuildStopsBeforeEmissionOnDiagnostics)
 };
@@ -16737,6 +16738,39 @@ static void CompilerCheckPerformanceSmokeStaysBounded()
         AssertTrue(
             stopwatch.Elapsed < TimeSpan.FromSeconds(15),
             $"Compiler check performance smoke exceeded 15 seconds: {stopwatch.Elapsed.TotalMilliseconds:0}ms.");
+    });
+}
+
+static void CompilerCheckKeepsParallelDiagnosticsInSourceOrder()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ParallelDiagnostics"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ParallelDiagnostics"
+            generatedOutputRoot = "generated"
+            """);
+
+        WriteFile(root, "src/Zeta.tysh", """
+            namespace Samples.ParallelDiagnostics
+
+            export fun zeta(): string = 1
+            """);
+        WriteFile(root, "src/Alpha.tysh", """
+            namespace Samples.ParallelDiagnostics
+
+            export fun alpha(): string = 2
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2201").ToArray();
+
+        AssertEqual(2, diagnostics.Length);
+        AssertEqual("src/Alpha.tysh", diagnostics[0].File);
+        AssertEqual("src/Zeta.tysh", diagnostics[1].File);
     });
 }
 

@@ -27,7 +27,7 @@
    - 목표, 요구사항, 기능, 체크리스트, 증거를 연결하는 agent-facing 추적성 문서다.
 
 7. [codex-skills.md](codex-skills.md)
-   - TypeSharp goal 작업에 설치/권장된 Codex skill과 사용 규칙을 기록한다.
+   - TypeSharp goal 작업에 필요한 Codex skill 선택, 설치 상태, 사용 규칙을 기록한다.
 
 8. [progress.md](progress.md)
    - active task packet, `tasks-rollup.md`, handoff 기록 규칙이다.

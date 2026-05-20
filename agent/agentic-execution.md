@@ -15,12 +15,13 @@
 5. [tasks-rollup.md](tasks-rollup.md)
 6. [checklist.md](checklist.md)
 7. [traceability.md](traceability.md)
-8. [codex-skills.md](codex-skills.md)
-9. [Document Ownership](../docs/src/content/docs/document-ownership.md)
-10. [Project Ledger](../docs/src/content/docs/project-ledger.md)
-11. [Work Ledger](../docs/src/content/docs/work-ledger.md)
-12. [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
-13. 작업과 직접 관련된 docs canonical page 또는 repo source
+8. [Document Ownership](../docs/src/content/docs/document-ownership.md)
+9. [Project Ledger](../docs/src/content/docs/project-ledger.md)
+10. [Work Ledger](../docs/src/content/docs/work-ledger.md)
+11. [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
+12. 작업과 직접 관련된 docs canonical page 또는 repo source
+
+Codex skill이 필요한 작업에서만 [codex-skills.md](codex-skills.md)를 읽고, 설치된 skill 본문은 사용자 Codex home의 해당 `SKILL.md`에서 확인한다.
 
 ## Stable Baseline
 
@@ -109,6 +110,13 @@ Blocked:
 - Completed active packets are summarized in [tasks-rollup.md](tasks-rollup.md), then removed.
 - [tasks.md](tasks.md) must point to the next active task or `None`, and the queue row must be `Done`, `Blocked`, `Dropped`, or still explicitly pending.
 - Run relevant verification and `git diff --check`. For docs changes, run `npm run build` in `docs`.
+
+## Parallel Work Rules
+
+- Parallelize read-only repository inspection and independent verification commands when their output paths do not overlap.
+- Do not run two commands in parallel when they both write the same generated output, package folder, `tests/tmp` child, VS Code server folder, docs build output, or git index.
+- Keep file edits serialized through one patch at a time.
+- For compiler code, preserve deterministic source-order diagnostics when using source-file parallelism.
 
 ## Handoff
 

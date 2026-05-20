@@ -26,39 +26,75 @@ public static class TypeSharpChecker
         var metadataResult = TypeSharpMetadataReader.Read(TypeSharpReferenceResolver.Resolve(manifestResult.Manifest));
         diagnostics.AddRange(metadataResult.Diagnostics);
 
-        var parsedSources = new List<SourceModule>();
-        foreach (var sourceFile in sourceDiscovery.SourceFiles)
+        var parsedSourceResults = sourceDiscovery.SourceFiles
+            .AsParallel()
+            .AsOrdered()
+            .Select(ParseSource)
+            .ToArray();
+        var parsedSources = new List<SourceModule>(parsedSourceResults.Length);
+        foreach (var parsedSourceResult in parsedSourceResults)
         {
-            var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
-            diagnostics.AddRange(parseResult.Diagnostics);
-            if (parseResult.HasErrors || parseResult.Root is null)
+            diagnostics.AddRange(parsedSourceResult.Diagnostics);
+            if (parsedSourceResult.Module is not null)
             {
-                continue;
+                parsedSources.Add(parsedSourceResult.Module);
             }
-
-            parsedSources.Add(new SourceModule(sourceFile, parseResult.Root));
         }
 
         diagnostics.AddRange(SourceModuleGraph.Build(parsedSources).Diagnostics);
 
-        foreach (var parsedSource in parsedSources)
-        {
-            diagnostics.AddRange(TypeSharpInteropValidator.Validate(
-                parsedSource.Root,
+        var sourceDiagnostics = parsedSources
+            .AsParallel()
+            .AsOrdered()
+            .Select(parsedSource => CheckSource(
+                parsedSource,
                 metadataResult.Assemblies,
-                parsedSource.SourceFile.RelativePath,
-                manifestResult.Manifest.Language.Nullable));
-            var bindingResult = TypeSharpBinder.Bind(parsedSource.Root, parsedSource.SourceFile.RelativePath);
-            diagnostics.AddRange(bindingResult.Diagnostics);
-            if (!bindingResult.HasErrors)
-            {
-                diagnostics.AddRange(TypeSharpTypeChecker.Check(
-                    parsedSource.Root,
-                    parsedSource.SourceFile.RelativePath,
-                    metadataResult.Assemblies).Diagnostics);
-            }
+                manifestResult.Manifest.Language.Nullable))
+            .ToArray();
+        foreach (var sourceDiagnostic in sourceDiagnostics)
+        {
+            diagnostics.AddRange(sourceDiagnostic.Diagnostics);
         }
 
         return new CheckResult(sourceDiscovery.SourceFiles, diagnostics);
     }
+
+    private static SourceParseResult ParseSource(SourceFile sourceFile)
+    {
+        var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+        if (parseResult.HasErrors || parseResult.Root is null)
+        {
+            return new SourceParseResult(null, parseResult.Diagnostics);
+        }
+
+        return new SourceParseResult(new SourceModule(sourceFile, parseResult.Root), parseResult.Diagnostics);
+    }
+
+    private static SourceDiagnostics CheckSource(
+        SourceModule parsedSource,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        string nullableMode)
+    {
+        var diagnostics = new List<Diagnostic>();
+        diagnostics.AddRange(TypeSharpInteropValidator.Validate(
+            parsedSource.Root,
+            assemblies,
+            parsedSource.SourceFile.RelativePath,
+            nullableMode));
+        var bindingResult = TypeSharpBinder.Bind(parsedSource.Root, parsedSource.SourceFile.RelativePath);
+        diagnostics.AddRange(bindingResult.Diagnostics);
+        if (!bindingResult.HasErrors)
+        {
+            diagnostics.AddRange(TypeSharpTypeChecker.Check(
+                parsedSource.Root,
+                parsedSource.SourceFile.RelativePath,
+                assemblies).Diagnostics);
+        }
+
+        return new SourceDiagnostics(diagnostics);
+    }
+
+    private sealed record SourceParseResult(SourceModule? Module, IReadOnlyList<Diagnostic> Diagnostics);
+
+    private sealed record SourceDiagnostics(IReadOnlyList<Diagnostic> Diagnostics);
 }

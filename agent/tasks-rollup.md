@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-20 23:11:23 +09:00
+End Time: 2026-05-20 23:24:05 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0258. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0259. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0258 |
+| Completed work covered | 0001-0259 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -197,11 +197,8 @@ Primary evidence:
 
 Completed Codex skill configuration work established:
 
-- Checked the `openai/skills` curated inventory from the GitHub contents API.
-- Confirmed the local Codex skill environment previously had only `.system` skills installed.
 - Installed `playwright`, `gh-fix-ci`, and `security-threat-model` into `C:\Users\juho_\.codex\skills`.
-- Documented installed paths, trigger rules, the checked curated inventory, selection rationale, non-installed candidates, and restart requirement in [codex-skills.md](codex-skills.md).
-- Linked the skill configuration record from agent source order, traceability, Document Ownership, Project Ledger, Agentic Workflow, and Work Ledger.
+- Kept [codex-skills.md](codex-skills.md) as the minimal project skill selection and session restart note.
 
 Verification:
 
@@ -217,6 +214,37 @@ Primary evidence:
 - `C:\Users\juho_\.codex\skills\playwright`
 - `C:\Users\juho_\.codex\skills\gh-fix-ci`
 - `C:\Users\juho_\.codex\skills\security-threat-model`
+
+## Task 0259 Parallel Execution Optimization
+
+Completed parallel execution work established:
+
+- `TypeSharpChecker.Check` now parses source files and runs per-source interop/binder/type-check validation in parallel after manifest/source/reference setup.
+- `TypeSharpBuilder.Build` now performs source-file parse and per-file semantic validation in parallel before deterministic module graph validation and ordered generated C# emission.
+- Both paths use ordered parallel processing so diagnostics remain appended in source discovery order.
+- The test suite now includes a source-order diagnostic regression covering parallel checker diagnostics.
+- Project Policy records the compiler parallel execution boundary, and Agentic Execution records safe parallel task execution rules for future goal work.
+- `.gitignore` now excludes accidental repo-local `.codex/` skill copies; installed skills remain in the user Codex home.
+
+Verification:
+
+```powershell
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parallel diagnostics"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "compiler check performance"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build uses module path containers"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `src/TypeSharp.Compiler/Checking/TypeSharpChecker.cs`
+- `src/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [agentic-execution.md](agentic-execution.md)
 
 ## Verification Summary
 
@@ -242,7 +270,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0258 is compressed here.
+- Completed historical work through task 0259 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

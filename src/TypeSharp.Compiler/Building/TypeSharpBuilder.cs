@@ -41,31 +41,21 @@ public static class TypeSharpBuilder
             return new BuildResult([], null, null, diagnostics);
         }
 
-        foreach (var sourceFile in sourceDiscovery.SourceFiles)
-        {
-            var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
-            diagnostics.AddRange(parseResult.Diagnostics);
-            if (parseResult.HasErrors || parseResult.Root is null)
-            {
-                continue;
-            }
-
-            diagnostics.AddRange(TypeSharpInteropValidator.Validate(
-                parseResult.Root,
+        var sourceAnalysisResults = sourceDiscovery.SourceFiles
+            .AsParallel()
+            .AsOrdered()
+            .Select(sourceFile => AnalyzeSource(
+                sourceFile,
                 metadataResult.Assemblies,
-                sourceFile.RelativePath,
-                manifestResult.Manifest.Language.Nullable));
-            var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath);
-            diagnostics.AddRange(bindingResult.Diagnostics);
-            if (!bindingResult.HasErrors)
+                manifestResult.Manifest.Language.Nullable))
+            .ToArray();
+        foreach (var sourceAnalysisResult in sourceAnalysisResults)
+        {
+            diagnostics.AddRange(sourceAnalysisResult.Diagnostics);
+            if (sourceAnalysisResult.Root is not null)
             {
-                diagnostics.AddRange(TypeSharpTypeChecker.Check(
-                    parseResult.Root,
-                    sourceFile.RelativePath,
-                    metadataResult.Assemblies).Diagnostics);
+                parsedSources.Add((sourceAnalysisResult.SourceFile, sourceAnalysisResult.Root));
             }
-
-            parsedSources.Add((sourceFile, parseResult.Root));
         }
 
         var sourceModules = parsedSources
@@ -1902,6 +1892,37 @@ public static class TypeSharpBuilder
         return new GeneratedProjectBuildResult(process.ExitCode, standardOutput, standardError);
     }
 
+    private static SourceAnalysisResult AnalyzeSource(
+        SourceFile sourceFile,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        string nullableMode)
+    {
+        var diagnostics = new List<Diagnostic>();
+        var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+        diagnostics.AddRange(parseResult.Diagnostics);
+        if (parseResult.HasErrors || parseResult.Root is null)
+        {
+            return new SourceAnalysisResult(sourceFile, null, diagnostics);
+        }
+
+        diagnostics.AddRange(TypeSharpInteropValidator.Validate(
+            parseResult.Root,
+            assemblies,
+            sourceFile.RelativePath,
+            nullableMode));
+        var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath);
+        diagnostics.AddRange(bindingResult.Diagnostics);
+        if (!bindingResult.HasErrors)
+        {
+            diagnostics.AddRange(TypeSharpTypeChecker.Check(
+                parseResult.Root,
+                sourceFile.RelativePath,
+                assemblies).Diagnostics);
+        }
+
+        return new SourceAnalysisResult(sourceFile, parseResult.Root, diagnostics);
+    }
+
     private static string ToGeneratedAssemblyRelativePath(TypeSharpManifest manifest, string configuration, string targetFramework)
     {
         var extension = IsExecutable(manifest.Project.OutputType) ? "exe" : "dll";
@@ -2256,4 +2277,9 @@ public static class TypeSharpBuilder
             .Replace("'", "&apos;", StringComparison.Ordinal);
 
     private sealed record GeneratedProjectBuildResult(int ExitCode, string StandardOutput, string StandardError);
+
+    private sealed record SourceAnalysisResult(
+        SourceFile SourceFile,
+        SyntaxNode? Root,
+        IReadOnlyList<Diagnostic> Diagnostics);
 }

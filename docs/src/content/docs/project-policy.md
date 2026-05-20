@@ -59,6 +59,13 @@ Risk controls:
 | Runtime helper churn can break generated assemblies. | Use the runtime ABI policy in [.NET Interop](../dotnet-interop/). |
 | Preview feature drift can destabilize the language. | Use [Feature Status](../feature-status/) and explicit preview gates. |
 
+Parallel execution policy:
+
+- Source-file parse and per-file semantic validation can run in parallel after source discovery, reference resolution, and metadata loading have completed.
+- Diagnostics must still be appended in deterministic source order so CLI, LSP, fixture, and JSON output remain stable.
+- Cross-file module graph validation runs after all parse-clean source modules have been collected.
+- Generated C# project emission and external `dotnet build` orchestration remain ordered unless a task proves output paths, generated project files, and external process logs cannot conflict.
+
 ## Dependency And Target Policy
 
 Core rule: generated TypeSharp assemblies, `TypeSharp.Core`, and `TypeSharp.Runtime` must be referenceable from ordinary `net48` projects without hidden package requirements.
