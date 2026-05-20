@@ -1820,11 +1820,6 @@ public static class CSharpSourceBackend
         {
             var parameter = node.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "_";
             var body = node.Children.LastOrDefault(child => !child.IsToken);
-            if (body?.Kind != SyntaxKind.BlockExpression)
-            {
-                return $"{parameter} => {EmitExpression(body)}";
-            }
-
             var returnType = TryGetDelegateSignature(expectedType, out var parameterTypes, out var delegateReturnType)
                 ? delegateReturnType
                 : InferExpressionType(body);
@@ -1842,7 +1837,9 @@ public static class CSharpSourceBackend
 
             try
             {
-                return $"{parameter} => {EmitLambdaBlockBody(body, returnType)}";
+                return body?.Kind == SyntaxKind.BlockExpression
+                    ? $"{parameter} => {EmitLambdaBlockBody(body, returnType)}"
+                    : $"{parameter} => {EmitExpression(body, string.Equals(returnType, "void", StringComparison.Ordinal) ? null : returnType)}";
             }
             finally
             {
@@ -2999,6 +2996,12 @@ public static class CSharpSourceBackend
                 return InferExpressionType(GetBlockResultExpression(node));
             }
 
+            if (node.Kind == SyntaxKind.CollectionExpression)
+            {
+                var elementType = InferCollectionLiteralElementType(node.Children.Where(child => !child.IsToken).ToArray());
+                return elementType.Length > 0 ? $"{elementType}[]" : "object";
+            }
+
             if (node.Kind == SyntaxKind.IfExpression &&
                 TryInferIfExpressionType(node, out var ifType))
             {
@@ -3066,6 +3069,21 @@ public static class CSharpSourceBackend
             return result?.Kind == SyntaxKind.ExpressionStatement
                 ? result.Children.FirstOrDefault(child => !child.IsToken)
                 : result;
+        }
+
+        private static string InferCollectionLiteralElementType(IReadOnlyList<SyntaxNode> elements)
+        {
+            if (elements.Count == 0 || elements.Any(element => element.Kind == SyntaxKind.SpreadElement))
+            {
+                return string.Empty;
+            }
+
+            var elementTypes = elements
+                .Select(InferExpressionType)
+                .Where(type => !string.Equals(type, "object", StringComparison.Ordinal))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            return elementTypes.Length == 1 ? elementTypes[0] : string.Empty;
         }
 
         private static bool IsUnaryLogicalNotExpression(SyntaxNode node) =>

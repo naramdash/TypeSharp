@@ -879,6 +879,11 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaCollectionExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (TryInferLambdaIfExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
         {
             return true;
@@ -940,6 +945,102 @@ public static class TypeSharpCSharpOverloadResolver
         var expression = GetBlockResultExpression(body);
         return expression is not null &&
             TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out type);
+    }
+
+    private static bool TryInferLambdaCollectionExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.CollectionExpression)
+        {
+            return false;
+        }
+
+        var elements = body.Children.Where(child => !child.IsToken).ToArray();
+        if (TryGetCollectionElementType(delegateSignature.ReturnType, out var expectedElementType) &&
+            elements.All(element => CanPassLambdaCollectionElement(argument, element, expectedElementType, delegateSignature, assemblies, localInstances, extensionNamespaces)))
+        {
+            type = new InferredArgumentType(delegateSignature.ReturnType);
+            return true;
+        }
+
+        var elementTypes = new List<InferredArgumentType>();
+        foreach (var element in elements)
+        {
+            if (!TryInferLambdaCollectionElementType(argument, element, delegateSignature, assemblies, localInstances, extensionNamespaces, out var elementType))
+            {
+                return false;
+            }
+
+            elementTypes.Add(elementType);
+        }
+
+        if (!TryMergeBranchTypes(elementTypes, out var mergedElementType))
+        {
+            return false;
+        }
+
+        type = new InferredArgumentType($"{NormalizePrimitiveTypeName(mergedElementType.Name)}[]");
+        return true;
+    }
+
+    private static bool CanPassLambdaCollectionElement(
+        SyntaxNode argument,
+        SyntaxNode element,
+        string expectedElementType,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces)
+    {
+        if (element.Kind == SyntaxKind.SpreadElement)
+        {
+            var expression = element.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is null ||
+                !TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out var spreadType) ||
+                !TryGetCollectionElementType(spreadType.Name, out var spreadElementType))
+            {
+                return false;
+            }
+
+            return CanPassKnownArgumentType(new InferredArgumentType(spreadElementType), expectedElementType, assemblies);
+        }
+
+        return TryInferLambdaBodyType(argument, element, delegateSignature, assemblies, localInstances, extensionNamespaces, out var elementType) &&
+            CanPassKnownArgumentType(elementType, expectedElementType, assemblies);
+    }
+
+    private static bool TryInferLambdaCollectionElementType(
+        SyntaxNode argument,
+        SyntaxNode element,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (element.Kind == SyntaxKind.SpreadElement)
+        {
+            var expression = element.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is null ||
+                !TryInferLambdaBodyType(argument, expression, delegateSignature, assemblies, localInstances, extensionNamespaces, out var spreadType) ||
+                !TryGetCollectionElementType(spreadType.Name, out var spreadElementType))
+            {
+                return false;
+            }
+
+            type = new InferredArgumentType(spreadElementType);
+            return true;
+        }
+
+        return TryInferLambdaBodyType(argument, element, delegateSignature, assemblies, localInstances, extensionNamespaces, out type);
     }
 
     private static bool TryInferLambdaIfExpressionType(
@@ -2068,6 +2169,31 @@ public static class TypeSharpCSharpOverloadResolver
 
         typeArguments = SplitTopLevelTypeArguments(argumentText);
         return typeArguments.Count > 0;
+    }
+
+    private static bool TryGetCollectionElementType(string typeName, out string elementType)
+    {
+        elementType = string.Empty;
+        if (typeName.EndsWith("[]", StringComparison.Ordinal))
+        {
+            elementType = typeName.Substring(0, typeName.Length - 2);
+            return elementType.Length > 0;
+        }
+
+        if (!TryParseConstructedGenericTypeName(typeName, out var genericTypeName, out var typeArguments) ||
+            typeArguments.Count != 1)
+        {
+            return false;
+        }
+
+        var genericName = GetUnqualifiedTypeName(StripGenericArity(genericTypeName));
+        if (!string.Equals(genericName, "List", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        elementType = typeArguments[0];
+        return elementType.Length > 0;
     }
 
     private static IReadOnlyList<string> SplitTopLevelTypeArguments(string text)

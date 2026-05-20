@@ -128,7 +128,7 @@ Stable declaration rules:
 - `partial` currently lowers for generated C# type declarations: modules, records, unions, classes, and interfaces.
 - `async` belongs on function declarations and lowers through `Task`/`Task<T>`.
 - `unsafe`, `dynamic`, `reflect`, and `interop` are capability markers, not ordinary type-system escapes.
-- Exported function-valued `let` declarations may use explicit function type annotations for precise generated delegate metadata. Unannotated lambda-valued top-level exports lower with conservative `System.Func<object, TResult>` inference for currently supported lambda bodies.
+- Exported function-valued `let` declarations may use explicit function type annotations for precise generated delegate metadata. Unannotated lambda-valued top-level exports lower with conservative `System.Func<object, TResult>` inference for currently supported lambda bodies, including block final-expression and collection expression returns.
 
 Nominal declarations carry the public ABI surface. Compile-time-only aliases such as type-level unions or structural shapes must not leak through exported declarations.
 
@@ -143,6 +143,7 @@ Stable expression rules:
 - Parenthesized expressions group an inner expression and preserve the inner expression type for checking and lowering.
 - Unary logical-not `!expr` is stable for `bool` operands and lowers to C# `!expr`.
 - Unary numeric sign expressions `+expr` and `-expr` are stable for supported numeric operands and lower to C# unary sign operators.
+- Collection expressions can be lambda bodies. Known array or `List<T>` delegate return targets provide the element target for checking and lowering.
 - Lambdas use `=>` and can be assigned to local or module `let` bindings. Lambda bodies can be blocks; when the target delegate expects a value, the final block expression is returned.
 - `match` arms use `=>`, with optional `when` guards.
 - Pipeline `value |> f(args...)` lowers as `f(value, args...)`.

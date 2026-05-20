@@ -1653,6 +1653,12 @@ public static class TypeSharpBuilder
             return InferExpressionType(GetBlockResultExpression(node));
         }
 
+        if (node.Kind == SyntaxKind.CollectionExpression)
+        {
+            var elementType = InferCollectionElementType(node.Children.Where(child => !child.IsToken).ToArray());
+            return elementType.Length > 0 ? $"{elementType}[]" : "object";
+        }
+
         if (node.Kind == SyntaxKind.IfExpression &&
             TryInferIfExpressionType(node, out var ifType))
         {

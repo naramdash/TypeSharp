@@ -179,6 +179,7 @@ The checker validates:
 - unary numeric sign bodies that preserve supported numeric operand types,
 - `if` expression bodies whose branch result expressions merge to one known return type,
 - block bodies whose final expression has a known return type,
+- collection expression bodies whose elements match known array or `List<T>` return element types,
 - null-coalescing bodies with known fallback or receiver-side types,
 - indexer-expression bodies with known array or metadata-backed indexer return types.
 

@@ -65,7 +65,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `keyof` aliases | Local string-based implementation details. |
 | Indexed access type aliases | Selected member runtime type for single-member local aliases; type-level union behavior for multi-member aliases. |
 | Explicit-receiver extension methods | C# extension methods with `this` on the receiver parameter. |
-| Function type values | `System.Func` or `System.Action` when arity and return shape are representable; unannotated top-level lambda values use conservative `Func<object, TResult>` inference and can lower block lambda bodies. |
+| Function type values | `System.Func` or `System.Action` when arity and return shape are representable; unannotated top-level lambda values use conservative `Func<object, TResult>` inference and can lower supported block and collection return bodies. |
 
 ## Function, Module, And Import Lowering
 
@@ -73,7 +73,7 @@ Top-level functions lower to generated static methods. Expression-bodied functio
 
 Named imports from metadata namespaces lower to `using` directives; aliases lower to C# alias directives; manifest references are copied into generated project reference items.
 
-Top-level function-valued `let` declarations lower to generated delegate fields when they have an explicit function type annotation or a lambda initializer. Unannotated lambda-valued exports use a conservative CLR delegate shape: the parameter side is `object`, and simple return bodies, including compatible block final expressions and `if` branch bodies, infer `TResult` where possible. This keeps the generated API CLR-representable while nudging precise public callback contracts toward explicit annotations.
+Top-level function-valued `let` declarations lower to generated delegate fields when they have an explicit function type annotation or a lambda initializer. Unannotated lambda-valued exports use a conservative CLR delegate shape: the parameter side is `object`, and simple return bodies, including compatible block final expressions, `if` branch bodies, and homogeneous collection expression bodies, infer `TResult` where possible. This keeps the generated API CLR-representable while nudging precise public callback contracts toward explicit annotations.
 
 Evidence:
 
@@ -82,7 +82,7 @@ Evidence:
 - `test/fixtures/backend/csharp/positive/0003-call-expression`
 - `test/fixtures/backend/csharp/positive/0008-basic-semantics`
 - CLI smokes for basic semantics, framework calls, local DLL calls, manifest reference propagation, and module-path containers.
-- CLI smokes for annotated and inferred function-valued top-level `let` exports.
+- CLI smokes for annotated and inferred function-valued top-level `let` exports, including collection return bodies.
 
 ## Records, Public Types, And Partial Declarations
 
@@ -132,13 +132,13 @@ becomes equivalent to:
 g(f(value), arg)
 ```
 
-Composition expressions lower to unary delegate lambdas. Value-producing `if` expressions lower to C# 7.3-compatible `if`/`else` blocks inside an immediately invoked `System.Func<T>` when they appear where C# needs an expression value. Block-bodied lambdas lower to C# block lambdas and return the final block expression for value-returning delegate targets. `yield` lowers to C# iterator statements when the function return type is an explicit `IEnumerable<T>` or `IEnumerator<T>`. `lock` lowers to C# lock statements and requires a non-null reference gate.
+Composition expressions lower to unary delegate lambdas. Value-producing `if` expressions lower to C# 7.3-compatible `if`/`else` blocks inside an immediately invoked `System.Func<T>` when they appear where C# needs an expression value. Block-bodied lambdas lower to C# block lambdas and return the final block expression for value-returning delegate targets. Collection expression lambda bodies use the delegate return target when it is an array or `List<T>`, so `text => [text]` lowers with the expected element type. `yield` lowers to C# iterator statements when the function return type is an explicit `IEnumerable<T>` or `IEnumerator<T>`. `lock` lowers to C# lock statements and requires a non-null reference gate.
 
 Evidence:
 
 - `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`
 - `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
-- `test/TypeSharp.Compiler.Tests/Program.cs` if-expression and block lambda delegate plus inferred function-valued export CLI build smokes
+- `test/TypeSharp.Compiler.Tests/Program.cs` if-expression, block lambda, and collection lambda delegate plus inferred function-valued export CLI build smokes
 - `test/fixtures/backend/csharp/positive/0031-yield-expression-lowering`
 - `test/fixtures/backend/csharp/positive/0032-lock-statement-lowering`
 - `test/fixtures/diagnostics/type-checker/negative/yield-mismatch`
