@@ -5,7 +5,7 @@ description: TypeSharp's target runtime, language identity, and required success
 
 TypeSharp is a new static language that emits `.NET Framework 4.8`-compatible artifacts and combines practical ideas from modern C#, F#, and TypeScript.
 
-This page is the docs-site canonical core goal established by task `0251-docs-site-canonical-language-ledger`. The repository file `docs/goal.md` remains an agent bootstrap bridge for Codex goal runs.
+This page is the docs-site canonical core goal established by task `0251-docs-site-canonical-language-ledger`. Standard goal text now belongs here; Codex goal runs use `agent.md` plus the temporary agent work records under `docs/`.
 
 ## Mission
 

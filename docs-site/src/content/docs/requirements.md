@@ -3,7 +3,7 @@ title: Project Requirements
 description: Required TypeSharp platform, language, compiler, interop, tooling, quality, and security constraints.
 ---
 
-This page is the docs-site canonical requirements ledger established by task `0251-docs-site-canonical-language-ledger`. The repository file `docs/requirements.md` remains a short transition bridge.
+This page is the docs-site canonical requirements ledger established by task `0251-docs-site-canonical-language-ledger`. The former repository bridge file `docs/requirements.md` was removed after its durable content was folded here.
 
 ## Requirement Levels
 

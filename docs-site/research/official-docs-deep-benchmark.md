@@ -2,7 +2,7 @@
 
 Benchmark date: 2026-05-19
 
-Task rollup: [Documentation Process Release And Adoption](../../docs/tasks/0001-0252-task-ledger-rollup.md#documentation-process-release-and-adoption)
+Task rollup: [Documentation Process Release And Adoption](../../docs/0001-0255-task-ledger-rollup.md#documentation-process-release-and-adoption)
 
 This benchmark records the official documentation information architecture that TypeSharp should match as it becomes a real language, compiler, CLI, and VS Code tooling project. It updates the first benchmark in [official-docs-benchmark.md](official-docs-benchmark.md) with a broader inventory snapshot and a stronger docs-site gap plan.
 

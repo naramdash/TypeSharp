@@ -3,15 +3,13 @@ title: Grammar And Language Reference
 description: Scannable links to the current TypeSharp grammar and language reference material.
 ---
 
-This page is the docs-site canonical language-reference index established by task `0251-docs-site-canonical-language-ledger`. It links the human-facing reference pages first and names `docs/` bridge files only as transition pointers.
+This page is the docs-site canonical language-reference index established by task `0251-docs-site-canonical-language-ledger`. It links the human-facing reference pages and the implemented feature evidence.
 
 ## Lexical Basics
 
 Source files use `.tysh`. The lexical grammar covers identifiers, keywords, literals, comments, and operators.
 
 Canonical page: [Grammar](../grammar/)
-
-Transition bridge: [`docs/grammar/lexical.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/lexical.md)
 
 ## Declarations
 
@@ -37,8 +35,6 @@ Local export specifier syntax such as `export { Name }` and `export type { TypeN
 
 Canonical pages: [Grammar](../grammar/), [Modules And Imports](../modules/), [Feature Status](../feature-status/)
 
-Transition bridge: [`docs/grammar/declarations.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/declarations.md)
-
 Human guide: [Modules And Imports](../modules/)
 
 ## Expressions
@@ -47,15 +43,11 @@ Expressions include literals, identifiers, calls, member access, indexer access,
 
 Canonical pages: [Grammar](../grammar/), [Language Tour](../language-tour/), [Type System](../type-system/)
 
-Transition bridge: [`docs/grammar/expressions.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/expressions.md)
-
 ## Types
 
 Type syntax includes primitive names, nullable types, arrays, generic types, function types, structural shapes, structural intersection aliases, limited `keyof`, limited indexed access types, type-level unions, and nominal declarations.
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/), [Feature Status](../feature-status/)
-
-Transition bridge: [`docs/grammar/types.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/types.md)
 
 Human guide: [Type System](../type-system/)
 
@@ -65,15 +57,11 @@ Pattern syntax supports nominal union and type-level union narrowing paths in th
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/)
 
-Transition bridge: [`docs/grammar/patterns.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/patterns.md)
-
 ## Interop Syntax
 
 Interop syntax covers imports from C# namespaces, attributes, `ref`/`out`/`in`, named arguments, and capability markers.
 
 Canonical pages: [Grammar](../grammar/), [.NET Interop](../dotnet-interop/), [Project Requirements](../requirements/)
-
-Transition bridge: [`docs/grammar/interop.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/interop.md)
 
 ## Name Resolution And Overloads
 
@@ -85,8 +73,6 @@ Overload resolution is nominal-first. Candidate checks include arity, named/opti
 
 Canonical pages: [Grammar](../grammar/), [Modules And Imports](../modules/), [.NET Interop](../dotnet-interop/), [Diagnostics](../diagnostics/)
 
-Transition bridge: [`docs/grammar/resolution.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/grammar/resolution.md)
-
 ## Public ABI Rules
 
 Public API must lower to C#-understandable CLR metadata. Structural shapes, intersection aliases, and type-level unions are compile-time-only and must not leak directly through public boundaries.
@@ -97,18 +83,11 @@ Canonical pages:
 - [Project Requirements](../requirements/)
 - [Advanced Topics](../advanced/)
 
-Transition bridges:
-
-- [`docs/csharp-interop.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/csharp-interop.md)
-- [`docs/runtime-abi.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/runtime-abi.md)
-
 ## Lowering Reference
 
 Implemented TypeSharp features lower to deterministic C# 7.3-compatible source before the generated `net48` project is built. The lowering contract covers generated module containers, records, nominal unions, pattern matching, structural proof erasure, async `Task`, collection expressions, indexers, intrinsics, extension methods, and public ABI rejection for compile-time-only types.
 
 Canonical page: [Lowering](../lowering/)
-
-Transition bridge: [`docs/lowering.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/lowering.md)
 
 ## Feature Specification Index
 
@@ -139,8 +118,6 @@ Interop and tooling feature specs:
 | CLI, diagnostics, generated C# emission, VS Code/LSP | [CLI](../cli/), [Diagnostics](../diagnostics/), [Lowering](../lowering/), [VS Code And LSP](../vscode-lsp/) | CLI, backend, generated build, LSP, and extension smokes. |
 
 When adding or promoting a feature, update the relevant canonical spec, [Feature Status](../feature-status/) if status changes, [Project Policy](../project-policy/) review/coverage evidence, and the active task packet.
-
-Transition bridge: [`docs/feature-specs.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/feature-specs.md)
 
 ## Diagnostic Code Index
 

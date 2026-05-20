@@ -41,8 +41,6 @@ packages = []
 
 Canonical pages: [CLI](../cli/) and [Project Configuration](../project-configuration/).
 
-Transition bridge: [`docs/cli.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/cli.md)
-
 Human guide: [Project Configuration](../project-configuration/)
 
 ## Runtime And Core Libraries
@@ -127,10 +125,8 @@ Canonical pages:
 - [Advanced Topics](../advanced/)
 - [Type System](../type-system/)
 
-Transition bridges:
+Implementation notes:
 
-- [`standard-library.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/standard-library.md)
-- [`runtime-abi.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/runtime-abi.md)
 - [`src/TypeSharp.Core/README.md`](https://github.com/naramdash/TypeSharp/blob/main/src/TypeSharp.Core/README.md)
 - [`src/TypeSharp.Runtime/README.md`](https://github.com/naramdash/TypeSharp/blob/main/src/TypeSharp.Runtime/README.md)
 
@@ -157,4 +153,4 @@ See [VS Code And LSP](../vscode-lsp/) for commands and package-shape checks.
 
 - [Modules And Imports](../modules/) for source module paths, imports, exports, and generated containers.
 - [Type System](../type-system/) for inference, null safety, `unknown`, `dynamic`, structural shapes, intersection aliases, unions, and public ABI boundaries.
-- [Grammar And Language Reference](../reference/) for syntax coverage and remaining transition bridge links.
+- [Grammar And Language Reference](../reference/) for syntax coverage and implemented feature evidence.

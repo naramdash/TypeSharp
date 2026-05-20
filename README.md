@@ -82,7 +82,7 @@ Design and implementation docs:
 - Feature status: [docs-site/src/content/docs/feature-status.md](docs-site/src/content/docs/feature-status.md)
 - Traceability: [docs/traceability.md](docs/traceability.md)
 
-The [docs](docs) folder is now the temporary agentic work surface for task packets, handoff, traceability, and bridge files. It is useful for contributors and agents, but it is not the best starting point for new users.
+The [docs](docs) folder is now the temporary agentic work surface for task packets, handoff, traceability, and execution control. It is useful for contributors and agents, but it is not the best starting point for new users.
 
 ## Repository Map
 
@@ -90,7 +90,7 @@ The [docs](docs) folder is now the temporary agentic work surface for task packe
 | --- | --- |
 | [src](src) | compiler, CLI, language server, runtime, and core library projects |
 | [tests](tests) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |
-| [docs](docs) | temporary agentic work surface, task packets, traceability, and bridge files |
+| [docs](docs) | temporary agentic work surface, task packets, traceability, and execution control |
 | [docs-site](docs-site) | canonical Astro Starlight GitHub Pages documentation site |
 | [examples](examples) | single-file examples and runnable adoption projects |
 | [vscode/typesharp](vscode/typesharp) | VS Code extension package, syntax, formatter, and LSP client |
@@ -115,6 +115,6 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 
 ## Project Governance
 
-The project is being developed against the goal and success criteria in [docs-site Core Goal](docs-site/src/content/docs/goal.md). Work is tracked in small task packets under [docs/tasks](docs/tasks), and completed behavior is connected back to requirements through [docs/traceability.md](docs/traceability.md).
+The project is being developed against the goal and success criteria in [docs-site Core Goal](docs-site/src/content/docs/goal.md). Work is tracked in small task packets under [docs/tasks.md](docs/tasks.md), and completed behavior is connected back to requirements through [docs/traceability.md](docs/traceability.md).
 
-If you are here to use or evaluate TypeSharp, start with the quickstart above and the GitHub Pages docs. If you are here to continue implementation work, read [agent.md](agent.md), [docs/agentic-execution.md](docs/agentic-execution.md), and the latest entries in [docs/tasks](docs/tasks).
+If you are here to use or evaluate TypeSharp, start with the quickstart above and the GitHub Pages docs. If you are here to continue implementation work, read [agent.md](agent.md), [docs/agentic-execution.md](docs/agentic-execution.md), and the latest entries in [docs/tasks.md](docs/tasks.md).

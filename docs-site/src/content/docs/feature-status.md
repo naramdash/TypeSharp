@@ -3,7 +3,7 @@ title: Feature Status
 description: Canonical status map for TypeSharp language, compiler, interop, tooling, and documentation features.
 ---
 
-This page is the docs-site canonical feature-status ledger established by task `0251-docs-site-canonical-language-ledger`. It folds the durable status model from `docs/feature-map.md` and the MVP boundaries from `docs/feasibility.md`; those files remain short transition bridges.
+This page is the docs-site canonical feature-status ledger established by task `0251-docs-site-canonical-language-ledger`. It folds the durable status model from the former `docs/feature-map.md` and MVP boundaries from the former `docs/feasibility.md`; those bridge files were removed after migration.
 
 ## Status Buckets
 

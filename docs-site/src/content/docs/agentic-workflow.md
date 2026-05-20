@@ -10,23 +10,23 @@ TypeSharp is designed to be worked on by long-running agents without losing the 
 | Need | Canonical File |
 | --- | --- |
 | Goal text to give Codex CLI `/goal` | [`agent.md`](https://github.com/naramdash/TypeSharp/blob/main/agent.md) |
-| Project mission and success criteria | [Core Goal](../goal/); `docs/goal.md` remains an agent bootstrap bridge |
+| Project mission and success criteria | [Core Goal](../goal/) |
 | Standard language/project reference ownership | [Document Ownership](../document-ownership/) |
 | Task selection, queue policy, Done criteria | [`docs/agentic-execution.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/agentic-execution.md) |
-| Active task and completed rollups | [`docs/tasks/README.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks/README.md) |
+| Active task and completed rollups | [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md) |
 | Remaining implementation work | [`docs/checklist.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/checklist.md) |
 | Evidence connections | [`docs/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/traceability.md) |
 
-Docs-site project record pages are the canonical human-visible management surface for standard language and project ledger records. The remaining `docs/` files stay operational for active agent work, handoff, traceability, rollups, and short bridge pointers.
+Docs-site project record pages are the canonical human-visible management surface for standard language and project ledger records. The remaining `docs/` files stay operational for active agent work, handoff, traceability, rollups, and execution control.
 
 ## Bootstrapping A Codex Goal Run
 
 Use the goal text in `agent.md`. Then the agent should read:
 
 1. `agent.md`
-2. `docs/goal.md`
+2. [Core Goal](../goal/)
 3. `docs/agentic-execution.md`
-4. `docs/tasks/README.md`
+4. `docs/tasks.md`
 5. `docs/checklist.md`
 6. `docs/traceability.md`
 7. [Document Ownership](../document-ownership/)
@@ -37,7 +37,7 @@ Use the goal text in `agent.md`. Then the agent should read:
 
 This order keeps the running goal stable even when docs-site navigation changes.
 
-After a task changes a standard language or project ledger decision, update the docs-site canonical page listed in [Document Ownership](../document-ownership/). If the matching `docs/` bridge still exists, update it in the same change or reduce it toward a bridge stub.
+After a task changes a standard language or project ledger decision, update the docs-site canonical page listed in [Document Ownership](../document-ownership/). Do not recreate standard-document bridge stubs under `docs/`.
 
 ## Choosing Work
 
@@ -56,10 +56,10 @@ Do not let the website and agent records become competing authorities.
 
 | If You Change | Also Check |
 | --- | --- |
-| Goal, non-goal, success criteria | [Core Goal](../goal/), [Project Ledger](../project-ledger/), `agent.md`, and the `docs/goal.md` bridge while it exists |
-| Task state or rollup | `docs/tasks/README.md`, task rollup, [Work Ledger](../work-ledger/), [Project Ledger](../project-ledger/) if categories change |
-| CLI, VS Code, diagnostics, or examples | matching docs-site page, bridge source listed in [Document Ownership](../document-ownership/), smoke commands |
-| Grammar or lowering | [Grammar](../grammar/), [Grammar And Language Reference](../reference/), [Advanced Topics](../advanced/), and remaining bridge sources listed in [Document Ownership](../document-ownership/) |
+| Goal, non-goal, success criteria | [Core Goal](../goal/), [Project Ledger](../project-ledger/), and `agent.md` |
+| Task state or rollup | `docs/tasks.md`, task rollup, [Work Ledger](../work-ledger/), [Project Ledger](../project-ledger/) if categories change |
+| CLI, VS Code, diagnostics, or examples | matching docs-site page, ownership listed in [Document Ownership](../document-ownership/), smoke commands |
+| Grammar or lowering | [Grammar](../grammar/), [Grammar And Language Reference](../reference/), [Advanced Topics](../advanced/), and ownership listed in [Document Ownership](../document-ownership/) |
 
 ## Verification
 

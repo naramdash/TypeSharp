@@ -3,7 +3,7 @@ title: Grammar
 description: Stable TypeSharp syntax documents and language coverage tracking.
 ---
 
-This page is the docs-site canonical grammar ledger established by task `0251-docs-site-canonical-language-ledger`. The repository files under `docs/grammar/` are short transition bridges that point back to this page and related canonical reference pages.
+This page is the docs-site canonical grammar ledger established by task `0251-docs-site-canonical-language-ledger`. The former repository files under `docs/grammar/` have been removed; grammar updates belong here and in the related canonical reference pages.
 
 ## Grammar Goals
 
@@ -277,23 +277,7 @@ Coverage status answers whether TypeSharp directly supports a feature, provides 
 
  Stable syntax should be reflected in parser fixtures under `tests/fixtures/parser/`. Parser fixture layout, snapshot rules, and current parser coverage policy are canonical in [Project Policy](../project-policy/).
 
-## Bridge Files
+## Former Sources
 
-After task `0251`, these repository files remain as short bridge stubs:
-
-- `docs/grammar/README.md`
-- `docs/grammar/coverage.md`
-- `docs/grammar/consistency.md`
-- `docs/grammar/ambiguity.md`
-- `docs/grammar/precedence.md`
-- `docs/grammar/lexical.md`
-- `docs/grammar/modules.md`
-- `docs/grammar/declarations.md`
-- `docs/grammar/types.md`
-- `docs/grammar/expressions.md`
-- `docs/grammar/patterns.md`
-- `docs/grammar/interop.md`
-- `docs/grammar/resolution.md`
-
-When references to the old detailed files are updated, these bridge files can leave `docs/` with the rest of the temporary agentic surface.
+The old `docs/grammar/**` bridge files were removed after their durable content was folded into docs-site. Do not recreate them; update [Grammar And Language Reference](../reference/), [Modules And Imports](../modules/), [Type System](../type-system/), [Lowering](../lowering/), or [.NET Interop](../dotnet-interop/) as appropriate.
 

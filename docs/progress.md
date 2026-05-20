@@ -8,8 +8,8 @@
 
 - 진행 기록은 사용 가능한 산출물이어야 한다. 대화 요약이나 임시 메모만으로 완료 상태를 증명하지 않는다.
 - 실제 checklist 항목을 줄이지 않는 기록용 문서는 만들지 않는다.
-- 작업은 가능한 한 [tasks/README.md](tasks/README.md)의 task packet으로 기록한다.
-- 큰 주제가 완료되면 관련 task packet을 rollup 문서로 압축해 `docs/tasks`가 읽을 수 있는 규모를 유지한다.
+- 작업은 가능한 한 [tasks.md](tasks.md)의 task packet으로 기록한다.
+- 큰 주제가 완료되면 관련 task packet을 rollup 문서로 압축해 `docs/`가 읽을 수 있는 규모를 유지한다.
 - 각 task packet과 rollup은 검증 명령, 결과, 남은 범위, out-of-scope를 보존해야 한다.
 - 완료 후에는 관련 코드/문서/테스트 변경과 task 기록을 같은 커밋 또는 명확히 연결된 커밋에 남긴다.
 - task가 `Done`이 되면 같은 작업 흐름 안에서 해당 변경을 커밋하고 원격 브랜치로 push한다.
@@ -18,9 +18,9 @@
 
 | 단위 | 사용 시점 | 위치 |
 | --- | --- | --- |
-| Task packet | 한 반복에서 checklist 항목 하나를 줄일 때 | `docs/tasks/NNNN-topic.md` |
-| Task rollup | 같은 큰 주제의 여러 task packet이 완료되어 압축할 때 | `docs/tasks/NNNN-NNNN-topic.md` |
-| ADR | 목표, architecture, public ABI, backend, runtime, tool 계약에 영향을 주는 큰 결정이 있을 때 | `docs/adr/NNNN-title.md` |
+| Task packet | 한 반복에서 checklist 항목 하나를 줄일 때 | `docs/NNNN-topic.md` |
+| Task rollup | 같은 큰 주제의 여러 task packet이 완료되어 압축할 때 | `docs/NNNN-NNNN-topic.md` |
+| ADR | 목표, architecture, public ABI, backend, runtime, tool 계약에 영향을 주는 큰 결정이 있을 때 | `docs/NNNN-adr-title.md` |
 | Traceability row | 완료 근거가 목표/요구사항/체크리스트와 연결될 때 | `docs/traceability.md` |
 | Checklist update | 완료 근거가 실제 파일, fixture, test, command로 확인될 때 | `docs/checklist.md` |
 
@@ -62,7 +62,7 @@ Rollup에는 다음을 보존한다.
 - public ABI 또는 `net48` 호환성 영향
 - 남은 out-of-scope와 다음 후보
 
-Rollup 후에는 `docs/tasks/README.md`가 rollup 문서를 가리키도록 갱신하고, rollup 커밋을 별도로 남긴다.
+Rollup 후에는 `docs/tasks.md`가 rollup 문서를 가리키도록 갱신하고, rollup 커밋을 별도로 남긴다.
 
 ## Commit 규칙
 

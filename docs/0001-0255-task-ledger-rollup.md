@@ -1,17 +1,17 @@
-# Task Rollup: 0001-0254 Project Work Ledger
+# Task Rollup: 0001-0255 Project Work Ledger
 
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-20 21:57:28 +09:00
+End Time: 2026-05-20 22:08:06 +09:00
 
 ## Objective
 
-Compress the historical `docs/tasks` packet set into one project work ledger so the folder stays readable while preserving completed scope, verification themes, and remaining follow-up areas.
+Compress the historical task packet set into one project work ledger so `docs/` stays readable while preserving completed scope, verification themes, and remaining follow-up areas.
 
 ## Compression Rule
 
-This rollup replaces the individual task packet files for completed work 0001 through 0254. Future long-running work may create a temporary task packet while it is active, but completed packets should be folded back into this ledger or a successor rollup instead of accumulating indefinitely.
+This rollup replaces the individual task packet files for completed work 0001 through 0255. Future long-running work may create a temporary task packet while it is active, but completed packets should be folded back into this ledger or a successor rollup instead of accumulating indefinitely.
 
 ## Current State
 
@@ -19,7 +19,7 @@ This rollup replaces the individual task packet files for completed work 0001 th
 | --- | --- |
 | Active task packet | None |
 | Next planned task packet | None selected |
-| Completed work covered | 0001-0254 |
+| Completed work covered | 0001-0255 |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
 | Web docs target | Astro Starlight docs-site with GitHub Pages-compatible static output |
@@ -187,6 +187,7 @@ Covered work:
 - 0167 official docs deep benchmark and docs overhaul.
 - 0251 docs-site canonical language/project ledger migration and `docs/` temporary agentic surface reduction.
 - 0252 agent bootstrap docs-site canonical follow-up and task-end commit/push rule.
+- 0255 docs canonical cleanup, removing the remaining standard-document bridge stubs from `docs/`.
 
 Summary:
 - Established progress, ADR, regression, checklist, traceability, feature review, release, and docs-site governance.
@@ -194,8 +195,8 @@ Summary:
 - Built Astro Starlight docs-site and expanded user-facing information architecture across learning paths, guides, reference, tools, migration, examples, diagnostics, and advanced topics.
 - Added docs benchmark artifacts against TypeScript/F#/C#/Vue/Nuxt-style documentation patterns.
 - Made docs-site the canonical home for standard language, requirements, feature status, grammar/reference, lowering, interop/runtime ABI, standard library, CLI/formatting/diagnostics, migration/examples, project policy, official reference tracking, project ledger, and work ledger documentation.
-- Reduced `docs/` standard documents to short bridge stubs, moved example source/projects to root `examples/`, moved official docs benchmark reports/inventory to `docs-site/research`, and kept `docs/` focused on task packets, rollups, handoff, checklist, traceability, and agentic execution control.
-- Aligned `agent.md`, `docs/agentic-execution.md`, and `docs/goal.md` with the post-0251 docs-site canonical ownership model, and made task-end git commit/push handoff explicit in `agent.md`.
+- Removed the remaining `docs/` standard-document bridge stubs, moved example source/projects to root `examples/`, moved official docs benchmark reports/inventory to `docs-site/research`, and kept `docs/` focused on task packets, rollups, handoff, checklist, traceability, and agentic execution control.
+- Aligned `agent.md` and `docs/agentic-execution.md` with the post-0251 docs-site canonical ownership model, and made task-end git commit/push handoff explicit in `agent.md`.
 
 Representative verification:
 - `npm run build` from `docs-site`.
@@ -322,7 +323,7 @@ dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csp
 dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj -- "C# backend fixture snapshots match"
 dotnet run --project tests/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
 npm run build
-rg --files docs/tasks
+rg --files docs
 stale previous rollup filename/range search
 rg -n "[ \t]$" <touched files>
 git diff --check
@@ -347,10 +348,12 @@ Result:
 - Pass. No stale `0001-0253` rollup references or temporary 0254 task packet references remain in live docs.
 - Pass. No trailing whitespace was found in touched files.
 - Pass. `git diff --check` reported no whitespace errors; Git printed line-ending normalization warnings only.
-- Pass. `docs/tasks` contains `README.md` and this completed-work rollup.
+- Pass. `docs/` contains only flat agent work files.
 - Pass. No live docs/tests links use old `docs/examples` or `docs/official-docs-*` artifact paths.
 - Pass. No live task ledger references point to the removed `0001-0251` rollup or the temporary 0252 task packet.
 - Pass. No stale migration-in-progress wording remains in `agent.md`, `docs/`, or docs-site source docs.
+- Pass. Post-0255 docs-site build generated 32 pages after standard bridge stubs were removed from `docs/`.
+- Pass. Post-0255 stale-path scan found no live markdown links to removed `docs/` standard-document files or old task rollup filenames.
 - Pass. No trailing whitespace was found in touched files.
 - Pass. `git diff --check` reported no whitespace errors; Git printed line-ending normalization warnings only.
 
@@ -365,12 +368,13 @@ Done:
 - Added nominal record spread field parsing, non-record source diagnostics, C# 7.3-compatible constructor lowering, parser/backend/type-checker fixtures, and CLI smoke coverage.
 - Added limited `keyof` type operator parsing, string literal type members, record/shape key checking, public-boundary diagnostics, C# 7.3-compatible string lowering, parser/backend/type-checker fixtures, and CLI smoke coverage.
 - Added limited indexed access type operator parsing, record/shape member-type checking, public-boundary diagnostics, C# 7.3-compatible selected-member-type lowering, parser/backend/type-checker fixtures, and CLI smoke coverage.
-- Completed Q0 task `0251-docs-site-canonical-language-ledger`, migrated standard language/project ledger ownership into docs-site, and left `docs/` focused on temporary agentic work plus short bridge stubs.
+- Completed Q0 task `0251-docs-site-canonical-language-ledger`, migrated standard language/project ledger ownership into docs-site, and started reducing `docs/` toward temporary agentic work only.
 - Completed Q0 task `0252-agent-bootstrap-docs-site-canonical-followup`, aligned remaining agent bootstrap docs with docs-site canonical ownership, and added the task-end commit/push rule to `agent.md`.
 - Completed Q4 task `0253-cli-manifest-semantic-validation`, adding semantic `TypeSharp.toml` option value validation, `TS0103` compiler/CLI smoke coverage, and docs-site manifest value-domain documentation.
 - Completed Q4 task `0254-cli-lsp-entrypoint`, adding `typesharp lsp` as the public stdio language-server launch path with protocol and usage smoke coverage.
+- Completed Q0 task `0255-docs-canonical-cleanup`, removing standard-document bridge stubs from `docs/` and pointing remaining references at docs-site canonical pages.
 - Preserved completed ranges, major implemented surfaces, verification themes, and remaining follow-up areas.
-- Kept `docs/tasks/README.md` as the short entry point.
+- Kept `docs/tasks.md` as the short task entry point.
 
 Remaining:
 - Select the next task from `docs/checklist.md` and `docs/traceability.md`.

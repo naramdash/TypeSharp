@@ -5,11 +5,6 @@ description: TypeSharp CLI command surface and project workflow.
 
 This is the canonical docs-site ledger for the TypeSharp CLI command surface, project workflow, formatting contract, exit codes, manifest shape, and source discovery behavior.
 
-Transition bridges:
-
-- [`docs/cli.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/cli.md)
-- [`docs/formatting.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/formatting.md)
-
 ## Goals
 
 - Inspect, build, and run `.tysh` projects from the CLI alone.

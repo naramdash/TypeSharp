@@ -6,7 +6,7 @@ Current scope:
 - registers the `typesharp` language id
 - associates `.tysh` files with TypeSharp
 - contributes language configuration for comments, brackets, and pairs
-- contributes a TextMate grammar based on `docs/grammar/lexical.md`
+- contributes a TextMate grammar based on `docs-site/src/content/docs/grammar.md`
 - activates on `onLanguage:typesharp`
 - starts the TypeSharp language server over stdio
 - publishes LSP diagnostics into VS Code diagnostics

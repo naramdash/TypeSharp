@@ -15,8 +15,9 @@
 - [x] `/goal` 기반 에이전트 지침이 있다.
 - [x] Ralph/Goal mode 장기 실행 계약이 있다.
 - [x] 언어 정체성 목표가 명시되어 있다.
-- [x] 기능 목표가 goal에 통합되어 있다.
-- [x] Union 설계 결정이 goal에 명시되어 있다.
+- [x] 기능 목표가 docs-site Core Goal에 통합되어 있다.
+- [x] Union 설계 결정이 docs-site Core Goal에 명시되어 있다.
+- [x] docs-site가 표준 언어/프로젝트 원장의 canonical surface이고 `docs/`는 agent work 운영 표면만 남긴다.
 - [x] VS Code와 CLI 개발 경험이 1급 목표로 명시되어 있다.
 - [x] .NET Framework ASP.NET/WCF/worker 호환성 목표가 명시되어 있다.
 - [x] VS Code LSP extension 지원 목표가 명시되어 있다.
@@ -26,7 +27,7 @@
 - [x] Vue/Nuxt/TypeScript/C#/F# 공식 문서 전체 페이지/정보 구조를 재벤치마크하고 GitHub Pages 문서를 초심자부터 고급 사용자까지 대규모 개편한다.
 - [x] 실제 실행 가능한 예제 프로젝트 목표가 명시되어 있다.
 - [x] .NET Framework application model compatibility 계약이 요구사항과 기능 매핑에 반영되어 있다.
-- [x] grammar 폴더가 있고 TypeSharp 문법 목표를 설명한다.
+- [x] docs-site Grammar가 TypeSharp 문법 목표를 설명한다.
 - [x] syntax consistency 규칙이 문서화되어 있다.
 - [x] TypeScript/F#/C# 기능을 문법으로 포괄하거나 대체하는 coverage matrix가 있다.
 - [x] TypeSharp source file 확장자가 `.tysh`로 정해져 있다.
@@ -49,7 +50,7 @@
 - [x] task packet template이 있다.
 - [x] 문서/구현/설계 결정별 Done 기준이 있다.
 - [x] 세션 인계 기준이 있다.
-- [x] 실제 `docs/tasks/` 작업 패킷이 있다.
+- [x] 실제 `docs/` 작업 패킷이 있다.
 - [x] 다음 구현 작업의 첫 task packet이 작성되어 있다.
 - [x] parser fixture format 정책이 있다.
 - [x] 반복 실행 결과를 기록할 progress log 정책이 있다.
@@ -734,7 +735,7 @@
 
 ## 반복 검토 질문
 
-아래 질문은 [feature-review.md](feature-review.md)의 기능별 review gate로 정책화한다. 각 기능은 자기 task packet 또는 traceability row에서 해당 질문에 대한 구체적 근거를 다시 남겨야 한다.
+아래 질문은 [Project Policy](../docs-site/src/content/docs/project-policy.md)의 기능별 review gate로 정책화한다. 각 기능은 자기 task packet 또는 traceability row에서 해당 질문에 대한 구체적 근거를 다시 남겨야 한다.
 
 - [x] 이 기능은 .NET Framework 4.8에서 실행 가능한가?
 - [x] 이 기능은 public .NET metadata로 표현 가능한가, 아니면 compile-time only인가?

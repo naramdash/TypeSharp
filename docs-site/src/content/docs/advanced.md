@@ -53,7 +53,7 @@ TypeSharp public API must be understandable to C# and CLR metadata consumers. Th
 - Nullability contracts should be enforced before generated C# is emitted.
 - Runtime helper types must remain stable enough for generated assemblies and C# consumers.
 
-Use [.NET Interop](../dotnet-interop/) for the canonical public ABI and runtime ABI policy, including ABI version fields, covered surfaces, change rules, and compatibility gates. Use [Project Requirements](../requirements/) and [Feature Status](../feature-status/) for the wider platform and maturity policy. `docs/runtime-abi.md` remains a short transition bridge after task `0251`.
+Use [.NET Interop](../dotnet-interop/) for the canonical public ABI and runtime ABI policy, including ABI version fields, covered surfaces, change rules, and compatibility gates. Use [Project Requirements](../requirements/) and [Feature Status](../feature-status/) for the wider platform and maturity policy.
 
 ## Lowering
 
@@ -72,13 +72,13 @@ Lowering turns TypeSharp syntax and semantic constructs into C# 7.3-compatible s
 - record expression construction,
 - C# imports and calls.
 
-Use [Lowering](../lowering/) for the canonical docs-site lowering contract, generated shape map, runtime-helper boundaries, and fixture evidence. `docs/lowering.md` remains a transition bridge after task `0251`.
+Use [Lowering](../lowering/) for the canonical docs-site lowering contract, generated shape map, runtime-helper boundaries, and fixture evidence.
 
 ## Metadata Reader And Interop Validation
 
 The metadata reader indexes selected public metadata from framework and local `net48` C# assemblies, including base/interface relations and extension method markers. Interop validation uses that metadata to catch missing references, missing imported framework/local types, missing framework/local static methods or static members, missing imported instance members while accepting applicable extension methods with receiver relationship ranking and `object` fallback, invalid byref calls, ambiguous overloads, explicit and simple inferred generic constraint violations including inherited base/interface satisfaction, unsupported package references, and unknown nullability. Manifest-based check/build also uses those metadata relations for imported C# assignment and return compatibility.
 
-Use [.NET Interop](../dotnet-interop/) for the canonical reference model, import model, supported metadata shape, type mapping, overload policy, capability boundaries, host compatibility, and interop smoke policy. `docs/csharp-interop.md` remains a short transition bridge after task `0251`.
+Use [.NET Interop](../dotnet-interop/) for the canonical reference model, import model, supported metadata shape, type mapping, overload policy, capability boundaries, host compatibility, and interop smoke policy.
 
 Current scope is intentionally narrower than full CLR metadata:
 

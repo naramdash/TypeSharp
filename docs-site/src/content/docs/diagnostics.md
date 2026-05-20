@@ -5,8 +5,6 @@ description: Diagnostic codes, metadata, JSON shape, and explanation surface.
 
 This is the canonical docs-site ledger for TypeSharp diagnostic code ranges, descriptor metadata, explanation output, JSON/text shape, and golden diagnostic fixture policy.
 
-Transition bridge: [`docs/diagnostics.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/diagnostics.md)
-
 Diagnostics are shared by:
 
 - compiler and checker internals,

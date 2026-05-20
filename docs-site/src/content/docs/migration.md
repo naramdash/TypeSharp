@@ -5,8 +5,6 @@ description: Adopting TypeSharp from existing .NET Framework and C# projects.
 
 This is the canonical docs-site migration guide for adopting TypeSharp from existing `.NET Framework 4.8` and C# projects.
 
-Transition bridge: [`docs/migration-guide.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/migration-guide.md)
-
 The migration stance is incremental. TypeSharp does not automatically convert an existing C# project. Instead, write new TypeSharp `net48` libraries, reference existing C# assemblies from TypeSharp, and reference generated TypeSharp assemblies from existing C#/.NET Framework applications.
 
 ## Fit

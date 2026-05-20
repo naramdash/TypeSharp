@@ -82,8 +82,8 @@ The repository smoke test `docs site contract is stable` checks the expected doc
 
 ## I Need The Canonical Design Decision
 
-Human-facing pages summarize behavior. Canonical design and traceability documents live in the repository:
+Human-facing standard docs live in docs-site. Agent-facing traceability and task records live in the repository:
 
-- [`docs/goal.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/goal.md)
+- [Core Goal](../goal/)
 - [`docs/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/traceability.md)
-- [`docs/tasks`](https://github.com/naramdash/TypeSharp/tree/main/docs/tasks)
+- [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md)

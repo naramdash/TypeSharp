@@ -2,7 +2,7 @@
 
 문서 기준일: 2026-05-19
 
-이 폴더는 TypeSharp의 장기 설계 결정을 기록한다. ADR은 task packet과 다르다. task packet은 "무엇을 했는가"를 기록하고, ADR은 "왜 이 방향을 선택했는가"를 기록한다.
+이 파일은 TypeSharp의 장기 설계 결정을 기록하는 ADR 작성 규칙이다. ADR은 task packet과 다르다. task packet은 "무엇을 했는가"를 기록하고, ADR은 "왜 이 방향을 선택했는가"를 기록한다.
 
 ## 언제 ADR을 쓰는가
 
@@ -21,7 +21,7 @@ ADR이 필요 없는 경우:
 ## 파일 이름
 
 ```text
-docs/adr/NNNN-short-title.md
+docs/NNNN-adr-short-title.md
 ```
 
 규칙:
@@ -96,6 +96,6 @@ Neutral:
 
 ## 연결 규칙
 
-- ADR이 accepted 되면 관련 [../traceability.md](../traceability.md) row 또는 관련 사양 문서에서 링크한다.
-- 구현이 필요한 ADR은 `docs/tasks` packet을 만든다.
+- ADR이 accepted 되면 관련 [traceability.md](traceability.md) row 또는 관련 사양 문서에서 링크한다.
+- 구현이 필요한 ADR은 `docs/tasks.md`의 active task 또는 `docs/NNNN-topic.md` packet으로 연결한다.
 - ADR이 superseded 되면 기존 ADR의 `Superseded By`를 갱신하고 새 ADR의 `Supersedes`를 채운다.

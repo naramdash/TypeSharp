@@ -3,7 +3,7 @@ title: Lowering
 description: Canonical TypeSharp-to-C# 7.3 lowering contract, runtime dependencies, public ABI boundaries, and fixture evidence.
 ---
 
-This page is the docs-site canonical lowering ledger established by task `0251-docs-site-canonical-language-ledger`. The repository file `docs/lowering.md` remains a short transition bridge.
+This page is the docs-site canonical lowering ledger established by task `0251-docs-site-canonical-language-ledger`. The former repository bridge file `docs/lowering.md` was removed after its durable content was folded here.
 
 ## Backend Contract
 

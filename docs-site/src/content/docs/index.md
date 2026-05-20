@@ -7,7 +7,7 @@ TypeSharp targets generated `.NET Framework 4.8` artifacts while bringing modern
 
 TypeSharp is currently a preview project. The compiler, CLI, generated C# backend, runtime libraries, VS Code extension, and smoke-tested examples are in the repository, but the language is still being built and stabilized.
 
-This site is the canonical publishing surface for standard language and project ledger documentation since task `0251-docs-site-canonical-language-ledger`. The `docs/` directory remains the temporary operating area for agentic goal work, bridge files, task packets, rollups, and handoff state.
+This site is the canonical publishing surface for standard language and project ledger documentation since task `0251-docs-site-canonical-language-ledger`. The `docs/` directory remains the temporary operating area for agentic goal work, task packets, rollups, traceability, and handoff state.
 
 ## Start Here
 
@@ -28,7 +28,7 @@ This site is the canonical publishing surface for standard language and project 
 - [API And CLI Reference](api/) collects CLI, manifest, runtime/core, generated assembly, and VS Code reference material.
 - [Advanced Topics](advanced/) connects lowering, public ABI, metadata, diagnostics, LSP, and regression strategy.
 - [Troubleshooting](troubleshooting/) maps common failures to diagnostics and checks.
-- [Project Ledger](project-ledger/) groups the canonical project records and transition bridge files.
+- [Project Ledger](project-ledger/) groups the canonical project records and remaining agent work records.
 - [Project Requirements](requirements/) lists required platform, language, compiler, interop, tooling, quality, and security constraints.
 - [Document Ownership](document-ownership/) tracks which legacy `docs/` files are docs-site canonical, temporary agentic files, or archive/remove candidates.
 - [Work Ledger](work-ledger/) shows the current long-running task state and compressed completed-work rollup.

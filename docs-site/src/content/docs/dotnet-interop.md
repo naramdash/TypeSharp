@@ -7,11 +7,6 @@ This is the canonical docs-site ledger for TypeSharp's C#/.NET Framework interop
 
 TypeSharp's interop model is conservative: generated output should behave like ordinary `.NET Framework 4.8` assemblies that C# projects can reference. TypeScript-style structural and type-level features may help local TypeSharp checking, but they must not leak through public CLR metadata boundaries.
 
-Transition bridges:
-
-- [`docs/csharp-interop.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/csharp-interop.md)
-- [`docs/runtime-abi.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/runtime-abi.md)
-
 ## Goals
 
 TypeSharp interop must support these durable goals:

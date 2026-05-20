@@ -3,9 +3,9 @@ title: Work Ledger
 description: Current long-running TypeSharp task state and completed work rollup.
 ---
 
-This page is the web-facing view of the long-running task ledger. The compact source record lives in `docs/tasks/README.md` and `docs/tasks/0001-0254-task-ledger-rollup.md`.
+This page is the web-facing view of the long-running task ledger. The compact source record lives in `docs/tasks.md` and `docs/0001-0255-task-ledger-rollup.md`.
 
-Codex CLI goal and other long-running agents should still read the canonical files under `docs/tasks/` when selecting work. This page exists so humans can inspect the same state through the docs site.
+Codex CLI goal and other long-running agents should still read the canonical files under `docs/` when selecting work. This page exists so humans can inspect the same state through the docs site.
 
 ## Current State
 
@@ -13,10 +13,10 @@ Codex CLI goal and other long-running agents should still read the canonical fil
 | --- | --- |
 | Active task packet | None |
 | Next top-priority task | Not selected |
-| Current tooling slice | Task `0254-cli-lsp-entrypoint` is complete and folded into the compressed task rollup. `typesharp lsp` now exposes the existing language server as the public stdio LSP entry point. |
-| Completed work covered | 0001-0254 |
-| Canonical task index | [`docs/tasks/README.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks/README.md) |
-| Compressed work ledger | [`docs/tasks/0001-0254-task-ledger-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks/0001-0254-task-ledger-rollup.md) |
+| Current tooling slice | Task `0255-docs-canonical-cleanup` is complete and folded into the compressed task rollup. `docs/` now contains only agentic work records. |
+| Completed work covered | 0001-0255 |
+| Canonical task index | [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md) |
+| Compressed work ledger | [`docs/0001-0255-task-ledger-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/0001-0255-task-ledger-rollup.md) |
 
 ## Completed Work Themes
 
@@ -40,7 +40,7 @@ Codex CLI goal and other long-running agents should still read the canonical fil
 
 When a long-running task completes:
 
-1. Update the canonical task rollup under `docs/tasks/`.
+1. Update the canonical task rollup under `docs/`.
 2. Update this page if the current state, theme summary, or remaining future areas changed.
 3. Update [Agentic Workflow](../agentic-workflow/) only if the way agents choose or record work changed.
 4. Run `npm run build` from `docs-site`.

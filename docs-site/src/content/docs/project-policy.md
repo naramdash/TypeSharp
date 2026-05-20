@@ -3,18 +3,7 @@ title: Project Policy
 description: Architecture, dependency, target framework, regression, feature review, parser fixture, and release policy for TypeSharp.
 ---
 
-This is the canonical docs-site ledger for project policy that is too implementation-facing for the user guides but still durable enough to leave `docs/`.
-
-Transition bridges:
-
-- [`docs/architecture.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/architecture.md)
-- [`docs/dependencies.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/dependencies.md)
-- [`docs/framework-targeting.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/framework-targeting.md)
-- [`docs/release.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/release.md)
-- [`docs/regression-testing.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/regression-testing.md)
-- [`docs/feature-review.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/feature-review.md)
-- [`docs/parser-fixtures.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/parser-fixtures.md)
-- [`docs/references.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/references.md)
+This is the canonical docs-site ledger for project policy that is too implementation-facing for the user guides but still durable enough to keep in the public docs site.
 
 ## Architecture
 
