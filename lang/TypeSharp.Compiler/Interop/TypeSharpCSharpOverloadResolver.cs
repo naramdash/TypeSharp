@@ -862,6 +862,11 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaNullCoalescingExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (TryInferLambdaStaticMethodCallType(argument, body, delegateSignature, assemblies, extensionNamespaces, out type))
         {
             return true;
@@ -1041,6 +1046,50 @@ public static class TypeSharpCSharpOverloadResolver
 
         type = new InferredArgumentType("bool");
         return true;
+    }
+
+    private static bool TryInferLambdaNullCoalescingExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.BinaryExpression ||
+            !body.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.NullCoalescingToken))
+        {
+            return false;
+        }
+
+        var expressions = body.Children.Where(child => !child.IsToken).ToArray();
+        if (expressions.Length < 2)
+        {
+            return false;
+        }
+
+        if (TryInferLambdaBodyType(argument, expressions[1], delegateSignature, assemblies, localInstances, extensionNamespaces, out var rightType) &&
+            !rightType.IsNullLiteral)
+        {
+            type = rightType;
+            return true;
+        }
+
+        if (TryInferLambdaBodyType(argument, expressions[0], delegateSignature, assemblies, localInstances, extensionNamespaces, out var leftType))
+        {
+            type = leftType;
+            return true;
+        }
+
+        if (rightType.Name.Length > 0)
+        {
+            type = rightType;
+            return true;
+        }
+
+        return false;
     }
 
     private static bool TryInferLambdaStaticMethodCallType(

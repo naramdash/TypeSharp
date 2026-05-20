@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 01:19:17 +09:00
+End Time: 2026-05-21 02:21:43 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0272. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0273. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0272 |
+| Completed work covered | 0001-0273 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -682,6 +682,33 @@ Primary evidence:
 - [Lowering](../docs/src/content/docs/lowering.md)
 - `test/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0273 Lambda Null-Coalescing Overload Inference
+
+Completed C# interop work established:
+
+- C# delegate overload filtering now infers lambda body return types for null-coalescing expressions such as `item => item.Name ?? "fallback"` when the fallback or receiver-side expression has a known metadata-backed type.
+- The overload resolver rejects incompatible delegate return targets instead of treating unknown `??` lambda bodies as broadly applicable, so invalid calls report `TS2406` before generated C# emission.
+- Compatible overload candidates rank through the existing known-return scoring path, preserving C# 7.3-compatible generated lambda syntax and normal `??` lowering.
+- The local legacy metadata fixture now includes string/int delegate overloads and an int-only negative target for null-coalescing lambda bodies.
+- .NET interop and C# members docs now list null-coalescing lambda body return inference as part of the implemented contextual delegate subset.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters lambda delegate coalesce return type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# delegate lambda coalesce return overload diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported delegate lambda overload coalesce return match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on no matching C# delegate lambda coalesce return overload"
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -706,7 +733,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0272 is compressed here.
+- Completed historical work through task 0273 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

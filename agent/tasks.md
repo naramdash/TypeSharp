@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0272                          |
+| Completed range    | 0001-0273                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -52,6 +52,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | Done   | Work ledger future area | Lambda null-coalescing overload inference          | [tasks-rollup.md#task-0273-lambda-null-coalescing-overload-inference](tasks-rollup.md#task-0273-lambda-null-coalescing-overload-inference)                   | Added metadata-backed `??` lambda body return inference for C# delegate overload filtering/ranking, with checker diagnostics, resolver coverage, and `net48` CLI build smokes. |
 | Q2       | Done   | Work ledger future area | Inferred lambda-valued export let                  | [tasks-rollup.md#task-0272-inferred-lambda-valued-export-let](tasks-rollup.md#task-0272-inferred-lambda-valued-export-let)                                     | Lowered unannotated lambda-valued top-level `let` exports and aliases as conservative `System.Func<object, TResult>` delegate values with source graph, import alias, docs, and net48 build coverage. |
 | Q4       | Done   | User directive | VS Code LSP feedback                                | [tasks-rollup.md#task-0271-vs-code-lsp-feedback](tasks-rollup.md#task-0271-vs-code-lsp-feedback)                                                               | Advertised LSP open/change/close sync, cleared stale diagnostics on `didClose`, kept semantic diagnostics/hover/definition/completion/formatting covered by server and extension smokes. |
 | Q5       | Done   | User directive | Monorepo folder structure                           | [tasks-rollup.md#task-0270-monorepo-folder-structure](tasks-rollup.md#task-0270-monorepo-folder-structure)                                                     | Split product, language, test, docs, agent, examples, and VS Code ownership into explicit top-level folders with README contracts and updated path references. |
