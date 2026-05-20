@@ -1,9 +1,9 @@
-# Task Rollup: 0001-0253 Project Work Ledger
+# Task Rollup: 0001-0254 Project Work Ledger
 
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-20 21:50:21 +09:00
+End Time: 2026-05-20 21:57:28 +09:00
 
 ## Objective
 
@@ -11,7 +11,7 @@ Compress the historical `docs/tasks` packet set into one project work ledger so 
 
 ## Compression Rule
 
-This rollup replaces the individual task packet files for completed work 0001 through 0253. Future long-running work may create a temporary task packet while it is active, but completed packets should be folded back into this ledger or a successor rollup instead of accumulating indefinitely.
+This rollup replaces the individual task packet files for completed work 0001 through 0254. Future long-running work may create a temporary task packet while it is active, but completed packets should be folded back into this ledger or a successor rollup instead of accumulating indefinitely.
 
 ## Current State
 
@@ -19,7 +19,7 @@ This rollup replaces the individual task packet files for completed work 0001 th
 | --- | --- |
 | Active task packet | None |
 | Next planned task packet | None selected |
-| Completed work covered | 0001-0253 |
+| Completed work covered | 0001-0254 |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
 | Web docs target | Astro Starlight docs-site with GitHub Pages-compatible static output |
@@ -163,15 +163,16 @@ Covered work:
 - 0122, 0124-0132 CLI format/new/options work and VS Code format provider.
 - 0136 docs-site VS Code/LSP smoke contract.
 - 0253 CLI manifest semantic validation for supported `TypeSharp.toml` option values.
+- 0254 CLI `lsp` stdio language server entry point.
 
 Summary:
-- Implemented CLI flows for `check`, `build`, `run`, `format`, `new`, common options, warning gates, configuration/target framework selection, verbosity, strict project option parsing, and build no-emission on diagnostics.
+- Implemented CLI flows for `check`, `build`, `run`, `format`, `new`, `lsp`, common options, warning gates, configuration/target framework selection, verbosity, strict project option parsing, and build no-emission on diagnostics.
 - Added semantic manifest value checks for `project.outputType`, `language.version`, `language.nullable`, and `tooling.diagnosticFormat`, reporting `TS0103` before source discovery or build emission.
-- Connected VS Code extension activation to stdio LSP diagnostics, hover, definition, completion, and document formatting.
+- Connected VS Code extension activation and the CLI `lsp` entry point to stdio LSP diagnostics, hover, definition, completion, and document formatting.
 - Documented reproducible VS Code/LSP smoke commands in the docs site.
 
 Representative verification:
-- CLI command smoke tests, manifest validation smokes, extension host smoke notes, formatter checks, and docs-site smoke contract build.
+- CLI command smoke tests, manifest validation smokes, CLI LSP protocol smokes, extension host smoke notes, formatter checks, and docs-site smoke contract build.
 
 ## Documentation Process Release And Adoption
 
@@ -340,6 +341,12 @@ Result:
 - Pass. No stale `0001-0252` rollup references or temporary 0253 task packet references remain in live docs.
 - Pass. No trailing whitespace was found in touched files.
 - Pass. `git diff --check` reported no whitespace errors; Git printed line-ending normalization warnings only.
+- Pass. Post-0254 compiler test project build and CLI project build passed with 0 warnings.
+- Pass. Post-0254 focused `CLI lsp`, `language server`, `VS Code extension package shape`, `CLI accepts common no-color option`, docs-site contract, and GitHub Pages workflow contract smokes passed.
+- Pass. Post-0254 docs-site build generated 32 pages.
+- Pass. No stale `0001-0253` rollup references or temporary 0254 task packet references remain in live docs.
+- Pass. No trailing whitespace was found in touched files.
+- Pass. `git diff --check` reported no whitespace errors; Git printed line-ending normalization warnings only.
 - Pass. `docs/tasks` contains `README.md` and this completed-work rollup.
 - Pass. No live docs/tests links use old `docs/examples` or `docs/official-docs-*` artifact paths.
 - Pass. No live task ledger references point to the removed `0001-0251` rollup or the temporary 0252 task packet.
@@ -361,6 +368,7 @@ Done:
 - Completed Q0 task `0251-docs-site-canonical-language-ledger`, migrated standard language/project ledger ownership into docs-site, and left `docs/` focused on temporary agentic work plus short bridge stubs.
 - Completed Q0 task `0252-agent-bootstrap-docs-site-canonical-followup`, aligned remaining agent bootstrap docs with docs-site canonical ownership, and added the task-end commit/push rule to `agent.md`.
 - Completed Q4 task `0253-cli-manifest-semantic-validation`, adding semantic `TypeSharp.toml` option value validation, `TS0103` compiler/CLI smoke coverage, and docs-site manifest value-domain documentation.
+- Completed Q4 task `0254-cli-lsp-entrypoint`, adding `typesharp lsp` as the public stdio language-server launch path with protocol and usage smoke coverage.
 - Preserved completed ranges, major implemented surfaces, verification themes, and remaining follow-up areas.
 - Kept `docs/tasks/README.md` as the short entry point.
 

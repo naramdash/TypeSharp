@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
+    <ProjectReference Include="..\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
   </ItemGroup>
 </Project>

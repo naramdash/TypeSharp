@@ -11,7 +11,7 @@
 | Canonical grammar ledger | [docs-site Grammar](../../docs-site/src/content/docs/grammar.md) |
 | Canonical language reference index | [docs-site Grammar And Language Reference](../../docs-site/src/content/docs/reference.md) |
 | 문서 ownership matrix | [docs-site Document Ownership](../../docs-site/src/content/docs/document-ownership.md) |
-| Completed migration task | [../tasks/0001-0253-task-ledger-rollup.md](../tasks/0001-0253-task-ledger-rollup.md) |
+| Completed migration task | [../tasks/0001-0254-task-ledger-rollup.md](../tasks/0001-0254-task-ledger-rollup.md) |
 
 ## 남아 있는 Bridge Files
 

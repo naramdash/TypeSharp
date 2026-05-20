@@ -28,16 +28,16 @@ typesharp build [project] [options]
 typesharp run [project] [-- args...]
 typesharp explain <diagnostic-code> [--json]
 typesharp format <project-or-path> [--check]
+typesharp lsp
 ```
 
 Stable backlog command surface:
 
 ```text
-typesharp lsp
 typesharp test [project]
 ```
 
-`typesharp lsp` is the future public LSP entry point. The VS Code extension currently starts the language server directly.
+`typesharp lsp` is the public stdio LSP entry point for editors and tooling hosts. The VS Code extension can still use its bundled language server DLL directly, but `typesharp lsp` is the stable CLI launch path.
 
 ## Command Contracts
 
@@ -129,6 +129,17 @@ Lookup is case-insensitive. Unknown codes return exit code `1`; missing codes or
 `--warnings-as-errors` and manifest `tooling.treatWarningsAsErrors = true` make warnings fail CLI check/build gates without changing the diagnostic severity payload.
 
 The formatter does not rewrite files with parse diagnostics. The current MVP does not reorder declarations, reflow pipeline/match expressions, or perform full AST printing.
+
+### `typesharp lsp`
+
+Starts the TypeSharp language server over standard input/output using the current working directory as the workspace root. This command is for editor and tooling hosts that speak LSP framing directly; it does not write normal CLI progress output to stdout.
+
+Rules:
+
+- protocol messages use standard LSP `Content-Length` framing,
+- `--no-color` is accepted as a no-op common option,
+- other command options are usage errors with exit code `2`,
+- the server exits cleanly after the LSP `exit` notification or stdin EOF.
 
 ## Common Options
 

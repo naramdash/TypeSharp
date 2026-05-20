@@ -8,13 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
     <ProjectReference Include="..\..\src\TypeSharp.Cli\TypeSharp.Cli.csproj" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\LspDiagnosticMapper.cs" Link="TypeSharpLanguageServer\LspDiagnosticMapper.cs" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\TypeSharpDocumentCompletion.cs" Link="TypeSharpLanguageServer\TypeSharpDocumentCompletion.cs" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\TypeSharpDocumentDefinition.cs" Link="TypeSharpLanguageServer\TypeSharpDocumentDefinition.cs" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\TypeSharpDocumentDiagnostics.cs" Link="TypeSharpLanguageServer\TypeSharpDocumentDiagnostics.cs" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\TypeSharpDocumentHover.cs" Link="TypeSharpLanguageServer\TypeSharpDocumentHover.cs" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\TypeSharpDocumentSymbols.cs" Link="TypeSharpLanguageServer\TypeSharpDocumentSymbols.cs" />
-    <Compile Include="..\..\src\TypeSharp.LanguageServer\TypeSharpLanguageServer.cs" Link="TypeSharpLanguageServer\TypeSharpLanguageServer.cs" />
+    <ProjectReference Include="..\..\src\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
     <Compile Include="..\..\src\TypeSharp.Core\Option.cs" Link="TypeSharpCore\Option.cs" />
     <Compile Include="..\..\src\TypeSharp.Core\Result.cs" Link="TypeSharpCore\Result.cs" />
     <Compile Include="..\..\src\TypeSharp.Core\Unit.cs" Link="TypeSharpCore\Unit.cs" />

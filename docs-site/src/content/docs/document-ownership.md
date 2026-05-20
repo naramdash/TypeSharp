@@ -85,7 +85,7 @@ Every current or recently migrated standard language/project ledger document und
 | --- | --- |
 | `docs/tasks/README.md` | Active task packet index while agentic goal work is running. |
 | `docs/tasks/*-task-ledger-rollup.md` | Temporary compressed work history until folded into docs-site work ledger. |
-| `docs/tasks/0001-0253-task-ledger-rollup.md` | Compressed completed-work ledger including tasks `0251-docs-site-canonical-language-ledger`, `0252-agent-bootstrap-docs-site-canonical-followup`, and `0253-cli-manifest-semantic-validation`. |
+| `docs/tasks/0001-0254-task-ledger-rollup.md` | Compressed completed-work ledger including tasks `0251-docs-site-canonical-language-ledger`, `0252-agent-bootstrap-docs-site-canonical-followup`, `0253-cli-manifest-semantic-validation`, and `0254-cli-lsp-entrypoint`. |
 | `docs/agentic-execution.md` | Temporary agent execution contract for goal runs; it may later become a short bridge to docs-site Agentic Workflow. |
 | `docs/progress.md` | Temporary policy bridge for task packets, rollups, and handoff mechanics. |
 | `docs/checklist.md` | Temporary checklist bridge until incomplete work is represented in docs-site ledger pages. |

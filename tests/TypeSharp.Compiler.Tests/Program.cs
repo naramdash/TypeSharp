@@ -290,6 +290,8 @@ var tests = new (string Name, Action Body)[]
     ("CLI check keeps warnings nonblocking by default", CliCheckKeepsWarningsNonblockingByDefault),
     ("CLI check treats warnings as errors", CliCheckTreatsWarningsAsErrors),
     ("CLI build stops before emission on warnings as errors", CliBuildStopsBeforeEmissionOnWarningsAsErrors),
+    ("CLI lsp runs language server protocol", CliLspRunsLanguageServerProtocol),
+    ("CLI lsp rejects unknown options", CliLspRejectsUnknownOptions),
     ("LSP diagnostic mapper uses zero-based ranges", LspDiagnosticMapperUsesZeroBasedRanges),
     ("language server publishes diagnostics on didOpen", LanguageServerPublishesDiagnosticsOnDidOpen),
     ("language server returns hover for bound symbols", LanguageServerReturnsHoverForBoundSymbols),
@@ -9818,6 +9820,44 @@ static void CliBuildStopsBeforeEmissionOnWarningsAsErrors()
         AssertFalse(File.Exists(Path.Combine(root, "generated", "WarningAsErrorBuild.Generated.csproj")), "Build should not emit generated project when warnings are treated as errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "WarningAsErrorBuild.dll")), "Build should not emit generated assembly when warnings are treated as errors.");
     });
+}
+
+static void CliLspRunsLanguageServerProtocol()
+{
+    WithWorkspace(root =>
+    {
+        using var input = new MemoryStream();
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}");
+        WriteLspFrame(input, "{\"jsonrpc\":\"2.0\",\"method\":\"exit\"}");
+        input.Position = 0;
+
+        using var protocolOutput = new MemoryStream();
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["lsp"], output, error, input, protocolOutput, root);
+
+        AssertEqual(0, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        var response = Encoding.UTF8.GetString(protocolOutput.ToArray());
+        AssertContains("\"textDocumentSync\":1", response);
+        AssertContains("\"hoverProvider\":true", response);
+        AssertContains("\"definitionProvider\":true", response);
+        AssertContains("\"completionProvider\"", response);
+    });
+}
+
+static void CliLspRejectsUnknownOptions()
+{
+    using var output = new StringWriter();
+    using var error = new StringWriter();
+
+    var exitCode = TypeSharpCli.Run(["lsp", "--stdio"], output, error);
+
+    AssertEqual(2, exitCode);
+    AssertEqual(string.Empty, output.ToString());
+    AssertContains("Usage: typesharp lsp [--no-color]", error.ToString());
 }
 
 static void LspDiagnosticMapperUsesZeroBasedRanges()

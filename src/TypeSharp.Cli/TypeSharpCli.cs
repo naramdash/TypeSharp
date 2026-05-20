@@ -4,6 +4,7 @@ using TypeSharp.Compiler.Checking;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Parsing;
 using TypeSharp.Compiler.Projects;
+using TypeSharp.LanguageServer;
 using System.Diagnostics;
 using System.Text;
 
@@ -11,7 +12,16 @@ namespace TypeSharp.Cli;
 
 public static class TypeSharpCli
 {
-    public static int Run(string[] args, TextWriter output, TextWriter error)
+    public static int Run(string[] args, TextWriter output, TextWriter error) =>
+        Run(args, output, error, input: null, protocolOutput: null, Directory.GetCurrentDirectory());
+
+    public static int Run(
+        string[] args,
+        TextWriter output,
+        TextWriter error,
+        Stream? input,
+        Stream? protocolOutput,
+        string workspaceRoot)
     {
         if (args.Length == 0)
         {
@@ -28,6 +38,7 @@ public static class TypeSharpCli
             "run" => RunRun(args, output, error),
             "format" => RunFormat(args, output, error),
             "explain" => RunExplain(args, output, error),
+            "lsp" => RunLsp(args, error, input, protocolOutput, workspaceRoot),
             "--help" or "-h" or "help" => RunHelp(output),
             _ => RunUnknownCommand(args[0], error)
         };
@@ -86,6 +97,30 @@ public static class TypeSharpCli
         output.WriteLine("  run [project] [-- args...]");
         output.WriteLine("  format [project-or-file] [--check]");
         output.WriteLine("  explain <diagnostic-code> [--json]");
+        output.WriteLine("  lsp");
+        return 0;
+    }
+
+    private static int RunLsp(string[] args, TextWriter error, Stream? input, Stream? protocolOutput, string workspaceRoot)
+    {
+        for (var index = 1; index < args.Length; index++)
+        {
+            if (args[index] == "--no-color")
+            {
+                continue;
+            }
+
+            error.WriteLine("Usage: typesharp lsp [--no-color]");
+            return 2;
+        }
+
+        if (input is null || protocolOutput is null)
+        {
+            error.WriteLine("typesharp lsp requires standard input and output streams.");
+            return 2;
+        }
+
+        TypeSharpLanguageServer.Run(input, protocolOutput, workspaceRoot);
         return 0;
     }
 

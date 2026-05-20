@@ -438,6 +438,7 @@
 - [x] CLI `format`
 - [x] CLI `format --check`
 - [x] CLI `format` parse-diagnostic no-rewrite path
+- [x] CLI `lsp` stdio language server entry point
 - [x] formatter convention 문서
 - [x] VS Code document formatter provider
 - [x] VS Code extension scaffold
@@ -500,6 +501,7 @@
 - [x] CLI preview option acceptance and unknown project option rejection smoke tests
 - [x] CLI warnings-as-errors smoke tests
 - [x] CLI verbosity parsing and build output smoke tests
+- [x] CLI lsp stdio protocol smoke tests
 - [x] diagnostic descriptor registry smoke tests
 - [x] binder/name resolution smoke tests
 - [x] binder duplicate symbol diagnostics

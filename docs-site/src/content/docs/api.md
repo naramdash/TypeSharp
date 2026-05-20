@@ -15,6 +15,7 @@ typesharp build [project]
 typesharp run [project] [-- args...]
 typesharp format [project-or-path] [--check]
 typesharp explain <diagnostic-code>
+typesharp lsp
 ```
 
 See [CLI](../cli/) for command details and canonical behavior.
