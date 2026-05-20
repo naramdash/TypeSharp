@@ -3,7 +3,7 @@ title: Work Ledger
 description: Current long-running TypeSharp task state and completed work rollup.
 ---
 
-This page is the web-facing view of the long-running task ledger. The compact source record lives in `docs/tasks.md` and `docs/0001-0255-task-ledger-rollup.md`.
+This page is the web-facing view of the long-running task ledger. The compact source record lives in `docs/tasks.md`, including user and agent task sections, the active task packet, and `docs/tasks-rollup.md`.
 
 Codex CLI goal and other long-running agents should still read the flat canonical files under `docs/` when selecting work. This page exists so humans can inspect the same state through the docs site.
 
@@ -13,10 +13,11 @@ Codex CLI goal and other long-running agents should still read the flat canonica
 | --- | --- |
 | Active task packet | None |
 | Next top-priority task | Not selected |
-| Current tooling slice | Task `0255-docs-canonical-cleanup` is complete and folded into the compressed task rollup. `docs/` now contains only agentic work records. |
-| Completed work covered | 0001-0255 |
+| Task queue owner | [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md) |
+| Current tooling slice | Task `0256-test-suite-quality-audit` is complete and folded into the compressed task rollup. No active task is selected. |
+| Completed work covered | 0001-0256 |
 | Canonical task index | [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md) |
-| Compressed work ledger | [`docs/0001-0255-task-ledger-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/0001-0255-task-ledger-rollup.md) |
+| Compressed work ledger | [`docs/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks-rollup.md) |
 
 ## Completed Work Themes
 
@@ -29,6 +30,7 @@ Codex CLI goal and other long-running agents should still read the flat canonica
 | Docs and adoption | Astro Starlight docs site, GitHub Pages workflow, runnable examples, migration guide, docs benchmarks, host compatibility notes, progress/ADR/regression policy, release readiness, and traceability. |
 | Agentic bootstrap | Post-0251 bootstrap docs now direct agents to docs-site canonical standard ledger pages, keep `docs/` as the temporary work surface, and require task-end commit/push handoff in `agent.md`. |
 | Source modules and safety gates | Capability diagnostics, `unknown` narrowing, root namespace fallback, ambient signatures, `open`, import aliases, source module path identity, relative source graph/lowering, multi-source containers, export parsing, local export-list public surface, local/relative named function import/export/re-export alias forwarding, local literal export alias forwarding, local top-level value export alias lowering, explicitly annotated function-valued top-level `let` export and alias lowering, relative top-level value import/re-export alias lowering, local/relative type import/export alias lowering including regular named exported type aliases, relative named module import alias lowering, relative named module re-export alias remapping, relative type-only re-export remapping, relative star re-exports over the currently lowerable function/value/type surface, and missing source module export diagnostics for named/type imports, re-exports, and namespace alias member access. |
+| Regression quality | Task 0256 audited parser/backend/diagnostic fixtures, CLI/run/example smokes, metadata/C# interop, runtime/core, VS Code mocked/live/host tests, docs-site build smoke, and generated residue handling; it hardened fixture README coverage, diagnostic polarity, runnable CLI stderr checks, and Extension Host exit semantics. |
 
 ## Remaining Known Future Areas
 
@@ -40,7 +42,7 @@ Codex CLI goal and other long-running agents should still read the flat canonica
 
 When a long-running task completes:
 
-1. Update the canonical task rollup under `docs/`.
+1. Update `docs/tasks-rollup.md`.
 2. Update this page if the current state, theme summary, or remaining future areas changed.
 3. Update [Agentic Workflow](../agentic-workflow/) only if the way agents choose or record work changed.
 4. Run `npm run build` from `docs-site`.

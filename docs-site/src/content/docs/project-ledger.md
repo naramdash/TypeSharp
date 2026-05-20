@@ -12,7 +12,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 | Surface | Role | Update Rule |
 | --- | --- | --- |
 | `docs-site/` | Canonical standard language, project ledger, reference, guide, and user-facing documentation. | Update first for standard language and project reference decisions. |
-| `docs/` | Temporary agentic goal work, active task packets, rollups, checklist, traceability, handoff state, and execution-control files. | Keep operational and short; do not add long-lived language reference here. |
+| `docs/` | Temporary agentic goal work, active task packets, `tasks-rollup.md`, checklist, traceability, handoff state, and execution-control files. | Keep operational and short; do not add long-lived language reference here. |
 | `agent.md` | Codex CLI goal bootstrap and long-running agent instructions. | Keep concise and operational. |
 
 ## Project Record Pages
@@ -50,7 +50,8 @@ These are the only `docs/` records that should remain:
 - [`docs/agentic-execution.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/agentic-execution.md): long-running agent execution contract.
 - [`docs/progress.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/progress.md): task packet, rollup, commit, and handoff policy.
 - [`docs/checklist.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/checklist.md): executable project checklist and remaining work source.
-- [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md): current task packet index and rollups.
+- [`docs/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks.md): current active task index and completed range pointer.
+- [`docs/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/tasks-rollup.md): compressed completed task history.
 - [`docs/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/traceability.md): goal, requirements, features, checklist, and evidence connections.
 - [`docs/adr.md`](https://github.com/naramdash/TypeSharp/blob/main/docs/adr.md): architecture decision record format.
 

@@ -46,6 +46,8 @@ var tests = new (string Name, Action Body)[]
     ("binder fixture convention paths are stable", BinderFixtureConventionPathsAreStable),
     ("type checker fixture convention paths are stable", TypeCheckerFixtureConventionPathsAreStable),
     ("C# backend fixture convention paths are stable", CSharpBackendFixtureConventionPathsAreStable),
+    ("fixture scenario README coverage is stable", FixtureScenarioReadmeCoverageIsStable),
+    ("diagnostic fixture polarity is stable", DiagnosticFixturePolarityIsStable),
     ("backend abstraction exposes C# source backend", BackendAbstractionExposesCSharpSourceBackend),
     ("backend artifact contract supports direct assembly output", BackendArtifactContractSupportsDirectAssemblyOutput),
     ("lowering pipeline injects runtime helper imports", LoweringPipelineInjectsRuntimeHelperImports),
@@ -941,6 +943,80 @@ static void CSharpBackendFixtureConventionPathsAreStable()
     AssertEqual("tests/fixtures/backend/csharp/positive", CSharpBackendFixtureConventions.PositiveRoot);
     AssertEqual("input.tysh", CSharpBackendFixtureConventions.InputFileName);
     AssertEqual("expected.cs", CSharpBackendFixtureConventions.ExpectedCSharpFileName);
+}
+
+static void FixtureScenarioReadmeCoverageIsStable()
+{
+    var fixtureSets = new[]
+    {
+        (Root: ParserFixtureConventions.PositiveRoot, InputFileName: ParserFixtureConventions.InputFileName),
+        (Root: ParserFixtureConventions.NegativeRoot, InputFileName: ParserFixtureConventions.InputFileName),
+        (Root: BinderFixtureConventions.PositiveRoot, InputFileName: BinderFixtureConventions.InputFileName),
+        (Root: BinderFixtureConventions.NegativeRoot, InputFileName: BinderFixtureConventions.InputFileName),
+        (Root: TypeCheckerFixtureConventions.PositiveRoot, InputFileName: TypeCheckerFixtureConventions.InputFileName),
+        (Root: TypeCheckerFixtureConventions.NegativeRoot, InputFileName: TypeCheckerFixtureConventions.InputFileName),
+        (Root: CSharpBackendFixtureConventions.PositiveRoot, InputFileName: CSharpBackendFixtureConventions.InputFileName)
+    };
+
+    foreach (var fixtureSet in fixtureSets)
+    {
+        foreach (var fixtureDirectory in Directory.EnumerateDirectories(fixtureSet.Root).OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!File.Exists(Path.Combine(fixtureDirectory, fixtureSet.InputFileName)))
+            {
+                continue;
+            }
+
+            var readmePath = Path.Combine(fixtureDirectory, "README.md");
+            var relativeFixture = Path.GetRelativePath(Directory.GetCurrentDirectory(), fixtureDirectory).Replace('\\', '/');
+            AssertTrue(File.Exists(readmePath), $"Fixture '{relativeFixture}' should document the scenario in README.md.");
+            AssertFalse(string.IsNullOrWhiteSpace(File.ReadAllText(readmePath)), $"Fixture '{relativeFixture}' README.md should not be empty.");
+        }
+    }
+}
+
+static void DiagnosticFixturePolarityIsStable()
+{
+    var fixtureSets = new[]
+    {
+        (Root: ParserFixtureConventions.PositiveRoot, ExpectedDiagnosticsFileName: ParserFixtureConventions.ExpectedDiagnosticsFileName, ShouldHaveDiagnostics: false),
+        (Root: ParserFixtureConventions.NegativeRoot, ExpectedDiagnosticsFileName: ParserFixtureConventions.ExpectedDiagnosticsFileName, ShouldHaveDiagnostics: true),
+        (Root: BinderFixtureConventions.PositiveRoot, ExpectedDiagnosticsFileName: BinderFixtureConventions.ExpectedDiagnosticsFileName, ShouldHaveDiagnostics: false),
+        (Root: BinderFixtureConventions.NegativeRoot, ExpectedDiagnosticsFileName: BinderFixtureConventions.ExpectedDiagnosticsFileName, ShouldHaveDiagnostics: true),
+        (Root: TypeCheckerFixtureConventions.PositiveRoot, ExpectedDiagnosticsFileName: TypeCheckerFixtureConventions.ExpectedDiagnosticsFileName, ShouldHaveDiagnostics: false),
+        (Root: TypeCheckerFixtureConventions.NegativeRoot, ExpectedDiagnosticsFileName: TypeCheckerFixtureConventions.ExpectedDiagnosticsFileName, ShouldHaveDiagnostics: true)
+    };
+
+    foreach (var fixtureSet in fixtureSets)
+    {
+        foreach (var fixtureDirectory in Directory.EnumerateDirectories(fixtureSet.Root).OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            var diagnosticsPath = Path.Combine(fixtureDirectory, fixtureSet.ExpectedDiagnosticsFileName);
+            var relativeFixture = Path.GetRelativePath(Directory.GetCurrentDirectory(), fixtureDirectory).Replace('\\', '/');
+            using var document = JsonDocument.Parse(File.ReadAllText(diagnosticsPath));
+            var diagnostics = document.RootElement.GetProperty("diagnostics");
+
+            if (fixtureSet.ShouldHaveDiagnostics)
+            {
+                AssertTrue(diagnostics.GetArrayLength() > 0, $"Negative fixture '{relativeFixture}' should expect at least one diagnostic.");
+            }
+            else
+            {
+                AssertEqual(0, diagnostics.GetArrayLength());
+            }
+
+            foreach (var diagnostic in diagnostics.EnumerateArray())
+            {
+                AssertFalse(string.IsNullOrWhiteSpace(diagnostic.GetProperty("code").GetString()), $"Fixture '{relativeFixture}' diagnostic should include a code.");
+                AssertFalse(string.IsNullOrWhiteSpace(diagnostic.GetProperty("message").GetString()), $"Fixture '{relativeFixture}' diagnostic should include a message.");
+                AssertFalse(string.IsNullOrWhiteSpace(diagnostic.GetProperty("file").GetString()), $"Fixture '{relativeFixture}' diagnostic should include a file.");
+                AssertTrue(diagnostic.GetProperty("start").TryGetProperty("line", out _), $"Fixture '{relativeFixture}' diagnostic should include a start line.");
+                AssertTrue(diagnostic.GetProperty("start").TryGetProperty("column", out _), $"Fixture '{relativeFixture}' diagnostic should include a start column.");
+                AssertTrue(diagnostic.GetProperty("end").TryGetProperty("line", out _), $"Fixture '{relativeFixture}' diagnostic should include an end line.");
+                AssertTrue(diagnostic.GetProperty("end").TryGetProperty("column", out _), $"Fixture '{relativeFixture}' diagnostic should include an end column.");
+            }
+        }
+    }
 }
 
 static void BackendAbstractionExposesCSharpSourceBackend()
@@ -10597,6 +10673,10 @@ static void RunCliCommand(string[] args, int expectedExitCode)
     AssertTrue(
         exitCode == expectedExitCode,
         $"Expected CLI exit code {expectedExitCode}, got {exitCode}.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+    if (expectedExitCode == 0)
+    {
+        AssertEqual(string.Empty, error.ToString());
+    }
 }
 
 static void CliBuildEmitsGeneratedCSharpSource()

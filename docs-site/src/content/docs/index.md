@@ -7,7 +7,7 @@ TypeSharp targets generated `.NET Framework 4.8` artifacts while bringing modern
 
 TypeSharp is currently a preview project. The compiler, CLI, generated C# backend, runtime libraries, VS Code extension, and smoke-tested examples are in the repository, but the language is still being built and stabilized.
 
-This site is the canonical publishing surface for standard language and project ledger documentation since task `0251-docs-site-canonical-language-ledger`. The `docs/` directory remains the temporary operating area for agentic goal work, task packets, rollups, traceability, and handoff state.
+This site is the canonical publishing surface for standard language and project ledger documentation since task `0251-docs-site-canonical-language-ledger`. The `docs/` directory remains the temporary operating area for agentic goal work, active task packets, `tasks-rollup.md`, traceability, and handoff state.
 
 ## Start Here
 

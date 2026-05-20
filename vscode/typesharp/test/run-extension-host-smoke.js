@@ -93,7 +93,8 @@ try {
     throw result.error;
   }
 
-  process.exitCode = result.status || 0;
+  assert.strictEqual(result.signal, null, `VS Code Extension Host smoke terminated by signal ${result.signal}.`);
+  assert.strictEqual(result.status, 0, `VS Code Extension Host smoke exited with status ${result.status}.`);
 } finally {
   fs.rmSync(workspaceRoot, { recursive: true, force: true });
 }

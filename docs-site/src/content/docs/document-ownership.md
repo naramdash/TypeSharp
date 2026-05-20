@@ -12,7 +12,7 @@ Task `0251-docs-site-canonical-language-ledger` moved the durable language and p
 | Surface | Target Role |
 | --- | --- |
 | `docs-site/src/content/docs/` | Canonical human-readable language reference, feature status, lowering guide, interop contract, CLI/LSP guide, examples guide, migration guide, and project ledger pages. |
-| `docs/` | Temporary agentic workspace for active goal runs, task packets, rollups, checklist/traceability files, handoff state, and execution-control documents. |
+| `docs/` | Temporary agentic workspace for active goal runs, active task packets, `tasks-rollup.md`, checklist/traceability files, handoff state, and execution-control documents. |
 | `agent.md` | Minimal bootstrap file for Codex goal runs. It points to docs-site canonical pages and the remaining `docs/` temporary work surface. |
 
 ## Canonical Standard Pages
@@ -45,7 +45,8 @@ Raw benchmark artifacts live under `docs-site/research/`. Source and runnable sa
 | `docs/checklist.md` | Remaining implementation and verification work source. |
 | `docs/traceability.md` | Evidence bridge connecting goal, requirements, features, checklist, and completed behavior. |
 | `docs/tasks.md` | Active task packet index while agentic goal work is running. |
-| `docs/*-task-ledger-rollup.md` | Temporary compressed work history kept as root-level docs files until folded further into docs-site work ledger. |
+| `docs/NNNN-*.md` | Temporary active task packets while long-running work is in progress. |
+| `docs/tasks-rollup.md` | Temporary compressed work history kept as a root-level docs file until folded further into docs-site work ledger. |
 | `docs/adr.md` | ADR authoring template for large decisions. |
 
 ## Maintenance Rule

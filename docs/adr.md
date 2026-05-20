@@ -97,5 +97,5 @@ Neutral:
 ## 연결 규칙
 
 - ADR이 accepted 되면 관련 [traceability.md](traceability.md) row 또는 관련 사양 문서에서 링크한다.
-- 구현이 필요한 ADR은 `docs/tasks.md`의 active task 또는 `docs/NNNN-topic.md` packet으로 연결한다.
+- 구현이 필요한 ADR은 `docs/tasks.md`의 active task 또는 `docs/NNNN-short-name.md` active packet으로 연결한다.
 - ADR이 superseded 되면 기존 ADR의 `Superseded By`를 갱신하고 새 ADR의 `Supersedes`를 채운다.

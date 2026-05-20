@@ -15,10 +15,10 @@
    - 장기 실행 모드에서 작업을 고르고 검증하고 인계하는 실행 계약이다.
 
 3. [tasks.md](tasks.md)
-   - 활성 task packet과 완료 rollup 위치를 알려주는 작업 인덱스다.
+   - State, User Task Inbox, Agent Task Queue, 완료 범위, 압축 원장 위치를 알려주는 작업 인덱스다.
 
-4. [0001-0255-task-ledger-rollup.md](0001-0255-task-ledger-rollup.md)
-   - 완료된 agent work 이력을 압축한 rollup이다.
+4. [tasks-rollup.md](tasks-rollup.md)
+   - 완료된 agent work 이력을 압축한 고정 rollup 파일이다.
 
 5. [checklist.md](checklist.md)
    - 남은 구현/검증 작업을 고르는 운영 체크리스트다.
@@ -27,7 +27,7 @@
    - 목표, 요구사항, 기능, 체크리스트, 증거를 연결하는 agent-facing 추적성 문서다.
 
 7. [progress.md](progress.md)
-   - task packet, rollup, handoff 기록 규칙이다.
+   - active task packet, `tasks-rollup.md`, handoff 기록 규칙이다.
 
 8. [adr.md](adr.md)
    - 큰 설계 결정을 ADR로 남길 때 쓰는 임시 운영 템플릿이다.
@@ -48,6 +48,6 @@
 ## 유지 규칙
 
 - 표준 언어, 프로젝트 정책, 사용자 가이드는 `docs-site/src/content/docs/`에 먼저 반영한다.
-- `docs/`에는 active task, handoff, checklist, traceability, and agent execution control만 남긴다.
+- `docs/`에는 active task packet, `tasks.md`, `tasks-rollup.md`, handoff, checklist, traceability, and agent execution control만 남긴다.
 - 새 bridge stub를 만들지 않는다. 예전 경로 호환이 필요하면 `docs-site` 원장 문서에서 former source로 설명한다.
 - agent work 상태가 바뀌면 이 디렉터리의 운영 문서와 docs-site의 Work Ledger/Agentic Workflow를 함께 맞춘다.

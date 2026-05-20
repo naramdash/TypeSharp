@@ -2,7 +2,7 @@
 
 Benchmark date: 2026-05-19
 
-Task rollup: [Documentation Process Release And Adoption](../../docs/0001-0255-task-ledger-rollup.md#documentation-process-release-and-adoption)
+Task rollup: [Documentation Process Release And Adoption](../../docs/tasks-rollup.md#documentation-process-release-and-adoption)
 
 This benchmark records the documentation information architecture patterns TypeSharp should match for real users. It uses official documentation indexes and navigation surfaces only; it summarizes structure and page archetypes without copying source prose.
 
