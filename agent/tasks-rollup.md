@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 02:21:43 +09:00
+End Time: 2026-05-21 02:38:16 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0273. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0274. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0273 |
+| Completed work covered | 0001-0274 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -709,6 +709,33 @@ Primary evidence:
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 - `test/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0274 Lambda Indexer Overload Inference
+
+Completed C# interop work established:
+
+- C# delegate overload filtering now infers lambda body return types for indexer expressions such as `item => item[0]` when the receiver is a known array or an imported metadata-backed C# type with a compatible public indexer.
+- Imported C# indexer return metadata participates in delegate return filtering/ranking, so incompatible delegate return targets report `TS2406` before generated C# emission.
+- Indexer argument matching reuses the existing known literal, numeric conversion, object fallback, and metadata relationship scoring path used by C# overload resolution.
+- The local legacy metadata fixture now includes string/int delegate overloads over `LegacyFormatter` indexer returns and an int-only negative target.
+- .NET interop and C# members docs now list indexer-expression lambda body return inference as part of the implemented contextual delegate subset.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters lambda delegate indexer return type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# delegate lambda indexer return overload diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported delegate lambda overload indexer return match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on no matching C# delegate lambda indexer return overload"
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -733,7 +760,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0273 is compressed here.
+- Completed historical work through task 0274 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

@@ -857,6 +857,11 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaIndexerExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (TryInferLambdaBinaryExpressionType(body, out type))
         {
             return true;
@@ -1025,6 +1030,48 @@ public static class TypeSharpCSharpOverloadResolver
         return false;
     }
 
+    private static bool TryInferLambdaIndexerExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        if (body.Kind != SyntaxKind.IndexerExpression)
+        {
+            return false;
+        }
+
+        var expressions = body.Children.Where(child => !child.IsToken).ToArray();
+        if (expressions.Length < 2 ||
+            !TryInferLambdaBodyType(argument, expressions[0], delegateSignature, assemblies, localInstances, extensionNamespaces, out var receiverType))
+        {
+            return false;
+        }
+
+        var indexArguments = expressions.Skip(1).ToArray();
+        var lambdaInstances = assemblies is null
+            ? localInstances
+            : CreateLambdaParameterLocalInstances(argument, delegateSignature, assemblies, localInstances);
+        if (TryGetArrayIndexerReturnType(receiverType.Name, indexArguments, assemblies, lambdaInstances, out var arrayElementType))
+        {
+            type = new InferredArgumentType(arrayElementType);
+            return true;
+        }
+
+        if (assemblies is not null &&
+            TryGetInstanceIndexerReturnType(receiverType.Name, indexArguments, assemblies, lambdaInstances, out var returnType))
+        {
+            type = new InferredArgumentType(returnType);
+            return true;
+        }
+
+        return false;
+    }
+
     private static bool TryInferLambdaBinaryExpressionType(
         SyntaxNode body,
         out InferredArgumentType type)
@@ -1142,6 +1189,29 @@ public static class TypeSharpCSharpOverloadResolver
     }
 
     private static IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>> CreateLambdaParameterLocalInstances(
+        SyntaxNode argument,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances)
+    {
+        var merged = localInstances is null
+            ? new Dictionary<string, IReadOnlyList<MetadataTypeSymbol>>(StringComparer.Ordinal)
+            : new Dictionary<string, IReadOnlyList<MetadataTypeSymbol>>(localInstances, StringComparer.Ordinal);
+
+        if (!TryGetLambdaParameterNames(argument, out var parameterNames))
+        {
+            return merged;
+        }
+
+        foreach (var pair in CreateLambdaParameterLocalInstances(parameterNames, delegateSignature, assemblies))
+        {
+            merged[pair.Key] = pair.Value;
+        }
+
+        return merged;
+    }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>> CreateLambdaParameterLocalInstances(
         IReadOnlyList<string> parameterNames,
         KnownDelegateSignature delegateSignature,
         IReadOnlyList<MetadataAssemblySymbol> assemblies)
@@ -1157,6 +1227,121 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         return instances;
+    }
+
+    private static bool TryGetArrayIndexerReturnType(
+        string receiverType,
+        IReadOnlyList<SyntaxNode> arguments,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        out string elementType)
+    {
+        elementType = string.Empty;
+        if (!receiverType.EndsWith("[]", StringComparison.Ordinal) ||
+            arguments.Count != 1 ||
+            !TryInferArgumentType(arguments[0], out var indexType, assemblies, localInstances) ||
+            !CanPassKnownArgumentType(indexType, "int", assemblies))
+        {
+            return false;
+        }
+
+        elementType = receiverType[..^2];
+        return elementType.Length > 0;
+    }
+
+    private static bool TryGetInstanceIndexerReturnType(
+        string receiverType,
+        IReadOnlyList<SyntaxNode> arguments,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        out string returnType)
+    {
+        returnType = string.Empty;
+        var candidates = FindMetadataTypes(assemblies, receiverType)
+            .SelectMany(type => type.Properties
+                .Where(property =>
+                    !property.IsStatic &&
+                    property.HasPublicGetter &&
+                    property.IsIndexer &&
+                    property.ParameterTypes.Count == arguments.Count))
+            .ToArray();
+        if (candidates.Length == 0 ||
+            !TryInferIndexerArgumentTypes(arguments, assemblies, localInstances, out var argumentTypes))
+        {
+            return false;
+        }
+
+        var scoredCandidates = candidates
+            .Select(property => TryScoreIndexerArguments(property, argumentTypes, assemblies, out var score)
+                ? new IndexerCandidateScore(property, score)
+                : (IndexerCandidateScore?)null)
+            .Where(candidate => candidate is not null)
+            .Select(candidate => candidate!.Value)
+            .ToArray();
+        if (scoredCandidates.Length == 0)
+        {
+            return false;
+        }
+
+        var bestScore = scoredCandidates.Min(candidate => candidate.Score);
+        var bestCandidates = scoredCandidates
+            .Where(candidate => candidate.Score == bestScore)
+            .Select(candidate => candidate.Property)
+            .ToArray();
+        if (bestCandidates.Length != 1)
+        {
+            return false;
+        }
+
+        returnType = bestCandidates[0].Type;
+        return returnType.Length > 0;
+    }
+
+    private static bool TryInferIndexerArgumentTypes(
+        IReadOnlyList<SyntaxNode> arguments,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        out IReadOnlyList<InferredArgumentType> argumentTypes)
+    {
+        var inferred = new List<InferredArgumentType>();
+        foreach (var argument in arguments)
+        {
+            if (!TryInferArgumentType(argument, out var type, assemblies, localInstances))
+            {
+                argumentTypes = [];
+                return false;
+            }
+
+            inferred.Add(type);
+        }
+
+        argumentTypes = inferred;
+        return true;
+    }
+
+    private static bool TryScoreIndexerArguments(
+        MetadataPropertySymbol property,
+        IReadOnlyList<InferredArgumentType> argumentTypes,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        out int score)
+    {
+        score = 0;
+        if (property.ParameterTypes.Count != argumentTypes.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < argumentTypes.Count; index++)
+        {
+            if (!TryScoreKnownArgumentType(argumentTypes[index], property.ParameterTypes[index], assemblies, out var argumentScore))
+            {
+                return false;
+            }
+
+            score += argumentScore;
+        }
+
+        return true;
     }
 
     private static bool TryGetLambdaParameterMemberAccessPath(
@@ -1782,4 +1967,6 @@ public static class TypeSharpCSharpOverloadResolver
     private readonly record struct KnownDelegateSignature(IReadOnlyList<string> ParameterTypes, string ReturnType);
 
     private readonly record struct CandidateScore(CSharpOverloadCandidate Candidate, int Score);
+
+    private readonly record struct IndexerCandidateScore(MetadataPropertySymbol Property, int Score);
 }

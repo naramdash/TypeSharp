@@ -170,7 +170,8 @@ The checker validates:
 - static method-call return bodies,
 - extension method-call return bodies,
 - binary predicate bodies that return `bool`,
-- null-coalescing bodies with known fallback or receiver-side types.
+- null-coalescing bodies with known fallback or receiver-side types,
+- indexer-expression bodies with known array or metadata-backed indexer return types.
 
 ## Events
 
