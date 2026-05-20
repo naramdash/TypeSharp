@@ -10445,7 +10445,19 @@ static void DocsSiteContractIsStable()
     AssertEqual("6.0.3", root.GetProperty("devDependencies").GetProperty("typescript").GetString());
     AssertTrue(File.Exists(Path.Combine(siteRoot, "package-lock.json")), "Docs site should have a committed npm lockfile.");
 
-    var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.mjs"));
+    AssertTrue(File.Exists(Path.Combine(siteRoot, "astro.config.ts")), "Docs site should keep the Astro configuration in TypeScript.");
+    AssertFalse(File.Exists(Path.Combine(siteRoot, "astro.config.mjs")), "Docs site should not keep a JavaScript Astro configuration when TypeScript is supported.");
+
+    var docsOwnedJavaScript = Directory
+        .EnumerateFiles(siteRoot, "*.*", SearchOption.AllDirectories)
+        .Where(path => IsDocsOwnedSourcePath(siteRoot, path))
+        .Where(path => IsJavaScriptSourcePath(path))
+        .Select(path => Path.GetRelativePath(siteRoot, path).Replace('\\', '/'))
+        .OrderBy(path => path, StringComparer.Ordinal)
+        .ToArray();
+    AssertEqual(string.Empty, string.Join(", ", docsOwnedJavaScript));
+
+    var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.ts"));
     AssertContains("starlight({", astroConfig);
     AssertContains("title: 'TypeSharp'", astroConfig);
     AssertContains("label: 'Learn'", astroConfig);
@@ -16954,6 +16966,31 @@ static void AssertContains(string expectedSubstring, string actual)
     {
         throw new InvalidOperationException($"Expected output to contain '{expectedSubstring}', got '{actual}'.");
     }
+}
+
+static bool IsDocsOwnedSourcePath(string siteRoot, string path)
+{
+    var relativePath = Path.GetRelativePath(siteRoot, path);
+    var segments = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+    if (segments.Length == 0)
+    {
+        return false;
+    }
+
+    var firstSegment = segments[0];
+    return !string.Equals(firstSegment, ".astro", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(firstSegment, "dist", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(firstSegment, "node_modules", StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsJavaScriptSourcePath(string path)
+{
+    var extension = Path.GetExtension(path);
+    return string.Equals(extension, ".js", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(extension, ".mjs", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(extension, ".cjs", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(extension, ".jsx", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(extension, ".mjsx", StringComparison.OrdinalIgnoreCase);
 }
 
 static int CountOccurrences(string text, string value)

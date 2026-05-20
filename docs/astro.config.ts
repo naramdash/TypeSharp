@@ -67,6 +67,6 @@ export default defineConfig({
           ],
         },
       ],
-    }),
+    } satisfies Parameters<typeof starlight>[0]),
   ],
 });

@@ -49,6 +49,7 @@
 | Codex skills configuration | [tasks-rollup.md#task-0258-codex-skills-configuration](tasks-rollup.md#task-0258-codex-skills-configuration), [codex-skills.md](codex-skills.md), `C:\Users\juho_\.codex\skills` |
 | Parallel execution optimization | [tasks-rollup.md#task-0259-parallel-execution-optimization](tasks-rollup.md#task-0259-parallel-execution-optimization), `src/TypeSharp.Compiler/Checking`, `src/TypeSharp.Compiler/Building`, `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Docs dependency update | [tasks-rollup.md#task-0260-docs-dependency-update](tasks-rollup.md#task-0260-docs-dependency-update), `docs/package.json`, `docs/package-lock.json`, `tests/TypeSharp.Compiler.Tests/Program.cs` |
+| Docs TypeScript config conversion | [tasks-rollup.md#task-0261-docs-typescript-config-conversion](tasks-rollup.md#task-0261-docs-typescript-config-conversion), `docs/astro.config.ts`, `tests/TypeSharp.Compiler.Tests/Program.cs` |
 | Modules, imports, exports, safety gates | [tasks-rollup.md#language-safety-modules-and-import-export](tasks-rollup.md#language-safety-modules-and-import-export), source module and diagnostics fixtures |
 | Test suite quality audit | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit), `tests/TypeSharp.Compiler.Tests/Program.cs`, `tests/fixtures`, `vscode/typesharp/test`, `examples/runnable` |
 

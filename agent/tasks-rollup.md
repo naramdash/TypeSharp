@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-20 23:34:38 +09:00
+End Time: 2026-05-20 23:46:22 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0260. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0261. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0260 |
+| Completed work covered | 0001-0261 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -97,6 +97,7 @@ Completed docs/adoption work established:
 - Root README became the human entry point.
 - Agent workflow now requires task-end commit/push handoff and compressed task history.
 - Docs package dependencies are pinned to the current npm registry latest tags for Astro, Starlight, and TypeScript, with package contract coverage.
+- Docs-owned site configuration is TypeScript and the docs contract rejects committed docs-owned JavaScript source/config files.
 
 Primary evidence:
 
@@ -277,6 +278,30 @@ Primary evidence:
 - `docs/package-lock.json`
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0261 Docs TypeScript Config Conversion
+
+Completed docs TypeScript conversion work established:
+
+- Renamed `docs/astro.config.mjs` to `docs/astro.config.ts`.
+- Kept the Starlight configuration under TypeScript validation with `satisfies Parameters<typeof starlight>[0]`.
+- Strengthened the docs site contract so it requires `astro.config.ts`, rejects `astro.config.mjs`, and fails if docs-owned source/config files use `.js`, `.mjs`, `.cjs`, `.jsx`, or `.mjsx`.
+- Confirmed no docs-owned JavaScript source files remain; generated `dist`, `.astro`, and `node_modules` output are excluded from that contract.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+rg --files docs | rg "\.(mjs|js|cjs|jsx|mjsx)$"
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "GitHub Pages workflow contract"
+```
+
+Primary evidence:
+
+- `docs/astro.config.ts`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -301,7 +326,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0260 is compressed here.
+- Completed historical work through task 0261 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
