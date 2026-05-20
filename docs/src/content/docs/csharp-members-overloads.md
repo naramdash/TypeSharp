@@ -176,6 +176,7 @@ The checker validates:
 - `satisfies` bodies that preserve the proved expression type after proof erasure,
 - parenthesized bodies that preserve the enclosed expression type,
 - unary logical-not bodies that return `bool`,
+- unary numeric sign bodies that preserve supported numeric operand types,
 - null-coalescing bodies with known fallback or receiver-side types,
 - indexer-expression bodies with known array or metadata-backed indexer return types.
 

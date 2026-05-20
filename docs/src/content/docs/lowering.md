@@ -53,6 +53,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `lock` | C# `lock (expr) { ... }` statement. |
 | Parenthesized expressions | Preserve grouping as C# parentheses. |
 | Unary logical not | C# `!expr`. |
+| Unary numeric sign | C# `+expr` or `-expr`. |
 | Pipeline | Nested first-argument calls. |
 | Composition | Unary delegate lambdas. |
 | `satisfies` | Erases to the left expression after compile-time proof. |
@@ -162,7 +163,7 @@ Collection expressions lower to C# 7.3-compatible array creation or `List<T>` in
 
 Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known.
 
-Parenthesized expressions preserve grouping in generated C#. Unary logical-not expressions lower directly to C# `!expr`. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
+Parenthesized expressions preserve grouping in generated C#. Unary logical-not and numeric sign expressions lower directly to C# `!expr`, `+expr`, or `-expr`. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
 
 Evidence:
 
@@ -173,6 +174,7 @@ Evidence:
 - `test/TypeSharp.Compiler.Tests/Program.cs` parenthesized expression CLI build smoke
 - `test/fixtures/parser/positive/0033-logical-not-expression`
 - `test/TypeSharp.Compiler.Tests/Program.cs` logical-not lambda delegate CLI build smoke
+- `test/TypeSharp.Compiler.Tests/Program.cs` unary numeric lambda delegate and inferred function-valued export CLI build smokes
 - `test/fixtures/backend/csharp/positive/0033-extension-method-lowering`
 - `test/fixtures/backend/csharp/positive/0034-collection-spread-lowering`
 

@@ -142,6 +142,11 @@ internal sealed class TypeSharpInferenceEngine
             return IsBoolType(operandType) ? SimpleType.Named("bool") : SimpleType.Unknown;
         }
 
+        if (TryInferUnaryNumericExpression(children, expressions, inferNested, out var unaryNumericType))
+        {
+            return unaryNumericType;
+        }
+
         foreach (var child in expressions)
         {
             inferNested(child);
@@ -192,6 +197,50 @@ internal sealed class TypeSharpInferenceEngine
         type.IsKnown &&
         !type.IsNull &&
         string.Equals(type.Name, "bool", StringComparison.Ordinal);
+
+    private static bool TryInferUnaryNumericExpression(
+        IReadOnlyList<SyntaxNode> children,
+        IReadOnlyList<SyntaxNode> expressions,
+        Func<SyntaxNode, SimpleType> inferNested,
+        out SimpleType type)
+    {
+        type = SimpleType.Unknown;
+        var operatorKind = children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+        if (expressions.Count != 1 ||
+            operatorKind is not (SyntaxKind.PlusToken or SyntaxKind.MinusToken))
+        {
+            return false;
+        }
+
+        var operandType = inferNested(expressions[0]);
+        type = TryGetUnaryNumericResultType(operandType, operatorKind, out var resultType)
+            ? resultType
+            : SimpleType.Unknown;
+        return true;
+    }
+
+    private static bool TryGetUnaryNumericResultType(SimpleType operandType, SyntaxKind operatorKind, out SimpleType resultType)
+    {
+        resultType = SimpleType.Unknown;
+        if (!operandType.IsKnown || operandType.IsNull)
+        {
+            return false;
+        }
+
+        return operandType.Name switch
+        {
+            "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
+            "int" or "long" or "float" or "double" or "decimal" => SetResult(SimpleType.Named(operandType.Name), out resultType),
+            "uint" or "ulong" when operatorKind == SyntaxKind.PlusToken => SetResult(SimpleType.Named(operandType.Name), out resultType),
+            _ => false
+        };
+    }
+
+    private static bool SetResult(SimpleType value, out SimpleType result)
+    {
+        result = value;
+        return true;
+    }
 
     private static bool IsCompositionExpression(IReadOnlyList<SyntaxNode> children)
     {

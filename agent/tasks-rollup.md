@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 04:28:22 +09:00
+End Time: 2026-05-21 04:48:20 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0280. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0281. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0280 |
+| Completed work covered | 0001-0281 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -929,6 +929,44 @@ Primary evidence:
 - [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0281 Lambda Unary Numeric Overload Inference
+
+Completed lowering, inference, and C# interop work established:
+
+- Type inference now preserves supported unary numeric sign expression result types for `+expr` and `-expr`, including integral promotion to `int` for smaller signed/unsigned operands.
+- Top-level unannotated lambda-valued exports infer `System.Func<object, int>` for unary numeric literal bodies such as `text => -1`.
+- C# delegate overload filtering/ranking now treats lambda bodies such as `value => -value` and `value => +value` as the supported numeric operand return type when the operand is known from delegate metadata.
+- Incompatible delegate return targets report `TS2406` before generated C# emission.
+- The local legacy metadata fixture now includes `PickUnaryNumericReturn` overloads and a `RequiresUnaryNumericReturnString` negative target.
+- Grammar, reference, lowering, .NET interop, and C# members docs now list unary numeric sign lowering and unary numeric lambda body return inference as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build lowers inferred function value exports"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters lambda delegate unary numeric return type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# delegate lambda unary numeric return overload diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported delegate lambda overload unary numeric return match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on no matching C# delegate lambda unary numeric return overload"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -953,7 +991,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0280 is compressed here.
+- Completed historical work through task 0281 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

@@ -1198,6 +1198,11 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
+        if (TryInferLambdaUnaryNumericExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
+        {
+            return true;
+        }
+
         if (body.Children.Any(child => child.IsToken && IsBinaryPredicateOperator(child.Kind)))
         {
             type = new InferredArgumentType("bool");
@@ -1248,6 +1253,50 @@ public static class TypeSharpCSharpOverloadResolver
 
         type = new InferredArgumentType("bool");
         return true;
+    }
+
+    private static bool TryInferLambdaUnaryNumericExpressionType(
+        SyntaxNode argument,
+        SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
+        out InferredArgumentType type)
+    {
+        type = default;
+        var expressions = body.Children.Where(child => !child.IsToken).ToArray();
+        var operatorKind = body.Children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+        if (expressions.Length != 1 ||
+            operatorKind is not (SyntaxKind.PlusToken or SyntaxKind.MinusToken) ||
+            !TryInferLambdaBodyType(argument, expressions[0], delegateSignature, assemblies, localInstances, extensionNamespaces, out var operandType) ||
+            !TryGetUnaryNumericResultType(operandType, operatorKind, out var resultType, out var numericLiteralText))
+        {
+            return false;
+        }
+
+        type = new InferredArgumentType(resultType, numericLiteralText);
+        return true;
+    }
+
+    private static bool TryGetUnaryNumericResultType(
+        InferredArgumentType operandType,
+        SyntaxKind operatorKind,
+        out string resultType,
+        out string? numericLiteralText)
+    {
+        var operand = NormalizePrimitiveTypeName(operandType.Name);
+        resultType = operand switch
+        {
+            "byte" or "sbyte" or "short" or "ushort" => "int",
+            "int" or "long" or "float" or "double" or "decimal" => operand,
+            "uint" or "ulong" when operatorKind == SyntaxKind.PlusToken => operand,
+            _ => string.Empty
+        };
+        numericLiteralText = operatorKind == SyntaxKind.MinusToken && !string.IsNullOrEmpty(operandType.NumericLiteralText)
+            ? $"-{operandType.NumericLiteralText}"
+            : operandType.NumericLiteralText;
+        return resultType.Length > 0;
     }
 
     private static bool IsBinaryPredicateOperator(SyntaxKind kind) =>

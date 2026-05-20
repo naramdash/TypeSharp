@@ -2733,6 +2733,11 @@ public static class CSharpSourceBackend
                 return "bool";
             }
 
+            if (TryInferUnaryNumericExpressionType(node, out var unaryNumericType))
+            {
+                return unaryNumericType;
+            }
+
             if (node.Kind == SyntaxKind.BinaryExpression &&
                 node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
             {
@@ -2746,6 +2751,34 @@ public static class CSharpSourceBackend
             node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.FirstOrDefault(child => child.IsToken)?.Kind == SyntaxKind.BangToken &&
             node.Children.Count(child => !child.IsToken) == 1;
+
+        private static bool TryInferUnaryNumericExpressionType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var operatorKind = node.Children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (node.Kind != SyntaxKind.BinaryExpression ||
+                expression is null ||
+                node.Children.Count(child => !child.IsToken) != 1 ||
+                operatorKind is not (SyntaxKind.PlusToken or SyntaxKind.MinusToken))
+            {
+                return false;
+            }
+
+            return TryGetUnaryNumericResultType(InferExpressionType(expression), operatorKind, out type);
+        }
+
+        private static bool TryGetUnaryNumericResultType(string operandType, SyntaxKind operatorKind, out string resultType)
+        {
+            resultType = operandType switch
+            {
+                "byte" or "sbyte" or "short" or "ushort" => "int",
+                "int" or "long" or "float" or "double" or "decimal" => operandType,
+                "uint" or "ulong" when operatorKind == SyntaxKind.PlusToken => operandType,
+                _ => string.Empty
+            };
+            return resultType.Length > 0;
+        }
 
         private static string InferLiteralType(SyntaxNode? initializer)
         {
