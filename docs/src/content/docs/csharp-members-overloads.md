@@ -11,8 +11,15 @@ Official sources reviewed on 2026-05-21:
 - [C# keywords](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/)
 - [Operators and expressions](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/)
 - [Exceptions and exception handling](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/exceptions/)
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
 
 TypeSharp's rule is conservative: if a C# member interaction cannot be validated clearly, report a diagnostic before generated C# emission.
+
+## C# Release Parity Boundary
+
+TypeSharp tracks current C# releases as design input, but generated `net48` source stays C# 7.3-compatible. C# 14 extension members, null-conditional assignment, unbound generic `nameof`, lambda parameter modifiers, partial events/constructors, and related ergonomics must be expressed as TypeSharp semantics with C# 7.3 lowering rather than by emitting C# 14 syntax. C# 15 collection expression arguments and union types are Preview Watch signals only.
 
 ## Member Surface
 

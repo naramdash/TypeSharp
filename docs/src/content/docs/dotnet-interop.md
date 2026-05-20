@@ -23,6 +23,8 @@ TypeSharp interop must support these durable goals:
 
 The current backend emits C# 7.3-compatible source and builds generated projects for `net48`.
 
+Official C# release parity is tracked in [Feature Status](../feature-status/). As of the 2026-05-21 review, C# 14 stable features are TypeSharp design inputs only when they can lower to C# 7.3-compatible generated source, and C# 15 features remain Preview Watch. TypeSharp must not require .NET 10, .NET 11, or C# 14/15 generated-source syntax for ordinary `net48` artifacts.
+
 Generated output includes:
 
 - generated `.g.cs` source files,

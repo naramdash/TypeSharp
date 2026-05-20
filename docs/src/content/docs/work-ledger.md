@@ -12,10 +12,10 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | Item | State |
 | --- | --- |
 | Active task packet | None |
-| Next top-priority task | `0294 C# stable preview parity plan` is the highest-priority requested roadmap slice in `agent/tasks.md`. |
+| Next top-priority task | `0298 C# unbound generic nameof parity` is the highest-priority requested follow-up in `agent/tasks.md`. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0293-language-ecosystem-roadmap` is complete and folded into the compressed task rollup. No active task is selected. |
-| Completed work covered | 0001-0293 |
+| Current tooling slice | Task `0294-csharp-stable-preview-parity-plan` is complete and folded into the compressed task rollup. No active task is selected. |
+| Completed work covered | 0001-0294 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

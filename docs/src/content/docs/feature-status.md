@@ -24,6 +24,34 @@ TypeSharp evaluates every C#, F#, and TypeScript feature through four practical 
 - F#-style functional consistency: immutable data, option/result modeling, nominal closed unions, pattern matching, pipeline, and composition.
 - C#/.NET practicality: generated public metadata, attributes, records/classes/interfaces/delegates/events, async `Task`, generics, and local C# DLL/framework assembly interop.
 
+## C# Stable And Preview Parity Review
+
+Official C# sources refreshed on 2026-05-21:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+
+Current boundary:
+
+- C# 14 is the current stable C# release and is supported on .NET 10.
+- C# 15 is the current preview C# release and is supported on .NET 11 preview.
+- Microsoft documents .NET Framework projects as defaulting to C# 7.3, so TypeSharp generated source remains C# 7.3-compatible for `net48`.
+
+| C# Signal | TypeSharp Status | TypeSharp Direction |
+| --- | --- | --- |
+| C# 14 extension members, including extension properties and static extension members | Stable Backlog | TypeSharp-authored explicit-receiver extension methods are already MVP limited. Richer extension properties/static extension members need a metadata/lowering design that emits ordinary C# 7.3-compatible extension/static members. |
+| C# 14 null-conditional assignment | Stable Backlog | Useful TypeSharp ergonomics if lowered to explicit null guards in generated C# 7.3. Design must preserve left/right evaluation order and diagnostics before implementation. |
+| C# 14 `nameof` on unbound generic types | Stable Backlog | Low-risk TypeSharp parity candidate because generated C# can lower to a string constant instead of C# 14 syntax. Parser/name-resolution coverage is still required. |
+| C# 14 simple lambda parameter modifiers | Stable Backlog | Useful for imported delegate/byref interop. TypeSharp should accept only explicitly modeled `ref`/`out`/`in` lambda boundaries and lower to C# 7.3-compatible typed lambdas. |
+| C# 14 partial constructors and partial events | Stable Backlog | Relevant only after TypeSharp has a broader partial member/public ABI merge policy. Generated code can keep complete members until that policy exists. |
+| C# 14 field-backed properties | Replacement | TypeSharp should keep explicit record/class/property semantics and generate backing fields when needed. It does not need a `field` keyword surface. |
+| C# 14 user-defined compound assignment operators | Stable Backlog | Depends on a broader operator overload policy. Not stable while full C# operator overloading remains outside the TypeSharp surface. |
+| C# 14 file-based app preprocessor directives | Rejected for MVP | TypeSharp uses `TypeSharp.toml`, explicit source discovery, and module graph rules instead of C# file-based app directives. |
+| C# 14 first-class `Span<T>` conversions | Experimental | Span-like APIs require `System.Memory`, `net48` deployment, and performance review before TypeSharp adopts a stable surface. |
+| C# 15 collection expression arguments | Preview Watch | Directional input for TypeSharp collection expressions only. Do not make `with(...)` collection arguments stable until C# 15 leaves preview and TypeSharp has C# 7.3 lowering semantics. |
+| C# 15 union types | Preview Watch | Directional input only. TypeSharp's stable union model remains nominal closed unions plus local type-level unions until C# union runtime/metadata contracts settle. |
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
@@ -78,6 +106,7 @@ TypeSharp evaluates every C#, F#, and TypeScript feature through four practical 
 | Area | Status | Boundary |
 | --- | --- | --- |
 | C# preview union types | Preview Watch | Directional input only; TypeSharp's stable union model remains nominal closed unions plus local type-level unions. |
+| C# preview collection expression arguments | Preview Watch | Directional input only; TypeSharp collection expression constructor/factory arguments need stable C# semantics and independent `net48` lowering before adoption. |
 | TypeScript native compiler and 7.0 behavior | Preview Watch | Tooling strategy input only; not a TypeSharp runtime or syntax requirement. |
 | Type providers | Experimental | Build-time external schema/code execution needs permission, cache, reproducibility, and sandbox policy first. |
 | Effect annotations | Experimental | Small `async`, `throws`, `io`, `unsafe`, or `dynamic` annotations may inform diagnostics before runtime effect systems. |

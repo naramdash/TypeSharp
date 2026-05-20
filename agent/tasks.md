@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0293                          |
+| Completed range    | 0001-0294                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q2       | Requested   | Task 0294 parity review   | 0298 C# unbound generic nameof parity    | Create packet when selected                                              | Implement or design TypeSharp `nameof(List<>)`-style support by lowering to C# 7.3-compatible string constants with parser/name-resolution coverage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |
 | Q2       | Requested   | Task 0293 roadmap refresh | 0296 F# functional consistency roadmap   | Create packet when selected                                              | Plan pattern exhaustiveness, computation/workflow modeling, pipelines/composition, records/unions, async, and result ergonomics from the F# baseline. |
 | Q2       | Requested   | Task 0293 roadmap refresh | 0295 TypeScript structural module roadmap | Create packet when selected                                             | Plan structural type operators, narrowing, declaration/module ergonomics, and project config behavior without leaking structural shapes into public ABI. |
-| Q1       | Requested   | Task 0293 roadmap refresh | 0294 C# stable preview parity plan       | Create packet when selected                                              | Classify C# 14 stable ergonomics and C# 15 preview union/collection signals against TypeSharp lowering, public ABI, diagnostics, and feature gates. |
-| Q1       | Done        | User directive            | 0293 Language ecosystem roadmap          | [tasks-rollup.md#task-0293-language-ecosystem-roadmap](tasks-rollup.md#task-0293-language-ecosystem-roadmap) | Refreshed official C#/F#/TypeScript/.NET ecosystem baselines, queued the next roadmap slice, and updated goal-mode continuation rules.        |
+| Q1       | Done        | Task 0293 roadmap refresh | 0294 C# stable preview parity plan       | [tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan](tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan) | Classified current C# stable/preview signals against TypeSharp lowering, public ABI, diagnostics, and feature gates, then queued `0298`. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

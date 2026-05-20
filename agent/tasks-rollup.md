@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 08:30:16 +09:00
+End Time: 2026-05-21 08:36:54 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0293. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0294. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0293 |
+| Completed work covered | 0001-0294 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -107,6 +107,7 @@ Completed docs/adoption work established:
 - The Writing Guide adapts the Vue Docs Writing Guide into TypeSharp-specific authoring rules, `tysh` example project guidance, emoji usage, and review checks.
 - Release artifact automation publishes tagged CLI, `net48` runtime library, VSIX, release notes, and SHA-256 manifest assets to GitHub Releases.
 - Microsoft Learn C#-style detailed TypeSharp reference pages now explain CLR type mapping, value/reference/nullability/generic public type rules, member lookup, overload ranking, byref calls, delegates, events, extension methods, exception boundaries, and interop diagnostics.
+- Feature Status now records the 2026-05-21 C# stable/preview parity review, including C# 14 Stable Backlog/Replacement/Experimental classifications and C# 15 Preview Watch boundaries.
 - Runnable TypeSharp example projects now use realistic invoice, billing public API, local C# billing interop, ASP.NET/WCF greeting, worker work-item, and nullable customer profile scenarios, with smoke-tested commands and host compilation where applicable.
 - Runnable example READMEs now explain every command, output, TypeSharp, C#, and XML code block before the block appears, with docs authoring guidance and contract tests enforcing that pattern.
 
@@ -1363,6 +1364,32 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - Official references listed in [Project Policy](../docs/src/content/docs/project-policy.md)
 
+## Task 0294 CSharp Stable Preview Parity Plan
+
+Completed C# roadmap work established:
+
+- Refreshed official Microsoft C# language versioning, C# 14, and C# 15 sources on 2026-05-21.
+- Recorded the target boundary that .NET Framework projects default to C# 7.3, so TypeSharp generated `net48` source remains C# 7.3-compatible even when later C# releases inform TypeSharp design.
+- Added a C# stable/preview parity review to Feature Status.
+- Classified C# 14 extension members, null-conditional assignment, unbound generic `nameof`, simple lambda parameter modifiers, partial constructors/events, and user-defined compound assignment as Stable Backlog where TypeSharp semantics and C# 7.3 lowering can be designed independently.
+- Classified C# 14 field-backed properties as Replacement, C# 14 file-based app directives as Rejected for MVP, C# 14 `Span<T>` conversions as Experimental, and C# 15 collection expression arguments and union types as Preview Watch.
+- Updated C# members and .NET interop docs to state that C# 14/15 syntax must not be emitted for ordinary `net48` artifacts.
+- Queued `0298 C# unbound generic nameof parity` as the next concrete C# follow-up because it can lower to C# 7.3-compatible string constants.
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1387,7 +1414,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0293 is compressed here.
+- Completed historical work through task 0294 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
