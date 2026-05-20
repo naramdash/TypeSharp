@@ -154,8 +154,8 @@ public static class TypeSharpCSharpOverloadResolver
             }
 
             var positionalOrdinal = GetPositionalOrdinal(arguments, index);
-            var betterType = GetExpectedArgumentType(better.Method, better.Method.Parameters[betterParameterIndex.Value], betterParameterIndex.Value, positionalOrdinal);
-            var worseType = GetExpectedArgumentType(worse.Method, worse.Method.Parameters[worseParameterIndex.Value], worseParameterIndex.Value, positionalOrdinal);
+            var betterType = GetExpectedArgumentType(better.Method, arguments, index, better.Method.Parameters[betterParameterIndex.Value], betterParameterIndex.Value, positionalOrdinal, assemblies, localInstances: null);
+            var worseType = GetExpectedArgumentType(worse.Method, arguments, index, worse.Method.Parameters[worseParameterIndex.Value], worseParameterIndex.Value, positionalOrdinal, assemblies, localInstances: null);
             if (TypeNamesEqual(betterType, worseType))
             {
                 continue;
@@ -231,7 +231,7 @@ public static class TypeSharpCSharpOverloadResolver
 
             var parameter = method.Parameters[parameterIndex.Value];
             var positionalOrdinal = GetPositionalOrdinal(arguments, index);
-            var expectedType = GetExpectedArgumentType(method, parameter, parameterIndex.Value, positionalOrdinal);
+            var expectedType = GetExpectedArgumentType(method, arguments, index, parameter, parameterIndex.Value, positionalOrdinal, assemblies, localInstances);
 
             if (GetArgumentByRefKind(argument) != parameter.ByRefKind)
             {
@@ -281,7 +281,7 @@ public static class TypeSharpCSharpOverloadResolver
             }
 
             var positionalOrdinal = GetPositionalOrdinal(arguments, index);
-            var expectedType = GetExpectedArgumentType(method, parameter, parameterIndex.Value, positionalOrdinal);
+            var expectedType = GetExpectedArgumentType(method, arguments, index, parameter, parameterIndex.Value, positionalOrdinal, assemblies, localInstances);
             if (IsLambdaArgument(argument))
             {
                 if (!CanPassLambdaArgument(argument, expectedType, assemblies, localInstances, extensionNamespaces))
@@ -390,13 +390,25 @@ public static class TypeSharpCSharpOverloadResolver
         return ordinal;
     }
 
+    private static int GetPositionalArgumentCount(IReadOnlyList<SyntaxNode> arguments) =>
+        arguments.Count(argument => !TryGetNamedArgumentName(argument, out _));
+
     private static string GetExpectedArgumentType(
         MetadataMethodSymbol method,
+        IReadOnlyList<SyntaxNode> arguments,
+        int argumentIndex,
         MetadataParameterSymbol parameter,
         int parameterIndex,
-        int positionalOrdinal)
+        int positionalOrdinal,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances)
     {
         if (!IsExpandedParamsArgument(method, parameterIndex, positionalOrdinal))
+        {
+            return parameter.Type;
+        }
+
+        if (CanUseSingleParamsArrayArgument(method, arguments, argumentIndex, parameter, positionalOrdinal, assemblies, localInstances))
         {
             return parameter.Type;
         }
@@ -404,6 +416,44 @@ public static class TypeSharpCSharpOverloadResolver
         return parameter.Type.EndsWith("[]", StringComparison.Ordinal)
             ? parameter.Type.Substring(0, parameter.Type.Length - 2)
             : parameter.Type;
+    }
+
+    private static bool CanUseSingleParamsArrayArgument(
+        MetadataMethodSymbol method,
+        IReadOnlyList<SyntaxNode> arguments,
+        int argumentIndex,
+        MetadataParameterSymbol parameter,
+        int positionalOrdinal,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances)
+    {
+        if (TryGetNamedArgumentName(arguments[argumentIndex], out _) ||
+            positionalOrdinal != method.Parameters.Count - 1 ||
+            GetPositionalArgumentCount(arguments) != method.Parameters.Count ||
+            !IsCollectionExpressionArgument(arguments[argumentIndex]) ||
+            !TryInferArgumentType(arguments[argumentIndex], out var argumentType, assemblies, localInstances))
+        {
+            return false;
+        }
+
+        return CanPassKnownArgumentType(argumentType, parameter.Type, assemblies);
+    }
+
+    private static bool IsCollectionExpressionArgument(SyntaxNode argument)
+    {
+        var expression = UnwrapArgumentExpression(argument);
+        while (expression.Kind == SyntaxKind.ParenthesizedExpression)
+        {
+            var inner = expression.Children.FirstOrDefault(child => !child.IsToken);
+            if (inner is null)
+            {
+                return false;
+            }
+
+            expression = inner;
+        }
+
+        return expression.Kind == SyntaxKind.CollectionExpression;
     }
 
     private static bool IsExpandedParamsArgument(MetadataMethodSymbol method, int parameterIndex, int positionalOrdinal)
@@ -452,7 +502,7 @@ public static class TypeSharpCSharpOverloadResolver
             }
 
             var positionalOrdinal = GetPositionalOrdinal(arguments, index);
-            var expectedType = GetExpectedArgumentType(candidate.Method, parameter, parameterIndex.Value, positionalOrdinal);
+            var expectedType = GetExpectedArgumentType(candidate.Method, arguments, index, parameter, parameterIndex.Value, positionalOrdinal, assemblies, localInstances);
             if (IsLambdaArgument(argument))
             {
                 if (!TryScoreLambdaArgument(argument, expectedType, assemblies, localInstances, extensionNamespaces, out var lambdaScore))

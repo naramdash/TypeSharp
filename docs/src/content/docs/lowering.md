@@ -161,7 +161,7 @@ Evidence:
 
 ## Collections, Indexers, Intrinsics, And Extensions
 
-Collection expressions lower to C# 7.3-compatible array creation or `List<T>` initializers. Spread elements over known arrays or `List<T>` lower through `System.Linq.Enumerable.Concat<T>` with target-specific array/list materialization. Homogeneous collection expression arguments to imported C# array overloads participate in metadata-backed overload filtering before emission.
+Collection expressions lower to C# 7.3-compatible array creation or `List<T>` initializers. Spread elements over known arrays or `List<T>` lower through `System.Linq.Enumerable.Concat<T>` with target-specific array/list materialization. Homogeneous collection expression arguments to imported C# array overloads and single collection expression arguments in `params T[]` positions participate in metadata-backed overload filtering before emission.
 
 Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known.
 

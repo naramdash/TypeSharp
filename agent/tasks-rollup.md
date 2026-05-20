@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 06:41:24 +09:00
+End Time: 2026-05-21 06:56:20 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0287. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0288. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0287 |
+| Completed work covered | 0001-0288 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -1177,6 +1177,41 @@ Primary evidence:
 - [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0288 Params Collection Expression Array Overload
+
+Completed C# interop work established:
+
+- A single homogeneous collection expression in an imported C# `params T[]` position is now checked against the full params array type before falling back to expanded element matching.
+- `LegacyParamsOverloads.Pick(",", ["a", "b"])` ranks the `params string[]` candidate ahead of the expanded `params object[]` fallback.
+- Expanded params calls such as `LegacyParamsOverloads.Pick(",", "a", "b")` keep their element-type matching path.
+- Checker coverage proves compatible params collection expression calls do not report `TS2402` or `TS2406`.
+- CLI build coverage proves the call emits and compiles as `LegacyParamsOverloads.Pick(",", new string[] { "a", "b" })` in `net48` generated C#.
+- C# members, lowering, .NET interop, and Work Ledger docs list single collection expression params-array ranking as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver treats collection expression as params array"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker accepts imported params collection expression array overload"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported params collection expression array match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters collection expression argument type"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles exact expanded params overload match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports ambiguous expanded params overload diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported params call"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1201,7 +1236,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0287 is compressed here.
+- Completed historical work through task 0288 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

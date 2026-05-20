@@ -112,6 +112,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports no matching C# overload for known argument type diagnostics", CheckerReportsNoMatchingCSharpOverloadForKnownArgumentTypeDiagnostics),
     ("checker reports no matching C# overload for numeric literal conversion diagnostics", CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDiagnostics),
     ("checker reports no matching C# overload for collection expression argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForCollectionExpressionArgumentDiagnostics),
+    ("checker accepts imported params collection expression array overload", CheckerAcceptsImportedParamsCollectionExpressionArrayOverload),
     ("checker reports no matching C# overload for imported metadata argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForImportedMetadataArgumentDiagnostics),
     ("checker reports no matching C# overload for null literal diagnostics", CheckerReportsNoMatchingCSharpOverloadForNullLiteralDiagnostics),
     ("checker reports no matching C# constructor diagnostics", CheckerReportsNoMatchingCSharpConstructorDiagnostics),
@@ -171,6 +172,7 @@ var tests = new (string Name, Action Body)[]
     ("C# overload resolver filters known argument type mismatch", CSharpOverloadResolverFiltersKnownArgumentTypeMismatch),
     ("C# overload resolver filters numeric literal conversion mismatch", CSharpOverloadResolverFiltersNumericLiteralConversionMismatch),
     ("C# overload resolver filters collection expression argument type", CSharpOverloadResolverFiltersCollectionExpressionArgumentType),
+    ("C# overload resolver treats collection expression as params array", CSharpOverloadResolverTreatsCollectionExpressionAsParamsArray),
     ("C# overload resolver ranks null literal reference match", CSharpOverloadResolverRanksNullLiteralReferenceMatch),
     ("C# overload resolver ranks null literal nearest metadata reference", CSharpOverloadResolverRanksNullLiteralNearestMetadataReference),
     ("C# overload resolver ranks nearest metadata relationship", CSharpOverloadResolverRanksNearestMetadataRelationship),
@@ -412,6 +414,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported metadata relationship overload match", CliBuildCompilesImportedMetadataRelationshipOverloadMatch),
     ("CLI build compiles imported collection expression overload match", CliBuildCompilesImportedCollectionExpressionOverloadMatch),
     ("CLI build compiles numeric literal constant conversion", CliBuildCompilesNumericLiteralConstantConversion),
+    ("CLI build compiles imported params collection expression array match", CliBuildCompilesImportedParamsCollectionExpressionArrayMatch),
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
     ("CLI build compiles imported named argument call", CliBuildCompilesImportedNamedArgumentCall),
@@ -3734,6 +3737,38 @@ static void CheckerReportsNoMatchingCSharpOverloadForCollectionExpressionArgumen
     });
 }
 
+static void CheckerAcceptsImportedParamsCollectionExpressionArrayOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ParamsCollectionExpressionArrayOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ParamsCollectionExpressionArrayOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ParamsCollectionExpressionArrayOverload
+
+            import { LegacyParamsOverloads } from "Legacy.Tools"
+
+            export fun choose(): string =
+              LegacyParamsOverloads.Pick(",", ["a", "b"])
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertFalse(result.HasErrors, "A single homogeneous collection expression should be accepted as the params array argument.");
+        AssertFalse(result.Diagnostics.Any(diagnostic => diagnostic.Code is "TS2402" or "TS2406"), "Compatible params collection expression calls should not produce overload diagnostics.");
+    });
+}
+
 static void CheckerReportsNoMatchingCSharpOverloadForImportedMetadataArgumentDiagnostics()
 {
     WithWorkspace(root =>
@@ -5744,6 +5779,51 @@ static void CSharpOverloadResolverFiltersCollectionExpressionArgumentType()
     AssertFalse(resolution.IsAmbiguous, "Collection expression element type should remove incompatible array overload candidates.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible collection expression overload candidate.");
     AssertEqual("string[]", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverTreatsCollectionExpressionAsParamsArray()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyParamsOverloads.Pick(",", ["Ada", "Byron"])
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyParamsOverloads",
+        [
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("separator", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("values", "string[]", MetadataByRefKind.None, IsParams: true, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "Pick",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("separator", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("values", "object[]", MetadataByRefKind.None, IsParams: true, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(2, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "A collection expression that fits the params array should outrank expanded object fallback.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select one params overload candidate.");
+    AssertEqual("string[]", selected.Method.Parameters[1].Type);
 }
 
 static void CSharpOverloadResolverRanksNullLiteralReferenceMatch()
@@ -15624,6 +15704,50 @@ static void CliBuildCompilesNumericLiteralConstantConversion()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NumericLiteralConstantConversion.dll")),
             "Generated project build should compile an integral constant conversion to a smaller C# numeric parameter.");
+    });
+}
+
+static void CliBuildCompilesImportedParamsCollectionExpressionArrayMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedParamsCollectionExpressionArrayMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedParamsCollectionExpressionArrayMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedParamsCollectionExpressionArrayMatch
+
+            import { LegacyParamsOverloads } from "Legacy.Tools"
+
+            export fun choose(): string =
+              LegacyParamsOverloads.Pick(",", ["a", "b"])
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported params collection expression array match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedParamsCollectionExpressionArrayMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyParamsOverloads.Pick(\",\", new string[] { \"a\", \"b\" });", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedParamsCollectionExpressionArrayMatch.dll")),
+            "Generated project build should compile a collection expression as the imported params array argument.");
     });
 }
 

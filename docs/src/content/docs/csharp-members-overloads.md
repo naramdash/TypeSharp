@@ -92,7 +92,7 @@ Current ranking prefers:
 
 If two candidates remain equally plausible, TypeSharp reports ambiguity instead of relying on generated C# compilation.
 
-Homogeneous collection expression arguments such as `["Ada"]` infer an array argument type for imported C# overload filtering and ranking. They also infer implemented `T` positions for imported generic method parameters shaped like `T[]`, so constraints such as `where T : class` are validated before emission. Incompatible array element targets report `TS2406` before generated C# emission instead of falling through to a C# compiler error.
+Homogeneous collection expression arguments such as `["Ada"]` infer an array argument type for imported C# overload filtering and ranking. They also infer implemented `T` positions for imported generic method parameters shaped like `T[]`, so constraints such as `where T : class` are validated before emission. In a `params T[]` position, a single compatible collection expression is ranked as the params array argument before falling back to expanded element matching. Incompatible array element targets report `TS2406` before generated C# emission instead of falling through to a C# compiler error.
 
 ## Named, Optional, And Params Arguments
 
@@ -109,6 +109,7 @@ Rules:
 - required parameters must be supplied,
 - optional parameters can be omitted only when metadata says they are optional,
 - expanded `params` arguments are checked against the element type,
+- a single compatible collection expression in the `params` position is checked against the full `params` array type,
 - invalid combinations report diagnostics before emission.
 
 ## Ref, Out, And In
