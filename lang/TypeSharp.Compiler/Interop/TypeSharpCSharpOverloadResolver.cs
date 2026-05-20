@@ -862,7 +862,7 @@ public static class TypeSharpCSharpOverloadResolver
             return true;
         }
 
-        if (TryInferLambdaBinaryExpressionType(body, out type))
+        if (TryInferLambdaBinaryExpressionType(argument, body, delegateSignature, assemblies, localInstances, extensionNamespaces, out type))
         {
             return true;
         }
@@ -1073,27 +1073,150 @@ public static class TypeSharpCSharpOverloadResolver
     }
 
     private static bool TryInferLambdaBinaryExpressionType(
+        SyntaxNode argument,
         SyntaxNode body,
+        KnownDelegateSignature delegateSignature,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances,
+        IReadOnlyCollection<string>? extensionNamespaces,
         out InferredArgumentType type)
     {
         type = default;
-        if (body.Kind != SyntaxKind.BinaryExpression ||
-            !body.Children.Any(child => child.IsToken &&
-                child.Kind is SyntaxKind.EqualsEqualsToken or
-                    SyntaxKind.BangEqualsToken or
-                    SyntaxKind.LessToken or
-                    SyntaxKind.LessOrEqualsToken or
-                    SyntaxKind.GreaterToken or
-                    SyntaxKind.GreaterOrEqualsToken or
-                    SyntaxKind.AmpersandAmpersandToken or
-                    SyntaxKind.PipePipeToken))
+        if (body.Kind != SyntaxKind.BinaryExpression)
         {
             return false;
         }
 
-        type = new InferredArgumentType("bool");
+        if (body.Children.Any(child => child.IsToken && IsBinaryPredicateOperator(child.Kind)))
+        {
+            type = new InferredArgumentType("bool");
+            return true;
+        }
+
+        if (!TryGetBinaryValueExpression(body, out var left, out var right, out var operatorKind) ||
+            !TryInferLambdaBodyType(argument, left, delegateSignature, assemblies, localInstances, extensionNamespaces, out var leftType) ||
+            !TryInferLambdaBodyType(argument, right, delegateSignature, assemblies, localInstances, extensionNamespaces, out var rightType))
+        {
+            return false;
+        }
+
+        if (operatorKind == SyntaxKind.PlusToken &&
+            (IsStringKnownType(leftType) || IsStringKnownType(rightType)))
+        {
+            type = new InferredArgumentType("string");
+            return true;
+        }
+
+        if (TryPromoteKnownNumericBinaryType(leftType, rightType, out var numericType))
+        {
+            type = new InferredArgumentType(numericType);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsBinaryPredicateOperator(SyntaxKind kind) =>
+        kind is SyntaxKind.EqualsEqualsToken or
+            SyntaxKind.BangEqualsToken or
+            SyntaxKind.LessToken or
+            SyntaxKind.LessOrEqualsToken or
+            SyntaxKind.GreaterToken or
+            SyntaxKind.GreaterOrEqualsToken or
+            SyntaxKind.AmpersandAmpersandToken or
+            SyntaxKind.PipePipeToken;
+
+    private static bool TryGetBinaryValueExpression(
+        SyntaxNode body,
+        out SyntaxNode left,
+        out SyntaxNode right,
+        out SyntaxKind operatorKind)
+    {
+        var expressions = body.Children.Where(child => !child.IsToken).ToArray();
+        left = expressions.Length == 2 ? expressions[0] : null!;
+        right = expressions.Length == 2 ? expressions[1] : null!;
+        operatorKind = body.Children
+            .Where(child => child.IsToken)
+            .Select(child => child.Kind)
+            .FirstOrDefault(kind => kind is SyntaxKind.PlusToken or
+                SyntaxKind.MinusToken or
+                SyntaxKind.StarToken or
+                SyntaxKind.SlashToken or
+                SyntaxKind.PercentToken);
+
+        return expressions.Length == 2 && operatorKind != SyntaxKind.UnknownToken;
+    }
+
+    private static bool IsStringKnownType(InferredArgumentType type) =>
+        string.Equals(NormalizePrimitiveTypeName(type.Name), "string", StringComparison.Ordinal);
+
+    private static bool TryPromoteKnownNumericBinaryType(
+        InferredArgumentType leftType,
+        InferredArgumentType rightType,
+        out string resultType)
+    {
+        resultType = string.Empty;
+        var left = NormalizePrimitiveTypeName(leftType.Name);
+        var right = NormalizePrimitiveTypeName(rightType.Name);
+        if (!IsNumericType(left) || !IsNumericType(right))
+        {
+            return false;
+        }
+
+        if (left is "decimal" || right is "decimal")
+        {
+            if (left is "float" or "double" || right is "float" or "double")
+            {
+                return false;
+            }
+
+            resultType = "decimal";
+            return true;
+        }
+
+        if (left is "double" || right is "double")
+        {
+            resultType = "double";
+            return true;
+        }
+
+        if (left is "float" || right is "float")
+        {
+            resultType = "float";
+            return true;
+        }
+
+        if (left is "ulong" || right is "ulong")
+        {
+            if (CanImplicitlyPromoteToUnsignedLong(left) && CanImplicitlyPromoteToUnsignedLong(right))
+            {
+                resultType = "ulong";
+                return true;
+            }
+
+            return false;
+        }
+
+        if (left is "long" || right is "long")
+        {
+            resultType = "long";
+            return true;
+        }
+
+        if (left is "uint" || right is "uint")
+        {
+            resultType = left is "sbyte" or "short" or "int" || right is "sbyte" or "short" or "int"
+                ? "long"
+                : "uint";
+            return true;
+        }
+
+        resultType = "int";
         return true;
     }
+
+    private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
+        type is "byte" or "ushort" or "uint" or "ulong";
 
     private static bool TryInferLambdaNullCoalescingExpressionType(
         SyntaxNode argument,

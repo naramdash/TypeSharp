@@ -150,6 +150,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports no matching C# delegate lambda extension method return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaExtensionMethodReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda static method return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaStaticMethodReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda binary return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaBinaryReturnOverloadDiagnostics),
+    ("checker reports no matching C# delegate lambda binary value return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaBinaryValueReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda coalesce return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaCoalesceReturnOverloadDiagnostics),
     ("checker reports no matching C# delegate lambda indexer return overload diagnostics", CheckerReportsNoMatchingCSharpDelegateLambdaIndexerReturnOverloadDiagnostics),
     ("C# overload resolver selects exact literal match", CSharpOverloadResolverSelectsExactLiteralMatch),
@@ -168,6 +169,7 @@ var tests = new (string Name, Action Body)[]
     ("C# overload resolver filters lambda delegate extension method return type", CSharpOverloadResolverFiltersLambdaDelegateExtensionMethodReturnType),
     ("C# overload resolver filters lambda delegate static method return type", CSharpOverloadResolverFiltersLambdaDelegateStaticMethodReturnType),
     ("C# overload resolver filters lambda delegate binary return type", CSharpOverloadResolverFiltersLambdaDelegateBinaryReturnType),
+    ("C# overload resolver filters lambda delegate binary value return type", CSharpOverloadResolverFiltersLambdaDelegateBinaryValueReturnType),
     ("C# overload resolver filters lambda delegate coalesce return type", CSharpOverloadResolverFiltersLambdaDelegateCoalesceReturnType),
     ("C# overload resolver filters lambda delegate indexer return type", CSharpOverloadResolverFiltersLambdaDelegateIndexerReturnType),
     ("C# overload resolver ranks lambda delegate return type", CSharpOverloadResolverRanksLambdaDelegateReturnType),
@@ -204,6 +206,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on no matching C# delegate lambda extension method return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaExtensionMethodReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda static method return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaStaticMethodReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda binary return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBinaryReturnOverload),
+    ("CLI build stops before emission on no matching C# delegate lambda binary value return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBinaryValueReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda coalesce return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaCoalesceReturnOverload),
     ("CLI build stops before emission on no matching C# delegate lambda indexer return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaIndexerReturnOverload),
     ("CLI build stops before emission on known argument type C# overload mismatch", CliBuildStopsBeforeEmissionOnKnownArgumentTypeCSharpOverloadMismatch),
@@ -383,6 +386,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported delegate lambda overload extension method return match", CliBuildCompilesImportedDelegateLambdaOverloadExtensionMethodReturnMatch),
     ("CLI build compiles imported delegate lambda overload static method return match", CliBuildCompilesImportedDelegateLambdaOverloadStaticMethodReturnMatch),
     ("CLI build compiles imported delegate lambda overload binary return match", CliBuildCompilesImportedDelegateLambdaOverloadBinaryReturnMatch),
+    ("CLI build compiles imported delegate lambda overload binary value return match", CliBuildCompilesImportedDelegateLambdaOverloadBinaryValueReturnMatch),
     ("CLI build compiles imported delegate lambda overload coalesce return match", CliBuildCompilesImportedDelegateLambdaOverloadCoalesceReturnMatch),
     ("CLI build compiles imported delegate lambda overload indexer return match", CliBuildCompilesImportedDelegateLambdaOverloadIndexerReturnMatch),
     ("CLI build compiles imported event add and remove call", CliBuildCompilesImportedEventAddRemoveCall),
@@ -2670,6 +2674,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(
             ["System.Func`2<Legacy.Tools.LegacyNamed, bool>", "System.Func`2<Legacy.Tools.LegacyNamed, string>"],
             delegateBinaryReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+        var delegateBinaryValueReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickBinaryValueReturn").ToArray();
+        AssertEqual(2, delegateBinaryValueReturnPicks.Length);
+        AssertSequence(
+            ["System.Func`2<Legacy.Tools.LegacyNamed, int>", "System.Func`2<Legacy.Tools.LegacyNamed, string>"],
+            delegateBinaryValueReturnPicks.Select(method => method.Parameters[1].Type).OrderBy(type => type, StringComparer.Ordinal).ToArray());
         var delegateCoalesceReturnPicks = legacyDelegateOverloads.Methods.Where(method => method.Name == "PickCoalesceReturn").ToArray();
         AssertEqual(2, delegateCoalesceReturnPicks.Length);
         AssertSequence(
@@ -2712,6 +2721,9 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var requiresBinaryReturnString = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresBinaryReturnString"), "RequiresBinaryReturnString metadata should be present.");
         AssertSequence(["value", "transform"], requiresBinaryReturnString.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, string>"], requiresBinaryReturnString.Parameters.Select(parameter => parameter.Type).ToArray());
+        var requiresBinaryValueReturnInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresBinaryValueReturnInt"), "RequiresBinaryValueReturnInt metadata should be present.");
+        AssertSequence(["value", "transform"], requiresBinaryValueReturnInt.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, int>"], requiresBinaryValueReturnInt.Parameters.Select(parameter => parameter.Type).ToArray());
         var requiresCoalesceReturnInt = Require(legacyDelegateOverloads.Methods.SingleOrDefault(method => method.Name == "RequiresCoalesceReturnInt"), "RequiresCoalesceReturnInt metadata should be present.");
         AssertSequence(["value", "transform"], requiresCoalesceReturnInt.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["Legacy.Tools.LegacyNamed", "System.Func`2<Legacy.Tools.LegacyNamed, int>"], requiresCoalesceReturnInt.Parameters.Select(parameter => parameter.Type).ToArray());
@@ -4807,6 +4819,41 @@ static void CheckerReportsNoMatchingCSharpDelegateLambdaBinaryReturnOverloadDiag
     });
 }
 
+static void CheckerReportsNoMatchingCSharpDelegateLambdaBinaryValueReturnOverloadDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaBinaryValueReturnOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaBinaryValueReturnOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaBinaryValueReturnOverload
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBinaryValueReturnInt(LegacyNamed("Ada"), item => item.Name + "!")
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "C# delegate lambda binary value return mismatch should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyDelegateOverloads.RequiresBinaryValueReturnInt", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
 static void CheckerReportsNoMatchingCSharpDelegateLambdaCoalesceReturnOverloadDiagnostics()
 {
     WithWorkspace(root =>
@@ -5799,6 +5846,63 @@ static void CSharpOverloadResolverFiltersLambdaDelegateBinaryReturnType()
     AssertFalse(resolution.IsAmbiguous, "Lambda binary expression return type should remove incompatible delegate overload candidates.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate binary return overload candidate.");
     AssertEqual("System.Func`2<Legacy.Tools.LegacyNamed, bool>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersLambdaDelegateBinaryValueReturnType()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickBinaryValueReturn(LegacyNamed("Ada"), item => item.Name + "!")
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var legacyNamed = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNamed",
+        [],
+        [new MetadataPropertySymbol("Name", "string", IsStatic: false, HasPublicGetter: true, HasPublicSetter: false)],
+        [],
+        []);
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickBinaryValueReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickBinaryValueReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "Legacy.Tools.LegacyNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<Legacy.Tools.LegacyNamed, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+    var assembly = new MetadataAssemblySymbol("Legacy.Tools", ResolvedReferenceKind.LocalAssembly, "Legacy.Tools", null, null)
+    {
+        Types = [legacyNamed, metadataType]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [assembly]);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Lambda binary value expression return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate binary value return overload candidate.");
+    AssertEqual("System.Func`2<Legacy.Tools.LegacyNamed, string>", selected.Method.Parameters[1].Type);
 }
 
 static void CSharpOverloadResolverFiltersLambdaDelegateCoalesceReturnType()
@@ -7137,6 +7241,46 @@ static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBinaryRet
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda binary return overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaBinaryReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda binary return overload diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaBinaryReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda binary return overload diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaBinaryValueReturnOverload()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingDelegateLambdaBinaryValueReturnOverloadBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingDelegateLambdaBinaryValueReturnOverloadBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingDelegateLambdaBinaryValueReturnOverloadBuild
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyDelegateOverloads.RequiresBinaryValueReturnInt(LegacyNamed("Ada"), item => item.Name + "!")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyDelegateOverloads.RequiresBinaryValueReturnInt", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when no matching delegate lambda binary value return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "NoMatchingDelegateLambdaBinaryValueReturnOverloadBuild.Generated.csproj")), "Build should not emit generated project when no matching delegate lambda binary value return overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NoMatchingDelegateLambdaBinaryValueReturnOverloadBuild.dll")), "Build should not emit generated assembly when no matching delegate lambda binary value return overload diagnostics contain errors.");
     });
 }
 
@@ -14296,6 +14440,47 @@ static void CliBuildCompilesImportedDelegateLambdaOverloadBinaryReturnMatch()
     });
 }
 
+static void CliBuildCompilesImportedDelegateLambdaOverloadBinaryValueReturnMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadBinaryValueReturnMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadBinaryValueReturnMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadBinaryValueReturnMatch
+
+            import { LegacyDelegateOverloads, LegacyNamed } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickBinaryValueReturn(LegacyNamed("Ada"), item => item.Name + "!")
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(exitCode == 0, $"Imported delegate lambda overload binary value return match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadBinaryValueReturnMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickBinaryValueReturn(new LegacyNamed(\"Ada\"), item => item.Name + \"!\");", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadBinaryValueReturnMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload binary value return matches.");
+    });
+}
+
 static void CliBuildCompilesImportedDelegateLambdaOverloadCoalesceReturnMatch()
 {
     WithWorkspace(root =>
@@ -18506,6 +18691,16 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                     return "text:" + transform(value);
                 }
 
+                public static string PickBinaryValueReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
+                {
+                    return "text:" + transform(value);
+                }
+
+                public static string PickBinaryValueReturn(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return "int:" + transform(value).ToString();
+                }
+
                 public static string PickCoalesceReturn(LegacyNamed value, System.Func<LegacyNamed, string> transform)
                 {
                     return "text:" + transform(value);
@@ -18579,6 +18774,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public static string RequiresBinaryReturnString(LegacyNamed value, System.Func<LegacyNamed, string> transform)
                 {
                     return transform(value);
+                }
+
+                public static string RequiresBinaryValueReturnInt(LegacyNamed value, System.Func<LegacyNamed, int> transform)
+                {
+                    return transform(value).ToString();
                 }
 
                 public static string RequiresCoalesceReturnInt(LegacyNamed value, System.Func<LegacyNamed, int> transform)

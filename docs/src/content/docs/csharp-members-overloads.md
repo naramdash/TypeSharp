@@ -170,6 +170,7 @@ The checker validates:
 - static method-call return bodies,
 - extension method-call return bodies,
 - binary predicate bodies that return `bool`,
+- binary value bodies that return known string concatenation or numeric arithmetic types,
 - null-coalescing bodies with known fallback or receiver-side types,
 - indexer-expression bodies with known array or metadata-backed indexer return types.
 
