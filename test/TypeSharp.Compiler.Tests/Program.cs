@@ -135,6 +135,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports missing C# instance indexer diagnostics", CheckerReportsMissingCSharpInstanceIndexerDiagnostics),
     ("checker reports mismatched C# instance indexer diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerDiagnostics),
     ("checker reports mismatched C# instance indexer numeric literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnostics),
+    ("checker reports mismatched C# instance indexer parenthesized argument diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerParenthesizedArgumentDiagnostics),
     ("checker reports mismatched C# instance indexer null literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNullLiteralDiagnostics),
     ("checker reports ambiguous C# instance indexer diagnostics", CheckerReportsAmbiguousCSharpInstanceIndexerDiagnostics),
     ("checker accepts imported C# indexer metadata relationship ranking", CheckerAcceptsImportedCSharpIndexerMetadataRelationshipRanking),
@@ -268,6 +269,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on missing C# instance indexer", CliBuildStopsBeforeEmissionOnMissingCSharpInstanceIndexer),
     ("CLI build stops before emission on mismatched C# instance indexer", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexer),
     ("CLI build stops before emission on mismatched C# instance indexer numeric literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericLiteral),
+    ("CLI build stops before emission on mismatched C# instance indexer parenthesized argument", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerParenthesizedArgument),
     ("CLI build stops before emission on mismatched C# instance indexer null literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNullLiteral),
     ("CLI build stops before emission on ambiguous C# instance indexer", CliBuildStopsBeforeEmissionOnAmbiguousCSharpInstanceIndexer),
     ("CLI build stops before emission on missing C# instance property setter", CliBuildStopsBeforeEmissionOnMissingCSharpInstancePropertySetter),
@@ -398,6 +400,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported static property assignment", CliBuildCompilesImportedStaticPropertyAssignment),
     ("CLI build compiles imported static field assignment", CliBuildCompilesImportedStaticFieldAssignment),
     ("CLI build compiles imported indexer access", CliBuildCompilesImportedIndexerAccess),
+    ("CLI build compiles imported indexer parenthesized argument", CliBuildCompilesImportedIndexerParenthesizedArgument),
     ("CLI build compiles imported indexer numeric literal conversion", CliBuildCompilesImportedIndexerNumericLiteralConversion),
     ("CLI build compiles imported overloaded indexer exact match", CliBuildCompilesImportedOverloadedIndexerExactMatch),
     ("CLI build compiles imported indexer metadata relationship match", CliBuildCompilesImportedIndexerMetadataRelationshipMatch),
@@ -4416,6 +4419,44 @@ static void CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnosti
         AssertContains("indexer", diagnostic.Message);
         AssertContains("Legacy.Tools.LegacyByteIndexer", diagnostic.Message);
         AssertContains("does not contain a public instance indexer compatible with argument type(s) 'double'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMismatchedCSharpInstanceIndexerParenthesizedArgumentDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerParenthesizedArgument"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerParenthesizedArgument"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerParenthesizedArgument
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[(true)]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Mismatched parenthesized C# instance indexer argument should produce diagnostics before emission.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2411");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("formatter", diagnostic.Message);
+        AssertContains("Legacy.Tools.LegacyFormatter", diagnostic.Message);
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'bool'", diagnostic.Message);
     });
 }
 
@@ -9864,6 +9905,48 @@ static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericL
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerParenthesizedArgument()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerParenthesizedArgumentBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerParenthesizedArgumentBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerParenthesizedArgumentBuild
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[(true)]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2411\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyFormatter", error.ToString());
+        AssertContains("does not contain a public instance indexer compatible with argument type(s) 'bool'", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched parenthesized C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerParenthesizedArgumentBuild.Generated.csproj")), "Build should not emit generated project when mismatched parenthesized C# instance indexer diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerParenthesizedArgumentBuild.dll")), "Build should not emit generated assembly when mismatched parenthesized C# instance indexer diagnostics contain errors.");
+    });
+}
+
 static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNullLiteral()
 {
     WithWorkspace(root =>
@@ -14986,6 +15069,51 @@ static void CliBuildCompilesImportedIndexerAccess()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerAccess.dll")),
             "Generated project build should compile imported indexer access.");
+    });
+}
+
+static void CliBuildCompilesImportedIndexerParenthesizedArgument()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedIndexerParenthesizedArgument"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedIndexerParenthesizedArgument"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedIndexerParenthesizedArgument
+
+            import { LegacyFormatter } from "Legacy.Tools"
+
+            export fun item(): string {
+              let formatter = LegacyFormatter("legacy:")
+              formatter[(2)]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedIndexerParenthesizedArgument.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("var formatter = new LegacyFormatter(\"legacy:\");", generatedSource);
+        AssertContains("return formatter[(2)];", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedIndexerParenthesizedArgument.dll")),
+            "Generated project build should compile imported indexer parenthesized argument access.");
     });
 }
 

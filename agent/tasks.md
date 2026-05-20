@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0288                          |
+| Completed range    | 0001-0289                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -52,6 +52,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                   |
 | -------- | ------ | -------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | Done   | Work ledger future area | Parenthesized indexer argument validation          | [tasks-rollup.md#task-0289-parenthesized-indexer-argument-validation](tasks-rollup.md#task-0289-parenthesized-indexer-argument-validation)                     | Unwrapped parenthesized imported C# indexer arguments for metadata validation so mismatches report `TS2411` before emission, with positive and no-emission CLI coverage. |
 | Q3       | Done   | Work ledger future area | Params collection expression array overload         | [tasks-rollup.md#task-0288-params-collection-expression-array-overload](tasks-rollup.md#task-0288-params-collection-expression-array-overload)                 | Ranked a single homogeneous collection expression as the full imported C# `params T[]` array argument before expanded element fallback, with resolver/checker/`net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Collection generic array inference                 | [tasks-rollup.md#task-0287-collection-generic-array-inference](tasks-rollup.md#task-0287-collection-generic-array-inference)                                   | Added homogeneous collection expression inference for imported C# `T[]` generic method parameters, `TS2417` diagnostics before emission, and `net48` CLI build coverage. |
 | Q3       | Done   | Work ledger future area | Null indexer overload inference                    | [tasks-rollup.md#task-0286-null-indexer-overload-inference](tasks-rollup.md#task-0286-null-indexer-overload-inference)                                       | Added `null` literal filtering/ranking for imported C# instance indexers, `TS2411` diagnostics before emission, and `net48` CLI build coverage. |

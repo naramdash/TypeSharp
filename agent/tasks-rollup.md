@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 06:56:20 +09:00
+End Time: 2026-05-21 07:10:14 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0288. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0289. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0288 |
+| Completed work covered | 0001-0289 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -1212,6 +1212,39 @@ Primary evidence:
 - [Lowering](../docs/src/content/docs/lowering.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0289 Parenthesized Indexer Argument Validation
+
+Completed C# interop work established:
+
+- Imported C# interop validation now unwraps parenthesized argument expressions before metadata-backed argument inference.
+- Parenthesized imported indexer arguments such as `formatter[(true)]` now preserve generated C# grouping but use the enclosed `bool` expression for metadata validation.
+- Mismatched parenthesized indexer arguments report `TS2411` before generated C# emission instead of falling through to generated project build failure `TS3501`.
+- Compatible parenthesized indexer arguments such as `formatter[(2)]` continue to emit and compile as grouped C# indexer access.
+- C# members, lowering, .NET interop, and Work Ledger docs list parenthesized imported indexer argument validation as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports mismatched C# instance indexer parenthesized argument diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on mismatched C# instance indexer parenthesized argument"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported indexer parenthesized argument"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports mismatched C# instance indexer diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on mismatched C# instance indexer"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported indexer access"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpInteropValidator.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1236,7 +1269,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0288 is compressed here.
+- Completed historical work through task 0289 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

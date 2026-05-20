@@ -163,7 +163,7 @@ Evidence:
 
 Collection expressions lower to C# 7.3-compatible array creation or `List<T>` initializers. Spread elements over known arrays or `List<T>` lower through `System.Linq.Enumerable.Concat<T>` with target-specific array/list materialization. Homogeneous collection expression arguments to imported C# array overloads and single collection expression arguments in `params T[]` positions participate in metadata-backed overload filtering before emission.
 
-Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known.
+Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known. Parenthesized indexer arguments preserve their generated grouping while metadata validation uses the enclosed expression type.
 
 Parenthesized expressions preserve grouping in generated C#. Unary logical-not and numeric sign expressions lower directly to C# `!expr`, `+expr`, or `-expr`. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
 

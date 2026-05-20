@@ -150,6 +150,7 @@ Rules:
 - property set requires a setter,
 - readonly fields cannot be assigned,
 - known indexer arguments are checked against available indexers,
+- parenthesized indexer arguments are checked by the enclosed expression type before generated C# emission,
 - `null` indexer arguments reject non-nullable value-type indexers and rank concrete reference indexers before `object` fallback,
 - ambiguous indexers report diagnostics.
 

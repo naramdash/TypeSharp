@@ -1133,17 +1133,47 @@ public static class TypeSharpInteropValidator
 
     private static SyntaxNode UnwrapArgumentExpression(SyntaxNode argument)
     {
-        if (argument.Kind == SyntaxKind.NamedArgument)
+        var expression = argument;
+        while (true)
         {
-            return argument.Children.LastOrDefault(child => !child.IsToken) ?? argument;
-        }
+            if (expression.Kind == SyntaxKind.NamedArgument)
+            {
+                var namedExpression = expression.Children.LastOrDefault(child => !child.IsToken);
+                if (namedExpression is null)
+                {
+                    return expression;
+                }
 
-        if (argument.Kind is SyntaxKind.RefArgument or SyntaxKind.OutArgument or SyntaxKind.InArgument)
-        {
-            return argument.Children.FirstOrDefault(child => !child.IsToken) ?? argument;
-        }
+                expression = namedExpression;
+                continue;
+            }
 
-        return argument;
+            if (expression.Kind is SyntaxKind.RefArgument or SyntaxKind.OutArgument or SyntaxKind.InArgument)
+            {
+                var byRefExpression = expression.Children.FirstOrDefault(child => !child.IsToken);
+                if (byRefExpression is null)
+                {
+                    return expression;
+                }
+
+                expression = byRefExpression;
+                continue;
+            }
+
+            if (expression.Kind == SyntaxKind.ParenthesizedExpression)
+            {
+                var parenthesizedExpression = expression.Children.FirstOrDefault(child => !child.IsToken);
+                if (parenthesizedExpression is null)
+                {
+                    return expression;
+                }
+
+                expression = parenthesizedExpression;
+                continue;
+            }
+
+            return expression;
+        }
     }
 
     private static bool TryInferLiteralGenericTypeArgument(SyntaxNode expression, out GenericTypeArgument argument)
