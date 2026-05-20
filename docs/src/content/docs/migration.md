@@ -63,7 +63,7 @@ paths = [
 
 `src/Main.tysh`:
 
-```text
+```tysh
 namespace Company.Billing.Rules
 
 import { LegacyCalculator } from "Legacy.Billing"
@@ -138,7 +138,7 @@ paths = ["lib/Legacy.Tools.dll"]
 
 TypeSharp source:
 
-```text
+```tysh
 namespace Company.Tools
 
 import { Regex } from "System.Text.RegularExpressions"
@@ -181,7 +181,7 @@ TypeSharp reference-like types are non-null by default. Treat unannotated C# ref
 
 Use `Result<T,E>` for expected domain failure:
 
-```text
+```tysh
 public union ParseError {
   Empty
   Invalid(message: string)

@@ -7,7 +7,7 @@ description: Core TypeSharp concepts for new users.
 
 Use `let` for immutable values and `fun` for functions.
 
-```text
+```tysh
 let greeting = "Hello"
 
 export fun greet(name: string): string =
@@ -20,7 +20,7 @@ Functions can use expression bodies or block bodies.
 
 Every source file is part of a module graph. `namespace` gives generated C# a stable namespace. `import` brings TypeSharp or C# types into scope.
 
-```text
+```tysh
 namespace Samples.Billing
 
 import { LegacyFormatter } from "Legacy.Tools"
@@ -38,7 +38,7 @@ The current inference engine handles common local literal, identifier, direct ca
 
 Structural shapes are useful inside TypeSharp code:
 
-```text
+```tysh
 type Named = { Name: string }
 
 fun keep(customer: Customer): Customer =
@@ -55,14 +55,14 @@ Records are immutable-first data types. Expected nominal record expressions can 
 
 Simple homogeneous collection expressions lower to arrays by default, or to `List<T>` when an explicit target type is present. Collection spread elements merge known arrays or `List<T>` values while still lowering to C# 7.3-compatible code. Iterator functions can use block-level `yield` with an explicit `IEnumerable<T>` return type, block-level `lock` statements lower to C# monitor locks, and explicit-receiver `extension` methods lower to C# extension methods. Pipeline expressions lower to nested function calls, composition expressions lower to delegate lambdas, `satisfies` erases after type checking, `nameof` lowers to C# `nameof(...)`, and `checked(...)`/`unchecked(...)` lower to C# overflow-context expressions.
 
-```text
+```tysh
 export fun total(): int {
   let values: int[] = [1, 2, 3]
   values[0]
 }
 ```
 
-```text
+```tysh
 import { IEnumerable } from "System.Collections.Generic"
 
 export fun names(): IEnumerable<string> {

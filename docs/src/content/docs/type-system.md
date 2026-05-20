@@ -9,7 +9,7 @@ TypeSharp combines TypeScript-style local flexibility, F#-style expression-orien
 
 The compiler infers common local values and expression flows so small functions do not need annotation noise.
 
-```text
+```tysh
 let count = 3
 let label = "items"
 ```
@@ -20,7 +20,7 @@ Public functions and public data shapes should still use explicit types because 
 
 Nullability is a compile-time contract. Returning `null` from a non-null function or assigning nullable data into a non-null location reports a diagnostic instead of relying on runtime failure.
 
-```text
+```tysh
 export fun displayName(name: string): string = name
 ```
 
@@ -42,7 +42,7 @@ TypeSharp keeps dynamic code behind capability markers. Using `dynamic` outside 
 
 Structural shapes let TypeSharp code describe required members without introducing a nominal type.
 
-```text
+```tysh
 type Named = { Name: string }
 
 fun keep(customer: Customer): Customer =
@@ -55,7 +55,7 @@ Structural shapes are compile-time tools. They must not leak directly through pu
 
 Intersection aliases compose named structural shapes locally:
 
-```text
+```tysh
 type Named = { Name: string }
 type Aged = { Age: int }
 type PersonLike = Named & Aged
@@ -63,7 +63,7 @@ type PersonLike = Named & Aged
 
 Limited `keyof` can derive a local string literal union from a known record or named structural shape:
 
-```text
+```tysh
 record Customer(Name: string, Age: int)
 type CustomerKey = keyof Customer
 type CustomerName = Customer["Name"]
@@ -94,7 +94,7 @@ Use [API And CLI Reference](../api/) for the canonical standard library namespac
 
 Iterator functions use explicit CLR enumerable return types. A block-level `yield` expression is checked against the `IEnumerable<T>` or `IEnumerator<T>` element type before generated C# emission.
 
-```text
+```tysh
 import { IEnumerable } from "System.Collections.Generic"
 
 export fun names(): IEnumerable<string> {
@@ -103,7 +103,7 @@ export fun names(): IEnumerable<string> {
 }
 ```
 
-```text
+```tysh
 export union LookupResult {
   Found(Customer)
   Missing(string)

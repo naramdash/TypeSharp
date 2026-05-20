@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 00:06:00 +09:00
+End Time: 2026-05-21 00:17:00 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0262. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0263. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0262 |
+| Completed work covered | 0001-0263 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -98,6 +98,7 @@ Completed docs/adoption work established:
 - Agent workflow now requires task-end commit/push handoff and compressed task history.
 - Docs package dependencies are pinned to the current npm registry latest tags for Astro, Starlight, and TypeScript, with package contract coverage.
 - Docs-owned site configuration is TypeScript and the docs contract rejects committed docs-owned JavaScript source/config files.
+- TypeSharp source examples in docs use `tysh` code fences, and Starlight/Shiki reuses the VS Code TextMate grammar for syntax highlighting.
 
 Primary evidence:
 
@@ -338,6 +339,33 @@ Primary evidence:
 - [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 
+## Task 0263 Docs tysh Syntax Highlighting
+
+Completed docs syntax highlighting work established:
+
+- `docs/astro.config.ts` registers the VS Code `typesharp.tmLanguage.json` TextMate grammar as the Starlight/Shiki `typesharp` language.
+- Starlight accepts both `tysh` and `typesharp` aliases for TypeSharp code fences.
+- TypeSharp source examples in API, CLI, cookbook, .NET interop, fundamentals, guides, language tour, lowering, migration, modules, and type-system pages now use `tysh` fences.
+- CLI commands, diagnostic output, file trees, and pipeline diagrams remain `text` fences.
+- The docs site contract now checks the Shiki language registration and rejects TypeSharp-looking source blocks left under `text` fences.
+- Built public docs output renders `data-language="tysh"` code blocks with token spans from the shared grammar.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+rg -F 'data-language="tysh"' docs/dist/language-tour/index.html docs/dist/fundamentals/index.html docs/dist/modules/index.html
+dotnet build tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project tests\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "docs site contract"
+```
+
+Primary evidence:
+
+- `docs/astro.config.ts`
+- `docs/src/content/docs/*.md`
+- `vscode/typesharp/syntaxes/typesharp.tmLanguage.json`
+- `tests/TypeSharp.Compiler.Tests/Program.cs`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -362,7 +390,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0262 is compressed here.
+- Completed historical work through task 0263 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

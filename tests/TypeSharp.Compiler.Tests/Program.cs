@@ -10516,6 +10516,12 @@ static void DocsSiteContractIsStable()
     var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.ts"));
     AssertContains("starlight({", astroConfig);
     AssertContains("title: 'TypeSharp'", astroConfig);
+    AssertContains("../vscode/typesharp/syntaxes/typesharp.tmLanguage.json", astroConfig);
+    AssertContains("expressiveCode:", astroConfig);
+    AssertContains("langs: [typesharpShikiLanguage]", astroConfig);
+    AssertContains("langAlias:", astroConfig);
+    AssertContains("typesharp: 'typesharp'", astroConfig);
+    AssertContains("tysh: 'typesharp'", astroConfig);
     AssertContains("label: 'Learn'", astroConfig);
     AssertContains("label: 'Use TypeSharp'", astroConfig);
     AssertContains("label: 'Reference'", astroConfig);
@@ -10582,6 +10588,15 @@ static void DocsSiteContractIsStable()
             File.Exists(Path.Combine(siteRoot, "src", "content", "docs", $"{page}.md")),
             $"Docs site page '{page}' should exist.");
     }
+
+    var docsContentRoot = Path.Combine(siteRoot, "src", "content", "docs");
+    var docsMarkdownPages = Directory
+        .EnumerateFiles(docsContentRoot, "*.md", SearchOption.TopDirectoryOnly)
+        .OrderBy(path => path, StringComparer.Ordinal)
+        .ToArray();
+    var tyshFenceCount = docsMarkdownPages.Sum(path => CountOccurrences(File.ReadAllText(path), "```tysh"));
+    AssertTrue(tyshFenceCount >= 60, $"Docs TypeSharp examples should use tysh fences. Found {tyshFenceCount}.");
+    AssertDocsTextFencesDoNotContainTypeSharpSource(docsContentRoot, docsMarkdownPages);
 
     var startHerePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "start-here.md"));
     AssertContains("I Maintain .NET Framework Applications", startHerePage);
@@ -17064,6 +17079,103 @@ static int CountOccurrences(string text, string value)
     }
 
     return count;
+}
+
+static void AssertDocsTextFencesDoNotContainTypeSharpSource(string docsContentRoot, IReadOnlyList<string> markdownPaths)
+{
+    var violations = new List<string>();
+    foreach (var markdownPath in markdownPaths)
+    {
+        var text = File.ReadAllText(markdownPath);
+        foreach (var block in EnumerateMarkdownCodeBlocks(text))
+        {
+            if (string.Equals(block.Language, "text", StringComparison.Ordinal)
+                && LooksLikeTypeSharpSourceBlock(block.Body))
+            {
+                var relativePath = Path.GetRelativePath(docsContentRoot, markdownPath).Replace('\\', '/');
+                violations.Add($"{relativePath}:{block.StartLine}");
+            }
+        }
+    }
+
+    AssertEqual(string.Empty, string.Join(Environment.NewLine, violations));
+}
+
+static IEnumerable<(string Language, string Body, int StartLine)> EnumerateMarkdownCodeBlocks(string text)
+{
+    var normalized = text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+    var lines = normalized.Split('\n');
+    var body = new StringBuilder();
+    var inFence = false;
+    var language = string.Empty;
+    var startLine = 0;
+
+    for (var index = 0; index < lines.Length; index++)
+    {
+        var line = lines[index];
+        if (!inFence)
+        {
+            if (!line.StartsWith("```", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            language = line.Substring(3).Trim();
+            var languageSuffix = language.IndexOf(' ');
+            if (languageSuffix >= 0)
+            {
+                language = language.Substring(0, languageSuffix);
+            }
+
+            body.Clear();
+            inFence = true;
+            startLine = index + 1;
+            continue;
+        }
+
+        if (line.StartsWith("```", StringComparison.Ordinal))
+        {
+            yield return (language, body.ToString(), startLine);
+            inFence = false;
+            language = string.Empty;
+            continue;
+        }
+
+        body.AppendLine(line);
+    }
+}
+
+static bool LooksLikeTypeSharpSourceBlock(string body)
+{
+    var firstLine = body
+        .Replace("\r\n", "\n", StringComparison.Ordinal)
+        .Replace('\r', '\n')
+        .Split('\n')
+        .Select(line => line.Trim())
+        .FirstOrDefault(line => line.Length > 0);
+    if (firstLine is null)
+    {
+        return false;
+    }
+
+    return StartsWithTypeSharpKeyword(firstLine, "namespace")
+        || StartsWithTypeSharpKeyword(firstLine, "import")
+        || firstLine.StartsWith("public union ", StringComparison.Ordinal)
+        || StartsWithTypeSharpKeyword(firstLine, "export")
+        || StartsWithTypeSharpKeyword(firstLine, "let")
+        || StartsWithTypeSharpKeyword(firstLine, "type")
+        || StartsWithTypeSharpKeyword(firstLine, "record")
+        || StartsWithTypeSharpKeyword(firstLine, "fun")
+        || StartsWithTypeSharpKeyword(firstLine, "literal")
+        || firstLine.StartsWith("value |>", StringComparison.Ordinal)
+        || firstLine.StartsWith("g(f(", StringComparison.Ordinal);
+}
+
+static bool StartsWithTypeSharpKeyword(string line, string keyword)
+{
+    return string.Equals(line, keyword, StringComparison.Ordinal)
+        || line.StartsWith(keyword + " ", StringComparison.Ordinal)
+        || line.StartsWith(keyword + "\t", StringComparison.Ordinal);
 }
 
 static void AssertThrows<TException>(Action action)

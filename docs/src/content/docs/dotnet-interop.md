@@ -70,7 +70,7 @@ paths = ["lib/Legacy.Tools.dll"]
 
 Then import public C# types by namespace:
 
-```text
+```tysh
 import { LegacyFormatter } from "Legacy.Tools"
 ```
 
@@ -80,7 +80,7 @@ The current metadata reader indexes public top-level types and selected member m
 
 TypeSharp `import` handles source modules and .NET namespace/type imports through one syntax surface, then separates them during resolution.
 
-```text
+```tysh
 namespace Samples.CSharpInterop
 
 import { Console, DateTime, StringComparer } from "System"

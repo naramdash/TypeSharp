@@ -115,13 +115,13 @@ Evidence:
 
 Pipeline expressions lower left-to-right into nested first-argument calls:
 
-```text
+```tysh
 value |> f |> g(arg)
 ```
 
 becomes equivalent to:
 
-```text
+```tysh
 g(f(value), arg)
 ```
 

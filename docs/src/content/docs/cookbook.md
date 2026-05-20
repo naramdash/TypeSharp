@@ -14,7 +14,7 @@ description: Short TypeSharp recipes for common project tasks.
 paths = ["lib/Legacy.Tools.dll"]
 ```
 
-```text
+```tysh
 namespace Samples.Interop
 
 import { LegacyFormatter } from "Legacy.Tools"
@@ -29,7 +29,7 @@ export fun format(value: string): string {
 
 Keep public signatures nominal:
 
-```text
+```tysh
 namespace Samples.PublicApi
 
 export record Customer(Name: string, Age: int)
@@ -44,7 +44,7 @@ Avoid exposing structural shapes, intersection aliases, or type-level unions dir
 
 Prefer nullable annotations or `Option<T>` where absence is expected:
 
-```text
+```tysh
 export fun displayName(name: string?): string =
   if name == null {
     "Anonymous"
@@ -55,7 +55,7 @@ export fun displayName(name: string?): string =
 
 ## Create And Update A Record
 
-```text
+```tysh
 export record Customer(Name: string, Age: int)
 
 export fun birthday(customer: Customer): Customer =
@@ -66,7 +66,7 @@ Status: record update lowering is implemented and smoke-tested.
 
 ## Use A Nominal Union With Match
 
-```text
+```tysh
 export union OrderState {
   Draft
   Submitted(string)
@@ -83,7 +83,7 @@ Status: nominal union and match lowering are implemented for the smoke-tested su
 
 ## Build And Run With Arguments
 
-```text
+```tysh
 namespace Samples.Args
 
 export fun main(args: string[]): string =

@@ -72,7 +72,7 @@ Rules:
 
 Core public types:
 
-```text
+```tysh
 namespace TypeSharp.Core
 
 public union Option<T> {
@@ -92,7 +92,7 @@ public struct Unit { }
 
 Standard library imports should be explicit:
 
-```text
+```tysh
 import { Result, Ok, Error } from "TypeSharp.Core"
 import { Option, Some, None } from "TypeSharp.Core"
 ```

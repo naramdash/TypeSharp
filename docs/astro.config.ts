@@ -1,10 +1,25 @@
+import { createRequire } from 'node:module';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+const require = createRequire(import.meta.url);
 const repository = process.env.GITHUB_REPOSITORY ?? '';
 const repositoryName = repository.includes('/') ? repository.split('/')[1] : '';
 const base = process.env.TYPE_SHARP_DOCS_BASE ?? (repositoryName ? `/${repositoryName}` : '/');
 const site = process.env.TYPE_SHARP_DOCS_SITE ?? 'https://typesharp.github.io';
+const typesharpTextMateGrammar = require('../vscode/typesharp/syntaxes/typesharp.tmLanguage.json') as {
+  name: string;
+  scopeName: string;
+  fileTypes: string[];
+  patterns: unknown[];
+  repository: Record<string, unknown>;
+};
+const typesharpShikiLanguage = {
+  ...typesharpTextMateGrammar,
+  name: 'typesharp',
+  displayName: 'TypeSharp',
+  aliases: ['tysh'],
+};
 
 export default defineConfig({
   site,
@@ -14,6 +29,15 @@ export default defineConfig({
       title: 'TypeSharp',
       description: '.NET Framework 4.8-compatible static language design, compiler, CLI, and VS Code tooling.',
       disable404Route: true,
+      expressiveCode: {
+        shiki: {
+          langs: [typesharpShikiLanguage],
+          langAlias: {
+            typesharp: 'typesharp',
+            tysh: 'typesharp',
+          },
+        },
+      },
       sidebar: [
         {
           label: 'Learn',

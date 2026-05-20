@@ -24,7 +24,7 @@ Use `typesharp check` while editing and `typesharp build` when you want generate
 
 `namespace` controls the generated .NET namespace. `import` brings TypeSharp or C# symbols into scope.
 
-```text
+```tysh
 namespace Company.Billing
 
 import { LegacyFormatter } from "Legacy.Tools"
@@ -36,7 +36,7 @@ Use stable namespaces for public APIs because C# consumers see the generated nam
 
 Use `let` for values and `fun` for functions.
 
-```text
+```tysh
 let prefix = "Invoice"
 
 export fun label(number: int): string =
@@ -49,7 +49,7 @@ Public functions should use explicit parameter and return types. This keeps gene
 
 TypeSharp infers common local expression types, including literals, identifiers, direct calls, binary expressions, and pipeline flows.
 
-```text
+```tysh
 let count = 3
 let next = count + 1
 ```
@@ -60,7 +60,7 @@ Prefer explicit annotations at module boundaries, exported functions, and intero
 
 Records are immutable-first data shapes for public data.
 
-```text
+```tysh
 export record Customer(Name: string, Age: int)
 ```
 
@@ -70,7 +70,7 @@ Use records when C# callers should see a named data type instead of an anonymous
 
 Classes and interfaces represent nominal .NET shapes. Delegates let TypeSharp interact with C# callback APIs.
 
-```text
+```tysh
 export interface IRule {
   fun validate(value: string): bool
 }
@@ -84,7 +84,7 @@ Use nominal declarations for public contracts because they lower to C#-understan
 
 Use `Option<T>` for explicit absence and `Result<T, E>` for recoverable failure. This is clearer than passing `null` through code and relying on runtime checks.
 
-```text
+```tysh
 export fun findName(id: int): Option<string> =
   None
 ```
@@ -95,7 +95,7 @@ Nullability diagnostics report when a nullable value flows into a non-null contr
 
 Nominal unions model closed alternatives.
 
-```text
+```tysh
 export union LookupResult {
   Found(Customer)
   Missing(string)
@@ -108,7 +108,7 @@ export union LookupResult {
 
 Structural shapes describe required members for compile-time checks.
 
-```text
+```tysh
 type Named = { Name: string }
 
 fun keep(customer: Customer): Customer =
@@ -121,7 +121,7 @@ Use structural shapes inside TypeSharp code when you need shape-based checking. 
 
 Type-level unions are compile-time-only unions used for local narrowing.
 
-```text
+```tysh
 type Input = Customer | string
 ```
 
@@ -131,7 +131,7 @@ They are useful for local logic, but public boundaries must use CLR-visible alte
 
 Simple homogeneous collection expressions lower to arrays by default. If the target type is `List<T>`, they lower to a C# collection initializer. `...` spread elements can merge known arrays or `List<T>` values and lower through C# 7.3-compatible LINQ concatenation.
 
-```text
+```tysh
 let numbers: int[] = [1, 2, 3]
 let first = numbers[0]
 ```
@@ -142,14 +142,14 @@ Indexer expressions are preserved as C#-compatible array or indexer access.
 
 Expected nominal record expressions lower to constructor calls. A record expression can spread another nominal record value and then override copied fields explicitly.
 
-```text
+```tysh
 export fun older(customer: Customer): Customer =
   { ...customer, Age: customer.Age + 1 }
 ```
 
 Iterator functions can use block-level `yield` when the return type is an explicit CLR enumerable.
 
-```text
+```tysh
 import { IEnumerable } from "System.Collections.Generic"
 
 export fun names(): IEnumerable<string> {
@@ -168,7 +168,7 @@ Extension methods use an explicit receiver parameter and lower to C# extension m
 
 Pipeline expressions pass a value into a function call. Composition expressions build unary delegate values from callable targets.
 
-```text
+```tysh
 export fun total(): int =
   [1, 2, 3] |> sum
 
@@ -181,7 +181,7 @@ The current lowering rewrites pipelines to nested function calls and composition
 
 `nameof` keeps C#-style name references refactoring-safe while still lowering to C# 7.3-compatible source.
 
-```text
+```tysh
 export fun fieldName(): string = nameof(Customer.Name)
 ```
 
@@ -189,7 +189,7 @@ export fun fieldName(): string = nameof(Customer.Name)
 
 Overflow context expressions preserve the inner expression type and lower directly to C# `checked(...)` or `unchecked(...)`.
 
-```text
+```tysh
 export fun checkedAdd(value: int): int = checked(value + 1)
 ```
 
@@ -197,7 +197,7 @@ export fun checkedAdd(value: int): int = checked(value + 1)
 
 `async fun` lowers to .NET `Task` or `Task<T>`, which lets C# callers use normal task-based async patterns.
 
-```text
+```tysh
 export async fun loadName(): Task<string> {
   return "Ada"
 }
@@ -214,7 +214,7 @@ TypeSharp can reference local C# DLLs and call supported constructors, methods, 
 paths = ["lib/Legacy.Tools.dll"]
 ```
 
-```text
+```tysh
 import { LegacyFormatter } from "Legacy.Tools"
 ```
 

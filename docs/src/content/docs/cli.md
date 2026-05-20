@@ -264,7 +264,7 @@ Canonical `.tysh` layout:
 
 File layout:
 
-```text
+```tysh
 namespace Company.Product
 
 import { Thing } from "./thing"

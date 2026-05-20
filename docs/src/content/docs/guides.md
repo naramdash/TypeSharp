@@ -50,7 +50,7 @@ paths = ["lib/Legacy.Tools.dll"]
 
 TypeSharp imports C# types with namespace-based imports:
 
-```text
+```tysh
 import { LegacyFormatter } from "Legacy.Tools"
 ```
 
@@ -68,7 +68,7 @@ Unknown nullability from legacy C# metadata is reported separately as interop wa
 
 Use `Option<T>` and `Result<T, E>` for explicit absence and failure modeling. Use immutable records for public data and nominal unions for closed domain alternatives.
 
-```text
+```tysh
 export record Customer(Name: string, Age: int)
 
 export union LookupResult {

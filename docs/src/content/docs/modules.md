@@ -20,7 +20,7 @@ The compiler uses that path to detect duplicate modules and resolve relative spe
 
 A file-scoped `namespace` gives generated C# a stable namespace.
 
-```text
+```tysh
 namespace Samples.Billing
 
 export fun total(): int = 42
@@ -45,7 +45,7 @@ This naming is deterministic and is part of the current generated source backend
 
 Imports from non-relative module specifiers are treated as C# namespace/type imports.
 
-```text
+```tysh
 import { StringBuilder } from "System.Text"
 import { StringBuilder as Builder } from "System.Text"
 import * as Text from "System.Text"
@@ -57,7 +57,7 @@ Named aliases lower to generated C# alias `using` directives. Namespace aliases 
 
 Relative specifiers are resolved against the source module graph.
 
-```text
+```tysh
 import { helper } from "./Feature/Helper"
 ```
 
@@ -65,38 +65,38 @@ Missing relative modules report `TS0112`. Resolved relative imports are tracked 
 
 Unaliased named source imports lower through a generated C# `using static` directive for the target source module container:
 
-```text
+```tysh
 import { helper } from "./Feature/Helper"
 ```
 
 Relative named function import aliases lower through a generated private forwarding method in the importing module container:
 
-```text
+```tysh
 import { helper as runHelper } from "./Feature/Helper"
 ```
 
 Relative top-level value import aliases lower through a generated private property in the importing module container:
 
-```text
+```tysh
 import { PublicName as ImportedName } from "./Feature/Helper"
 ```
 
 Relative type import aliases, including regular named aliases for exported source types, lower through generated C# `using` aliases:
 
-```text
+```tysh
 import type { Customer as Model } from "./Feature/Models"
 import { Customer as NamedModel } from "./Feature/Models"
 ```
 
 Relative named module import aliases lower through generated C# type aliases:
 
-```text
+```tysh
 import { Tools as HelperTools } from "./Feature/Helper"
 ```
 
 Namespace source imports lower to a generated C# alias for the target source module container:
 
-```text
+```tysh
 import * as Helper from "./Feature/Helper"
 ```
 
@@ -106,14 +106,14 @@ Relative named and type imports must refer to names exported by the target sourc
 
 `export` marks public TypeSharp declarations for generated API shape where the declaration is implemented by the backend.
 
-```text
+```tysh
 export record Customer(Name: string)
 export fun greet(name: string): string = "Hello, " + name
 ```
 
 Local export lists can mark declarations in the same file as public surface:
 
-```text
+```tysh
 record Customer(Name: string)
 fun greet(name: string): string = "Hello, " + name
 
@@ -123,28 +123,28 @@ export { greet }
 
 Local named function export aliases also contribute public surface and emit forwarding methods:
 
-```text
+```tysh
 fun helper(): string = "helper"
 export { helper as publicHelper }
 ```
 
 Local literal export aliases contribute public surface and emit public constant or static readonly fields:
 
-```text
+```tysh
 literal InternalVersion: string = "1.0"
 export { InternalVersion as PublicVersion }
 ```
 
 Local top-level value export aliases contribute public surface and emit a public property backed by the generated field:
 
-```text
+```tysh
 let InternalName: string = "Ada"
 export { InternalName as PublicName }
 ```
 
 Explicitly annotated function-valued top-level `let` declarations lower to generated C# delegate values, and local aliases for those declarations emit forwarding properties:
 
-```text
+```tysh
 export let Transform: string -> string = text => text
 
 let internalTransform: string -> string = text => text
@@ -153,7 +153,7 @@ export { internalTransform as PublicTransform }
 
 Local type export aliases contribute source module public surface and relative type imports lower to the original generated C# type:
 
-```text
+```tysh
 record Customer(Name: string)
 export type { Customer as Model }
 ```
@@ -162,7 +162,7 @@ Duplicate names in local export lists report `TS2004`. Relative named/type sourc
 
 Forwarding exports are parser-visible:
 
-```text
+```tysh
 export { Customer } from "./Models"
 export type { CustomerShape } from "./Models"
 export * from "./Models"
@@ -170,7 +170,7 @@ export * from "./Models"
 
 The current compiler lowers relative named function re-exports and top-level value re-exports, including aliases, for example:
 
-```text
+```tysh
 export { helper } from "./Feature/Helper"
 export { helper as publicHelper } from "./Feature/Helper"
 export { PublicName } from "./Feature/Helper"
@@ -180,7 +180,7 @@ The re-exporting module contributes `helper`, `publicHelper`, or `PublicName` to
 
 Relative type-only re-exports also contribute to the source module type surface:
 
-```text
+```tysh
 export type { VisibleModel as PublicModel } from "./Feature/Models"
 ```
 
@@ -188,7 +188,7 @@ Downstream `import type { PublicModel as Model } from "./Barrel"` lowers to a ge
 
 Relative module re-export aliases also contribute to the source module surface:
 
-```text
+```tysh
 export { Tools as PublicTools } from "./Feature/Helper"
 ```
 
@@ -196,7 +196,7 @@ Downstream `import { PublicTools as HelperTools } from "./Barrel"` lowers to a g
 
 Relative star re-exports forward the currently lowerable function, top-level value, and type surface from the target module:
 
-```text
+```tysh
 export * from "./Feature/Helper"
 ```
 
