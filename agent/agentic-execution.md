@@ -15,11 +15,12 @@
 5. [tasks-rollup.md](tasks-rollup.md)
 6. [checklist.md](checklist.md)
 7. [traceability.md](traceability.md)
-8. [Document Ownership](../docs/src/content/docs/document-ownership.md)
-9. [Project Ledger](../docs/src/content/docs/project-ledger.md)
-10. [Work Ledger](../docs/src/content/docs/work-ledger.md)
-11. [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
-12. 작업과 직접 관련된 docs canonical page 또는 repo source
+8. [codex-skills.md](codex-skills.md)
+9. [Document Ownership](../docs/src/content/docs/document-ownership.md)
+10. [Project Ledger](../docs/src/content/docs/project-ledger.md)
+11. [Work Ledger](../docs/src/content/docs/work-ledger.md)
+12. [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
+13. 작업과 직접 관련된 docs canonical page 또는 repo source
 
 ## Stable Baseline
 

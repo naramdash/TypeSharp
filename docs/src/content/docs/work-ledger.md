@@ -14,8 +14,8 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | Active task packet | None |
 | Next top-priority task | Not selected |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0257-docs-agent-directory-rename` is complete and folded into the compressed task rollup. No active task is selected. |
-| Completed work covered | 0001-0257 |
+| Current tooling slice | Task `0258-codex-skills-configuration` is complete and folded into the compressed task rollup. No active task is selected. |
+| Completed work covered | 0001-0258 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
@@ -29,6 +29,7 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | CLI and VS Code | `check`, `build`, `run`, `format`, `new`, `lsp`, common options, warning gates, target/configuration/verbosity handling, strict option parsing, semantic manifest value validation, VS Code activation, LSP diagnostics, hover, definition, completion, and formatting. |
 | Docs and adoption | Astro Starlight docs site, GitHub Pages workflow, runnable examples, migration guide, docs benchmarks, host compatibility notes, progress/ADR/regression policy, release readiness, and traceability. |
 | Agentic bootstrap | Post-0257 bootstrap docs now direct agents to docs canonical standard ledger pages, keep `agent/` as the temporary work surface, require task-end commit/push handoff in `agent.md`, and keep the public docs source under `docs/`. |
+| Codex skills | Project-useful Codex skills are installed and documented for browser automation, GitHub Actions investigation, and threat modeling. |
 | Source modules and safety gates | Capability diagnostics, `unknown` narrowing, root namespace fallback, ambient signatures, `open`, import aliases, source module path identity, relative source graph/lowering, multi-source containers, export parsing, local export-list public surface, local/relative named function import/export/re-export alias forwarding, local literal export alias forwarding, local top-level value export alias lowering, explicitly annotated function-valued top-level `let` export and alias lowering, relative top-level value import/re-export alias lowering, local/relative type import/export alias lowering including regular named exported type aliases, relative named module import alias lowering, relative named module re-export alias remapping, relative type-only re-export remapping, relative star re-exports over the currently lowerable function/value/type surface, and missing source module export diagnostics for named/type imports, re-exports, and namespace alias member access. |
 | Regression quality | Task 0256 audited parser/backend/diagnostic fixtures, CLI/run/example smokes, metadata/C# interop, runtime/core, VS Code mocked/live/host tests, docs build smoke, and generated residue handling; it hardened fixture README coverage, diagnostic polarity, runnable CLI stderr checks, and Extension Host exit semantics. |
 

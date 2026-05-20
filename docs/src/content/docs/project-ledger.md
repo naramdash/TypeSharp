@@ -53,6 +53,7 @@ These are the only `agent/` records that should remain:
 - [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md): current active task index and completed range pointer.
 - [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md): compressed completed task history.
 - [`agent/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/traceability.md): goal, requirements, features, checklist, and evidence connections.
+- [`agent/codex-skills.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/codex-skills.md): Codex skill selection and install status for TypeSharp goal work.
 - [`agent/adr.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/adr.md): architecture decision record format.
 
 ## Change Discipline

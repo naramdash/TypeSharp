@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-20 23:05:07 +09:00
+End Time: 2026-05-20 23:11:23 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0257. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0258. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0257 |
+| Completed work covered | 0001-0258 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -193,6 +193,31 @@ Primary evidence:
 - `tests/TypeSharp.Compiler.Tests/Program.cs`
 - [Document Ownership](../docs/src/content/docs/document-ownership.md)
 
+## Task 0258 Codex Skills Configuration
+
+Completed Codex skill configuration work established:
+
+- Checked the `openai/skills` curated inventory from the GitHub contents API.
+- Confirmed the local Codex skill environment previously had only `.system` skills installed.
+- Installed `playwright`, `gh-fix-ci`, and `security-threat-model` into `C:\Users\juho_\.codex\skills`.
+- Documented installed paths, trigger rules, the checked curated inventory, selection rationale, non-installed candidates, and restart requirement in [codex-skills.md](codex-skills.md).
+- Linked the skill configuration record from agent source order, traceability, Document Ownership, Project Ledger, Agentic Workflow, and Work Ledger.
+
+Verification:
+
+```powershell
+Get-ChildItem -Directory C:\Users\juho_\.codex\skills
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [codex-skills.md](codex-skills.md)
+- `C:\Users\juho_\.codex\skills\playwright`
+- `C:\Users\juho_\.codex\skills\gh-fix-ci`
+- `C:\Users\juho_\.codex\skills\security-threat-model`
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -217,7 +242,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0257 is compressed here.
+- Completed historical work through task 0258 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

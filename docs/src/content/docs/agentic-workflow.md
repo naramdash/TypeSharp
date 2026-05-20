@@ -17,6 +17,7 @@ TypeSharp is designed to be worked on by long-running agents without losing the 
 | Completed task rollup | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 | Remaining implementation work | [`agent/checklist.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/checklist.md) |
 | Evidence connections | [`agent/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/traceability.md) |
+| Codex skill selection | [`agent/codex-skills.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/codex-skills.md) |
 
 docs project record pages are the canonical human-visible management surface for standard language and project ledger records. The `agent/` files stay operational for active agent work, handoff, traceability, `tasks-rollup.md`, and execution control.
 
@@ -32,11 +33,12 @@ Use the goal text in `agent.md`. Then the agent should read:
 6. `agent/tasks-rollup.md`
 7. `agent/checklist.md`
 8. `agent/traceability.md`
-9. [Document Ownership](../document-ownership/)
-10. [Project Ledger](../project-ledger/)
-11. [Work Ledger](../work-ledger/)
-12. this Agentic Workflow page
-13. the docs canonical page or `agent/` temporary work file directly related to the chosen task
+9. `agent/codex-skills.md`
+10. [Document Ownership](../document-ownership/)
+11. [Project Ledger](../project-ledger/)
+12. [Work Ledger](../work-ledger/)
+13. this Agentic Workflow page
+14. the docs canonical page or `agent/` temporary work file directly related to the chosen task
 
 This order keeps the running goal stable even when docs navigation changes.
 

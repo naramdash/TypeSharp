@@ -26,10 +26,13 @@
 6. [traceability.md](traceability.md)
    - 목표, 요구사항, 기능, 체크리스트, 증거를 연결하는 agent-facing 추적성 문서다.
 
-7. [progress.md](progress.md)
+7. [codex-skills.md](codex-skills.md)
+   - TypeSharp goal 작업에 설치/권장된 Codex skill과 사용 규칙을 기록한다.
+
+8. [progress.md](progress.md)
    - active task packet, `tasks-rollup.md`, handoff 기록 규칙이다.
 
-8. [adr.md](adr.md)
+9. [adr.md](adr.md)
    - 큰 설계 결정을 ADR로 남길 때 쓰는 임시 운영 템플릿이다.
 
 ## 표준 문서 원장

@@ -25,6 +25,7 @@
 | Current active task and next priority | [tasks.md](tasks.md) |
 | Completed task history | [tasks-rollup.md](tasks-rollup.md) |
 | Remaining operational work | [checklist.md](checklist.md) |
+| Codex skill selection and install status | [codex-skills.md](codex-skills.md) |
 | Task recording policy | [progress.md](progress.md) |
 | ADR template | [adr.md](adr.md) |
 | Web-visible ledger state | [Work Ledger](../docs/src/content/docs/work-ledger.md), [Project Ledger](../docs/src/content/docs/project-ledger.md), [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md) |
@@ -45,6 +46,7 @@
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |
 | Docs/agent directory ownership | [tasks-rollup.md#task-0257-docs-agent-directory-rename](tasks-rollup.md#task-0257-docs-agent-directory-rename), `docs/src/content/docs`, `agent/`, `.github/workflows/docs.yml` |
+| Codex skills configuration | [tasks-rollup.md#task-0258-codex-skills-configuration](tasks-rollup.md#task-0258-codex-skills-configuration), [codex-skills.md](codex-skills.md), `C:\Users\juho_\.codex\skills` |
 | Modules, imports, exports, safety gates | [tasks-rollup.md#language-safety-modules-and-import-export](tasks-rollup.md#language-safety-modules-and-import-export), source module and diagnostics fixtures |
 | Test suite quality audit | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit), `tests/TypeSharp.Compiler.Tests/Program.cs`, `tests/fixtures`, `vscode/typesharp/test`, `examples/runnable` |
 

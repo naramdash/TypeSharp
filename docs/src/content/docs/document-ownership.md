@@ -44,6 +44,7 @@ Raw benchmark artifacts live under `docs/research/`. Source and runnable samples
 | `agent/progress.md` | Task packet, rollup, commit, and handoff mechanics. |
 | `agent/checklist.md` | Remaining implementation and verification work source. |
 | `agent/traceability.md` | Evidence bridge connecting goal, requirements, features, checklist, and completed behavior. |
+| `agent/codex-skills.md` | Operational Codex skill selection, install status, and usage rules for TypeSharp goal work. |
 | `agent/tasks.md` | Active task packet index while agentic goal work is running. |
 | `agent/NNNN-*.md` | Temporary active task packets while long-running work is in progress. |
 | `agent/tasks-rollup.md` | Temporary compressed work history kept under `agent/` until folded further into docs Work Ledger. |
