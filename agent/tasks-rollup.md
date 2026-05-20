@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 07:10:14 +09:00
+End Time: 2026-05-21 07:26:47 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0289. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0290. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0289 |
+| Completed work covered | 0001-0290 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -1245,6 +1245,37 @@ Primary evidence:
 - [Lowering](../docs/src/content/docs/lowering.md)
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 
+## Task 0290 Parenthesized Overload Argument Unwrapping
+
+Completed C# interop work established:
+
+- Imported C# overload resolution now unwraps parenthesized argument expressions through the same common path used for named and byref arguments.
+- Parenthesized `null` overload arguments such as `LegacyNullOverloads.DescribeNamed((null))` participate in metadata-specificity ranking and select the nearest reference target before generated C# emission.
+- Parenthesized lambda arguments such as `LegacyDelegateOverloads.PickReturn("Ada", (text => text))` participate in delegate arity and return filtering/ranking.
+- Generated C# still preserves source grouping for parenthesized overload arguments.
+- C# members, lowering, .NET interop, and Work Ledger docs list parenthesized overload argument unwrapping as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver ranks parenthesized null literal nearest metadata reference"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters parenthesized lambda delegate argument"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles parenthesized null literal metadata relationship overload match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported delegate lambda overload parenthesized argument match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1269,7 +1300,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0289 is compressed here.
+- Completed historical work through task 0290 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

@@ -165,7 +165,7 @@ Collection expressions lower to C# 7.3-compatible array creation or `List<T>` in
 
 Indexer expressions preserve C# array or indexer access and validate imported C# indexer arguments where metadata is known. Parenthesized indexer arguments preserve their generated grouping while metadata validation uses the enclosed expression type.
 
-Parenthesized expressions preserve grouping in generated C#. Unary logical-not and numeric sign expressions lower directly to C# `!expr`, `+expr`, or `-expr`. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
+Parenthesized expressions preserve grouping in generated C#. Metadata validation uses the enclosed expression type for implemented imported overload and indexer argument checks. Unary logical-not and numeric sign expressions lower directly to C# `!expr`, `+expr`, or `-expr`. `nameof`, `checked`, and `unchecked` lower directly to C# 7.3-compatible intrinsics. Explicit-receiver extension methods lower to C# extension methods in a static helper container.
 
 Evidence:
 

@@ -94,6 +94,8 @@ If two candidates remain equally plausible, TypeSharp reports ambiguity instead 
 
 Homogeneous collection expression arguments such as `["Ada"]` infer an array argument type for imported C# overload filtering and ranking. They also infer implemented `T` positions for imported generic method parameters shaped like `T[]`, so constraints such as `where T : class` are validated before emission. In a `params T[]` position, a single compatible collection expression is ranked as the params array argument before falling back to expanded element matching. Incompatible array element targets report `TS2406` before generated C# emission instead of falling through to a C# compiler error.
 
+Parenthesized overload arguments preserve generated C# grouping, but implemented metadata checks use the enclosed expression category. This includes parenthesized `null` literal specificity and parenthesized lambda delegate filtering/ranking before generated C# emission.
+
 ## Named, Optional, And Params Arguments
 
 ```tysh

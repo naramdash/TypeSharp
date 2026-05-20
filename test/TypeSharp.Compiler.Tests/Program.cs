@@ -176,9 +176,11 @@ var tests = new (string Name, Action Body)[]
     ("C# overload resolver treats collection expression as params array", CSharpOverloadResolverTreatsCollectionExpressionAsParamsArray),
     ("C# overload resolver ranks null literal reference match", CSharpOverloadResolverRanksNullLiteralReferenceMatch),
     ("C# overload resolver ranks null literal nearest metadata reference", CSharpOverloadResolverRanksNullLiteralNearestMetadataReference),
+    ("C# overload resolver ranks parenthesized null literal nearest metadata reference", CSharpOverloadResolverRanksParenthesizedNullLiteralNearestMetadataReference),
     ("C# overload resolver ranks nearest metadata relationship", CSharpOverloadResolverRanksNearestMetadataRelationship),
     ("C# overload resolver filters explicit generic arity", CSharpOverloadResolverFiltersExplicitGenericArity),
     ("C# overload resolver filters lambda delegate arity", CSharpOverloadResolverFiltersLambdaDelegateArity),
+    ("C# overload resolver filters parenthesized lambda delegate argument", CSharpOverloadResolverFiltersParenthesizedLambdaDelegateArgument),
     ("C# overload resolver filters lambda delegate return type", CSharpOverloadResolverFiltersLambdaDelegateReturnType),
     ("C# overload resolver filters lambda delegate parameter return type", CSharpOverloadResolverFiltersLambdaDelegateParameterReturnType),
     ("C# overload resolver filters lambda delegate member return type", CSharpOverloadResolverFiltersLambdaDelegateMemberReturnType),
@@ -413,6 +415,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles object overload fallback for known argument type", CliBuildCompilesObjectOverloadFallbackForKnownArgumentType),
     ("CLI build compiles null literal reference overload match", CliBuildCompilesNullLiteralReferenceOverloadMatch),
     ("CLI build compiles null literal metadata relationship overload match", CliBuildCompilesNullLiteralMetadataRelationshipOverloadMatch),
+    ("CLI build compiles parenthesized null literal metadata relationship overload match", CliBuildCompilesParenthesizedNullLiteralMetadataRelationshipOverloadMatch),
     ("CLI build compiles imported metadata overload match", CliBuildCompilesImportedMetadataOverloadMatch),
     ("CLI build compiles imported metadata relationship overload match", CliBuildCompilesImportedMetadataRelationshipOverloadMatch),
     ("CLI build compiles imported collection expression overload match", CliBuildCompilesImportedCollectionExpressionOverloadMatch),
@@ -424,6 +427,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported delegate lambda call", CliBuildCompilesImportedDelegateLambdaCall),
     ("CLI build compiles imported delegate lambda overload arity match", CliBuildCompilesImportedDelegateLambdaOverloadArityMatch),
     ("CLI build compiles imported delegate lambda overload return match", CliBuildCompilesImportedDelegateLambdaOverloadReturnMatch),
+    ("CLI build compiles imported delegate lambda overload parenthesized argument match", CliBuildCompilesImportedDelegateLambdaOverloadParenthesizedArgumentMatch),
     ("CLI build compiles imported delegate lambda overload parameter return match", CliBuildCompilesImportedDelegateLambdaOverloadParameterReturnMatch),
     ("CLI build compiles imported delegate lambda overload return ranking", CliBuildCompilesImportedDelegateLambdaOverloadReturnRanking),
     ("CLI build compiles imported delegate lambda overload member return match", CliBuildCompilesImportedDelegateLambdaOverloadMemberReturnMatch),
@@ -5973,6 +5977,68 @@ static void CSharpOverloadResolverRanksNullLiteralNearestMetadataReference()
     AssertEqual("Legacy.Tools.LegacyDerivedNamed", selected.Method.Parameters[0].Type);
 }
 
+static void CSharpOverloadResolverRanksParenthesizedNullLiteralNearestMetadataReference()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyNullOverloads.DescribeNamed((null))
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNullOverloads",
+        [
+            new MetadataMethodSymbol(
+                "DescribeNamed",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.LegacyBaseNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "DescribeNamed",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "Legacy.Tools.LegacyDerivedNamed", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "DescribeNamed",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "object", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+    var metadata = new MetadataAssemblySymbol(
+        "Legacy.Tools",
+        ResolvedReferenceKind.LocalAssembly,
+        "Legacy.Tools",
+        Path: null,
+        RelativePath: null)
+    {
+        Types =
+        [
+            metadataType,
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyBaseNamed", [], [], [], []),
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyDerivedNamed", [], [], [], [])
+            {
+                BaseTypeName = "Legacy.Tools.LegacyBaseNamed"
+            }
+        ]
+    };
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments,
+        assemblies: [metadata]);
+
+    AssertEqual(3, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Parenthesized null literal metadata reference overload should choose the most specific metadata target.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the nearest parenthesized null literal metadata reference overload candidate.");
+    AssertEqual("Legacy.Tools.LegacyDerivedNamed", selected.Method.Parameters[0].Type);
+}
+
 static void CSharpOverloadResolverRanksNearestMetadataRelationship()
 {
     var parseResult = TypeSharpParser.ParseText("""
@@ -6130,6 +6196,51 @@ static void CSharpOverloadResolverFiltersLambdaDelegateArity()
     AssertEqual(1, resolution.ApplicableCandidates.Count);
     AssertFalse(resolution.IsAmbiguous, "Lambda parameter count should remove incompatible delegate overload candidates.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible delegate overload candidate.");
+    AssertEqual("System.Func`2<string, string>", selected.Method.Parameters[1].Type);
+}
+
+static void CSharpOverloadResolverFiltersParenthesizedLambdaDelegateArgument()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyDelegateOverloads.PickReturn("Ada", (text => text))
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyDelegateOverloads",
+        [
+            new MetadataMethodSymbol(
+                "PickReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, string>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ]),
+            new MetadataMethodSymbol(
+                "PickReturn",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [
+                    new MetadataParameterSymbol("value", "string", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                    new MetadataParameterSymbol("transform", "System.Func`2<string, int>", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                ])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Parenthesized lambda argument return type should remove incompatible delegate overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible parenthesized lambda delegate overload candidate.");
     AssertEqual("System.Func`2<string, string>", selected.Method.Parameters[1].Type);
 }
 
@@ -15663,6 +15774,51 @@ static void CliBuildCompilesNullLiteralMetadataRelationshipOverloadMatch()
     });
 }
 
+static void CliBuildCompilesParenthesizedNullLiteralMetadataRelationshipOverloadMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ParenthesizedNullLiteralMetadataRelationshipOverloadMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ParenthesizedNullLiteralMetadataRelationshipOverloadMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ParenthesizedNullLiteralMetadataRelationshipOverloadMatch
+
+            import { LegacyNullOverloads } from "Legacy.Tools"
+
+            export fun choose(): string {
+              LegacyNullOverloads.DescribeNamed((null))
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Parenthesized null literal metadata relationship overload match should build.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ParenthesizedNullLiteralMetadataRelationshipOverloadMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyNullOverloads.DescribeNamed((null));", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ParenthesizedNullLiteralMetadataRelationshipOverloadMatch.dll")),
+            "Generated project build should compile a parenthesized null literal metadata relationship overload match.");
+    });
+}
+
 static void CliBuildCompilesImportedMetadataOverloadMatch()
 {
     WithWorkspace(root =>
@@ -16122,6 +16278,47 @@ static void CliBuildCompilesImportedDelegateLambdaOverloadReturnMatch()
         AssertTrue(
             File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadReturnMatch.dll")),
             "Generated project build should compile imported delegate lambda overload return matches.");
+    });
+}
+
+static void CliBuildCompilesImportedDelegateLambdaOverloadParenthesizedArgumentMatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedDelegateLambdaOverloadParenthesizedArgumentMatch"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedDelegateLambdaOverloadParenthesizedArgumentMatch"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedDelegateLambdaOverloadParenthesizedArgumentMatch
+
+            import { LegacyDelegateOverloads } from "Legacy.Tools"
+
+            export fun pick(): string = LegacyDelegateOverloads.PickReturn("Ada", (text => text))
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedDelegateLambdaOverloadParenthesizedArgumentMatch.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyDelegateOverloads.PickReturn(\"Ada\", (text => text));", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedDelegateLambdaOverloadParenthesizedArgumentMatch.dll")),
+            "Generated project build should compile imported delegate lambda overload parenthesized argument matches.");
     });
 }
 
