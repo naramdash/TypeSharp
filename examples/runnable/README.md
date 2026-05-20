@@ -20,3 +20,5 @@
 The smoke test `runnable example project commands are smoke-tested` copies this folder to `tests/tmp`, then executes the commands above against the copied projects so generated `bin/`, `obj/`, and `generated/` artifacts do not dirty the repository.
 
 The console run smoke accepts a generated executable launch failure only when the CLI returns environment exit code `4` after successfully producing the executable. This keeps the example matrix useful on machines where antivirus blocks short-lived generated `net48` executables.
+
+Each project README explains every command, output, TypeSharp, C#, or XML code block before the block appears, so users can read the example as a guided workflow instead of a bare file dump.

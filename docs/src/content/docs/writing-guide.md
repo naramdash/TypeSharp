@@ -133,6 +133,7 @@ generated/bin/Release/net48/BillingRules.dll
 - Use explicit imports or fully qualified names when a reader could otherwise miss where a symbol comes from.
 - Prefer examples that can be checked by `typesharp check` and built by `typesharp build`.
 - If a snippet is conceptual, label it before the code block and keep it out of runnable project instructions.
+- For runnable example project READMEs, explain every command, expected output, `tysh`, C#, XML, or manifest block before the block appears.
 - Keep command examples in `powershell` fences, manifest examples in `toml`, generated C# in `csharp`, and expected output in `text`.
 
 ## Emoji Policy ✨
@@ -156,6 +157,7 @@ Before publishing a docs change:
 - Confirm the page names the reader's problem before the implementation detail.
 - Confirm every TypeSharp source block uses a `tysh` fence.
 - Confirm runnable examples include `TypeSharp.toml`, source path, commands, and expected artifact or output.
+- Confirm runnable example project READMEs explain every code block before the block appears.
 - Confirm preview-only behavior is labeled as preview.
 - Confirm links point to canonical docs pages such as [Project Configuration](../project-configuration/), [Runtime Artifacts](../runtime-artifacts/), [Examples](../examples/), and [Feature Status](../feature-status/).
 - Run `npm run build` in `docs/`.

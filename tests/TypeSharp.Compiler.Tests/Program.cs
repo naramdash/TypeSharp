@@ -10325,9 +10325,14 @@ static void RunnableExampleCatalogSmokeMatrixIsStable()
         AssertTrue(
             Directory.EnumerateFiles(Path.Combine(projectRoot, "src"), "*.tysh", SearchOption.AllDirectories).Any(),
             $"Runnable example '{project}' should have TypeSharp source files.");
+        var projectReadmePath = Path.Combine(projectRoot, "README.md");
+        var projectReadme = File.ReadAllText(projectReadmePath);
+        AssertContains("## Code Walkthrough", projectReadme);
+        AssertMarkdownCodeFencesHaveExplanations(projectReadmePath);
         AssertContains($"[{project}]({project}/README.md)", catalogReadme);
     }
 
+    AssertContains("Each project README explains every command, output, TypeSharp, C#, or XML code block before the block appears", catalogReadme);
     AssertContains("typesharp check", catalogReadme);
     AssertContains("typesharp build", catalogReadme);
     AssertContains("typesharp run", catalogReadme);
@@ -10340,6 +10345,55 @@ static void RunnableExampleCatalogSmokeMatrixIsStable()
     AssertContains("ASP.NET", catalogReadme);
     AssertContains("WCF", catalogReadme);
     AssertContains("TS2202", catalogReadme);
+
+    var consoleReadme = File.ReadAllText(Path.Combine(catalogRoot, "console-hello", "README.md"));
+    AssertContains("This TypeSharp block defines the public data shapes", consoleReadme);
+    AssertContains("This output block is the stable smoke result", consoleReadme);
+    var libraryReadme = File.ReadAllText(Path.Combine(catalogRoot, "library-public-api", "README.md"));
+    AssertContains("This C# block is the host-side proof", libraryReadme);
+    var interopReadme = File.ReadAllText(Path.Combine(catalogRoot, "csharp-interop", "README.md"));
+    AssertContains("This TypeSharp block shows the `out` parameter case", interopReadme);
+    var aspNetWcfReadme = File.ReadAllText(Path.Combine(catalogRoot, "host-aspnet-wcf", "README.md"));
+    AssertContains("This XML block is not executed by TypeSharp", aspNetWcfReadme);
+    var workerReadme = File.ReadAllText(Path.Combine(catalogRoot, "host-worker", "README.md"));
+    AssertContains("This C# block is the worker host proof", workerReadme);
+    var diagnosticsReadme = File.ReadAllText(Path.Combine(catalogRoot, "diagnostics-null-safety", "README.md"));
+    AssertContains("This TypeSharp block is intentionally invalid", diagnosticsReadme);
+}
+
+static void AssertMarkdownCodeFencesHaveExplanations(string markdownPath)
+{
+    var lines = File.ReadAllLines(markdownPath);
+    var inFence = false;
+    for (var i = 0; i < lines.Length; i++)
+    {
+        if (!lines[i].TrimStart().StartsWith("```", StringComparison.Ordinal))
+        {
+            continue;
+        }
+
+        if (!inFence)
+        {
+            var previous = i - 1;
+            while (previous >= 0 && string.IsNullOrWhiteSpace(lines[previous]))
+            {
+                previous--;
+            }
+
+            AssertTrue(previous >= 0, $"Code block in '{markdownPath}' should have an explanatory sentence immediately before it.");
+            var explanation = lines[previous].Trim();
+            AssertTrue(
+                explanation.Contains("block", StringComparison.OrdinalIgnoreCase),
+                $"Code block in '{markdownPath}' should be introduced by a sentence that explains the block. Found: '{explanation}'.");
+            AssertTrue(
+                explanation.EndsWith(":", StringComparison.Ordinal),
+                $"Code block explanation in '{markdownPath}' should end with a colon. Found: '{explanation}'.");
+        }
+
+        inFence = !inFence;
+    }
+
+    AssertFalse(inFence, $"Markdown code fences should be balanced in '{markdownPath}'.");
 }
 
 static void RunnableExampleProjectCommandsAreSmokeTested()
@@ -10725,6 +10779,8 @@ static void DocsSiteContractIsStable()
     AssertContains("tysh Example Project Guidelines", writingGuidePage);
     AssertContains("Emoji Policy", writingGuidePage);
     AssertContains("Review Checklist", writingGuidePage);
+    AssertContains("explain every command, expected output, `tysh`, C#, XML, or manifest block before the block appears", writingGuidePage);
+    AssertContains("Confirm runnable example project READMEs explain every code block before the block appears", writingGuidePage);
     AssertContains("```tysh", writingGuidePage);
     AssertContains("TypeSharp.toml", writingGuidePage);
     AssertContains("targetFramework = \"net48\"", writingGuidePage);
@@ -10769,6 +10825,7 @@ static void DocsSiteContractIsStable()
     AssertContains("named/optional/params/out calls", examplesPage);
     AssertContains("billing work-item", examplesPage);
     AssertContains("nullable customer profile flow", examplesPage);
+    AssertContains("introduce every command, output, TypeSharp, C#, or XML code block with a short explanation before the block", examplesPage);
 
     var typeSystemPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "type-system.md"));
     AssertContains("Local Inference", typeSystemPage);

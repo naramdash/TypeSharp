@@ -83,6 +83,7 @@ Longer docs authoring rules live in [Writing Guide](../writing-guide/). These lo
 - Interop capability boundaries show `interop`, `dynamic`, `reflect`, or `unsafe` markers explicitly.
 - Example CLI behavior follows [CLI](../cli/); syntax and feature status follow [Grammar](../grammar/) and [Feature Status](../feature-status/).
 - Runnable project docs include `TypeSharp.toml`, `src/Main.tysh`, `typesharp check`, `typesharp build`, expected output or artifact paths, and any required `net48` Core/Runtime references.
+- Runnable project docs introduce every command, output, TypeSharp, C#, or XML code block with a short explanation before the block.
 
 ## Repository Artifact Location
 
