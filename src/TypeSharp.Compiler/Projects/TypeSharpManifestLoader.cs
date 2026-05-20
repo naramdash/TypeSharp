@@ -67,6 +67,8 @@ public static class TypeSharpManifestLoader
             document.GetString("tooling", "diagnosticFormat", defaultTooling.DiagnosticFormat, diagnostics),
             document.GetBool("tooling", "treatWarningsAsErrors", defaultTooling.TreatWarningsAsErrors, diagnostics));
 
+        ValidateManifestOptions(fullManifestPath, document, project, language, tooling, diagnostics);
+
         if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
         {
             return new ManifestLoadResult(null, diagnostics);
@@ -75,5 +77,84 @@ public static class TypeSharpManifestLoader
         return new ManifestLoadResult(
             new TypeSharpManifest(fullManifestPath, projectDirectory, project, language, references, tooling),
             diagnostics);
+    }
+
+    private static void ValidateManifestOptions(
+        string manifestPath,
+        MinimalTomlDocument document,
+        ProjectOptions project,
+        LanguageOptions language,
+        ToolingOptions tooling,
+        List<Diagnostic> diagnostics)
+    {
+        ValidateOneOf(
+            manifestPath,
+            document,
+            "project",
+            "outputType",
+            project.OutputType,
+            ["library", "exe"],
+            diagnostics);
+        ValidateOneOf(
+            manifestPath,
+            document,
+            "language",
+            "version",
+            language.Version,
+            [TypeSharpCompilerInfo.LanguageVersion],
+            diagnostics);
+        ValidateOneOf(
+            manifestPath,
+            document,
+            "language",
+            "nullable",
+            language.Nullable,
+            ["strict", "loose"],
+            diagnostics);
+        ValidateOneOf(
+            manifestPath,
+            document,
+            "tooling",
+            "diagnosticFormat",
+            tooling.DiagnosticFormat,
+            ["text", "json"],
+            diagnostics);
+    }
+
+    private static void ValidateOneOf(
+        string manifestPath,
+        MinimalTomlDocument document,
+        string section,
+        string key,
+        string value,
+        IReadOnlyList<string> supportedValues,
+        List<Diagnostic> diagnostics)
+    {
+        if (supportedValues.Contains(value, StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        if (!document.TryGetLocation(section, key, out var line, out var column))
+        {
+            return;
+        }
+
+        diagnostics.Add(DiagnosticFactory.Manifest(
+            DiagnosticDescriptors.InvalidManifestValue,
+            $"Manifest value '{section}.{key}' must be {FormatSupportedValues(supportedValues)}.",
+            manifestPath,
+            line,
+            column));
+    }
+
+    private static string FormatSupportedValues(IReadOnlyList<string> supportedValues)
+    {
+        if (supportedValues.Count == 1)
+        {
+            return $"'{supportedValues[0]}'";
+        }
+
+        return "one of " + string.Join(", ", supportedValues.Select(value => $"'{value}'"));
     }
 }

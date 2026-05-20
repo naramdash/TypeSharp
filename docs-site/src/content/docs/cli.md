@@ -195,6 +195,10 @@ treatWarningsAsErrors = false
 Manifest rules:
 
 - `sourceRoots` controls `.tysh` discovery; if omitted, `src` is the default source root.
+- `project.outputType` must be `library` or `exe`.
+- `language.version` must be `preview`.
+- `language.nullable` must be `strict` or `loose`; `strict` reports unknown C# nullability warnings at interop boundaries.
+- `tooling.diagnosticFormat` must be `text` or `json`.
 - source file extension is `.tysh`.
 - source-root-relative module paths are case-insensitive for collision checks.
 - duplicate module paths report `TS0111`.

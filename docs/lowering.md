@@ -12,7 +12,7 @@
 | Compiler pipeline and backend context | [docs-site Advanced Topics](../docs-site/src/content/docs/advanced.md) |
 | Public ABI and interop context | [docs-site .NET Interop](../docs-site/src/content/docs/dotnet-interop.md) |
 | Migration matrix | [docs-site Document Ownership](../docs-site/src/content/docs/document-ownership.md) |
-| Completed migration task | [tasks/0001-0252-task-ledger-rollup.md](tasks/0001-0252-task-ledger-rollup.md) |
+| Completed migration task | [tasks/0001-0253-task-ledger-rollup.md](tasks/0001-0253-task-ledger-rollup.md) |
 
 ## Bridge Scope
 

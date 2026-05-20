@@ -34,9 +34,9 @@ public static class DiagnosticDescriptors
         "Invalid manifest value",
         DiagnosticSeverity.Error,
         DiagnosticCategory.Project,
-        "Manifest value has the wrong shape.",
-        "A manifest key exists, but its value is not the expected type.",
-        "Change the value to the expected manifest type.");
+        "Manifest value is invalid.",
+        "A manifest key exists, but its value has the wrong type or is outside the supported value domain.",
+        "Change the value to a supported manifest value.");
 
     public static readonly DiagnosticDescriptor SourceRootNotFound = new(
         "TS0110",

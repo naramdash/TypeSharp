@@ -239,6 +239,8 @@ var tests = new (string Name, Action Body)[]
     ("CLI build lowers function value exports", CliBuildLowersFunctionValueExports),
     ("CLI build lowers local type export aliases", CliBuildLowersLocalTypeExportAliases),
     ("manifest loader reports invalid manifest shape", ManifestLoaderReportsInvalidManifestShape),
+    ("manifest loader rejects invalid option domains", ManifestLoaderRejectsInvalidOptionDomains),
+    ("CLI check emits JSON invalid manifest value diagnostics", CliCheckEmitsJsonInvalidManifestValueDiagnostics),
     ("CLI run builds and runs generated net48 executable", CliRunBuildsAndRunsGeneratedNet48Executable),
     ("CLI run passes arguments to generated main", CliRunPassesArgumentsToGeneratedMain),
     ("CLI run uses module path container for multi-source executable", CliRunUsesModulePathContainerForMultiSourceExecutable),
@@ -8431,6 +8433,58 @@ static void ManifestLoaderReportsInvalidManifestShape()
 
         AssertTrue(result.HasErrors, "Invalid manifest shape should produce an error.");
         AssertEqual("TS0103", result.Diagnostics.Single().Code);
+    });
+}
+
+static void ManifestLoaderRejectsInvalidOptionDomains()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidDomains"
+            outputType = "console"
+
+            [language]
+            version = "stable"
+            nullable = "permissive"
+
+            [tooling]
+            diagnosticFormat = "xml"
+            """);
+
+        var result = TypeSharpManifestLoader.Load(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported manifest option values should produce errors.");
+        AssertTrue(result.Manifest is null, "Invalid manifest option values should stop manifest loading.");
+        AssertEqual(4, result.Diagnostics.Count(diagnostic => diagnostic.Code == "TS0103"));
+        var messages = string.Join("\n", result.Diagnostics.Select(diagnostic => diagnostic.Message));
+        AssertContains("Manifest value 'project.outputType' must be one of 'library', 'exe'.", messages);
+        AssertContains("Manifest value 'language.version' must be 'preview'.", messages);
+        AssertContains("Manifest value 'language.nullable' must be one of 'strict', 'loose'.", messages);
+        AssertContains("Manifest value 'tooling.diagnosticFormat' must be one of 'text', 'json'.", messages);
+    });
+}
+
+static void CliCheckEmitsJsonInvalidManifestValueDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidManifestJson"
+            outputType = "console"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0103\"", error.ToString());
+        AssertContains("Manifest value 'project.outputType' must be one of 'library', 'exe'.", error.ToString());
+        AssertContains("TypeSharp.toml", error.ToString());
     });
 }
 

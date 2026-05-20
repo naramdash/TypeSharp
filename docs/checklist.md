@@ -483,6 +483,7 @@
 - [x] parser fixture format policy
 - [x] compiler skeleton smoke test harness
 - [x] manifest/source discovery smoke tests
+- [x] manifest semantic option validation smoke tests
 - [x] duplicate source module path diagnostic smoke tests
 - [x] source module graph relative import alias and diagnostic smoke tests
 - [x] source module graph missing export diagnostic smoke tests

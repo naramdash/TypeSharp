@@ -10,8 +10,8 @@
 | --- | --- |
 | 활성 task packet | None |
 | 다음 최우선 task | Not selected |
-| 완료 범위 | 0001-0252 |
-| 압축 원장 | [0001-0252-task-ledger-rollup.md](0001-0252-task-ledger-rollup.md) |
+| 완료 범위 | 0001-0253 |
+| 압축 원장 | [0001-0253-task-ledger-rollup.md](0001-0253-task-ledger-rollup.md) |
 
 ## 사용 규칙
 
@@ -24,6 +24,6 @@
 ## 읽는 순서
 
 1. 이 README에서 활성 task가 있는지 확인한다.
-2. 완료된 작업 이력은 [0001-0252-task-ledger-rollup.md](0001-0252-task-ledger-rollup.md)를 읽는다.
+2. 완료된 작업 이력은 [0001-0253-task-ledger-rollup.md](0001-0253-task-ledger-rollup.md)를 읽는다.
 3. 새 작업을 고를 때는 checklist와 traceability를 보고, 필요한 사양 문서로 바로 이동한다.
 4. 새 작업이 완료되면 rollup에 요약하고 개별 packet은 남기지 않는다.

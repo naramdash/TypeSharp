@@ -186,6 +186,20 @@ internal sealed class MinimalTomlDocument
         return defaultValue;
     }
 
+    public bool TryGetLocation(string section, string key, out int line, out int column)
+    {
+        if (TryGetEntry(section, key, out var entry))
+        {
+            line = entry.Line;
+            column = entry.Column;
+            return true;
+        }
+
+        line = 1;
+        column = 1;
+        return false;
+    }
+
     private static bool ValueClosesArray(string value)
     {
         var inString = false;
