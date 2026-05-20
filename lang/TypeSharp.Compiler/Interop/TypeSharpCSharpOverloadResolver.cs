@@ -1,3 +1,4 @@
+using System.Globalization;
 using TypeSharp.Compiler.Parsing;
 
 namespace TypeSharp.Compiler.Interop;
@@ -591,6 +592,11 @@ public static class TypeSharpCSharpOverloadResolver
             return !string.IsNullOrEmpty(type.Name);
         }
 
+        if (TryInferUnaryNumericArgumentType(argument, out type, assemblies, localInstances))
+        {
+            return true;
+        }
+
         if (argument.Kind == SyntaxKind.CallExpression &&
             assemblies is not null &&
             TryGetConstructedCallTypeName(argument, out var typeName))
@@ -714,6 +720,28 @@ public static class TypeSharpCSharpOverloadResolver
         }
 
         return text.Contains('.', StringComparison.Ordinal) ? "double" : "int";
+    }
+
+    private static bool TryInferUnaryNumericArgumentType(
+        SyntaxNode argument,
+        out InferredArgumentType type,
+        IReadOnlyList<MetadataAssemblySymbol>? assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>>? localInstances)
+    {
+        type = default;
+        var expressions = argument.Children.Where(child => !child.IsToken).ToArray();
+        var operatorKind = argument.Children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+        if (argument.Kind != SyntaxKind.BinaryExpression ||
+            expressions.Length != 1 ||
+            operatorKind is not (SyntaxKind.PlusToken or SyntaxKind.MinusToken) ||
+            !TryInferArgumentType(expressions[0], out var operandType, assemblies, localInstances) ||
+            !TryGetUnaryNumericResultType(operandType, operatorKind, out var resultType, out var numericLiteralText))
+        {
+            return false;
+        }
+
+        type = new InferredArgumentType(resultType, numericLiteralText);
+        return true;
     }
 
     private static bool CanPassKnownArgumentType(
@@ -854,18 +882,25 @@ public static class TypeSharpCSharpOverloadResolver
         return TryParseIntegralLiteral(argumentType.NumericLiteralText, out var value) &&
             expected switch
             {
-                "byte" => value <= byte.MaxValue,
-                "sbyte" => value <= (ulong)sbyte.MaxValue,
-                "short" => value <= (ulong)short.MaxValue,
-                "ushort" => value <= ushort.MaxValue,
-                "uint" => value <= uint.MaxValue,
-                "ulong" => true,
+                "byte" => value >= byte.MinValue && value <= byte.MaxValue,
+                "sbyte" => value >= sbyte.MinValue && value <= sbyte.MaxValue,
+                "short" => value >= short.MinValue && value <= short.MaxValue,
+                "ushort" => value >= ushort.MinValue && value <= ushort.MaxValue,
+                "uint" => value >= uint.MinValue && value <= uint.MaxValue,
+                "ulong" => value >= ulong.MinValue && value <= ulong.MaxValue,
                 _ => false
             };
     }
 
-    private static bool TryParseIntegralLiteral(string? text, out ulong value) =>
-        ulong.TryParse(text, out value);
+    private static bool TryParseIntegralLiteral(string? text, out decimal value)
+    {
+        value = 0;
+        return !string.IsNullOrWhiteSpace(text) &&
+            !text.Contains('.', StringComparison.Ordinal) &&
+            !text.EndsWith("m", StringComparison.OrdinalIgnoreCase) &&
+            decimal.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value) &&
+            decimal.Truncate(value) == value;
+    }
 
     private static bool IsLambdaArgument(SyntaxNode argument) =>
         UnwrapArgumentExpression(argument).Kind == SyntaxKind.LambdaExpression;

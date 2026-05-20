@@ -83,7 +83,7 @@ Current ranking prefers:
 1. arity and named argument match,
 2. exact nominal type match,
 3. nullable compatibility,
-4. known literal, homogeneous collection expression array arguments, and fitting numeric conversions,
+4. known literal, unary numeric, homogeneous collection expression array arguments, and fitting numeric conversions,
 5. imported metadata relationship distance,
 6. generic inference and constraint satisfaction in implemented positions,
 7. delegate/lambda contextual checks,
@@ -153,6 +153,7 @@ Rules:
 - readonly fields cannot be assigned,
 - known indexer arguments are checked against available indexers,
 - parenthesized indexer arguments are checked by the enclosed expression type before generated C# emission,
+- unary numeric indexer arguments preserve their signed constant value for metadata validation,
 - `null` indexer arguments reject non-nullable value-type indexers and rank concrete reference indexers before `object` fallback,
 - ambiguous indexers report diagnostics.
 

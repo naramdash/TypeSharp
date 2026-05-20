@@ -1,3 +1,4 @@
+using System.Globalization;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Parsing;
 
@@ -2056,6 +2057,11 @@ public static class TypeSharpInteropValidator
             return true;
         }
 
+        if (TryInferUnaryNumericIndexerArgumentType(expression, assemblies, localInstances, out type))
+        {
+            return true;
+        }
+
         if (TryInferConstructedGenericTypeArgument(expression, assemblies, out var constructedArgument) ||
             TryInferTrackedLocalGenericTypeArgument(expression, localInstances, out constructedArgument))
         {
@@ -2113,6 +2119,48 @@ public static class TypeSharpInteropValidator
         };
 
         return !string.IsNullOrEmpty(type.Name);
+    }
+
+    private static bool TryInferUnaryNumericIndexerArgumentType(
+        SyntaxNode expression,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        IReadOnlyDictionary<string, IReadOnlyList<MetadataTypeSymbol>> localInstances,
+        out InferredIndexerArgumentType type)
+    {
+        type = default;
+        var expressions = expression.Children.Where(child => !child.IsToken).ToArray();
+        var operatorKind = expression.Children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+        if (expression.Kind != SyntaxKind.BinaryExpression ||
+            expressions.Length != 1 ||
+            operatorKind is not (SyntaxKind.PlusToken or SyntaxKind.MinusToken) ||
+            !TryInferIndexerArgumentType(expressions[0], assemblies, localInstances, out var operandType) ||
+            !TryGetUnaryNumericIndexerResultType(operandType, operatorKind, out var resultType, out var numericLiteralText))
+        {
+            return false;
+        }
+
+        type = new InferredIndexerArgumentType(resultType, numericLiteralText);
+        return true;
+    }
+
+    private static bool TryGetUnaryNumericIndexerResultType(
+        InferredIndexerArgumentType operandType,
+        SyntaxKind operatorKind,
+        out string resultType,
+        out string? numericLiteralText)
+    {
+        var operand = NormalizePrimitiveTypeName(operandType.Name);
+        resultType = operand switch
+        {
+            "byte" or "sbyte" or "short" or "ushort" => "int",
+            "int" or "long" or "float" or "double" or "decimal" => operand,
+            "uint" or "ulong" when operatorKind == SyntaxKind.PlusToken => operand,
+            _ => string.Empty
+        };
+        numericLiteralText = operatorKind == SyntaxKind.MinusToken && !string.IsNullOrEmpty(operandType.NumericLiteralText)
+            ? $"-{operandType.NumericLiteralText}"
+            : operandType.NumericLiteralText;
+        return resultType.Length > 0;
     }
 
     private static bool CanPassToIndexerParameter(
@@ -2420,17 +2468,27 @@ public static class TypeSharpInteropValidator
             return true;
         }
 
-        return ulong.TryParse(actualType.NumericLiteralText, out var value) &&
+        return TryParseIntegralLiteral(actualType.NumericLiteralText, out var value) &&
             parameter switch
             {
-                "byte" => value <= byte.MaxValue,
-                "sbyte" => value <= (ulong)sbyte.MaxValue,
-                "short" => value <= (ulong)short.MaxValue,
-                "ushort" => value <= ushort.MaxValue,
-                "uint" => value <= uint.MaxValue,
-                "ulong" => true,
+                "byte" => value >= byte.MinValue && value <= byte.MaxValue,
+                "sbyte" => value >= sbyte.MinValue && value <= sbyte.MaxValue,
+                "short" => value >= short.MinValue && value <= short.MaxValue,
+                "ushort" => value >= ushort.MinValue && value <= ushort.MaxValue,
+                "uint" => value >= uint.MinValue && value <= uint.MaxValue,
+                "ulong" => value >= ulong.MinValue && value <= ulong.MaxValue,
                 _ => false
             };
+    }
+
+    private static bool TryParseIntegralLiteral(string? text, out decimal value)
+    {
+        value = 0;
+        return !string.IsNullOrWhiteSpace(text) &&
+            !text.Contains('.', StringComparison.Ordinal) &&
+            !text.EndsWith("m", StringComparison.OrdinalIgnoreCase) &&
+            decimal.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value) &&
+            decimal.Truncate(value) == value;
     }
 
     private static bool IsNumericType(string type) =>

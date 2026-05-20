@@ -111,6 +111,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports no matching C# overload diagnostics", CheckerReportsNoMatchingCSharpOverloadDiagnostics),
     ("checker reports no matching C# overload for known argument type diagnostics", CheckerReportsNoMatchingCSharpOverloadForKnownArgumentTypeDiagnostics),
     ("checker reports no matching C# overload for numeric literal conversion diagnostics", CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDiagnostics),
+    ("checker reports no matching C# overload for unary numeric argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForUnaryNumericArgumentDiagnostics),
     ("checker reports no matching C# overload for collection expression argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForCollectionExpressionArgumentDiagnostics),
     ("checker accepts imported params collection expression array overload", CheckerAcceptsImportedParamsCollectionExpressionArrayOverload),
     ("checker reports no matching C# overload for imported metadata argument diagnostics", CheckerReportsNoMatchingCSharpOverloadForImportedMetadataArgumentDiagnostics),
@@ -135,6 +136,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports missing C# instance indexer diagnostics", CheckerReportsMissingCSharpInstanceIndexerDiagnostics),
     ("checker reports mismatched C# instance indexer diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerDiagnostics),
     ("checker reports mismatched C# instance indexer numeric literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnostics),
+    ("checker reports mismatched C# instance indexer unary numeric diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerUnaryNumericDiagnostics),
     ("checker reports mismatched C# instance indexer parenthesized argument diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerParenthesizedArgumentDiagnostics),
     ("checker reports mismatched C# instance indexer null literal diagnostics", CheckerReportsMismatchedCSharpInstanceIndexerNullLiteralDiagnostics),
     ("checker reports ambiguous C# instance indexer diagnostics", CheckerReportsAmbiguousCSharpInstanceIndexerDiagnostics),
@@ -172,6 +174,7 @@ var tests = new (string Name, Action Body)[]
     ("C# overload resolver selects exact literal match", CSharpOverloadResolverSelectsExactLiteralMatch),
     ("C# overload resolver filters known argument type mismatch", CSharpOverloadResolverFiltersKnownArgumentTypeMismatch),
     ("C# overload resolver filters numeric literal conversion mismatch", CSharpOverloadResolverFiltersNumericLiteralConversionMismatch),
+    ("C# overload resolver filters unary numeric argument conversion", CSharpOverloadResolverFiltersUnaryNumericArgumentConversion),
     ("C# overload resolver filters collection expression argument type", CSharpOverloadResolverFiltersCollectionExpressionArgumentType),
     ("C# overload resolver treats collection expression as params array", CSharpOverloadResolverTreatsCollectionExpressionAsParamsArray),
     ("C# overload resolver ranks null literal reference match", CSharpOverloadResolverRanksNullLiteralReferenceMatch),
@@ -251,6 +254,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on no matching C# delegate lambda indexer return overload", CliBuildStopsBeforeEmissionOnNoMatchingCSharpDelegateLambdaIndexerReturnOverload),
     ("CLI build stops before emission on known argument type C# overload mismatch", CliBuildStopsBeforeEmissionOnKnownArgumentTypeCSharpOverloadMismatch),
     ("CLI build stops before emission on numeric literal C# overload mismatch", CliBuildStopsBeforeEmissionOnNumericLiteralCSharpOverloadMismatch),
+    ("CLI build stops before emission on unary numeric C# overload mismatch", CliBuildStopsBeforeEmissionOnUnaryNumericCSharpOverloadMismatch),
     ("CLI build stops before emission on collection expression C# overload mismatch", CliBuildStopsBeforeEmissionOnCollectionExpressionCSharpOverloadMismatch),
     ("CLI build stops before emission on imported metadata argument C# overload mismatch", CliBuildStopsBeforeEmissionOnImportedMetadataArgumentCSharpOverloadMismatch),
     ("CLI build stops before emission on null literal C# overload mismatch", CliBuildStopsBeforeEmissionOnNullLiteralCSharpOverloadMismatch),
@@ -271,6 +275,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on missing C# instance indexer", CliBuildStopsBeforeEmissionOnMissingCSharpInstanceIndexer),
     ("CLI build stops before emission on mismatched C# instance indexer", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexer),
     ("CLI build stops before emission on mismatched C# instance indexer numeric literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericLiteral),
+    ("CLI build stops before emission on mismatched C# instance indexer unary numeric", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerUnaryNumeric),
     ("CLI build stops before emission on mismatched C# instance indexer parenthesized argument", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerParenthesizedArgument),
     ("CLI build stops before emission on mismatched C# instance indexer null literal", CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNullLiteral),
     ("CLI build stops before emission on ambiguous C# instance indexer", CliBuildStopsBeforeEmissionOnAmbiguousCSharpInstanceIndexer),
@@ -420,6 +425,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles imported metadata relationship overload match", CliBuildCompilesImportedMetadataRelationshipOverloadMatch),
     ("CLI build compiles imported collection expression overload match", CliBuildCompilesImportedCollectionExpressionOverloadMatch),
     ("CLI build compiles numeric literal constant conversion", CliBuildCompilesNumericLiteralConstantConversion),
+    ("CLI build compiles unary numeric constant conversion", CliBuildCompilesUnaryNumericConstantConversion),
     ("CLI build compiles imported params collection expression array match", CliBuildCompilesImportedParamsCollectionExpressionArrayMatch),
     ("CLI build compiles exact expanded params overload match", CliBuildCompilesExactExpandedParamsOverloadMatch),
     ("CLI build compiles imported optional call", CliBuildCompilesImportedOptionalCall),
@@ -2676,6 +2682,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertEqual(3, nullItems.Length);
         AssertSequence(["int", "object", "string"], nullItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
 
+        var legacyNumeric = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNumeric"), "LegacyNumeric metadata should be present.");
+        var formatSByte = Require(legacyNumeric.Methods.SingleOrDefault(method => method.Name == "FormatSByte"), "LegacyNumeric.FormatSByte metadata should be present.");
+        AssertSequence(["value"], formatSByte.Parameters.Select(parameter => parameter.Name).ToArray());
+        AssertSequence(["sbyte"], formatSByte.Parameters.Select(parameter => parameter.Type).ToArray());
+
         var legacyByRef = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyByRef"), "LegacyByRef metadata should be present.");
         var tryParse = Require(legacyByRef.Methods.SingleOrDefault(method => method.Name == "TryParseCount"), "TryParseCount metadata should be present.");
         AssertSequence(["text", "value"], tryParse.Parameters.Select(parameter => parameter.Name).ToArray());
@@ -3709,6 +3720,41 @@ static void CheckerReportsNoMatchingCSharpOverloadForNumericLiteralConversionDia
     });
 }
 
+static void CheckerReportsNoMatchingCSharpOverloadForUnaryNumericArgumentDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NoMatchingUnaryNumericArgumentOverload"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NoMatchingUnaryNumericArgumentOverload"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NoMatchingUnaryNumericArgumentOverload
+
+            import { LegacyNumeric } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyNumeric.FormatByte(-1)
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Impossible unary numeric C# overload conversion should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2406");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("LegacyNumeric.FormatByte", diagnostic.Message);
+        AssertContains("matches no overload candidate", diagnostic.Message);
+    });
+}
+
 static void CheckerReportsNoMatchingCSharpOverloadForCollectionExpressionArgumentDiagnostics()
 {
     WithWorkspace(root =>
@@ -4423,6 +4469,43 @@ static void CheckerReportsMismatchedCSharpInstanceIndexerNumericLiteralDiagnosti
         AssertContains("indexer", diagnostic.Message);
         AssertContains("Legacy.Tools.LegacyByteIndexer", diagnostic.Message);
         AssertContains("does not contain a public instance indexer compatible with argument type(s) 'double'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsMismatchedCSharpInstanceIndexerUnaryNumericDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerUnaryNumeric"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerUnaryNumeric"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerUnaryNumeric
+
+            import { LegacyByteIndexer } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let indexer = LegacyByteIndexer()
+              indexer[-1]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Mismatched C# instance indexer unary numeric argument should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2411");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertContains("Legacy.Tools.LegacyByteIndexer", diagnostic.Message);
+        AssertContains("'int'", diagnostic.Message);
     });
 }
 
@@ -5785,6 +5868,45 @@ static void CSharpOverloadResolverFiltersNumericLiteralConversionMismatch()
     AssertFalse(resolution.IsAmbiguous, "Integral constants that fit a smaller numeric parameter should remain applicable.");
     var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible numeric conversion candidate.");
     AssertEqual("byte", selected.Method.Parameters[0].Type);
+}
+
+static void CSharpOverloadResolverFiltersUnaryNumericArgumentConversion()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.OverloadResolver
+
+        fun choose(): string = LegacyNumeric.PickSigned(-1)
+        """);
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+    var call = Require(FindFirstNode(root, SyntaxKind.CallExpression), "Test input should contain a call expression.");
+    var arguments = call.Children.Skip(1).Where(child => !child.IsToken).ToArray();
+    var metadataType = new MetadataTypeSymbol(
+        "Legacy.Tools",
+        "LegacyNumeric",
+        [
+            new MetadataMethodSymbol(
+                "PickSigned",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "sbyte", MetadataByRefKind.None, IsParams: false, IsOptional: false)]),
+            new MetadataMethodSymbol(
+                "PickSigned",
+                "string",
+                MetadataNullabilityKind.NotApplicable,
+                [new MetadataParameterSymbol("value", "byte", MetadataByRefKind.None, IsParams: false, IsOptional: false)])
+        ],
+        [],
+        [],
+        []);
+
+    var resolution = TypeSharpCSharpOverloadResolver.Resolve(
+        metadataType.Methods.Select(method => new CSharpOverloadCandidate(metadataType, method)),
+        arguments);
+
+    AssertEqual(1, resolution.ApplicableCandidates.Count);
+    AssertFalse(resolution.IsAmbiguous, "Unary numeric constants should remove impossible numeric overload candidates.");
+    var selected = Require(resolution.SelectedCandidate, "Resolver should select the compatible unary numeric conversion candidate.");
+    AssertEqual("sbyte", selected.Method.Parameters[0].Type);
 }
 
 static void CSharpOverloadResolverFiltersCollectionExpressionArgumentType()
@@ -9211,6 +9333,46 @@ static void CliBuildStopsBeforeEmissionOnNumericLiteralCSharpOverloadMismatch()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnUnaryNumericCSharpOverloadMismatch()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnaryNumericOverloadMismatchBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnaryNumericOverloadMismatchBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnaryNumericOverloadMismatchBuild
+
+            import { LegacyNumeric } from "Legacy.Tools"
+
+            export fun broken(): string =
+              LegacyNumeric.FormatByte(-1)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2406\"", error.ToString());
+        AssertContains("LegacyNumeric.FormatByte", error.ToString());
+        AssertContains("matches no overload candidate", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unary numeric C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnaryNumericOverloadMismatchBuild.Generated.csproj")), "Build should not emit generated project when unary numeric C# overload diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnaryNumericOverloadMismatchBuild.dll")), "Build should not emit generated assembly when unary numeric C# overload diagnostics contain errors.");
+    });
+}
+
 static void CliBuildStopsBeforeEmissionOnCollectionExpressionCSharpOverloadMismatch()
 {
     WithWorkspace(root =>
@@ -10013,6 +10175,47 @@ static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerNumericL
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched C# instance indexer numeric literal diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerNumericLiteralBuild.Generated.csproj")), "Build should not emit generated project when mismatched C# instance indexer numeric literal diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerNumericLiteralBuild.dll")), "Build should not emit generated assembly when mismatched C# instance indexer numeric literal diagnostics contain errors.");
+    });
+}
+
+static void CliBuildStopsBeforeEmissionOnMismatchedCSharpInstanceIndexerUnaryNumeric()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "MismatchedCSharpInstanceIndexerUnaryNumericBuild"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.MismatchedCSharpInstanceIndexerUnaryNumericBuild"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.MismatchedCSharpInstanceIndexerUnaryNumericBuild
+
+            import { LegacyByteIndexer } from "Legacy.Tools"
+
+            export fun broken(): string {
+              let indexer = LegacyByteIndexer()
+              indexer[-1]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2411\"", error.ToString());
+        AssertContains("Legacy.Tools.LegacyByteIndexer", error.ToString());
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when mismatched C# instance indexer unary numeric diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "MismatchedCSharpInstanceIndexerUnaryNumericBuild.Generated.csproj")), "Build should not emit generated project when mismatched C# instance indexer unary numeric diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "MismatchedCSharpInstanceIndexerUnaryNumericBuild.dll")), "Build should not emit generated assembly when mismatched C# instance indexer unary numeric diagnostics contain errors.");
     });
 }
 
@@ -15991,6 +16194,48 @@ static void CliBuildCompilesNumericLiteralConstantConversion()
     });
 }
 
+static void CliBuildCompilesUnaryNumericConstantConversion()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnaryNumericConstantConversion"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnaryNumericConstantConversion"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnaryNumericConstantConversion
+
+            import { LegacyNumeric } from "Legacy.Tools"
+
+            export fun pick(): string =
+              LegacyNumeric.FormatSByte(-1)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/UnaryNumericConstantConversion.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("return LegacyNumeric.FormatSByte(-1);", generatedSource);
+        AssertTrue(
+            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnaryNumericConstantConversion.dll")),
+            "Generated project build should compile a unary integral constant conversion to a signed C# numeric parameter.");
+    });
+}
+
 static void CliBuildCompilesImportedParamsCollectionExpressionArrayMatch()
 {
     WithWorkspace(root =>
@@ -21148,6 +21393,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
 
                 public static string FormatByte(byte value)
+                {
+                    return value.ToString();
+                }
+
+                public static string FormatSByte(sbyte value)
                 {
                     return value.ToString();
                 }

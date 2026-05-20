@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0291                          |
+| Completed range    | 0001-0292                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -33,18 +33,19 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 <!-- user tasks below -->
 
 - [x] agent/tasks.md 파일의 Agent Task Queue 섹션은 최근 5개만 남기도록 변경, User Task Inbox는 유저가 언제나 변경할 수 있음을 명시
+- [ ] 모태가 된 언어들의 모든 기능, 환경, 이코시스템을 분석해서 이 언어에 적절한 계획을 세우고 tasks.md에 반영하기. goal 모드가 끝났다고 생각되었을때에는 이러한 작업을 반복하여 멈추지 않고 계속 계획을 세우고 실행하도록 agent.md 문서에 반영할것
 
 ## Agent Task Queue
 
 최근 5개 행만 유지한다. 이전 완료 이력은 [tasks-rollup.md](tasks-rollup.md)를 본다.
 
-| Priority | Status | Source                  | Task                                                | Packet                                                                                                                                                         | Notes                                                                                                                                                                                                    |
-| -------- | ------ | ----------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q0       | Done   | User directive          | Task queue retention policy                        | [tasks-rollup.md#task-0291-task-queue-retention-policy](tasks-rollup.md#task-0291-task-queue-retention-policy)                                                 | Kept the user inbox user-editable at any time, limited the visible agent queue to the latest five rows, and kept older done work in the compressed rollup.                                               |
-| Q3       | Done   | Work ledger future area | Parenthesized overload argument unwrapping          | [tasks-rollup.md#task-0290-parenthesized-overload-argument-unwrapping](tasks-rollup.md#task-0290-parenthesized-overload-argument-unwrapping)                   | Unwrapped parenthesized imported C# overload arguments for null metadata specificity and lambda delegate filtering/ranking while preserving generated grouping.                                          |
-| Q3       | Done   | Work ledger future area | Parenthesized indexer argument validation           | [tasks-rollup.md#task-0289-parenthesized-indexer-argument-validation](tasks-rollup.md#task-0289-parenthesized-indexer-argument-validation)                     | Unwrapped parenthesized imported C# indexer arguments for metadata validation so mismatches report `TS2411` before emission, with positive and no-emission CLI coverage.                                 |
-| Q3       | Done   | Work ledger future area | Params collection expression array overload         | [tasks-rollup.md#task-0288-params-collection-expression-array-overload](tasks-rollup.md#task-0288-params-collection-expression-array-overload)                 | Ranked a single homogeneous collection expression as the full imported C# `params T[]` array argument before expanded element fallback, with resolver/checker/`net48` CLI build coverage.                |
-| Q3       | Done   | Work ledger future area | Collection generic array inference                  | [tasks-rollup.md#task-0287-collection-generic-array-inference](tasks-rollup.md#task-0287-collection-generic-array-inference)                                   | Added homogeneous collection expression inference for imported C# `T[]` generic method parameters, `TS2417` diagnostics before emission, and `net48` CLI build coverage.                                 |
+| Priority | Status | Source                  | Task                                        | Packet                                                                                                                                         | Notes                                                                                                                                                                                     |
+| -------- | ------ | ----------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | Done   | Work ledger future area | Unary numeric C# argument inference         | [tasks-rollup.md#task-0292-unary-numeric-csharp-argument-inference](tasks-rollup.md#task-0292-unary-numeric-csharp-argument-inference)         | Inferred direct unary numeric imported C# method and indexer arguments, including signed constant conversion diagnostics before emission and `net48` CLI build coverage.                 |
+| Q0       | Done   | User directive          | Task queue retention policy                 | [tasks-rollup.md#task-0291-task-queue-retention-policy](tasks-rollup.md#task-0291-task-queue-retention-policy)                                 | Kept the user inbox user-editable at any time, limited the visible agent queue to the latest five rows, and kept older done work in the compressed rollup.                                |
+| Q3       | Done   | Work ledger future area | Parenthesized overload argument unwrapping  | [tasks-rollup.md#task-0290-parenthesized-overload-argument-unwrapping](tasks-rollup.md#task-0290-parenthesized-overload-argument-unwrapping)   | Unwrapped parenthesized imported C# overload arguments for null metadata specificity and lambda delegate filtering/ranking while preserving generated grouping.                           |
+| Q3       | Done   | Work ledger future area | Parenthesized indexer argument validation   | [tasks-rollup.md#task-0289-parenthesized-indexer-argument-validation](tasks-rollup.md#task-0289-parenthesized-indexer-argument-validation)     | Unwrapped parenthesized imported C# indexer arguments for metadata validation so mismatches report `TS2411` before emission, with positive and no-emission CLI coverage.                  |
+| Q3       | Done   | Work ledger future area | Params collection expression array overload | [tasks-rollup.md#task-0288-params-collection-expression-array-overload](tasks-rollup.md#task-0288-params-collection-expression-array-overload) | Ranked a single homogeneous collection expression as the full imported C# `params T[]` array argument before expanded element fallback, with resolver/checker/`net48` CLI build coverage. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

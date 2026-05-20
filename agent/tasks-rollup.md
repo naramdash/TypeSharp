@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 07:46:30 +09:00
+End Time: 2026-05-21 08:22 +09:00
 
 ## Objective
 
@@ -11,13 +11,13 @@ Keep one compact completed-work ledger for agent handoff without preserving ever
 
 ## Compression Rule
 
-This rollup replaces individual completed task packet files for work 0001 through 0291. Future completed active packets should be folded into this file, then removed from `agent/`.
+This rollup replaces individual completed task packet files for work 0001 through 0292. Future completed active packets should be folded into this file, then removed from `agent/`.
 
 ## State At Compression
 
 | Area | State |
 | --- | --- |
-| Completed work covered | 0001-0291 |
+| Completed work covered | 0001-0292 |
 | Active task packet at compression | None |
 | Generated artifact target | `net48` generated assemblies and runtime/core libraries |
 | Host/tool target | Modern .NET host for compiler, CLI, LSP, and tests |
@@ -62,6 +62,7 @@ Completed interop work established:
 - Metadata reader indexes for public types, fields, properties, indexers, generic methods, constraints, extension methods, params/byref/property accessors, static members, and nullability markers.
 - C# constructor, member, field, property, indexer, delegate, event, attribute, generic type/method, nullable, overload, params/optional/named/byref, extension method, local/framework missing symbol, and generic constraint diagnostics.
 - Imported class-to-interface/base assignment validation and metadata relationship ranking.
+- Direct unary numeric imported C# method and indexer arguments now infer their signed constant values for overload/indexer validation before generated C# emission.
 - Unsupported NuGet/package reference diagnostics and capability markers for `dynamic`, `reflect`, `interop`, and `unsafe`.
 
 Primary evidence:
@@ -1301,6 +1302,39 @@ Primary evidence:
 - [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md)
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 
+## Task 0292 Unary Numeric CSharp Argument Inference
+
+Completed C# interop work established:
+
+- Direct unary numeric imported C# method arguments such as `LegacyNumeric.FormatSByte(-1)` now infer their signed constant value for overload filtering/ranking.
+- Impossible unary numeric constant conversions such as `LegacyNumeric.FormatByte(-1)` report `TS2406` before generated C# emission.
+- Imported C# indexer validation now applies the same signed unary numeric inference, so mismatches such as `LegacyByteIndexer()[-1]` report `TS2411` before emission.
+- Signed integral constant conversion checks now preserve lower bounds for `byte`, `sbyte`, `short`, `ushort`, `uint`, and `ulong` instead of treating all integral literal text as unsigned.
+- .NET interop and C# members docs list direct unary numeric overload arguments and unary numeric imported indexer argument validation as implemented behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# overload resolver filters unary numeric argument conversion"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports no matching C# overload for unary numeric argument diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports mismatched C# instance indexer unary numeric diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on unary numeric C# overload mismatch"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build stops before emission on mismatched C# instance indexer unary numeric"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles unary numeric constant conversion"
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`
+- `lang/TypeSharp.Compiler/Interop/TypeSharpInteropValidator.cs`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1325,7 +1359,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0291 is compressed here.
+- Completed historical work through task 0292 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
