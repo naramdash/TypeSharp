@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0259                          |
+| Completed range    | 0001-0260                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -35,7 +35,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 - [x] `docs-site`를 `docs`로 변경하기, `docs` 폴더는 `agent`로 변경하기
 - [x] 이 프로젝트를 위해 유용한 codex skills 목록 확인하고 구성하기
 - [x] Task 수행 및 프로젝트 코드들 병렬로 수행할 수 있는 구간을 찾아 최적화하기
-- [ ] docs package.json deps 최신화하기
+- [x] docs package.json deps 최신화하기
 - [ ] docs 에 쓰이는 javascript는 최대한 typescript로 바꾸기, typescript로 바꿀 수 없는 부분은 명확하게 주석으로 설명하기
 - [ ] VSCode Syntax Highlighting Extension 만들고 설치 방법 설명하기, 사용자의 개입이 필요할 경우 사용자를 위해 marketplace에 extension을 올리는 방법 설명하는 임시 가이드 만들기
 - [ ] `docs` 폴더의 tysh 코드 예제 표시가 syntax highlight 될 수 있도록 하기
@@ -51,6 +51,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status | Source         | Task                        | Packet                                                                                                         | Notes                                                                                                                                     |
 | -------- | ------ | -------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Q5       | Done   | User directive | Docs dependency update      | [tasks-rollup.md#task-0260-docs-dependency-update](tasks-rollup.md#task-0260-docs-dependency-update)           | Updated `docs` package and lockfile to current npm registry latest tags for Astro, Starlight, and TypeScript; refreshed docs package contract coverage. |
 | Q2       | Done   | User directive | Parallel execution optimization | [tasks-rollup.md#task-0259-parallel-execution-optimization](tasks-rollup.md#task-0259-parallel-execution-optimization) | Parallelized source-file parse and semantic validation while preserving deterministic diagnostics; documented agent and compiler parallelism rules. |
 | Q0       | Done   | User directive | Codex skills configuration  | [tasks-rollup.md#task-0258-codex-skills-configuration](tasks-rollup.md#task-0258-codex-skills-configuration)   | Installed project-useful Codex skills in the user Codex home and documented selection, install paths, and trigger policy in `agent/codex-skills.md`. |
 | Q0       | Done   | User directive | Docs/agent directory rename | [tasks-rollup.md#task-0257-docs-agent-directory-rename](tasks-rollup.md#task-0257-docs-agent-directory-rename) | Renamed the public docs site source to `docs/`, moved temporary agent work records to `agent/`, and updated ownership/workflow contracts. |

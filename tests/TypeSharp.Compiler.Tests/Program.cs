@@ -10440,8 +10440,9 @@ static void DocsSiteContractIsStable()
 
     AssertEqual("typesharp-docs", root.GetProperty("name").GetString());
     AssertEqual("astro build", root.GetProperty("scripts").GetProperty("build").GetString());
-    AssertEqual("6.3.5", root.GetProperty("dependencies").GetProperty("astro").GetString());
+    AssertEqual("6.3.6", root.GetProperty("dependencies").GetProperty("astro").GetString());
     AssertEqual("0.39.2", root.GetProperty("dependencies").GetProperty("@astrojs/starlight").GetString());
+    AssertEqual("6.0.3", root.GetProperty("devDependencies").GetProperty("typescript").GetString());
     AssertTrue(File.Exists(Path.Combine(siteRoot, "package-lock.json")), "Docs site should have a committed npm lockfile.");
 
     var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.mjs"));

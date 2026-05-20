@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@astrojs/starlight": "0.39.2",
-    "astro": "6.3.5"
+    "astro": "6.3.6"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   }
 }
