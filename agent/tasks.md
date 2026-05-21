@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0344-composition-shift-ambiguity-diagnostics-slice.md](0344-composition-shift-ambiguity-diagnostics-slice.md) |
-| Active summary     | Diagnose numeric/value-shaped `>>` and `<<` expressions as composition/shift ambiguity instead of letting them lower as invalid composition lambdas. |
-| Completed range    | 0001-0343                         |
+| Active task packet | None                               |
+| Active summary     | None                               |
+| Completed range    | 0001-0344                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0343 roadmap refresh | 0344 Composition shift ambiguity diagnostics slice | [0344-composition-shift-ambiguity-diagnostics-slice.md](0344-composition-shift-ambiguity-diagnostics-slice.md) | Diagnose known value-shaped `>>` and `<<` expressions before lowering, preserving `>>`/`<<` as function composition while keeping numeric shifts and shift assignment out. |
+| Q2       | Done        | Task 0343 roadmap refresh | 0344 Composition shift ambiguity diagnostics slice | [tasks-rollup.md#task-0344-composition-shift-ambiguity-diagnostics-slice](tasks-rollup.md#task-0344-composition-shift-ambiguity-diagnostics-slice) | Added `TS2201` diagnostics for known value-shaped `>>` and `<<` operands while preserving TypeSharp composition parsing and lowering; numeric shifts and shift assignment remain backlog. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0343 Roadmap refresh after local assignment target analysis | [tasks-rollup.md#task-0343-roadmap-refresh-after-local-assignment-target-analysis](tasks-rollup.md#task-0343-roadmap-refresh-after-local-assignment-target-analysis) | Rechecked official source signals after local assignment target analysis, confirmed the baseline, and selected composition/shift ambiguity diagnostics as the next bounded compiler slice. |
 | Q2       | Done        | Task 0341 roadmap refresh | 0342 Local assignment target analysis slice | [tasks-rollup.md#task-0342-local-assignment-target-analysis-slice](tasks-rollup.md#task-0342-local-assignment-target-analysis-slice) | Added local `let mut` assignment target tracking and focused simple/bitwise assignment compatibility diagnostics for identifier assignments; kept imported C# member/indexer/event assignment on the existing interop validator path. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0341 Roadmap refresh after bitwise compound assignments | [tasks-rollup.md#task-0341-roadmap-refresh-after-bitwise-compound-assignments](tasks-rollup.md#task-0341-roadmap-refresh-after-bitwise-compound-assignments) | Rechecked official source signals after bitwise compound assignments, confirmed the baseline, and selected bounded local assignment target diagnostics as the next implementation slice. |

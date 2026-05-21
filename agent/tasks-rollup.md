@@ -3231,6 +3231,50 @@ Remaining:
 
 - Composition/shift ambiguity diagnostics are active in task 0344. Numeric shifts, shift assignment, user-defined operators, broader composition type inference, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0344 Composition Shift Ambiguity Diagnostics Slice
+
+Completed implementation work established:
+
+- Preserved `>>` and `<<` as TypeSharp function-composition operators and kept the existing parser/backend composition fixtures unchanged.
+- Added a type-checker composition path that checks direct operands before generic inference and reports `TS2201` when a known value-shaped operand, including numeric, `bool`, `string`, nullable primitive, `null`, or enum-shaped values, would otherwise lower as invalid composition.
+- Added the negative fixture `test/fixtures/diagnostics/type-checker/negative/composition-shift-ambiguity` covering numeric literal `>>`, numeric literal `<<`, local known values, enum member values, and nullable primitive values.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs to spell out the ambiguity boundary.
+- Kept numeric shifts, shift assignment, user-defined operators, broader composition type inference, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra out of the slice.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/negative/composition-shift-ambiguity`
+- `test/fixtures/parser/positive/0022-composition-expression`
+- `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Numeric shifts, shift assignment, user-defined operators, broader composition type inference, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3255,14 +3299,14 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0312 is compressed here.
+- Completed historical work through task 0344 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue the active task in [tasks.md](tasks.md).
-- Fold each completed active task back into this file and remove the completed packet.
+- Use [tasks.md](tasks.md) to select the next task when work resumes.
+- Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
 

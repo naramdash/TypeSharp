@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Task 0344 composition shift ambiguity diagnostics | [0344-composition-shift-ambiguity-diagnostics-slice.md](0344-composition-shift-ambiguity-diagnostics-slice.md) | Type-checker composition diagnostics, positive composition fixture preservation, negative ambiguity fixture, Feature Status, Work Ledger, and tasks rollup. |
+| None | [tasks.md](tasks.md) | No active task. |
 
 ## Completed Evidence Index
 
@@ -58,6 +58,7 @@
 | Boolean bitwise expressions | [tasks-rollup.md#task-0338-boolean-bitwise-expression-slice](tasks-rollup.md#task-0338-boolean-bitwise-expression-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`, `test/fixtures/diagnostics/type-checker/positive/boolean-bitwise-expression`, `test/fixtures/diagnostics/type-checker/negative/boolean-bitwise-invalid`, `test/fixtures/backend/csharp/positive/0042-boolean-bitwise-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Bitwise compound assignment | [tasks-rollup.md#task-0340-bitwise-compound-assignment-slice](tasks-rollup.md#task-0340-bitwise-compound-assignment-slice), `lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs`, `lang/TypeSharp.Compiler/Parsing/TypeSharpLexer.cs`, `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`, `test/fixtures/parser/positive/0036-bitwise-compound-assignment`, `test/fixtures/diagnostics/type-checker/positive/bitwise-compound-assignment`, `test/fixtures/backend/csharp/positive/0043-bitwise-compound-assignment-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Local assignment target analysis | [tasks-rollup.md#task-0342-local-assignment-target-analysis-slice](tasks-rollup.md#task-0342-local-assignment-target-analysis-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/positive/local-assignment-target-analysis`, `test/fixtures/diagnostics/type-checker/negative/local-assignment-target-invalid`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Composition shift ambiguity diagnostics | [tasks-rollup.md#task-0344-composition-shift-ambiguity-diagnostics-slice](tasks-rollup.md#task-0344-composition-shift-ambiguity-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/composition-shift-ambiguity`, `test/fixtures/parser/positive/0022-composition-expression`, `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

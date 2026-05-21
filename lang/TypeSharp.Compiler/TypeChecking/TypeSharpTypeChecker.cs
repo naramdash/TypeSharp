@@ -722,6 +722,11 @@ public static class TypeSharpTypeChecker
                 return CheckAssignmentExpression(node, scope);
             }
 
+            if (IsCompositionExpression(node))
+            {
+                return CheckCompositionExpression(node, scope);
+            }
+
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
                 return inferredType;
@@ -1059,6 +1064,108 @@ public static class TypeSharpTypeChecker
         private static bool IsBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken);
+
+        private SimpleType CheckCompositionExpression(SyntaxNode node, TypeScope scope)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length != 2)
+            {
+                foreach (var expression in expressions)
+                {
+                    CheckExpression(expression, scope);
+                }
+
+                return SimpleType.Unknown;
+            }
+
+            var operatorText = TryGetCompositionOperatorText(node.Children, out var compositionOperator)
+                ? compositionOperator
+                : ">>";
+            var leftType = CheckExpression(expressions[0], scope);
+            var rightType = CheckExpression(expressions[1], scope);
+            var valueOperandTypes = new[] { leftType, rightType }
+                .Where(type => IsKnownCompositionValueOperand(scope, type))
+                .Select(type => type.ToString())
+                .ToArray();
+
+            if (valueOperandTypes.Length == 1)
+            {
+                ReportMismatch(
+                    node,
+                    $"Operator '{operatorText}' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operand '{valueOperandTypes[0]}' cannot be composed.");
+            }
+            else if (valueOperandTypes.Length > 1)
+            {
+                ReportMismatch(
+                    node,
+                    $"Operator '{operatorText}' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands '{valueOperandTypes[0]}' and '{valueOperandTypes[1]}' cannot be composed.");
+            }
+
+            return SimpleType.Unknown;
+        }
+
+        private static bool IsCompositionExpression(SyntaxNode node) =>
+            node.Kind == SyntaxKind.BinaryExpression &&
+            TryGetCompositionOperatorText(node.Children, out _);
+
+        private static bool TryGetCompositionOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+        {
+            for (var index = 0; index + 1 < children.Count; index++)
+            {
+                if (!children[index].IsToken || !children[index + 1].IsToken)
+                {
+                    continue;
+                }
+
+                if (children[index].Kind == SyntaxKind.GreaterToken && children[index + 1].Kind == SyntaxKind.GreaterToken)
+                {
+                    operatorText = ">>";
+                    return true;
+                }
+
+                if (children[index].Kind == SyntaxKind.LessToken && children[index + 1].Kind == SyntaxKind.LessToken)
+                {
+                    operatorText = "<<";
+                    return true;
+                }
+            }
+
+            operatorText = string.Empty;
+            return false;
+        }
+
+        private static bool IsKnownCompositionValueOperand(TypeScope scope, SimpleType type)
+        {
+            if (!type.IsKnown)
+            {
+                return false;
+            }
+
+            if (type.IsNull)
+            {
+                return true;
+            }
+
+            return IsPrimitiveCompositionValueType(type.Name) ||
+                scope.ResolveEnum(type.Name, out _);
+        }
+
+        private static bool IsPrimitiveCompositionValueType(string typeName) =>
+            typeName is
+                "bool" or
+                "byte" or
+                "char" or
+                "decimal" or
+                "double" or
+                "float" or
+                "int" or
+                "long" or
+                "sbyte" or
+                "short" or
+                "string" or
+                "uint" or
+                "ulong" or
+                "ushort";
 
         private static bool IsAssignmentOperatorKind(SyntaxKind kind) =>
             kind is SyntaxKind.EqualsToken

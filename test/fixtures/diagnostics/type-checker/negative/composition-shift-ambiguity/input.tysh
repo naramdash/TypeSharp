@@ -1,0 +1,26 @@
+namespace Samples.TypeChecker.CompositionShiftAmbiguity
+
+enum Permission {
+  None,
+  Read,
+  Write
+}
+
+let literalRight = 1 >> 2
+
+let literalLeft = 4 << 1
+
+fun localShiftLike(): int {
+  let left = 4
+  let right = 1
+  left << right
+}
+
+fun enumShiftLike(): Permission =
+  Permission.Read >> Permission.Write
+
+fun nullableShiftLike(): int {
+  let maybe: int? = 1
+  maybe >> 1
+  0
+}
