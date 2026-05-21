@@ -272,7 +272,6 @@ public static class TypeSharpTypeChecker
                     break;
 
                 case SyntaxKind.RecordDeclaration:
-                case SyntaxKind.EnumDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
                 case SyntaxKind.DelegateDeclaration:
@@ -281,6 +280,11 @@ public static class TypeSharpTypeChecker
                     {
                         CheckGenericConstraints(function);
                     }
+                    break;
+
+                case SyntaxKind.EnumDeclaration:
+                    CheckGenericConstraints(node);
+                    CheckEnumDeclaration(node);
                     break;
 
                 case SyntaxKind.ExtensionDeclaration:
@@ -307,6 +311,22 @@ public static class TypeSharpTypeChecker
             foreach (var child in node.Children.Where(child => !child.IsToken))
             {
                 CheckTopLevelDeclaration(child, scope);
+            }
+        }
+
+        private void CheckEnumDeclaration(SyntaxNode node)
+        {
+            var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            if (annotation is null || !TryGetType(annotation, out var underlyingType))
+            {
+                return;
+            }
+
+            if (!IsValidEnumUnderlyingType(underlyingType.Name))
+            {
+                ReportMismatch(
+                    annotation,
+                    $"Enum underlying type must be one of 'byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', or 'ulong', but found '{underlyingType}'.");
             }
         }
 
@@ -1124,6 +1144,9 @@ public static class TypeSharpTypeChecker
                 "unit" or
                 "void");
         }
+
+        private static bool IsValidEnumUnderlyingType(string typeName) =>
+            typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
 
         private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
         {

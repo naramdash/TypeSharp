@@ -1,1 +1,1 @@
-Verifies that simple enum declarations and enum member references parse.
+Verifies that enum declarations with an explicit underlying type, explicit numeric member values, and enum member references parse.

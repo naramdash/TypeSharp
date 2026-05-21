@@ -1,0 +1,5 @@
+namespace Samples.TypeChecker.EnumUnderlyingTypeInvalid
+
+enum Color : string {
+  Red = 1
+}

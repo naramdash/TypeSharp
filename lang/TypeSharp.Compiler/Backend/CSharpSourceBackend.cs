@@ -766,8 +766,9 @@ public static class CSharpSourceBackend
         {
             var name = GetEnumDeclarationName(node);
             var visibility = GetVisibility(node);
+            var underlyingType = GetEnumUnderlyingType(node);
             var members = GetEnumMemberShapes(node);
-            _builder.AppendLine($"    {visibility} enum {name}");
+            _builder.AppendLine($"    {visibility} enum {name}{underlyingType}");
             _builder.AppendLine("    {");
             for (var index = 0; index < members.Count; index++)
             {
@@ -779,6 +780,19 @@ public static class CSharpSourceBackend
             }
 
             _builder.AppendLine("    }");
+        }
+
+        private string GetEnumUnderlyingType(SyntaxNode node)
+        {
+            var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            if (annotation is null)
+            {
+                return string.Empty;
+            }
+
+            var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
+            var type = MapType(typeNode);
+            return string.IsNullOrWhiteSpace(type) ? string.Empty : $" : {type}";
         }
 
         private void EmitUnionDeclaration(SyntaxNode node)

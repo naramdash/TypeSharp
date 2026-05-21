@@ -2157,6 +2157,49 @@ Remaining:
 
 - Explicit TypeSharp enum underlying types are active in task 0318. Flag semantics, enum member attributes, enum aliases, imported C# enum numeric/underlying metadata, numeric range validation, and richer pattern algebra remain future work.
 
+## Task 0318 Explicit Enum Underlying Types Slice
+
+Completed language/compiler work established:
+
+- Added parser support for optional explicit enum underlying type clauses such as `enum Color : byte`.
+- Preserved duplicate enum member binding and existing enum type-checking/exhaustiveness semantics by keeping enum reasoning name/member based.
+- Lowered explicit TypeSharp-owned enum underlying types to ordinary C# enum base-type clauses while keeping generated source C# 7.3-compatible.
+- Kept explicit numeric member values working with explicit underlying types.
+- Added deterministic `TS2201` diagnostics for unsupported enum underlying types before generated C# emission.
+- Kept flags, computed enum values, enum aliases, imported C# enum numeric/underlying metadata, numeric range validation, and enum member attributes out of scope.
+- Added parser, type-checker positive/negative, backend snapshot, and CLI generated `net48` assembly plus C# consumer coverage.
+- Updated canonical grammar, reference, type-system, lowering, feature-status, diagnostics, and work-ledger docs for the implemented enum underlying-type boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/enum-underlying-type-invalid`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Flag semantics, enum member attributes, enum aliases, imported C# enum numeric/underlying metadata, numeric range validation, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

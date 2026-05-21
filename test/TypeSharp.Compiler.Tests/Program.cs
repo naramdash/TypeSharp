@@ -19694,7 +19694,7 @@ static void CliBuildCompilesEnumDeclarationApi()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.Enums
 
-            public enum Color {
+            public enum Color : byte {
               Red = 1,
               Green,
               Blue = 4
@@ -19713,7 +19713,7 @@ static void CliBuildCompilesEnumDeclarationApi()
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
-        AssertContains("public enum Color", generatedSource);
+        AssertContains("public enum Color : byte", generatedSource);
         AssertContains("Red = 1", generatedSource);
         AssertContains("Blue = 4", generatedSource);
         AssertContains("return Color.Green;", generatedSource);

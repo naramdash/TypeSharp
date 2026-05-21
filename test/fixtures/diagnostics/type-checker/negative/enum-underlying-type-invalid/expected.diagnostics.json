@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum underlying type must be one of 'byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', or 'ulong', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 12 },
+      "end": { "line": 3, "column": 20 }
+    }
+  ]
+}

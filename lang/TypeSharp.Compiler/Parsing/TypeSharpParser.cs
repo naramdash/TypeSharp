@@ -534,6 +534,11 @@ public sealed class TypeSharpParser
         var children = prefixChildren ?? [];
         children.Add(TokenNode(Expect(SyntaxKind.EnumKeyword)));
         children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+        if (Current.Kind == SyntaxKind.ColonToken)
+        {
+            children.Add(ParseTypeAnnotation());
+        }
+
         children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
 
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)

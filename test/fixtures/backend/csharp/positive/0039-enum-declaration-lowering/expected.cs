@@ -10,7 +10,7 @@ namespace Samples.Enums
         }
     }
 
-    public enum Color
+    public enum Color : byte
     {
         Red = 1,
         Green,
