@@ -6,15 +6,13 @@ enum Permission {
   Write
 }
 
-let literalRight = 1 >> 2
+record Point(X: int)
 
-let literalLeft = 4 << 1
+let boolShift = true >> false
 
-fun localShiftLike(): int {
-  let left = 4
-  let right = 1
-  left << right
-}
+let stringShift = "left" << 1
+
+let decimalShift = 1.0m >> 1
 
 fun enumShiftLike(): Permission =
   Permission.Read >> Permission.Write
@@ -22,5 +20,13 @@ fun enumShiftLike(): Permission =
 fun nullableShiftLike(): int {
   let maybe: int? = 1
   maybe >> 1
+  0
+}
+
+fun unsupportedCount(value: int, count: uint): int =
+  value << count
+
+fun structuralShift(point: Point): int {
+  point >> point
   0
 }

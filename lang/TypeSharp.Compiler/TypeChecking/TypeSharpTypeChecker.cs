@@ -824,6 +824,7 @@ public static class TypeSharpTypeChecker
             if (!functionAnnotationKnown &&
                 initializerExpression is not null &&
                 IsCompositionExpression(initializerExpression) &&
+                !IsShiftLikeCompositionExpression(initializerExpression, scope) &&
                 IsPublicBoundaryDeclaration(node))
             {
                 ReportMismatch(
@@ -3119,23 +3120,16 @@ public static class TypeSharpTypeChecker
                 : ">>";
             var leftType = CheckExpression(expressions[0], scope);
             var rightType = CheckExpression(expressions[1], scope);
-            var valueOperandTypes = new[] { leftType, rightType }
-                .Where(type => IsKnownCompositionValueOperand(scope, type))
-                .Select(type => type.ToString())
-                .ToArray();
-
-            if (valueOperandTypes.Length == 1)
+            if (TryGetBinaryIntegralShiftResultType(leftType, rightType, out var shiftResultType))
             {
-                ReportMismatch(
-                    node,
-                    $"Operator '{operatorText}' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operand '{valueOperandTypes[0]}' cannot be composed.");
-                return SimpleType.Unknown;
+                return shiftResultType;
             }
-            else if (valueOperandTypes.Length > 1)
+
+            if (ShouldReportShiftOperandDiagnostic(scope, leftType, rightType))
             {
                 ReportMismatch(
                     node,
-                    $"Operator '{operatorText}' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands '{valueOperandTypes[0]}' and '{valueOperandTypes[1]}' cannot be composed.");
+                    $"Shift operator '{operatorText}' operands must be non-null primitive integral values with an int-compatible shift count, but found '{leftType}' and '{rightType}'.");
                 return SimpleType.Unknown;
             }
 
@@ -3450,6 +3444,66 @@ public static class TypeSharpTypeChecker
             return false;
         }
 
+        private bool IsShiftLikeCompositionExpression(SyntaxNode node, TypeScope scope)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (!IsCompositionExpression(node) || expressions.Length != 2)
+            {
+                return false;
+            }
+
+            var leftType = InferExpressionForCompositionClassification(expressions[0], scope);
+            var rightType = InferExpressionForCompositionClassification(expressions[1], scope);
+            return IsShiftOperandCandidate(scope, leftType) || IsShiftOperandCandidate(scope, rightType);
+        }
+
+        private SimpleType InferExpressionForCompositionClassification(SyntaxNode node, TypeScope scope)
+        {
+            return _inference.TryInferExpression(
+                node,
+                scope,
+                child => InferExpressionForCompositionClassification(child, scope),
+                out var type)
+                ? type
+                : SimpleType.Unknown;
+        }
+
+        private static bool ShouldReportShiftOperandDiagnostic(TypeScope scope, SimpleType leftType, SimpleType rightType)
+        {
+            if (IsKnownFunctionLikeType(leftType) || IsKnownFunctionLikeType(rightType))
+            {
+                return false;
+            }
+
+            return IsShiftOperandCandidate(scope, leftType) ||
+                IsShiftOperandCandidate(scope, rightType) ||
+                (leftType.IsKnown && rightType.IsKnown);
+        }
+
+        private static bool IsShiftOperandCandidate(TypeScope scope, SimpleType type)
+        {
+            if (!type.IsKnown || IsKnownFunctionLikeType(type))
+            {
+                return false;
+            }
+
+            return type.IsNull ||
+                type.IsNullable ||
+                IsPrimitiveCompositionValueType(type.Name) ||
+                scope.ResolveEnum(type.Name, out _) ||
+                scope.ResolveShape(type.Name, out _) ||
+                scope.ResolveRecordShape(type.Name, out _) ||
+                scope.ResolveType(type.Name);
+        }
+
+        private static bool IsKnownFunctionLikeType(SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            (type.Name.Contains("->", StringComparison.Ordinal) ||
+             type.Name.StartsWith("System.Func<", StringComparison.Ordinal) ||
+             type.Name.StartsWith("System.Action<", StringComparison.Ordinal) ||
+             string.Equals(type.Name, "System.Action", StringComparison.Ordinal));
+
         private static bool IsKnownCompositionValueOperand(TypeScope scope, SimpleType type)
         {
             if (!type.IsKnown)
@@ -3536,6 +3590,23 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
+        private static bool TryGetBinaryIntegralShiftResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullableIntegralType(leftType) ||
+                !IsKnownNonNullableShiftCountType(rightType))
+            {
+                return false;
+            }
+
+            return leftType.Name switch
+            {
+                "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
+                "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(leftType.Name), out resultType),
+                _ => false
+            };
+        }
+
         private static bool TryGetBinaryBooleanBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
         {
             resultType = SimpleType.Unknown;
@@ -3559,6 +3630,12 @@ public static class TypeSharpTypeChecker
             !type.IsNull &&
             !type.IsNullable &&
             IsIntegralPrimitiveType(type.Name);
+
+        private static bool IsKnownNonNullableShiftCountType(SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            !type.IsNullable &&
+            type.Name is "byte" or "sbyte" or "short" or "ushort" or "int";
 
         private static bool IsIntegralPrimitiveType(string typeName) =>
             typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";

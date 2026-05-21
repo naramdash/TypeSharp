@@ -1894,6 +1894,11 @@ public static class TypeSharpBuilder
             return bitwiseType;
         }
 
+        if (TryInferShiftExpressionType(node, out var shiftType))
+        {
+            return shiftType;
+        }
+
         if (node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
         {
@@ -2007,6 +2012,48 @@ public static class TypeSharpBuilder
         return false;
     }
 
+    private static bool TryInferShiftExpressionType(SyntaxNode node, out string type)
+    {
+        type = string.Empty;
+        var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+        if (node.Kind != SyntaxKind.BinaryExpression ||
+            expressions.Length != 2 ||
+            !TryGetShiftOperatorText(node.Children, out _))
+        {
+            return false;
+        }
+
+        var leftType = InferExpressionType(expressions[0]);
+        var rightType = InferExpressionType(expressions[1]);
+        return TryGetBinaryIntegralShiftResultType(leftType, rightType, out type);
+    }
+
+    private static bool TryGetShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+    {
+        for (var index = 0; index + 1 < children.Count; index++)
+        {
+            if (!children[index].IsToken || !children[index + 1].IsToken)
+            {
+                continue;
+            }
+
+            if (children[index].Kind == SyntaxKind.GreaterToken && children[index + 1].Kind == SyntaxKind.GreaterToken)
+            {
+                operatorText = ">>";
+                return true;
+            }
+
+            if (children[index].Kind == SyntaxKind.LessToken && children[index + 1].Kind == SyntaxKind.LessToken)
+            {
+                operatorText = "<<";
+                return true;
+            }
+        }
+
+        operatorText = string.Empty;
+        return false;
+    }
+
     private static bool TryGetUnaryIntegralBitwiseResultType(string operandType, out string resultType)
     {
         resultType = operandType switch
@@ -2064,8 +2111,28 @@ public static class TypeSharpBuilder
         return true;
     }
 
+    private static bool TryGetBinaryIntegralShiftResultType(string left, string right, out string resultType)
+    {
+        resultType = string.Empty;
+        if (!IsIntegralPrimitiveType(left) || !IsShiftCountPrimitiveType(right))
+        {
+            return false;
+        }
+
+        resultType = left switch
+        {
+            "byte" or "sbyte" or "short" or "ushort" => "int",
+            "int" or "uint" or "long" or "ulong" => left,
+            _ => string.Empty
+        };
+        return resultType.Length > 0;
+    }
+
     private static bool IsIntegralPrimitiveType(string typeName) =>
         typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+    private static bool IsShiftCountPrimitiveType(string typeName) =>
+        typeName is "byte" or "sbyte" or "short" or "ushort" or "int";
 
     private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
         type is "byte" or "ushort" or "uint" or "ulong";

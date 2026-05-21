@@ -3,42 +3,58 @@
     {
       "code": "TS2201",
       "severity": "error",
-      "message": "Operator '>>' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands 'int' and 'int' cannot be composed.",
+      "message": "Shift operator '>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'bool' and 'bool'.",
       "file": "input.tysh",
-      "start": { "line": 9, "column": 20 },
-      "end": { "line": 9, "column": 26 }
+      "start": { "line": 11, "column": 17 },
+      "end": { "line": 11, "column": 30 }
     },
     {
       "code": "TS2201",
       "severity": "error",
-      "message": "Operator '<<' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands 'int' and 'int' cannot be composed.",
+      "message": "Shift operator '<<' operands must be non-null primitive integral values with an int-compatible shift count, but found 'string' and 'int'.",
       "file": "input.tysh",
-      "start": { "line": 11, "column": 19 },
-      "end": { "line": 11, "column": 25 }
+      "start": { "line": 13, "column": 19 },
+      "end": { "line": 13, "column": 30 }
     },
     {
       "code": "TS2201",
       "severity": "error",
-      "message": "Operator '<<' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands 'int' and 'int' cannot be composed.",
+      "message": "Shift operator '>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'decimal' and 'int'.",
       "file": "input.tysh",
-      "start": { "line": 16, "column": 3 },
-      "end": { "line": 16, "column": 16 }
+      "start": { "line": 15, "column": 20 },
+      "end": { "line": 15, "column": 29 }
     },
     {
       "code": "TS2201",
       "severity": "error",
-      "message": "Operator '>>' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands 'Permission' and 'Permission' cannot be composed.",
+      "message": "Shift operator '>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'Permission' and 'Permission'.",
       "file": "input.tysh",
-      "start": { "line": 20, "column": 3 },
-      "end": { "line": 20, "column": 38 }
+      "start": { "line": 18, "column": 3 },
+      "end": { "line": 18, "column": 38 }
     },
     {
       "code": "TS2201",
       "severity": "error",
-      "message": "Operator '>>' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands 'int?' and 'int' cannot be composed.",
+      "message": "Shift operator '>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int?' and 'int'.",
       "file": "input.tysh",
-      "start": { "line": 24, "column": 3 },
-      "end": { "line": 24, "column": 13 }
+      "start": { "line": 22, "column": 3 },
+      "end": { "line": 22, "column": 13 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '<<' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'.",
+      "file": "input.tysh",
+      "start": { "line": 27, "column": 3 },
+      "end": { "line": 27, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'Point' and 'Point'.",
+      "file": "input.tysh",
+      "start": { "line": 30, "column": 3 },
+      "end": { "line": 30, "column": 17 }
     }
   ]
 }

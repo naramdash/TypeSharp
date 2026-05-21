@@ -2404,6 +2404,13 @@ public static class CSharpSourceBackend
                 return EmitPipeline(expressions[0], expressions[1]);
             }
 
+            if (TryGetShiftOperatorText(node.Children, out var shiftOperator) &&
+                expressions.Length == 2 &&
+                TryInferShiftExpressionType(node, out _))
+            {
+                return $"{EmitExpression(expressions[0])} {shiftOperator} {EmitExpression(expressions[1])}";
+            }
+
             if (TryGetCompositionDirection(node, out var direction))
             {
                 return EmitComposition(expressions[0], expressions[1], direction);
@@ -2523,6 +2530,34 @@ public static class CSharpSourceBackend
                 }
             }
 
+            return false;
+        }
+
+        private static bool TryGetShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+        {
+            for (var index = 0; index < children.Count - 1; index++)
+            {
+                if (!children[index].IsToken || !children[index + 1].IsToken)
+                {
+                    continue;
+                }
+
+                if (children[index].Kind == SyntaxKind.GreaterToken &&
+                    children[index + 1].Kind == SyntaxKind.GreaterToken)
+                {
+                    operatorText = ">>";
+                    return true;
+                }
+
+                if (children[index].Kind == SyntaxKind.LessToken &&
+                    children[index + 1].Kind == SyntaxKind.LessToken)
+                {
+                    operatorText = "<<";
+                    return true;
+                }
+            }
+
+            operatorText = string.Empty;
             return false;
         }
 
@@ -3692,6 +3727,11 @@ public static class CSharpSourceBackend
                 }
             }
 
+            if (initializer is not null && TryInferShiftExpressionType(initializer, out var shiftType))
+            {
+                return shiftType;
+            }
+
             return InferLiteralType(initializer);
         }
 
@@ -3724,6 +3764,11 @@ public static class CSharpSourceBackend
                 {
                     return $"{elementType}[]";
                 }
+            }
+
+            if (initializer is not null && TryInferShiftExpressionType(initializer, out var shiftType))
+            {
+                return shiftType;
             }
 
             return InferLiteralType(initializer);
@@ -4123,6 +4168,11 @@ public static class CSharpSourceBackend
                 return bitwiseType;
             }
 
+            if (TryInferStaticShiftExpressionType(node, out var shiftType))
+            {
+                return shiftType;
+            }
+
             if (node.Kind == SyntaxKind.BinaryExpression &&
                 node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
             {
@@ -4251,6 +4301,66 @@ public static class CSharpSourceBackend
             return false;
         }
 
+        private bool TryInferShiftExpressionType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (node.Kind != SyntaxKind.BinaryExpression ||
+                expressions.Length != 2 ||
+                !TryGetShiftOperatorText(node.Children, out _))
+            {
+                return false;
+            }
+
+            var leftType = InferEmitterExpressionType(expressions[0]);
+            var rightType = InferEmitterExpressionType(expressions[1]);
+            return TryGetBinaryIntegralShiftResultType(leftType, rightType, out type);
+        }
+
+        private string InferEmitterExpressionType(SyntaxNode? node)
+        {
+            if (node is null)
+            {
+                return "object";
+            }
+
+            if (node.Kind == SyntaxKind.IdentifierExpression)
+            {
+                var name = GetIdentifierText(node);
+                return _valueTypes.TryGetValue(name, out var knownType) && knownType.Length > 0
+                    ? knownType
+                    : "object";
+            }
+
+            if (node.Kind == SyntaxKind.ParenthesizedExpression || node.Kind == SyntaxKind.CheckedExpression)
+            {
+                return InferEmitterExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
+            }
+
+            if (TryInferShiftExpressionType(node, out var shiftType))
+            {
+                return shiftType;
+            }
+
+            return InferExpressionType(node);
+        }
+
+        private static bool TryInferStaticShiftExpressionType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (node.Kind != SyntaxKind.BinaryExpression ||
+                expressions.Length != 2 ||
+                !TryGetShiftOperatorText(node.Children, out _))
+            {
+                return false;
+            }
+
+            var leftType = InferExpressionType(expressions[0]);
+            var rightType = InferExpressionType(expressions[1]);
+            return TryGetBinaryIntegralShiftResultType(leftType, rightType, out type);
+        }
+
         private static bool TryGetUnaryIntegralBitwiseResultType(string operandType, out string resultType)
         {
             resultType = operandType switch
@@ -4308,8 +4418,28 @@ public static class CSharpSourceBackend
             return true;
         }
 
+        private static bool TryGetBinaryIntegralShiftResultType(string left, string right, out string resultType)
+        {
+            resultType = string.Empty;
+            if (!IsIntegralPrimitiveType(left) || !IsShiftCountPrimitiveType(right))
+            {
+                return false;
+            }
+
+            resultType = left switch
+            {
+                "byte" or "sbyte" or "short" or "ushort" => "int",
+                "int" or "uint" or "long" or "ulong" => left,
+                _ => string.Empty
+            };
+            return resultType.Length > 0;
+        }
+
         private static bool IsIntegralPrimitiveType(string typeName) =>
             typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+        private static bool IsShiftCountPrimitiveType(string typeName) =>
+            typeName is "byte" or "sbyte" or "short" or "ushort" or "int";
 
         private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
             type is "byte" or "ushort" or "uint" or "ulong";

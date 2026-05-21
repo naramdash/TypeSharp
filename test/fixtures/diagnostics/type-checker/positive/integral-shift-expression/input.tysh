@@ -1,0 +1,16 @@
+namespace Samples.TypeChecker.IntegralShiftExpression
+
+let literalLeft = 1 << 3
+
+let literalRight = 16 >> 2
+
+let mixed = literalLeft >> 1
+
+fun shiftByte(value: byte, count: ushort): int =
+  value << count
+
+fun shiftUnsigned(value: uint, count: int): uint =
+  value >> count
+
+fun shiftLong(value: long, count: short): long =
+  value << count

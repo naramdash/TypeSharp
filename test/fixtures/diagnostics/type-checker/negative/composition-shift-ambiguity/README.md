@@ -1,3 +1,3 @@
 # Composition Shift Ambiguity
 
-Ensures value-shaped `>>` and `<<` expressions report deterministic type-checker diagnostics because TypeSharp reserves those tokens for function composition while numeric shifts remain backlog.
+Verifies non-integral value-shaped `>>` and `<<` operands report deterministic shift diagnostics while function-shaped operands remain reserved for composition.

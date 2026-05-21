@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(521, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(523, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -87,8 +87,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
     }
 
     AssertEqual(131, shardCounts[0]);
-    AssertEqual(130, shardCounts[1]);
-    AssertEqual(130, shardCounts[2]);
+    AssertEqual(131, shardCounts[1]);
+    AssertEqual(131, shardCounts[2]);
     AssertEqual(130, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
@@ -19512,6 +19512,112 @@ static void CliBuildCompilesIntegralBitwiseExpressionApi()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated integral bitwise APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesIntegralShiftExpressionApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "IntegralShiftApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.IntegralShift"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.IntegralShift
+
+            export fun literalLeft(): int =
+              1 << 3
+
+            export fun literalRight(): int =
+              16 >> 2
+
+            export fun shiftByte(value: byte, count: ushort): int =
+              value << count
+
+            export fun shiftUnsigned(value: uint, count: int): uint =
+              value >> count
+
+            export fun shiftLong(value: long, count: short): long =
+              value << count
+
+            export fun combined(value: int): int =
+              (value << 2) >> 1
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/IntegralShiftApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static int literalLeft()", generatedSource);
+        AssertContains("return 1 << 3;", generatedSource);
+        AssertContains("public static int literalRight()", generatedSource);
+        AssertContains("return 16 >> 2;", generatedSource);
+        AssertContains("return value << count;", generatedSource);
+        AssertContains("return value >> count;", generatedSource);
+        AssertContains("return (value << 2) >> 1;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "IntegralShiftApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with integral shift APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "IntegralShiftConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>IntegralShiftConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="IntegralShiftApi">
+                  <HintPath>../generated/bin/Debug/net48/IntegralShiftApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace IntegralShiftConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.IntegralShift.Module.literalLeft() == 8 &&
+                            Samples.IntegralShift.Module.literalRight() == 4 &&
+                            Samples.IntegralShift.Module.shiftByte(3, 2) == 12 &&
+                            Samples.IntegralShift.Module.shiftUnsigned(8u, 1) == 4u &&
+                            Samples.IntegralShift.Module.shiftLong(2L, 3) == 16L &&
+                            Samples.IntegralShift.Module.combined(4) == 8;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build IntegralShiftConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated integral shift APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

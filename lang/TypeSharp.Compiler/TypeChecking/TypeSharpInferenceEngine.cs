@@ -121,6 +121,11 @@ internal sealed class TypeSharpInferenceEngine
         var expressions = children.Where(child => !child.IsToken).ToArray();
         if (IsCompositionExpression(children))
         {
+            if (TryInferBinaryShiftExpression(children, expressions, inferNested, out var shiftType))
+            {
+                return shiftType;
+            }
+
             foreach (var child in expressions)
             {
                 inferNested(child);
@@ -290,6 +295,26 @@ internal sealed class TypeSharpInferenceEngine
         return true;
     }
 
+    private static bool TryInferBinaryShiftExpression(
+        IReadOnlyList<SyntaxNode> children,
+        IReadOnlyList<SyntaxNode> expressions,
+        Func<SyntaxNode, SimpleType> inferNested,
+        out SimpleType type)
+    {
+        type = SimpleType.Unknown;
+        if (expressions.Count != 2 || !TryGetShiftOperatorText(children, out _))
+        {
+            return false;
+        }
+
+        var leftType = inferNested(expressions[0]);
+        var rightType = inferNested(expressions[1]);
+        type = TryGetBinaryIntegralShiftResultType(leftType, rightType, out var resultType)
+            ? resultType
+            : SimpleType.Unknown;
+        return true;
+    }
+
     private static bool TryGetUnaryIntegralBitwiseResultType(SimpleType operandType, out SimpleType resultType)
     {
         resultType = SimpleType.Unknown;
@@ -320,6 +345,23 @@ internal sealed class TypeSharpInferenceEngine
         return true;
     }
 
+    private static bool TryGetBinaryIntegralShiftResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+    {
+        resultType = SimpleType.Unknown;
+        if (!IsKnownNonNullableIntegralType(leftType) ||
+            !IsKnownNonNullableShiftCountType(rightType))
+        {
+            return false;
+        }
+
+        return leftType.Name switch
+        {
+            "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
+            "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(leftType.Name), out resultType),
+            _ => false
+        };
+    }
+
     private static bool TryGetBinaryBooleanBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
     {
         resultType = SimpleType.Unknown;
@@ -343,6 +385,12 @@ internal sealed class TypeSharpInferenceEngine
         !type.IsNull &&
         !type.IsNullable &&
         IsIntegralPrimitiveType(type.Name);
+
+    private static bool IsKnownNonNullableShiftCountType(SimpleType type) =>
+        type.IsKnown &&
+        !type.IsNull &&
+        !type.IsNullable &&
+        type.Name is "byte" or "sbyte" or "short" or "ushort" or "int";
 
     private static bool IsIntegralPrimitiveType(string typeName) =>
         typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
@@ -406,6 +454,32 @@ internal sealed class TypeSharpInferenceEngine
             }
         }
 
+        return false;
+    }
+
+    private static bool TryGetShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+    {
+        for (var index = 0; index < children.Count - 1; index++)
+        {
+            if (!children[index].IsToken || !children[index + 1].IsToken)
+            {
+                continue;
+            }
+
+            if (children[index].Kind == SyntaxKind.GreaterToken && children[index + 1].Kind == SyntaxKind.GreaterToken)
+            {
+                operatorText = ">>";
+                return true;
+            }
+
+            if (children[index].Kind == SyntaxKind.LessToken && children[index + 1].Kind == SyntaxKind.LessToken)
+            {
+                operatorText = "<<";
+                return true;
+            }
+        }
+
+        operatorText = string.Empty;
         return false;
     }
 

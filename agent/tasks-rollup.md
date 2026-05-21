@@ -5146,6 +5146,68 @@ Remaining:
 
 - Active in task 0386: integral numeric shift expressions.
 
+## Task 0386 Integral Numeric Shift Expressions
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Accepted `left << right` and `left >> right` only when both operands type-check as known non-null primitive integral values and the right count is a C# 7.3-compatible non-null `byte`, `sbyte`, `short`, `ushort`, or `int`.
+- Preserved existing `>>` and `<<` composition behavior for function-shaped operands, including the existing composition lowering smoke.
+- Reused C# shift result rules for generated `net48` source: small left operands promote to `int`, while `int`, `uint`, `long`, and `ulong` keep the left operand result shape.
+- Changed invalid value-shaped shift-looking operands such as `bool`, `string`, `decimal`, enum values, nullable integral values, unsupported `uint` counts, and records to deterministic `TS2201` diagnostics before backend emission.
+- Lowered accepted primitive integral shifts to ordinary C# `<<` and `>>` expressions in C# 7.3-compatible generated source.
+- Added backend and generated `net48` C# consumer evidence for the new shift surface and updated the shared catalog to 523 cases with four-shard expected counts of `131`, `131`, `131`, and `130`.
+- Kept shift assignment, logical unsigned shifts, user-defined operators, enum flag algebra beyond existing same-enum operators, imported operator overload resolution, parser token reshaping, and higher-order/imported composition changes out of scope.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "CLI build compiles integral shift expression API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "CLI build compiles composition lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "test runner shard selection"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "MSTest package shard bridge"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --verbosity quiet
+npm run build          # in docs
+git diff --check
+```
+
+Result: compiler/MSTest builds and targeted harness checks succeeded on 2026-05-22; docs build and diff checks succeeded after ledger updates.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `test/fixtures/diagnostics/type-checker/positive/integral-shift-expression`
+- `test/fixtures/diagnostics/type-checker/negative/composition-shift-ambiguity`
+- `test/fixtures/backend/csharp/positive/0050-integral-shift-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `test/README.md`
+- `.github/workflows/regression.yml`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [C# bitwise and shift operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/bitwise-and-shift-operators)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Active in task 0387: roadmap refresh after integral shift expressions.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -5170,13 +5232,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0385 is compressed here.
+- Completed historical work through task 0386 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0386 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0387 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

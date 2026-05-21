@@ -1,0 +1,19 @@
+namespace Samples.IntegralShift
+
+export fun literalLeft(): int =
+  1 << 3
+
+export fun literalRight(): int =
+  16 >> 2
+
+export fun shiftByte(value: byte, count: ushort): int =
+  value << count
+
+export fun shiftUnsigned(value: uint, count: int): uint =
+  value >> count
+
+export fun shiftLong(value: long, count: short): long =
+  value << count
+
+export fun combined(value: int): int =
+  (value << 2) >> 1
