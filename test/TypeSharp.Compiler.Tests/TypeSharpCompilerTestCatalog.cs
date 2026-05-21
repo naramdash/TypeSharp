@@ -373,7 +373,7 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("runnable example project commands are smoke-tested", RunnableExampleProjectCommandsAreSmokeTested),
         new TypeSharpCompilerTestCase("docs site contract is stable", DocsSiteContractIsStable),
         new TypeSharpCompilerTestCase("GitHub Pages workflow contract is stable", GitHubPagesWorkflowContractIsStable),
-        new TypeSharpCompilerTestCase("release artifacts workflow contract is stable", ReleaseArtifactsWorkflowContractIsStable),
+        new TypeSharpCompilerTestCase("release and regression workflow contracts are stable", ReleaseAndRegressionWorkflowContractsAreStable),
         new TypeSharpCompilerTestCase("repository monorepo layout is stable", RepositoryMonorepoLayoutIsStable),
         new TypeSharpCompilerTestCase("CLI build emits generated C# source", CliBuildEmitsGeneratedCSharpSource),
         new TypeSharpCompilerTestCase("CLI build compiles parenthesized expression lowering", CliBuildCompilesParenthesizedExpressionLowering),

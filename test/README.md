@@ -33,3 +33,7 @@ dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Te
 ```
 
 The root `global.json` opts `dotnet test` into Microsoft Testing Platform mode for .NET 10 SDKs, so use `dotnet test --project ...` and MTP-supported options. The root `NuGet.config` clears inherited package sources, maps the current MSTest bridge package graph to `nuget.org`, uses `nuget.org` for audit data, and stores restored packages under ignored `.nuget/packages`. The MSTest bridge exists for package-based discovery and ecosystem integration; the package-free main runner and four shard projects remain the faster release-confidence path.
+
+## CI Regression Gate
+
+`.github/workflows/regression.yml` runs on Windows for compiler, test, example, VS Code, and workflow changes. It pins .NET 10 and Node 24, restores the MSTest bridge in locked mode, builds the package-free main and shard runners, runs all four shard runners in parallel, then builds and runs the focused MSTest bridge discovery smoke.

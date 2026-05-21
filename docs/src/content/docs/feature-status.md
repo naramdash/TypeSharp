@@ -241,6 +241,8 @@ After test-host NuGet package selection and restore hardening, TypeSharp keeps t
 
 After the test-host NuGet hardening roadmap refresh, official C#, TypeScript, .NET testing, MSTest SDK, and xUnit.net v3 sources were rechecked on 2026-05-22 and found no generated-artifact baseline change. C# language versioning still maps `.NET Framework` targets to C# 7.3, TypeScript 7.0 remains a native-preview transition signal rather than a TypeSharp baseline change, and .NET 10 `dotnet test` MTP mode supports the hardened MSTest smoke path. The next bounded slice is CI regression gating: add a Windows GitHub Actions workflow that exercises the package-free shard runner as the release-confidence path and the hardened MSTest bridge as package-based discovery evidence.
 
+After the CI regression gate, `.github/workflows/regression.yml` runs on Windows for compiler, test, example, VS Code, and workflow changes. The gate pins .NET 10 and Node 24, restores the MSTest bridge in locked mode, builds the package-free main and shard runners, runs the four shard projects in parallel, and runs a focused MSTest bridge discovery smoke. Generated artifacts stay `net48`, generated C# stays C# 7.3-compatible, runtime/core stay package-free, and the next bounded slice is a roadmap refresh after this CI adoption step.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

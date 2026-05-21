@@ -4545,7 +4545,48 @@ Primary evidence:
 
 Remaining:
 
-- CI regression gate for the package-free shard runner and focused MSTest smoke is active in task 0374.
+- Completed in task 0374: the Windows regression gate now exercises the package-free shard runner and focused MSTest smoke.
+
+## Task 0374 CI Regression Gate For Shard Runner And MSTest Smoke
+
+Completed CI regression gate work established:
+
+- Added `.github/workflows/regression.yml` for Windows push, pull request, and manual regression runs over compiler, language, test, examples, VS Code, NuGet/global SDK, and workflow changes.
+- Pinned .NET `10.0.x` and Node `24` in the workflow to match the existing release/test host assumptions.
+- Restores `test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj` in locked mode so the root `NuGet.config`, package source mapping, audit source, repo-local package cache, and `packages.lock.json` controls are exercised in CI.
+- Builds the package-free main runner, builds all four package-free shard runner projects, and runs the four shards in parallel with CI failure propagation.
+- Builds the MSTest SDK/Microsoft Testing Platform bridge without restore and runs the focused `CatalogIsExposedForPackageRunners` smoke as package-based discovery evidence.
+- Added regression workflow assertions to the existing workflow contract test coverage without changing the 517-case catalog membership.
+- Documented the gate in `test/README.md`, Project Policy, Feature Status, Work Ledger, and traceability.
+- Kept generated artifacts on `net48`, generated C# on C# 7.3-compatible output, `TypeSharp.Core`/`TypeSharp.Runtime` package-free, and full MSTest catalog execution optional because the shard runner remains the release-confidence path.
+
+Verification:
+
+```powershell
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --locked-mode --verbosity minimal
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "release and regression workflow contracts"
+$shards = 0..3 | ForEach-Object { "test\TypeSharp.Compiler.Tests.Shard$_\TypeSharp.Compiler.Tests.Shard$_.csproj" }; foreach ($project in $shards) { dotnet build $project --nologo --verbosity quiet }
+# Ran the workflow-equivalent PowerShell Start-Job shard command; all four shard runners passed in about 70 seconds.
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-restore --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+npm run build          # in docs
+```
+
+Primary evidence:
+
+- `.github/workflows/regression.yml`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/README.md`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Roadmap refresh after CI regression gate is active in task 0375.
 
 ## Verification Summary
 
@@ -4571,13 +4612,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0373 is compressed here.
+- Completed historical work through task 0374 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0374 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0375 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

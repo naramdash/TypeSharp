@@ -1,0 +1,139 @@
+name: Regression
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cli/**'
+      - 'lang/**'
+      - 'examples/**'
+      - 'test/**'
+      - 'vscode/**'
+      - 'NuGet.config'
+      - 'global.json'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'cli/**'
+      - 'lang/**'
+      - 'examples/**'
+      - 'test/**'
+      - 'vscode/**'
+      - 'NuGet.config'
+      - 'global.json'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '24'
+
+jobs:
+  compiler:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Show .NET info
+        run: dotnet --info
+
+      - name: Restore MSTest bridge in locked mode
+        run: >
+          dotnet restore
+          test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj
+          --locked-mode
+          --verbosity minimal
+
+      - name: Build package-free main runner
+        run: >
+          dotnet build
+          test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+          --nologo
+          --verbosity quiet
+
+      - name: Build shard runners
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $shards = 0..3 | ForEach-Object {
+            "test\TypeSharp.Compiler.Tests.Shard$_\TypeSharp.Compiler.Tests.Shard$_.csproj"
+          }
+
+          foreach ($project in $shards) {
+            dotnet build $project --nologo --verbosity quiet
+          }
+
+      - name: Run shard runners in parallel
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $shards = 0..3 | ForEach-Object {
+            "test\TypeSharp.Compiler.Tests.Shard$_\TypeSharp.Compiler.Tests.Shard$_.csproj"
+          }
+
+          $jobs = foreach ($project in $shards) {
+            Start-Job -Name (Split-Path $project -LeafBase) -ScriptBlock {
+              param($p)
+
+              dotnet run --project $p --no-build
+              if ($LASTEXITCODE -ne 0) {
+                throw "Shard '$p' failed with exit code $LASTEXITCODE."
+              }
+            } -ArgumentList $project
+          }
+
+          $jobs | Wait-Job | Out-Null
+
+          $failed = $false
+          foreach ($job in $jobs) {
+            Receive-Job $job
+            if ($job.State -ne 'Completed') {
+              $failed = $true
+            }
+          }
+
+          $jobs | Remove-Job
+
+          if ($failed) {
+            throw 'One or more shard runners failed.'
+          }
+
+      - name: Build MSTest bridge
+        run: >
+          dotnet build
+          test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj
+          --no-restore
+          --nologo
+          --verbosity quiet
+
+      - name: Run MSTest bridge smoke
+        run: >
+          dotnet test
+          --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj
+          --no-build
+          --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"

@@ -14009,7 +14009,7 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertFalse(workflow.Contains("docs-site", StringComparison.Ordinal), "Docs workflow should no longer reference the former docs-site path.");
 }
 
-static void ReleaseArtifactsWorkflowContractIsStable()
+static void ReleaseAndRegressionWorkflowContractsAreStable()
 {
     var workflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "release-artifacts.yml");
     var workflow = File.ReadAllText(workflowPath);
@@ -14064,6 +14064,40 @@ static void ReleaseArtifactsWorkflowContractIsStable()
     AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
     AssertContains("SHA256SUMS.txt", projectPolicyPage);
     AssertContains("contents: write", projectPolicyPage);
+
+    var regressionWorkflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "regression.yml");
+    var regressionWorkflow = File.ReadAllText(regressionWorkflowPath);
+
+    AssertContains("name: Regression", regressionWorkflow);
+    AssertContains("push:", regressionWorkflow);
+    AssertContains("pull_request:", regressionWorkflow);
+    AssertContains("workflow_dispatch:", regressionWorkflow);
+    AssertContains("contents: read", regressionWorkflow);
+    AssertContains("concurrency:", regressionWorkflow);
+    AssertContains("runs-on: windows-latest", regressionWorkflow);
+    AssertContains("uses: actions/checkout@v6", regressionWorkflow);
+    AssertContains("uses: actions/setup-dotnet@v5", regressionWorkflow);
+    AssertContains("dotnet-version: ${{ env.DOTNET_VERSION }}", regressionWorkflow);
+    AssertContains("DOTNET_VERSION: '10.0.x'", regressionWorkflow);
+    AssertContains("uses: actions/setup-node@v6", regressionWorkflow);
+    AssertContains("NODE_VERSION: '24'", regressionWorkflow);
+    AssertContains("- 'cli/**'", regressionWorkflow);
+    AssertContains("- 'lang/**'", regressionWorkflow);
+    AssertContains("- 'examples/**'", regressionWorkflow);
+    AssertContains("- 'test/**'", regressionWorkflow);
+    AssertContains("- 'vscode/**'", regressionWorkflow);
+    AssertContains("- '.github/workflows/**'", regressionWorkflow);
+    AssertContains("test\\TypeSharp.Compiler.Tests.MSTest\\TypeSharp.Compiler.Tests.MSTest.csproj", regressionWorkflow);
+    AssertContains("--locked-mode", regressionWorkflow);
+    AssertContains("dotnet build", regressionWorkflow);
+    AssertContains("test\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj", regressionWorkflow);
+    AssertContains("test\\TypeSharp.Compiler.Tests.Shard$_\\TypeSharp.Compiler.Tests.Shard$_.csproj", regressionWorkflow);
+    AssertContains("Start-Job", regressionWorkflow);
+    AssertContains("Wait-Job", regressionWorkflow);
+    AssertContains("Receive-Job", regressionWorkflow);
+    AssertContains("dotnet test", regressionWorkflow);
+    AssertContains("FullyQualifiedName~CatalogIsExposedForPackageRunners", regressionWorkflow);
+    AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
 static void RepositoryMonorepoLayoutIsStable()
