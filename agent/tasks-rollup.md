@@ -2048,6 +2048,42 @@ Remaining:
 
 - Flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, enum aliases, and richer pattern algebra remain future work.
 
+## Task 0315 Roadmap Refresh After Imported C# Enum Exhaustiveness
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET support, NuGet, and VS Code sources on 2026-05-21 after imported C# enum exhaustiveness landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, and current enum parser/backend shapes.
+- Selected the next bounded implementation slice: explicit numeric member values for TypeSharp-owned enums, without taking on flags, aliases, explicit underlying types, computed values, or imported enum numeric metadata.
+- Created active task `0316 Explicit enum numeric values slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Explicit TypeSharp enum numeric values are active in task 0316. Flag semantics, explicit enum underlying types, enum member attributes, enum aliases, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

@@ -153,6 +153,8 @@ After enum declarations, the empty-queue refresh rechecked official C#, F#, Type
 
 After TypeSharp-owned enum match exhaustiveness, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice extended enum exhaustiveness to named imported C# enum metadata using finite public enum-member fields from referenced assemblies. Flag algebra, explicit TypeSharp enum numeric values, enum aliases, and enum member attributes remain separate backlog items.
 
+After imported C# enum exhaustiveness, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is explicit numeric member values for TypeSharp-owned enums. This keeps enum type checking and exhaustiveness name/member based, and leaves flags, aliases, explicit underlying types, computed enum expressions, and imported enum numeric metadata as separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
