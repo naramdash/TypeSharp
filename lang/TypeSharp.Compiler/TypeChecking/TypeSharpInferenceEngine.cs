@@ -152,7 +152,7 @@ internal sealed class TypeSharpInferenceEngine
             return unaryBitwiseType;
         }
 
-        if (TryInferBinaryIntegralBitwiseExpression(children, expressions, inferNested, out var binaryBitwiseType))
+        if (TryInferBinaryBitwiseExpression(children, expressions, inferNested, out var binaryBitwiseType))
         {
             return binaryBitwiseType;
         }
@@ -266,7 +266,7 @@ internal sealed class TypeSharpInferenceEngine
         return true;
     }
 
-    private static bool TryInferBinaryIntegralBitwiseExpression(
+    private static bool TryInferBinaryBitwiseExpression(
         IReadOnlyList<SyntaxNode> children,
         IReadOnlyList<SyntaxNode> expressions,
         Func<SyntaxNode, SimpleType> inferNested,
@@ -282,7 +282,9 @@ internal sealed class TypeSharpInferenceEngine
 
         var leftType = inferNested(expressions[0]);
         var rightType = inferNested(expressions[1]);
-        type = TryGetBinaryIntegralBitwiseResultType(leftType, rightType, out var resultType)
+        type = TryGetBinaryBooleanBitwiseResultType(leftType, rightType, out var boolResultType)
+            ? boolResultType
+            : TryGetBinaryIntegralBitwiseResultType(leftType, rightType, out var resultType)
             ? resultType
             : SimpleType.Unknown;
         return true;
@@ -317,6 +319,24 @@ internal sealed class TypeSharpInferenceEngine
         resultType = SimpleType.Named(promotedType);
         return true;
     }
+
+    private static bool TryGetBinaryBooleanBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+    {
+        resultType = SimpleType.Unknown;
+        if (!IsKnownNonNullableBoolType(leftType) || !IsKnownNonNullableBoolType(rightType))
+        {
+            return false;
+        }
+
+        resultType = SimpleType.Named("bool");
+        return true;
+    }
+
+    private static bool IsKnownNonNullableBoolType(SimpleType type) =>
+        type.IsKnown &&
+        !type.IsNull &&
+        !type.IsNullable &&
+        string.Equals(type.Name, "bool", StringComparison.Ordinal);
 
     private static bool IsKnownNonNullableIntegralType(SimpleType type) =>
         type.IsKnown &&

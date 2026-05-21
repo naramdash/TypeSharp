@@ -1,0 +1,10 @@
+namespace Samples.TypeChecker.BooleanBitwiseExpression
+
+let both = true & false
+
+let either = true | false
+
+let toggled = true ^ false
+
+fun combine(left: bool, right: bool): bool =
+  (left & right) | (left ^ right)

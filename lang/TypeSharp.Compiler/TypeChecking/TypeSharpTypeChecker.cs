@@ -878,7 +878,18 @@ public static class TypeSharpTypeChecker
                 return integralResultType;
             }
 
-            ReportMismatch(node, $"Bitwise operator '{operatorText}' operands must be integral numeric values of a supported primitive type, but found '{leftType}' and '{rightType}'.");
+            if (TryGetBinaryBooleanBitwiseResultType(leftType, rightType, out var boolResultType))
+            {
+                return boolResultType;
+            }
+
+            if (IsKnownNonNullableBoolType(leftType) || IsKnownNonNullableBoolType(rightType))
+            {
+                ReportMismatch(node, $"Boolean bitwise operator '{operatorText}' operands must both be 'bool', but found '{leftType}' and '{rightType}'.");
+                return SimpleType.Unknown;
+            }
+
+            ReportMismatch(node, $"Bitwise operator '{operatorText}' operands must be integral numeric values or boolean values of a supported primitive type, but found '{leftType}' and '{rightType}'.");
             return SimpleType.Unknown;
         }
 
@@ -921,6 +932,24 @@ public static class TypeSharpTypeChecker
             resultType = SimpleType.Named(promotedType);
             return true;
         }
+
+        private static bool TryGetBinaryBooleanBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullableBoolType(leftType) || !IsKnownNonNullableBoolType(rightType))
+            {
+                return false;
+            }
+
+            resultType = SimpleType.Named("bool");
+            return true;
+        }
+
+        private static bool IsKnownNonNullableBoolType(SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            !type.IsNullable &&
+            string.Equals(type.Name, "bool", StringComparison.Ordinal);
 
         private static bool IsKnownNonNullableIntegralType(SimpleType type) =>
             type.IsKnown &&

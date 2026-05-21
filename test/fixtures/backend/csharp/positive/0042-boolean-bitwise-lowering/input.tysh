@@ -1,0 +1,13 @@
+namespace Samples.BooleanBitwise
+
+export fun both(left: bool, right: bool): bool =
+  left & right
+
+export fun either(left: bool, right: bool): bool =
+  left | right
+
+export fun toggled(left: bool, right: bool): bool =
+  left ^ right
+
+export fun combined(left: bool, right: bool): bool =
+  (left & right) | (left ^ right)

@@ -1,0 +1,11 @@
+namespace Samples.TypeChecker.BooleanBitwiseInvalid
+
+let boolAndInt = true & 1
+
+let stringOrBool = "yes" | false
+
+let nullable: bool? = true
+
+let nullableXor = nullable ^ false
+
+let boolComplement = ~true

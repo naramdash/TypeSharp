@@ -2965,6 +2965,58 @@ Remaining:
 
 - Boolean `|`/`&`/`^` expressions are active in task 0338. Shifts, compound assignment, user-defined operators, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0338 Boolean Bitwise Expression Slice
+
+Completed active implementation work for:
+
+- Start Time: 2026-05-21 17:29:25 +09:00
+- End Time: 2026-05-21 17:40:23 +09:00
+
+Completed work:
+
+- Added expression-level boolean `|`, `&`, and `^` support for known non-null `bool` operands in the type checker.
+- Extended expression inference, generated-source type inference, and project builder type inference so boolean bitwise expressions produce `bool`.
+- Preserved enum value bitwise and integral numeric bitwise behavior while adding deterministic diagnostics for bool/non-bool mixes and nullable bool operands.
+- Kept unary boolean complement, shifts, compound assignment, user-defined operators, flag-aware enum algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, broad attribute target validation, numeric pattern algebra, and richer pattern algebra out of scope.
+- Added focused positive/negative type-checker fixtures, backend C# snapshot coverage, a generated `net48` CLI build and C# consumer smoke, fixture README coverage, canonical docs, work-ledger, tasks, and traceability coverage.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles boolean bitwise expression API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [TypeSharpInferenceEngine.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [TypeSharpBuilder.cs](../lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs)
+- `test/fixtures/diagnostics/type-checker/positive/boolean-bitwise-expression`
+- `test/fixtures/diagnostics/type-checker/negative/boolean-bitwise-invalid`
+- `test/fixtures/diagnostics/type-checker/negative/integral-bitwise-invalid`
+- `test/fixtures/backend/csharp/positive/0042-boolean-bitwise-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Unary boolean complement, shifts, compound assignment, user-defined operators, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

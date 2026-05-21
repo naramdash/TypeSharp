@@ -3507,7 +3507,7 @@ public static class CSharpSourceBackend
                 return unaryNumericType;
             }
 
-            if (TryInferIntegralBitwiseExpressionType(node, out var bitwiseType))
+            if (TryInferBitwiseExpressionType(node, out var bitwiseType))
             {
                 return bitwiseType;
             }
@@ -3613,7 +3613,7 @@ public static class CSharpSourceBackend
             return resultType.Length > 0;
         }
 
-        private static bool TryInferIntegralBitwiseExpressionType(SyntaxNode node, out string type)
+        private static bool TryInferBitwiseExpressionType(SyntaxNode node, out string type)
         {
             type = string.Empty;
             var operatorKind = node.Children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
@@ -3631,10 +3631,10 @@ public static class CSharpSourceBackend
             if (operatorKind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken &&
                 expressions.Length == 2)
             {
-                return TryGetBinaryIntegralBitwiseResultType(
-                    InferExpressionType(expressions[0]),
-                    InferExpressionType(expressions[1]),
-                    out type);
+                var leftType = InferExpressionType(expressions[0]);
+                var rightType = InferExpressionType(expressions[1]);
+                return TryGetBinaryBooleanBitwiseResultType(leftType, rightType, out type) ||
+                    TryGetBinaryIntegralBitwiseResultType(leftType, rightType, out type);
             }
 
             return false;
@@ -3648,6 +3648,15 @@ public static class CSharpSourceBackend
                 "int" or "uint" or "long" or "ulong" => operandType,
                 _ => string.Empty
             };
+            return resultType.Length > 0;
+        }
+
+        private static bool TryGetBinaryBooleanBitwiseResultType(string left, string right, out string resultType)
+        {
+            resultType = string.Equals(left, "bool", StringComparison.Ordinal) &&
+                string.Equals(right, "bool", StringComparison.Ordinal)
+                ? "bool"
+                : string.Empty;
             return resultType.Length > 0;
         }
 
