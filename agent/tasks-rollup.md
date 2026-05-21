@@ -5089,6 +5089,63 @@ Remaining:
 
 - Active in task 0385: roadmap refresh after generic optional/default parameters.
 
+## Task 0385 Roadmap Refresh After Generic Optional Default Parameters
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals on 2026-05-22 after generic optional/default parameters landed.
+- Confirmed no generated-artifact baseline change: TypeSharp-generated assemblies stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and modern .NET/Node/package dependencies remain isolated to compiler, test, docs, CI, or editor tooling.
+- Confirmed the current test-package answer: TypeSharp already uses a `net10.0` NuGet package bridge through pinned `MSTest.Sdk/4.2.3`, .NET 10 Microsoft Testing Platform mode, checked-in package lock files, package source mapping, audit controls, and four package-based MSTest shard projects over the shared catalog. Adding another runner package now would duplicate the same evidence instead of improving generated artifact compatibility.
+- Kept C# 14 stable on .NET 10 and C# 15 preview on .NET 11 as language-design inputs only. Microsoft C# language versioning still maps `.NET Framework` targets to C# 7.3, and C# 15 union/runtime helper churn remains preview-only.
+- Kept F# 10 and TypeScript 7.0 Beta as tooling, diagnostics, and compiler-engineering signals only. TypeScript 7.0's side-by-side native-preview strategy reinforces TypeSharp's deterministic migration and parallel-test policy, not a runtime or generated-artifact dependency.
+- Confirmed .NET Framework 4.8.1 remains the latest Framework, while `net48` remains TypeSharp's broad generated target and `net481` stays a separate qualified-profile backlog item.
+- Confirmed VS Code LSP guidance and GitHub Actions runner-image signals do not change current editor or generated-artifact baselines. The Windows Server 2025 + Visual Studio 2026 hosted-runner migration beginning June 2026 remains a CI watch item.
+- Selected the next bounded implementation slice: `0386 Integral numeric shift expressions`. The slice should accept `left << right` and `left >> right` only for known non-null primitive integral operands, preserve `>>`/`<<` composition for function-shaped operands, keep ambiguous or non-integral value-shaped operands diagnostic-first, lower accepted shifts to ordinary C# 7.3-compatible operators, and keep shift assignment, logical unsigned shifts, user-defined operators, enum flag algebra, imported operator overloads, and higher-order composition changes out of scope.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [C# bitwise and shift operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/bitwise-and-shift-operators)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet restore audit](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities)
+- [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test#mtp-mode-of-dotnet-test)
+- [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [GitHub Actions runner images](https://github.com/actions/runner-images)
+- [GitHub Actions image migrations](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [actions/setup-dotnet](https://github.com/actions/setup-dotnet)
+- [actions/setup-node](https://github.com/actions/setup-node)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0386: integral numeric shift expressions.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -5113,13 +5170,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0384 is compressed here.
+- Completed historical work through task 0385 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0385 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0386 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
