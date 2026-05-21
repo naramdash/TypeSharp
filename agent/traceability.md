@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
+| Task 0320 explicit enum numeric range validation | [0320-explicit-enum-numeric-range-validation-slice.md](0320-explicit-enum-numeric-range-validation-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, enum diagnostic fixtures, canonical enum docs, and task rollup updates. |
 
 ## Completed Evidence Index
 

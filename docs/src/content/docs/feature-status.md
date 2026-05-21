@@ -157,6 +157,8 @@ After imported C# enum exhaustiveness, the empty-queue refresh rechecked officia
 
 After explicit TypeSharp enum numeric values, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice added explicit underlying types for TypeSharp-owned enums. This keeps enum reasoning name/member based and leaves flags, aliases, computed enum expressions, imported enum underlying/numeric metadata, and numeric range validation as separate backlog items.
 
+After explicit TypeSharp enum underlying types, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is explicit enum numeric range validation for TypeSharp-owned enums. This keeps enum reasoning name/member based and leaves flags, aliases, computed enum expressions, enum member attributes, and imported enum underlying/numeric metadata as separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

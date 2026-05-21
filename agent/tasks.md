@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | None |
-| Active summary     | None |
-| Completed range    | 0001-0318                         |
+| Active task packet | [0320-explicit-enum-numeric-range-validation-slice.md](0320-explicit-enum-numeric-range-validation-slice.md) |
+| Active summary     | Validate explicit TypeSharp enum numeric member initializers against the declared enum underlying type, or `int` by default, before C# emission. |
+| Completed range    | 0001-0319                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q2       | In Progress | Task 0319 roadmap refresh | 0320 Explicit enum numeric range validation slice | [0320-explicit-enum-numeric-range-validation-slice.md](0320-explicit-enum-numeric-range-validation-slice.md) | Add deterministic `TS2201` diagnostics for out-of-range or non-integral explicit enum member values while leaving flags, aliases, computed expressions, and imported enum numeric metadata out of scope. |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0319 Roadmap refresh after explicit enum underlying types | [tasks-rollup.md#task-0319-roadmap-refresh-after-explicit-enum-underlying-types](tasks-rollup.md#task-0319-roadmap-refresh-after-explicit-enum-underlying-types) | Rechecked official source signals after explicit enum underlying types, confirmed the baseline, and selected explicit enum numeric range validation as the next bounded implementation slice. |
 | Q2       | Done        | Task 0317 roadmap refresh | 0318 Explicit enum underlying types slice | [tasks-rollup.md#task-0318-explicit-enum-underlying-types-slice](tasks-rollup.md#task-0318-explicit-enum-underlying-types-slice) | Added TypeSharp-owned enum `: underlyingType` parsing, validation, and C# enum lowering without changing flags, aliases, computed values, or imported enum policy. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0317 Roadmap refresh after explicit enum numeric values | [tasks-rollup.md#task-0317-roadmap-refresh-after-explicit-enum-numeric-values](tasks-rollup.md#task-0317-roadmap-refresh-after-explicit-enum-numeric-values) | Rechecked official source signals after explicit enum numeric values, confirmed the baseline, and selected explicit TypeSharp enum underlying types as the next bounded implementation slice. |
 | Q2       | Done        | Task 0315 roadmap refresh | 0316 Explicit enum numeric values slice | [tasks-rollup.md#task-0316-explicit-enum-numeric-values-slice](tasks-rollup.md#task-0316-explicit-enum-numeric-values-slice) | Added TypeSharp-owned enum member `= numeric` parsing and C# enum lowering without changing enum type checking, flags, aliases, or underlying-type policy. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0315 Roadmap refresh after imported C# enum exhaustiveness | [tasks-rollup.md#task-0315-roadmap-refresh-after-imported-csharp-enum-exhaustiveness](tasks-rollup.md#task-0315-roadmap-refresh-after-imported-csharp-enum-exhaustiveness) | Rechecked official source signals after imported enum exhaustiveness, confirmed the baseline, and selected explicit TypeSharp enum numeric values as the next bounded implementation slice. |
-| Q3       | Done        | Task 0313 roadmap refresh | 0314 Imported C# enum exhaustiveness slice | [tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice](tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice) | Extended finite enum-member coverage from TypeSharp-owned enums to named imported C# enum metadata without taking on flags or numeric-value semantics. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 
