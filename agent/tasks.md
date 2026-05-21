@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0360-direct-generic-composition-inference-slice.md](0360-direct-generic-composition-inference-slice.md) |
-| Active summary     | 0360 Direct generic composition inference slice |
-| Completed range    | 0001-0359                         |
+| Active task packet | None |
+| Active summary     | None |
+| Completed range    | 0001-0360                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0359 roadmap refresh | 0360 Direct generic composition inference slice | [0360-direct-generic-composition-inference-slice.md](0360-direct-generic-composition-inference-slice.md) | Extend direct named-function composition compatibility checks to bounded TypeSharp generic unary targets without changing C# lowering. |
+| Q2       | Done        | Task 0359 roadmap refresh | 0360 Direct generic composition inference slice | [tasks-rollup.md#task-0360-direct-generic-composition-inference-slice](tasks-rollup.md#task-0360-direct-generic-composition-inference-slice) | Extended direct named-function composition compatibility checks to bounded TypeSharp generic unary targets without changing C# lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0359 Roadmap refresh after direct generic pipeline inference | [tasks-rollup.md#task-0359-roadmap-refresh-after-direct-generic-pipeline-inference](tasks-rollup.md#task-0359-roadmap-refresh-after-direct-generic-pipeline-inference) | Rechecked official source signals after direct generic pipeline inference, confirmed the baseline, and selected bounded direct generic composition inference. |
 | Q2       | Done        | Task 0357 roadmap refresh | 0358 Direct generic pipeline inference slice | [tasks-rollup.md#task-0358-direct-generic-pipeline-inference-slice](tasks-rollup.md#task-0358-direct-generic-pipeline-inference-slice) | Extended direct `value |> f` and `value |> f(args...)` checks to known TypeSharp generic targets using the same bounded inference/substitution as direct calls. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0357 Roadmap refresh after constructed generic function call inference | [tasks-rollup.md#task-0357-roadmap-refresh-after-constructed-generic-function-call-inference](tasks-rollup.md#task-0357-roadmap-refresh-after-constructed-generic-function-call-inference) | Rechecked official source signals after constructed generic function call inference, confirmed the baseline, and selected bounded direct generic pipeline inference. |

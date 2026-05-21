@@ -21778,9 +21778,21 @@ static void CliBuildCompilesCompositionLowering()
 
             export fun format(value: int): string = value.ToString()
 
+            fun identity<T>(value: T): T = value
+
+            fun arrayIdentity<T>(items: T[]): T[] = items
+
+            fun arrayCount<T>(items: T[]): int = 1
+
             export let formatAfterIncrement: int -> string = increment >> format
 
             export let formatBeforeIncrement: int -> string = format << increment
+
+            export let formatAfterIdentity: int -> string = identity >> format
+
+            export let identityAfterIncrement: int -> int = increment >> identity
+
+            export let countAfterArrayIdentity: int[] -> int = arrayIdentity >> arrayCount
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -21794,6 +21806,9 @@ static void CliBuildCompilesCompositionLowering()
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("public static readonly System.Func<int, string> formatAfterIncrement = __compose0 => format(increment(__compose0));", generatedSource);
         AssertContains("public static readonly System.Func<int, string> formatBeforeIncrement = __compose1 => format(increment(__compose1));", generatedSource);
+        AssertContains("public static readonly System.Func<int, string> formatAfterIdentity = __compose2 => format(identity(__compose2));", generatedSource);
+        AssertContains("public static readonly System.Func<int, int> identityAfterIncrement = __compose3 => identity(increment(__compose3));", generatedSource);
+        AssertContains("public static readonly System.Func<int[], int> countAfterArrayIdentity = __compose4 => arrayCount(arrayIdentity(__compose4));", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CompositionLowering.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with composition lowering.");
@@ -21831,7 +21846,11 @@ static void CliBuildCompilesCompositionLowering()
                 {
                     public static string Read()
                     {
-                        return Samples.Composition.Module.formatAfterIncrement(1) + Samples.Composition.Module.formatBeforeIncrement(1);
+                        return Samples.Composition.Module.formatAfterIncrement(1)
+                            + Samples.Composition.Module.formatBeforeIncrement(1)
+                            + Samples.Composition.Module.formatAfterIdentity(1)
+                            + Samples.Composition.Module.identityAfterIncrement(1).ToString()
+                            + Samples.Composition.Module.countAfterArrayIdentity(new int[] { 1 }).ToString();
                     }
                 }
             }

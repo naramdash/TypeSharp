@@ -1,0 +1,24 @@
+namespace Samples.TypeChecker.DirectGenericCompositionInference
+
+import { List } from "System.Collections.Generic"
+
+fun increment(value: int): int = value + 1
+
+fun stringify(value: int): string = value.ToString()
+
+fun genericString<T>(value: T): string = "x"
+
+ambient fun genericTakesInt<T>(value: int): T
+
+fun genericStringArray<T>(value: T): string[] = ["x"]
+
+fun numberArrayCount(values: int[]): int = 1
+
+fun genericStringList<T>(value: T): List<string> = ["x"]
+
+fun numberListCount(values: List<int>): int = 1
+
+let genericReturnMismatch: int -> int = genericString >> increment
+let genericParameterMismatch: int -> int = stringify >> genericTakesInt
+let genericArrayMismatch: int -> int = genericStringArray >> numberArrayCount
+let genericListMismatch: int -> int = genericStringList >> numberListCount

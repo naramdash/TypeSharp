@@ -8,6 +8,12 @@ namespace Samples.Composition
 
         public static readonly System.Func<int, string> formatBeforeIncrement = __compose1 => format(increment(__compose1));
 
+        public static readonly System.Func<int, string> formatAfterIdentity = __compose2 => format(identity(__compose2));
+
+        public static readonly System.Func<int, int> identityAfterIncrement = __compose3 => identity(increment(__compose3));
+
+        public static readonly System.Func<int[], int> countAfterArrayIdentity = __compose4 => arrayCount(arrayIdentity(__compose4));
+
         public static int increment(int value)
         {
             return value + 1;
@@ -16,6 +22,21 @@ namespace Samples.Composition
         public static string format(int value)
         {
             return value.ToString();
+        }
+
+        internal static T identity<T>(T value)
+        {
+            return value;
+        }
+
+        internal static T[] arrayIdentity<T>(T[] items)
+        {
+            return items;
+        }
+
+        internal static int arrayCount<T>(T[] items)
+        {
+            return 1;
         }
     }
 }

@@ -1,0 +1,24 @@
+namespace Samples.TypeChecker.DirectGenericCompositionInference
+
+import { List } from "System.Collections.Generic"
+
+fun identity<T>(value: T): T = value
+
+fun stringify(value: int): string = value.ToString()
+
+fun length(value: string): int = value.Length
+
+fun arrayIdentity<T>(items: T[]): T[] = items
+
+fun arrayCount<T>(items: T[]): int = 1
+
+fun listIdentity<T>(items: List<T>): List<T> = items
+
+fun listCount<T>(items: List<T>): int = 1
+
+let identityBeforeStringify: int -> string = identity >> stringify
+let stringifyBeforeIdentity: int -> string = stringify >> identity
+let arrayIdentityBeforeCount: int[] -> int = arrayIdentity >> arrayCount
+let listIdentityBeforeCount: List<string> -> int = listIdentity >> listCount
+let reverseIdentityBeforeStringify: int -> string = stringify << identity
+let reverseStringifyBeforeIdentity: int -> string = identity << stringify

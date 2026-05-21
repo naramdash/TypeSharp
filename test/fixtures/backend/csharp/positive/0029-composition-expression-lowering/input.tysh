@@ -4,6 +4,18 @@ export fun increment(value: int): int = value + 1
 
 export fun format(value: int): string = value.ToString()
 
+fun identity<T>(value: T): T = value
+
+fun arrayIdentity<T>(items: T[]): T[] = items
+
+fun arrayCount<T>(items: T[]): int = 1
+
 export let formatAfterIncrement: int -> string = increment >> format
 
 export let formatBeforeIncrement: int -> string = format << increment
+
+export let formatAfterIdentity: int -> string = identity >> format
+
+export let identityAfterIncrement: int -> int = increment >> identity
+
+export let countAfterArrayIdentity: int[] -> int = arrayIdentity >> arrayCount

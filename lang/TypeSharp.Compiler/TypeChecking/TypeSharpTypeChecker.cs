@@ -1728,8 +1728,6 @@ public static class TypeSharpTypeChecker
                 !TryGetDirectIdentifierName(rightExpression, out var rightName) ||
                 !scope.ResolveFunctionInfo(leftName, out var leftFunction) ||
                 !scope.ResolveFunctionInfo(rightName, out var rightFunction) ||
-                leftFunction.TypeParameters.Count > 0 ||
-                rightFunction.TypeParameters.Count > 0 ||
                 !TryGetUnaryFunctionSignature(leftFunction, out var leftParameterType, out var leftReturnType) ||
                 !TryGetUnaryFunctionSignature(rightFunction, out var rightParameterType, out var rightReturnType))
             {
@@ -1737,15 +1735,32 @@ public static class TypeSharpTypeChecker
             }
 
             var firstName = leftName;
+            var firstFunction = leftFunction;
             var firstReturnType = leftReturnType;
             var secondName = rightName;
+            var secondFunction = rightFunction;
             var secondParameterType = rightParameterType;
             if (operatorText == "<<")
             {
                 firstName = rightName;
+                firstFunction = rightFunction;
                 firstReturnType = rightReturnType;
                 secondName = leftName;
+                secondFunction = leftFunction;
                 secondParameterType = leftParameterType;
+            }
+
+            ResolveCompositionGenericEdgeTypes(
+                firstFunction,
+                firstReturnType,
+                secondFunction,
+                secondParameterType,
+                out firstReturnType,
+                out secondParameterType);
+
+            if (!firstReturnType.IsKnown || !secondParameterType.IsKnown)
+            {
+                return;
             }
 
             if (CanAssign(scope, secondParameterType, firstReturnType))
@@ -1756,6 +1771,58 @@ public static class TypeSharpTypeChecker
             ReportMismatch(
                 node,
                 $"Composition operator '{operatorText}' cannot compose '{firstName}' with '{secondName}': '{firstName}' returns '{firstReturnType}', but '{secondName}' expects '{secondParameterType}'.");
+        }
+
+        private static void ResolveCompositionGenericEdgeTypes(
+            FunctionInfo firstFunction,
+            SimpleType firstReturnType,
+            FunctionInfo secondFunction,
+            SimpleType secondParameterType,
+            out SimpleType resolvedFirstReturnType,
+            out SimpleType resolvedSecondParameterType)
+        {
+            var firstTypeParameterNames = new HashSet<string>(firstFunction.TypeParameters, StringComparer.Ordinal);
+            var secondTypeParameterNames = new HashSet<string>(secondFunction.TypeParameters, StringComparer.Ordinal);
+            var firstSubstitutions = new Dictionary<string, SimpleType>(StringComparer.Ordinal);
+            var secondSubstitutions = new Dictionary<string, SimpleType>(StringComparer.Ordinal);
+
+            TryInferCompositionTypeArgument(
+                firstReturnType,
+                secondParameterType,
+                firstTypeParameterNames,
+                secondTypeParameterNames,
+                firstSubstitutions);
+            TryInferCompositionTypeArgument(
+                secondParameterType,
+                firstReturnType,
+                secondTypeParameterNames,
+                firstTypeParameterNames,
+                secondSubstitutions);
+
+            resolvedFirstReturnType = SubstituteGenericType(firstReturnType, firstSubstitutions, firstTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            resolvedSecondParameterType = SubstituteGenericType(secondParameterType, secondSubstitutions, secondTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+        }
+
+        private static void TryInferCompositionTypeArgument(
+            SimpleType genericShape,
+            SimpleType sourceType,
+            IReadOnlySet<string> typeParameterNames,
+            IReadOnlySet<string> oppositeTypeParameterNames,
+            Dictionary<string, SimpleType> substitutions)
+        {
+            if (typeParameterNames.Count == 0 ||
+                !TryInferDirectGenericArgument(
+                    genericShape,
+                    sourceType,
+                    typeParameterNames,
+                    out var typeParameterName,
+                    out var inferredType) ||
+                GenericTypeReferencesAny(inferredType, oppositeTypeParameterNames, oppositeTypeParameterNames))
+            {
+                return;
+            }
+
+            substitutions[typeParameterName] = inferredType;
         }
 
         private static bool TryGetUnaryFunctionSignature(

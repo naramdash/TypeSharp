@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 21:41:50 +09:00
+End Time: 2026-05-21 21:54:50 +09:00
 
 ## Objective
 
@@ -3901,6 +3901,53 @@ Remaining:
 
 - Direct generic composition inference is active in task 0360. Imported C# composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0360 Direct Generic Composition Inference Slice
+
+Completed implementation work established:
+
+- Extended direct identifier-only `f >> g` and `g << f` compatibility checks to known TypeSharp-declared generic unary function targets.
+- Added bounded composition-edge inference/substitution for simple `T`, arrays such as `T[]`, and matching single-argument generic wrappers such as `List<T>`.
+- Preserved existing direct named-function composition checks and skipped broader unresolved generic composition cases until a future full composition type-inference slice.
+- Reported deterministic `TS2201` diagnostics for incompatible substituted generic composition edges.
+- Strengthened the C# backend composition fixture and CLI composition build smoke with generic TypeSharp unary functions while keeping the existing C# 7.3-compatible delegate-lambda lowering shape.
+- Added positive and negative type-checker fixtures for direct generic composition inference.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the direct generic composition inference boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles composition lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/positive/direct-generic-composition-inference`
+- `test/fixtures/diagnostics/type-checker/negative/direct-generic-composition-inference`
+- `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Imported C# composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition expression function-type inference, public ABI inference for composition expressions, composition overload ranking, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3925,13 +3972,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0359 is compressed here.
+- Completed historical work through task 0360 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0360 from [tasks.md](tasks.md) when work resumes.
+- Recheck [tasks.md](tasks.md), [checklist.md](checklist.md), and official baseline references before selecting the next bounded slice.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
