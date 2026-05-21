@@ -61,12 +61,20 @@ jobs:
       - name: Show .NET info
         run: dotnet --info
 
-      - name: Restore MSTest bridge in locked mode
-        run: >
-          dotnet restore
-          test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj
-          --locked-mode
-          --verbosity minimal
+      - name: Restore MSTest bridges in locked mode
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $mstestProjects = @(
+            "test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj"
+          ) + (0..3 | ForEach-Object {
+            "test\TypeSharp.Compiler.Tests.MSTest.Shard$_\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj"
+          })
+
+          foreach ($project in $mstestProjects) {
+            dotnet restore $project --locked-mode --verbosity minimal
+          }
 
       - name: Build package-free main runner
         run: >
@@ -131,9 +139,62 @@ jobs:
           --nologo
           --verbosity quiet
 
+      - name: Build MSTest package shard bridges
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $mstestShards = 0..3 | ForEach-Object {
+            "test\TypeSharp.Compiler.Tests.MSTest.Shard$_\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj"
+          }
+
+          foreach ($project in $mstestShards) {
+            dotnet build $project --no-restore --nologo --verbosity quiet
+          }
+
       - name: Run MSTest bridge smoke
         run: >
           dotnet test
           --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj
           --no-build
           --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+
+      - name: Run MSTest package shard bridges in parallel
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $mstestShards = 0..3 | ForEach-Object {
+            "test\TypeSharp.Compiler.Tests.MSTest.Shard$_\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj"
+          }
+          $expectedTests = @(131, 130, 130, 130)
+
+          $jobs = for ($index = 0; $index -lt $mstestShards.Count; $index++) {
+            Start-Job -Name (Split-Path $mstestShards[$index] -LeafBase) -ScriptBlock {
+              param($p, $minimum)
+
+              dotnet test `
+                --project $p `
+                --no-build `
+                --filter "FullyQualifiedName~CatalogCase" `
+                --minimum-expected-tests $minimum
+              if ($LASTEXITCODE -ne 0) {
+                throw "MSTest shard '$p' failed with exit code $LASTEXITCODE."
+              }
+            } -ArgumentList $mstestShards[$index], $expectedTests[$index]
+          }
+
+          $jobs | Wait-Job | Out-Null
+
+          $failed = $false
+          foreach ($job in $jobs) {
+            Receive-Job $job
+            if ($job.State -ne 'Completed') {
+              $failed = $true
+            }
+          }
+
+          $jobs | Remove-Job
+
+          if ($failed) {
+            throw 'One or more MSTest package shard bridges failed.'
+          }

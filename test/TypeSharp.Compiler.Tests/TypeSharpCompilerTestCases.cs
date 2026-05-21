@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(520, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(521, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -64,6 +64,55 @@ static void TestRunnerShardSelectionIsStable()
     AssertTrue(combined.Includes("alpha smoke", 5), "Combined filter and shard should include matching bucket tests.");
 
     AssertThrows<InvalidOperationException>(() => TestRunnerSettings.Create(["--shard", "4/4"]));
+}
+
+static void MSTestPackageShardBridgeProjectsAreStable()
+{
+    var repositoryRoot = Directory.GetCurrentDirectory();
+    var baseProjectPath = Path.Combine(repositoryRoot, "test", "TypeSharp.Compiler.Tests.MSTest", "TypeSharp.Compiler.Tests.MSTest.csproj");
+    var baseProject = File.ReadAllText(baseProjectPath);
+
+    AssertContains("<Project Sdk=\"MSTest.Sdk/4.2.3\">", baseProject);
+    AssertContains("<TargetFramework>net10.0</TargetFramework>", baseProject);
+    AssertContains("..\\TypeSharp.Compiler.Tests\\TestShardDefaults.cs", baseProject);
+    AssertContains("<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>", baseProject);
+    AssertTrue(
+        File.Exists(Path.Combine(repositoryRoot, "test", "TypeSharp.Compiler.Tests.MSTest", "packages.lock.json")),
+        "Expected the base MSTest bridge lock file to be checked in.");
+
+    var shardCounts = new int[4];
+    for (var index = 0; index < TypeSharpCompilerTestCases.All.Count; index++)
+    {
+        shardCounts[index % shardCounts.Length]++;
+    }
+
+    AssertEqual(131, shardCounts[0]);
+    AssertEqual(130, shardCounts[1]);
+    AssertEqual(130, shardCounts[2]);
+    AssertEqual(130, shardCounts[3]);
+
+    for (var shard = 0; shard < shardCounts.Length; shard++)
+    {
+        var projectDirectory = Path.Combine(repositoryRoot, "test", $"TypeSharp.Compiler.Tests.MSTest.Shard{shard}");
+        var projectPath = Path.Combine(projectDirectory, $"TypeSharp.Compiler.Tests.MSTest.Shard{shard}.csproj");
+        var project = File.ReadAllText(projectPath);
+
+        AssertContains("<Project Sdk=\"MSTest.Sdk/4.2.3\">", project);
+        AssertContains("<TargetFramework>net10.0</TargetFramework>", project);
+        AssertContains($"<AssemblyName>TypeSharp.Compiler.Tests.MSTest.Shard{shard}</AssemblyName>", project);
+        AssertContains("..\\TypeSharp.Compiler.Tests.MSTest\\TypeSharpCompilerMSTestCatalog.cs", project);
+        AssertContains($"..\\TypeSharp.Compiler.Tests.Shard{shard}\\TestShardDefaults.cs", project);
+        AssertContains("<TestingExtensionsProfile>None</TestingExtensionsProfile>", project);
+        AssertContains("<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>", project);
+        AssertContains("<NuGetAudit>true</NuGetAudit>", project);
+        AssertTrue(
+            File.Exists(Path.Combine(projectDirectory, "packages.lock.json")),
+            $"Expected the MSTest shard {shard} lock file to be checked in.");
+
+        var defaults = File.ReadAllText(Path.Combine(repositoryRoot, "test", $"TypeSharp.Compiler.Tests.Shard{shard}", "TestShardDefaults.cs"));
+        AssertContains($"ShardIndex = {shard}", defaults);
+        AssertContains("ShardCount = 4", defaults);
+    }
 }
 
 static void DiagnosticDescriptorRegistryIsStable()
@@ -14088,6 +14137,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("- 'vscode/**'", regressionWorkflow);
     AssertContains("- '.github/workflows/**'", regressionWorkflow);
     AssertContains("test\\TypeSharp.Compiler.Tests.MSTest\\TypeSharp.Compiler.Tests.MSTest.csproj", regressionWorkflow);
+    AssertContains("test\\TypeSharp.Compiler.Tests.MSTest.Shard$_\\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj", regressionWorkflow);
     AssertContains("--locked-mode", regressionWorkflow);
     AssertContains("dotnet build", regressionWorkflow);
     AssertContains("test\\TypeSharp.Compiler.Tests\\TypeSharp.Compiler.Tests.csproj", regressionWorkflow);
@@ -14097,6 +14147,9 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Receive-Job", regressionWorkflow);
     AssertContains("dotnet test", regressionWorkflow);
     AssertContains("FullyQualifiedName~CatalogIsExposedForPackageRunners", regressionWorkflow);
+    AssertContains("FullyQualifiedName~CatalogCase", regressionWorkflow);
+    AssertContains("--minimum-expected-tests", regressionWorkflow);
+    AssertContains("One or more MSTest package shard bridges failed.", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 

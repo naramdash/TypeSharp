@@ -1,0 +1,32 @@
+<Project Sdk="MSTest.Sdk/4.2.3">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>TypeSharp.Compiler.Tests.MSTest.Shard2</AssemblyName>
+    <RootNamespace>TypeSharp.Compiler.Tests.MSTest.Shard2</RootNamespace>
+    <TestingExtensionsProfile>None</TestingExtensionsProfile>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\TypeSharp.Compiler.Tests.MSTest\TypeSharpCompilerMSTestCatalog.cs" Link="TypeSharpCompilerMSTestCatalog.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TestRunnerSettings.cs" Link="TestRunnerSettings.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests.Shard2\TestShardDefaults.cs" Link="TestShardDefaults.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCase.cs" Link="TypeSharpCompilerTestCase.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCatalog.cs" Link="TypeSharpCompilerTestCatalog.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCases.cs" Link="TypeSharpCompilerTestCases.cs" />
+    <ProjectReference Include="..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
+    <ProjectReference Include="..\..\cli\TypeSharp.Cli\TypeSharp.Cli.csproj" />
+    <ProjectReference Include="..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
+    <Compile Include="..\..\lang\TypeSharp.Core\Option.cs" Link="TypeSharpCore\Option.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Core\Result.cs" Link="TypeSharpCore\Result.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Core\Unit.cs" Link="TypeSharpCore\Unit.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpRuntimeInfo.cs" Link="TypeSharpRuntime\TypeSharpRuntimeInfo.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpAsync.cs" Link="TypeSharpRuntime\TypeSharpAsync.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpEquality.cs" Link="TypeSharpRuntime\TypeSharpEquality.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpPattern.cs" Link="TypeSharpRuntime\TypeSharpPattern.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpUnion.cs" Link="TypeSharpRuntime\TypeSharpUnion.cs" />
+  </ItemGroup>
+</Project>

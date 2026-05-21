@@ -6,6 +6,7 @@ internal static partial class TypeSharpCompilerTestCases
     {
         new TypeSharpCompilerTestCase("version defaults match the documented CLI contract", VersionDefaultsMatchCliContract),
         new TypeSharpCompilerTestCase("test runner shard selection is stable", TestRunnerShardSelectionIsStable),
+        new TypeSharpCompilerTestCase("MSTest package shard bridge projects are stable", MSTestPackageShardBridgeProjectsAreStable),
         new TypeSharpCompilerTestCase("diagnostic descriptor registry is stable", DiagnosticDescriptorRegistryIsStable),
         new TypeSharpCompilerTestCase("diagnostic text follows CLI text shape", DiagnosticTextUsesCliShape),
         new TypeSharpCompilerTestCase("CLI new creates console project", CliNewCreatesConsoleProject),

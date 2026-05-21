@@ -4925,7 +4925,62 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0382: MSTest package shard bridge.
+- Completed in task 0382: MSTest package shard bridge.
+
+## Task 0382 MSTest Package Shard Bridge
+
+Completed package-based test sharding work:
+
+- Added four `net10.0` `MSTest.Sdk/4.2.3` shard bridge projects under `test/TypeSharp.Compiler.Tests.MSTest.Shard0` through `Shard3`.
+- Reused the existing `TypeSharpCompilerTestCases.All` catalog and the existing `TestShardDefaults` ordinal partition model, so package-free and package-based shard runners share the same test list and stable shard math.
+- Updated the MSTest dynamic-data bridge so each shard project exposes only its `index % 4` catalog slice, while the base `TypeSharp.Compiler.Tests.MSTest` project still exposes the full catalog for package-runner discovery smoke.
+- Checked in package lock files for each MSTest shard project. The restore graph remains the existing MSTest SDK/Microsoft Testing Platform graph mapped to `nuget.org` through the root `NuGet.config`.
+- Updated the Windows regression workflow to restore all MSTest bridge projects in locked mode, build the package shard bridge projects, run the existing MSTest package discovery smoke, and run the four MSTest package shard bridges in parallel with minimum expected catalog counts.
+- Updated the test README with package-based shard commands and added regression tests for the project/lock/workflow contracts. The shared catalog is now 521 cases.
+
+Verification:
+
+```powershell
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --locked-mode --verbosity minimal
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --locked-mode --verbosity minimal
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --locked-mode --verbosity minimal
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --locked-mode --verbosity minimal
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --locked-mode --verbosity minimal
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "MSTest package shard bridge"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "release and regression workflow contracts"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "test runner shard selection"
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --verbosity quiet
+# Ran the four package-free shard projects in parallel.
+# Ran the four MSTest package shard projects in parallel with minimum expected counts 131, 130, 130, and 130.
+npm run build          # in docs
+git diff --check
+```
+
+Result: all listed commands succeeded on 2026-05-22; the package-free shard runner still passed the full catalog, the parallel MSTest package shards passed 131/130/130/130 catalog cases, the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest.Shard0`
+- `test/TypeSharp.Compiler.Tests.MSTest.Shard1`
+- `test/TypeSharp.Compiler.Tests.MSTest.Shard2`
+- `test/TypeSharp.Compiler.Tests.MSTest.Shard3`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0383: roadmap refresh after MSTest package shards.
 
 ## Verification Summary
 
@@ -4951,13 +5006,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0381 is compressed here.
+- Completed historical work through task 0382 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0382 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0383 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

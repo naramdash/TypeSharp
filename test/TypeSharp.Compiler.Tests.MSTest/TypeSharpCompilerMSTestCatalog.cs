@@ -12,8 +12,17 @@ public sealed class TypeSharpCompilerMSTestCatalog
 
     public static IEnumerable<object[]> CatalogCases()
     {
+        var settings = TestRunnerSettings.Create(Array.Empty<string>());
+        var ordinal = 0;
+
         foreach (var test in TypeSharpCompilerTestCases.All)
         {
+            var currentOrdinal = ordinal++;
+            if (!settings.Includes(test.Name, currentOrdinal))
+            {
+                continue;
+            }
+
             yield return new object[] { test };
         }
     }
@@ -28,7 +37,7 @@ public sealed class TypeSharpCompilerMSTestCatalog
     [TestMethod]
     public void CatalogIsExposedForPackageRunners()
     {
-        Assert.AreEqual(520, TypeSharpCompilerTestCases.All.Count);
+        Assert.AreEqual(521, TypeSharpCompilerTestCases.All.Count);
         Assert.AreEqual(
             TypeSharpCompilerTestCases.All.Count,
             TypeSharpCompilerTestCases.All.Select(test => test.Name).Distinct(StringComparer.Ordinal).Count());
