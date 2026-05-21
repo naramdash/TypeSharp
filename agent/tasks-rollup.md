@@ -3696,6 +3696,44 @@ Remaining:
 
 - Imported C# generic call validation, generic pipeline/composition inference, constructed generic parameter inference, generic constraints beyond the existing backend-compatible checks, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0355 Roadmap Refresh After Direct Generic Function Call Inference
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code source signals on 2026-05-21 after direct TypeSharp-declared generic function call inference landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, current direct generic TypeSharp function call behavior, and the remaining function call/pipeline backlog.
+- Selected the next bounded implementation slice: constructed generic function call inference for direct TypeSharp-declared generic functions.
+- Kept imported C# generic call validation, generic pipeline/composition inference, broader generic constraints, optional/default/params TypeSharp parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra out of the slice.
+- Created active task `0356 Constructed generic function call inference slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [NuGet audit](https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Constructed generic TypeSharp function call inference is active in task 0356. Imported C# generic call validation, generic pipeline/composition inference, broader generic constraints, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3720,13 +3758,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0354 is compressed here.
+- Completed historical work through task 0355 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Use [tasks.md](tasks.md) to select the next task when work resumes.
+- Continue active task 0356 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

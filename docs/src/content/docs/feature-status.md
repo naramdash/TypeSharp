@@ -207,6 +207,8 @@ After direct TypeSharp-declared function call arity and argument diagnostics, th
 
 The direct generic TypeSharp function call inference slice completed explicit generic type argument validation plus simple argument inference/substitution for direct TypeSharp-declared generic functions whose declared type parameters appear directly as parameter or return types. Repeated simple type parameters must infer consistently, substituted direct call returns participate in assignment checks, and generated C# call lowering remains unchanged. Imported C# generic call validation, generic pipeline/composition inference, constructed generic parameter inference, broader constraints, optional/default/params TypeSharp parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, and type constructor policy remain backlog.
 
+After direct generic TypeSharp function call inference, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is constructed generic function call inference for direct TypeSharp-declared generic functions. Imported C# generic call validation, generic pipeline/composition inference, broader generic constraints, optional/default/params TypeSharp parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, and type constructor policy remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

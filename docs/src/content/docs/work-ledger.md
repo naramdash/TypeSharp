@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task. |
+| Active task packet | `agent/0356-constructed-generic-function-call-inference-slice.md` |
+| Next top-priority task | Task 0356 constructed generic function call inference slice. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0354 completed bounded direct TypeSharp generic function call inference while preserving generated C# call lowering. |
-| Completed work covered | 0001-0354 |
+| Current tooling slice | Task 0356 is extending direct TypeSharp generic function calls from simple `T` inference to bounded constructed parameter/return positions. |
+| Completed work covered | 0001-0355 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

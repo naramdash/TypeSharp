@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| 0356 Constructed generic function call inference slice | [0356-constructed-generic-function-call-inference-slice.md](0356-constructed-generic-function-call-inference-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, constructed generic type-checker fixtures, backend lowering fixture, `test/TypeSharp.Compiler.Tests/Program.cs`, docs canonical pages. |
 
 ## Completed Evidence Index
 
