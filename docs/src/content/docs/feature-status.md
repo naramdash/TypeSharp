@@ -147,6 +147,8 @@ The bounded implementation slices after the refresh added match guard support an
 - Literal match patterns parse for bool, string, and numeric literal arms; `bool` and local literal-union matches report missing cases/members and lower to C# 7.3-compatible conditional comparisons.
 - Enum exhaustiveness and richer pattern algebra remain separate follow-ups.
 
+After literal match exhaustiveness, the empty-queue refresh rechecked the same official sources on 2026-05-21 and found no baseline change. The next bounded implementation slice is simple TypeSharp enum declaration parsing/checking/lowering, because enum match exhaustiveness needs a stable TypeSharp-owned enum symbol and generated C# shape first.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

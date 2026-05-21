@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active packet after task 0308 completion. The empty-queue rule should select a roadmap-refresh task next. |
+| Enum declaration implementation slice | [0310-enum-declaration-implementation-slice.md](0310-enum-declaration-implementation-slice.md) | Parser enum fixture, binder/type-checker enum symbol diagnostics, C# backend enum lowering, CLI `net48` build smoke, docs and verification |
 
 ## Completed Evidence Index
 

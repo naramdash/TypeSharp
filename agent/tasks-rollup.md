@@ -1828,6 +1828,36 @@ Remaining:
 
 - Enum exhaustiveness and richer pattern algebra remain future match work.
 
+## Task 0309 Roadmap Refresh After Literal Match Exhaustiveness
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework lifecycle, NuGet, and VS Code sources on 2026-05-21 after literal match exhaustiveness landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 and TypeScript 7.0 remain preview/tooling-direction signals, and package/Marketplace/template publication remains gated by Project Policy.
+- Confirmed the latest source signals still match Feature Status: C# language versioning maps .NET Framework targets to C# 7.3, F# 10 remains a refinement/tooling signal, TypeScript 7.0 Beta stays side-by-side through `@typescript/native-preview`, NuGet lock/audit/source-mapping constraints still apply, and VS Code extension publishing still uses `vsce`/Marketplace gates.
+- Compared Feature Status, Grammar, and Work Ledger against the compiler state and selected the next bounded implementation slice: simple TypeSharp enum declarations and C# 7.3-compatible lowering as prerequisite groundwork for enum match exhaustiveness.
+- Created active task `0310 Enum declaration implementation slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework lifecycle](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-framework)
+- [dotnet restore](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
