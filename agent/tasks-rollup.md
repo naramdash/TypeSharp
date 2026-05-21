@@ -4508,7 +4508,44 @@ Primary evidence:
 
 Remaining:
 
-- Roadmap refresh after test-host NuGet hardening is active in task 0373.
+- Completed in task 0373: the roadmap refresh after test-host NuGet hardening selected CI regression gating over the shard runner and focused MSTest bridge smoke.
+
+## Task 0373 Roadmap Refresh After Test-host NuGet Hardening
+
+Completed roadmap refresh work established:
+
+- Rechecked official source signals on 2026-05-22 after test-host NuGet hardening. The same-day source set still supports the current baseline: `.NET Framework` target frameworks map to C# 7.3, modern C# 14/.NET 10 and C# 15/.NET 11 signals do not change generated artifact requirements, TypeScript 7.0 remains a native-preview transition signal, .NET 10 `dotnet test` MTP mode is the right package-based discovery path, and xUnit.net v3 remains a future comparison candidate.
+- Confirmed no generated-artifact baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and the package-free custom shard runner remains the release-confidence path.
+- Inspected current workflows and confirmed only docs deployment and release artifact packaging exist; there is no push/PR compiler regression CI gate yet.
+- Selected the next bounded task: `0374 CI regression gate for shard runner and MSTest smoke`. The gate should run on Windows, exercise the four package-free shard projects, restore the MSTest bridge in locked mode, and run a focused MSTest bridge smoke for package-based discovery evidence.
+- Kept actual CI workflow implementation, xUnit.net v3 adoption, compiler NuGet restore, generated target changes, and test semantics changes out of this roadmap-refresh slice.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [xUnit.net v3 MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- `.github/workflows/docs.yml`
+- `.github/workflows/release-artifacts.yml`
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- CI regression gate for the package-free shard runner and focused MSTest smoke is active in task 0374.
 
 ## Verification Summary
 
@@ -4534,13 +4571,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0372 is compressed here.
+- Completed historical work through task 0373 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0373 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0374 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
