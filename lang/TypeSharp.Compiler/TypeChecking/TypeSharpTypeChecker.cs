@@ -1,6 +1,7 @@
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Parsing;
+using TypeSharp.Compiler.Projects;
 
 namespace TypeSharp.Compiler.TypeChecking;
 
@@ -8,7 +9,7 @@ public static class TypeSharpTypeChecker
 {
     public static TypeCheckResult Check(SyntaxNode root, string file)
     {
-        var checker = new Checker(file, []);
+        var checker = new Checker(file, [], []);
         return checker.Check(root);
     }
 
@@ -17,7 +18,17 @@ public static class TypeSharpTypeChecker
         string file,
         IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies)
     {
-        var checker = new Checker(file, metadataAssemblies);
+        var checker = new Checker(file, metadataAssemblies, []);
+        return checker.Check(root);
+    }
+
+    public static TypeCheckResult Check(
+        SyntaxNode root,
+        string file,
+        IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies,
+        IReadOnlyList<SourceAliasOption> sourceAliases)
+    {
+        var checker = new Checker(file, metadataAssemblies, sourceAliases);
         return checker.Check(root);
     }
 
@@ -49,14 +60,19 @@ public static class TypeSharpTypeChecker
 
         private readonly string _file;
         private readonly IReadOnlyList<MetadataAssemblySymbol> _metadataAssemblies;
+        private readonly IReadOnlyList<SourceAliasOption> _sourceAliases;
         private readonly List<Diagnostic> _diagnostics = [];
         private readonly TypeSharpInferenceEngine _inference = new();
         private HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
 
-        public Checker(string file, IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies)
+        public Checker(
+            string file,
+            IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies,
+            IReadOnlyList<SourceAliasOption> sourceAliases)
         {
             _file = file;
             _metadataAssemblies = metadataAssemblies;
+            _sourceAliases = sourceAliases;
         }
 
         public TypeCheckResult Check(SyntaxNode root)
@@ -87,7 +103,7 @@ public static class TypeSharpTypeChecker
                     case SyntaxKind.ImportTypeDeclaration:
                         var isRelativeSourceImport = child.Kind == SyntaxKind.ImportNamedDeclaration &&
                             TryGetModuleSpecifier(child, out var moduleSpecifier) &&
-                            IsRelativeSpecifier(moduleSpecifier);
+                            (IsRelativeSpecifier(moduleSpecifier) || MatchesSourceAlias(moduleSpecifier));
                         foreach (var importName in GetNamedImportIdentifiers(child))
                         {
                             var name = importName.Text ?? string.Empty;
@@ -3040,6 +3056,24 @@ public static class TypeSharpTypeChecker
             specifier == ".." ||
             specifier.StartsWith("./", StringComparison.Ordinal) ||
             specifier.StartsWith("../", StringComparison.Ordinal);
+
+        private bool MatchesSourceAlias(string specifier) =>
+            _sourceAliases.Any(alias => SourceAliasPatternMatches(alias.Pattern.Trim(), specifier));
+
+        private static bool SourceAliasPatternMatches(string pattern, string specifier)
+        {
+            var wildcard = pattern.IndexOf('*');
+            if (wildcard < 0)
+            {
+                return string.Equals(pattern, specifier, StringComparison.Ordinal);
+            }
+
+            var prefix = pattern[..wildcard];
+            var suffix = pattern[(wildcard + 1)..];
+            return specifier.Length >= prefix.Length + suffix.Length &&
+                specifier.StartsWith(prefix, StringComparison.Ordinal) &&
+                specifier.EndsWith(suffix, StringComparison.Ordinal);
+        }
 
         private static bool TryUnquoteStringLiteral(string? text, out string value)
         {

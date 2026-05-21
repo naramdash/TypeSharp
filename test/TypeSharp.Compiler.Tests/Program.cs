@@ -52,11 +52,16 @@ var tests = new (string Name, Action Body)[]
     ("backend artifact contract supports direct assembly output", BackendArtifactContractSupportsDirectAssemblyOutput),
     ("lowering pipeline injects runtime helper imports", LoweringPipelineInjectsRuntimeHelperImports),
     ("manifest loader reads explicit manifest path", ManifestLoaderReadsExplicitManifestPath),
+    ("manifest loader reads source aliases", ManifestLoaderReadsSourceAliases),
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
     ("source discovery reports duplicate module paths", SourceDiscoveryReportsDuplicateModulePaths),
     ("source module graph collects relative import dependencies", SourceModuleGraphCollectsRelativeImportDependencies),
+    ("source module graph collects alias import dependencies", SourceModuleGraphCollectsAliasImportDependencies),
+    ("source module graph prefers longest alias prefix", SourceModuleGraphPrefersLongestAliasPrefix),
+    ("source module graph reports invalid source alias target", SourceModuleGraphReportsInvalidSourceAliasTarget),
+    ("source module graph reports invalid source alias wildcard", SourceModuleGraphReportsInvalidSourceAliasWildcard),
     ("source module graph collects relative import alias dependencies", SourceModuleGraphCollectsRelativeImportAliasDependencies),
     ("source module graph collects relative value import alias dependencies", SourceModuleGraphCollectsRelativeValueImportAliasDependencies),
     ("source module graph collects relative type import alias dependencies", SourceModuleGraphCollectsRelativeTypeImportAliasDependencies),
@@ -212,7 +217,9 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON reference diagnostics", CliCheckEmitsJsonReferenceDiagnostics),
     ("CLI check emits JSON duplicate source module diagnostics", CliCheckEmitsJsonDuplicateSourceModuleDiagnostics),
     ("CLI check accepts relative source module import aliases", CliCheckAcceptsRelativeSourceModuleImportAliases),
+    ("CLI check accepts source module alias imports", CliCheckAcceptsSourceModuleAliasImports),
     ("CLI check emits JSON unresolved source module diagnostics", CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics),
+    ("CLI check emits JSON source alias diagnostics", CliCheckEmitsJsonSourceAliasDiagnostics),
     ("CLI check emits JSON missing source module export diagnostics", CliCheckEmitsJsonMissingSourceModuleExportDiagnostics),
     ("CLI check emits JSON missing source module re-export diagnostics", CliCheckEmitsJsonMissingSourceModuleReExportDiagnostics),
     ("CLI check emits JSON missing source module namespace member diagnostics", CliCheckEmitsJsonMissingSourceModuleNamespaceMemberDiagnostics),
@@ -220,6 +227,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on reference diagnostics", CliBuildStopsBeforeEmissionOnReferenceDiagnostics),
     ("CLI build stops before emission on duplicate source modules", CliBuildStopsBeforeEmissionOnDuplicateSourceModules),
     ("CLI build lowers relative source module import aliases", CliBuildLowersRelativeSourceModuleImportAliases),
+    ("CLI build lowers source module alias imports", CliBuildLowersSourceModuleAliasImports),
     ("CLI build stops before emission on missing source module exports", CliBuildStopsBeforeEmissionOnMissingSourceModuleExports),
     ("CLI build stops before emission on missing source module re-exports", CliBuildStopsBeforeEmissionOnMissingSourceModuleReExports),
     ("CLI build stops before emission on missing source module namespace members", CliBuildStopsBeforeEmissionOnMissingSourceModuleNamespaceMembers),
@@ -389,6 +397,10 @@ var tests = new (string Name, Action Body)[]
     ("CLI build lowers relative source value re-exports", CliBuildLowersRelativeSourceValueReExports),
     ("CLI build lowers relative source type re-exports", CliBuildLowersRelativeSourceTypeReExports),
     ("CLI build lowers relative source star re-exports", CliBuildLowersRelativeSourceStarReExports),
+    ("CLI build lowers source alias re-exports", CliBuildLowersSourceAliasReExports),
+    ("CLI build lowers source alias value re-export import aliases", CliBuildLowersSourceAliasValueReExportImportAliases),
+    ("CLI build lowers source alias type re-export imports", CliBuildLowersSourceAliasTypeReExportImports),
+    ("CLI build lowers source alias module re-export imports", CliBuildLowersSourceAliasModuleReExportImports),
     ("CLI build omits ambient function declarations", CliBuildOmitsAmbientFunctionDeclarations),
     ("CLI build ignores ambient main entry point", CliBuildIgnoresAmbientMainEntryPoint),
     ("CLI build lowers open declarations to using directives", CliBuildLowersOpenDeclarationsToUsingDirectives),
@@ -1222,6 +1234,31 @@ static void ManifestLoaderReadsExplicitManifestPath()
     });
 }
 
+static void ManifestLoaderReadsSourceAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "Aliases"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            "@shared" = "src/Shared"
+            """);
+
+        var result = TypeSharpManifestLoader.Load(manifestPath);
+
+        AssertFalse(result.HasErrors, "Manifest with source aliases should load without errors.");
+        var manifest = Require(result.Manifest, "Manifest should be available.");
+        AssertEqual(2, manifest.Modules.Aliases.Count);
+        AssertEqual("@app/*", manifest.Modules.Aliases[0].Pattern);
+        AssertEqual("src/*", manifest.Modules.Aliases[0].Target);
+        AssertEqual("@shared", manifest.Modules.Aliases[1].Pattern);
+        AssertEqual("src/Shared", manifest.Modules.Aliases[1].Target);
+    });
+}
+
 static void ManifestLocatorSearchesParentDirectories()
 {
     WithWorkspace(root =>
@@ -1341,6 +1378,165 @@ static void SourceModuleGraphCollectsRelativeImportDependencies()
         AssertEqual("Feature/Helper", dependency.ToModulePath);
         AssertEqual("./Helper", dependency.Specifier);
         AssertEqual(0, graph.Diagnostics.Count);
+    });
+}
+
+static void SourceModuleGraphCollectsAliasImportDependencies()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "SourceGraphAlias"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Feature/Main.tysh", """
+            namespace Samples.SourceGraphAlias
+
+            import { keep } from "@app/Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphAlias
+
+            export fun keep(): string = "ok"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules, manifest.Modules.Aliases);
+
+        AssertFalse(graph.HasErrors, "Alias source imports should resolve through the source graph.");
+        var dependency = graph.Dependencies.Single();
+        AssertEqual(SourceModuleDependencyKind.Import, dependency.Kind);
+        AssertEqual("Feature/Main", dependency.FromModulePath);
+        AssertEqual("Feature/Helper", dependency.ToModulePath);
+        AssertEqual("@app/Feature/Helper", dependency.Specifier);
+    });
+}
+
+static void SourceModuleGraphPrefersLongestAliasPrefix()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "SourceGraphAliasPrefix"
+
+            [modules.aliases]
+            "@app/*" = "src/Generic/*"
+            "@app/Feature/*" = "src/Feature/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphAliasPrefix
+
+            import { keep } from "@app/Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphAliasPrefix
+
+            export fun keep(): string = "specific"
+            """);
+        WriteFile(root, "src/Generic/Feature/Helper.tysh", """
+            namespace Samples.SourceGraphAliasPrefix
+
+            export fun keep(): string = "generic"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules, manifest.Modules.Aliases);
+
+        AssertFalse(graph.HasErrors, "Longest alias prefix should choose a single deterministic target.");
+        AssertEqual("Feature/Helper", graph.Dependencies.Single().ToModulePath);
+    });
+}
+
+static void SourceModuleGraphReportsInvalidSourceAliasTarget()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "SourceGraphBadAlias"
+
+            [modules.aliases]
+            "@shared/*" = "../Shared/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphBadAlias
+
+            import { keep } from "@shared/Helper"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules, manifest.Modules.Aliases);
+
+        AssertTrue(graph.HasErrors, "Alias targets outside source roots should fail before emission.");
+        var diagnostic = graph.Diagnostics.Single(diagnostic => diagnostic.Code == "TS0103");
+        AssertContains("target '../Shared/*' escapes the project directory", diagnostic.Message);
+        AssertEqual(Path.GetFullPath(manifestPath), diagnostic.File);
+    });
+}
+
+static void SourceModuleGraphReportsInvalidSourceAliasWildcard()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "SourceGraphBadAliasWildcard"
+
+            [modules.aliases]
+            "@app/*" = "src"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceGraphBadAliasWildcard
+
+            import { keep } from "@app/Helper"
+            """);
+
+        var manifest = Require(TypeSharpManifestLoader.Load(manifestPath).Manifest, "Manifest should be available.");
+        var discovery = SourceDiscovery.Discover(manifest);
+        var modules = discovery.SourceFiles
+            .Select(sourceFile =>
+            {
+                var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
+                return new SourceModule(sourceFile, Require(parseResult.Root, "Source should parse."));
+            })
+            .ToArray();
+
+        var graph = SourceModuleGraph.Build(modules, manifest.Modules.Aliases);
+
+        AssertTrue(graph.HasErrors, "Alias wildcard mismatch should fail before emission.");
+        var diagnostic = graph.Diagnostics.Single(diagnostic => diagnostic.Code == "TS0103");
+        AssertContains("must either both use one '*' wildcard or neither use one", diagnostic.Message);
     });
 }
 
@@ -7749,6 +7945,40 @@ static void CliCheckAcceptsRelativeSourceModuleImportAliases()
     });
 }
 
+static void CliCheckAcceptsSourceModuleAliasImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "SourceModuleAliasJson"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.SourceModuleAliasJson
+
+            import { keep } from "@app/Helper"
+
+            export fun read(): string = keep()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.SourceModuleAliasJson
+
+            export fun keep(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("\"diagnostics\": []", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+    });
+}
+
 static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
 {
     WithWorkspace(root =>
@@ -7769,6 +7999,35 @@ static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
         AssertContains("\"code\": \"TS0112\"", error.ToString());
         AssertContains("Source module specifier './Missing' could not be resolved from module 'Main'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonSourceAliasDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BadSourceAliasJson"
+
+            [modules.aliases]
+            "@shared/*" = "../Shared/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BadSourceAliasJson
+
+            import { keep } from "@shared/Helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0103\"", error.ToString());
+        AssertContains("Source alias '@shared/*' target '../Shared/*' escapes the project directory.", error.ToString());
+        AssertContains("TypeSharp.toml", error.ToString());
     });
 }
 
@@ -7989,6 +8248,48 @@ static void CliBuildLowersRelativeSourceModuleImportAliases()
         AssertContains("using HelperTools = Samples.RelativeSourceModuleAlias.Tools;", generatedMain);
         AssertContains("return HelperTools.keep();", generatedMain);
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceModuleAlias.dll")), "Generated relative source module import alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersSourceModuleAliasImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ManifestSourceModuleAlias"
+            generatedOutputRoot = "generated"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ManifestSourceModuleAlias
+
+            import { keep } from "@app/Helper"
+
+            export fun read(): string = keep()
+            """);
+        WriteFile(root, "src/Helper.tysh", """
+            namespace Samples.ManifestSourceModuleAlias
+
+            export fun keep(): string = "ok"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ManifestSourceModuleAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.ManifestSourceModuleAlias;", generatedMain);
+        AssertContains("using static Samples.ManifestSourceModuleAlias.ModuleHelper;", generatedMain);
+        AssertFalse(generatedMain.Contains("using @app", StringComparison.Ordinal), "Alias source import should not lower as a C# namespace import.");
+        AssertContains("return keep();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ManifestSourceModuleAlias.dll")), "Generated manifest source alias project should compile to a net48 DLL.");
     });
 }
 
@@ -14530,6 +14831,198 @@ static void CliBuildLowersRelativeSourceStarReExports()
         AssertContains("public static string helper()", generatedBarrel);
         AssertContains("return Samples.RelativeSourceStarReExport.Feature.ModuleFeature_Helper.helper();", generatedBarrel);
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "RelativeSourceStarReExport.dll")), "Generated relative source star re-export project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersSourceAliasReExports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AliasSourceReExport"
+            generatedOutputRoot = "generated"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AliasSourceReExport.App
+
+            import { publicHelper } from "@app/Barrel"
+
+            export fun mainValue(): string = publicHelper()
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.AliasSourceReExport.Barrel
+
+            export { helper as publicHelper } from "@app/Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.AliasSourceReExport.Feature
+
+            export fun helper(): string = "helper"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/AliasSourceReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        var generatedBarrel = File.ReadAllText(Path.Combine(root, "generated", "src", "Barrel.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.AliasSourceReExport.Barrel.ModuleBarrel;", generatedMain);
+        AssertContains("return publicHelper();", generatedMain);
+        AssertContains("public static string publicHelper()", generatedBarrel);
+        AssertContains("return Samples.AliasSourceReExport.Feature.ModuleFeature_Helper.helper();", generatedBarrel);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AliasSourceReExport.dll")), "Generated source alias re-export project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersSourceAliasValueReExportImportAliases()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AliasSourceValueReExportAlias"
+            generatedOutputRoot = "generated"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AliasSourceValueReExportAlias.App
+
+            import { PublicName as ImportedName } from "@app/Barrel"
+
+            export fun mainValue(): string = ImportedName
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.AliasSourceValueReExportAlias.Barrel
+
+            export { PublicName } from "@app/Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.AliasSourceValueReExportAlias.Feature
+
+            let InternalName: string = "Ada"
+
+            export { InternalName as PublicName }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/AliasSourceValueReExportAlias.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.AliasSourceValueReExportAlias.Barrel.ModuleBarrel;", generatedMain);
+        AssertContains("private static string ImportedName", generatedMain);
+        AssertContains("get { return Samples.AliasSourceValueReExportAlias.Feature.ModuleFeature_Helper.PublicName; }", generatedMain);
+        AssertContains("return ImportedName;", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AliasSourceValueReExportAlias.dll")), "Generated source alias value re-export alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersSourceAliasTypeReExportImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AliasSourceTypeReExport"
+            generatedOutputRoot = "generated"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AliasSourceTypeReExport.App
+
+            import type { PublicModel as Model } from "@app/Barrel"
+
+            export fun pass(model: Model): Model = model
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.AliasSourceTypeReExport.Barrel
+
+            export type { VisibleModel as PublicModel } from "@app/Models"
+            """);
+        WriteFile(root, "src/Models.tysh", """
+            namespace Samples.AliasSourceTypeReExport.Models
+
+            export record VisibleModel(Name: string)
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/AliasSourceTypeReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.AliasSourceTypeReExport.Barrel;", generatedMain);
+        AssertContains("using Model = Samples.AliasSourceTypeReExport.Models.VisibleModel;", generatedMain);
+        AssertFalse(generatedMain.Contains("using static Samples.AliasSourceTypeReExport.Barrel.ModuleBarrel;", StringComparison.Ordinal), "Type-only source alias re-export imports should not add source module static usings.");
+        AssertContains("public static Model pass(Model model)", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AliasSourceTypeReExport.dll")), "Generated source alias type re-export project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildLowersSourceAliasModuleReExportImports()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "AliasSourceModuleReExport"
+            generatedOutputRoot = "generated"
+
+            [modules.aliases]
+            "@app/*" = "src/*"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.AliasSourceModuleReExport.App
+
+            import { PublicTools as HelperTools } from "@app/Barrel"
+
+            export fun mainValue(): string = HelperTools.keep()
+            """);
+        WriteFile(root, "src/Barrel.tysh", """
+            namespace Samples.AliasSourceModuleReExport.Barrel
+
+            export { Tools as PublicTools } from "@app/Feature/Helper"
+            """);
+        WriteFile(root, "src/Feature/Helper.tysh", """
+            namespace Samples.AliasSourceModuleReExport.Feature
+
+            export module Tools {
+              export fun keep(): string = "helper"
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/AliasSourceModuleReExport.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedMain = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using static Samples.AliasSourceModuleReExport.Barrel.ModuleBarrel;", generatedMain);
+        AssertContains("using HelperTools = Samples.AliasSourceModuleReExport.Feature.Tools;", generatedMain);
+        AssertContains("return HelperTools.keep();", generatedMain);
+        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "AliasSourceModuleReExport.dll")), "Generated source alias module re-export project should compile to a net48 DLL.");
     });
 }
 

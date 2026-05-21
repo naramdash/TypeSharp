@@ -526,23 +526,19 @@ public static class CSharpSourceBackend
                         continue;
                     }
 
-                    var isRelativeSourceImport = IsRelativeSpecifier(namespaceName);
-                    if (isRelativeSourceImport)
+                    var isSourceImport = sourceImports.TryGetValue(namespaceName, out var sourceImport);
+                    if (isSourceImport)
                     {
-                        if (!sourceImports.TryGetValue(namespaceName, out var sourceImport))
+                        var resolvedSourceImport = sourceImport!;
+                        if (seenUsings.Add(resolvedSourceImport.NamespaceName))
                         {
-                            continue;
-                        }
-
-                        if (seenUsings.Add(sourceImport.NamespaceName))
-                        {
-                            usings.Add(sourceImport.NamespaceName);
+                            usings.Add(resolvedSourceImport.NamespaceName);
                         }
 
                         if (child.Kind == SyntaxKind.ImportNamedDeclaration &&
-                            seenStaticUsings.Add(sourceImport.QualifiedModuleContainer))
+                            seenStaticUsings.Add(resolvedSourceImport.QualifiedModuleContainer))
                         {
-                            staticUsings.Add(sourceImport.QualifiedModuleContainer);
+                            staticUsings.Add(resolvedSourceImport.QualifiedModuleContainer);
                         }
                     }
                     else if (seenUsings.Add(namespaceName))
@@ -552,24 +548,24 @@ public static class CSharpSourceBackend
 
                     foreach (var specifier in GetNamedImportSpecifiers(child))
                     {
-                        if (!isRelativeSourceImport && seenImportedNames.Add(specifier.LocalName))
+                        if (!isSourceImport && seenImportedNames.Add(specifier.LocalName))
                         {
                             importedNames.Add(specifier.LocalName);
                         }
 
-                        CSharpSourceImportTarget? aliasSourceImport = null;
-                        var shouldEmitRelativeTypeAlias = isRelativeSourceImport &&
-                            sourceImports.TryGetValue(namespaceName, out aliasSourceImport) &&
+                        var aliasSourceImport = isSourceImport ? sourceImport : null;
+                        var shouldEmitRelativeTypeAlias = isSourceImport &&
+                            aliasSourceImport is not null &&
                             (child.Kind == SyntaxKind.ImportTypeDeclaration
                                 ? specifier.IsAlias || aliasSourceImport.HasExportedTypeTarget(specifier.ImportedName)
                                 : specifier.IsAlias && aliasSourceImport.HasExportedTypeTarget(specifier.ImportedName));
-                        var shouldEmitRelativeModuleAlias = isRelativeSourceImport &&
+                        var shouldEmitRelativeModuleAlias = isSourceImport &&
+                            aliasSourceImport is not null &&
                             child.Kind == SyntaxKind.ImportNamedDeclaration &&
                             specifier.IsAlias &&
-                            (aliasSourceImport is not null || sourceImports.TryGetValue(namespaceName, out aliasSourceImport)) &&
                             aliasSourceImport.HasExportedModuleTarget(specifier.ImportedName);
                         if (namespaceName.Length > 0 &&
-                            ((!isRelativeSourceImport && specifier.IsAlias) || shouldEmitRelativeTypeAlias || shouldEmitRelativeModuleAlias) &&
+                            ((!isSourceImport && specifier.IsAlias) || shouldEmitRelativeTypeAlias || shouldEmitRelativeModuleAlias) &&
                             seenAliases.Add(specifier.LocalName))
                         {
                             var qualifiedName = shouldEmitRelativeTypeAlias
@@ -594,13 +590,8 @@ public static class CSharpSourceBackend
                     }
 
                     var qualifiedName = namespaceName;
-                    if (IsRelativeSpecifier(namespaceName))
+                    if (sourceImports.TryGetValue(namespaceName, out var sourceImport))
                     {
-                        if (!sourceImports.TryGetValue(namespaceName, out var sourceImport))
-                        {
-                            continue;
-                        }
-
                         qualifiedName = sourceImport.QualifiedModuleContainer;
                     }
 

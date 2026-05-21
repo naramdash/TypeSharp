@@ -112,6 +112,17 @@ internal sealed class MinimalTomlDocument
                 }
             }
 
+            if (sections[currentSection].ContainsKey(key))
+            {
+                diagnostics.Add(DiagnosticFactory.Manifest(
+                    DiagnosticDescriptors.InvalidManifestSyntax,
+                    $"Duplicate manifest key '{key}' in section '{currentSection}'.",
+                    path,
+                    lineNumber,
+                    1));
+                continue;
+            }
+
             sections[currentSection][key] = new TomlEntry(value, lineNumber, equalsIndex + 2);
         }
 
@@ -184,6 +195,39 @@ internal sealed class MinimalTomlDocument
 
         diagnostics.Add(InvalidValue(section, key, "string array", entry));
         return defaultValue;
+    }
+
+    public IReadOnlyList<TomlStringMapEntry> GetStringMap(string section, List<Diagnostic> diagnostics)
+    {
+        if (!_sections.TryGetValue(section, out var entries))
+        {
+            return [];
+        }
+
+        var values = new List<TomlStringMapEntry>();
+        foreach (var (rawKey, entry) in entries)
+        {
+            if (!TryParseKey(rawKey, out var key))
+            {
+                diagnostics.Add(DiagnosticFactory.Manifest(
+                    DiagnosticDescriptors.InvalidManifestSyntax,
+                    $"Manifest key '{rawKey}' in section '{section}' must be a bare key or quoted string key.",
+                    _path,
+                    entry.Line,
+                    1));
+                continue;
+            }
+
+            if (!TryParseString(entry.Value, out var value))
+            {
+                diagnostics.Add(InvalidValue(section, key, "string", entry));
+                continue;
+            }
+
+            values.Add(new TomlStringMapEntry(key, value, entry.Line, 1));
+        }
+
+        return values;
     }
 
     public bool TryGetLocation(string section, string key, out int line, out int column)
@@ -296,6 +340,29 @@ internal sealed class MinimalTomlDocument
         return true;
     }
 
+    private static bool TryParseKey(string value, out string result)
+    {
+        result = string.Empty;
+        var trimmed = value.Trim();
+        if (trimmed.Length == 0)
+        {
+            return false;
+        }
+
+        if (trimmed.StartsWith('"'))
+        {
+            return TryParseString(trimmed, out result);
+        }
+
+        if (trimmed.Any(character => !char.IsLetterOrDigit(character) && character != '_' && character != '-'))
+        {
+            return false;
+        }
+
+        result = trimmed;
+        return true;
+    }
+
     private static bool TryParseStringArray(string value, out IReadOnlyList<string> result)
     {
         result = [];
@@ -391,6 +458,8 @@ internal sealed class MinimalTomlDocument
             .Replace("\\n", "\n", StringComparison.Ordinal)
             .Replace("\\r", "\r", StringComparison.Ordinal)
             .Replace("\\t", "\t", StringComparison.Ordinal);
+
+    public readonly record struct TomlStringMapEntry(string Key, string Value, int Line, int Column);
 
     private readonly record struct TomlEntry(string Value, int Line, int Column);
 }

@@ -1,6 +1,7 @@
 using System.Globalization;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Parsing;
+using TypeSharp.Compiler.Projects;
 
 namespace TypeSharp.Compiler.Interop;
 
@@ -15,7 +16,8 @@ public static class TypeSharpInteropValidator
         SyntaxNode root,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         string file,
-        string nullableMode = "strict")
+        string nullableMode = "strict",
+        IReadOnlyList<SourceAliasOption>? sourceAliases = null)
     {
         var diagnostics = new List<Diagnostic>();
         var extensionNamespaces = CollectExtensionMethodNamespaces(root);
@@ -26,6 +28,7 @@ public static class TypeSharpInteropValidator
             nullableMode,
             diagnostics,
             extensionNamespaces,
+            sourceAliases ?? [],
             new Dictionary<string, IReadOnlyList<MetadataTypeSymbol>>(StringComparer.Ordinal),
             parent: null,
             grandParent: null);
@@ -39,6 +42,7 @@ public static class TypeSharpInteropValidator
         string nullableMode,
         List<Diagnostic> diagnostics,
         IReadOnlyCollection<string> extensionNamespaces,
+        IReadOnlyList<SourceAliasOption> sourceAliases,
         Dictionary<string, IReadOnlyList<MetadataTypeSymbol>> localInstances,
         SyntaxNode? parent,
         SyntaxNode? grandParent)
@@ -49,7 +53,7 @@ public static class TypeSharpInteropValidator
             TrackFunctionParameters(node, assemblies, functionScope);
             foreach (var child in node.Children.Where(child => !child.IsToken))
             {
-                ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, functionScope, node, parent);
+                ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, sourceAliases, functionScope, node, parent);
             }
 
             return;
@@ -60,7 +64,7 @@ public static class TypeSharpInteropValidator
             var blockScope = new Dictionary<string, IReadOnlyList<MetadataTypeSymbol>>(localInstances, StringComparer.Ordinal);
             foreach (var child in node.Children.Where(child => !child.IsToken))
             {
-                ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, blockScope, node, parent);
+                ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, sourceAliases, blockScope, node, parent);
             }
 
             return;
@@ -72,7 +76,7 @@ public static class TypeSharpInteropValidator
             TrackContextualLambdaParameters(node, parent, grandParent, assemblies, extensionNamespaces, localInstances, lambdaScope);
             foreach (var child in node.Children.Where(child => !child.IsToken))
             {
-                ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, lambdaScope, node, parent);
+                ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, sourceAliases, lambdaScope, node, parent);
             }
 
             return;
@@ -80,7 +84,7 @@ public static class TypeSharpInteropValidator
 
         if (node.Kind is SyntaxKind.ImportNamedDeclaration or SyntaxKind.ImportTypeDeclaration)
         {
-            ValidateNamedImport(node, assemblies, file, diagnostics);
+            ValidateNamedImport(node, assemblies, file, diagnostics, sourceAliases);
         }
 
         if (node.Kind == SyntaxKind.MemberAccessExpression)
@@ -119,7 +123,7 @@ public static class TypeSharpInteropValidator
 
         foreach (var child in node.Children.Where(child => !child.IsToken))
         {
-            ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, localInstances, node, parent);
+            ValidateNode(child, assemblies, file, nullableMode, diagnostics, extensionNamespaces, sourceAliases, localInstances, node, parent);
         }
 
         if (node.Kind == SyntaxKind.ValueDeclaration)
@@ -137,10 +141,12 @@ public static class TypeSharpInteropValidator
         SyntaxNode node,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         string file,
-        List<Diagnostic> diagnostics)
+        List<Diagnostic> diagnostics,
+        IReadOnlyList<SourceAliasOption> sourceAliases)
     {
         if (!TryGetModuleSpecifier(node, out _, out var moduleSpecifier) ||
-            IsRelativeSpecifier(moduleSpecifier))
+            IsRelativeSpecifier(moduleSpecifier) ||
+            MatchesSourceAlias(moduleSpecifier, sourceAliases))
         {
             return;
         }
@@ -2850,6 +2856,24 @@ public static class TypeSharpInteropValidator
         specifier == ".." ||
         specifier.StartsWith("./", StringComparison.Ordinal) ||
         specifier.StartsWith("../", StringComparison.Ordinal);
+
+    private static bool MatchesSourceAlias(string specifier, IReadOnlyList<SourceAliasOption> sourceAliases) =>
+        sourceAliases.Any(alias => SourceAliasPatternMatches(alias.Pattern.Trim(), specifier));
+
+    private static bool SourceAliasPatternMatches(string pattern, string specifier)
+    {
+        var wildcard = pattern.IndexOf('*');
+        if (wildcard < 0)
+        {
+            return string.Equals(pattern, specifier, StringComparison.Ordinal);
+        }
+
+        var prefix = pattern[..wildcard];
+        var suffix = pattern[(wildcard + 1)..];
+        return specifier.Length >= prefix.Length + suffix.Length &&
+            specifier.StartsWith(prefix, StringComparison.Ordinal) &&
+            specifier.EndsWith(suffix, StringComparison.Ordinal);
+    }
 
     private static string Unquote(string text)
     {

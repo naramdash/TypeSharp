@@ -1,13 +1,17 @@
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Parsing;
+using TypeSharp.Compiler.Projects;
 
 namespace TypeSharp.Compiler.Binding;
 
 public static class TypeSharpBinder
 {
-    public static BindingResult Bind(SyntaxNode root, string file)
+    public static BindingResult Bind(
+        SyntaxNode root,
+        string file,
+        IReadOnlyList<SourceAliasOption>? sourceAliases = null)
     {
-        var binder = new Binder(file);
+        var binder = new Binder(file, sourceAliases ?? []);
         return binder.Bind(root);
     }
 
@@ -40,12 +44,14 @@ public static class TypeSharpBinder
         private readonly string _file;
         private readonly List<Diagnostic> _diagnostics = [];
         private readonly List<BoundSymbol> _symbols = [];
+        private readonly IReadOnlyList<SourceAliasOption> _sourceAliases;
         private readonly HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
         private bool _hasStaticImport;
 
-        public Binder(string file)
+        public Binder(string file, IReadOnlyList<SourceAliasOption> sourceAliases)
         {
             _file = file;
+            _sourceAliases = sourceAliases;
         }
 
         public BindingResult Bind(SyntaxNode root)
@@ -847,18 +853,18 @@ public static class TypeSharpBinder
             }
         }
 
-        private static bool IsUnsupportedExportSpecifierDeclaration(SyntaxNode node) =>
+        private bool IsUnsupportedExportSpecifierDeclaration(SyntaxNode node) =>
             HasFromSpecifier(node) && !IsSupportedSourceReExport(node);
 
-        private static bool IsSupportedSourceReExport(SyntaxNode node) =>
+        private bool IsSupportedSourceReExport(SyntaxNode node) =>
             node.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration or SyntaxKind.ExportStarDeclaration &&
             HasFromSpecifier(node) &&
-            HasRelativeFromSpecifier(node);
+            HasSourceFromSpecifier(node);
 
         private static bool HasFromSpecifier(SyntaxNode node) =>
             node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.FromKeyword);
 
-        private static bool HasRelativeFromSpecifier(SyntaxNode node)
+        private bool HasSourceFromSpecifier(SyntaxNode node)
         {
             for (var index = 0; index < node.Children.Count - 1; index++)
             {
@@ -872,10 +878,29 @@ public static class TypeSharpBinder
                 return specifier == "." ||
                     specifier == ".." ||
                     specifier.StartsWith("./", StringComparison.Ordinal) ||
-                    specifier.StartsWith("../", StringComparison.Ordinal);
+                    specifier.StartsWith("../", StringComparison.Ordinal) ||
+                    MatchesSourceAlias(specifier);
             }
 
             return false;
+        }
+
+        private bool MatchesSourceAlias(string specifier) =>
+            _sourceAliases.Any(alias => SourceAliasPatternMatches(alias.Pattern.Trim(), specifier));
+
+        private static bool SourceAliasPatternMatches(string pattern, string specifier)
+        {
+            var wildcard = pattern.IndexOf('*');
+            if (wildcard < 0)
+            {
+                return string.Equals(pattern, specifier, StringComparison.Ordinal);
+            }
+
+            var prefix = pattern[..wildcard];
+            var suffix = pattern[(wildcard + 1)..];
+            return specifier.Length >= prefix.Length + suffix.Length &&
+                specifier.StartsWith(prefix, StringComparison.Ordinal) &&
+                specifier.EndsWith(suffix, StringComparison.Ordinal);
         }
 
         private static string Unquote(string text)

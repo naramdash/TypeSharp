@@ -1569,6 +1569,40 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 
+## Task 0303 Manifest Source Alias Diagnostics
+
+Completed implementation work established:
+
+- Added manifest project options for `[modules.aliases]` with source alias records, TOML string-map loading, and invalid/duplicate manifest value diagnostics.
+- Implemented current-project source alias validation in the source module graph: bare specifier keys, project-relative targets, source-root containment, one-wildcard shape, case-insensitive collision checks, longest-prefix precedence, ambiguous match diagnostics, and unresolved expanded-target diagnostics.
+- Routed source aliases through checker, builder, binder, interop validation, type checking, and C# backend import classification so alias imports and re-exports resolve through existing source module dependency targets instead of external CLR imports.
+- Extended generated C# target collection for alias-backed function, value, type, module, and star re-export barrels.
+- Updated canonical docs and ledgers to mark current-project manifest aliases implemented while keeping `[projectReferences]` as the remaining source-module gap.
+
+Verification:
+
+```powershell
+dotnet build test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --no-build --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj -- "source alias"
+dotnet run --no-build --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [ModuleOptions.cs](../lang/TypeSharp.Compiler/Projects/ModuleOptions.cs)
+- [TypeSharpManifestLoader.cs](../lang/TypeSharp.Compiler/Projects/TypeSharpManifestLoader.cs)
+- [MinimalTomlDocument.cs](../lang/TypeSharp.Compiler/Projects/MinimalTomlDocument.cs)
+- [SourceModuleGraph.cs](../lang/TypeSharp.Compiler/Projects/SourceModuleGraph.cs)
+- [TypeSharpBuilder.cs](../lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [Program.cs](../test/TypeSharp.Compiler.Tests/Program.cs)
+- [Modules And Imports](../docs/src/content/docs/modules.md)
+- [Project Configuration](../docs/src/content/docs/project-configuration.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

@@ -47,7 +47,8 @@ public static class TypeSharpBuilder
             .Select(sourceFile => AnalyzeSource(
                 sourceFile,
                 metadataResult.Assemblies,
-                manifestResult.Manifest.Language.Nullable))
+                manifestResult.Manifest.Language.Nullable,
+                manifestResult.Manifest.Modules.Aliases))
             .ToArray();
         foreach (var sourceAnalysisResult in sourceAnalysisResults)
         {
@@ -61,7 +62,7 @@ public static class TypeSharpBuilder
         var sourceModules = parsedSources
             .Select(source => new SourceModule(source.SourceFile, source.Root))
             .ToArray();
-        var sourceModuleGraph = SourceModuleGraph.Build(sourceModules);
+        var sourceModuleGraph = SourceModuleGraph.Build(sourceModules, manifestResult.Manifest.Modules.Aliases);
         diagnostics.AddRange(sourceModuleGraph.Diagnostics);
 
         if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -80,7 +81,7 @@ public static class TypeSharpBuilder
             manifestResult.Manifest.Project.GeneratedOutputRoot));
 
         var rootNamespace = GetRootNamespace(manifestResult.Manifest);
-        var sourceModuleTargets = BuildSourceModuleTargets(parsedSources, rootNamespace);
+        var sourceModuleTargets = BuildSourceModuleTargets(parsedSources, rootNamespace, sourceModuleGraph);
         foreach (var (sourceFile, root) in parsedSources)
         {
             var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath, backend);
@@ -309,7 +310,7 @@ public static class TypeSharpBuilder
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
     {
         var importAliases = new List<CSharpSourceValueImportAlias>();
-        foreach (var importDeclaration in root.Children.Where(IsRelativeNamedSourceImport))
+        foreach (var importDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ImportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(importDeclaration, out var specifier))
             {
@@ -357,7 +358,7 @@ public static class TypeSharpBuilder
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
     {
         var reExports = new List<CSharpSourceValueReExport>();
-        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -394,7 +395,7 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -449,7 +450,7 @@ public static class TypeSharpBuilder
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
     {
         var importAliases = new List<CSharpSourceFunctionImportAlias>();
-        foreach (var importDeclaration in root.Children.Where(IsRelativeNamedSourceImport))
+        foreach (var importDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ImportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(importDeclaration, out var specifier))
             {
@@ -527,7 +528,7 @@ public static class TypeSharpBuilder
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources)
     {
         var reExports = new List<CSharpSourceFunctionReExport>();
-        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -562,7 +563,7 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -609,7 +610,8 @@ public static class TypeSharpBuilder
 
     private static IReadOnlyDictionary<string, CSharpSourceImportTarget> BuildSourceModuleTargets(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
-        string defaultNamespace)
+        string defaultNamespace,
+        SourceModuleGraph sourceModuleGraph)
     {
         var targets = new Dictionary<string, CSharpSourceImportTarget>(StringComparer.OrdinalIgnoreCase);
         foreach (var (sourceFile, root) in parsedSources)
@@ -628,12 +630,14 @@ public static class TypeSharpBuilder
             {
                 TypeExportTargets = CollectTypeExportTargets(
                     sourceFile.ModulePath,
+                    sourceModuleGraph,
                     targets,
                     parsedSources,
                     typeExportTargetCache,
                     new HashSet<string>(StringComparer.OrdinalIgnoreCase)),
                 ModuleExportTargets = CollectModuleExportTargets(
                     sourceFile.ModulePath,
+                    sourceModuleGraph,
                     targets,
                     parsedSources,
                     moduleExportTargetCache,
@@ -644,8 +648,18 @@ public static class TypeSharpBuilder
         return targets;
     }
 
+    private static SourceModuleDependency? FindSourceExportDependency(
+        SourceModuleGraph sourceModuleGraph,
+        string modulePath,
+        string specifier) =>
+        sourceModuleGraph.Dependencies.FirstOrDefault(candidate =>
+            candidate.Kind == SourceModuleDependencyKind.Export &&
+            string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal));
+
     private static IReadOnlyDictionary<string, string> CollectTypeExportTargets(
         string modulePath,
+        SourceModuleGraph sourceModuleGraph,
         IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         Dictionary<string, IReadOnlyDictionary<string, string>> cache,
@@ -677,19 +691,25 @@ public static class TypeSharpBuilder
             typeExportTargets[exportTarget.Key] = exportTarget.Value;
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeTypeReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportTypeDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var dependency = FindSourceExportDependency(sourceModuleGraph, modulePath, specifier);
+            if (dependency is null)
+            {
+                continue;
+            }
+
             foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
             {
                 if (TryResolveSourceTypeExport(
-                    resolvedModulePath,
+                    dependency.ToModulePath,
                     exportSpecifier.TargetName,
+                    sourceModuleGraph,
                     sourceModuleTargets,
                     parsedSources,
                     cache,
@@ -701,16 +721,22 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var dependency = FindSourceExportDependency(sourceModuleGraph, modulePath, specifier);
+            if (dependency is null)
+            {
+                continue;
+            }
+
             var targetTypeExportTargets = CollectTypeExportTargets(
-                resolvedModulePath,
+                dependency.ToModulePath,
+                sourceModuleGraph,
                 sourceModuleTargets,
                 parsedSources,
                 cache,
@@ -761,6 +787,7 @@ public static class TypeSharpBuilder
 
     private static IReadOnlyDictionary<string, string> CollectModuleExportTargets(
         string modulePath,
+        SourceModuleGraph sourceModuleGraph,
         IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         Dictionary<string, IReadOnlyDictionary<string, string>> cache,
@@ -792,19 +819,25 @@ public static class TypeSharpBuilder
             moduleExportTargets[exportTarget.Key] = exportTarget.Value;
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var dependency = FindSourceExportDependency(sourceModuleGraph, modulePath, specifier);
+            if (dependency is null)
+            {
+                continue;
+            }
+
             foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
             {
                 if (TryResolveSourceModuleExport(
-                    resolvedModulePath,
+                    dependency.ToModulePath,
                     exportSpecifier.TargetName,
+                    sourceModuleGraph,
                     sourceModuleTargets,
                     parsedSources,
                     cache,
@@ -897,6 +930,7 @@ public static class TypeSharpBuilder
     private static bool TryResolveSourceModuleExport(
         string modulePath,
         string exportedName,
+        SourceModuleGraph sourceModuleGraph,
         IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         Dictionary<string, IReadOnlyDictionary<string, string>> cache,
@@ -929,14 +963,19 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var dependency = FindSourceExportDependency(sourceModuleGraph, modulePath, specifier);
+            if (dependency is null)
+            {
+                continue;
+            }
+
             foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
             {
                 if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
@@ -945,8 +984,9 @@ public static class TypeSharpBuilder
                 }
 
                 if (TryResolveSourceModuleExport(
-                    resolvedModulePath,
+                    dependency.ToModulePath,
                     exportSpecifier.TargetName,
+                    sourceModuleGraph,
                     sourceModuleTargets,
                     parsedSources,
                     cache,
@@ -974,6 +1014,7 @@ public static class TypeSharpBuilder
     private static bool TryResolveSourceTypeExport(
         string modulePath,
         string exportedName,
+        SourceModuleGraph sourceModuleGraph,
         IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceModuleTargets,
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         Dictionary<string, IReadOnlyDictionary<string, string>> cache,
@@ -1017,14 +1058,19 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeTypeReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportTypeDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var dependency = FindSourceExportDependency(sourceModuleGraph, modulePath, specifier);
+            if (dependency is null)
+            {
+                continue;
+            }
+
             foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
             {
                 if (!string.Equals(exportSpecifier.ExportedName, exportedName, StringComparison.Ordinal))
@@ -1033,8 +1079,9 @@ public static class TypeSharpBuilder
                 }
 
                 if (TryResolveSourceTypeExport(
-                    resolvedModulePath,
+                    dependency.ToModulePath,
                     exportSpecifier.TargetName,
+                    sourceModuleGraph,
                     sourceModuleTargets,
                     parsedSources,
                     cache,
@@ -1047,17 +1094,23 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(modulePath, specifier);
+            var dependency = FindSourceExportDependency(sourceModuleGraph, modulePath, specifier);
+            if (dependency is null)
+            {
+                continue;
+            }
+
             if (TryResolveSourceTypeExport(
-                resolvedModulePath,
+                dependency.ToModulePath,
                 exportedName,
+                sourceModuleGraph,
                 sourceModuleTargets,
                 parsedSources,
                 cache,
@@ -1145,7 +1198,7 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -1183,7 +1236,7 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -1282,7 +1335,7 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -1320,7 +1373,7 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -1397,15 +1450,24 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier) ||
+                !sourceModuleGraph.Dependencies.Any(candidate =>
+                    candidate.Kind == SourceModuleDependencyKind.Export &&
+                    string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
             foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
             {
                 names.Add(exportSpecifier.ExportedName);
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -1473,15 +1535,24 @@ public static class TypeSharpBuilder
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeNamedReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportNamedDeclaration))
         {
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifier) ||
+                !sourceModuleGraph.Dependencies.Any(candidate =>
+                    candidate.Kind == SourceModuleDependencyKind.Export &&
+                    string.Equals(candidate.FromModulePath, modulePath, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(candidate.Specifier, specifier, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
             foreach (var exportSpecifier in GetNamedExportSpecifiers(exportDeclaration))
             {
                 names.Add(exportSpecifier.ExportedName);
             }
         }
 
-        foreach (var exportDeclaration in source.Root.Children.Where(IsSupportedRelativeStarReExport))
+        foreach (var exportDeclaration in source.Root.Children.Where(child => child.Kind == SyntaxKind.ExportStarDeclaration))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifier))
             {
@@ -2064,7 +2135,8 @@ public static class TypeSharpBuilder
     private static SourceAnalysisResult AnalyzeSource(
         SourceFile sourceFile,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
-        string nullableMode)
+        string nullableMode,
+        IReadOnlyList<SourceAliasOption> sourceAliases)
     {
         var diagnostics = new List<Diagnostic>();
         var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
@@ -2078,15 +2150,17 @@ public static class TypeSharpBuilder
             parseResult.Root,
             assemblies,
             sourceFile.RelativePath,
-            nullableMode));
-        var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath);
+            nullableMode,
+            sourceAliases));
+        var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath, sourceAliases);
         diagnostics.AddRange(bindingResult.Diagnostics);
         if (!bindingResult.HasErrors)
         {
             diagnostics.AddRange(TypeSharpTypeChecker.Check(
                 parseResult.Root,
                 sourceFile.RelativePath,
-                assemblies).Diagnostics);
+                assemblies,
+                sourceAliases).Diagnostics);
         }
 
         return new SourceAnalysisResult(sourceFile, parseResult.Root, diagnostics);
@@ -2180,26 +2254,6 @@ public static class TypeSharpBuilder
         return namespaceName.Length > 0 ? namespaceName : defaultNamespace;
     }
 
-    private static bool IsSupportedRelativeNamedReExport(SyntaxNode node) =>
-        node.Kind == SyntaxKind.ExportNamedDeclaration &&
-        TryGetModuleSpecifier(node, out var specifier) &&
-        IsRelativeSpecifier(specifier);
-
-    private static bool IsSupportedRelativeTypeReExport(SyntaxNode node) =>
-        node.Kind == SyntaxKind.ExportTypeDeclaration &&
-        TryGetModuleSpecifier(node, out var specifier) &&
-        IsRelativeSpecifier(specifier);
-
-    private static bool IsSupportedRelativeStarReExport(SyntaxNode node) =>
-        node.Kind == SyntaxKind.ExportStarDeclaration &&
-        TryGetModuleSpecifier(node, out var specifier) &&
-        IsRelativeSpecifier(specifier);
-
-    private static bool IsRelativeNamedSourceImport(SyntaxNode node) =>
-        node.Kind == SyntaxKind.ImportNamedDeclaration &&
-        TryGetModuleSpecifier(node, out var specifier) &&
-        IsRelativeSpecifier(specifier);
-
     private static bool IsLocalNamedExportAlias(SyntaxNode node) =>
         node.Kind == SyntaxKind.ExportNamedDeclaration &&
         !TryGetModuleSpecifier(node, out _) &&
@@ -2231,47 +2285,6 @@ public static class TypeSharpBuilder
 
         value = text[1..^1];
         return value.Length > 0;
-    }
-
-    private static bool IsRelativeSpecifier(string specifier) =>
-        specifier == "." ||
-        specifier == ".." ||
-        specifier.StartsWith("./", StringComparison.Ordinal) ||
-        specifier.StartsWith("../", StringComparison.Ordinal);
-
-    private static string ResolveRelativeModulePath(string fromModulePath, string specifier)
-    {
-        var parts = new List<string>();
-        var lastSlash = fromModulePath.LastIndexOf('/');
-        if (lastSlash >= 0)
-        {
-            parts.AddRange(fromModulePath[..lastSlash].Split('/', StringSplitOptions.RemoveEmptyEntries));
-        }
-
-        foreach (var part in specifier.Split('/', StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (part == ".")
-            {
-                continue;
-            }
-
-            if (part == "..")
-            {
-                if (parts.Count > 0)
-                {
-                    parts.RemoveAt(parts.Count - 1);
-                }
-
-                continue;
-            }
-
-            parts.Add(part);
-        }
-
-        var resolved = string.Join("/", parts);
-        return resolved.EndsWith(".tysh", StringComparison.OrdinalIgnoreCase)
-            ? resolved[..^".tysh".Length]
-            : resolved;
     }
 
     private static IEnumerable<NamedExportSpecifier> GetNamedExportSpecifiers(SyntaxNode node)

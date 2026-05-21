@@ -10,13 +10,16 @@ public sealed record SourceModuleGraph(
 {
     public bool HasErrors => Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
-    public static SourceModuleGraph Build(IReadOnlyList<SourceModule> modules)
+    public static SourceModuleGraph Build(
+        IReadOnlyList<SourceModule> modules,
+        IReadOnlyList<SourceAliasOption>? sourceAliases = null)
     {
         var diagnostics = new List<Diagnostic>();
         var dependencies = new List<SourceModuleDependency>();
         var moduleByPath = new Dictionary<string, SourceModule>(StringComparer.OrdinalIgnoreCase);
         var localExportsByPath = new Dictionary<string, SourceModuleExports>(StringComparer.OrdinalIgnoreCase);
         var exportsByPath = new Dictionary<string, SourceModuleExports>(StringComparer.OrdinalIgnoreCase);
+        var aliases = CreateSourceAliasContext(sourceAliases ?? [], modules, diagnostics);
         foreach (var module in modules)
         {
             moduleByPath.TryAdd(module.SourceFile.ModulePath, module);
@@ -25,13 +28,13 @@ public sealed record SourceModuleGraph(
 
         foreach (var module in modules)
         {
-            CollectExports(module, moduleByPath, localExportsByPath, exportsByPath, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+            CollectExports(module, aliases, moduleByPath, localExportsByPath, exportsByPath, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         }
 
         foreach (var module in modules)
         {
-            CollectDependencies(module, module.Root, moduleByPath, exportsByPath, dependencies, diagnostics);
-            ValidateNamespaceImportMemberAccesses(module, moduleByPath, exportsByPath, diagnostics);
+            CollectDependencies(module, module.Root, aliases, moduleByPath, exportsByPath, dependencies, diagnostics);
+            ValidateNamespaceImportMemberAccesses(module, aliases, moduleByPath, exportsByPath, diagnostics);
         }
 
         return new SourceModuleGraph(modules, dependencies, diagnostics);
@@ -40,6 +43,7 @@ public sealed record SourceModuleGraph(
     private static void CollectDependencies(
         SourceModule module,
         SyntaxNode node,
+        SourceAliasContext aliases,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
         IReadOnlyDictionary<string, SourceModuleExports> exportsByPath,
         List<SourceModuleDependency> dependencies,
@@ -47,9 +51,8 @@ public sealed record SourceModuleGraph(
     {
         if (TryGetDependencyKind(node, out var kind) &&
             TryGetModuleSpecifier(node, out var specifierToken, out var specifier) &&
-            IsRelativeSpecifier(specifier))
+            TryResolveSourceModulePath(module, specifier, specifierToken, aliases, diagnostics, out var resolvedModulePath))
         {
-            var resolvedModulePath = ResolveRelativeModulePath(module.SourceFile.ModulePath, specifier);
             if (!moduleByPath.ContainsKey(resolvedModulePath))
             {
                 diagnostics.Add(new Diagnostic(
@@ -81,7 +84,7 @@ public sealed record SourceModuleGraph(
                         diagnostics);
                 }
                 else if (kind == SourceModuleDependencyKind.Export &&
-                    IsSupportedSourceReExport(node) &&
+                    IsSupportedSourceReExport(node, aliases) &&
                     exportsByPath.TryGetValue(resolvedModulePath, out var reExportTargetExports))
                 {
                     ValidateSourceReExportExports(
@@ -97,7 +100,7 @@ public sealed record SourceModuleGraph(
 
         foreach (var child in node.Children)
         {
-            CollectDependencies(module, child, moduleByPath, exportsByPath, dependencies, diagnostics);
+            CollectDependencies(module, child, aliases, moduleByPath, exportsByPath, dependencies, diagnostics);
         }
     }
 
@@ -260,18 +263,19 @@ public sealed record SourceModuleGraph(
         }
     }
 
-    private static bool IsSupportedSourceReExport(SyntaxNode node) =>
+    private static bool IsSupportedSourceReExport(SyntaxNode node, SourceAliasContext aliases) =>
         node.Kind is SyntaxKind.ExportNamedDeclaration or SyntaxKind.ExportTypeDeclaration or SyntaxKind.ExportStarDeclaration &&
         TryGetModuleSpecifier(node, out _, out var specifier) &&
-        IsRelativeSpecifier(specifier);
+        (IsRelativeSpecifier(specifier) || MatchesSourceAlias(specifier, aliases));
 
     private static void ValidateNamespaceImportMemberAccesses(
         SourceModule module,
+        SourceAliasContext aliases,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
         IReadOnlyDictionary<string, SourceModuleExports> exportsByPath,
         List<Diagnostic> diagnostics)
     {
-        var namespaceImports = CollectRelativeNamespaceImports(module, moduleByPath, exportsByPath);
+        var namespaceImports = CollectRelativeNamespaceImports(module, aliases, moduleByPath, exportsByPath, diagnostics);
         if (namespaceImports.Count == 0)
         {
             return;
@@ -282,20 +286,26 @@ public sealed record SourceModuleGraph(
 
     private static IReadOnlyDictionary<string, SourceModuleNamespaceImport> CollectRelativeNamespaceImports(
         SourceModule module,
+        SourceAliasContext aliases,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
-        IReadOnlyDictionary<string, SourceModuleExports> exportsByPath)
+        IReadOnlyDictionary<string, SourceModuleExports> exportsByPath,
+        List<Diagnostic> diagnostics)
     {
         var imports = new Dictionary<string, SourceModuleNamespaceImport>(StringComparer.Ordinal);
         foreach (var child in module.Root.Children.Where(child => child.Kind == SyntaxKind.ImportNamespaceDeclaration))
         {
             if (!TryGetModuleSpecifier(child, out _, out var specifier) ||
-                !IsRelativeSpecifier(specifier) ||
                 !TryGetNamespaceImportAlias(child, out var alias))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(module.SourceFile.ModulePath, specifier);
+            var specifierToken = child.Children.First(grandchild => grandchild.Kind == SyntaxKind.StringLiteralToken);
+            if (!TryResolveSourceModulePath(module, specifier, specifierToken, aliases, diagnostics, out var resolvedModulePath))
+            {
+                continue;
+            }
+
             if (!moduleByPath.ContainsKey(resolvedModulePath) ||
                 !exportsByPath.TryGetValue(resolvedModulePath, out var exports))
             {
@@ -379,6 +389,304 @@ public sealed record SourceModuleGraph(
         specifier.StartsWith("./", StringComparison.Ordinal) ||
         specifier.StartsWith("../", StringComparison.Ordinal);
 
+    private static SourceAliasContext CreateSourceAliasContext(
+        IReadOnlyList<SourceAliasOption> aliases,
+        IReadOnlyList<SourceModule> modules,
+        List<Diagnostic> diagnostics)
+    {
+        var modulePathByRelativeTarget = modules
+            .GroupBy(module => StripTyshExtension(NormalizeAliasPath(module.SourceFile.RelativePath, allowWildcard: false, out _)), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().SourceFile.ModulePath, StringComparer.OrdinalIgnoreCase);
+        var sourceRoots = modules
+            .Select(module => NormalizeAliasPath(module.SourceFile.SourceRoot, allowWildcard: false, out _))
+            .Where(root => root.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (aliases.Count == 0)
+        {
+            return new SourceAliasContext([], modulePathByRelativeTarget, sourceRoots);
+        }
+
+        var rules = new List<SourceAliasRule>();
+        var seen = new Dictionary<string, SourceAliasOption>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var alias in aliases)
+        {
+            var pattern = alias.Pattern.Trim();
+            var target = alias.Target.Trim();
+            var hasError = false;
+
+            if (pattern.Length == 0)
+            {
+                ReportInvalidAlias(alias, "Source alias key cannot be empty.", diagnostics);
+                hasError = true;
+            }
+            else if (IsRelativeSpecifier(pattern))
+            {
+                ReportInvalidAlias(alias, $"Source alias '{pattern}' must be a bare module specifier, not a relative path.", diagnostics);
+                hasError = true;
+            }
+
+            if (target.Length == 0)
+            {
+                ReportInvalidAlias(alias, $"Source alias '{pattern}' target cannot be empty.", diagnostics);
+                hasError = true;
+            }
+
+            var patternWildcards = CountWildcards(pattern);
+            var targetWildcards = CountWildcards(target);
+            if (patternWildcards > 1 || targetWildcards > 1)
+            {
+                ReportInvalidAlias(alias, $"Source alias '{pattern}' and target '{target}' may contain at most one '*' wildcard each.", diagnostics);
+                hasError = true;
+            }
+            else if (patternWildcards != targetWildcards)
+            {
+                ReportInvalidAlias(alias, $"Source alias '{pattern}' and target '{target}' must either both use one '*' wildcard or neither use one.", diagnostics);
+                hasError = true;
+            }
+
+            if (seen.TryGetValue(pattern, out var existing))
+            {
+                ReportInvalidAlias(alias, $"Source alias '{pattern}' collides with alias '{existing.Pattern}' by Windows-compatible case-insensitive comparison.", diagnostics);
+                hasError = true;
+            }
+            else if (pattern.Length > 0)
+            {
+                seen.Add(pattern, alias);
+            }
+
+            if (!TryCreateAliasRule(pattern, target, sourceRoots, out var rule, out var message))
+            {
+                ReportInvalidAlias(alias, message, diagnostics);
+                hasError = true;
+            }
+
+            if (!hasError)
+            {
+                rules.Add(rule);
+            }
+        }
+
+        var orderedRules = rules
+            .OrderByDescending(rule => rule.MatchPrefix.Length)
+            .ThenBy(rule => rule.Pattern, StringComparer.Ordinal)
+            .ToArray();
+        return new SourceAliasContext(orderedRules, modulePathByRelativeTarget, sourceRoots);
+    }
+
+    private static bool TryCreateAliasRule(
+        string pattern,
+        string target,
+        IReadOnlyList<string> sourceRoots,
+        out SourceAliasRule rule,
+        out string message)
+    {
+        rule = default!;
+        message = string.Empty;
+
+        if (pattern.Length == 0 || target.Length == 0)
+        {
+            message = "Source alias key and target must be non-empty.";
+            return false;
+        }
+
+        if (Path.IsPathRooted(target))
+        {
+            message = $"Source alias '{pattern}' target '{target}' must be project-relative.";
+            return false;
+        }
+
+        var patternWildcard = pattern.IndexOf('*');
+        var targetWildcard = target.IndexOf('*');
+        var normalizedTargetPrefix = NormalizeAliasPath(
+            targetWildcard >= 0 ? target[..targetWildcard] : target,
+            allowWildcard: false,
+            out var targetEscapesProject);
+        if (targetEscapesProject)
+        {
+            message = $"Source alias '{pattern}' target '{target}' escapes the project directory.";
+            return false;
+        }
+
+        if (sourceRoots.Count > 0 &&
+            !IsUnderSourceRoot(normalizedTargetPrefix, sourceRoots))
+        {
+            message = $"Source alias '{pattern}' target '{target}' must normalize under a configured source root.";
+            return false;
+        }
+
+        var matchPrefix = patternWildcard >= 0 ? pattern[..patternWildcard] : pattern;
+        var matchSuffix = patternWildcard >= 0 ? pattern[(patternWildcard + 1)..] : string.Empty;
+        var targetPrefix = targetWildcard >= 0 ? target[..targetWildcard] : target;
+        var targetSuffix = targetWildcard >= 0 ? target[(targetWildcard + 1)..] : string.Empty;
+        rule = new SourceAliasRule(pattern, target, matchPrefix, matchSuffix, targetPrefix, targetSuffix, patternWildcard >= 0);
+        return true;
+    }
+
+    private static bool TryResolveSourceModulePath(
+        SourceModule module,
+        string specifier,
+        SyntaxNode specifierToken,
+        SourceAliasContext aliases,
+        List<Diagnostic>? diagnostics,
+        out string resolvedModulePath)
+    {
+        if (IsRelativeSpecifier(specifier))
+        {
+            resolvedModulePath = ResolveRelativeModulePath(module.SourceFile.ModulePath, specifier);
+            return true;
+        }
+
+        var matches = aliases.Rules.Where(alias => alias.Matches(specifier)).ToArray();
+        if (matches.Length == 0)
+        {
+            resolvedModulePath = string.Empty;
+            return false;
+        }
+
+        var bestPrefixLength = matches.Max(match => match.MatchPrefix.Length);
+        var bestMatches = matches
+            .Where(match => match.MatchPrefix.Length == bestPrefixLength)
+            .OrderBy(match => match.Pattern, StringComparer.Ordinal)
+            .ToArray();
+        if (bestMatches.Length > 1)
+        {
+            diagnostics?.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedSourceModuleImport.Code,
+                DiagnosticDescriptors.UnsupportedSourceModuleImport.DefaultSeverity,
+                $"Source module specifier '{specifier}' matches ambiguous source aliases '{bestMatches[0].Pattern}' and '{bestMatches[1].Pattern}'.",
+                module.SourceFile.RelativePath,
+                specifierToken.Span));
+            resolvedModulePath = string.Empty;
+            return false;
+        }
+
+        var alias = bestMatches[0];
+        var capture = alias.HasWildcard
+            ? specifier.Substring(alias.MatchPrefix.Length, specifier.Length - alias.MatchPrefix.Length - alias.MatchSuffix.Length)
+            : string.Empty;
+        var expandedTarget = alias.HasWildcard
+            ? alias.TargetPrefix + capture + alias.TargetSuffix
+            : alias.Target;
+        var normalizedTarget = NormalizeAliasPath(expandedTarget, allowWildcard: false, out var escapesProject);
+        if (escapesProject || (aliases.SourceRoots.Count > 0 && !IsUnderSourceRoot(normalizedTarget, aliases.SourceRoots)))
+        {
+            diagnostics?.Add(new Diagnostic(
+                DiagnosticDescriptors.UnresolvedSourceModule.Code,
+                DiagnosticDescriptors.UnresolvedSourceModule.DefaultSeverity,
+                $"Source alias specifier '{specifier}' expands to target '{normalizedTarget}', which is outside configured source roots.",
+                module.SourceFile.RelativePath,
+                specifierToken.Span));
+            resolvedModulePath = string.Empty;
+            return false;
+        }
+
+        var normalizedTargetWithoutExtension = StripTyshExtension(normalizedTarget);
+        if (aliases.ModulePathByRelativeTarget.TryGetValue(normalizedTargetWithoutExtension, out var aliasResolvedModulePath))
+        {
+            resolvedModulePath = aliasResolvedModulePath;
+            return true;
+        }
+
+        diagnostics?.Add(new Diagnostic(
+            DiagnosticDescriptors.UnresolvedSourceModule.Code,
+            DiagnosticDescriptors.UnresolvedSourceModule.DefaultSeverity,
+            $"Source alias specifier '{specifier}' expands to target '{normalizedTargetWithoutExtension}', but no discovered source module was found.",
+            module.SourceFile.RelativePath,
+            specifierToken.Span));
+        resolvedModulePath = string.Empty;
+        return false;
+    }
+
+    private static bool MatchesSourceAlias(string specifier, SourceAliasContext aliases) =>
+        aliases.Rules.Any(alias => alias.Matches(specifier));
+
+    private static int CountWildcards(string value) =>
+        value.Count(character => character == '*');
+
+    private static void ReportInvalidAlias(SourceAliasOption alias, string message, List<Diagnostic> diagnostics)
+    {
+        diagnostics.Add(DiagnosticFactory.Manifest(
+            DiagnosticDescriptors.InvalidManifestValue,
+            message,
+            alias.File,
+            alias.Line,
+            alias.Column));
+    }
+
+    private static bool IsUnderSourceRoot(string normalizedTarget, IReadOnlyList<string> sourceRoots)
+    {
+        foreach (var sourceRoot in sourceRoots)
+        {
+            if (sourceRoot == ".")
+            {
+                return true;
+            }
+
+            if (string.Equals(normalizedTarget, sourceRoot, StringComparison.OrdinalIgnoreCase) ||
+                normalizedTarget.StartsWith(sourceRoot + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string NormalizeAliasPath(string path, bool allowWildcard, out bool escapesProject)
+    {
+        escapesProject = false;
+        var normalized = path.Replace('\\', '/').Trim();
+        if (normalized.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (Path.IsPathRooted(normalized))
+        {
+            escapesProject = true;
+            return normalized.Trim('/');
+        }
+
+        var parts = new List<string>();
+        foreach (var part in normalized.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part == ".")
+            {
+                continue;
+            }
+
+            if (part == "..")
+            {
+                if (parts.Count == 0)
+                {
+                    escapesProject = true;
+                    continue;
+                }
+
+                parts.RemoveAt(parts.Count - 1);
+                continue;
+            }
+
+            if (!allowWildcard && part.Contains('*', StringComparison.Ordinal))
+            {
+                parts.Add(part.Replace("*", string.Empty, StringComparison.Ordinal));
+                continue;
+            }
+
+            parts.Add(part);
+        }
+
+        return parts.Count == 0 ? "." : string.Join("/", parts);
+    }
+
+    private static string StripTyshExtension(string path) =>
+        path.EndsWith(".tysh", StringComparison.OrdinalIgnoreCase)
+            ? path[..^".tysh".Length]
+            : path;
+
     private static string ResolveRelativeModulePath(string fromModulePath, string specifier)
     {
         var parts = new List<string>();
@@ -450,6 +758,7 @@ public sealed record SourceModuleGraph(
 
     private static SourceModuleExports CollectExports(
         SourceModule module,
+        SourceAliasContext aliases,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
         IReadOnlyDictionary<string, SourceModuleExports> localExportsByPath,
         Dictionary<string, SourceModuleExports> exportsByPath,
@@ -480,21 +789,20 @@ public sealed record SourceModuleGraph(
             return new SourceModuleExports(exportedValues, exportedTypes, importAliasValues, exportedFunctions, exportedModules);
         }
 
-        foreach (var exportDeclaration in module.Root.Children.Where(child => IsSupportedSourceReExport(child)))
+        foreach (var exportDeclaration in module.Root.Children.Where(child => IsSupportedSourceReExport(child, aliases)))
         {
-            if (!TryGetModuleSpecifier(exportDeclaration, out _, out var specifier) ||
-                !IsRelativeSpecifier(specifier))
+            if (!TryGetModuleSpecifier(exportDeclaration, out var specifierToken, out var specifier) ||
+                !TryResolveSourceModulePath(module, specifier, specifierToken, aliases, diagnostics: null, out var resolvedModulePath))
             {
                 continue;
             }
 
-            var resolvedModulePath = ResolveRelativeModulePath(module.SourceFile.ModulePath, specifier);
             if (!moduleByPath.TryGetValue(resolvedModulePath, out var targetModule))
             {
                 continue;
             }
 
-            var targetExports = CollectExports(targetModule, moduleByPath, localExportsByPath, exportsByPath, visiting);
+            var targetExports = CollectExports(targetModule, aliases, moduleByPath, localExportsByPath, exportsByPath, visiting);
             if (exportDeclaration.Kind == SyntaxKind.ExportStarDeclaration)
             {
                 foreach (var exportedValue in targetExports.ValueNames)
@@ -940,6 +1248,33 @@ public sealed record SourceModuleGraph(
         string Specifier,
         string ResolvedModulePath,
         SourceModuleExports Exports);
+
+    private sealed record SourceAliasContext(
+        IReadOnlyList<SourceAliasRule> Rules,
+        IReadOnlyDictionary<string, string> ModulePathByRelativeTarget,
+        IReadOnlyList<string> SourceRoots);
+
+    private sealed record SourceAliasRule(
+        string Pattern,
+        string Target,
+        string MatchPrefix,
+        string MatchSuffix,
+        string TargetPrefix,
+        string TargetSuffix,
+        bool HasWildcard)
+    {
+        public bool Matches(string specifier)
+        {
+            if (!HasWildcard)
+            {
+                return string.Equals(specifier, Pattern, StringComparison.Ordinal);
+            }
+
+            return specifier.Length >= MatchPrefix.Length + MatchSuffix.Length &&
+                specifier.StartsWith(MatchPrefix, StringComparison.Ordinal) &&
+                specifier.EndsWith(MatchSuffix, StringComparison.Ordinal);
+        }
+    }
 
     private readonly record struct NamedImportSpecifier(string ImportedName, string LocalName, SourceSpan Span)
     {

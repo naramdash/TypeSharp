@@ -41,7 +41,7 @@ public static class TypeSharpChecker
             }
         }
 
-        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources).Diagnostics);
+        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources, manifestResult.Manifest.Modules.Aliases).Diagnostics);
 
         var sourceDiagnostics = parsedSources
             .AsParallel()
@@ -49,7 +49,8 @@ public static class TypeSharpChecker
             .Select(parsedSource => CheckSource(
                 parsedSource,
                 metadataResult.Assemblies,
-                manifestResult.Manifest.Language.Nullable))
+                manifestResult.Manifest.Language.Nullable,
+                manifestResult.Manifest.Modules.Aliases))
             .ToArray();
         foreach (var sourceDiagnostic in sourceDiagnostics)
         {
@@ -73,22 +74,25 @@ public static class TypeSharpChecker
     private static SourceDiagnostics CheckSource(
         SourceModule parsedSource,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
-        string nullableMode)
+        string nullableMode,
+        IReadOnlyList<SourceAliasOption> sourceAliases)
     {
         var diagnostics = new List<Diagnostic>();
         diagnostics.AddRange(TypeSharpInteropValidator.Validate(
             parsedSource.Root,
             assemblies,
             parsedSource.SourceFile.RelativePath,
-            nullableMode));
-        var bindingResult = TypeSharpBinder.Bind(parsedSource.Root, parsedSource.SourceFile.RelativePath);
+            nullableMode,
+            sourceAliases));
+        var bindingResult = TypeSharpBinder.Bind(parsedSource.Root, parsedSource.SourceFile.RelativePath, sourceAliases);
         diagnostics.AddRange(bindingResult.Diagnostics);
         if (!bindingResult.HasErrors)
         {
             diagnostics.AddRange(TypeSharpTypeChecker.Check(
                 parsedSource.Root,
                 parsedSource.SourceFile.RelativePath,
-                assemblies).Diagnostics);
+                assemblies,
+                sourceAliases).Diagnostics);
         }
 
         return new SourceDiagnostics(diagnostics);

@@ -106,9 +106,9 @@ Relative named and type imports must refer to names exported by the target sourc
 
 ## Manifest-Owned Source Aliases
 
-Source aliases are accepted as roadmap policy only when `TypeSharp.toml` owns the mapping and generated output can keep the same module identity as a relative source import. They are not the same feature as TypeScript `paths`: TypeSharp aliases must affect the source graph and generated C# identity, or they must stop with diagnostics before emission.
+Source aliases are manifest-owned source graph mappings. They are not the same feature as TypeScript `paths`: TypeSharp aliases affect the source graph and generated C# identity, or they stop with diagnostics before emission.
 
-Reserved manifest shape:
+Manifest shape:
 
 ```toml
 [modules.aliases]
@@ -116,15 +116,15 @@ Reserved manifest shape:
 "@shared/*" = "../Shared/src/*"
 ```
 
-Alias rules for the implementation slice:
+Current rules:
 
 - A key may contain at most one `*`, and a value that uses `*` must use the same captured segment.
-- A resolved target must normalize to a discovered `.tysh` source module in the current project or to an explicitly referenced TypeSharp project export.
+- A resolved target must normalize under a configured current-project source root and match a discovered `.tysh` source module.
 - Alias resolution must be deterministic across platforms: normalized slash form, case-insensitive collision checks on Windows-compatible paths, and longest matching alias prefix before shorter wildcard matches.
 - Resolved aliases reuse the normal source module graph. Missing target modules report the same unresolved source module class as `TS0112`; missing exported names still report `TS0114`.
-- Unsupported alias syntax, ambiguous matches, or targets outside declared source roots/project references must report manifest or project diagnostics before generated C# is written.
+- Unsupported alias syntax, ambiguous matches, or targets outside declared source roots report manifest or project diagnostics before generated C# is written.
 
-Current preview projects should keep using relative source imports. The reserved alias spelling is for the queued implementation work, not a currently active compiler feature.
+Project-reference alias targets remain future work. Current aliases resolve only inside the current project's discovered source graph.
 
 ## TypeSharp Project References
 

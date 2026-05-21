@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | Select the next `Requested` or `Ready` task from the queue. |
+| None | [tasks.md](tasks.md) | No active packet. Next requested task is 0304 TypeSharp project reference build graph. |
 
 ## Completed Evidence Index
 
@@ -83,6 +83,7 @@
 | Language ecosystem roadmap | [tasks-rollup.md#task-0293-language-ecosystem-roadmap](tasks-rollup.md#task-0293-language-ecosystem-roadmap), `agent.md`, [tasks.md](tasks.md), [agentic-execution.md](agentic-execution.md), [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md), [Work Ledger](../docs/src/content/docs/work-ledger.md) |
 | C# stable preview parity plan | [tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan](tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan), [Feature Status](../docs/src/content/docs/feature-status.md), [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md), [tasks.md](tasks.md) |
 | Source module alias and project reference policy | [tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy](tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy), [Modules And Imports](../docs/src/content/docs/modules.md), [Project Configuration](../docs/src/content/docs/project-configuration.md), [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md), [Feature Status](../docs/src/content/docs/feature-status.md), [tasks.md](tasks.md) |
+| Manifest source alias diagnostics | [tasks-rollup.md#task-0303-manifest-source-alias-diagnostics](tasks-rollup.md#task-0303-manifest-source-alias-diagnostics), `lang/TypeSharp.Compiler/Projects/ModuleOptions.cs`, `lang/TypeSharp.Compiler/Projects/SourceModuleGraph.cs`, `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/TypeSharp.Compiler.Tests/Program.cs`, [Modules And Imports](../docs/src/content/docs/modules.md), [Project Configuration](../docs/src/content/docs/project-configuration.md), [Diagnostics](../docs/src/content/docs/diagnostics.md) |
 | Modules, imports, exports, safety gates | [tasks-rollup.md#language-safety-modules-and-import-export](tasks-rollup.md#language-safety-modules-and-import-export), source module and diagnostics fixtures |
 | Test suite quality audit | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit), `test/TypeSharp.Compiler.Tests/Program.cs`, `test/fixtures`, `vscode/typesharp/test`, `examples/runnable` |
 

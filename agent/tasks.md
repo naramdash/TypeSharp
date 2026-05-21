@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0296, 0298-0301               |
+| Completed range    | 0001-0296, 0298-0301, 0303         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | Done        | Task 0295 TypeScript roadmap | 0301 Source module alias and project reference policy | [tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy](tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy) | Defined reserved `[modules.aliases]` and `[projectReferences]` policy with generated C# identity, `net48` artifact, and deterministic diagnostic boundaries. |
-| Q2       | Requested   | Task 0301 source module policy | 0303 Manifest source alias diagnostics | Create packet when selected | Implement `[modules.aliases]` manifest parsing, deterministic alias matching, source-root/project-reference target validation, and pre-emission diagnostics. |
+| Q2       | Done        | Task 0301 source module policy | 0303 Manifest source alias diagnostics | [tasks-rollup.md#task-0303-manifest-source-alias-diagnostics](tasks-rollup.md#task-0303-manifest-source-alias-diagnostics) | Implemented `[modules.aliases]` parsing, current-project alias validation/resolution, diagnostics, generated C# lowering, tests, and docs. |
 | Q3       | Requested   | Task 0301 source module policy | 0304 TypeSharp project reference build graph | Create packet when selected | Implement `[projectReferences]` manifest loading, cycle checks, referenced-project build ordering, generated assembly consumption, and export metadata diagnostics. |
 | Q3       | Requested   | Task 0295 TypeScript roadmap | 0302 Advanced type operator evaluator budget | Create packet when selected                                      | Design recursion limits and diagnostics for mapped, conditional, template-literal, and utility type computation without public ABI leakage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |
+| Q2       | Done        | Task 0295 TypeScript roadmap | 0301 Source module alias and project reference policy | [tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy](tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy) | Defined reserved `[modules.aliases]` and `[projectReferences]` policy with generated C# identity, `net48` artifact, and deterministic diagnostic boundaries. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

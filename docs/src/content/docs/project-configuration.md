@@ -72,9 +72,9 @@ packages = []
 
 The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`.
 
-## Planned Source Aliases
+## Source Aliases
 
-Manifest-owned source aliases are reserved for a future implementation slice. They are project configuration, not source syntax and not TypeScript `paths` compatibility.
+Manifest-owned source aliases are project configuration, not source syntax and not TypeScript `paths` compatibility.
 
 ```toml
 [modules.aliases]
@@ -82,9 +82,14 @@ Manifest-owned source aliases are reserved for a future implementation slice. Th
 "@shared/*" = "../Shared/src/*"
 ```
 
-The compiler must treat an alias import as a source graph lookup that either resolves to the same module identity as a relative `.tysh` import or stops before emission. An alias target must normalize under a declared `sourceRoots` entry or through an explicit TypeSharp project reference. Targets that only help type checking, depend on a JavaScript runtime resolver, or point at npm/package `exports` behavior are outside the TypeSharp contract.
+The compiler treats an alias import as a source graph lookup that either resolves to the same module identity as a relative `.tysh` import or stops before emission. An alias target must normalize under a declared `sourceRoots` entry in the current project. Targets that only help type checking, depend on a JavaScript runtime resolver, point at npm/package `exports` behavior, or cross project boundaries without implemented TypeSharp project references are outside the current contract.
 
-Until alias implementation lands, use relative imports such as `./Feature/Rules`.
+Examples:
+
+```tysh
+import { rule } from "@app/Feature/Rules"
+export { sharedRule } from "@shared/Rules"
+```
 
 ## Planned Project References
 

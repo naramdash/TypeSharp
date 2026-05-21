@@ -57,6 +57,12 @@ public static class TypeSharpManifestLoader
             document.GetString("language", "nullable", defaultLanguage.Nullable, diagnostics),
             document.GetStringArray("language", "previewFeatures", defaultLanguage.PreviewFeatures, diagnostics));
 
+        var modules = new ModuleOptions(
+            document
+                .GetStringMap("modules.aliases", diagnostics)
+                .Select(entry => new SourceAliasOption(entry.Key, entry.Value, fullManifestPath, entry.Line, entry.Column))
+                .ToArray());
+
         var references = new ReferenceOptions(
             document.GetStringArray("references", "assemblies", ReferenceOptions.Empty.Assemblies, diagnostics),
             document.GetStringArray("references", "paths", ReferenceOptions.Empty.Paths, diagnostics),
@@ -75,7 +81,7 @@ public static class TypeSharpManifestLoader
         }
 
         return new ManifestLoadResult(
-            new TypeSharpManifest(fullManifestPath, projectDirectory, project, language, references, tooling),
+            new TypeSharpManifest(fullManifestPath, projectDirectory, project, language, modules, references, tooling),
             diagnostics);
     }
 
