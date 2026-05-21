@@ -19718,6 +19718,12 @@ static void CliBuildCompilesEnumDeclarationApi()
 
             export fun bluePart(input: Color): Color =
               input & Color.Blue
+
+            export fun toggled(input: Color): Color =
+              input ^ Color.Blue
+
+            export fun inverted(input: Color): Color =
+              ~input
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -19739,6 +19745,8 @@ static void CliBuildCompilesEnumDeclarationApi()
         AssertContains("Purple = Red | Blue", generatedSource);
         AssertContains("return Color.Red | Color.Blue;", generatedSource);
         AssertContains("return input & Color.Blue;", generatedSource);
+        AssertContains("return input ^ Color.Blue;", generatedSource);
+        AssertContains("return ~input;", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "EnumDeclarationApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with enum declaration API.");
@@ -19778,6 +19786,8 @@ static void CliBuildCompilesEnumDeclarationApi()
                     {
                         return Samples.Enums.Module.favorite() == Samples.Enums.Color.Purple &&
                             Samples.Enums.Module.bluePart(Samples.Enums.Color.Purple) == Samples.Enums.Color.Blue &&
+                            Samples.Enums.Module.toggled(Samples.Enums.Color.Purple) == Samples.Enums.Color.Red &&
+                            Samples.Enums.Module.inverted(Samples.Enums.Color.Blue) == ~Samples.Enums.Color.Blue &&
                             (int)Samples.Enums.Color.Blue == 4 &&
                             (int)Samples.Enums.Color.Purple == 5;
                     }

@@ -92,6 +92,8 @@ public enum SyntaxKind
     PipePipeToken,
     PipeToken,
     AmpersandToken,
+    CaretToken,
+    TildeToken,
     EqualsGreaterToken,
     ArrowToken,
     PipeGreaterToken,

@@ -799,7 +799,34 @@ public static class TypeSharpTypeChecker
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
             var operatorText = node.Children.FirstOrDefault(child =>
                 child.IsToken &&
-                child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken)?.Text ?? "?";
+                child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken)?.Text ?? "?";
+
+            if (operatorText == "~")
+            {
+                if (expressions.Length != 1)
+                {
+                    foreach (var expression in expressions)
+                    {
+                        CheckExpression(expression, scope);
+                    }
+
+                    return SimpleType.Unknown;
+                }
+
+                var operandType = CheckExpression(expressions[0], scope);
+                if (!operandType.IsKnown)
+                {
+                    return SimpleType.Unknown;
+                }
+
+                if (operandType.IsNull || operandType.IsNullable || !scope.ResolveEnum(operandType.Name, out _))
+                {
+                    ReportMismatch(node, $"Enum value '~' operand must be an enum value, but found '{operandType}'.");
+                    return SimpleType.Unknown;
+                }
+
+                return operandType;
+            }
 
             if (expressions.Length != 2)
             {
@@ -837,7 +864,7 @@ public static class TypeSharpTypeChecker
 
         private static bool IsEnumValueBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
-            node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken);
+            node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken);
 
         private static bool TryGetEnumMemberAccess(
             SyntaxNode receiver,

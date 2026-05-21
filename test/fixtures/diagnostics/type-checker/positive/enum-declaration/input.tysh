@@ -12,5 +12,9 @@ let favorite: Color = Color.Red | Color.Blue
 
 let blueOnly: Color = favorite & Color.Blue
 
+let toggled: Color = favorite ^ Color.Blue
+
+let inverted: Color = ~favorite
+
 fun choose(): Color =
-  favorite & Color.Red
+  favorite ^ Color.Red

@@ -1,1 +1,1 @@
-Verifies that enum member values type-check against their declaring enum, including declarations with explicit numeric member values, explicit member aliases, composite member expressions, and an explicit underlying type.
+Verifies that enum member values type-check against their declaring enum, including declarations with explicit numeric member values, explicit member aliases, composite member expressions, an explicit underlying type, and same-enum value `|`, `&`, `^`, and unary `~` expressions.

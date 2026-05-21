@@ -1,1 +1,1 @@
-Verifies that enum declarations with attributes, an explicit underlying type, explicit numeric member values, member attributes, member references, and composite member expressions lower to C# 7.3-compatible source.
+Verifies that enum declarations with attributes, an explicit underlying type, explicit numeric member values, member attributes, member references, composite member expressions, and same-enum value `|`, `&`, `^`, and unary `~` expressions lower to C# 7.3-compatible source.

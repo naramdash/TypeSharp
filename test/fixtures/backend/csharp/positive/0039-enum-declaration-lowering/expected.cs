@@ -15,6 +15,16 @@ namespace Samples.Enums
         {
             return input & Color.Blue;
         }
+
+        public static Color toggled(Color input)
+        {
+            return input ^ Color.Blue;
+        }
+
+        public static Color inverted(Color input)
+        {
+            return ~input;
+        }
     }
 
     [FlagsAttribute]

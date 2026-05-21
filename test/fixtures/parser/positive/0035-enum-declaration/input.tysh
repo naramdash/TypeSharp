@@ -17,3 +17,9 @@ export fun favorite(): Color =
 
 export fun bluePart(input: Color): Color =
   input & Color.Blue
+
+export fun toggled(input: Color): Color =
+  input ^ Color.Blue
+
+export fun inverted(input: Color): Color =
+  ~input

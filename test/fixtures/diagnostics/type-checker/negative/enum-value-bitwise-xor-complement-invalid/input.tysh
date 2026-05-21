@@ -1,0 +1,19 @@
+namespace Samples.TypeChecker.EnumValueBitwiseXorComplementInvalid
+
+enum Permission {
+  Read,
+  Write
+}
+
+enum Color {
+  Red,
+  Blue
+}
+
+let mixedEnum: Permission = Permission.Read ^ Color.Red
+
+let numericXor = 1 ^ 2
+
+let enumAndNumber: Permission = Permission.Read ^ 1
+
+let numericComplement = ~1

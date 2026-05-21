@@ -155,6 +155,8 @@ public sealed class TypeSharpLexer
             '!' => SyntaxKind.BangToken,
             '|' => SyntaxKind.PipeToken,
             '&' => SyntaxKind.AmpersandToken,
+            '^' => SyntaxKind.CaretToken,
+            '~' => SyntaxKind.TildeToken,
             _ => SyntaxKind.UnknownToken
         };
 

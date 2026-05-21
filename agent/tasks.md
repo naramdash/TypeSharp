@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0334-enum-value-xor-complement-expression-slice.md](0334-enum-value-xor-complement-expression-slice.md) |
-| Active summary     | Add expression-level same-enum value `^` and unary `~` over enum values, lowering to C# `^`/`~`, while keeping numeric/general bitwise, shifts, compound assignment, flag-aware match reasoning, imported flag algebra, pattern algebra, and arbitrary/general computed enum member declarations out. |
-| Completed range    | 0001-0333                         |
+| Active task packet | None |
+| Active summary     | No active task; apply the queue/checklist/roadmap selection rules on the next cycle. |
+| Completed range    | 0001-0334                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0333 roadmap refresh | 0334 Enum value XOR and complement expression slice | [0334-enum-value-xor-complement-expression-slice.md](0334-enum-value-xor-complement-expression-slice.md) | Add expression-level same-enum value `^` and unary `~` over enum values, lowering to C# `^`/`~`; keep numeric/general bitwise, shifts, compound assignment, flag-aware match reasoning, imported flag algebra, pattern algebra, and arbitrary/general computed enum member declarations out. |
+| Q2       | Done        | Task 0333 roadmap refresh | 0334 Enum value XOR and complement expression slice | [tasks-rollup.md#task-0334-enum-value-xor-and-complement-expression-slice](tasks-rollup.md#task-0334-enum-value-xor-and-complement-expression-slice) | Added expression-level same-enum value `^` and unary `~` over enum values, lowering to C# `^`/`~`; kept numeric/general bitwise, shifts, compound assignment, flag-aware match reasoning, imported flag algebra, pattern algebra, and arbitrary/general computed enum member declarations out. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0333 Roadmap refresh after enum value AND expressions | [tasks-rollup.md#task-0333-roadmap-refresh-after-enum-value-and-expressions](tasks-rollup.md#task-0333-roadmap-refresh-after-enum-value-and-expressions) | Rechecked official source signals after enum value AND expressions, confirmed the baseline, and selected same-enum value `^` plus unary `~` expressions as the next bounded implementation slice. |
 | Q2       | Done        | Task 0331 roadmap refresh | 0332 Enum value bitwise AND expression slice | [tasks-rollup.md#task-0332-enum-value-bitwise-and-expression-slice](tasks-rollup.md#task-0332-enum-value-bitwise-and-expression-slice) | Added expression-level same-enum `&` over enum values, lowering to C# `&`; kept numeric bitwise, `^`/`~`/shifts, flag-aware match reasoning, imported flag algebra, and pattern algebra out. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0331 Roadmap refresh after enum value OR expressions | [tasks-rollup.md#task-0331-roadmap-refresh-after-enum-value-or-expressions](tasks-rollup.md#task-0331-roadmap-refresh-after-enum-value-or-expressions) | Rechecked official source signals after enum value OR expressions, confirmed the baseline, and selected same-enum value `&` expressions as the next bounded implementation slice. |

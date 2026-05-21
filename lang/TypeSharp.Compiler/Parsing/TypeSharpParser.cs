@@ -1905,7 +1905,7 @@ public sealed class TypeSharpParser
     }
 
     private static int GetUnaryPrecedence(SyntaxKind kind) =>
-        kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken or SyntaxKind.BangToken ? 7 : 0;
+        kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken or SyntaxKind.BangToken or SyntaxKind.TildeToken ? 7 : 0;
 
     private static int GetBinaryPrecedence(SyntaxKind kind) =>
         kind switch
@@ -1915,6 +1915,7 @@ public sealed class TypeSharpParser
             SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken => 4,
             SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken => 3,
             SyntaxKind.AmpersandToken => 2,
+            SyntaxKind.CaretToken => 2,
             SyntaxKind.PipeToken => 2,
             SyntaxKind.AmpersandAmpersandToken => 2,
             SyntaxKind.PipePipeToken => 1,
