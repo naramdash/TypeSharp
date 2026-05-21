@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0365-roadmap-refresh-after-direct-composition-value-inference.md](0365-roadmap-refresh-after-direct-composition-value-inference.md) |
-| Active summary     | 0365 Roadmap refresh after direct composition value inference |
-| Completed range    | 0001-0364                         |
+| Active task packet | [0366-params-parameter-declaration-slice.md](0366-params-parameter-declaration-slice.md) |
+| Active summary     | 0366 Params parameter declaration slice |
+| Completed range    | 0001-0365                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q1       | In Progress | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference | [0365-roadmap-refresh-after-direct-composition-value-inference.md](0365-roadmap-refresh-after-direct-composition-value-inference.md) | Recheck official source signals after private direct composition value inference and select the next bounded implementation slice. |
+| Q2       | In Progress | Task 0365 roadmap refresh | 0366 Params parameter declaration slice | [0366-params-parameter-declaration-slice.md](0366-params-parameter-declaration-slice.md) | Implement a bounded TypeSharp-owned `params` final array parameter declaration slice for direct TypeSharp-declared calls and C# 7.3-compatible generated signatures. |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference | [tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference](tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference) | Rechecked official source signals after private direct composition value inference, confirmed the baseline, and selected bounded TypeSharp-owned `params` parameter declarations. |
 | Q2       | Done        | Task 0363 roadmap refresh | 0364 Direct composition value inference slice | [tasks-rollup.md#task-0364-direct-composition-value-inference-slice](tasks-rollup.md#task-0364-direct-composition-value-inference-slice) | Inferred concrete delegates for unannotated non-exported direct named-function composition values with fully known signatures, while keeping public ABI inference closed. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0363 Roadmap refresh after composition annotation compatibility | [tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility](tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility) | Rechecked official source signals after explicit composition annotation compatibility, confirmed the baseline, and selected bounded private direct composition value inference. |
 | Q2       | Done        | Task 0361 roadmap refresh | 0362 Composition function-type annotation compatibility slice | [tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice](tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice) | Validated explicit function-type annotations on direct named-function composition values before C# emission, without enabling unannotated composition type inference. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0361 Roadmap refresh after direct generic composition inference | [tasks-rollup.md#task-0361-roadmap-refresh-after-direct-generic-composition-inference](tasks-rollup.md#task-0361-roadmap-refresh-after-direct-generic-composition-inference) | Rechecked official source signals after direct generic composition inference, confirmed the baseline, and selected bounded explicit composition annotation compatibility. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

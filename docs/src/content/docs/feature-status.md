@@ -227,6 +227,8 @@ After explicit composition function-type annotation compatibility, the empty-que
 
 The private direct composition value inference slice completed concrete generated delegate inference for unannotated non-exported top-level values shaped like `let composed = f >> g` and `let composed = g << f` when both sides are direct TypeSharp-declared unary functions and bounded generic edge substitution yields a fully known input/result signature. Generated C# now emits internal/private `System.Func<TInput,TResult>` or `System.Action<TInput>` fields for those representable cases. Public/exported direct composition values without explicit function type annotations report `TS2201`, so public ABI inference remains closed. Imported composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, and general type-constructor unification remain backlog.
 
+After private direct composition value inference, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. Stable C# `params` parameter behavior and TypeScript rest parameter ergonomics make TypeSharp-owned `params` declarations the next bounded slice, limited to final array parameters on direct TypeSharp-declared calls with C# 7.3-compatible `params T[]` generated signatures. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, and `params` in function-type syntax remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
