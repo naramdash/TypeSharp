@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task; the agent will select from the user inbox, agent queue, checklist, or roadmap-refresh rule. |
+| Active task packet | `agent/0342-local-assignment-target-analysis-slice.md` |
+| Next top-priority task | Task 0342 local assignment target analysis is in progress. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0340 completed bitwise compound assignment `|=`/`&=`/`^=` parsing and C# 7.3-compatible lowering. |
-| Completed work covered | 0001-0340 |
+| Current tooling slice | Task 0341 refreshed the roadmap after bitwise compound assignments and opened bounded local assignment target diagnostics as task 0342. |
+| Completed work covered | 0001-0341 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

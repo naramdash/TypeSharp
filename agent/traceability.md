@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Next work is selected from user inbox, agent queue, checklist, or roadmap-refresh rule. |
+| Task 0342 local assignment target analysis | [0342-local-assignment-target-analysis-slice.md](0342-local-assignment-target-analysis-slice.md) | Type-checker mutability tracking, assignment diagnostics fixtures, generated C# assignment smokes, Feature Status, Work Ledger, and tasks rollup. |
 
 ## Completed Evidence Index
 

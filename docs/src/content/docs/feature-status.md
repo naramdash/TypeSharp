@@ -179,6 +179,8 @@ After expression-level integral numeric bitwise expressions, the empty-queue ref
 
 After expression-level boolean bitwise expressions, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice completed bitwise compound assignment `|=`, `&=`, and `^=` over the already supported assignment surface, without enabling shifts, shift assignment, user-defined operators, broader assignment target analysis, flag-aware enum algebra, imported enum flag reasoning, broad attribute target validation, arbitrary/general computed enum member declarations, numeric pattern algebra, or richer pattern algebra.
 
+After bitwise compound assignments, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is local assignment target analysis for TypeSharp identifier assignments, tracking `let mut` and focused assignment compatibility diagnostics while leaving imported C# member, indexer, static member, and event assignment on the existing metadata-backed interop validator path. Shifts and shift assignment remain separate because `>>` and `<<` already serve TypeSharp function composition and need a dedicated grammar/design pass.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
