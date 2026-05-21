@@ -73,6 +73,16 @@ type CustomerName = Customer["Name"]
 
 Limited indexed access types can read a known record or shape member type by string literal key. A `keyof`-derived key union produces a local type-level union of the selected member types.
 
+## TypeScript-Style Structural Roadmap
+
+TypeSharp follows TypeScript's structural typing as a local proof model, not as a public CLR metadata model. The practical roadmap is:
+
+- keep shape checks, `satisfies`, intersections, local type-level unions, limited `keyof`, and indexed access local-only unless wrapped in a named public type;
+- broaden narrowing toward TypeScript-style discriminated unions where a local structural union has a known literal tag property;
+- add optional-member and index-signature behavior only after the checker can report deterministic missing/possibly-undefined member diagnostics;
+- treat mapped, conditional, template-literal, and utility types as backlog until TypeSharp has a budgeted compile-time evaluator and recursion limits;
+- prefer generated nominal interfaces or wrappers for any future structural public ABI adapter.
+
 ## Nominal Public API
 
 C# consumers see generated CLR metadata. That means public TypeSharp APIs need stable nominal shapes:

@@ -24,6 +24,39 @@ TypeSharp evaluates every C#, F#, and TypeScript feature through four practical 
 - F#-style functional consistency: immutable data, option/result modeling, nominal closed unions, pattern matching, pipeline, and composition.
 - C#/.NET practicality: generated public metadata, attributes, records/classes/interfaces/delegates/events, async `Task`, generics, and local C# DLL/framework assembly interop.
 
+## TypeScript Structural And Module Review
+
+Official TypeScript sources refreshed on 2026-05-21:
+
+- [Type compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility)
+- [Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+- [Creating Types from Types](https://www.typescriptlang.org/docs/handbook/2/types-from-types.html)
+- [Modules reference](https://www.typescriptlang.org/docs/handbook/modules/reference)
+- [Project references](https://www.typescriptlang.org/docs/handbook/project-references)
+- [Type declarations](https://www.typescriptlang.org/docs/handbook/2/type-declarations)
+- [TSConfig reference](https://www.typescriptlang.org/tsconfig/)
+- [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html)
+- [TypeScript 5.9 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html)
+
+Current boundary:
+
+- TypeSharp adopts TypeScript's structural-checking ergonomics only where they remain local, deterministic, and explainable before C# lowering.
+- Compile-time-only structural shapes, type-level unions, intersections, and derived type operators must not appear directly in public CLR metadata.
+- TypeSharp keeps files as modules by default and uses an explicit source module graph; it does not model Node, bundler, CommonJS, package `exports`, `paths`, or JavaScript emit semantics as stable language behavior.
+- `TypeSharp.toml` is the project contract. It can learn from TSConfig options such as source includes, project references, declaration output, and stricter checking, but it must map to generated `net48` artifacts instead of JavaScript runtime settings.
+
+| TypeScript Signal | TypeSharp Status | TypeSharp Direction |
+| --- | --- | --- |
+| Structural compatibility and object shapes | MVP local only | Shape aliases and `satisfies` provide local proof. Public APIs use records, classes, interfaces, delegates, or nominal unions unless a future adapter policy generates stable names. |
+| `unknown`, type guards, and discriminated narrowing | MVP limited | `unknown` requires proof before access, and type-level unions support currently implemented type-pattern narrowing. Next work should add bounded structural discriminant narrowing for local object shapes. |
+| Type aliases and interfaces | MVP split | Type aliases remain flexible local type expressions; `public interface` is the CLR-visible contract shape. TypeScript declaration merging is not stable because it obscures generated metadata ownership. |
+| `keyof` and indexed access | MVP limited | Known records and named structural shapes can derive local key/member types. Optional members, index signatures, and deeper generic operators need more checker coverage. |
+| Mapped, conditional, template-literal, and utility types | Stable Backlog | Accepted direction only with an evaluator budget, recursion limits, deterministic diagnostics, and no public compile-time-only leakage. |
+| ES module imports/exports and type-only imports | MVP limited | Relative source imports/re-exports, type-only imports, namespace imports, and explicit export surfaces are implemented for source modules. Non-relative source packages and path aliases need a manifest-owned lowering policy. |
+| TSConfig, project references, and declaration files | Stable Backlog | Useful as configuration signals for source roots, project graph partitioning, generated declaration metadata, and editor navigation, but TypeSharp keeps `TypeSharp.toml` and C# metadata as the stable artifact model. |
+| TypeScript 6.0/5.9 module defaults, subpath imports, `node20`, `import defer`, and stable type ordering | Preview/Directional Watch | TypeSharp already uses modules by default. Node/bundler modes, package subpath imports, and deferred JavaScript evaluation are runtime-specific signals; stable type ordering is useful compiler-engineering input for deterministic diagnostics and generated artifacts. |
+| JSX, decorators, JavaScript runtime compatibility, and npm package semantics | Rejected or Experimental | JSX and JavaScript execution are outside the CLR target. Decorator-like metaprogramming must route through .NET attributes/analyzers/generators with explicit safety policy. |
+
 ## F# Functional Consistency Review
 
 Official F# sources refreshed on 2026-05-21:

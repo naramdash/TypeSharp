@@ -1390,6 +1390,32 @@ Primary evidence:
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 - [tasks.md](tasks.md)
 
+## Task 0295 TypeScript Structural Module Roadmap
+
+Completed TypeScript roadmap work established:
+
+- Refreshed official TypeScript sources on 2026-05-21, including Type Compatibility, Narrowing, Creating Types from Types, Modules Reference, Project References, Type Declarations, TSConfig Reference, and TypeScript 6.0/5.9 release notes.
+- Added a Feature Status TypeScript structural/module review that keeps TypeSharp's structural typing local, deterministic, and separate from public CLR metadata.
+- Classified structural object compatibility, `unknown`/type guards/discriminated narrowing, type aliases/interfaces, `keyof`, indexed access, mapped/conditional/template-literal/utility types, ES modules, project references, declaration files, TSConfig, and TypeScript 6.0/5.9 signals against TypeSharp's `net48` artifact boundary.
+- Updated Type System docs with the TypeScript-style structural roadmap: local shape proofs first, bounded structural discriminant narrowing next, optional/index-signature diagnostics later, and advanced type operators behind a budgeted evaluator.
+- Updated Modules and Project Configuration docs to keep TypeSharp source modules and `TypeSharp.toml` manifest behavior distinct from Node, bundler, CommonJS, package `exports`, `paths`, JavaScript/JSX source inclusion, and npm declaration lookup.
+- Queued follow-up tasks 0300, 0301, and 0302 for structural discriminant narrowing, source module alias/project-reference policy, and advanced type-operator evaluator budgeting.
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Modules And Imports](../docs/src/content/docs/modules.md)
+- [Project Configuration](../docs/src/content/docs/project-configuration.md)
+- [tasks.md](tasks.md)
+
 ## Task 0296 FSharp Functional Consistency Roadmap
 
 Completed F# roadmap work established:

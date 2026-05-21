@@ -5,6 +5,8 @@ description: Source files, module paths, imports, exports, namespaces, and gener
 
 TypeSharp follows the TypeScript-style idea that files belong to a module graph. The graph is explicit: source roots define module identity, and import/export declarations define dependencies and public surface intent.
 
+The TypeSharp module roadmap deliberately stops short of TypeScript's full Node, bundler, CommonJS, package `exports`, and `paths` behavior. A source import must either resolve through the TypeSharp source graph or lower to a C# namespace/type import. Manifest-owned source aliases can be added later, but they must either rewrite to deterministic generated C# references or report diagnostics before emission; they must not create TypeScript-style type-check-only paths that fail at runtime.
+
 ## Files Are Modules
 
 Every `.tysh` source file receives a source-root-relative module path.
@@ -211,6 +213,15 @@ export * from "./Feature/Helper"
 ```
 
 Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`.
+
+## Roadmap Boundary
+
+Near-term module work should focus on:
+
+- manifest-owned source path aliases that preserve generated C# identity and cannot silently diverge from runtime references;
+- stricter diagnostics for unsupported non-relative source imports, non-lowerable re-exports, and side-effect-only imports;
+- project-graph references between TypeSharp projects, modeled through generated assemblies and source-module metadata rather than JavaScript package resolution;
+- editor navigation metadata for generated source and public exports, analogous to TypeScript declaration maps but grounded in TypeSharp source spans and C# artifacts.
 
 ## Related Pages
 

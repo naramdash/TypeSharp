@@ -12,10 +12,10 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | Item | State |
 | --- | --- |
 | Active task packet | None |
-| Next top-priority task | Select requested Q2 task `0295 TypeScript structural module roadmap`. |
+| Next top-priority task | Select requested Q2 task `0300 Structural discriminant narrowing slice`. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0299-match-exhaustiveness-expansion` is complete; nominal union `_` arms now participate in exhaustiveness and lower to deterministic fallback branches. |
-| Completed work covered | 0001-0294, 0296, 0298-0299 |
+| Current tooling slice | Task `0295-typescript-structural-module-roadmap` is complete; Feature Status, Type System, Modules, and Project Configuration now document the TypeScript-derived structural/module roadmap boundary. |
+| Completed work covered | 0001-0296, 0298-0299 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
@@ -37,6 +37,7 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 ## Remaining Known Future Areas
 
 - Non-relative re-export and non-lowerable source re-export forms beyond the current function/literal/value/lambda-valued value/type/module alias forwarding and remapping slice.
+- TypeScript-derived structural/module follow-ups: structural discriminant narrowing, manifest-owned source aliases/project references, and budgeted advanced type operators.
 - Richer match exhaustiveness beyond current known nominal/type-level union cases and discard arms, including guarded arms, bool/enum cases, literal unions, and fuller pattern algebra.
 - Fuller indexer conversion/ranking beyond exact/object/null/parenthesized/unary numeric/known numeric/metadata relationship checks, broader contextual generic inference beyond direct, homogeneous collection expression `T[]`, and explicit constructed generic argument positions, fuller C# overload conversion/contextual ranking beyond current literal/unary numeric/null metadata-specificity/imported metadata relationship/collection expression array argument/single collection expression params-array argument/parenthesized overload argument unwrapping/delegate arity, known return checks, identity lambda parameter return checks, known lambda return conversion ranking, metadata member-chain return inference, metadata instance method-call return inference, imported extension method-call return inference, imported static method-call return inference, comparison/logical binary predicate return inference, string/numeric binary value return inference, `nameof` return inference, checked/unchecked return inference, `satisfies` return inference, parenthesized return inference, unary logical-not return inference, unary numeric return inference, `if` expression return inference, block final-expression return inference, collection expression return inference, null-coalescing return inference, and indexer-expression return inference, richer lambda body contextual typing beyond those known/literal, identity, member-chain, instance/extension/static method-call, binary predicate, binary value, `nameof`, checked/unchecked, `satisfies`, parenthesized, unary logical-not, unary numeric, `if`, block final-expression, collection expression, null-coalescing, and indexer bodies, and richer extension conversion/conflict diagnostics.
 - Future IL backend work after the C# 7.3 source backend remains stable.

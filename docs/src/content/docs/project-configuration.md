@@ -5,6 +5,8 @@ description: TypeSharp.toml, source roots, generated output, references, and bui
 
 TypeSharp projects are described by `TypeSharp.toml`. The manifest is the stable contract between the CLI, compiler, generated C# backend, examples, and host projects.
 
+TypeScript's TSConfig is useful input for project ergonomics, but TypeSharp does not copy JavaScript runtime options. `module`, `moduleResolution`, `target`, `jsx`, `allowJs`, `checkJs`, package `exports`, and `paths` only become TypeSharp features when they have a deterministic `TypeSharp.toml` meaning and a generated `net48` artifact shape.
+
 ## Minimal Manifest
 
 ```toml
@@ -83,6 +85,23 @@ Keep `net48` as the default TypeSharp compatibility target unless a documented c
 
 Use [Project Policy](../project-policy/) for the canonical dependency inventory, future dependency gate, target-framework profile rules, and release baseline policy.
 Use [Runtime Artifacts](../runtime-artifacts/) for the generated C# project shape, Core/Runtime reference model, and deployable `net48` artifact set.
+
+## TypeScript-Inspired Configuration Roadmap
+
+Accepted direction:
+
+- source include/exclude patterns that still produce deterministic source-root-relative module paths;
+- manifest-owned source aliases that lower or diagnose rather than behaving like TypeScript `paths` entries that do not affect emit;
+- TypeSharp project references that build referenced projects first and consume generated assemblies/metadata through explicit paths;
+- declaration/navigation metadata for editors when it can point back to `.tysh` source spans and generated C# artifacts;
+- stricter checking profiles inspired by TSConfig strictness flags, expressed as TypeSharp diagnostic policy rather than JavaScript compiler switches.
+
+Rejected or deferred:
+
+- `tsconfig.json` as the TypeSharp project file;
+- JavaScript/JSX source inclusion through `allowJs`, `checkJs`, or JSX options;
+- Node/bundler module-resolution modes as language semantics;
+- npm package restore through TypeScript declaration lookup before TypeSharp has a package lock, license, checksum, and metadata security policy.
 
 ## Language And Tooling Options
 

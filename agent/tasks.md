@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0294, 0296, 0298-0299         |
+| Completed range    | 0001-0296, 0298-0299               |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | Done        | Task 0296 F# roadmap      | 0299 Match exhaustiveness expansion      | [tasks-rollup.md#task-0299-match-exhaustiveness-expansion](tasks-rollup.md#task-0299-match-exhaustiveness-expansion) | Added nominal union `_` exhaustiveness coverage, C# fallback lowering, diagnostics/docs updates, and focused/full verification. |
-| Q2       | Done        | Task 0294 parity review   | 0298 C# unbound generic nameof parity    | [tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity](tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity) | Implemented `nameof(List<>)`-style parsing, type-root binding, and C# 7.3 string constant lowering with positive/negative coverage. |
+| Q2       | Requested   | Task 0295 TypeScript roadmap | 0300 Structural discriminant narrowing slice | Create packet when selected                                           | Implement bounded local narrowing for structural/type-level unions with known literal tag properties and deterministic diagnostics. |
+| Q2       | Requested   | Task 0295 TypeScript roadmap | 0301 Source module alias and project reference policy | Create packet when selected                                     | Define `TypeSharp.toml`-owned source aliases/project references that lower to generated C# identities or report diagnostics before emission. |
+| Q3       | Requested   | Task 0295 TypeScript roadmap | 0302 Advanced type operator evaluator budget | Create packet when selected                                      | Design recursion limits and diagnostics for mapped, conditional, template-literal, and utility type computation without public ABI leakage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |
-| Q2       | Done        | Task 0293 roadmap refresh | 0296 F# functional consistency roadmap   | [tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap](tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap) | Refreshed official F# sources, classified TypeSharp functional roadmap boundaries, and queued match exhaustiveness expansion. |
-| Q2       | Requested   | Task 0293 roadmap refresh | 0295 TypeScript structural module roadmap | Create packet when selected                                             | Plan structural type operators, narrowing, declaration/module ergonomics, and project config behavior without leaking structural shapes into public ABI. |
+| Q2       | Done        | Task 0293 roadmap refresh | 0295 TypeScript structural module roadmap | [tasks-rollup.md#task-0295-typescript-structural-module-roadmap](tasks-rollup.md#task-0295-typescript-structural-module-roadmap) | Refreshed official TypeScript sources, documented structural/module/config boundaries, and queued 0300-0302 follow-up slices. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 
