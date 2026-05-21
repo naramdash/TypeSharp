@@ -3443,6 +3443,45 @@ Remaining:
 
 - Higher-order pipeline targets, imported functions, generic inference, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0349 Roadmap Refresh After Pipeline Input Compatibility Diagnostics
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 after direct pipeline input compatibility diagnostics landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, current pipeline parsing/lowering behavior, and the remaining function pipeline/operator backlog.
+- Selected the next bounded implementation slice: direct pipeline target arity and non-piped call argument diagnostics for known TypeSharp-declared function targets.
+- Kept imported C# pipeline targets, generic inference, optional/default/params TypeSharp function parameter policy, higher-order pipeline targets, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra out of the slice.
+- Created active task `0350 Pipeline target arity and argument diagnostics slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [C# bitwise and shift operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/bitwise-and-shift-operators)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [F# functions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/functions/)
+- [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Direct pipeline target arity and non-piped call argument diagnostics are active in task 0350. Imported C# pipeline targets, generic inference, optional/default/params TypeSharp function parameter policy, higher-order pipeline targets, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3467,7 +3506,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0348 is compressed here.
+- Completed historical work through task 0349 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

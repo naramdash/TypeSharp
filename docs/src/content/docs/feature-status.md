@@ -195,6 +195,8 @@ After direct named-function composition compatibility diagnostics, the empty-que
 
 The direct pipeline function input compatibility slice completed `TS2201` diagnostics for incompatible `value |> f` and `value |> f(args...)` targets when the target's first TypeSharp-declared parameter type is known. Existing pipeline parsing and C# 7.3-compatible call lowering remain unchanged. Higher-order pipeline targets, imported functions, generic inference, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, flag-aware enum algebra, and richer pattern algebra remain backlog.
 
+After direct pipeline input compatibility diagnostics, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is direct pipeline target arity and non-piped call argument diagnostics for known TypeSharp-declared function targets. Imported C# pipeline targets, generic inference, optional/default/params TypeSharp function parameter policy, higher-order pipeline targets, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, flag-aware enum algebra, and richer pattern algebra remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

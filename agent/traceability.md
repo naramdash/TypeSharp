@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| Pipeline target arity and argument diagnostics | [0350-pipeline-target-arity-and-argument-diagnostics-slice.md](0350-pipeline-target-arity-and-argument-diagnostics-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, focused pipeline diagnostics fixture, pipeline backend fixture stability, docs diagnostics/lowering/reference updates. |
 
 ## Completed Evidence Index
 

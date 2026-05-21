@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task. |
+| Active task packet | [`agent/0350-pipeline-target-arity-and-argument-diagnostics-slice.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/0350-pipeline-target-arity-and-argument-diagnostics-slice.md) |
+| Next top-priority task | Task 0350 pipeline target arity and argument diagnostics is in progress. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0348 completed bounded direct pipeline input compatibility diagnostics while preserving pipeline parsing and C# 7.3-compatible lowering. |
-| Completed work covered | 0001-0348 |
+| Current tooling slice | Task 0349 rechecked official source signals after direct pipeline input compatibility diagnostics and opened task 0350 for direct pipeline target arity and call-argument diagnostics. |
+| Completed work covered | 0001-0349 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
