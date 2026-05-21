@@ -223,6 +223,8 @@ After direct generic named-function composition inference, the empty-queue refre
 
 The explicit composition function-type annotation compatibility slice completed `TS2201` diagnostics for `let composed: A -> B = f >> g` and `let composed: A -> B = g << f` when direct TypeSharp-declared unary functions would receive an incompatible annotated input or return a result incompatible with the annotation. The slice reuses the existing bounded generic composition edge substitution, leaves generated delegate-lambda lowering unchanged, and keeps unannotated composition function-type inference, public ABI inference, imported composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, and general type-constructor unification in backlog.
 
+After explicit composition function-type annotation compatibility, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is private direct composition value inference for unannotated non-exported values whose direct TypeSharp-declared unary composition signature is fully known. Exported unannotated composition values, public ABI inference, imported composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, and general type-constructor unification remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

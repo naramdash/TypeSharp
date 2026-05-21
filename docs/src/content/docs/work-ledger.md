@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Recheck `agent/tasks.md`, `agent/checklist.md`, and official baseline references before selecting the next slice. |
+| Active task packet | `agent/0364-direct-composition-value-inference-slice.md` |
+| Next top-priority task | Task 0364 direct composition value inference slice. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0362 completed explicit function-type annotation compatibility checks for direct named-function composition values. |
-| Completed work covered | 0001-0362 |
+| Current tooling slice | Task 0364 is inferring concrete delegate types for unannotated non-exported direct named-function composition values when signatures are fully known. |
+| Completed work covered | 0001-0363 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

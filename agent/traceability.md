@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | Recheck the task index, checklist, and official baseline references before selecting the next bounded slice. |
+| 0364 Direct composition value inference slice | [0364-direct-composition-value-inference-slice.md](0364-direct-composition-value-inference-slice.md) | `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`, backend composition lowering fixture, `test/TypeSharp.Compiler.Tests/Program.cs`, docs canonical pages. |
 
 ## Completed Evidence Index
 
