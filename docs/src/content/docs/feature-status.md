@@ -149,6 +149,8 @@ The bounded implementation slices after the refresh added match guard support an
 
 After literal match exhaustiveness, the empty-queue refresh rechecked the same official sources on 2026-05-21 and found no baseline change. The next bounded implementation slice completed simple TypeSharp enum declaration parsing/checking/lowering, giving enum match exhaustiveness a stable TypeSharp-owned enum symbol and generated C# shape.
 
+After enum declarations, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The next bounded implementation slice is enum match exhaustiveness for TypeSharp-owned enums; imported C# enum exhaustiveness, flag semantics, explicit underlying types, explicit numeric member values, and enum member attributes remain backlog.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

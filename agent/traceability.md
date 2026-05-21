@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
+| Enum match exhaustiveness slice | [0312-enum-match-exhaustiveness-slice.md](0312-enum-match-exhaustiveness-slice.md) | Type-checker enum match diagnostics, backend enum match lowering, CLI `net48` build smoke, docs and verification |
 
 ## Completed Evidence Index
 
