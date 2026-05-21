@@ -1,0 +1,32 @@
+namespace Samples.BitwiseCompoundAssignment
+
+enum Permission {
+  None,
+  Read,
+  Write,
+  ReadWrite = Read | Write
+}
+
+fun updateBits(): int {
+  let mut value = 1
+  value |= 2
+  value &= 3
+  value ^= 4
+  value
+}
+
+fun updateFlags(): Permission {
+  let mut permission = Permission.Read
+  permission |= Permission.Write
+  permission &= Permission.ReadWrite
+  permission ^= Permission.Write
+  permission
+}
+
+fun updateBool(): bool {
+  let mut flag = true
+  flag &= false
+  flag |= true
+  flag ^= false
+  flag
+}

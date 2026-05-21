@@ -1945,5 +1945,10 @@ public sealed class TypeSharpParser
          (current.Kind == SyntaxKind.LessToken && next.Kind == SyntaxKind.LessToken));
 
     private static bool IsAssignmentOperator(SyntaxKind kind) =>
-        kind is SyntaxKind.EqualsToken or SyntaxKind.PlusEqualsToken or SyntaxKind.MinusEqualsToken;
+        kind is SyntaxKind.EqualsToken
+            or SyntaxKind.PlusEqualsToken
+            or SyntaxKind.MinusEqualsToken
+            or SyntaxKind.PipeEqualsToken
+            or SyntaxKind.AmpersandEqualsToken
+            or SyntaxKind.CaretEqualsToken;
 }

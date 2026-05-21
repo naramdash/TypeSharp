@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0340-bitwise-compound-assignment-slice.md](0340-bitwise-compound-assignment-slice.md) |
-| Active summary     | Add parser/lowering support for bitwise compound assignment `|=`, `&=`, and `^=` without taking on shifts or user-defined operators. |
-| Completed range    | 0001-0339                         |
+| Active task packet | None                               |
+| Active summary     | No active task.                    |
+| Completed range    | 0001-0340                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0339 roadmap refresh | 0340 Bitwise compound assignment slice | [0340-bitwise-compound-assignment-slice.md](0340-bitwise-compound-assignment-slice.md) | Add parser and C# 7.3-compatible lowering for `\|=`, `&=`, and `^=` over the already supported assignment surface; keep shifts, `<<=`, `>>=`, user-defined operators, and broader assignment analysis out. |
+| Q2       | Done        | Task 0339 roadmap refresh | 0340 Bitwise compound assignment slice | [tasks-rollup.md#task-0340-bitwise-compound-assignment-slice](tasks-rollup.md#task-0340-bitwise-compound-assignment-slice) | Added parser and C# 7.3-compatible lowering for `\|=`, `&=`, and `^=` over the already supported assignment surface; kept shifts, `<<=`, `>>=`, user-defined operators, and broader assignment analysis out. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0339 Roadmap refresh after boolean bitwise expressions | [tasks-rollup.md#task-0339-roadmap-refresh-after-boolean-bitwise-expressions](tasks-rollup.md#task-0339-roadmap-refresh-after-boolean-bitwise-expressions) | Rechecked official source signals after boolean bitwise expressions, confirmed the baseline, and selected bitwise compound assignment `\|=`/`&=`/`^=` as the next bounded implementation slice. |
 | Q2       | Done        | Task 0337 roadmap refresh | 0338 Boolean bitwise expression slice | [tasks-rollup.md#task-0338-boolean-bitwise-expression-slice](tasks-rollup.md#task-0338-boolean-bitwise-expression-slice) | Added expression-level boolean `\|`, `&`, and `^` over known non-null `bool` operands with C# 7.3-compatible lowering; kept unary boolean complement, shifts, compound assignment, user-defined operators, and flag-aware enum algebra out. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0337 Roadmap refresh after integral numeric bitwise expressions | [tasks-rollup.md#task-0337-roadmap-refresh-after-integral-numeric-bitwise-expressions](tasks-rollup.md#task-0337-roadmap-refresh-after-integral-numeric-bitwise-expressions) | Rechecked official source signals after integral numeric bitwise expressions, confirmed the baseline, and selected boolean `\|`/`&`/`^` expressions as the next bounded implementation slice. |

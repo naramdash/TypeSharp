@@ -505,6 +505,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles enum declaration API", CliBuildCompilesEnumDeclarationApi),
     ("CLI build compiles integral bitwise expression API", CliBuildCompilesIntegralBitwiseExpressionApi),
     ("CLI build compiles boolean bitwise expression API", CliBuildCompilesBooleanBitwiseExpressionApi),
+    ("CLI build compiles bitwise compound assignment API", CliBuildCompilesBitwiseCompoundAssignmentApi),
     ("CLI build compiles enum match exhaustiveness", CliBuildCompilesEnumMatchExhaustiveness),
     ("CLI build compiles imported C# enum match exhaustiveness", CliBuildCompilesImportedCSharpEnumMatchExhaustiveness),
     ("CLI build compiles partial declaration API", CliBuildCompilesPartialDeclarationApi),
@@ -19999,6 +20000,124 @@ static void CliBuildCompilesBooleanBitwiseExpressionApi()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated boolean bitwise APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesBitwiseCompoundAssignmentApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "BitwiseCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.BitwiseCompoundAssignment"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.BitwiseCompoundAssignment
+
+            public enum Permission {
+              None = 0,
+              Read = 1,
+              Write = 2,
+              ReadWrite = Read | Write
+            }
+
+            export fun updateBits(): int {
+              let mut value = 1
+              value |= 2
+              value &= 3
+              value ^= 4
+              value
+            }
+
+            export fun updateFlags(): Permission {
+              let mut permission = Permission.Read
+              permission |= Permission.Write
+              permission &= Permission.ReadWrite
+              permission ^= Permission.Write
+              permission
+            }
+
+            export fun updateBool(): bool {
+              let mut flag = true
+              flag &= false
+              flag |= true
+              flag ^= false
+              flag
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/BitwiseCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("value |= 2;", generatedSource);
+        AssertContains("value &= 3;", generatedSource);
+        AssertContains("value ^= 4;", generatedSource);
+        AssertContains("permission |= Permission.Write;", generatedSource);
+        AssertContains("permission &= Permission.ReadWrite;", generatedSource);
+        AssertContains("permission ^= Permission.Write;", generatedSource);
+        AssertContains("flag &= false;", generatedSource);
+        AssertContains("flag |= true;", generatedSource);
+        AssertContains("flag ^= false;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "BitwiseCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with bitwise compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "BitwiseCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>BitwiseCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="BitwiseCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/BitwiseCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace BitwiseCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.BitwiseCompoundAssignment.Module.updateBits() == 7 &&
+                            Samples.BitwiseCompoundAssignment.Module.updateFlags() == Samples.BitwiseCompoundAssignment.Permission.Read &&
+                            Samples.BitwiseCompoundAssignment.Module.updateBool() == true;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build BitwiseCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated bitwise compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

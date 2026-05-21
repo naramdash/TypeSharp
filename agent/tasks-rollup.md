@@ -3055,6 +3055,56 @@ Remaining:
 
 - Bitwise compound assignment `|=`/`&=`/`^=` is active in task 0340. Shifts, shift assignment, unary boolean complement, user-defined operators, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0340 Bitwise Compound Assignment Slice
+
+Completed active implementation work for:
+
+- Start Time: 2026-05-21 17:55:52 +09:00
+- End Time: 2026-05-21 18:06:31 +09:00
+
+Completed work:
+
+- Added `|=`, `&=`, and `^=` lexer tokens and assignment parsing.
+- Preserved existing `=`, `+=`, and `-=` assignment behavior.
+- Reused the existing assignment emitter so bitwise compound assignment lowers to ordinary C# 7.3-compatible assignment operators.
+- Added parser snapshot coverage, type-checker acceptance coverage, backend snapshot coverage, generated `net48` CLI build and C# consumer smoke, fixture README coverage, canonical docs, work-ledger, tasks, and traceability coverage.
+- Kept shifts, shift assignment, user-defined operators, broader assignment target analysis, flag-aware enum algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, broad attribute target validation, numeric pattern algebra, and richer pattern algebra out of scope.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles bitwise compound assignment API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [SyntaxKind.cs](../lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs)
+- [TypeSharpLexer.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpLexer.cs)
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- `test/fixtures/parser/positive/0036-bitwise-compound-assignment`
+- `test/fixtures/diagnostics/type-checker/positive/bitwise-compound-assignment`
+- `test/fixtures/backend/csharp/positive/0043-bitwise-compound-assignment-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+
+Remaining:
+
+- Shifts, shift assignment, unary boolean complement, user-defined operators, broader assignment target analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
