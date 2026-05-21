@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Apply the roadmap-refresh rule because user inbox, agent queue, and checklist currently have no unchecked work. |
+| Active task packet | `agent/0314-imported-csharp-enum-exhaustiveness-slice.md` |
+| Next top-priority task | Continue task `0314`, extending enum match exhaustiveness to imported C# enum metadata. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0312-enum-match-exhaustiveness-slice` completed match exhaustiveness for TypeSharp-owned enum declarations. |
-| Completed work covered | 0001-0312 |
+| Current tooling slice | Task `0314-imported-csharp-enum-exhaustiveness-slice` is active after the roadmap refresh found no baseline change. |
+| Completed work covered | 0001-0313 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

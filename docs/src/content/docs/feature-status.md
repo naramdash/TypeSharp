@@ -151,6 +151,8 @@ After literal match exhaustiveness, the empty-queue refresh rechecked the same o
 
 After enum declarations, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice completed enum match exhaustiveness for TypeSharp-owned enums; imported C# enum exhaustiveness, flag semantics, explicit underlying types, explicit numeric member values, and enum member attributes remain backlog.
 
+After TypeSharp-owned enum match exhaustiveness, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The next bounded implementation slice is imported C# enum exhaustiveness using finite public enum-member metadata from referenced assemblies. Flag algebra, explicit TypeSharp enum numeric values, enum aliases, and enum member attributes remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

@@ -1974,6 +1974,42 @@ Remaining:
 
 - Imported C# enum exhaustiveness, flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, and richer pattern algebra remain future work.
 
+## Task 0313 Roadmap Refresh After Enum Match Exhaustiveness
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework lifecycle, NuGet, and VS Code sources on 2026-05-21 after TypeSharp-owned enum match exhaustiveness landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, and compiler metadata paths against the current code state.
+- Selected the next bounded implementation slice: imported C# enum match exhaustiveness using finite enum members already present in local/framework metadata.
+- Created active task `0314 Imported C# enum exhaustiveness slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework lifecycle](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-framework)
+- [dotnet restore](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Imported C# enum exhaustiveness is active in task 0314. Flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

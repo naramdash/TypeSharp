@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
+| Task 0314 Imported C# enum exhaustiveness slice | [0314-imported-csharp-enum-exhaustiveness-slice.md](0314-imported-csharp-enum-exhaustiveness-slice.md) | Metadata enum members, imported enum scope registration, imported enum match diagnostics/lowering, CLI local C# DLL smoke, docs updates. |
 
 ## Completed Evidence Index
 
