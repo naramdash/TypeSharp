@@ -2176,7 +2176,7 @@ public static class CSharpSourceBackend
             var wroteArm = false;
             foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
             {
-                if (!TryGetMatchArm(arm, union, out var unionCase, out var payloadVariable, out var expression))
+                if (!TryGetMatchArm(arm, union, out var unionCase, out var payloadVariable, out var expression, out var isDiscard))
                 {
                     continue;
                 }
@@ -2186,18 +2186,28 @@ public static class CSharpSourceBackend
                     builder.AppendLine();
                 }
 
-                var predicate = unionCase.Parameters.Count == 0
-                    ? "IsPayloadlessCase"
-                    : "IsPayloadCase";
-                builder.AppendLine($"                if (TypeSharpPattern.{predicate}({matchValueName}, {unionCase.Tag}))");
-                builder.AppendLine("                {");
-                if (payloadVariable.Length > 0 && unionCase.Parameters.Count == 1)
+                if (isDiscard)
                 {
-                    builder.AppendLine($"                    var {payloadVariable} = TypeSharpPattern.RequirePayload<{unionCase.Parameters[0].Type}>({matchValueName}, {unionCase.Tag});");
+                    builder.AppendLine("                {");
+                    builder.AppendLine($"                    return {EmitExpression(expression)};");
+                    builder.AppendLine("                }");
+                }
+                else
+                {
+                    var predicate = unionCase.Parameters.Count == 0
+                        ? "IsPayloadlessCase"
+                        : "IsPayloadCase";
+                    builder.AppendLine($"                if (TypeSharpPattern.{predicate}({matchValueName}, {unionCase.Tag}))");
+                    builder.AppendLine("                {");
+                    if (payloadVariable.Length > 0 && unionCase.Parameters.Count == 1)
+                    {
+                        builder.AppendLine($"                    var {payloadVariable} = TypeSharpPattern.RequirePayload<{unionCase.Parameters[0].Type}>({matchValueName}, {unionCase.Tag});");
+                    }
+
+                    builder.AppendLine($"                    return {EmitExpression(expression)};");
+                    builder.AppendLine("                }");
                 }
 
-                builder.AppendLine($"                    return {EmitExpression(expression)};");
-                builder.AppendLine("                }");
                 wroteArm = true;
             }
 
@@ -2379,14 +2389,23 @@ public static class CSharpSourceBackend
             UnionShape union,
             out UnionCaseShape unionCase,
             out string payloadVariable,
-            out SyntaxNode? expression)
+            out SyntaxNode? expression,
+            out bool isDiscard)
         {
             unionCase = default;
             payloadVariable = string.Empty;
             expression = null;
+            isDiscard = false;
 
             var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
             var caseName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (caseName == "_")
+            {
+                expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+                isDiscard = expression is not null;
+                return isDiscard;
+            }
+
             if (caseName.Length == 0)
             {
                 return false;

@@ -1,0 +1,13 @@
+namespace Samples.TypeChecker.UnionMatchDiscard
+
+union PaymentStatus {
+  Pending
+  Paid(at: string)
+  Failed(reason: string)
+}
+
+fun describe(status: PaymentStatus): string =
+  match status {
+    Pending => "Waiting"
+    _ => "Settled"
+  }

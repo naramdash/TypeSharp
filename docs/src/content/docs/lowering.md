@@ -46,7 +46,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | Manifest references | Generated project `<Reference>` items. |
 | Records | Immutable sealed C# classes with constructor, get-only properties, equality, and hash code. |
 | Nominal unions | Abstract base type plus sealed case types and runtime pattern helper metadata. |
-| Pattern matching over nominal unions | Ordered C# case checks using runtime pattern helpers. |
+| Pattern matching over nominal unions | Ordered C# case checks using runtime pattern helpers; `_` lowers to an unconditional fallback arm. |
 | Type-level unions in local code | Local erased representation, usually `object`, with narrowing checks. |
 | Structural shape proofs | Compile-time checks; no public metadata shape. |
 | `async fun` | C# `async` method returning `Task` or `Task<T>`. |
@@ -106,7 +106,7 @@ Evidence:
 
 Nominal unions lower to an abstract base type with sealed nested case types. Payload-free cases expose static properties; payload cases expose factory methods. Generated cases implement runtime helper metadata so pattern helpers can inspect tags, names, and payloads.
 
-Nominal union matches lower to ordered C# checks. Payload extraction uses runtime helpers. Non-exhaustive matches should be reported before backend emission.
+Nominal union matches lower to ordered C# checks. Payload extraction uses runtime helpers, and `_` arms lower to an unconditional fallback return in source order. Non-exhaustive matches should be reported before backend emission.
 
 Type-level unions are local compile-time constructs. Their matches lower to C# type checks where supported, and public boundary leaks report diagnostics.
 

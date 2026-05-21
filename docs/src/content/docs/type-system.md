@@ -119,7 +119,7 @@ Pattern matching over nominal unions is the path toward exhaustive domain logic.
 TypeSharp follows F#'s functional consistency where the behavior can remain explainable to C# and .NET Framework consumers:
 
 - immutable values, expression-oriented functions, records, nominal unions, `Option<T>`, `Result<T,E>`, pattern matching, pipeline, and composition are part of the MVP path;
-- richer exhaustiveness is the next functional correctness priority, especially payload-free nominal unions, wildcard and guard interactions, bool/enum cases, and known local type-level unions;
+- richer exhaustiveness is the next functional correctness priority; known nominal unions and local type-level unions report missing cases/members, `_` can cover the remainder, and guard interactions plus bool/enum cases remain next;
 - struct-backed value options, recursive union ergonomics, and helper APIs such as bind/map/default are stable backlog items once their `net48` ABI and allocation tradeoffs are documented;
 - general currying, partial application, computation-expression-style workflows, active-pattern-style extractors, units of measure, and type providers stay backlog or experimental until TypeSharp has deterministic lowering, diagnostics, and security boundaries.
 

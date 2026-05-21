@@ -58,7 +58,7 @@ Diagnostic codes use `TS` plus four digits. Once a public code is allocated, it 
 | `TS2004` | Binding | Error | Duplicate export |
 | `TS2201` | Type Checking | Error | Type mismatch |
 | `TS2202` | Type Checking | Error | Nullability contract violation |
-| `TS2203` | Type Checking | Error | Non-exhaustive match |
+| `TS2203` | Type Checking | Error | Non-exhaustive match over a known union |
 | `TS2204` | Type Checking | Error | Compile-time-only type leaked through public boundary |
 | `TS2205` | Type Checking | Error | Unsupported generic constraint |
 | `TS2206` | Type Checking | Error | Dynamic capability required |

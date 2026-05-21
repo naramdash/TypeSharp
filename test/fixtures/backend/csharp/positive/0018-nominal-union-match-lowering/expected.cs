@@ -31,6 +31,24 @@ namespace Samples.Unions
                 throw TypeSharpPattern.NoMatch(__match0);
             })();
         }
+
+        public static string describeWithFallback(PaymentStatus status)
+        {
+            return new System.Func<string>(delegate()
+            {
+                var __match1 = status;
+                if (TypeSharpPattern.IsPayloadlessCase(__match1, 0))
+                {
+                    return "Waiting";
+                }
+
+                {
+                    return "Settled";
+                }
+
+                throw TypeSharpPattern.NoMatch(__match1);
+            })();
+        }
     }
 
     public abstract class PaymentStatus

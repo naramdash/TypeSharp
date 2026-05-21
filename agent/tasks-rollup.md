@@ -1450,6 +1450,43 @@ Primary evidence:
 - [Lowering](../docs/src/content/docs/lowering.md)
 - [tasks.md](tasks.md)
 
+## Task 0299 Match Exhaustiveness Expansion
+
+Completed match exhaustiveness work established:
+
+- Added nominal union `_` discard-arm handling to the type checker so a known union match can cover remaining cases without reporting `TS2203`.
+- Preserved deterministic missing-case diagnostics for nominal unions that still omit known cases, and kept existing local type-level union exhaustiveness behavior intact.
+- Lowered nominal union `_` arms to unconditional C# fallback returns in source order, matching the existing type-level union discard lowering shape while preserving `net48` C# 7.3 output.
+- Added a positive type-checker fixture for nominal union discard exhaustiveness and expanded the nominal union backend snapshot to cover discard fallback lowering.
+- Updated diagnostic descriptor metadata and canonical docs for the supported boundary, including marking `when` guards as planned until parser/checker support lands together.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "type checker fixture diagnostics match"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "C# backend fixture snapshots match"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "CLI build stops before emission on non-exhaustive match"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "CLI build compiles nominal union match lowering"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [DiagnosticDescriptors.cs](../lang/TypeSharp.Compiler/Diagnostics/DiagnosticDescriptors.cs)
+- [union-match-discard](../test/fixtures/diagnostics/type-checker/positive/union-match-discard)
+- [0018-nominal-union-match-lowering](../test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

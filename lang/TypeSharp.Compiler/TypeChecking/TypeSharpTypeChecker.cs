@@ -1086,15 +1086,23 @@ public static class TypeSharpTypeChecker
             if (inputType.IsKnown && scope.ResolveUnion(inputType.Name, out var union))
             {
                 var coveredCases = new HashSet<string>(StringComparer.Ordinal);
+                var hasDiscardArm = false;
                 foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
                 {
                     var armScope = new TypeScope(scope);
-                    if (TryGetUnionArm(arm, union, out var unionCase, out var payloadName, out var expression))
+                    if (TryGetUnionArm(arm, union, out var unionCase, out var payloadName, out var expression, out var isDiscard))
                     {
-                        coveredCases.Add(unionCase.Name);
-                        if (payloadName.Length > 0 && unionCase.Parameters.Count == 1)
+                        if (isDiscard)
                         {
-                            armScope.DeclareValue(payloadName, SimpleType.Named(unionCase.Parameters[0].Type));
+                            hasDiscardArm = true;
+                        }
+                        else
+                        {
+                            coveredCases.Add(unionCase.Name);
+                            if (payloadName.Length > 0 && unionCase.Parameters.Count == 1)
+                            {
+                                armScope.DeclareValue(payloadName, SimpleType.Named(unionCase.Parameters[0].Type));
+                            }
                         }
                     }
 
@@ -1104,10 +1112,12 @@ public static class TypeSharpTypeChecker
                     }
                 }
 
-                var missingCases = union.Cases
-                    .Where(unionCase => !coveredCases.Contains(unionCase.Name))
-                    .Select(unionCase => unionCase.Name)
-                    .ToArray();
+                var missingCases = hasDiscardArm
+                    ? []
+                    : union.Cases
+                        .Where(unionCase => !coveredCases.Contains(unionCase.Name))
+                        .Select(unionCase => unionCase.Name)
+                        .ToArray();
                 if (missingCases.Length > 0)
                 {
                     _diagnostics.Add(new Diagnostic(
@@ -2640,14 +2650,22 @@ public static class TypeSharpTypeChecker
             UnionInfo union,
             out UnionCaseInfo unionCase,
             out string payloadName,
-            out SyntaxNode? expression)
+            out SyntaxNode? expression,
+            out bool isDiscard)
         {
             unionCase = default;
             payloadName = string.Empty;
             expression = GetMatchArmExpression(arm);
+            isDiscard = false;
 
             var pattern = arm.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
             var caseName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (caseName == "_")
+            {
+                isDiscard = true;
+                return true;
+            }
+
             if (caseName.Length == 0)
             {
                 return false;

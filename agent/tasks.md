@@ -16,8 +16,8 @@
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
-| Active summary     | None. Next requested Q2 queue item is `0299 Match exhaustiveness expansion`. |
-| Completed range    | 0001-0294, 0296, 0298              |
+| Active summary     | None                               |
+| Completed range    | 0001-0294, 0296, 0298-0299         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | Requested   | Task 0296 F# roadmap      | 0299 Match exhaustiveness expansion      | Create packet when selected                                              | Broaden TypeSharp match exhaustiveness diagnostics for payload-free nominal unions, wildcard/guard interactions, bool/enums, and known local type-level unions. |
+| Q2       | Done        | Task 0296 F# roadmap      | 0299 Match exhaustiveness expansion      | [tasks-rollup.md#task-0299-match-exhaustiveness-expansion](tasks-rollup.md#task-0299-match-exhaustiveness-expansion) | Added nominal union `_` exhaustiveness coverage, C# fallback lowering, diagnostics/docs updates, and focused/full verification. |
 | Q2       | Done        | Task 0294 parity review   | 0298 C# unbound generic nameof parity    | [tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity](tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity) | Implemented `nameof(List<>)`-style parsing, type-root binding, and C# 7.3 string constant lowering with positive/negative coverage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |
 | Q2       | Done        | Task 0293 roadmap refresh | 0296 F# functional consistency roadmap   | [tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap](tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap) | Refreshed official F# sources, classified TypeSharp functional roadmap boundaries, and queued match exhaustiveness expansion. |

@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | Next requested Q2 item is `0299 Match exhaustiveness expansion` from [tasks.md](tasks.md). | Completed 0296 evidence is in [tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap](tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap). |
+| None | [tasks.md](tasks.md) | Select the next requested queue item before adding active evidence. |
 
 ## Completed Evidence Index
 

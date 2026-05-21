@@ -242,8 +242,8 @@ public static class DiagnosticDescriptors
         DiagnosticSeverity.Error,
         DiagnosticCategory.TypeChecking,
         "Non-exhaustive match.",
-        "A match expression over a known nominal union must handle every declared case.",
-        "Add arms for the missing union cases.");
+        "A match expression over a known nominal union or type-level union must handle every known case/member unless a discard arm covers the remainder.",
+        "Add arms for the missing cases/members, or add a final discard arm.");
 
     public static readonly DiagnosticDescriptor MissingReference = new(
         "TS2401",

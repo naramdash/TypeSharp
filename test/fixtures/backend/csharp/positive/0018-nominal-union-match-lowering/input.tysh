@@ -12,3 +12,9 @@ export fun describe(status: PaymentStatus): string =
     Paid(at) => $"Paid:{at}"
     Failed(reason) => $"Failed:{reason}"
   }
+
+export fun describeWithFallback(status: PaymentStatus): string =
+  match status {
+    Pending => "Waiting"
+    _ => "Settled"
+  }
