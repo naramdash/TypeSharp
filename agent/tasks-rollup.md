@@ -3398,6 +3398,51 @@ Remaining:
 
 - Direct pipeline input compatibility diagnostics are active in task 0348. Higher-order pipeline targets, imported functions, generic inference, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0348 Pipeline Function Input Compatibility Diagnostics Slice
+
+Completed implementation work established:
+
+- Added a type-checker pipeline path that preserves existing target capability checks, checks direct call target arguments, and validates the piped input against known TypeSharp-declared first parameter types.
+- Reported deterministic `TS2201` diagnostics for incompatible `value |> f` and `value |> f(args...)` targets when the target signature is known.
+- Preserved existing pipeline parsing, backend fixture output, and C# 7.3-compatible call lowering.
+- Added `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility` covering compatible direct targets, chained pipeline targets, call targets, incompatible identifier targets, incompatible call targets, and zero-parameter out-of-scope behavior.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the bounded direct pipeline compatibility boundary.
+- Kept higher-order pipeline targets, imported functions, generic inference, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra out of the slice.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles pipeline lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility`
+- `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Higher-order pipeline targets, imported functions, generic inference, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3422,7 +3467,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0347 is compressed here.
+- Completed historical work through task 0348 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

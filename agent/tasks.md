@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0348-pipeline-function-input-compatibility-diagnostics-slice.md](0348-pipeline-function-input-compatibility-diagnostics-slice.md) |
-| Active summary     | Add direct pipeline input compatibility diagnostics for known TypeSharp-declared function targets. |
-| Completed range    | 0001-0347                         |
+| Active task packet | None                               |
+| Active summary     | None                               |
+| Completed range    | 0001-0348                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0347 roadmap refresh | 0348 Pipeline function input compatibility diagnostics slice | [0348-pipeline-function-input-compatibility-diagnostics-slice.md](0348-pipeline-function-input-compatibility-diagnostics-slice.md) | Add direct `value |> f` and `value |> f(args...)` first-parameter compatibility diagnostics for known TypeSharp-declared function targets. |
+| Q2       | Done        | Task 0347 roadmap refresh | 0348 Pipeline function input compatibility diagnostics slice | [tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice](tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice) | Added direct `value |> f` and `value |> f(args...)` first-parameter `TS2201` diagnostics for known TypeSharp-declared function targets while preserving pipeline lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0347 Roadmap refresh after composition function compatibility diagnostics | [tasks-rollup.md#task-0347-roadmap-refresh-after-composition-function-compatibility-diagnostics](tasks-rollup.md#task-0347-roadmap-refresh-after-composition-function-compatibility-diagnostics) | Rechecked official source signals after direct named-function composition compatibility diagnostics, confirmed the baseline, and selected bounded direct pipeline input compatibility diagnostics. |
 | Q2       | Done        | Task 0345 roadmap refresh | 0346 Composition function compatibility diagnostics slice | [tasks-rollup.md#task-0346-composition-function-compatibility-diagnostics-slice](tasks-rollup.md#task-0346-composition-function-compatibility-diagnostics-slice) | Added direct unary named-function `>>`/`<<` compatibility diagnostics before lowering, keeping higher-order function values, generics, imported functions, shifts, and currying out. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0345 Roadmap refresh after composition shift ambiguity diagnostics | [tasks-rollup.md#task-0345-roadmap-refresh-after-composition-shift-ambiguity-diagnostics](tasks-rollup.md#task-0345-roadmap-refresh-after-composition-shift-ambiguity-diagnostics) | Rechecked official source signals after composition/shift ambiguity diagnostics, confirmed the baseline, and selected bounded direct named-function composition compatibility diagnostics. |

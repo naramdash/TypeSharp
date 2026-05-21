@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Pipeline function input compatibility diagnostics | [0348-pipeline-function-input-compatibility-diagnostics-slice.md](0348-pipeline-function-input-compatibility-diagnostics-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility`, pipeline parser/backend fixture stability, docs diagnostics/lowering/reference updates. |
+| None | [tasks.md](tasks.md) | No active task. |
 
 ## Completed Evidence Index
 
@@ -60,6 +60,7 @@
 | Local assignment target analysis | [tasks-rollup.md#task-0342-local-assignment-target-analysis-slice](tasks-rollup.md#task-0342-local-assignment-target-analysis-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/positive/local-assignment-target-analysis`, `test/fixtures/diagnostics/type-checker/negative/local-assignment-target-invalid`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Composition shift ambiguity diagnostics | [tasks-rollup.md#task-0344-composition-shift-ambiguity-diagnostics-slice](tasks-rollup.md#task-0344-composition-shift-ambiguity-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/composition-shift-ambiguity`, `test/fixtures/parser/positive/0022-composition-expression`, `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Composition function compatibility diagnostics | [tasks-rollup.md#task-0346-composition-function-compatibility-diagnostics-slice](tasks-rollup.md#task-0346-composition-function-compatibility-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/composition-function-compatibility`, `test/fixtures/parser/positive/0022-composition-expression`, `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Pipeline function input compatibility diagnostics | [tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice](tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility`, `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

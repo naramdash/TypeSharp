@@ -727,6 +727,11 @@ public static class TypeSharpTypeChecker
                 return CheckCompositionExpression(node, scope);
             }
 
+            if (IsPipelineExpression(node))
+            {
+                return CheckPipelineExpression(node, scope);
+            }
+
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
                 return inferredType;
@@ -1064,6 +1069,76 @@ public static class TypeSharpTypeChecker
         private static bool IsBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken);
+
+        private SimpleType CheckPipelineExpression(SyntaxNode node, TypeScope scope)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2)
+            {
+                foreach (var expression in expressions)
+                {
+                    CheckExpression(expression, scope);
+                }
+
+                return SimpleType.Unknown;
+            }
+
+            var input = expressions[0];
+            var target = expressions[1];
+            var inputType = CheckExpression(input, scope);
+            if (!TryGetPipelineTargetFunctionName(target, out var targetName) ||
+                !scope.ResolveFunctionInfo(targetName, out var targetFunction))
+            {
+                CheckExpression(target, scope);
+                return SimpleType.Unknown;
+            }
+
+            CheckPipelineTargetArguments(target, scope);
+            CheckPipelineFunctionInput(node, scope, targetName, targetFunction, inputType);
+            return targetFunction.ReturnType;
+        }
+
+        private void CheckPipelineTargetArguments(SyntaxNode target, TypeScope scope)
+        {
+            if (target.Kind != SyntaxKind.CallExpression)
+            {
+                return;
+            }
+
+            foreach (var argument in target.Children.Skip(1).Where(child => !child.IsToken))
+            {
+                CheckExpression(argument, scope);
+            }
+        }
+
+        private void CheckPipelineFunctionInput(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            FunctionInfo targetFunction,
+            SimpleType inputType)
+        {
+            if (!inputType.IsKnown ||
+                targetFunction.ParameterTypes is not { Count: > 0 } parameterTypes ||
+                !parameterTypes[0].IsKnown)
+            {
+                return;
+            }
+
+            var parameterType = parameterTypes[0];
+            if (CanAssign(scope, parameterType, inputType))
+            {
+                return;
+            }
+
+            ReportMismatch(
+                node,
+                $"Pipeline target '{targetName}' expects '{parameterType}' for its first parameter, but pipeline input has type '{inputType}'.");
+        }
+
+        private static bool IsPipelineExpression(SyntaxNode node) =>
+            node.Kind == SyntaxKind.BinaryExpression &&
+            node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.PipeGreaterToken);
 
         private SimpleType CheckCompositionExpression(SyntaxNode node, TypeScope scope)
         {

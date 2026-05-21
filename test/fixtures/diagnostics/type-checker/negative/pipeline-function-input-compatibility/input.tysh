@@ -1,0 +1,19 @@
+namespace Samples.TypeChecker.PipelineFunctionInputCompatibility
+
+fun increment(value: int): int = value + 1
+
+fun stringify(value: int): string = value.ToString()
+
+fun length(value: string): int = value.Length
+
+fun append(value: string, suffix: string): string = value + suffix
+
+fun now(): int = 0
+
+let validDirect = 1 |> increment
+let validChain = 1 |> stringify |> length
+let validCall = "a" |> append("!")
+
+let invalidDirect = "a" |> increment
+let invalidCall = 1 |> append("!")
+let zeroParameterOutOfScope = 1 |> now
