@@ -48,7 +48,7 @@ Current boundary:
 | TypeScript Signal | TypeSharp Status | TypeSharp Direction |
 | --- | --- | --- |
 | Structural compatibility and object shapes | MVP local only | Shape aliases and `satisfies` provide local proof. Public APIs use records, classes, interfaces, delegates, or nominal unions unless a future adapter policy generates stable names. |
-| `unknown`, type guards, and discriminated narrowing | MVP limited | `unknown` requires proof before access, and type-level unions support currently implemented type-pattern narrowing. Next work should add bounded structural discriminant narrowing for local object shapes. |
+| `unknown`, type guards, and discriminated narrowing | MVP limited | `unknown` requires proof before access. Type-level unions support type-pattern narrowing, and local structural/type-level unions support bounded equality/inequality narrowing on required literal discriminant members. Broader boolean algebra remains backlog. |
 | Type aliases and interfaces | MVP split | Type aliases remain flexible local type expressions; `public interface` is the CLR-visible contract shape. TypeScript declaration merging is not stable because it obscures generated metadata ownership. |
 | `keyof` and indexed access | MVP limited | Known records and named structural shapes can derive local key/member types. Optional members, index signatures, and deeper generic operators need more checker coverage. |
 | Mapped, conditional, template-literal, and utility types | Stable Backlog | Accepted direction only with an evaluator budget, recursion limits, deterministic diagnostics, and no public compile-time-only leakage. |

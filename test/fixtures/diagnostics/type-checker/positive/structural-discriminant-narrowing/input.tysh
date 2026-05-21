@@ -1,0 +1,19 @@
+namespace Samples.TypeChecker.StructuralDiscriminantNarrowing
+
+type CircleShape = { kind: "circle", radius: double }
+type SquareShape = { kind: "square", side: double }
+type Shape = CircleShape | SquareShape
+
+fun area(shape: Shape): string =
+  if shape.kind == "circle" {
+    shape.radius.ToString()
+  } else {
+    shape.side.ToString()
+  }
+
+fun inverted(shape: Shape): string =
+  if "square" != shape.kind {
+    shape.radius.ToString()
+  } else {
+    shape.side.ToString()
+  }

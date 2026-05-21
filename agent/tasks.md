@@ -17,7 +17,7 @@
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
 | Active summary     | None                               |
-| Completed range    | 0001-0296, 0298-0299               |
+| Completed range    | 0001-0296, 0298-0300               |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | Requested   | Task 0295 TypeScript roadmap | 0300 Structural discriminant narrowing slice | Create packet when selected                                           | Implement bounded local narrowing for structural/type-level unions with known literal tag properties and deterministic diagnostics. |
+| Q2       | Done        | Task 0295 TypeScript roadmap | 0300 Structural discriminant narrowing slice | [tasks-rollup.md#task-0300-structural-discriminant-narrowing-slice](tasks-rollup.md#task-0300-structural-discriminant-narrowing-slice) | Added `if` equality/inequality literal discriminant narrowing for local structural/type-level unions with deterministic impossible-literal diagnostics. |
 | Q2       | Requested   | Task 0295 TypeScript roadmap | 0301 Source module alias and project reference policy | Create packet when selected                                     | Define `TypeSharp.toml`-owned source aliases/project references that lower to generated C# identities or report diagnostics before emission. |
 | Q3       | Requested   | Task 0295 TypeScript roadmap | 0302 Advanced type operator evaluator budget | Create packet when selected                                      | Design recursion limits and diagnostics for mapped, conditional, template-literal, and utility type computation without public ABI leakage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |

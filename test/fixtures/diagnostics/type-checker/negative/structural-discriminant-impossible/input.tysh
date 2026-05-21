@@ -1,0 +1,12 @@
+namespace Samples.TypeChecker.StructuralDiscriminantImpossible
+
+type CircleShape = { kind: "circle", radius: double }
+type SquareShape = { kind: "square", side: double }
+type Shape = CircleShape | SquareShape
+
+fun impossible(shape: Shape): string =
+  if shape.kind == "triangle" {
+    "bad"
+  } else {
+    "ok"
+  }

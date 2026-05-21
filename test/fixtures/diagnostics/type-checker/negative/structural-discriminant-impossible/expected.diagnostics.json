@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Discriminant member 'kind' on type-level union 'Shape' has no member with literal type \"triangle\".",
+      "file": "input.tysh",
+      "start": { "line": 8, "column": 6 },
+      "end": { "line": 8, "column": 30 }
+    }
+  ]
+}

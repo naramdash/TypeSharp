@@ -12,10 +12,10 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | Item | State |
 | --- | --- |
 | Active task packet | None |
-| Next top-priority task | Select requested Q2 task `0300 Structural discriminant narrowing slice`. |
+| Next top-priority task | Select requested Q2 task `0301 Source module alias and project reference policy`. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0295-typescript-structural-module-roadmap` is complete; Feature Status, Type System, Modules, and Project Configuration now document the TypeScript-derived structural/module roadmap boundary. |
-| Completed work covered | 0001-0296, 0298-0299 |
+| Current tooling slice | Task `0300-structural-discriminant-narrowing-slice` is complete; local structural/type-level unions now narrow on required literal discriminant equality/inequality checks. |
+| Completed work covered | 0001-0296, 0298-0300 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

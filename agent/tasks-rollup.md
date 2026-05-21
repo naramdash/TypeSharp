@@ -1513,6 +1513,36 @@ Primary evidence:
 - [Diagnostics](../docs/src/content/docs/diagnostics.md)
 - [tasks.md](tasks.md)
 
+## Task 0300 Structural Discriminant Narrowing Slice
+
+Completed type-checker work established:
+
+- Added bounded branch-scope narrowing for `if value.Tag == "literal"` and `if value.Tag != "literal"` when `value` has a local type-level union type and every union member resolves to a shape with a required literal discriminant member.
+- Narrowed the original variable to the matching structural member type when a branch leaves exactly one union member, enabling member access such as `shape.radius` or `shape.side` inside the corresponding branch.
+- Added a deterministic `TS2201` diagnostic when the checked discriminant literal is impossible for a fully known discriminated structural/type-level union.
+- Kept the feature local-only; public structural and type-level union boundary diagnostics are unchanged.
+- Added positive and negative type-checker fixtures for structural discriminant narrowing and impossible discriminant checks.
+- Updated Feature Status and Type System docs for the supported equality/inequality boundary and the remaining boolean-algebra backlog.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "type checker fixture diagnostics match"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [structural-discriminant-narrowing](../test/fixtures/diagnostics/type-checker/positive/structural-discriminant-narrowing)
+- [structural-discriminant-impossible](../test/fixtures/diagnostics/type-checker/negative/structural-discriminant-impossible)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

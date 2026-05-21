@@ -1055,6 +1055,16 @@ public static class TypeSharpTypeChecker
 
         private SimpleType InferIf(SyntaxNode node, TypeScope scope)
         {
+            var condition = node.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.BlockExpression && child.Kind != SyntaxKind.ElseClause);
+            BranchNarrowing? thenNarrowing = null;
+            BranchNarrowing? elseNarrowing = null;
+            if (condition is not null &&
+                TryGetDiscriminantNarrowing(condition, scope, out var conditionThenNarrowing, out var conditionElseNarrowing))
+            {
+                thenNarrowing = conditionThenNarrowing;
+                elseNarrowing = conditionElseNarrowing;
+            }
+
             foreach (var child in node.Children.Where(child => !child.IsToken && child.Kind != SyntaxKind.BlockExpression && child.Kind != SyntaxKind.ElseClause))
             {
                 CheckExpression(child, scope);
@@ -1063,18 +1073,176 @@ public static class TypeSharpTypeChecker
             var branchTypes = new List<SimpleType>();
             foreach (var branch in node.Children.Where(child => child.Kind == SyntaxKind.BlockExpression))
             {
-                branchTypes.Add(CheckBlock(branch, new TypeScope(scope)));
+                branchTypes.Add(CheckBlock(branch, CreateBranchScope(scope, thenNarrowing)));
             }
 
             foreach (var elseClause in node.Children.Where(child => child.Kind == SyntaxKind.ElseClause))
             {
                 foreach (var branch in elseClause.Children.Where(child => !child.IsToken))
                 {
-                    branchTypes.Add(CheckExpression(branch, scope));
+                    branchTypes.Add(CheckExpression(branch, CreateBranchScope(scope, elseNarrowing)));
                 }
             }
 
             return MergeBranchTypes(branchTypes);
+        }
+
+        private static TypeScope CreateBranchScope(TypeScope parent, BranchNarrowing? narrowing)
+        {
+            var scope = new TypeScope(parent);
+            if (narrowing.HasValue)
+            {
+                scope.DeclareValue(narrowing.Value.VariableName, narrowing.Value.Type);
+            }
+
+            return scope;
+        }
+
+        private bool TryGetDiscriminantNarrowing(
+            SyntaxNode condition,
+            TypeScope scope,
+            out BranchNarrowing? thenNarrowing,
+            out BranchNarrowing? elseNarrowing)
+        {
+            thenNarrowing = null;
+            elseNarrowing = null;
+
+            condition = UnwrapParenthesized(condition);
+            if (condition.Kind != SyntaxKind.BinaryExpression)
+            {
+                return false;
+            }
+
+            var operatorToken = condition.Children.FirstOrDefault(child =>
+                child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken);
+            if (operatorToken is null)
+            {
+                return false;
+            }
+
+            var expressions = condition.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length != 2)
+            {
+                return false;
+            }
+
+            if (!TryGetDiscriminantComparison(expressions[0], expressions[1], out var variableName, out var memberName, out var literalType) &&
+                !TryGetDiscriminantComparison(expressions[1], expressions[0], out variableName, out memberName, out literalType))
+            {
+                return false;
+            }
+
+            if (!scope.ResolveValue(variableName, out var inputType) ||
+                !inputType.IsKnown ||
+                !scope.ResolveTypeLevelUnion(inputType.Name, out var union))
+            {
+                return false;
+            }
+
+            var matchedMembers = new List<TypeLevelUnionMemberInfo>();
+            var unmatchedMembers = new List<TypeLevelUnionMemberInfo>();
+            foreach (var member in union.Members)
+            {
+                if (!member.Type.IsKnown ||
+                    !scope.ResolveShape(member.Type.Name, out var shape))
+                {
+                    return false;
+                }
+
+                var shapeMember = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+                if (shapeMember.Name is null ||
+                    shapeMember.IsOptional ||
+                    !TryGetLiteralRuntimeType(shapeMember.Type, out _))
+                {
+                    return false;
+                }
+
+                if (shapeMember.Type.Name == literalType.Name)
+                {
+                    matchedMembers.Add(member);
+                }
+                else
+                {
+                    unmatchedMembers.Add(member);
+                }
+            }
+
+            if (matchedMembers.Count == 0)
+            {
+                ReportMismatch(
+                    condition,
+                    $"Discriminant member '{memberName}' on type-level union '{union.Name}' has no member with literal type {literalType}.");
+                return false;
+            }
+
+            if (unmatchedMembers.Count == 0)
+            {
+                return false;
+            }
+
+            var equalityCheck = operatorToken.Kind == SyntaxKind.EqualsEqualsToken;
+            var trueMembers = equalityCheck ? matchedMembers : unmatchedMembers;
+            var falseMembers = equalityCheck ? unmatchedMembers : matchedMembers;
+            if (trueMembers.Count == 1)
+            {
+                thenNarrowing = new BranchNarrowing(variableName, trueMembers[0].Type);
+            }
+
+            if (falseMembers.Count == 1)
+            {
+                elseNarrowing = new BranchNarrowing(variableName, falseMembers[0].Type);
+            }
+
+            return thenNarrowing.HasValue || elseNarrowing.HasValue;
+        }
+
+        private static bool TryGetDiscriminantComparison(
+            SyntaxNode memberCandidate,
+            SyntaxNode literalCandidate,
+            out string variableName,
+            out string memberName,
+            out SimpleType literalType)
+        {
+            literalType = SimpleType.Unknown;
+            literalCandidate = UnwrapParenthesized(literalCandidate);
+            return TryGetDiscriminantAccess(memberCandidate, out variableName, out memberName) &&
+                TryGetLiteralExpressionType(literalCandidate, out literalType);
+        }
+
+        private static bool TryGetDiscriminantAccess(SyntaxNode node, out string variableName, out string memberName)
+        {
+            variableName = string.Empty;
+            memberName = string.Empty;
+
+            node = UnwrapParenthesized(node);
+            if (node.Kind != SyntaxKind.MemberAccessExpression)
+            {
+                return false;
+            }
+
+            var receiver = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (receiver is null ||
+                UnwrapParenthesized(receiver).Kind != SyntaxKind.IdentifierExpression ||
+                !TryGetFirstIdentifier(UnwrapParenthesized(receiver), out var variableIdentifier))
+            {
+                return false;
+            }
+
+            var memberIdentifier = node.Children.LastOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken);
+            variableName = variableIdentifier.Text ?? string.Empty;
+            memberName = memberIdentifier?.Text ?? string.Empty;
+            return variableName.Length > 0 && memberName.Length > 0;
+        }
+
+        private static SyntaxNode UnwrapParenthesized(SyntaxNode node)
+        {
+            while (node.Kind == SyntaxKind.ParenthesizedExpression &&
+                node.Children.FirstOrDefault(child => !child.IsToken) is { } expression)
+            {
+                node = expression;
+            }
+
+            return node;
         }
 
         private SimpleType InferMatch(SyntaxNode node, TypeScope scope)
@@ -3125,6 +3293,8 @@ public static class TypeSharpTypeChecker
     private readonly record struct ShapeMemberInfo(string Name, SimpleType Type, bool IsOptional);
 
     private readonly record struct RecordExpressionFieldInfo(SyntaxNode Node, SimpleType Type, bool IsOptional);
+
+    private readonly record struct BranchNarrowing(string VariableName, SimpleType Type);
 
     private readonly record struct FunctionInfo(SimpleType ReturnType, FunctionCapabilities Capabilities);
 
