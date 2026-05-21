@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Select the next task from User Task Inbox, Agent Task Queue, or checklist. |
+| Active task packet | `agent/0308-literal-match-exhaustiveness-slice.md` |
+| Next top-priority task | Continue task `0308 Literal match exhaustiveness slice`. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0306-match-guard-implementation-slice` completed `match` arm `when` guard parsing, checking, lowering, fixtures, and docs. |
-| Completed work covered | 0001-0306 |
+| Current tooling slice | Task `0308-literal-match-exhaustiveness-slice` is implementing literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering. |
+| Completed work covered | 0001-0307 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
@@ -39,7 +39,7 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 - Non-relative re-export and non-lowerable source re-export forms beyond the current function/literal/value/lambda-valued value/type/module alias forwarding and remapping slice.
 - .NET ecosystem follow-ups: NuGet package restore implementation behind lock/source-mapping/audit/license/checksum gates, a qualified `net481` profile, VS Code Marketplace publication, `dotnet new` template packs, and host packaging automation.
 - TypeScript-derived structural/module follow-ups: implement budgeted advanced type operators in bounded slices and design richer cross-project project-reference re-export metadata.
-- Richer match exhaustiveness beyond current known nominal/type-level union cases, discard arms, and guarded-arm non-coverage; bool/enum cases, literal unions, and fuller pattern algebra remain follow-ups.
+- Richer match exhaustiveness beyond current known nominal/type-level union cases, discard arms, and guarded-arm non-coverage. Task `0308` targets bool and local literal-union cases; enum cases and fuller pattern algebra remain follow-ups.
 - Fuller indexer conversion/ranking beyond exact/object/null/parenthesized/unary numeric/known numeric/metadata relationship checks, broader contextual generic inference beyond direct, homogeneous collection expression `T[]`, and explicit constructed generic argument positions, fuller C# overload conversion/contextual ranking beyond current literal/unary numeric/null metadata-specificity/imported metadata relationship/collection expression array argument/single collection expression params-array argument/parenthesized overload argument unwrapping/delegate arity, known return checks, identity lambda parameter return checks, known lambda return conversion ranking, metadata member-chain return inference, metadata instance method-call return inference, imported extension method-call return inference, imported static method-call return inference, comparison/logical binary predicate return inference, string/numeric binary value return inference, `nameof` return inference, checked/unchecked return inference, `satisfies` return inference, parenthesized return inference, unary logical-not return inference, unary numeric return inference, `if` expression return inference, block final-expression return inference, collection expression return inference, null-coalescing return inference, and indexer-expression return inference, richer lambda body contextual typing beyond those known/literal, identity, member-chain, instance/extension/static method-call, binary predicate, binary value, `nameof`, checked/unchecked, `satisfies`, parenthesized, unary logical-not, unary numeric, `if`, block final-expression, collection expression, null-coalescing, and indexer bodies, and richer extension conversion/conflict diagnostics.
 - Future IL backend work after the C# 7.3 source backend remains stable.
 

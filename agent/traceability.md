@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Next agent should select from User Task Inbox, Agent Task Queue, or checklist. |
+| Literal match exhaustiveness slice | [0308-literal-match-exhaustiveness-slice.md](0308-literal-match-exhaustiveness-slice.md) | Parser literal pattern fixture, bool exhaustive/non-exhaustive diagnostics, local literal-union exhaustive/non-exhaustive diagnostics, C# backend lowering, docs and verification |
 
 ## Completed Evidence Index
 

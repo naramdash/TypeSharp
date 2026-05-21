@@ -1765,6 +1765,29 @@ Remaining:
 
 - Bool, enum, literal-union exhaustiveness and richer pattern algebra remain future match work.
 
+## Task 0307 Roadmap Refresh After Match Guards
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework lifecycle, NuGet, and VS Code sources on 2026-05-21 after match guard implementation.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 and TypeScript 7.0 remain preview/tooling-direction signals, and package/Marketplace/template publication remains gated by Project Policy.
+- Recorded the refresh in Feature Status and Work Ledger, including the continued separation between stable TypeSharp semantics and preview external language/runtime features.
+- Selected the next bounded implementation slice: literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering, with enum exhaustiveness and richer pattern algebra remaining separate follow-ups.
+- Created active task `0308 Literal match exhaustiveness slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

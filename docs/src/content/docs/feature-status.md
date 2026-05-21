@@ -130,13 +130,21 @@ Current boundary:
 
 ## Roadmap Refresh Result
 
-Official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources were rechecked on 2026-05-21 after the .NET ecosystem tooling roadmap. The refresh did not change TypeSharp's baseline: generated artifacts remain `net48`, generated C# remains C# 7.3-compatible, external preview features stay behind Preview Watch, and package/Marketplace/template publication remains gated by Project Policy.
+Official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources were rechecked on 2026-05-21 after the match guard implementation. The refresh did not change TypeSharp's baseline: generated artifacts remain `net48`, generated C# remains C# 7.3-compatible, external preview features stay behind Preview Watch, and package/Marketplace/template publication remains gated by Project Policy.
+
+Refresh notes:
+
+- C# 14 remains the latest stable C# release, and C# 15 remains preview on .NET 11 preview with collection expression arguments and union types as directional signals only.
+- Microsoft C# language versioning still maps all .NET Framework targets to C# 7.3 by default, preserving TypeSharp's generated-source baseline.
+- TypeScript 6.0 remains the transition release toward the TypeScript 7.0 native compiler, while TypeScript 7.0 Beta remains a side-by-side native preview/tooling signal rather than a TypeSharp runtime or syntax dependency.
+- F# 10 remains a refinement release for clarity, tooling, and performance; its scoped warnings, task improvements, and trimming signals continue to inform diagnostics/tooling policy rather than adding an F# runtime dependency.
+- .NET Framework lifecycle, NuGet lock/source-mapping/audit requirements, and VS Code LSP/Marketplace publication requirements do not change the current TypeSharp baseline.
 
 The current bounded implementation slice added match guard support:
 
 - `match` arm `when` guards parse, bind, type-check, and lower for nominal unions and existing local type-level union match paths.
 - Guarded arms do not satisfy exhaustiveness by themselves unless a later unguarded arm or discard arm covers the same closed set.
-- Bool/enum exhaustiveness and richer pattern algebra remain separate follow-ups.
+- The next bounded implementation slice should add literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering. Enum exhaustiveness and richer pattern algebra remain separate follow-ups.
 
 ## MVP Language Features
 
