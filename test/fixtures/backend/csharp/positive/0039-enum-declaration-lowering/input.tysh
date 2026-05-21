@@ -1,8 +1,12 @@
 namespace Samples.Enums
 
+import { FlagsAttribute, ObsoleteAttribute } from "System"
+
+[FlagsAttribute]
 public enum Color : byte {
   Red = 1,
   Crimson = Red,
+  [ObsoleteAttribute("Use Blue instead.")]
   Green,
   Blue = 4
 }

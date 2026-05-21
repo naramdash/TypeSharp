@@ -543,10 +543,13 @@ public sealed class TypeSharpParser
 
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
-            var memberChildren = new List<SyntaxNode>
+            var memberChildren = new List<SyntaxNode>();
+            while (Current.Kind == SyntaxKind.OpenBracketToken)
             {
-                TokenNode(Expect(SyntaxKind.IdentifierToken))
-            };
+                memberChildren.Add(ParseAttributeList());
+            }
+
+            memberChildren.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
 
             if (Current.Kind == SyntaxKind.EqualsToken)
             {

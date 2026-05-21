@@ -767,15 +767,21 @@ public static class CSharpSourceBackend
             var name = GetEnumDeclarationName(node);
             var visibility = GetVisibility(node);
             var underlyingType = GetEnumUnderlyingType(node);
-            var members = GetEnumMemberShapes(node);
+            var members = node.Children
+                .Where(child => child.Kind == SyntaxKind.EnumMember)
+                .Select(GetEnumMemberShape)
+                .Where(member => member.Name.Length > 0)
+                .ToArray();
+            EmitAttributeLists(node, "    ");
             _builder.AppendLine($"    {visibility} enum {name}{underlyingType}");
             _builder.AppendLine("    {");
-            for (var index = 0; index < members.Count; index++)
+            for (var index = 0; index < members.Length; index++)
             {
+                EmitAttributeLists(members[index].Node, "        ");
                 var valueSuffix = members[index].ExplicitValue is { Length: > 0 } value
                     ? $" = {value}"
                     : string.Empty;
-                var suffix = index == members.Count - 1 ? string.Empty : ",";
+                var suffix = index == members.Length - 1 ? string.Empty : ",";
                 _builder.AppendLine($"        {members[index].Name}{valueSuffix}{suffix}");
             }
 
@@ -793,6 +799,47 @@ public static class CSharpSourceBackend
             var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
             var type = MapType(typeNode);
             return string.IsNullOrWhiteSpace(type) ? string.Empty : $" : {type}";
+        }
+
+        private void EmitAttributeLists(SyntaxNode node, string indent)
+        {
+            foreach (var attributeList in node.Children.Where(child => child.Kind == SyntaxKind.AttributeList))
+            {
+                var attributes = attributeList.Children
+                    .Where(child => child.Kind == SyntaxKind.Attribute)
+                    .Select(EmitAttribute)
+                    .Where(attribute => attribute.Length > 0)
+                    .ToArray();
+
+                if (attributes.Length > 0)
+                {
+                    _builder.AppendLine($"{indent}[{string.Join(", ", attributes)}]");
+                }
+            }
+        }
+
+        private string EmitAttribute(SyntaxNode node)
+        {
+            var nameNode = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeName);
+            var name = GetQualifiedName(nameNode);
+            if (name.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            var call = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.CallExpression);
+            if (call is null)
+            {
+                return name;
+            }
+
+            var callee = call.Children.FirstOrDefault(child => !child.IsToken);
+            var arguments = call.Children
+                .SkipWhile(child => !ReferenceEquals(child, callee))
+                .Skip(1)
+                .Where(child => !child.IsToken)
+                .Select(child => EmitExpression(child));
+            return $"{name}({string.Join(", ", arguments)})";
         }
 
         private void EmitUnionDeclaration(SyntaxNode node)
@@ -4282,7 +4329,7 @@ public static class CSharpSourceBackend
             var name = member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
             var initializer = member.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer);
             var explicitValue = GetEnumMemberExplicitValue(initializer);
-            return new EnumMemberShape(name, explicitValue);
+            return new EnumMemberShape(member, name, explicitValue);
         }
 
         private static string? GetEnumMemberExplicitValue(SyntaxNode? initializer)
@@ -4588,7 +4635,7 @@ public static class CSharpSourceBackend
 
         private readonly record struct TypeLevelUnionMemberShape(string SourceType, string CSharpType);
 
-        private readonly record struct EnumMemberShape(string Name, string? ExplicitValue);
+        private readonly record struct EnumMemberShape(SyntaxNode Node, string Name, string? ExplicitValue);
 
         private readonly record struct EnumShape(string Name, IReadOnlyList<string> Members);
 

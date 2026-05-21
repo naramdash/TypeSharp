@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Task 0326 enum attribute lowering | [0326-enum-attribute-lowering-slice.md](0326-enum-attribute-lowering-slice.md) | `TypeSharpParser.cs`, `CSharpSourceBackend.cs`, enum parser/backend fixtures, generated `net48` compile smoke, and enum docs/rollup updates. |
+| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
 
 ## Completed Evidence Index
 
@@ -51,6 +51,7 @@
 | Explicit enum numeric range validation | [tasks-rollup.md#task-0320-explicit-enum-numeric-range-validation-slice](tasks-rollup.md#task-0320-explicit-enum-numeric-range-validation-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/enum-numeric-range-invalid`, `test/fixtures/diagnostics/type-checker/positive/enum-declaration`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Explicit enum member aliases | [tasks-rollup.md#task-0322-explicit-enum-member-aliases-slice](tasks-rollup.md#task-0322-explicit-enum-member-aliases-slice), `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`, `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/fixtures/parser/positive/0035-enum-declaration`, `test/fixtures/diagnostics/type-checker/negative/enum-alias-invalid`, `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Imported enum numeric metadata | [tasks-rollup.md#task-0324-imported-enum-numeric-metadata-slice](tasks-rollup.md#task-0324-imported-enum-numeric-metadata-slice), `lang/TypeSharp.Compiler/Interop/MetadataAssemblySymbol.cs`, `lang/TypeSharp.Compiler/Interop/TypeSharpMetadataReader.cs`, `test/TypeSharp.Compiler.Tests/Program.cs`, [Type System](../docs/src/content/docs/type-system.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md) |
+| Enum attribute lowering | [tasks-rollup.md#task-0326-enum-attribute-lowering-slice](tasks-rollup.md#task-0326-enum-attribute-lowering-slice), `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/fixtures/parser/positive/0035-enum-declaration`, `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

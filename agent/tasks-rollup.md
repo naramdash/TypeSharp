@@ -2426,7 +2426,7 @@ Primary evidence:
 
 Remaining:
 
-- Enum declaration/member attribute lowering is active in task 0326. Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+- Enum declaration/member attribute lowering is complete in task 0326. Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
 
 ## Task 0325 Roadmap Refresh After Imported Enum Numeric Metadata
 
@@ -2461,7 +2461,51 @@ Primary evidence:
 
 Remaining:
 
-- Enum declaration/member attribute lowering is active in task 0326. Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+- Enum declaration/member attribute lowering is complete in task 0326. Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+
+## Task 0326 Enum Attribute Lowering Slice
+
+Completed implementation work:
+
+- Added parser support for attribute lists before TypeSharp-owned enum members.
+- Lowered TypeSharp-owned enum declaration attributes before generated C# enum declarations.
+- Lowered enum member attributes before generated C# enum members while preserving explicit numeric values and aliases.
+- Added parser and C# backend fixture coverage using `[FlagsAttribute]` and `[ObsoleteAttribute]`.
+- Extended the generated `net48` enum API build smoke to assert emitted enum/member attributes.
+- Updated grammar, reference, type-system, lowering, feature-status, work-ledger, tasks, and traceability docs for the metadata-only boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles enum declaration API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+
+Remaining:
+
+- Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
 
 ## Verification Summary
 
