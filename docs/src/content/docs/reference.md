@@ -17,7 +17,7 @@ Implemented and planned declaration forms include functions, values, literals, r
 
 `partial` is implemented for declarations that currently lower to generated C# types: modules, records, unions, classes, and interfaces. Partial methods, partial constructors, partial events, and source augmentation hooks remain future work.
 
-Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member access, lower to ordinary generated C# enum declarations, and participate in match exhaustiveness. Named imported C# enums also participate in match exhaustiveness when metadata exposes finite public enum members. Flag enums, explicit underlying types, explicit numeric member values, and enum member attributes remain future work.
+Simple TypeSharp-owned enum declarations parse, bind duplicate members, support optional explicit integer numeric member values, type-check same-enum member access, lower to ordinary generated C# enum declarations, and participate in match exhaustiveness. Named imported C# enums also participate in match exhaustiveness when metadata exposes finite public enum members. Flag enums, explicit underlying types, computed enum member values, enum aliases, and enum member attributes remain future work.
 
 Source files without an explicit file-scoped `namespace` still lower under the manifest `rootNamespace`; they are not emitted into a global namespace.
 

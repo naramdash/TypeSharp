@@ -542,6 +542,23 @@ public sealed class TypeSharpParser
             {
                 TokenNode(Expect(SyntaxKind.IdentifierToken))
             };
+
+            if (Current.Kind == SyntaxKind.EqualsToken)
+            {
+                var initializerChildren = new List<SyntaxNode>
+                {
+                    TokenNode(NextToken())
+                };
+
+                if (Current.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)
+                {
+                    initializerChildren.Add(TokenNode(NextToken()));
+                }
+
+                initializerChildren.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
+                memberChildren.Add(Node(SyntaxKind.Initializer, initializerChildren));
+            }
+
             children.Add(Node(SyntaxKind.EnumMember, memberChildren));
 
             if (Current.Kind == SyntaxKind.CommaToken)

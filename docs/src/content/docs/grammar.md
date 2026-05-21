@@ -125,7 +125,7 @@ Stable declaration rules:
 - `let` is immutable binding; `let mut` is mutable binding.
 - `literal` is the compile-time constant spelling. Core grammar does not add `var`, `val`, or `const` aliases.
 - `fun` is the public callable declaration form; expression-bodied functions use `=`, and block-bodied functions use `{ ... }`.
-- Simple enum declarations use `enum Name { Member, Other }`; explicit underlying types, numeric member values, flag policy, and enum-member attributes remain planned.
+- Simple enum declarations use `enum Name { Member, Other }`; members can include explicit integer numeric values such as `Member = 1`. Explicit underlying types, computed member values, flag policy, and enum-member attributes remain planned.
 - `partial` currently lowers for generated C# type declarations: modules, records, unions, classes, and interfaces.
 - `async` belongs on function declarations and lowers through `Task`/`Task<T>`.
 - `unsafe`, `dynamic`, `reflect`, and `interop` are capability markers, not ordinary type-system escapes.
@@ -169,7 +169,7 @@ Stable pattern rules:
 - Guard syntax uses `when`; guarded arms do not prove nominal, bool, or local type-level union exhaustiveness without a later unguarded arm or discard.
 - `expr is pattern` introduces narrowing and pattern bindings with scoped lifetime.
 - Nominal closed unions, TypeSharp-owned enums, `bool`, and known local type-level unions, including literal unions, report missing cases/members when the checker can prove non-exhaustiveness.
-- Imported C# enum exhaustiveness and richer pattern algebra remain planned beyond the current nominal, enum, bool, and local type-level union guard rules.
+- Richer pattern algebra remains planned beyond the current nominal, TypeSharp-owned enum, named imported C# enum, bool, and local type-level union guard rules.
 
 ### Name Resolution
 

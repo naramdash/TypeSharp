@@ -12,8 +12,8 @@ namespace Samples.Enums
 
     public enum Color
     {
-        Red,
+        Red = 1,
         Green,
-        Blue
+        Blue = 4
     }
 }

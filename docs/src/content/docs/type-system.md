@@ -145,7 +145,7 @@ C# consumers see generated CLR metadata. That means public TypeSharp APIs need s
 
 If a compile-time-only type-level union, intersection alias, or structural shape appears in a public boundary, the compiler reports a public ABI diagnostic.
 
-Simple TypeSharp-owned enums expose ordinary CLR enum metadata. The current checker accepts same-enum member values such as `Color.Green` where `Color` is expected, rejects unrelated enum values, reports missing enum members, and checks enum match exhaustiveness over TypeSharp-owned enum members. Named imported C# enums participate in the same match exhaustiveness path when referenced assembly metadata exposes finite public enum members. Flags, explicit underlying types, explicit numeric values, and enum member attributes are not part of the implemented slice.
+Simple TypeSharp-owned enums expose ordinary CLR enum metadata. Members can use explicit integer numeric values, but the current checker still reasons about enum values by declaring enum name and member name. The checker accepts same-enum member values such as `Color.Green` where `Color` is expected, rejects unrelated enum values, reports missing enum members, and checks enum match exhaustiveness over TypeSharp-owned enum members. Named imported C# enums participate in the same match exhaustiveness path when referenced assembly metadata exposes finite public enum members. Flags, explicit underlying types, computed enum values, enum aliases, and enum member attributes are not part of the implemented slice.
 
 ## Type-Level And Nominal Unions
 

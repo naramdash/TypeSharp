@@ -766,13 +766,16 @@ public static class CSharpSourceBackend
         {
             var name = GetEnumDeclarationName(node);
             var visibility = GetVisibility(node);
-            var members = GetEnumMembers(node);
+            var members = GetEnumMemberShapes(node);
             _builder.AppendLine($"    {visibility} enum {name}");
             _builder.AppendLine("    {");
             for (var index = 0; index < members.Count; index++)
             {
+                var valueSuffix = members[index].ExplicitValue is { Length: > 0 } value
+                    ? $" = {value}"
+                    : string.Empty;
                 var suffix = index == members.Count - 1 ? string.Empty : ",";
-                _builder.AppendLine($"        {members[index]}{suffix}");
+                _builder.AppendLine($"        {members[index].Name}{valueSuffix}{suffix}");
             }
 
             _builder.AppendLine("    }");
@@ -4249,11 +4252,41 @@ public static class CSharpSourceBackend
         }
 
         private static IReadOnlyList<string> GetEnumMembers(SyntaxNode node) =>
+            GetEnumMemberShapes(node)
+                .Select(member => member.Name)
+                .ToArray();
+
+        private static IReadOnlyList<EnumMemberShape> GetEnumMemberShapes(SyntaxNode node) =>
             node.Children
                 .Where(child => child.Kind == SyntaxKind.EnumMember)
-                .Select(member => member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty)
-                .Where(name => name.Length > 0)
+                .Select(GetEnumMemberShape)
+                .Where(member => member.Name.Length > 0)
                 .ToArray();
+
+        private static EnumMemberShape GetEnumMemberShape(SyntaxNode member)
+        {
+            var name = member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            var initializer = member.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer);
+            var explicitValue = GetEnumMemberExplicitValue(initializer);
+            return new EnumMemberShape(name, explicitValue);
+        }
+
+        private static string? GetEnumMemberExplicitValue(SyntaxNode? initializer)
+        {
+            if (initializer is null)
+            {
+                return null;
+            }
+
+            var sign = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)?.Text;
+            var value = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.NumericLiteralToken)?.Text;
+            if (string.IsNullOrEmpty(value))
+            {
+                return null;
+            }
+
+            return $"{sign}{value}";
+        }
 
         private static string GetInterfaceDeclarationName(SyntaxNode node)
         {
@@ -4539,6 +4572,8 @@ public static class CSharpSourceBackend
         private readonly record struct TypeLevelUnionShape(string Name, IReadOnlyList<TypeLevelUnionMemberShape> Members);
 
         private readonly record struct TypeLevelUnionMemberShape(string SourceType, string CSharpType);
+
+        private readonly record struct EnumMemberShape(string Name, string? ExplicitValue);
 
         private readonly record struct EnumShape(string Name, IReadOnlyList<string> Members);
 

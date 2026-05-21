@@ -153,7 +153,7 @@ After enum declarations, the empty-queue refresh rechecked official C#, F#, Type
 
 After TypeSharp-owned enum match exhaustiveness, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice extended enum exhaustiveness to named imported C# enum metadata using finite public enum-member fields from referenced assemblies. Flag algebra, explicit TypeSharp enum numeric values, enum aliases, and enum member attributes remain separate backlog items.
 
-After imported C# enum exhaustiveness, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is explicit numeric member values for TypeSharp-owned enums. This keeps enum type checking and exhaustiveness name/member based, and leaves flags, aliases, explicit underlying types, computed enum expressions, and imported enum numeric metadata as separate backlog items.
+After imported C# enum exhaustiveness, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice added explicit numeric member values for TypeSharp-owned enums. This keeps enum type checking and exhaustiveness name/member based, and leaves flags, aliases, explicit underlying types, computed enum expressions, and imported enum numeric metadata as separate backlog items.
 
 ## MVP Language Features
 
@@ -169,7 +169,7 @@ After imported C# enum exhaustiveness, the empty-queue refresh rechecked officia
 | Indexed access types | MVP limited | Known record/shape member types can be selected with `T["Member"]`; public ABI leakage is rejected. |
 | Local type inference | MVP | Locals, literals, calls, binary expressions, lambdas, and supported pipeline flows infer common types. |
 | Records | MVP | Immutable public data shapes lower to C#-friendly nominal types. |
-| Enums | MVP limited | Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member values, lower to ordinary C# enums, and participate in match exhaustiveness. Named imported C# enums also participate in match exhaustiveness when metadata exposes finite public enum members. Flags, explicit underlying types, explicit numeric values, and enum member attributes remain backlog. |
+| Enums | MVP limited | Simple TypeSharp-owned enum declarations parse, bind duplicate members, support optional explicit integer numeric member values, type-check same-enum member values, lower to ordinary C# enums, and participate in match exhaustiveness. Named imported C# enums also participate in match exhaustiveness when metadata exposes finite public enum members. Flags, explicit underlying types, computed enum values, enum aliases, and enum member attributes remain backlog. |
 | Async `Task` interop | MVP | `async fun` lowers to `Task` or `Task<T>` for .NET Framework compatibility. |
 | Pipeline and composition | MVP limited | First-argument pipeline and unary composition lower to C# 7.3-compatible calls and delegate lambdas. |
 | Collection expressions | MVP limited | Array and `List<T>` targets are supported, including known array/List spread lowering. |

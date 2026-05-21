@@ -19695,9 +19695,9 @@ static void CliBuildCompilesEnumDeclarationApi()
             namespace Samples.Enums
 
             public enum Color {
-              Red,
+              Red = 1,
               Green,
-              Blue
+              Blue = 4
             }
 
             export fun favorite(): Color =
@@ -19714,6 +19714,8 @@ static void CliBuildCompilesEnumDeclarationApi()
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("public enum Color", generatedSource);
+        AssertContains("Red = 1", generatedSource);
+        AssertContains("Blue = 4", generatedSource);
         AssertContains("return Color.Green;", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "EnumDeclarationApi.dll");
@@ -19752,7 +19754,8 @@ static void CliBuildCompilesEnumDeclarationApi()
                 {
                     public static bool Read()
                     {
-                        return Samples.Enums.Module.favorite() == Samples.Enums.Color.Green;
+                        return Samples.Enums.Module.favorite() == Samples.Enums.Color.Green &&
+                            (int)Samples.Enums.Color.Blue == 4;
                     }
                 }
             }

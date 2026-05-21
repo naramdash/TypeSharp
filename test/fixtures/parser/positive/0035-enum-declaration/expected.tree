@@ -11,14 +11,20 @@ SourceFile TextSpan=1:1-10:14
     Token EnumKeyword "enum" TextSpan=3:8-3:12
     Token IdentifierToken "Color" TextSpan=3:13-3:18
     Token OpenBraceToken "{" TextSpan=3:19-3:20
-    EnumMember TextSpan=4:3-4:6
+    EnumMember TextSpan=4:3-4:10
       Token IdentifierToken "Red" TextSpan=4:3-4:6
-    Token CommaToken "," TextSpan=4:6-4:7
+      Initializer TextSpan=4:7-4:10
+        Token EqualsToken "=" TextSpan=4:7-4:8
+        Token NumericLiteralToken "1" TextSpan=4:9-4:10
+    Token CommaToken "," TextSpan=4:10-4:11
     EnumMember TextSpan=5:3-5:8
       Token IdentifierToken "Green" TextSpan=5:3-5:8
     Token CommaToken "," TextSpan=5:8-5:9
-    EnumMember TextSpan=6:3-6:7
+    EnumMember TextSpan=6:3-6:11
       Token IdentifierToken "Blue" TextSpan=6:3-6:7
+      Initializer TextSpan=6:8-6:11
+        Token EqualsToken "=" TextSpan=6:8-6:9
+        Token NumericLiteralToken "4" TextSpan=6:10-6:11
     Token CloseBraceToken "}" TextSpan=7:1-7:2
   FunctionDeclaration TextSpan=9:1-10:14
     ExportModifier TextSpan=9:1-9:7

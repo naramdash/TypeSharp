@@ -2084,6 +2084,44 @@ Remaining:
 
 - Explicit TypeSharp enum numeric values are active in task 0316. Flag semantics, explicit enum underlying types, enum member attributes, enum aliases, and richer pattern algebra remain future work.
 
+## Task 0316 Explicit Enum Numeric Values Slice
+
+Completed language/compiler work established:
+
+- Added parser support for optional explicit numeric enum member initializers such as `Red = 1`.
+- Preserved duplicate enum member binding and existing enum type-checking/exhaustiveness semantics by keeping enum reasoning name/member based.
+- Lowered explicit TypeSharp-owned enum member values to ordinary C# enum assignments while keeping generated source C# 7.3-compatible.
+- Kept flags, explicit underlying types, computed enum values, enum aliases, imported C# enum numeric metadata, and enum member attributes out of scope.
+- Added parser, type-checker, backend snapshot, and CLI generated `net48` assembly plus C# consumer coverage.
+- Updated canonical grammar, reference, type-system, lowering, feature-status, and work-ledger docs for the implemented enum value boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+
+Remaining:
+
+- Flag semantics, explicit enum underlying types, enum member attributes, enum aliases, imported C# enum numeric metadata, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
