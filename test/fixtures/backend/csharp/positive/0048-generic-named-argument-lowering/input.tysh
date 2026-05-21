@@ -1,0 +1,18 @@
+namespace Samples.GenericNamedArgumentLowering
+
+fun choose<T>(left: T, right: T): T = left
+
+fun pairLeft<T, U>(left: T, right: U): T = left
+
+fun keepWithPrefix<T>(value: T, prefix: string): T = value
+
+export fun main(): string {
+  let direct: string = choose(right: "b", left: "a")
+  let explicitValue: string = choose<string>(right: "d", left: "c")
+  let mixed: string = choose<string>("e", right: "f")
+  let mixedTypes: string = pairLeft(right: 1, left: "g")
+  let piped: string = "h" |> choose(right: "i")
+  let pipedExplicit: int = 1 |> choose<int>(right: 2)
+  let pipedMixed: int = 3 |> keepWithPrefix(prefix: "n=")
+  direct + explicitValue + mixed + mixedTypes + piped + pipedExplicit.ToString() + pipedMixed.ToString()
+}

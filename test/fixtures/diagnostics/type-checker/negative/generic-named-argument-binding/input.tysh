@@ -1,0 +1,22 @@
+namespace Samples.TypeChecker.GenericNamedArgumentBindingDiagnostics
+
+fun choose<T>(left: T, right: T): T = left
+
+fun keepArray<T>(items: T[]): T[] = items
+
+fun collect<T>(prefix: string, params values: T[]): string = prefix
+
+let unknownName: string = choose(text: "a", right: "b")
+let duplicateName: string = choose("a", left: "b")
+let positionalAfterNamed: string = choose(right: "b", "a")
+let missingRequired: string = choose(right: "b")
+let inconsistent = choose(left: "a", right: 1)
+let explicitWrongType: int = choose<int>(left: "a", right: 1)
+let explicitWrongArray: string[] = keepArray<string>(items: [1, 2])
+let wrongTypeArgumentCount = choose<string, int>(left: "a", right: "b")
+let pipelineFirstParameter: string = "value" |> choose(left: "again")
+let pipelineMissingRequired: string = "value" |> choose()
+let pipelineInconsistent = "value" |> choose(right: 1)
+let pipelineExplicitWrongType: int = 1 |> choose<int>(right: "two")
+let paramsNamed = collect(prefix: "x")
+let pipelineParamsNamed = "x" |> collect(values: "a")

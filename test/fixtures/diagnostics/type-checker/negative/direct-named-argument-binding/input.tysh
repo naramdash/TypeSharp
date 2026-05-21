@@ -8,8 +8,6 @@ fun tri(first: int, second: int, third: int): int = first + second + third
 
 fun collect(prefix: string, params values: string[]): string = prefix
 
-fun identity<T>(value: T): T = value
-
 let unknownName = decorate(text: "value")
 let duplicateName = decorate("value", value: "again")
 let positionalAfterNamed = decorate(prefix: "<", "value")
@@ -18,4 +16,3 @@ let wrongType = add(left: "x", right: 2)
 let pipelineFirstParameter = "value" |> decorate(value: "again")
 let pipelineMissingRequired = 1 |> tri(third: 3)
 let paramsNamed = collect(prefix: "x")
-let genericNamed = identity(value: "x")

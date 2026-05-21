@@ -2170,8 +2170,7 @@ public static class CSharpSourceBackend
         {
             signature = default;
             if (!TryGetTypeSharpOwnedFunctionName(callee, out var functionName) ||
-                !_functionSignatures.TryGetValue(functionName, out var resolvedSignature) ||
-                resolvedSignature.TypeParameters.Count > 0)
+                !_functionSignatures.TryGetValue(functionName, out var resolvedSignature))
             {
                 return false;
             }

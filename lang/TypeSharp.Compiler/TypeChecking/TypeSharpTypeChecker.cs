@@ -1289,11 +1289,13 @@ public static class TypeSharpTypeChecker
             {
                 if (hasNamedArguments)
                 {
-                    ReportMismatch(
+                    return CheckDirectGenericNamedFunctionCallExpression(
                         node,
-                        $"Named arguments are supported only on non-generic TypeSharp function calls in this slice; function '{functionName}' is generic.");
-                    CheckArgumentExpressions(arguments, scope);
-                    return SimpleType.Unknown;
+                        scope,
+                        functionName,
+                        function,
+                        arguments,
+                        explicitTypeArguments);
                 }
 
                 return CheckDirectGenericFunctionCallExpression(
@@ -1526,6 +1528,184 @@ public static class TypeSharpTypeChecker
             }
 
             return returnType;
+        }
+
+        private SimpleType CheckDirectGenericNamedFunctionCallExpression(
+            SyntaxNode node,
+            TypeScope scope,
+            string functionName,
+            FunctionInfo function,
+            IReadOnlyList<SyntaxNode> arguments,
+            IReadOnlyList<SimpleType> explicitTypeArguments)
+        {
+            var substitutions = new Dictionary<string, SimpleType>(StringComparer.Ordinal);
+            var typeParameterNames = new HashSet<string>(function.TypeParameters, StringComparer.Ordinal);
+
+            if (explicitTypeArguments.Count > 0)
+            {
+                if (explicitTypeArguments.Count != function.TypeParameters.Count)
+                {
+                    ReportMismatch(
+                        node,
+                        $"Function '{functionName}' expects {FormatGenericTypeArgumentCount(function.TypeParameters.Count)}, but call supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+                    CheckArgumentExpressions(arguments, scope);
+                    return SimpleType.Unknown;
+                }
+
+                for (var index = 0; index < explicitTypeArguments.Count; index++)
+                {
+                    substitutions[function.TypeParameters[index]] = explicitTypeArguments[index];
+                }
+            }
+
+            var returnType = SubstituteGenericType(function.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            if (function.ParameterTypes is not { } parameterTypes)
+            {
+                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                CheckArgumentExpressions(arguments, scope);
+                return returnType;
+            }
+
+            if (TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out _, out _, out _))
+            {
+                ReportMismatch(
+                    node,
+                    $"Named arguments cannot be used with TypeSharp params parameter function '{functionName}' in this generic slice.");
+                CheckArgumentExpressions(arguments, scope);
+                return returnType;
+            }
+
+            if (!TryBuildParameterIndex(function.ParameterNames, parameterTypes.Count, out var parameterIndexes))
+            {
+                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                CheckArgumentExpressions(arguments, scope);
+                return returnType;
+            }
+
+            var knownParameterNames = function.ParameterNames!;
+            var suppliedParameters = new bool[parameterTypes.Count];
+            var boundArguments = new List<BoundCallArgument>();
+            var nextPositionalParameter = 0;
+            var sawNamedArgument = false;
+
+            foreach (var argument in arguments)
+            {
+                if (TryGetNamedArgumentName(argument, out var argumentName))
+                {
+                    sawNamedArgument = true;
+                    var argumentExpression = GetArgumentExpression(argument);
+                    if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
+                    {
+                        ReportMismatch(argument, $"Function '{functionName}' has no parameter named '{argumentName}'.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    if (suppliedParameters[parameterIndex])
+                    {
+                        ReportMismatch(argument, $"Function '{functionName}' parameter '{argumentName}' is supplied more than once.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    suppliedParameters[parameterIndex] = true;
+                    boundArguments.Add(new BoundCallArgument(argument, parameterIndex));
+                    continue;
+                }
+
+                if (sawNamedArgument)
+                {
+                    ReportMismatch(argument, $"Function '{functionName}' positional arguments cannot follow named arguments.");
+                }
+
+                var positionalIndex = nextPositionalParameter++;
+                if (positionalIndex >= parameterTypes.Count)
+                {
+                    ReportMismatch(
+                        argument,
+                        $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies more arguments.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                if (suppliedParameters[positionalIndex])
+                {
+                    var parameterName = knownParameterNames[positionalIndex];
+                    ReportMismatch(argument, $"Function '{functionName}' parameter '{parameterName}' is supplied more than once.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                suppliedParameters[positionalIndex] = true;
+                boundArguments.Add(new BoundCallArgument(argument, positionalIndex));
+            }
+
+            ReportMissingNamedArguments(node, functionName, parameterTypes, knownParameterNames, function.OptionalParameterFlags, suppliedParameters);
+            if (explicitTypeArguments.Count > 0)
+            {
+                foreach (var boundArgument in boundArguments)
+                {
+                    var expression = GetArgumentExpression(boundArgument.Argument);
+                    var expectedType = SubstituteGenericType(
+                        parameterTypes[boundArgument.ParameterIndex],
+                        substitutions,
+                        typeParameterNames,
+                        unresolvedTypeParameterIsUnknown: true);
+                    if (!expectedType.IsKnown)
+                    {
+                        CheckExpression(expression, scope);
+                        continue;
+                    }
+
+                    CheckDirectFunctionArgument(node, scope, functionName, expression, boundArgument.ParameterIndex, expectedType);
+                }
+
+                return returnType;
+            }
+
+            var argumentTypes = new SimpleType[parameterTypes.Count];
+            foreach (var boundArgument in boundArguments)
+            {
+                argumentTypes[boundArgument.ParameterIndex] = CheckExpression(GetArgumentExpression(boundArgument.Argument), scope);
+            }
+
+            var inconsistentTypeParameters = InferDirectGenericFunctionTypeArguments(
+                node,
+                $"Function '{functionName}'",
+                parameterTypes,
+                parameterTypes.Count,
+                argumentTypes,
+                typeParameterNames,
+                substitutions);
+
+            foreach (var boundArgument in boundArguments)
+            {
+                var parameterType = parameterTypes[boundArgument.ParameterIndex];
+                if (GenericTypeReferencesAny(parameterType, inconsistentTypeParameters, typeParameterNames))
+                {
+                    continue;
+                }
+
+                var expectedType = SubstituteGenericType(
+                    parameterType,
+                    substitutions,
+                    typeParameterNames,
+                    unresolvedTypeParameterIsUnknown: true);
+                if (!expectedType.IsKnown)
+                {
+                    continue;
+                }
+
+                ValidateDirectFunctionArgumentType(
+                    node,
+                    scope,
+                    functionName,
+                    boundArgument.ParameterIndex,
+                    expectedType,
+                    argumentTypes[boundArgument.ParameterIndex]);
+            }
+
+            return SubstituteGenericType(function.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
         }
 
         private SimpleType CheckDirectGenericFunctionCallExpression(
@@ -2123,11 +2303,14 @@ public static class TypeSharpTypeChecker
             {
                 if (hasNamedArguments)
                 {
-                    ReportMismatch(
+                    return CheckGenericPipelineNamedFunctionApplication(
                         node,
-                        $"Named arguments are supported only on non-generic TypeSharp pipeline targets in this slice; target '{targetName}' is generic.");
-                    CheckArgumentExpressions(targetArguments, scope);
-                    return SimpleType.Unknown;
+                        scope,
+                        targetName,
+                        targetFunction,
+                        target,
+                        inputType,
+                        targetArguments);
                 }
 
                 return CheckGenericPipelineFunctionApplication(
@@ -2342,6 +2525,226 @@ public static class TypeSharpTypeChecker
             }
 
             return returnType;
+        }
+
+        private SimpleType CheckGenericPipelineNamedFunctionApplication(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            FunctionInfo targetFunction,
+            SyntaxNode target,
+            SimpleType inputType,
+            IReadOnlyList<SyntaxNode> targetArguments)
+        {
+            var substitutions = new Dictionary<string, SimpleType>(StringComparer.Ordinal);
+            var typeParameterNames = new HashSet<string>(targetFunction.TypeParameters, StringComparer.Ordinal);
+            var explicitTypeArguments = GetDirectCallTypeArguments(target, scope);
+
+            if (explicitTypeArguments.Count > 0)
+            {
+                if (explicitTypeArguments.Count != targetFunction.TypeParameters.Count)
+                {
+                    ReportMismatch(
+                        node,
+                        $"Pipeline target '{targetName}' expects {FormatGenericTypeArgumentCount(targetFunction.TypeParameters.Count)}, but pipeline supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+                    CheckArgumentExpressions(targetArguments, scope);
+                    return SimpleType.Unknown;
+                }
+
+                for (var index = 0; index < explicitTypeArguments.Count; index++)
+                {
+                    substitutions[targetFunction.TypeParameters[index]] = explicitTypeArguments[index];
+                }
+            }
+
+            var returnType = SubstituteGenericType(targetFunction.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            if (targetFunction.ParameterTypes is not { } parameterTypes)
+            {
+                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                CheckArgumentExpressions(targetArguments, scope);
+                return returnType;
+            }
+
+            if (TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out _, out _, out _))
+            {
+                ReportMismatch(
+                    node,
+                    $"Named arguments cannot be used with TypeSharp params parameter pipeline target '{targetName}' in this generic slice.");
+                CheckArgumentExpressions(targetArguments, scope);
+                return returnType;
+            }
+
+            if (!TryBuildParameterIndex(targetFunction.ParameterNames, parameterTypes.Count, out var parameterIndexes))
+            {
+                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                CheckArgumentExpressions(targetArguments, scope);
+                return returnType;
+            }
+
+            var knownParameterNames = targetFunction.ParameterNames!;
+            var suppliedParameters = new bool[parameterTypes.Count];
+            var boundArguments = new List<BoundCallArgument>();
+            if (parameterTypes.Count == 0)
+            {
+                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+            }
+            else
+            {
+                suppliedParameters[0] = true;
+            }
+
+            var nextPositionalParameter = 1;
+            var sawNamedArgument = false;
+            foreach (var argument in targetArguments)
+            {
+                if (TryGetNamedArgumentName(argument, out var argumentName))
+                {
+                    sawNamedArgument = true;
+                    var argumentExpression = GetArgumentExpression(argument);
+                    if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
+                    {
+                        ReportMismatch(argument, $"Pipeline target '{targetName}' has no parameter named '{argumentName}'.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    if (parameterIndex == 0)
+                    {
+                        ReportMismatch(
+                            argument,
+                            $"Pipeline target '{targetName}' already receives parameter '{argumentName}' from the pipeline input.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    if (suppliedParameters[parameterIndex])
+                    {
+                        ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{argumentName}' is supplied more than once.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    suppliedParameters[parameterIndex] = true;
+                    boundArguments.Add(new BoundCallArgument(argument, parameterIndex));
+                    continue;
+                }
+
+                if (sawNamedArgument)
+                {
+                    ReportMismatch(argument, $"Pipeline target '{targetName}' positional arguments cannot follow named arguments.");
+                }
+
+                var positionalIndex = nextPositionalParameter++;
+                if (positionalIndex >= parameterTypes.Count)
+                {
+                    ReportMismatch(
+                        argument,
+                        $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies more arguments.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                if (suppliedParameters[positionalIndex])
+                {
+                    var parameterName = knownParameterNames[positionalIndex];
+                    ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{parameterName}' is supplied more than once.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                suppliedParameters[positionalIndex] = true;
+                boundArguments.Add(new BoundCallArgument(argument, positionalIndex));
+            }
+
+            ReportMissingPipelineNamedArguments(node, targetName, parameterTypes, knownParameterNames, targetFunction.OptionalParameterFlags, suppliedParameters);
+            if (explicitTypeArguments.Count > 0)
+            {
+                if (parameterTypes.Count > 0)
+                {
+                    var expectedInputType = SubstituteGenericType(
+                        parameterTypes[0],
+                        substitutions,
+                        typeParameterNames,
+                        unresolvedTypeParameterIsUnknown: true);
+                    if (expectedInputType.IsKnown)
+                    {
+                        ValidatePipelineInputType(node, scope, targetName, expectedInputType, inputType);
+                    }
+                }
+
+                foreach (var boundArgument in boundArguments)
+                {
+                    var expression = GetArgumentExpression(boundArgument.Argument);
+                    var expectedType = SubstituteGenericType(
+                        parameterTypes[boundArgument.ParameterIndex],
+                        substitutions,
+                        typeParameterNames,
+                        unresolvedTypeParameterIsUnknown: true);
+                    if (!expectedType.IsKnown)
+                    {
+                        CheckExpression(expression, scope);
+                        continue;
+                    }
+
+                    CheckPipelineArgument(node, scope, targetName, expression, boundArgument.ParameterIndex, expectedType);
+                }
+
+                return returnType;
+            }
+
+            var argumentTypes = new SimpleType[parameterTypes.Count];
+            if (parameterTypes.Count > 0)
+            {
+                argumentTypes[0] = inputType;
+            }
+
+            foreach (var boundArgument in boundArguments)
+            {
+                argumentTypes[boundArgument.ParameterIndex] = CheckExpression(GetArgumentExpression(boundArgument.Argument), scope);
+            }
+
+            var inconsistentTypeParameters = InferDirectGenericFunctionTypeArguments(
+                node,
+                $"Pipeline target '{targetName}'",
+                parameterTypes,
+                parameterTypes.Count,
+                argumentTypes,
+                typeParameterNames,
+                substitutions);
+
+            for (var index = 0; index < parameterTypes.Count; index++)
+            {
+                if (index > 0 && !suppliedParameters[index])
+                {
+                    continue;
+                }
+
+                var parameterType = parameterTypes[index];
+                if (GenericTypeReferencesAny(parameterType, inconsistentTypeParameters, typeParameterNames))
+                {
+                    continue;
+                }
+
+                var expectedType = SubstituteGenericType(
+                    parameterType,
+                    substitutions,
+                    typeParameterNames,
+                    unresolvedTypeParameterIsUnknown: true);
+                if (!expectedType.IsKnown)
+                {
+                    continue;
+                }
+
+                if (index == 0)
+                {
+                    ValidatePipelineInputType(node, scope, targetName, expectedType, inputType);
+                    continue;
+                }
+
+                ValidatePipelineArgumentType(node, scope, targetName, index, expectedType, argumentTypes[index]);
+            }
+
+            return SubstituteGenericType(targetFunction.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
         }
 
         private SimpleType CheckPipelineParamsFunctionApplication(

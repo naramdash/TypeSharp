@@ -4825,7 +4825,55 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0380: generic TypeSharp named argument binding for known TypeSharp-owned generic functions.
+- Completed in task 0380: generic TypeSharp named argument binding for known TypeSharp-owned generic functions.
+
+## Task 0380 Generic TypeSharp Named Argument Binding
+
+Completed bounded generic TypeSharp-owned named argument binding:
+
+- Extended the checker so known TypeSharp-owned generic direct calls can bind named arguments through the existing parameter-name map and bounded generic inference/substitution shapes.
+- Extended first-argument pipeline validation so generic TypeSharp targets can bind named non-piped arguments while keeping the piped input bound to parameter 1.
+- Kept generic `params` named direct and pipeline combinations out of scope with deterministic `TS2201` diagnostics before C# emission.
+- Updated C# lowering so accepted generic TypeSharp-owned named calls emit ordinary positional C# calls, including explicit generic calls such as `choose<string>("c", "d")` and inferred pipeline calls such as `choose("h", "i")`.
+- Preserved imported C# named arguments on the metadata-backed interop path.
+- Added generic named-argument positive/negative type-checker fixtures, backend snapshot `0048-generic-named-argument-lowering`, and a generated `net48` CLI/C# consumer smoke. The shared catalog is now 520 cases.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, test README, and traceability.
+
+Verification:
+
+```powershell
+dotnet build test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --no-build -- --filter "type checker fixture diagnostics match"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --no-build -- --filter "C# backend fixture snapshots match"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --no-build -- --filter "generic named argument"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --no-build -- --filter "test runner shard selection"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj --no-build -- --filter "diagnostic fixture polarity"
+dotnet test test/TypeSharp.Compiler.Tests.MSTest/TypeSharp.Compiler.Tests.MSTest.csproj --filter "CatalogIsExposedForPackageRunners" --no-restore --verbosity quiet
+npm run build          # in docs
+git diff --check
+```
+
+Result: all listed commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/fixtures/diagnostics/type-checker/positive/generic-named-argument-binding`
+- `test/fixtures/diagnostics/type-checker/negative/generic-named-argument-binding`
+- `test/fixtures/backend/csharp/positive/0048-generic-named-argument-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+
+Remaining:
+
+- Active in task 0381: roadmap refresh after generic TypeSharp named arguments.
 
 ## Verification Summary
 
