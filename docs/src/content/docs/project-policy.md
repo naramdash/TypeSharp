@@ -107,6 +107,75 @@ Target framework rule:
 - Older profiles such as `net462` require a separate compatibility profile and explicit cost review.
 - Compiler/CLI/LSP modern .NET targets must not be confused with generated runtime targets.
 
+Official .NET/NuGet/VS Code ecosystem sources refreshed on 2026-05-21:
+
+- Microsoft Learn [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks): `net48` and `net481` are .NET Framework TFMs, and `.NET Framework 4.8.1` maps to `net481`.
+- Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies) and the [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework): `.NET Framework 4.8.1` is the latest .NET Framework version; Windows 10 22H2 includes 4.8 and can install 4.8.1, while recent Windows 11 releases include 4.8.1.
+- Microsoft Learn NuGet docs for [`PackageReference` and lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies), [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities), [package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping), and [trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers).
+- Microsoft Learn and VS Code docs for [`dotnet new` custom templates](https://learn.microsoft.com/en-us/dotnet/core/tools/custom-templates), [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide), and [VSIX/Marketplace publishing with `vsce`](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+
+## .NET Ecosystem Tooling Roadmap
+
+This roadmap defines gates before TypeSharp grows beyond explicit local DLL references and repository-local VSIX/template workflows.
+
+### NuGet Restore And Security
+
+`references.packages` stays reserved until all gates below are implemented:
+
+- Package references must use deterministic `PackageReference`-style metadata, not TypeScript declaration lookup or npm-style package resolution.
+- Restore must support a checked-in lock file equivalent to `packages.lock.json` and a locked mode for CI so dependency graph changes are intentional.
+- Restore must use an explicit `NuGet.config` generated or selected by TypeSharp. Package sources must be cleared by default, then added intentionally.
+- Package source mapping is required when more than one source is configured so package IDs cannot silently come from an unexpected feed.
+- Audit sources must be configurable separately from package sources, so vulnerability data can come from a public source even when packages come from an internal upstream feed.
+- Vulnerability auditing must have a policy for direct and transitive packages, severity threshold, and CI behavior. The stable gate should fail high/critical advisories unless the project has a documented exception.
+- License inventory, package ID/version inventory, and runtime deployment inventory are required for generated `net48` host compatibility.
+- Package signatures or trusted-signers policy are recommended before public release; SHA-256 checksums remain the minimum artifact-integrity gate.
+- Restore must never execute package build targets, analyzers, generators, or user code during `typesharp check`. If future `typesharp build` restore needs MSBuild targets, that execution boundary must be opt-in and documented.
+- The generated project must stay offline-friendly when no packages are used, preserving the current generated `NuGet.config` with sources cleared.
+
+### Target Profiles
+
+`net48` remains the default generated target because it is the broad compatibility profile for existing .NET Framework hosts.
+
+`net481` is a qualified profile, not an automatic upgrade:
+
+- It may be enabled only through an explicit manifest or CLI target once the compiler, Core, Runtime, generated project scaffold, C# consumer smoke, and host compatibility smoke all pass for `net481`.
+- The profile must document deployment assumptions, including supported Windows client/server baselines and whether the target machine already includes .NET Framework 4.8.1 or must install it.
+- `net481` must not change TypeSharp language semantics. Generated C# should remain C# 7.3-compatible unless a separate backend policy changes.
+- Core/Runtime may need multi-targeting before TypeSharp can claim first-class `net481`; until then, `net48` remains the stable release target.
+- Older .NET Framework targets such as `net462` stay separate compatibility projects because they can reduce available APIs and broaden host-matrix cost.
+
+### Templates And Scaffolding
+
+`typesharp new` remains the primary built-in scaffolding path. Future `dotnet new` template packs are useful only after the TypeSharp CLI and generated artifact story are stable enough to package.
+
+Template gates:
+
+- Each template emits `TypeSharp.toml`, source files, `.gitignore`, and smoke commands that work without hidden global tools beyond installed `dotnet`, `node`, and the TypeSharp CLI.
+- Console, library, interop-library, and host-consumer templates should share the same manifest semantics as hand-authored projects.
+- Templates must not enable preview language features, NuGet restore, `net481`, or host packaging by default.
+- Template package publication requires the same release integrity policy as CLI/runtime/VSIX artifacts.
+
+### VS Code And LSP Parity
+
+The VS Code extension should remain a thin client over the TypeSharp compiler/LSP contract. Parity milestones:
+
+- CLI and LSP diagnostics must share codes, spans, severity, and source ordering.
+- Formatter behavior must match `typesharp format --check` before the extension advertises stronger formatting guarantees.
+- Completion, hover, and go-to-definition must be backed by the same semantic model used by `typesharp check`.
+- A packaged VSIX must pass mocked extension-client tests, live language-server tests, and real Extension Host smoke tests before release.
+- Marketplace publishing requires a publisher id, token ownership, `engines.vscode` compatibility, HTTPS/readme asset compliance, and `vsce` packaging checks. The repository can automate packaging, but credentialed publish remains a release-owner action.
+
+### Release And Adoption Gates
+
+Before TypeSharp can call the .NET ecosystem workflow stable:
+
+- `typesharp new`, `check`, `build`, `run`, `format`, `explain`, and `lsp` must work from a clean Windows machine with installed `dotnet` and `node`.
+- A generated library must build for `net48`, be consumed by a C# `net48` project, and run in host-style ASP.NET/WCF/worker smoke shapes.
+- Release artifacts must include CLI zip, runtime/core `net48` zip, VSIX, release notes, and SHA-256 checksums.
+- NuGet package publication, template pack publication, and Marketplace publication remain separate adoption milestones with explicit credentials and security gates.
+- Every new ecosystem feature must include a rollback story: disable restore, fall back to local DLL references, install VSIX manually, or use explicit generated project references.
+
 ## Regression Policy
 
 Regression evidence must prove the changed behavior, not just that the full suite still passes.
@@ -259,10 +328,18 @@ When TypeSharp policy depends on external platform or language state, use offici
 - Microsoft Learn .NET Framework installation and support documentation: <https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-and-server>
 - Microsoft Learn .NET Framework versions and dependencies: <https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies>
 - .NET Framework support policy: <https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework>
+- Microsoft Learn target framework monikers: <https://learn.microsoft.com/en-us/dotnet/standard/frameworks>
 - Microsoft Learn C# language versioning: <https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning>
 - Microsoft Learn C# release notes: <https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/>
 - Microsoft Learn F# documentation and strategy: <https://learn.microsoft.com/en-us/dotnet/fsharp/> and <https://learn.microsoft.com/en-us/dotnet/fsharp/strategy>
 - Microsoft Learn F# release notes: <https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/>
+- Microsoft Learn NuGet `PackageReference` and lock files: <https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies>
+- Microsoft Learn NuGet package source mapping: <https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping>
+- Microsoft Learn `dotnet restore` package auditing: <https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities>
+- Microsoft Learn NuGet trusted signers: <https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers>
+- Microsoft Learn `dotnet new` custom templates: <https://learn.microsoft.com/en-us/dotnet/core/tools/custom-templates>
+- VS Code Language Server Extension Guide: <https://code.visualstudio.com/api/language-extensions/language-server-extension-guide>
+- VS Code Publishing Extensions guide: <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>
 - TypeScript official blog release notes: <https://devblogs.microsoft.com/typescript/>
 - Windows lifecycle documentation when target-framework deployment depends on installed OS baselines: <https://learn.microsoft.com/en-us/lifecycle/>
 

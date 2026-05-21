@@ -147,7 +147,7 @@ Reference rules:
 - `references.assemblies` becomes framework `<Reference Include="..."/>` items.
 - `references.paths` becomes local `<Reference>` items with generated-project-relative `<HintPath>` values.
 - `projectReferences.paths` names direct TypeSharp manifests. `typesharp build` builds those projects first and then writes local `<Reference>` items with hint paths to the referenced generated assemblies.
-- `references.packages` is reserved and currently reports `TS2405`; TypeSharp does not restore NuGet packages during build.
+- `references.packages` is reserved and currently reports `TS2405`; TypeSharp does not restore NuGet packages during build. Future support must preserve deterministic lock files, package source mapping, vulnerability auditing, license inventory, checksum/signature policy, and offline-friendly no-package builds.
 - The generated project writes an offline `NuGet.config` with package sources cleared so normal builds do not accidentally resolve hidden packages.
 
 ## TypeSharp Project References
@@ -243,6 +243,7 @@ TypeSharp does not require a custom loader, startup hook, ASP.NET Core migration
 ## Invariants
 
 - Generated projects target `net48` unless a future documented profile changes that.
+- `net481` is a qualified future profile, not an automatic upgrade. It needs Core/Runtime, generated project, C# consumer, and host smoke evidence before TypeSharp can claim support.
 - Generated C# stays C# 7.3-compatible.
 - Generated output is reproducible from source and should not be committed.
 - Source discovery excludes `bin`, `obj`, `.git`, and the generated output root.

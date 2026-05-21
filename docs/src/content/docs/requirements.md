@@ -33,6 +33,7 @@ Recommended:
 - Decide debug symbol support before stable release.
 - Keep Windows `net48` smoke coverage in CI when the environment is available.
 - Track `net48` and `net481` as separate compatibility profiles for vendor-qualified environments.
+- Keep `net481` opt-in until deployment baselines, target packs, Core/Runtime builds, generated project smokes, and C# consumer smokes are documented for that profile.
 
 ## Language Requirements
 
@@ -114,7 +115,7 @@ Required:
 
 Recommended:
 
-- NuGet support should include `net48` asset selection, transitive dependency, lock, license, and checksum policy before becoming stable.
+- NuGet support should include `net48` asset selection, transitive dependency closure, lock/locked-mode behavior, source mapping, vulnerability audit policy, license inventory, checksum/signature policy, and offline-cache behavior before becoming stable.
 - Extension method instance-call syntax can grow from the supported metadata receiver subset.
 - F# option, tuple, and record interop should remain a future compatibility layer.
 - CLS compliance and dynamic/reflection/COM profiles should be explicit opt-in checks.
@@ -153,6 +154,8 @@ Recommended:
 
 - `typesharp new` and `typesharp format` remain first-class adoption tools.
 - Formatter, linter, analyzer, and LSP features should build on the compiler semantic model.
+- CLI and VS Code/LSP workflows should stay behaviorally aligned: diagnostics, spans, severity, formatting drift, hover, definition, and completion should share compiler-owned semantics.
+- Future `dotnet new` template packs and VS Code Marketplace publication should wait until release artifacts, versioning, checksums, credentials, and rollback paths are defined.
 
 ## Quality, Security, And Release Requirements
 
@@ -170,7 +173,7 @@ Required:
 
 Recommended:
 
-- Performance baselines, diagnostic snapshot review, fuzzing, release reproducibility, and vulnerable dependency response policy should be added as the implementation matures.
+- Performance baselines, diagnostic snapshot review, fuzzing, release reproducibility, vulnerable dependency response policy, package restore adoption gates, and release rollback procedures should be added as the implementation matures.
 
 ## Related Pages
 

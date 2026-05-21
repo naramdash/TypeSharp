@@ -1672,6 +1672,38 @@ Primary evidence:
 - [Advanced Topics](../docs/src/content/docs/advanced.md)
 - [tasks.md](tasks.md)
 
+## Task 0297 .NET Ecosystem Tooling Roadmap
+
+Completed roadmap work established:
+
+- Refreshed official Microsoft Learn and VS Code sources for .NET Framework target framework monikers, `.NET Framework 4.8.1` deployment/support state, NuGet `PackageReference` lock files, `dotnet restore` auditing, package source mapping, trusted signers, `dotnet new` custom templates, VS Code language server extensions, and VSIX/Marketplace publishing.
+- Added a .NET ecosystem tooling roadmap to Project Policy that keeps `references.packages` reserved until TypeSharp has deterministic package metadata, checked-in lock files, locked-mode CI, explicit package sources, source mapping, vulnerability audit policy, license inventory, checksum/signature policy, transitive dependency policy, offline-cache behavior, and a no-user-code boundary for `typesharp check`.
+- Clarified target profile rules: `net48` remains the broad stable generated target, while `net481` is a future qualified profile requiring explicit manifest/CLI admission, target-pack/deployment assumptions, Core/Runtime builds, generated project smokes, C# consumer smokes, and host compatibility evidence.
+- Documented template and tooling gates: built-in `typesharp new` templates remain the current path, future `dotnet new` packs require release packaging policy, and VS Code/LSP behavior must stay aligned with CLI diagnostics, formatting, semantic hover, definition, completion, versioning, runtime ABI, and VSIX smoke tests.
+- Clarified release/adoption gates for CLI zip, runtime/core `net48` zip, VSIX, release notes, SHA-256 checksums, future NuGet/template/Marketplace publication, and rollback paths.
+- Updated Project Configuration, Requirements, .NET Interop, Runtime Artifacts, CLI, VS Code And LSP, Feature Status, Work Ledger, task state, and traceability to point at the new policy boundary.
+- Queued `0305 Roadmap refresh after ecosystem plan` as the next Q1 roadmap-refresh item because the visible queue would otherwise be empty.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Project Configuration](../docs/src/content/docs/project-configuration.md)
+- [Project Requirements](../docs/src/content/docs/requirements.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md)
+- [CLI](../docs/src/content/docs/cli.md)
+- [VS Code And LSP](../docs/src/content/docs/vscode-lsp.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

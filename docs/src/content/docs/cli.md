@@ -29,10 +29,13 @@ typesharp lsp
 Stable backlog command surface:
 
 ```text
+typesharp restore [project]
 typesharp test [project]
 ```
 
 `typesharp lsp` is the public stdio LSP entry point for editors and tooling hosts. The VS Code extension can still use its bundled language server DLL directly, but `typesharp lsp` is the stable CLI launch path.
+
+`typesharp restore` is a future explicit package-graph command. It is listed here so package restore stays separated from `check` until TypeSharp has a lock/audit/source-mapping policy.
 
 ## Command Contracts
 
@@ -53,6 +56,8 @@ Target default net48
 ### `typesharp new`
 
 Creates starter `console` or `library` projects. The default target framework is `net48`, templates must not enable preview features by default, and generated `.tysh` source should follow the formatting convention on this page.
+
+Built-in templates are the current adoption path. Future `dotnet new` template packs are release packaging work, not a current CLI dependency; they need the package, checksum, versioning, and rollback gates in [Project Policy](../project-policy/) before publication.
 
 Generated starter files:
 
@@ -88,7 +93,11 @@ The MVP backend is `--emit csharp`; future direct IL emission is Stable Backlog.
 
 Project build/run commands also accept `--target net48`. The override is validated by the CLI and takes precedence over the manifest `targetFramework` when writing the generated C# project and output path.
 
+`net481` is not a current implicit target. It can become an accepted target only after a documented compatibility profile proves Core/Runtime, generated project, C# consumer, and host smoke coverage for .NET Framework 4.8.1.
+
 When a manifest contains `[projectReferences]`, `build` builds direct referenced projects before the dependent project and writes explicit local references to the referenced generated assemblies into the dependent generated C# project.
+
+`typesharp build` does not restore NuGet packages today. Manifests with `references.packages` report `TS2405`; a future restore path must be explicit about lock files, package source mapping, auditing, license inventory, checksums/signatures, and whether any MSBuild package targets are allowed to execute.
 
 `typesharp build --verbosity quiet|minimal|normal|diagnostic` controls success logging: quiet suppresses artifact logs, minimal reports only the final assembly, normal reports generated source/project/assembly paths, and diagnostic adds option summary lines.
 
@@ -224,7 +233,7 @@ Manifest rules:
 - `main` is required only for executable projects.
 - `references.assemblies` names framework/GAC/reference assemblies.
 - `references.paths` names explicit local DLL references.
-- `references.packages` is reserved; the current compiler reports `TS2405` instead of restoring NuGet packages.
+- `references.packages` is reserved; the current compiler reports `TS2405` instead of restoring NuGet packages, and future support must follow the restore/security gates in [Project Policy](../project-policy/).
 - `projectReferences.paths` names direct TypeSharp manifests. Direct project source imports use `ProjectName/ModulePath`, referenced projects build before dependents, and hidden transitive project source imports are not visible.
 - MSBuild first-class integration is Stable Backlog and must not conflict with manifest semantics.
 

@@ -21,7 +21,7 @@ TypeSharp interop must support these durable goals:
 
 ## Generated Target
 
-The current backend emits C# 7.3-compatible source and builds generated projects for `net48`.
+The current backend emits C# 7.3-compatible source and builds generated projects for `net48`. `net481` is a future qualified profile, not an implicit target; it requires separate deployment assumptions, target-pack availability, Core/Runtime build evidence, generated project smokes, and C# consumer smokes before TypeSharp can claim support.
 
 Official C# release parity is tracked in [Feature Status](../feature-status/). As of the 2026-05-21 review, C# 14 stable features are TypeSharp design inputs only when they can lower to C# 7.3-compatible generated source; unbound generic `nameof` follows that rule by lowering to string constants. C# 15 features remain Preview Watch. TypeSharp must not require .NET 10, .NET 11, or C# 14/15 generated-source syntax for ordinary `net48` artifacts.
 
@@ -62,7 +62,7 @@ Rules:
 - The metadata reader indexes available `net48` framework reference assemblies and local DLL public top-level types plus selected public members.
 - Missing framework/local metadata is reported before generated C# emission when the compiler has enough metadata context. Examples include `TS2408` for missing framework types, `TS2407` for missing framework static methods, and `TS2409` for missing framework static members.
 - `packages` is a reserved manifest surface. The current compiler does not restore NuGet packages and reports `TS2405`.
-- Future package support must include `net48` asset selection, transitive dependencies, license inventory, checksums or lock files, and deterministic restore policy.
+- Future package support must include `net48` asset selection, transitive dependencies, checked-in lock files, locked-mode CI, package source mapping, vulnerability audit policy, license inventory, checksum/signature policy, and offline-cache behavior.
 - If multiple references expose the same simple assembly or type name, the manifest must define precedence or the compiler must report an ambiguity diagnostic.
 
 Add local DLL references in `TypeSharp.toml`:

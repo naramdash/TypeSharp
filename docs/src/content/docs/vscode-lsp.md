@@ -22,6 +22,8 @@ Formatting behavior follows the canonical [CLI](../cli/) formatting convention. 
 
 The extension can use a bundled `server/TypeSharp.LanguageServer.dll`, a repository development build, the public `typesharp lsp` CLI entry point, or explicit settings under `typesharp.languageServer.*`.
 
+The implementation follows the official [VS Code Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) shape: the editor client owns document notifications and UI wiring, while TypeSharp owns diagnostics and semantic responses.
+
 ## Syntax Highlighting Extension
 
 The syntax highlighting extension is the package under `vscode/typesharp`. It contributes:
@@ -57,6 +59,16 @@ npm run test:host
 
 `npm run test:smoke` verifies the extension client forwards document lifecycle notifications, maps diagnostics, clears closed-document diagnostics, and forwards hover, go-to-definition, completion, and formatting requests. `npm run test:live` starts the bundled language server over stdio and verifies diagnostics, hover, go-to-definition, completion, and formatting through the extension client. `npm run test:host` launches a real VS Code Extension Host and exercises the same editor-facing commands against `.tysh` documents in a temporary workspace.
 
+## Workflow Parity Roadmap
+
+The VS Code extension is release-ready only when it stays behaviorally aligned with the CLI:
+
+- diagnostics share compiler codes, severity, source ordering, and source spans with `typesharp check`;
+- formatting matches `typesharp format --check` for every supported formatter rule;
+- hover, go-to-definition, and completion read from the same semantic model used by CLI checks;
+- packaged VSIX builds include the same language server/runtime ABI expected by the matching CLI release;
+- release verification covers mocked extension-client tests, live stdio language-server tests, and a real Extension Host smoke test.
+
 ## Temporary Marketplace Publishing Guide
 
 Publishing requires user-owned Microsoft/Azure DevOps credentials and a Visual Studio Marketplace publisher id. The repository guide lives at `vscode/typesharp/MARKETPLACE.md` and follows the official Visual Studio Code extension publishing flow:
@@ -66,5 +78,7 @@ Publishing requires user-owned Microsoft/Azure DevOps credentials and a Visual S
 - verify locally with `npx --yes @vscode/vsce login <publisher-id>`,
 - package with `npm run package:vsix`,
 - publish with `npx --yes @vscode/vsce publish` or upload the generated VSIX manually.
+
+Marketplace publication is an adoption gate, not a normal build step. It requires a release-owner credential path, versioned VSIX artifact, release notes, checksum coverage, and a rollback path through manual VSIX installation.
 
 Official reference: [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).

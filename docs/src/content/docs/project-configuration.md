@@ -18,7 +18,7 @@ rootNamespace = "Company.Billing"
 generatedOutputRoot = "generated"
 ```
 
-`targetFramework` should be `net48` for the compatibility profile. The compiler and CLI can run on a modern .NET SDK, but generated artifacts are built for .NET Framework 4.8 unless a task explicitly says otherwise.
+`targetFramework` should be `net48` for the default compatibility profile. The compiler and CLI can run on a modern .NET SDK, but generated artifacts are built for .NET Framework 4.8 unless a documented compatibility profile says otherwise. `net481` is reserved for a future explicit profile and must not be treated as an automatic upgrade from `net48`.
 
 ## Source Roots
 
@@ -70,7 +70,7 @@ paths = ["lib/Legacy.Tools.dll"]
 packages = []
 ```
 
-The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`.
+The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`; package restore cannot become stable until the [Project Policy](../project-policy/) defines and implements lock files, package source mapping, audit severity, license inventory, checksum/signature, transitive dependency, and offline-cache behavior.
 
 ## Source Aliases
 
@@ -120,7 +120,7 @@ typesharp build TypeSharp.toml --configuration Release --target net48
 typesharp run TypeSharp.toml --configuration Debug --target net48
 ```
 
-Keep `net48` as the default TypeSharp compatibility target unless a documented compatibility profile says otherwise.
+Keep `net48` as the default TypeSharp compatibility target unless a documented compatibility profile says otherwise. A future `net481` override needs explicit manifest and CLI admission, Core/Runtime compatibility, generated project smoke coverage, and deployment assumptions before it can be accepted.
 
 Use [Project Policy](../project-policy/) for the canonical dependency inventory, future dependency gate, target-framework profile rules, and release baseline policy.
 Use [Runtime Artifacts](../runtime-artifacts/) for the generated C# project shape, Core/Runtime reference model, and deployable `net48` artifact set.
@@ -140,7 +140,7 @@ Rejected or deferred:
 - `tsconfig.json` as the TypeSharp project file;
 - JavaScript/JSX source inclusion through `allowJs`, `checkJs`, or JSX options;
 - Node/bundler module-resolution modes as language semantics;
-- npm package restore through TypeScript declaration lookup before TypeSharp has a package lock, license, checksum, and metadata security policy.
+- npm package restore through TypeScript declaration lookup, or any NuGet restore path without TypeSharp-owned lock, source mapping, audit, license, checksum/signature, and metadata security policy.
 
 ## Language And Tooling Options
 
