@@ -173,6 +173,8 @@ After expression-level same-enum value `|`, the empty-queue refresh rechecked of
 
 After expression-level same-enum value `&`, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice completed expression-level same-enum value `^` and unary `~` expressions such as `permission ^ Permission.Write` and `~permission`, without enabling numeric/general bitwise operators, shifts, compound assignment, flag-aware match exhaustiveness, numeric pattern algebra, imported enum flag reasoning, broad attribute target validation, or arbitrary/general computed enum member declarations.
 
+After expression-level same-enum value `^` and unary `~`, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is expression-level integral numeric `|`, `&`, `^`, and unary `~` over known non-null primitive integral operands, without enabling shifts, compound assignment, boolean bitwise expressions, flag-aware match algebra, imported enum flag reasoning, broad attribute target validation, arbitrary/general computed enum member declarations, numeric pattern algebra, or richer pattern algebra.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

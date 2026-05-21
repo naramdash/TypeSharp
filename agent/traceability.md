@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
+| Task 0336 Integral numeric bitwise expression slice | [0336-integral-numeric-bitwise-expression-slice.md](0336-integral-numeric-bitwise-expression-slice.md) | Type checker, parser/backend fixtures, generated `net48` CLI smoke, docs, and work-ledger updates for numeric `|`/`&`/`^`/`~` expressions. |
 
 ## Completed Evidence Index
 
