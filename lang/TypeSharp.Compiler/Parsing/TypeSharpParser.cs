@@ -1914,6 +1914,7 @@ public sealed class TypeSharpParser
             SyntaxKind.PlusToken or SyntaxKind.MinusToken => 5,
             SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken => 4,
             SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken => 3,
+            SyntaxKind.AmpersandToken => 2,
             SyntaxKind.PipeToken => 2,
             SyntaxKind.AmpersandAmpersandToken => 2,
             SyntaxKind.PipePipeToken => 1,

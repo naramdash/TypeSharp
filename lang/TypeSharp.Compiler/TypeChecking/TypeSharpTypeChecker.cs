@@ -712,9 +712,9 @@ public static class TypeSharpTypeChecker
                 return CheckSatisfiesExpression(node, scope);
             }
 
-            if (IsEnumValueBitwiseOrExpression(node))
+            if (IsEnumValueBitwiseExpression(node))
             {
-                return CheckEnumValueBitwiseOrExpression(node, scope);
+                return CheckEnumValueBitwiseExpression(node, scope);
             }
 
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
@@ -794,9 +794,13 @@ public static class TypeSharpTypeChecker
             return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
         }
 
-        private SimpleType CheckEnumValueBitwiseOrExpression(SyntaxNode node, TypeScope scope)
+        private SimpleType CheckEnumValueBitwiseExpression(SyntaxNode node, TypeScope scope)
         {
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            var operatorText = node.Children.FirstOrDefault(child =>
+                child.IsToken &&
+                child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken)?.Text ?? "?";
+
             if (expressions.Length != 2)
             {
                 foreach (var expression in expressions)
@@ -818,22 +822,22 @@ public static class TypeSharpTypeChecker
             var rightIsEnum = !rightType.IsNull && !rightType.IsNullable && scope.ResolveEnum(rightType.Name, out _);
             if (!leftIsEnum || !rightIsEnum)
             {
-                ReportMismatch(node, $"Enum value '|' operands must be enum values of the same type, but found '{leftType}' and '{rightType}'.");
+                ReportMismatch(node, $"Enum value '{operatorText}' operands must be enum values of the same type, but found '{leftType}' and '{rightType}'.");
                 return SimpleType.Unknown;
             }
 
             if (!string.Equals(leftType.Name, rightType.Name, StringComparison.Ordinal))
             {
-                ReportMismatch(node, $"Enum value '|' operands must have the same enum type, but found '{leftType}' and '{rightType}'.");
+                ReportMismatch(node, $"Enum value '{operatorText}' operands must have the same enum type, but found '{leftType}' and '{rightType}'.");
                 return SimpleType.Unknown;
             }
 
             return leftType;
         }
 
-        private static bool IsEnumValueBitwiseOrExpression(SyntaxNode node) =>
+        private static bool IsEnumValueBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
-            node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.PipeToken);
+            node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken);
 
         private static bool TryGetEnumMemberAccess(
             SyntaxNode receiver,

@@ -14,3 +14,6 @@ public enum Color : byte {
 
 export fun favorite(): Color =
   Color.Red | Color.Blue
+
+export fun bluePart(input: Color): Color =
+  input & Color.Blue

@@ -19715,6 +19715,9 @@ static void CliBuildCompilesEnumDeclarationApi()
 
             export fun favorite(): Color =
               Color.Red | Color.Blue
+
+            export fun bluePart(input: Color): Color =
+              input & Color.Blue
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -19735,6 +19738,7 @@ static void CliBuildCompilesEnumDeclarationApi()
         AssertContains("Blue = 4", generatedSource);
         AssertContains("Purple = Red | Blue", generatedSource);
         AssertContains("return Color.Red | Color.Blue;", generatedSource);
+        AssertContains("return input & Color.Blue;", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "EnumDeclarationApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with enum declaration API.");
@@ -19773,6 +19777,7 @@ static void CliBuildCompilesEnumDeclarationApi()
                     public static bool Read()
                     {
                         return Samples.Enums.Module.favorite() == Samples.Enums.Color.Purple &&
+                            Samples.Enums.Module.bluePart(Samples.Enums.Color.Purple) == Samples.Enums.Color.Blue &&
                             (int)Samples.Enums.Color.Blue == 4 &&
                             (int)Samples.Enums.Color.Purple == 5;
                     }

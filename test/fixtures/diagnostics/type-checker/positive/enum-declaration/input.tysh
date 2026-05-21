@@ -10,5 +10,7 @@ enum Color : byte {
 
 let favorite: Color = Color.Red | Color.Blue
 
+let blueOnly: Color = favorite & Color.Blue
+
 fun choose(): Color =
-  Color.Red | Color.Blue
+  favorite & Color.Red

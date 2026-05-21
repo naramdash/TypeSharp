@@ -10,6 +10,11 @@ namespace Samples.Enums
         {
             return Color.Red | Color.Blue;
         }
+
+        public static Color bluePart(Color input)
+        {
+            return input & Color.Blue;
+        }
     }
 
     [FlagsAttribute]
