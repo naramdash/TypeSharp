@@ -4873,7 +4873,59 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0381: roadmap refresh after generic TypeSharp named arguments.
+- Completed in task 0381: roadmap refresh after generic TypeSharp named arguments selected the MSTest package shard bridge next.
+
+## Task 0381 Roadmap Refresh After Generic TypeSharp Named Arguments
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals on 2026-05-22 after generic TypeSharp named argument binding.
+- Confirmed no generated-artifact baseline change: TypeSharp-generated assemblies stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and modern .NET/Node/package dependencies remain isolated to compiler, test, docs, CI, or editor tooling.
+- Kept C# 14 stable on .NET 10 and C# 15 preview on .NET 11 as language-design inputs only. Microsoft C# language versioning still maps `.NET Framework` targets to C# 7.3.
+- Kept F# 10 and TypeScript 7.0 Beta as tooling, diagnostics, and compiler-engineering signals only. They do not introduce an F# runtime, TypeScript runtime, Go toolchain, or preview compiler dependency into TypeSharp.
+- Confirmed .NET Framework 4.8.1 remains the latest Framework, while `net48` remains TypeSharp's broad generated target and `net481` stays a separate qualified-profile backlog item.
+- Confirmed TypeSharp already uses a `net10.0` NuGet package bridge through `MSTest.Sdk/4.2.3`, `.NET 10` `dotnet test` MTP mode, NuGet lock files, package source mapping, repo-local package cache, and restore audit controls.
+- Answered the test-package optimization concern by selecting the next bounded slice: `0382 MSTest package shard bridge`. The slice should make the package-based MSTest/MTP path shardable over the existing shared catalog, while keeping the package-free four-shard runner as the fastest release-confidence path and keeping xUnit.net v3 as a future comparison candidate only.
+- Confirmed VS Code LSP guidance and GitHub Actions runner-image signals do not change current editor or generated-artifact baselines. The `windows-latest`/`windows-2025` migration to Visual Studio 2026 beginning 2026-06-08 remains a CI watch item.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet restore audit](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities)
+- [.NET testing overview](https://learn.microsoft.com/en-us/dotnet/core/testing/)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test#mtp-mode-of-dotnet-test)
+- [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [GitHub Actions runner images](https://github.com/actions/runner-images)
+- [GitHub Actions image migrations](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0382: MSTest package shard bridge.
 
 ## Verification Summary
 
@@ -4899,13 +4951,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0379 is compressed here.
+- Completed historical work through task 0381 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0380 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0382 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
