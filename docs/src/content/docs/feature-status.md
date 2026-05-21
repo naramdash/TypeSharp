@@ -237,6 +237,8 @@ After the test catalog extraction and MSTest bridge, the custom regression catal
 
 After the MSTest catalog bridge roadmap refresh, official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, .NET testing, MSTest SDK, and xUnit.net v3 sources were rechecked on 2026-05-22 and found no generated-artifact baseline change. C# 14 remains the current stable .NET 10 C# signal, C# 15 remains preview on .NET 11 preview, TypeScript 6.0 is the transition release toward the TypeScript 7.0 native compiler, TypeScript 7.0 Beta remains side-by-side native-preview tooling, and F# 10 remains a refinement/tooling signal. The next bounded slice is test-host NuGet package selection and restore hardening: record why TypeSharp uses a `net10.0` package-based test bridge, compare MSTest SDK/MTP with xUnit.net v3 over the extracted catalog, then apply lock/source-mapping/audit posture where supported or document a compensating control where MSBuild SDK restore does not expose the same controls.
 
+After test-host NuGet package selection and restore hardening, TypeSharp keeps the pinned `MSTest.Sdk/4.2.3` bridge as the selected package-based `net10.0` discovery path and leaves xUnit.net v3 as a future bridge candidate over the same catalog. Root `NuGet.config`, repo-local `.nuget/packages`, `packages.lock.json`, locked-mode CI restore, and NuGet audit now cover the selected MSTest bridge package graph while generated artifacts, `TypeSharp.Core`, `TypeSharp.Runtime`, and the package-free shard runner remain package-free. The next active task is a roadmap refresh after this hardening to select the next bounded language, tooling, or adoption slice.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

@@ -4457,7 +4457,58 @@ Primary evidence:
 
 Remaining:
 
-- Test-host NuGet package selection and restore hardening is active in task 0372. Future CI adoption should wait until the MSTest SDK versus xUnit.net v3 choice and package restore controls are clarified.
+- Completed in task 0372: MSTest SDK/MTP remains the selected package bridge, xUnit.net v3 remains a future candidate, and the selected test-host package path now has lock/source-mapping/audit controls.
+
+## Task 0372 Test-host NuGet Package Selection And Restore Hardening
+
+Completed test-host package hardening work established:
+
+- Confirmed TypeSharp was already using a `net10.0` NuGet package-based test bridge through `Project Sdk="MSTest.Sdk/4.2.3"` in `test/TypeSharp.Compiler.Tests.MSTest`.
+- Compared MSTest SDK/Microsoft Testing Platform and xUnit.net v3 against TypeSharp's needs. MSTest remains selected for the first package bridge because it is Microsoft-supported, defaults to MTP, works with the root `.NET 10` MTP `global.json`, and exposes `TypeSharpCompilerTestCases.All` with minimal bridge code. xUnit.net v3 remains a future bridge candidate over the same catalog if it provides distinct ecosystem value.
+- Added root `NuGet.config` that clears inherited package sources, uses `nuget.org` as the package and audit source, maps the current MSTest bridge package graph to `nuget.org`, and sends restored packages to ignored repo-local `.nuget/packages`.
+- Added `.nuget/` to `.gitignore`.
+- Enabled `RestorePackagesWithLockFile`, `RestoreLockedMode` under `ContinuousIntegrationBuild=true`, `NuGetAudit`, transitive audit mode, and high-severity audit threshold in `test/TypeSharp.Compiler.Tests.MSTest`.
+- Checked in `test/TypeSharp.Compiler.Tests.MSTest/packages.lock.json` for the generated MSTest bridge graph: direct `MSTest.TestAdapter` and `MSTest.TestFramework` plus Microsoft Testing Platform transitives.
+- Documented the MSBuild SDK restore exception: `MSTest.Sdk` itself is restored before the normal project package graph and is not listed as a normal lock-file dependency. The compensating controls are the exact `Project Sdk` pin, source mapping for `MSTest.*`, repo-local package cache, and locked restore for the emitted graph.
+- Kept generated `net48` artifacts, `TypeSharp.Core`, `TypeSharp.Runtime`, package-free main/shard runners, CI migration, compiler NuGet restore, and generated target frameworks unchanged.
+
+Verification:
+
+```powershell
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --locked-mode --verbosity minimal
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+dotnet build-server shutdown
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+rg -n "PackageReference|packages\.config" lang\TypeSharp.Core lang\TypeSharp.Runtime
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `NuGet.config`
+- `.gitignore`
+- `global.json`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharp.Compiler.Tests.MSTest.csproj`
+- `test/TypeSharp.Compiler.Tests.MSTest/packages.lock.json`
+- `test/README.md`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet audit](https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages)
+- [`dotnet restore` command](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+
+Remaining:
+
+- Roadmap refresh after test-host NuGet hardening is active in task 0373.
 
 ## Verification Summary
 
@@ -4483,13 +4534,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0369 is compressed here.
+- Completed historical work through task 0372 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0372 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0373 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

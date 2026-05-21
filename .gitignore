@@ -1,6 +1,7 @@
 bin/
 obj/
 .vs/
+.nuget/
 .codex/*
 !.codex/skills/
 !.codex/skills/**

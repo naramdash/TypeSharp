@@ -4,6 +4,11 @@
     <AssemblyName>TypeSharp.Compiler.Tests.MSTest</AssemblyName>
     <RootNamespace>TypeSharp.Compiler.Tests.MSTest</RootNamespace>
     <TestingExtensionsProfile>None</TestingExtensionsProfile>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\TypeSharp.Compiler.Tests\TestRunnerSettings.cs" Link="TestRunnerSettings.cs" />
