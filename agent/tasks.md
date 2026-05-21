@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0362-composition-function-type-annotation-compatibility-slice.md](0362-composition-function-type-annotation-compatibility-slice.md) |
-| Active summary     | 0362 Composition function-type annotation compatibility slice |
-| Completed range    | 0001-0361                         |
+| Active task packet | None |
+| Active summary     | None |
+| Completed range    | 0001-0362                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0361 roadmap refresh | 0362 Composition function-type annotation compatibility slice | [0362-composition-function-type-annotation-compatibility-slice.md](0362-composition-function-type-annotation-compatibility-slice.md) | Validate explicit function-type annotations on direct named-function composition values before C# emission, without enabling unannotated composition type inference. |
+| Q2       | Done        | Task 0361 roadmap refresh | 0362 Composition function-type annotation compatibility slice | [tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice](tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice) | Validated explicit function-type annotations on direct named-function composition values before C# emission, without enabling unannotated composition type inference. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0361 Roadmap refresh after direct generic composition inference | [tasks-rollup.md#task-0361-roadmap-refresh-after-direct-generic-composition-inference](tasks-rollup.md#task-0361-roadmap-refresh-after-direct-generic-composition-inference) | Rechecked official source signals after direct generic composition inference, confirmed the baseline, and selected bounded explicit composition annotation compatibility. |
 | Q2       | Done        | Task 0359 roadmap refresh | 0360 Direct generic composition inference slice | [tasks-rollup.md#task-0360-direct-generic-composition-inference-slice](tasks-rollup.md#task-0360-direct-generic-composition-inference-slice) | Extended direct named-function composition compatibility checks to bounded TypeSharp generic unary targets without changing C# lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0359 Roadmap refresh after direct generic pipeline inference | [tasks-rollup.md#task-0359-roadmap-refresh-after-direct-generic-pipeline-inference](tasks-rollup.md#task-0359-roadmap-refresh-after-direct-generic-pipeline-inference) | Rechecked official source signals after direct generic pipeline inference, confirmed the baseline, and selected bounded direct generic composition inference. |

@@ -630,18 +630,38 @@ public static class TypeSharpTypeChecker
         private void CheckValueDeclaration(SyntaxNode node, TypeScope scope)
         {
             var expectedType = SimpleType.Unknown;
+            var hasTypeAnnotation = TryGetDirectTypeAnnotation(node, out var typeNode);
             var annotationKnown =
-                TryGetDirectTypeAnnotation(node, out var typeNode) &&
+                hasTypeAnnotation &&
                 TryGetType(typeNode, scope, out expectedType);
-            if (annotationKnown && !scope.AllowsDynamic && ContainsDynamicType(typeNode))
+            var annotationParameterType = SimpleType.Unknown;
+            var annotationReturnType = SimpleType.Unknown;
+            var functionAnnotationKnown =
+                hasTypeAnnotation &&
+                TryGetUnaryFunctionType(typeNode, scope, out annotationParameterType, out annotationReturnType);
+            if ((annotationKnown || functionAnnotationKnown) && !scope.AllowsDynamic && ContainsDynamicType(typeNode))
             {
                 ReportDynamicCapabilityRequired(typeNode);
             }
 
             var initializerType = SimpleType.Unknown;
+            SyntaxNode? initializerExpression = null;
             if (node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer) is { } initializer)
             {
-                initializerType = CheckInitializer(initializer, scope, annotationKnown ? expectedType : null);
+                initializerExpression = initializer.Children.FirstOrDefault(child => !child.IsToken);
+                initializerType = initializerExpression is null
+                    ? SimpleType.Unknown
+                    : CheckExpressionWithExpected(initializerExpression, scope, annotationKnown ? expectedType : null);
+            }
+
+            if (functionAnnotationKnown && initializerExpression is not null)
+            {
+                CheckCompositionFunctionTypeAnnotation(
+                    node,
+                    scope,
+                    initializerExpression,
+                    annotationParameterType,
+                    annotationReturnType);
             }
 
             if (annotationKnown && initializerType.IsKnown && IsNullabilityViolation(expectedType, initializerType))
@@ -1773,6 +1793,118 @@ public static class TypeSharpTypeChecker
                 $"Composition operator '{operatorText}' cannot compose '{firstName}' with '{secondName}': '{firstName}' returns '{firstReturnType}', but '{secondName}' expects '{secondParameterType}'.");
         }
 
+        private void CheckCompositionFunctionTypeAnnotation(
+            SyntaxNode node,
+            TypeScope scope,
+            SyntaxNode expression,
+            SimpleType annotationParameterType,
+            SimpleType annotationReturnType)
+        {
+            if (!TryGetDirectCompositionSignature(
+                scope,
+                expression,
+                out var firstName,
+                out var firstParameterType,
+                out var secondName,
+                out var secondReturnType))
+            {
+                return;
+            }
+
+            if (firstParameterType.IsKnown && !CanAssign(scope, firstParameterType, annotationParameterType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Function type annotation for composition supplies input '{annotationParameterType}', but '{firstName}' expects '{firstParameterType}'.");
+            }
+
+            if (!secondReturnType.IsKnown)
+            {
+                return;
+            }
+
+            if (IsNullabilityViolation(annotationReturnType, secondReturnType))
+            {
+                ReportMismatch(
+                    node,
+                    secondReturnType.IsNull
+                        ? $"Function type annotation for composition expects non-null result '{annotationReturnType}', but '{secondName}' returns null."
+                        : $"Function type annotation for composition expects non-null result '{annotationReturnType}', but '{secondName}' returns nullable type '{secondReturnType}'.");
+            }
+            else if (TryGetStructuralAssignmentDiagnostic(scope, annotationReturnType, secondReturnType, out var structuralMessage))
+            {
+                ReportMismatch(node, structuralMessage);
+            }
+            else if (!CanAssign(scope, annotationReturnType, secondReturnType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Function type annotation for composition expects result '{annotationReturnType}', but '{secondName}' returns '{secondReturnType}'.");
+            }
+        }
+
+        private static bool TryGetDirectCompositionSignature(
+            TypeScope scope,
+            SyntaxNode expression,
+            out string firstName,
+            out SimpleType firstParameterType,
+            out string secondName,
+            out SimpleType secondReturnType)
+        {
+            firstName = string.Empty;
+            firstParameterType = SimpleType.Unknown;
+            secondName = string.Empty;
+            secondReturnType = SimpleType.Unknown;
+
+            var expressions = expression.Children.Where(child => !child.IsToken).ToArray();
+            if (!IsCompositionExpression(expression) ||
+                expressions.Length != 2 ||
+                !TryGetCompositionOperatorText(expression.Children, out var operatorText) ||
+                !TryGetDirectIdentifierName(expressions[0], out var leftName) ||
+                !TryGetDirectIdentifierName(expressions[1], out var rightName) ||
+                !scope.ResolveFunctionInfo(leftName, out var leftFunction) ||
+                !scope.ResolveFunctionInfo(rightName, out var rightFunction) ||
+                !TryGetUnaryFunctionSignature(leftFunction, out var leftParameterType, out var leftReturnType) ||
+                !TryGetUnaryFunctionSignature(rightFunction, out var rightParameterType, out var rightReturnType))
+            {
+                return false;
+            }
+
+            firstName = leftName;
+            var firstFunction = leftFunction;
+            firstParameterType = leftParameterType;
+            var firstReturnType = leftReturnType;
+            secondName = rightName;
+            var secondFunction = rightFunction;
+            var secondParameterType = rightParameterType;
+            secondReturnType = rightReturnType;
+            if (operatorText == "<<")
+            {
+                firstName = rightName;
+                firstFunction = rightFunction;
+                firstParameterType = rightParameterType;
+                firstReturnType = rightReturnType;
+                secondName = leftName;
+                secondFunction = leftFunction;
+                secondParameterType = leftParameterType;
+                secondReturnType = leftReturnType;
+            }
+
+            ResolveCompositionGenericSignatureTypes(
+                firstFunction,
+                firstParameterType,
+                firstReturnType,
+                secondFunction,
+                secondParameterType,
+                secondReturnType,
+                out firstParameterType,
+                out _,
+                out _,
+                out secondReturnType);
+
+            return true;
+        }
+
         private static void ResolveCompositionGenericEdgeTypes(
             FunctionInfo firstFunction,
             SimpleType firstReturnType,
@@ -1780,6 +1912,31 @@ public static class TypeSharpTypeChecker
             SimpleType secondParameterType,
             out SimpleType resolvedFirstReturnType,
             out SimpleType resolvedSecondParameterType)
+        {
+            ResolveCompositionGenericSignatureTypes(
+                firstFunction,
+                SimpleType.Unknown,
+                firstReturnType,
+                secondFunction,
+                secondParameterType,
+                SimpleType.Unknown,
+                out _,
+                out resolvedFirstReturnType,
+                out resolvedSecondParameterType,
+                out _);
+        }
+
+        private static void ResolveCompositionGenericSignatureTypes(
+            FunctionInfo firstFunction,
+            SimpleType firstParameterType,
+            SimpleType firstReturnType,
+            FunctionInfo secondFunction,
+            SimpleType secondParameterType,
+            SimpleType secondReturnType,
+            out SimpleType resolvedFirstParameterType,
+            out SimpleType resolvedFirstReturnType,
+            out SimpleType resolvedSecondParameterType,
+            out SimpleType resolvedSecondReturnType)
         {
             var firstTypeParameterNames = new HashSet<string>(firstFunction.TypeParameters, StringComparer.Ordinal);
             var secondTypeParameterNames = new HashSet<string>(secondFunction.TypeParameters, StringComparer.Ordinal);
@@ -1799,8 +1956,10 @@ public static class TypeSharpTypeChecker
                 firstTypeParameterNames,
                 secondSubstitutions);
 
+            resolvedFirstParameterType = SubstituteGenericType(firstParameterType, firstSubstitutions, firstTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
             resolvedFirstReturnType = SubstituteGenericType(firstReturnType, firstSubstitutions, firstTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
             resolvedSecondParameterType = SubstituteGenericType(secondParameterType, secondSubstitutions, secondTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            resolvedSecondReturnType = SubstituteGenericType(secondReturnType, secondSubstitutions, secondTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
         }
 
         private static void TryInferCompositionTypeArgument(
@@ -4694,6 +4853,39 @@ public static class TypeSharpTypeChecker
             }
 
             return false;
+        }
+
+        private static bool TryGetUnaryFunctionType(
+            SyntaxNode annotation,
+            TypeScope scope,
+            out SimpleType parameterType,
+            out SimpleType returnType)
+        {
+            parameterType = SimpleType.Unknown;
+            returnType = SimpleType.Unknown;
+
+            if (annotation.Kind == SyntaxKind.TypeAnnotation)
+            {
+                var typeNode = annotation.Children.FirstOrDefault(child => !child.IsToken);
+                return typeNode is not null && TryGetUnaryFunctionType(typeNode, scope, out parameterType, out returnType);
+            }
+
+            if (annotation.Kind != SyntaxKind.FunctionType)
+            {
+                return false;
+            }
+
+            var types = annotation.Children.Where(child => !child.IsToken).ToArray();
+            if (types.Length != 2 ||
+                !TryGetType(types[0], scope, out parameterType) ||
+                !TryGetType(types[1], scope, out returnType))
+            {
+                parameterType = SimpleType.Unknown;
+                returnType = SimpleType.Unknown;
+                return false;
+            }
+
+            return parameterType.IsKnown && returnType.IsKnown;
         }
 
         private static bool TryGetTaskResultType(SimpleType type, out SimpleType resultType)

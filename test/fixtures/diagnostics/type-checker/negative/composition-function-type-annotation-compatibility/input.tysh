@@ -1,0 +1,15 @@
+namespace Samples.TypeChecker.CompositionFunctionTypeAnnotationCompatibility
+
+fun increment(value: int): int = value + 1
+
+fun stringify(value: int): string = value.ToString()
+
+fun length(value: string): int = value.Length
+
+fun identity<T>(value: T): T = value
+
+let inputMismatch: string -> string = increment >> stringify
+let returnMismatch: int -> int = increment >> stringify
+let reverseInputMismatch: string -> string = stringify << increment
+let genericInputMismatch: string -> string = identity >> stringify
+let genericReturnMismatch: int -> int = stringify >> identity
