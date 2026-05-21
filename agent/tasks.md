@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | None |
-| Active summary     | None |
-| Completed range    | 0001-0316                         |
+| Active task packet | [0318-explicit-enum-underlying-types-slice.md](0318-explicit-enum-underlying-types-slice.md) |
+| Active summary     | Implement explicit underlying types for TypeSharp-owned enums while preserving C# 7.3 lowering and existing enum member semantics. |
+| Completed range    | 0001-0317                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q2       | In Progress | Task 0317 roadmap refresh | 0318 Explicit enum underlying types slice | [0318-explicit-enum-underlying-types-slice.md](0318-explicit-enum-underlying-types-slice.md) | Add TypeSharp-owned enum `: underlyingType` parsing and C# enum lowering without changing flags, aliases, computed values, or imported enum policy. |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0317 Roadmap refresh after explicit enum numeric values | [tasks-rollup.md#task-0317-roadmap-refresh-after-explicit-enum-numeric-values](tasks-rollup.md#task-0317-roadmap-refresh-after-explicit-enum-numeric-values) | Rechecked official source signals after explicit enum numeric values, confirmed the baseline, and selected explicit TypeSharp enum underlying types as the next bounded implementation slice. |
 | Q2       | Done        | Task 0315 roadmap refresh | 0316 Explicit enum numeric values slice | [tasks-rollup.md#task-0316-explicit-enum-numeric-values-slice](tasks-rollup.md#task-0316-explicit-enum-numeric-values-slice) | Added TypeSharp-owned enum member `= numeric` parsing and C# enum lowering without changing enum type checking, flags, aliases, or underlying-type policy. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0315 Roadmap refresh after imported C# enum exhaustiveness | [tasks-rollup.md#task-0315-roadmap-refresh-after-imported-csharp-enum-exhaustiveness](tasks-rollup.md#task-0315-roadmap-refresh-after-imported-csharp-enum-exhaustiveness) | Rechecked official source signals after imported enum exhaustiveness, confirmed the baseline, and selected explicit TypeSharp enum numeric values as the next bounded implementation slice. |
 | Q3       | Done        | Task 0313 roadmap refresh | 0314 Imported C# enum exhaustiveness slice | [tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice](tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice) | Extended finite enum-member coverage from TypeSharp-owned enums to named imported C# enum metadata without taking on flags or numeric-value semantics. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0313 Roadmap refresh after enum match exhaustiveness | [tasks-rollup.md#task-0313-roadmap-refresh-after-enum-match-exhaustiveness](tasks-rollup.md#task-0313-roadmap-refresh-after-enum-match-exhaustiveness) | Rechecked official source signals after enum match exhaustiveness, confirmed the baseline, and selected imported C# enum exhaustiveness as the next bounded implementation slice. |
-| Q2       | Done        | Task 0311 roadmap refresh | 0312 Enum match exhaustiveness slice | [tasks-rollup.md#task-0312-enum-match-exhaustiveness-slice](tasks-rollup.md#task-0312-enum-match-exhaustiveness-slice) | Implemented TypeSharp-owned enum match exhaustiveness now that enum declaration groundwork exists. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

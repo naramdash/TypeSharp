@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
+| Task 0318 explicit enum underlying types slice | [0318-explicit-enum-underlying-types-slice.md](0318-explicit-enum-underlying-types-slice.md) | Parser/backend enum fixtures, generated `net48` build smoke, and grammar/reference/type-system/lowering docs showing the underlying-type boundary. |
 
 ## Completed Evidence Index
 

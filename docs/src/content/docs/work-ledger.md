@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Apply the roadmap-refresh rule because user inbox, agent queue, and checklist currently have no unchecked work. |
+| Active task packet | `agent/0318-explicit-enum-underlying-types-slice.md` |
+| Next top-priority task | Task `0318-explicit-enum-underlying-types-slice` is active. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0316-explicit-enum-numeric-values-slice` completed explicit numeric values for TypeSharp-owned enum members. |
-| Completed work covered | 0001-0316 |
+| Current tooling slice | Task `0318-explicit-enum-underlying-types-slice` is implementing explicit underlying types for TypeSharp-owned enums after task 0317 refreshed the roadmap baseline. |
+| Completed work covered | 0001-0317 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
