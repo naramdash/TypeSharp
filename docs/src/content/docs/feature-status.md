@@ -257,6 +257,8 @@ The generic TypeSharp named argument binding slice completed checker/backend sup
 
 After generic TypeSharp named argument binding, official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions sources were rechecked on 2026-05-22. No generated-artifact baseline changed. TypeSharp already uses a `net10.0` NuGet package bridge through `MSTest.Sdk/4.2.3` and .NET 10 Microsoft Testing Platform mode, with lock/source-mapping/audit controls isolated from generated `net48` artifacts. The next bounded slice is the MSTest package shard bridge so package-based `dotnet test` discovery can run the shared catalog in parallel while the package-free four-shard runner remains the fastest release-confidence path.
 
+The MSTest package shard bridge added four locked `net10.0` `MSTest.Sdk/4.2.3` shard projects over the shared catalog, so package-based `dotnet test`/MTP discovery now has a parallel full-catalog path without replacing the faster package-free shard runner. After that test infrastructure slice, official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions sources were rechecked again on 2026-05-22. No generated-artifact baseline changed: `net48` and C# 7.3-compatible generated source remain the stable public artifact target, while .NET 10 test tooling stays isolated. The next bounded language slice is generic TypeSharp optional/default parameters for concrete trailing literal defaults on TypeSharp-owned generic direct `fun` declarations.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
