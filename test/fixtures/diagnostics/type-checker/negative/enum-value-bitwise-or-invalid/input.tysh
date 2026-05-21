@@ -1,0 +1,17 @@
+namespace Samples.TypeChecker.EnumValueBitwiseOrInvalid
+
+enum Permission {
+  Read,
+  Write
+}
+
+enum Color {
+  Red,
+  Blue
+}
+
+let mixedEnum: Permission = Permission.Read | Color.Red
+
+let numericOr = 1 | 2
+
+let enumAndNumber: Permission = Permission.Read | 1

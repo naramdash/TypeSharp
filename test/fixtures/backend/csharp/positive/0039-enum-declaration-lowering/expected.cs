@@ -8,7 +8,7 @@ namespace Samples.Enums
     {
         public static Color favorite()
         {
-            return Color.Green;
+            return Color.Red | Color.Blue;
         }
     }
 

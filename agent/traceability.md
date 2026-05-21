@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| 0330 enum value bitwise OR expression slice | [0330-enum-value-bitwise-or-expression-slice.md](0330-enum-value-bitwise-or-expression-slice.md) | Parser/type-checker/backend support, positive and negative fixtures, generated `net48` smoke, and docs updates for same-enum value `|` expressions. |
+| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
 
 ## Completed Evidence Index
 

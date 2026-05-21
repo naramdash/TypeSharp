@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 15:58:05 +09:00
+End Time: 2026-05-21 16:07:08 +09:00
 
 ## Objective
 
@@ -2625,6 +2625,53 @@ Primary evidence:
 Remaining:
 
 - Same-enum value `|` expressions are active in task 0330. Numeric/general bitwise operators, flag-aware match exhaustiveness, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
+## Task 0330 Enum Value Bitwise OR Expression Slice
+
+Completed language/compiler work established:
+
+- Added parser support for expression-level `|` over enum values without changing type-union, pattern-or, pipeline, or enum initializer-local parsing.
+- Added type-checker validation for same-enum value `|` expressions and deterministic `TS2201` diagnostics for mixed enum or non-enum operands.
+- Preserved the narrow boundary: numeric/general bitwise operators, `&`, `^`, `~`, shifts, compound assignment, flag-aware match exhaustiveness, numeric pattern algebra, imported enum flag reasoning, and arbitrary/general computed enum member declarations remain out of scope.
+- Reused existing C# binary expression lowering so accepted expressions emit ordinary C# 7.3-compatible `|`.
+- Added parser, type-checker positive/negative, backend snapshot, generated `net48` CLI build, fixture README, canonical docs, work-ledger, tasks, and traceability coverage.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles enum declaration API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/enum-value-bitwise-or-invalid`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Numeric/general bitwise operators, flag-aware match exhaustiveness, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
 ## Verification Summary
 
