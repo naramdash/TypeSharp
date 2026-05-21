@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| Direct function call arity and argument diagnostics | [0352-direct-function-call-arity-and-argument-diagnostics-slice.md](0352-direct-function-call-arity-and-argument-diagnostics-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, focused direct function call diagnostics fixture, imported C# call stability, docs diagnostics/reference updates. |
 
 ## Completed Evidence Index
 
