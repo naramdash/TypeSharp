@@ -1,0 +1,16 @@
+namespace Samples.TypeChecker.DirectGenericFunctionCallInference
+
+fun identity<T>(value: T): T = value
+
+fun choose<T>(left: T, right: T): T = left
+
+fun pairLeft<T, U>(left: T, right: U): T = left
+
+fun asText(value: string): string = value
+
+let inferredString: string = identity("a")
+let inferredInt: int = identity(1)
+let explicitString: string = identity<string>("a")
+let repeated: int = choose(1, 2)
+let mixed: string = pairLeft("a", 1)
+let nested: string = asText(identity("a"))

@@ -1,0 +1,14 @@
+namespace Samples.TypeChecker.DirectGenericFunctionCallInference
+
+fun identity<T>(value: T): T = value
+
+fun choose<T>(left: T, right: T): T = left
+
+fun swap<T, U>(left: T, right: U): U = right
+
+let explicitMismatch = identity<string>(1)
+let explicitArityTooMany = identity<string, int>("a")
+let explicitArityTooFew = swap<string>("a", 1)
+let repeatedMismatch = choose(1, "a")
+let returnMismatch: string = identity(1)
+let explicitReturnMismatch: int = swap<string, bool>("a", true)

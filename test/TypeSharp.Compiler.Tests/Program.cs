@@ -19461,6 +19461,12 @@ static void CliBuildCompilesGenericFunctionApi()
             namespace Samples.GenericApi
 
             export fun identity<T>(value: T): T = value
+
+            export fun echo(): string {
+              let text: string = identity("value")
+              let typed: string = identity<string>(text)
+              typed
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -19473,6 +19479,8 @@ static void CliBuildCompilesGenericFunctionApi()
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("public static T identity<T>(T value)", generatedSource);
+        AssertContains("var text = identity(\"value\");", generatedSource);
+        AssertContains("var typed = identity<string>(text);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic function API.");
@@ -19510,7 +19518,9 @@ static void CliBuildCompilesGenericFunctionApi()
                 {
                     public static string Read()
                     {
-                        return Samples.GenericApi.Module.identity<string>("value");
+                        return Samples.GenericApi.Module.identity<string>("value")
+                            + ":"
+                            + Samples.GenericApi.Module.echo();
                     }
                 }
             }

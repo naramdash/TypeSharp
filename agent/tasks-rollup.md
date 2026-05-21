@@ -3647,6 +3647,55 @@ Remaining:
 
 - Direct generic TypeSharp function call inference is active in task 0354. Imported C# generic call validation, generic pipeline/composition inference, constructed generic parameter inference, generic constraints beyond the existing backend-compatible checks, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0354 Direct Generic Function Call Inference Slice
+
+Completed implementation work established:
+
+- Tracked TypeSharp-declared function type parameter names in the type checker function table.
+- Added a direct generic call path for TypeSharp-declared functions that accepts explicit generic type arguments and infers simple type parameters from known direct call arguments.
+- Substituted simple direct type-parameter return types so inferred or explicit generic calls participate in assignment and nested-call checks.
+- Reported deterministic `TS2201` diagnostics for explicit generic arity mismatches, explicit argument mismatches, inconsistent repeated type-parameter inference, and substituted return type mismatches.
+- Kept imported C# generic call validation, generic pipeline/composition inference, constructed generic parameter inference such as `T[]` or `List<T>`, broader generic constraints, optional/default/params TypeSharp parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, and type constructor policy out of the slice.
+- Preserved existing generated C# call lowering and strengthened the generic function CLI build smoke with inferred and explicit TypeSharp generic calls.
+- Added `test/fixtures/diagnostics/type-checker/positive/direct-generic-function-call-inference`, `test/fixtures/diagnostics/type-checker/negative/direct-generic-function-call-inference`, and `test/fixtures/backend/csharp/positive/0044-direct-generic-function-call-lowering`.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the bounded direct generic function call inference boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles generic function API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/positive/direct-generic-function-call-inference`
+- `test/fixtures/diagnostics/type-checker/negative/direct-generic-function-call-inference`
+- `test/fixtures/backend/csharp/positive/0044-direct-generic-function-call-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Imported C# generic call validation, generic pipeline/composition inference, constructed generic parameter inference, generic constraints beyond the existing backend-compatible checks, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3671,7 +3720,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0353 is compressed here.
+- Completed historical work through task 0354 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

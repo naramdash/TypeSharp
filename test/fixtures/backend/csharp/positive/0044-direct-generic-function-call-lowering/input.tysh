@@ -1,0 +1,14 @@
+namespace Samples.DirectGenericFunctionCallLowering
+
+fun identity<T>(value: T): T = value
+
+fun choose<T>(left: T, right: T): T = left
+
+fun asText(value: string): string = value
+
+export fun main(): string {
+  let text: string = identity("a")
+  let typed: string = identity<string>(text)
+  let chosen: string = choose(text, typed)
+  asText(chosen)
+}

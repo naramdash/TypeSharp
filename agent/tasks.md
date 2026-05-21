@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0354-direct-generic-function-call-inference-slice.md](0354-direct-generic-function-call-inference-slice.md) |
-| Active summary     | Direct TypeSharp generic function call inference slice |
-| Completed range    | 0001-0353                         |
+| Active task packet | None                               |
+| Active summary     | None                               |
+| Completed range    | 0001-0354                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0353 roadmap refresh | 0354 Direct generic function call inference slice | [0354-direct-generic-function-call-inference-slice.md](0354-direct-generic-function-call-inference-slice.md) | Add bounded direct TypeSharp generic function call inference for simple parameter/return type parameter substitution while preserving generated C# lowering. |
+| Q2       | Done        | Task 0353 roadmap refresh | 0354 Direct generic function call inference slice | [tasks-rollup.md#task-0354-direct-generic-function-call-inference-slice](tasks-rollup.md#task-0354-direct-generic-function-call-inference-slice) | Added bounded direct TypeSharp generic function call inference for simple parameter/return type parameter substitution while preserving generated C# lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0353 Roadmap refresh after direct function call diagnostics | [tasks-rollup.md#task-0353-roadmap-refresh-after-direct-function-call-diagnostics](tasks-rollup.md#task-0353-roadmap-refresh-after-direct-function-call-diagnostics) | Rechecked official source signals after direct function call diagnostics, confirmed the baseline, and selected bounded direct generic function call inference. |
 | Q2       | Done        | Task 0351 roadmap refresh | 0352 Direct function call arity and argument diagnostics slice | [tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice) | Added direct TypeSharp-declared function call arity and argument `TS2201` diagnostics while preserving imported C# call validation. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0351 Roadmap refresh after pipeline target diagnostics | [tasks-rollup.md#task-0351-roadmap-refresh-after-pipeline-target-diagnostics](tasks-rollup.md#task-0351-roadmap-refresh-after-pipeline-target-diagnostics) | Rechecked official source signals after direct pipeline arity/argument diagnostics, confirmed the baseline, and selected bounded direct TypeSharp function call arity/argument diagnostics. |
