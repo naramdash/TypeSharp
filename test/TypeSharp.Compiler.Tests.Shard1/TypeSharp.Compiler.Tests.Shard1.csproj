@@ -7,6 +7,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\TypeSharp.Compiler.Tests\Program.cs" Link="Program.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TestRunnerSettings.cs" Link="TestRunnerSettings.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCase.cs" Link="TypeSharpCompilerTestCase.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCatalog.cs" Link="TypeSharpCompilerTestCatalog.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCases.cs" Link="TypeSharpCompilerTestCases.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestRunner.cs" Link="TypeSharpCompilerTestRunner.cs" />
     <ProjectReference Include="..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
     <ProjectReference Include="..\..\cli\TypeSharp.Cli\TypeSharp.Cli.csproj" />
     <ProjectReference Include="..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />

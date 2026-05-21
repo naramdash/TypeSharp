@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-22 00:28:29 +09:00
+End Time: 2026-05-22 00:57:00 +09:00
 
 ## Objective
 
@@ -4358,7 +4358,63 @@ Primary evidence:
 
 Remaining:
 
-- Test catalog extraction for framework migration prerequisite is active in task 0370. Full MSTest SDK/Microsoft Testing Platform or xUnit.net v3 migration remains future work after the catalog is reusable.
+- Completed in task 0370: the reusable catalog now exists and the pinned MSTest SDK/Microsoft Testing Platform bridge reuses it. Future xUnit.net v3 or CI adoption should keep using the same catalog.
+
+## Task 0370 Test Catalog Extraction And MSTest Bridge
+
+Completed test-harness work established:
+
+- Split the former monolithic custom runner into reusable internal harness files: `TypeSharpCompilerTestCase`, `TypeSharpCompilerTestCases`, `TypeSharpCompilerTestCatalog`, `TypeSharpCompilerTestRunner`, and `TestRunnerSettings`.
+- Reduced `Program.cs` to the console entry point that runs `TypeSharpCompilerTestRunner.Run(TypeSharpCompilerTestCases.All, args)`.
+- Updated all four shard projects to link the same extracted catalog and runner harness, preserving stable test names, filtering, shard selection, pass/fail output, and exit-code behavior.
+- Added catalog stability coverage to the runner self-test: expected count, first/last names, and distinct names.
+- Added a `net10.0` MSTest SDK/Microsoft Testing Platform bridge in `test/TypeSharp.Compiler.Tests.MSTest`, pinned to `MSTest.Sdk/4.2.3`, with root `global.json` opting .NET 10 `dotnet test` into MTP mode.
+- Kept generated `net48` artifacts, `TypeSharp.Core`, `TypeSharp.Runtime`, and the package-free main/shard runners free of test-framework package references.
+- Confirmed the NuGet package bridge is useful for `dotnet test` discovery and ecosystem integration, but not the fastest release-confidence path: full MSTest catalog execution passed in about 3m27s while the four-shard custom runner path passed in about 67.5s wall-clock.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 517
+# four shard projects via Start-Job
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `global.json`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCase.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestRunner.cs`
+- `test/TypeSharp.Compiler.Tests/TestRunnerSettings.cs`
+- `test/TypeSharp.Compiler.Tests.Shard0`
+- `test/TypeSharp.Compiler.Tests.Shard1`
+- `test/TypeSharp.Compiler.Tests.Shard2`
+- `test/TypeSharp.Compiler.Tests.Shard3`
+- `test/TypeSharp.Compiler.Tests.MSTest`
+- `test/README.md`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [.NET `dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+
+Remaining:
+
+- Roadmap refresh after the MSTest catalog bridge is active in task 0371. Future xUnit.net v3 or CI adoption should reuse `TypeSharpCompilerTestCases.All` rather than duplicating the catalog.
 
 ## Verification Summary
 
@@ -4390,7 +4446,7 @@ Done:
 
 Remaining:
 
-- Continue active task 0370 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0371 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

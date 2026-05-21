@@ -24,4 +24,11 @@ $jobs = foreach ($project in $shards) { Start-Job -ScriptBlock { param($p) dotne
 $jobs | Wait-Job | Receive-Job
 ```
 
-MSTest SDK/Microsoft Testing Platform and xUnit.net v3 are reasonable future migration targets for `dotnet test` integration. The current shard path keeps the package-free runner while preserving all existing regression evidence; a framework migration should first extract the custom test catalog into discoverable test cases.
+`TypeSharp.Compiler.Tests.MSTest` is a `net10.0` MSTest SDK/Microsoft Testing Platform bridge over the same extracted catalog:
+
+```powershell
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 517
+```
+
+The root `global.json` opts `dotnet test` into Microsoft Testing Platform mode for .NET 10 SDKs, so use `dotnet test --project ...` and MTP-supported options. The MSTest bridge exists for package-based discovery and ecosystem integration; the package-free main runner and four shard projects remain the faster release-confidence path.

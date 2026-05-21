@@ -1,17 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="MSTest.Sdk/4.2.3">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <AssemblyName>TypeSharp.Compiler.Tests.Shard2</AssemblyName>
-    <RootNamespace>TypeSharp.Compiler.Tests.Shard2</RootNamespace>
+    <AssemblyName>TypeSharp.Compiler.Tests.MSTest</AssemblyName>
+    <RootNamespace>TypeSharp.Compiler.Tests.MSTest</RootNamespace>
+    <TestingExtensionsProfile>None</TestingExtensionsProfile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\TypeSharp.Compiler.Tests\Program.cs" Link="Program.cs" />
     <Compile Include="..\TypeSharp.Compiler.Tests\TestRunnerSettings.cs" Link="TestRunnerSettings.cs" />
+    <Compile Include="..\TypeSharp.Compiler.Tests\TestShardDefaults.cs" Link="TestShardDefaults.cs" />
     <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCase.cs" Link="TypeSharpCompilerTestCase.cs" />
     <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCatalog.cs" Link="TypeSharpCompilerTestCatalog.cs" />
     <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestCases.cs" Link="TypeSharpCompilerTestCases.cs" />
-    <Compile Include="..\TypeSharp.Compiler.Tests\TypeSharpCompilerTestRunner.cs" Link="TypeSharpCompilerTestRunner.cs" />
     <ProjectReference Include="..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
     <ProjectReference Include="..\..\cli\TypeSharp.Cli\TypeSharp.Cli.csproj" />
     <ProjectReference Include="..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />

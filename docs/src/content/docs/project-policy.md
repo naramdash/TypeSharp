@@ -65,8 +65,9 @@ Parallel execution policy:
 - Diagnostics must still be appended in deterministic source order so CLI, LSP, fixture, and JSON output remain stable.
 - Cross-file module graph validation runs after all parse-clean source modules have been collected.
 - Generated C# project emission and external `dotnet build` orchestration remain ordered unless a task proves output paths, generated project files, and external process logs cannot conflict.
-- The main `TypeSharp.Compiler.Tests` runner remains the full release-confidence path. Shard projects may link the same runner and execute disjoint ordinal slices in parallel when shared generated inputs use process-safe caches and every test keeps a unique workspace under `test/tmp`.
-- Future MSTest SDK/Microsoft Testing Platform or xUnit.net v3 adoption is a test-host tooling concern only. It must preserve the same catalog coverage as the custom runner, keep generated `net48` artifacts package-free, and use normal NuGet dependency controls before package references are added.
+- The main `TypeSharp.Compiler.Tests` runner remains the package-free full release-confidence path. Shard projects may link the same runner and execute disjoint ordinal slices in parallel when shared generated inputs use process-safe caches and every test keeps a unique workspace under `test/tmp`.
+- `TypeSharp.Compiler.Tests.MSTest` is a `net10.0` MSTest SDK/Microsoft Testing Platform bridge over `TypeSharpCompilerTestCases.All`. It exists for `dotnet test` discovery and ecosystem integration, not as the fastest release gate; the current full MSTest catalog run is slower than the four-shard custom runner path.
+- Test framework packages are test-host tooling only. They must reuse the extracted catalog, keep generated `net48` artifacts package-free, and stay pinned and documented. Future xUnit.net v3 or CI adoption must preserve the same catalog coverage rather than duplicating the list.
 
 ## Dependency And Target Policy
 
@@ -82,6 +83,7 @@ Current inventory:
 | `TypeSharp.Compiler` | modern .NET host | None | Host-side compiler implementation. |
 | `TypeSharp.Cli` | modern .NET host | None | Depends on compiler project reference. |
 | `TypeSharp.Compiler.Tests` | modern .NET host | None | Project references and linked core sources. |
+| `TypeSharp.Compiler.Tests.MSTest` | modern .NET test host | `MSTest.Sdk/4.2.3` | Test-host-only MTP bridge over `TypeSharpCompilerTestCases.All`; not referenced by generated artifacts. |
 | `docs` | Astro static site | `astro`, `@astrojs/starlight`, `typescript` | Documentation only; locked by `docs/package-lock.json` and not deployed with generated `net48` artifacts. |
 
 Compatibility audit:
@@ -115,7 +117,7 @@ Official .NET/NuGet/VS Code and .NET test-platform ecosystem sources refreshed o
 - Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies) and the [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework): `.NET Framework 4.8.1` is the latest .NET Framework version; Windows 10 22H2 includes 4.8 and can install 4.8.1, while recent Windows 11 releases include 4.8.1.
 - Microsoft Learn NuGet docs for [`PackageReference` and lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies), [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities), [package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping), and [trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers).
 - Microsoft Learn and VS Code docs for [`dotnet new` custom templates](https://learn.microsoft.com/en-us/dotnet/core/tools/custom-templates), [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide), and [VSIX/Marketplace publishing with `vsce`](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
-- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview) and [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests), plus xUnit.net [v3 package guidance](https://xunit.net/docs/nuget-packages-v3): MTP/MSTest SDK and xUnit.net v3 are valid modern test-host choices, but TypeSharp must first expose the existing custom test catalog as reusable discoverable cases before switching package frameworks.
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests), [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk), NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), and xUnit.net [v3 package guidance](https://xunit.net/docs/nuget-packages-v3): MTP/MSTest SDK and xUnit.net v3 are valid modern test-host choices. TypeSharp currently uses a pinned MSTest SDK bridge for package-based discovery while keeping the package-free main/shard runners as the release-confidence path.
 
 ## .NET Ecosystem Tooling Roadmap
 
