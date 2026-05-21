@@ -1935,6 +1935,45 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 
+## Task 0312 Enum Match Exhaustiveness Slice
+
+Completed language/compiler work established:
+
+- Added TypeSharp-owned enum match exhaustiveness diagnostics for known enum input types.
+- Treated unguarded enum member arms as coverage and unguarded `_` as covering the remaining enum members.
+- Kept guarded enum member arms non-covering unless a later unguarded member arm or discard covers the same member space.
+- Reported unknown enum member patterns with `TS2201` and non-exhaustive enum matches with `TS2203`.
+- Lowered supported enum matches to C# 7.3-compatible immediately invoked `System.Func<T>` delegates with ordered enum member comparisons and runtime `TypeSharpPattern.NoMatch` fallback.
+- Added type-checker positive/negative fixtures, backend snapshot coverage, and a CLI `net48` build/consumer smoke for generated enum match code.
+- Updated canonical grammar, reference, type-system, lowering, feature-status, and diagnostics docs for the implemented enum match boundary.
+
+Verification:
+
+```powershell
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/diagnostics/type-checker/positive/enum-match-exhaustiveness`
+- `test/fixtures/diagnostics/type-checker/negative/enum-match-non-exhaustive`
+- `test/fixtures/backend/csharp/positive/0040-enum-match-exhaustiveness-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Imported C# enum exhaustiveness, flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1959,7 +1998,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0310 is compressed here.
+- Completed historical work through task 0312 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

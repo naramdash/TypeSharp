@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for enum 'Color'. Missing members: Green, Blue.",
+      "file": "input.tysh",
+      "start": { "line": 10, "column": 3 },
+      "end": { "line": 13, "column": 4 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum 'Color' does not contain member 'Purple'.",
+      "file": "input.tysh",
+      "start": { "line": 17, "column": 5 },
+      "end": { "line": 17, "column": 11 }
+    }
+  ]
+}

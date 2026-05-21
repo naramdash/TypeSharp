@@ -85,7 +85,7 @@ Diagnostic codes use `TS` plus four digits. Once a public code is allocated, it 
 | `TS3500` | Backend | Error | Unsupported executable entry point |
 | `TS3501` | Backend | Error | Generated C# project build failed |
 
-`TS2002` also reports duplicate enum members in the same enum declaration. `TS2201` also reports non-boolean `match` arm guards, literal patterns that are incompatible with the matched input, unrelated enum value use, and missing enum members. `TS2203` treats guarded nominal, `bool`, and type-level union arms as non-covering unless a later unguarded arm or `_` discard covers the remaining closed set.
+`TS2002` also reports duplicate enum members in the same enum declaration. `TS2201` also reports non-boolean `match` arm guards, literal patterns that are incompatible with the matched input, unrelated enum value use, and missing enum members. `TS2203` treats guarded nominal, TypeSharp-owned enum, `bool`, and type-level union arms as non-covering unless a later unguarded arm or `_` discard covers the remaining closed set.
 
 No reserved examples are currently listed. Future diagnostics should be added to this table only when implemented.
 

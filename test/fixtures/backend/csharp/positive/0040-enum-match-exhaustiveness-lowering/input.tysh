@@ -1,0 +1,14 @@
+namespace Samples.EnumMatches
+
+enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+export fun describe(color: Color): string =
+  match color {
+    Red => "red"
+    Green when color == Color.Green => "green"
+    _ => "other"
+  }

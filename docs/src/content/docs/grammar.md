@@ -168,8 +168,8 @@ Stable pattern rules:
 - `not` negates a pattern.
 - Guard syntax uses `when`; guarded arms do not prove nominal, bool, or local type-level union exhaustiveness without a later unguarded arm or discard.
 - `expr is pattern` introduces narrowing and pattern bindings with scoped lifetime.
-- Nominal closed unions, `bool`, and known local type-level unions, including literal unions, report missing cases/members when the checker can prove non-exhaustiveness.
-- Enum match exhaustiveness and richer pattern algebra remain planned beyond the current nominal, bool, and local type-level union guard rules.
+- Nominal closed unions, TypeSharp-owned enums, `bool`, and known local type-level unions, including literal unions, report missing cases/members when the checker can prove non-exhaustiveness.
+- Imported C# enum exhaustiveness and richer pattern algebra remain planned beyond the current nominal, enum, bool, and local type-level union guard rules.
 
 ### Name Resolution
 

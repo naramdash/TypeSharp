@@ -91,7 +91,7 @@ Current boundary:
 | Immutable values, expression-result functions, local inference, first-class functions | MVP | TypeSharp keeps `let`, expression/block-bodied `fun`, function type values, and local inference, while public CLR boundaries continue to prefer explicit annotations. |
 | Pipelines and composition | MVP limited | `|>`, `>>`, and `<<` are implemented with C# 7.3-compatible lowering. Broader partial-application/currying remains backlog because generated delegate shapes must stay predictable for C# consumers. |
 | Records and discriminated unions | MVP | TypeSharp records and nominal unions are the stable public data/domain model. Recursive and mutually recursive union ergonomics remain backlog after exhaustiveness and ABI shape are stronger. |
-| Pattern matching and exhaustiveness | MVP expanding | Nominal-union, `bool`, and local type-level union match diagnostics cover known missing cases/members, including local literal-union members. `_` discard arms can cover the remaining known space, and `when` guards are checked in narrowed arm scope without proving coverage by themselves. Enum exhaustiveness and richer pattern algebra remain backlog. |
+| Pattern matching and exhaustiveness | MVP expanding | Nominal-union, TypeSharp-owned enum, `bool`, and local type-level union match diagnostics cover known missing cases/members, including local literal-union members. `_` discard arms can cover the remaining known space, and `when` guards are checked in narrowed arm scope without proving coverage by themselves. Imported C# enum exhaustiveness and richer pattern algebra remain backlog. |
 | Option, ValueOption, and result ergonomics | MVP plus Stable Backlog | `Option<T>` and `Result<T,E>` are core nominal unions. Struct-backed value options and richer bind/map/default helpers are backlog until ABI and allocation tradeoffs are documented for `net48`. |
 | Computation expressions, task workflows, and `and!`-style concurrency | Stable Backlog | TypeSharp keeps direct `async fun`/`Task<T>` interop as MVP. General builder-based computation expressions need a design that avoids macros, user-code execution during build, and non-obvious lowering. |
 | Active patterns | Stable Backlog | Useful as named match extractors, but they need deterministic binder/type-checker rules and diagnostics before syntax is accepted. |
@@ -149,7 +149,7 @@ The bounded implementation slices after the refresh added match guard support an
 
 After literal match exhaustiveness, the empty-queue refresh rechecked the same official sources on 2026-05-21 and found no baseline change. The next bounded implementation slice completed simple TypeSharp enum declaration parsing/checking/lowering, giving enum match exhaustiveness a stable TypeSharp-owned enum symbol and generated C# shape.
 
-After enum declarations, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The next bounded implementation slice is enum match exhaustiveness for TypeSharp-owned enums; imported C# enum exhaustiveness, flag semantics, explicit underlying types, explicit numeric member values, and enum member attributes remain backlog.
+After enum declarations, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice completed enum match exhaustiveness for TypeSharp-owned enums; imported C# enum exhaustiveness, flag semantics, explicit underlying types, explicit numeric member values, and enum member attributes remain backlog.
 
 ## MVP Language Features
 
@@ -165,7 +165,7 @@ After enum declarations, the empty-queue refresh rechecked official C#, F#, Type
 | Indexed access types | MVP limited | Known record/shape member types can be selected with `T["Member"]`; public ABI leakage is rejected. |
 | Local type inference | MVP | Locals, literals, calls, binary expressions, lambdas, and supported pipeline flows infer common types. |
 | Records | MVP | Immutable public data shapes lower to C#-friendly nominal types. |
-| Enums | MVP limited | Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member values, and lower to ordinary C# enums. Flags, explicit underlying types, explicit numeric values, enum member attributes, and enum match exhaustiveness remain backlog. |
+| Enums | MVP limited | Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member values, lower to ordinary C# enums, and participate in match exhaustiveness. Flags, explicit underlying types, explicit numeric values, imported C# enum exhaustiveness, and enum member attributes remain backlog. |
 | Async `Task` interop | MVP | `async fun` lowers to `Task` or `Task<T>` for .NET Framework compatibility. |
 | Pipeline and composition | MVP limited | First-argument pipeline and unary composition lower to C# 7.3-compatible calls and delegate lambdas. |
 | Collection expressions | MVP limited | Array and `List<T>` targets are supported, including known array/List spread lowering. |

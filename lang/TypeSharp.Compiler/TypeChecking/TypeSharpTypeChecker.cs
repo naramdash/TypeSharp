@@ -1375,6 +1375,11 @@ public static class TypeSharpTypeChecker
                 return MergeBranchTypes(branchTypes);
             }
 
+            if (inputType.IsKnown && scope.ResolveEnum(inputType.Name, out var enumMembers))
+            {
+                return InferEnumMatch(node, scope, inputType.Name, enumMembers, branchTypes);
+            }
+
             if (inputType.IsKnown && scope.ResolveTypeLevelUnion(inputType.Name, out var typeLevelUnion))
             {
                 if (IsLiteralTypeLevelUnion(typeLevelUnion))
@@ -1581,6 +1586,69 @@ public static class TypeSharpTypeChecker
                     DiagnosticDescriptors.NonExhaustiveMatch.Code,
                     DiagnosticDescriptors.NonExhaustiveMatch.DefaultSeverity,
                     $"Non-exhaustive match for type-level union '{typeLevelUnion.Name}'. Missing members: {string.Join(", ", missingMembers)}.",
+                    _file,
+                    node.Span));
+            }
+
+            return MergeBranchTypes(branchTypes);
+        }
+
+        private SimpleType InferEnumMatch(
+            SyntaxNode node,
+            TypeScope scope,
+            string enumName,
+            IReadOnlyList<string> enumMembers,
+            List<SimpleType> branchTypes)
+        {
+            var coveredMembers = new HashSet<string>(StringComparer.Ordinal);
+            var memberSet = new HashSet<string>(enumMembers, StringComparer.Ordinal);
+            var hasDiscardArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                var armScope = new TypeScope(scope);
+                var guard = GetMatchArmGuard(arm);
+                if (guard is not null)
+                {
+                    CheckMatchGuard(guard, armScope);
+                }
+
+                if (IsDiscardPattern(arm))
+                {
+                    if (guard is null)
+                    {
+                        hasDiscardArm = true;
+                    }
+                }
+                else if (TryGetEnumPattern(arm, out var memberName, out var pattern))
+                {
+                    if (!memberSet.Contains(memberName))
+                    {
+                        ReportMismatch(pattern, $"Enum '{enumName}' does not contain member '{memberName}'.");
+                    }
+                    else if (guard is null)
+                    {
+                        coveredMembers.Add(memberName);
+                    }
+                }
+
+                var expression = GetMatchArmExpression(arm);
+                if (expression is not null)
+                {
+                    branchTypes.Add(CheckExpression(expression, armScope));
+                }
+            }
+
+            var missingMembers = hasDiscardArm
+                ? []
+                : enumMembers
+                    .Where(member => !coveredMembers.Contains(member))
+                    .ToArray();
+            if (missingMembers.Length > 0)
+            {
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.NonExhaustiveMatch.Code,
+                    DiagnosticDescriptors.NonExhaustiveMatch.DefaultSeverity,
+                    $"Non-exhaustive match for enum '{enumName}'. Missing members: {string.Join(", ", missingMembers)}.",
                     _file,
                     node.Span));
             }
@@ -3187,6 +3255,20 @@ public static class TypeSharpTypeChecker
             }
 
             return TryGetLiteralTokenType(pattern.Children.FirstOrDefault(child => child.IsToken), out type);
+        }
+
+        private static bool TryGetEnumPattern(SyntaxNode arm, out string memberName, out SyntaxNode pattern)
+        {
+            memberName = string.Empty;
+            pattern = GetMatchArmPattern(arm) ?? arm;
+            if (pattern.Kind != SyntaxKind.Pattern)
+            {
+                return false;
+            }
+
+            var identifier = pattern.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken);
+            memberName = identifier?.Text ?? string.Empty;
+            return memberName.Length > 0 && memberName != "_";
         }
 
         private static SyntaxNode? GetMatchArmPattern(SyntaxNode arm) =>

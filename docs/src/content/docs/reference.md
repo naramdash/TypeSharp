@@ -57,7 +57,7 @@ Detailed C#/.NET reference: [C# And CLR Type Model](../csharp-type-model/)
 
 ## Patterns
 
-Pattern syntax supports nominal union, `bool`, and local type-level union narrowing paths in the current smoke-tested scope, including local literal-union match arms. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover. Enum match exhaustiveness remains a follow-up to the implemented enum declaration baseline.
+Pattern syntax supports nominal union, TypeSharp-owned enum, `bool`, and local type-level union narrowing paths in the current smoke-tested scope, including local literal-union match arms. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover.
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/)
 

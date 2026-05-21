@@ -82,6 +82,7 @@ public static class CSharpSourceBackend
         private readonly Dictionary<string, TypeLevelUnionShape> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly HashSet<string> _compileTimeOnlyTypeAliases = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _compileTimeOnlyTypeAliasRuntimeTypes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, EnumShape> _enums = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionShape> _unions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseFactories = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseValues = new(StringComparer.Ordinal);
@@ -177,6 +178,11 @@ public static class CSharpSourceBackend
             foreach (var union in unions)
             {
                 RegisterUnion(union);
+            }
+
+            foreach (var enumDeclaration in enums)
+            {
+                RegisterEnum(enumDeclaration);
             }
 
             foreach (var value in values)
@@ -511,6 +517,17 @@ public static class CSharpSourceBackend
                     _unionCaseFactories[unionCase.Name] = $"{unionName}.{unionCase.Name}";
                 }
             }
+        }
+
+        private void RegisterEnum(SyntaxNode node)
+        {
+            var name = GetEnumDeclarationName(node);
+            if (name.Length == 0)
+            {
+                return;
+            }
+
+            _enums[name] = new EnumShape(name, GetEnumMembers(node));
         }
 
         private static CSharpImports CollectImports(
@@ -2179,10 +2196,17 @@ public static class CSharpSourceBackend
 
             if (!TryGetUnionShape(input, out var union))
             {
-                if (TryGetExpressionType(input, out var inputTypeName) &&
-                    string.Equals(inputTypeName, "bool", StringComparison.Ordinal))
+                if (TryGetExpressionType(input, out var inputTypeName))
                 {
-                    return EmitLiteralMatch(node, input, resultType);
+                    if (_enums.TryGetValue(inputTypeName, out var enumShape))
+                    {
+                        return EmitEnumMatch(node, input, enumShape, resultType);
+                    }
+
+                    if (string.Equals(inputTypeName, "bool", StringComparison.Ordinal))
+                    {
+                        return EmitLiteralMatch(node, input, resultType);
+                    }
                 }
 
                 if (TryGetTypeLevelUnionShape(input, out var typeLevelUnion))
@@ -2244,6 +2268,77 @@ public static class CSharpSourceBackend
                         builder.AppendLine($"                    var {payloadVariable} = TypeSharpPattern.RequirePayload<{unionCase.Parameters[0].Type}>({matchValueName}, {unionCase.Tag});");
                     }
 
+                    if (guard is null)
+                    {
+                        builder.AppendLine($"                    return {resultExpression};");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                    if ({EmitExpression(guard)})");
+                        builder.AppendLine("                    {");
+                        builder.AppendLine($"                        return {resultExpression};");
+                        builder.AppendLine("                    }");
+                    }
+
+                    builder.AppendLine("                }");
+                }
+
+                wroteArm = true;
+            }
+
+            if (wroteArm)
+            {
+                builder.AppendLine();
+            }
+
+            builder.AppendLine($"                throw TypeSharpPattern.NoMatch({matchValueName});");
+            builder.Append("            })()");
+            return builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
+        }
+
+        private string EmitEnumMatch(SyntaxNode node, SyntaxNode input, EnumShape enumShape, string resultType)
+        {
+            var matchValueName = $"__match{_temporaryIndex++}";
+            var builder = new StringBuilder();
+            builder.AppendLine($"new System.Func<{resultType}>(delegate()");
+            builder.AppendLine("            {");
+            builder.AppendLine($"                var {matchValueName} = {EmitExpression(input)};");
+
+            var wroteArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                if (!TryGetEnumPatternMatchArm(arm, enumShape, out var memberName, out var expression, out var isDiscard))
+                {
+                    continue;
+                }
+
+                var guard = GetMatchArmGuard(arm);
+                var resultExpression = EmitExpression(expression);
+                if (wroteArm)
+                {
+                    builder.AppendLine();
+                }
+
+                if (isDiscard)
+                {
+                    if (guard is null)
+                    {
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                if ({EmitExpression(guard)})");
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
+                }
+                else
+                {
+                    builder.AppendLine($"                if (object.Equals({matchValueName}, {enumShape.Name}.{memberName}))");
+                    builder.AppendLine("                {");
                     if (guard is null)
                     {
                         builder.AppendLine($"                    return {resultExpression};");
@@ -2600,6 +2695,39 @@ public static class CSharpSourceBackend
                 return false;
             }
 
+            expression = GetMatchArmExpression(arm);
+            return expression is not null;
+        }
+
+        private static bool TryGetEnumPatternMatchArm(
+            SyntaxNode arm,
+            EnumShape enumShape,
+            out string memberName,
+            out SyntaxNode? expression,
+            out bool isDiscard)
+        {
+            memberName = string.Empty;
+            expression = null;
+            isDiscard = false;
+
+            var pattern = GetMatchArmPattern(arm);
+            var identifier = pattern?
+                .Children
+                .FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?
+                .Text ?? string.Empty;
+            if (identifier == "_")
+            {
+                expression = GetMatchArmExpression(arm);
+                isDiscard = expression is not null;
+                return isDiscard;
+            }
+
+            if (identifier.Length == 0 || !enumShape.Members.Contains(identifier))
+            {
+                return false;
+            }
+
+            memberName = identifier;
             expression = GetMatchArmExpression(arm);
             return expression is not null;
         }
@@ -4388,6 +4516,8 @@ public static class CSharpSourceBackend
         private readonly record struct TypeLevelUnionShape(string Name, IReadOnlyList<TypeLevelUnionMemberShape> Members);
 
         private readonly record struct TypeLevelUnionMemberShape(string SourceType, string CSharpType);
+
+        private readonly record struct EnumShape(string Name, IReadOnlyList<string> Members);
 
         private readonly record struct UnionShape(string Name, IReadOnlyList<UnionCaseShape> Cases);
 

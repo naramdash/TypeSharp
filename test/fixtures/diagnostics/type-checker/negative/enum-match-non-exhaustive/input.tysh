@@ -1,0 +1,19 @@
+namespace Samples.TypeChecker.EnumMatchNonExhaustive
+
+enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+fun missingMembers(color: Color): string =
+  match color {
+    Red => "red"
+    Green when true => "guarded green"
+  }
+
+fun unknownMember(color: Color): string =
+  match color {
+    Purple => "purple"
+    _ => "fallback"
+  }

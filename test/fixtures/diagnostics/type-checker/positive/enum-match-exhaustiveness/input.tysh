@@ -1,0 +1,28 @@
+namespace Samples.TypeChecker.EnumMatchExhaustiveness
+
+enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+fun describe(color: Color): string =
+  match color {
+    Red => "red"
+    Green => "green"
+    Blue => "blue"
+  }
+
+fun describeWithDiscard(color: Color): string =
+  match color {
+    Red => "red"
+    _ => "other"
+  }
+
+fun guardedThenCovered(color: Color): string =
+  match color {
+    Red when true => "guarded red"
+    Red => "red"
+    Green => "green"
+    Blue => "blue"
+  }
