@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task. |
+| Active task packet | [`agent/0354-direct-generic-function-call-inference-slice.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/0354-direct-generic-function-call-inference-slice.md) |
+| Next top-priority task | 0354 Direct generic function call inference slice |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0352 completed bounded direct TypeSharp-declared function call arity and argument diagnostics while preserving imported C# call validation. |
-| Completed work covered | 0001-0352 |
+| Current tooling slice | Task 0354 is active for bounded direct TypeSharp generic function call inference after task 0353 refreshed the roadmap. |
+| Completed work covered | 0001-0353 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

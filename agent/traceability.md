@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| 0354 Direct generic function call inference slice | [0354-direct-generic-function-call-inference-slice.md](0354-direct-generic-function-call-inference-slice.md) | Type checker implementation, focused generic direct-call diagnostics fixtures, docs canonical updates, and test/build verification. |
 
 ## Completed Evidence Index
 
