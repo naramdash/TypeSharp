@@ -5628,7 +5628,58 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0394: logical unsigned shift assignment imported member targets.
+- Completed in task 0394: logical unsigned shift assignment imported member targets.
+
+## Task 0394 Logical Unsigned Shift Assignment Imported Member Targets
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Added bounded checker support for imported C# `target.member >>>= count` when the member resolves to a readable/writable metadata-backed instance/static field or property, the member type is a known non-null primitive integral value, and the count is `byte`, `sbyte`, `short`, `ushort`, or `int`.
+- Kept indexer, event, unresolved member, unsupported count, nullable, non-integral, enum, record, user-defined operator, imported operator overload, TypeSharp member assignment, and broad class-member assignment cases as deterministic diagnostics before emission.
+- Extended metadata-backed member access inference so imported field/property reads expose normalized primitive member types to the checker and C# backend.
+- Added C# 7.3-compatible imported member `>>>=` lowering with explicit unchecked unsigned casts for signed/small integral targets, ordinary `>>` for unsigned targets, no emitted `>>>` or `>>>=`, and single-evaluation lowering for non-trivial receivers through a generated `System.Func<TReceiver,TMember>` expression.
+- Threaded metadata assemblies into the C# source backend during CLI build emission so generated-source lowering can choose imported member target/receiver types without changing the generated `net48` baseline.
+- Expanded the legacy metadata fixture and added shared catalog coverage for imported instance property, instance field, static unsigned property, static byte field, non-trivial receiver, unsupported count, indexer, and event cases, bringing the shared catalog to 528 cases with four-shard expected counts of `132`, `132`, `132`, and `132`.
+- Updated Feature Status, Type System, Lowering, Work Ledger, queue, and traceability docs to record the implemented boundary and remaining follow-ups.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "imported logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet test test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+npm run build          # in docs
+git diff --check
+```
+
+Result: all commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackendAdapter.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Active in task 0395: roadmap refresh after logical unsigned shift assignment imported member targets.
 
 ## Verification Summary
 
@@ -5660,7 +5711,7 @@ Done:
 
 Remaining:
 
-- Continue active task 0394 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0395 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

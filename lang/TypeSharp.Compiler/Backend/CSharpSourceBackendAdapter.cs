@@ -1,3 +1,4 @@
+using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Parsing;
 
 namespace TypeSharp.Compiler.Backend;
@@ -62,4 +63,17 @@ public sealed class CSharpSourceBackendAdapter : ITypeSharpBackend
         IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
         IReadOnlyList<CSharpSourceFunctionReExport> functionReExports) =>
         TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports));
+
+    public TypeSharpBackendArtifact Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
+        IReadOnlyList<CSharpSourceValueReExport> valueReExports,
+        IReadOnlyList<CSharpSourceEnumImportShape> enumImportShapes,
+        IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports,
+        IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies) =>
+        TypeSharpBackendArtifact.SourceText(GeneratedArtifactExtension, CSharpSourceBackend.Emit(root, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports, metadataAssemblies));
 }

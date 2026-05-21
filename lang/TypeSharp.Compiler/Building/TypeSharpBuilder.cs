@@ -131,7 +131,7 @@ public static class TypeSharpBuilder
                 .Concat(BuildSourceFunctionReExports(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources))
                 .ToArray();
             var artifact = backend is CSharpSourceBackendAdapter csharpBackend
-                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports)
+                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports, metadataResult.Assemblies)
                 : backend.Emit(root);
             if (artifact.Kind != TypeSharpBackendArtifactKind.SourceText)
             {

@@ -1026,15 +1026,13 @@ public static class TypeSharpTypeChecker
 
             if (IsImportedAssignmentTargetCandidate(target))
             {
-                var targetType = CheckExpression(target, scope);
-                CheckExpression(value, scope);
                 if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
                 {
-                    ReportMismatch(
-                        node,
-                        "Logical unsigned shift assignment '>>>=' is currently supported only for mutable local primitive integral targets; imported C# member, indexer, or event targets need a single-evaluation lowering policy.");
+                    return CheckImportedLogicalUnsignedShiftAssignment(node, target, value, scope);
                 }
 
+                var targetType = CheckExpression(target, scope);
+                CheckExpression(value, scope);
                 return targetType;
             }
 
@@ -1076,6 +1074,31 @@ public static class TypeSharpTypeChecker
         {
             CheckExpression(value, scope);
             return targetType;
+        }
+
+        private SimpleType CheckImportedLogicalUnsignedShiftAssignment(
+            SyntaxNode assignment,
+            SyntaxNode target,
+            SyntaxNode value,
+            TypeScope scope)
+        {
+            if (target.Kind == SyntaxKind.MemberAccessExpression &&
+                TryGetImportedMemberAssignmentTargetType(target, scope, out var targetType))
+            {
+                return CheckShiftCompoundAssignmentValue(
+                    assignment,
+                    value,
+                    scope,
+                    targetType,
+                    SyntaxKind.LogicalUnsignedShiftEqualsToken);
+            }
+
+            var fallbackTargetType = CheckExpression(target, scope);
+            CheckExpression(value, scope);
+            ReportMismatch(
+                assignment,
+                "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property member targets; indexer, event, and unresolved imported member targets are not supported.");
+            return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
 
         private SimpleType CheckShiftCompoundAssignmentValue(
@@ -1200,11 +1223,21 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
+            if (TryGetImportedStaticMemberAccessType(receiver, member.Text, scope, requireWritable: false, out var staticMemberType))
+            {
+                return staticMemberType;
+            }
+
             var receiverType = CheckExpression(receiver, scope);
             if (IsUnknownType(receiverType))
             {
                 ReportUnknownAccessRequiresNarrowing(node);
                 return SimpleType.Unknown;
+            }
+
+            if (TryGetImportedInstanceMemberAccessType(receiverType, member.Text, requireWritable: false, out var importedMemberType))
+            {
+                return importedMemberType;
             }
 
             if (!receiverType.IsKnown || !scope.ResolveShape(receiverType.Name, out var shape))
@@ -1221,6 +1254,108 @@ public static class TypeSharpTypeChecker
             }
 
             return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
+        }
+
+        private bool TryGetImportedMemberAssignmentTargetType(
+            SyntaxNode target,
+            TypeScope scope,
+            out SimpleType targetType)
+        {
+            targetType = SimpleType.Unknown;
+            if (!TryGetMemberAccessParts(target, out var receiver, out var memberName))
+            {
+                return false;
+            }
+
+            if (TryGetImportedStaticMemberAccessType(receiver, memberName, scope, requireWritable: true, out targetType))
+            {
+                return true;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            return TryGetImportedInstanceMemberAccessType(receiverType, memberName, requireWritable: true, out targetType);
+        }
+
+        private bool TryGetImportedStaticMemberAccessType(
+            SyntaxNode receiver,
+            string memberName,
+            TypeScope scope,
+            bool requireWritable,
+            out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            if (receiver.Kind != SyntaxKind.IdentifierExpression ||
+                !TryGetFirstIdentifier(receiver, out var identifier) ||
+                identifier.Text is not { Length: > 0 } receiverName ||
+                scope.ResolveValue(receiverName, out _) ||
+                scope.ResolveFunctionInfo(receiverName, out _))
+            {
+                return false;
+            }
+
+            return TryFindImportedMemberAccessType(
+                FindMetadataTypes(receiverName),
+                memberName,
+                isStatic: true,
+                requireWritable,
+                out type);
+        }
+
+        private bool TryGetImportedInstanceMemberAccessType(
+            SimpleType receiverType,
+            string memberName,
+            bool requireWritable,
+            out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            if (!receiverType.IsKnown || receiverType.IsNull || receiverType.IsNullable)
+            {
+                return false;
+            }
+
+            return TryFindImportedMemberAccessType(
+                FindMetadataTypes(receiverType.Name),
+                memberName,
+                isStatic: false,
+                requireWritable,
+                out type);
+        }
+
+        private static bool TryFindImportedMemberAccessType(
+            IReadOnlyList<MetadataTypeSymbol> receiverTypes,
+            string memberName,
+            bool isStatic,
+            bool requireWritable,
+            out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            foreach (var receiverType in receiverTypes)
+            {
+                var property = receiverType.Properties.FirstOrDefault(candidate =>
+                    candidate.IsStatic == isStatic &&
+                    !candidate.IsIndexer &&
+                    candidate.HasPublicGetter &&
+                    (!requireWritable || candidate.HasPublicSetter) &&
+                    string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+                if (property is not null)
+                {
+                    type = SimpleType.Named(NormalizePrimitiveTypeName(property.Type));
+                    return true;
+                }
+
+                var field = receiverType.Fields.FirstOrDefault(candidate =>
+                    candidate.IsStatic == isStatic &&
+                    !candidate.IsLiteral &&
+                    (!requireWritable || !candidate.IsReadOnly) &&
+                    string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+                if (field is not null)
+                {
+                    type = SimpleType.Named(NormalizePrimitiveTypeName(field.Type));
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private SimpleType CheckBitwiseExpression(SyntaxNode node, TypeScope scope)
@@ -3677,6 +3812,23 @@ public static class TypeSharpTypeChecker
         private static bool IsImportedAssignmentTargetCandidate(SyntaxNode node) =>
             node.Kind is SyntaxKind.MemberAccessExpression or SyntaxKind.IndexerExpression;
 
+        private static bool TryGetMemberAccessParts(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out string memberName)
+        {
+            receiver = default!;
+            memberName = string.Empty;
+            if (node.Kind != SyntaxKind.MemberAccessExpression)
+            {
+                return false;
+            }
+
+            receiver = node.Children.FirstOrDefault(child => !child.IsToken)!;
+            memberName = node.Children.LastOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            return receiver is not null && memberName.Length > 0;
+        }
+
         private static bool IsKnownEnumType(TypeScope scope, SimpleType type) =>
             type.IsKnown &&
             !type.IsNull &&
@@ -3691,10 +3843,10 @@ public static class TypeSharpTypeChecker
                 return false;
             }
 
-            return operandType.Name switch
+            return NormalizePrimitiveTypeName(operandType.Name) switch
             {
                 "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
-                "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(operandType.Name), out resultType),
+                "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(NormalizePrimitiveTypeName(operandType.Name)), out resultType),
                 _ => false
             };
         }
@@ -3722,10 +3874,10 @@ public static class TypeSharpTypeChecker
                 return false;
             }
 
-            return leftType.Name switch
+            return NormalizePrimitiveTypeName(leftType.Name) switch
             {
                 "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
-                "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(leftType.Name), out resultType),
+                "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(NormalizePrimitiveTypeName(leftType.Name)), out resultType),
                 _ => false
             };
         }
@@ -3752,20 +3904,22 @@ public static class TypeSharpTypeChecker
             type.IsKnown &&
             !type.IsNull &&
             !type.IsNullable &&
-            IsIntegralPrimitiveType(type.Name);
+            IsIntegralPrimitiveType(NormalizePrimitiveTypeName(type.Name));
 
         private static bool IsKnownNonNullableShiftCountType(SimpleType type) =>
             type.IsKnown &&
             !type.IsNull &&
             !type.IsNullable &&
-            type.Name is "byte" or "sbyte" or "short" or "ushort" or "int";
+            NormalizePrimitiveTypeName(type.Name) is "byte" or "sbyte" or "short" or "ushort" or "int";
 
         private static bool IsIntegralPrimitiveType(string typeName) =>
-            typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+            NormalizePrimitiveTypeName(typeName) is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
 
         private static bool TryPromoteIntegralBinaryType(string left, string right, out string resultType)
         {
             resultType = string.Empty;
+            left = NormalizePrimitiveTypeName(left);
+            right = NormalizePrimitiveTypeName(right);
             if (!IsIntegralPrimitiveType(left) || !IsIntegralPrimitiveType(right))
             {
                 return false;
@@ -3801,7 +3955,28 @@ public static class TypeSharpTypeChecker
         }
 
         private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
-            type is "byte" or "ushort" or "uint" or "ulong";
+            NormalizePrimitiveTypeName(type) is "byte" or "ushort" or "uint" or "ulong";
+
+        private static string NormalizePrimitiveTypeName(string typeName) =>
+            typeName switch
+            {
+                "System.Boolean" or "Boolean" => "bool",
+                "System.Byte" or "Byte" => "byte",
+                "System.SByte" or "SByte" => "sbyte",
+                "System.Int16" or "Int16" => "short",
+                "System.UInt16" or "UInt16" => "ushort",
+                "System.Int32" or "Int32" => "int",
+                "System.UInt32" or "UInt32" => "uint",
+                "System.Int64" or "Int64" => "long",
+                "System.UInt64" or "UInt64" => "ulong",
+                "System.Single" or "Single" => "float",
+                "System.Double" or "Double" => "double",
+                "System.Decimal" or "Decimal" => "decimal",
+                "System.Char" or "Char" => "char",
+                "System.String" or "String" => "string",
+                "System.Object" or "Object" => "object",
+                _ => typeName
+            };
 
         private static bool SetResult(SimpleType value, out SimpleType result)
         {

@@ -1,4 +1,5 @@
 using System.Text;
+using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Lowering;
 using TypeSharp.Compiler.Parsing;
 
@@ -80,16 +81,18 @@ public static class CSharpSourceBackend
         IReadOnlyList<CSharpSourceValueReExport> valueReExports,
         IReadOnlyList<CSharpSourceEnumImportShape> enumImportShapes,
         IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
-        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports,
+        IReadOnlyList<MetadataAssemblySymbol>? metadataAssemblies = null)
     {
         var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
-        var emitter = new Emitter();
+        var emitter = new Emitter(metadataAssemblies ?? []);
         return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports);
     }
 
     private sealed class Emitter
     {
         private readonly StringBuilder _builder = new();
+        private readonly IReadOnlyList<MetadataAssemblySymbol> _metadataAssemblies;
         private readonly HashSet<string> _constructorCandidateNames = new(StringComparer.Ordinal);
         private readonly Dictionary<string, RecordShape> _records = new(StringComparer.Ordinal);
         private readonly Dictionary<string, RecordShape> _structuralShapes = new(StringComparer.Ordinal);
@@ -104,6 +107,11 @@ public static class CSharpSourceBackend
         private HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
+
+        public Emitter(IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies)
+        {
+            _metadataAssemblies = metadataAssemblies;
+        }
 
         private sealed record CSharpSourceLiteralExportAlias(string ExportedName, SyntaxNode Literal);
 
@@ -2444,7 +2452,13 @@ public static class CSharpSourceBackend
             var rightExpression = EmitExpression(right);
             var leftType = InferEmitterExpressionType(left);
 
-            return leftType switch
+            return BuildLogicalUnsignedShiftValue(leftExpression, rightExpression, leftType);
+        }
+
+        private static string BuildLogicalUnsignedShiftValue(string leftExpression, string rightExpression, string leftType)
+        {
+            var normalizedLeftType = NormalizePrimitiveTypeName(leftType);
+            return normalizedLeftType switch
             {
                 "uint" or "ulong" => $"{leftExpression} >> {rightExpression}",
                 "long" => $"unchecked((long)(unchecked((ulong){ParenthesizeForCastOperand(leftExpression)}) >> {rightExpression}))",
@@ -2454,18 +2468,65 @@ public static class CSharpSourceBackend
 
         private string EmitLogicalUnsignedShiftAssignment(SyntaxNode target, SyntaxNode right)
         {
+            if (TryGetLogicalUnsignedShiftMemberAssignment(target, right, out var loweredMemberAssignment))
+            {
+                return loweredMemberAssignment;
+            }
+
             var targetExpression = EmitExpression(target);
             var rightExpression = EmitExpression(right);
             var targetType = InferEmitterExpressionType(target);
-            var shifted = targetType switch
+            var shifted = BuildLogicalUnsignedShiftAssignmentValue(targetExpression, rightExpression, targetType);
+
+            return $"{targetExpression} = {shifted}";
+        }
+
+        private string BuildLogicalUnsignedShiftAssignmentValue(string targetExpression, string rightExpression, string targetType)
+        {
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            return normalizedTargetType switch
             {
                 "uint" or "ulong" => $"{targetExpression} >> {rightExpression}",
                 "long" => $"unchecked((long)(unchecked((ulong){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))",
-                "byte" or "sbyte" or "short" or "ushort" => $"unchecked(({targetType})(unchecked((uint){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))",
+                "byte" or "sbyte" or "short" or "ushort" => $"unchecked(({normalizedTargetType})(unchecked((uint){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))",
                 _ => $"unchecked((int)(unchecked((uint){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))"
             };
+        }
 
-            return $"{targetExpression} = {shifted}";
+        private bool TryGetLogicalUnsignedShiftMemberAssignment(
+            SyntaxNode target,
+            SyntaxNode right,
+            out string lowered)
+        {
+            lowered = string.Empty;
+            if (!TryGetImportedMemberAssignmentTarget(
+                    target,
+                    out var receiver,
+                    out var memberName,
+                    out var targetType,
+                    out var receiverType,
+                    out var isStatic))
+            {
+                return false;
+            }
+
+            var rightExpression = EmitExpression(right);
+            if (isStatic || IsTrivialMemberReceiver(receiver))
+            {
+                var targetExpression = EmitExpression(target);
+                var shifted = BuildLogicalUnsignedShiftAssignmentValue(targetExpression, rightExpression, targetType);
+                lowered = $"{targetExpression} = {shifted}";
+                return true;
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var targetExpressionWithTemporary = $"{receiverParameter}.{memberName}";
+            var shiftedWithTemporary = BuildLogicalUnsignedShiftAssignmentValue(
+                targetExpressionWithTemporary,
+                rightExpression,
+                targetType);
+            lowered = $"new System.Func<{receiverType}, {NormalizePrimitiveTypeName(targetType)}>({receiverParameter} => {targetExpressionWithTemporary} = {shiftedWithTemporary})({EmitExpression(receiver)})";
+            return true;
         }
 
         private static string ParenthesizeForCastOperand(string expression) =>
@@ -4414,6 +4475,18 @@ public static class CSharpSourceBackend
                     : "object";
             }
 
+            if (node.Kind == SyntaxKind.MemberAccessExpression &&
+                TryGetImportedMemberAccessType(node, out var importedMemberType))
+            {
+                return importedMemberType;
+            }
+
+            if (node.Kind == SyntaxKind.CallExpression &&
+                TryGetTypeSharpOwnedCallReturnType(node, out var returnType))
+            {
+                return returnType;
+            }
+
             if (node.Kind == SyntaxKind.ParenthesizedExpression || node.Kind == SyntaxKind.CheckedExpression)
             {
                 return InferEmitterExpressionType(node.Children.FirstOrDefault(child => !child.IsToken));
@@ -4426,6 +4499,177 @@ public static class CSharpSourceBackend
 
             return InferExpressionType(node);
         }
+
+        private bool TryGetTypeSharpOwnedCallReturnType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var callee = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (callee is null || !TryGetTypeSharpOwnedFunctionSignature(callee, out var signature))
+            {
+                return false;
+            }
+
+            type = signature.ReturnType;
+            return !string.IsNullOrWhiteSpace(type) && !string.Equals(type, "void", StringComparison.Ordinal);
+        }
+
+        private bool TryGetImportedMemberAccessType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            return TryGetImportedMemberAccess(
+                node,
+                requireWritable: false,
+                out _,
+                out _,
+                out type,
+                out _,
+                out _);
+        }
+
+        private bool TryGetImportedMemberAssignmentTarget(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out string memberName,
+            out string targetType,
+            out string receiverType,
+            out bool isStatic)
+        {
+            return TryGetImportedMemberAccess(
+                node,
+                requireWritable: true,
+                out receiver,
+                out memberName,
+                out targetType,
+                out receiverType,
+                out isStatic);
+        }
+
+        private bool TryGetImportedMemberAccess(
+            SyntaxNode node,
+            bool requireWritable,
+            out SyntaxNode receiver,
+            out string memberName,
+            out string targetType,
+            out string receiverType,
+            out bool isStatic)
+        {
+            receiver = default!;
+            memberName = string.Empty;
+            targetType = string.Empty;
+            receiverType = string.Empty;
+            isStatic = false;
+            if (!TryGetMemberAccessParts(node, out receiver, out memberName))
+            {
+                return false;
+            }
+
+            if (receiver.Kind == SyntaxKind.IdentifierExpression &&
+                !_valueTypes.ContainsKey(GetIdentifierText(receiver)) &&
+                TryFindImportedMemberAccessType(
+                    FindMetadataTypes(GetIdentifierText(receiver)),
+                    memberName,
+                    isStatic: true,
+                    requireWritable,
+                    out targetType))
+            {
+                receiverType = GetIdentifierText(receiver);
+                isStatic = true;
+                return true;
+            }
+
+            receiverType = InferEmitterExpressionType(receiver);
+            return !string.IsNullOrWhiteSpace(receiverType) &&
+                !string.Equals(receiverType, "object", StringComparison.Ordinal) &&
+                TryFindImportedMemberAccessType(
+                    FindMetadataTypes(receiverType),
+                    memberName,
+                    isStatic: false,
+                    requireWritable,
+                    out targetType);
+        }
+
+        private IReadOnlyList<MetadataTypeSymbol> FindMetadataTypes(string typeName) =>
+            _metadataAssemblies
+                .SelectMany(assembly => assembly.Types)
+                .Where(type =>
+                    string.Equals(type.FullName, typeName, StringComparison.Ordinal) ||
+                    MetadataTypeNameMatches(type.FullName, typeName) ||
+                    MetadataTypeNameMatches(type.Name, typeName))
+                .ToArray();
+
+        private static bool TryFindImportedMemberAccessType(
+            IReadOnlyList<MetadataTypeSymbol> receiverTypes,
+            string memberName,
+            bool isStatic,
+            bool requireWritable,
+            out string type)
+        {
+            type = string.Empty;
+            foreach (var receiverType in receiverTypes)
+            {
+                var property = receiverType.Properties.FirstOrDefault(candidate =>
+                    candidate.IsStatic == isStatic &&
+                    !candidate.IsIndexer &&
+                    candidate.HasPublicGetter &&
+                    (!requireWritable || candidate.HasPublicSetter) &&
+                    string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+                if (property is not null)
+                {
+                    type = NormalizePrimitiveTypeName(property.Type);
+                    return true;
+                }
+
+                var field = receiverType.Fields.FirstOrDefault(candidate =>
+                    candidate.IsStatic == isStatic &&
+                    !candidate.IsLiteral &&
+                    (!requireWritable || !candidate.IsReadOnly) &&
+                    string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+                if (field is not null)
+                {
+                    type = NormalizePrimitiveTypeName(field.Type);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool MetadataTypeNameMatches(string? actual, string expected)
+        {
+            if (string.IsNullOrWhiteSpace(actual) || string.IsNullOrWhiteSpace(expected))
+            {
+                return false;
+            }
+
+            return string.Equals(actual, expected, StringComparison.Ordinal) ||
+                string.Equals(GetUnqualifiedTypeName(actual), expected, StringComparison.Ordinal) ||
+                string.Equals(actual, GetUnqualifiedTypeName(expected), StringComparison.Ordinal) ||
+                string.Equals(StripGenericArity(actual), StripGenericArity(expected), StringComparison.Ordinal) ||
+                string.Equals(GetUnqualifiedTypeName(StripGenericArity(actual)), GetUnqualifiedTypeName(StripGenericArity(expected)), StringComparison.Ordinal);
+        }
+
+        private static bool TryGetMemberAccessParts(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out string memberName)
+        {
+            receiver = default!;
+            memberName = string.Empty;
+            if (node.Kind != SyntaxKind.MemberAccessExpression)
+            {
+                return false;
+            }
+
+            receiver = node.Children.FirstOrDefault(child => !child.IsToken)!;
+            memberName = node.Children.LastOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            return receiver is not null && memberName.Length > 0;
+        }
+
+        private static bool IsTrivialMemberReceiver(SyntaxNode receiver) =>
+            receiver.Kind == SyntaxKind.IdentifierExpression ||
+            (receiver.Kind == SyntaxKind.ParenthesizedExpression &&
+                receiver.Children.FirstOrDefault(child => !child.IsToken) is { } inner &&
+                IsTrivialMemberReceiver(inner));
 
         private static bool TryInferStaticShiftExpressionType(SyntaxNode node, out string type)
         {
@@ -4466,6 +4710,8 @@ public static class CSharpSourceBackend
         private static bool TryGetBinaryIntegralBitwiseResultType(string left, string right, out string resultType)
         {
             resultType = string.Empty;
+            left = NormalizePrimitiveTypeName(left);
+            right = NormalizePrimitiveTypeName(right);
             if (!IsIntegralPrimitiveType(left) || !IsIntegralPrimitiveType(right))
             {
                 return false;
@@ -4503,6 +4749,8 @@ public static class CSharpSourceBackend
         private static bool TryGetBinaryIntegralShiftResultType(string left, string right, out string resultType)
         {
             resultType = string.Empty;
+            left = NormalizePrimitiveTypeName(left);
+            right = NormalizePrimitiveTypeName(right);
             if (!IsIntegralPrimitiveType(left) || !IsShiftCountPrimitiveType(right))
             {
                 return false;
@@ -4518,13 +4766,34 @@ public static class CSharpSourceBackend
         }
 
         private static bool IsIntegralPrimitiveType(string typeName) =>
-            typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+            NormalizePrimitiveTypeName(typeName) is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
 
         private static bool IsShiftCountPrimitiveType(string typeName) =>
-            typeName is "byte" or "sbyte" or "short" or "ushort" or "int";
+            NormalizePrimitiveTypeName(typeName) is "byte" or "sbyte" or "short" or "ushort" or "int";
 
         private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
-            type is "byte" or "ushort" or "uint" or "ulong";
+            NormalizePrimitiveTypeName(type) is "byte" or "ushort" or "uint" or "ulong";
+
+        private static string NormalizePrimitiveTypeName(string typeName) =>
+            typeName switch
+            {
+                "System.Boolean" or "Boolean" => "bool",
+                "System.Byte" or "Byte" => "byte",
+                "System.SByte" or "SByte" => "sbyte",
+                "System.Int16" or "Int16" => "short",
+                "System.UInt16" or "UInt16" => "ushort",
+                "System.Int32" or "Int32" => "int",
+                "System.UInt32" or "UInt32" => "uint",
+                "System.Int64" or "Int64" => "long",
+                "System.UInt64" or "UInt64" => "ulong",
+                "System.Single" or "Single" => "float",
+                "System.Double" or "Double" => "double",
+                "System.Decimal" or "Decimal" => "decimal",
+                "System.Char" or "Char" => "char",
+                "System.String" or "String" => "string",
+                "System.Object" or "Object" => "object",
+                _ => typeName
+            };
 
         private static string InferLiteralType(SyntaxNode? initializer)
         {
@@ -4666,7 +4935,7 @@ public static class CSharpSourceBackend
         }
 
         private static string MapSourceTypeName(string sourceType) =>
-            sourceType switch
+            NormalizePrimitiveTypeName(sourceType) switch
             {
                 "bool" => "bool",
                 "byte" => "byte",

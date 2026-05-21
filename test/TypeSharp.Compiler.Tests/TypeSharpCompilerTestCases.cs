@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(526, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(528, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(132, shardCounts[0]);
     AssertEqual(132, shardCounts[1]);
-    AssertEqual(131, shardCounts[2]);
-    AssertEqual(131, shardCounts[3]);
+    AssertEqual(132, shardCounts[2]);
+    AssertEqual(132, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -2704,7 +2704,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(Array.Empty<string>(), display.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyFields = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFields"), "LegacyFields metadata should be present.");
-        AssertSequence(["MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["MutableCount", "MutableStaticCount", "MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticName = Require(legacyFields.Properties.SingleOrDefault(property => property.Name == "StaticName"), "StaticName property metadata should be present.");
         AssertTrue(staticName.IsStatic, "StaticName should be marked static.");
         AssertTrue(staticName.HasPublicGetter, "StaticName should expose a public getter.");
@@ -2713,7 +2713,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertTrue(mutableStaticName.IsStatic, "MutableStaticName should be marked static.");
         AssertTrue(mutableStaticName.HasPublicGetter, "MutableStaticName should expose a public getter.");
         AssertTrue(mutableStaticName.HasPublicSetter, "MutableStaticName should expose a public setter.");
-        AssertSequence(["InstanceCode", "MutableCode", "MutableStaticCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["InstanceCode", "MutableCode", "MutableLong", "MutableStaticByte", "MutableStaticCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "StaticCode"), "StaticCode field metadata should be present.");
         AssertEqual("string", staticCode.Type);
         AssertTrue(staticCode.IsStatic, "StaticCode should be marked static.");
@@ -19846,6 +19846,192 @@ static void CliBuildCompilesLogicalUnsignedShiftAssignmentExpressionApi()
     });
 }
 
+static void CliBuildCompilesImportedLogicalUnsignedShiftAssignmentMemberTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedLogicalUnsignedShiftAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedLogicalUnsignedShiftAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedLogicalUnsignedShiftAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            fun makeFields(): LegacyFields =
+              LegacyFields()
+
+            export fun instanceProperty(count: int): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = -8
+              fields.MutableCount >>>= count
+              fields.MutableCount
+            }
+
+            export fun instanceField(value: long, count: short): long {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableLong = value
+              fields.MutableLong >>>= count
+              fields.MutableLong
+            }
+
+            export fun staticUnsigned(value: uint, count: int): uint {
+              LegacyFields.MutableStaticCount = value
+              LegacyFields.MutableStaticCount >>>= count
+              LegacyFields.MutableStaticCount
+            }
+
+            export fun staticSmall(value: byte, count: int): byte {
+              LegacyFields.MutableStaticByte = value
+              LegacyFields.MutableStaticByte >>>= count
+              LegacyFields.MutableStaticByte
+            }
+
+            export fun nonTrivialReceiver(count: int): int {
+              makeFields().MutableCount >>>= count
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedLogicalUnsignedShiftAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("fields.MutableCount = unchecked((int)(unchecked((uint)(fields.MutableCount)) >> count));", generatedSource);
+        AssertContains("fields.MutableLong = unchecked((long)(unchecked((ulong)(fields.MutableLong)) >> count));", generatedSource);
+        AssertContains("LegacyFields.MutableStaticCount = LegacyFields.MutableStaticCount >> count;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticByte = unchecked((byte)(unchecked((uint)(LegacyFields.MutableStaticByte)) >> count));", generatedSource);
+        AssertContains("new System.Func<LegacyFields, int>(__tsReceiver", generatedSource);
+        AssertContains(")(makeFields())", generatedSource);
+        AssertFalse(generatedSource.Contains("makeFields().MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial imported member receiver.");
+        AssertFalse(generatedSource.Contains(">>>", StringComparison.Ordinal), "Generated C# 7.3 source should not emit logical shift tokens.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedLogicalUnsignedShiftAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported logical unsigned shift assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ImportedLogicalUnsignedShiftAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ImportedLogicalUnsignedShiftAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ImportedLogicalUnsignedShiftAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/ImportedLogicalUnsignedShiftAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ImportedLogicalUnsignedShiftAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ImportedLogicalUnsignedShiftAssignment.Module.instanceProperty(1) == 2147483644 &&
+                            Samples.ImportedLogicalUnsignedShiftAssignment.Module.instanceField(-8L, 1) == 9223372036854775804L &&
+                            Samples.ImportedLogicalUnsignedShiftAssignment.Module.staticUnsigned(8u, 1) == 4u &&
+                            Samples.ImportedLogicalUnsignedShiftAssignment.Module.staticSmall(128, 1) == 64 &&
+                            Samples.ImportedLogicalUnsignedShiftAssignment.Module.nonTrivialReceiver(1) == 2147483644;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ImportedLogicalUnsignedShiftAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated imported logical unsigned shift assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidImportedLogicalUnsignedShiftAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidImportedLogicalUnsignedShiftAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidImportedLogicalUnsignedShiftAssignment
+
+            import { LegacyEvents, LegacyFields } from "Legacy.Tools"
+
+            export fun invalidCount(count: uint): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount >>>= count
+              fields.MutableCount
+            }
+
+            export fun invalidIndexer(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields[0] >>>= 1
+              0
+            }
+
+            export fun invalidEvent(): int {
+              let events: LegacyEvents = LegacyEvents()
+              events.Transform >>>= 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported imported C# logical unsigned shift assignment targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Shift assignment '>>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
+            "Imported member target should still reject unsupported shift counts.");
+        AssertEqual(
+            2,
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("indexer, event, and unresolved imported member targets are not supported", StringComparison.Ordinal)));
+    });
+}
+
 static void CliBuildCompilesShiftAssignmentExpressionApi()
 {
     WithWorkspace(root =>
@@ -24380,6 +24566,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
 
             public sealed class LegacyFields
             {
+                public LegacyFields()
+                {
+                    MutableCount = -8;
+                }
+
                 public const string StaticCode = "static";
 
                 public static string StaticName
@@ -24389,11 +24580,19 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
 
                 public static string MutableStaticName { get; set; }
 
+                public int MutableCount { get; set; }
+
+                public static uint MutableStaticCount { get; set; }
+
                 public static string MutableStaticCode = "mutable-static";
+
+                public static byte MutableStaticByte;
 
                 public readonly string InstanceCode = "instance";
 
                 public string MutableCode = "mutable";
+
+                public long MutableLong;
             }
 
             public static class LegacyExtensions
