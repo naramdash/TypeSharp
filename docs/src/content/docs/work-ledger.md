@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | `agent/0367-roadmap-refresh-after-params-parameter-declaration.md` |
-| Next top-priority task | Task 0367 roadmap refresh after params parameter declaration. |
+| Active task packet | `agent/0368-test-suite-runtime-reduction.md` |
+| Next top-priority task | Task 0368 test suite runtime reduction plan and refactor. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0367 is rechecking official source signals after TypeSharp-owned final-array `params` parameter declarations and selecting the next bounded implementation slice. |
-| Completed work covered | 0001-0366 |
+| Current tooling slice | Task 0368 is planning and refactoring `test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj` runtime while preserving the suite's project-purpose regression evidence. |
+| Completed work covered | 0001-0367 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

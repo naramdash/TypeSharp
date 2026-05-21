@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 23:19:58 +09:00
+End Time: 2026-05-21 23:50:38 +09:00
 
 ## Objective
 
@@ -4214,6 +4214,47 @@ Remaining:
 
 - Roadmap refresh after params parameter declarations is active in task 0367. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, `params` in function-type syntax, higher-order function values, currying, partial application, public composition ABI inference, imported composition targets, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0367 Roadmap Refresh After Params Parameter Declaration
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code source signals on 2026-05-21 after TypeSharp-owned final-array `params` parameter declarations landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, F# 10 remains a refinement/tooling signal, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, completed `params` parameter declaration behavior, and the remaining parameter/function ergonomics backlog.
+- Kept optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, `params` in function-type syntax, higher-order function values, currying, partial application, public composition ABI inference, imported composition targets, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra as future language work.
+- Promoted the pending User Task Inbox request as the next active bounded task because active work completed before user-owned queued work should continue: `0368 Test suite runtime reduction plan and refactor`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers)
+- [VS Code Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Test suite runtime reduction planning/refactor is active in task 0368. The user-owned inbox item remains unchecked until the refactor is actually completed.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -4238,13 +4279,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0366 is compressed here.
+- Completed historical work through task 0367 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0367 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0368 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

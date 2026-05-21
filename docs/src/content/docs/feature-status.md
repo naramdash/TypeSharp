@@ -231,6 +231,8 @@ After private direct composition value inference, the empty-queue refresh rechec
 
 The TypeSharp-owned `params` parameter declaration slice completed parser/checker/backend support for final array parameters shaped `params name: T[]` on direct TypeSharp-declared functions. Direct calls and first-argument pipeline lowering accept exact array arguments or expanded trailing element arguments, including bounded generic inference through the `params` tail. Generated C# emits `params T[]` signatures. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, and `params` in function-type syntax remain backlog.
 
+After TypeSharp-owned `params` parameter declarations, the roadmap refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The next active work follows the pending user-owned test-suite request: profile and refactor `test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj` runtime without weakening TypeSharp's regression evidence. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, and `params` in function-type syntax remain language backlog.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
