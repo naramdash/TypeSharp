@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | Recheck the task index, checklist, and official baseline references before selecting the next bounded slice. |
+| 0362 Composition function-type annotation compatibility slice | [0362-composition-function-type-annotation-compatibility-slice.md](0362-composition-function-type-annotation-compatibility-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, composition annotation type-checker fixtures, backend composition lowering fixture, `test/TypeSharp.Compiler.Tests/Program.cs`, docs canonical pages. |
 
 ## Completed Evidence Index
 

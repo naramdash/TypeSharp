@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Recheck `agent/tasks.md`, `agent/checklist.md`, and official baseline references before selecting the next slice. |
+| Active task packet | `agent/0362-composition-function-type-annotation-compatibility-slice.md` |
+| Next top-priority task | Task 0362 composition function-type annotation compatibility slice. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0360 completed direct generic named-function composition inference for known TypeSharp-declared unary targets without changing C# lowering. |
-| Completed work covered | 0001-0360 |
+| Current tooling slice | Task 0362 is validating explicit function-type annotations on direct named-function composition values before C# emission. |
+| Completed work covered | 0001-0361 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

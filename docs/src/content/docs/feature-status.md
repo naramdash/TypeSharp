@@ -219,6 +219,8 @@ After direct generic pipeline inference, the empty-queue refresh rechecked offic
 
 The direct generic named-function composition inference slice completed bounded compatibility checks for direct `f >> g` and `g << f` pairs when either side is a known TypeSharp-declared generic unary function. The checker infers from the composition edge for simple, array, and matching single-argument generic wrapper positions, reports `TS2201` for incompatible substituted edges, and leaves generated C# delegate-lambda lowering unchanged. Imported C# composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, and general type-constructor unification remain backlog.
 
+After direct generic named-function composition inference, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is explicit function-type annotation compatibility for direct named-function composition values. Unannotated composition expression function-type inference, public ABI inference for composition expressions, imported C# composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, and general type-constructor unification remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
