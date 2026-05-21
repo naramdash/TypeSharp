@@ -5,7 +5,7 @@ description: Source files, module paths, imports, exports, namespaces, and gener
 
 TypeSharp follows the TypeScript-style idea that files belong to a module graph. The graph is explicit: source roots define module identity, and import/export declarations define dependencies and public surface intent.
 
-The TypeSharp module roadmap deliberately stops short of TypeScript's full Node, bundler, CommonJS, package `exports`, and `paths` behavior. A source import must either resolve through the TypeSharp source graph or lower to a C# namespace/type import. Manifest-owned source aliases can be added later, but they must either rewrite to deterministic generated C# references or report diagnostics before emission; they must not create TypeScript-style type-check-only paths that fail at runtime.
+The TypeSharp module roadmap deliberately stops short of TypeScript's full Node, bundler, CommonJS, package `exports`, and `paths` behavior. A source import must either resolve through the TypeSharp source graph, a manifest-owned current-project alias, a direct TypeSharp project reference, or lower to a C# namespace/type import. Manifest-owned source mappings must rewrite to deterministic generated C# references or report diagnostics before emission; they must not create TypeScript-style type-check-only paths that fail at runtime.
 
 ## Files Are Modules
 
@@ -113,7 +113,7 @@ Manifest shape:
 ```toml
 [modules.aliases]
 "@app/*" = "src/*"
-"@shared/*" = "../Shared/src/*"
+"@features/*" = "src/Feature/*"
 ```
 
 Current rules:
@@ -128,23 +128,33 @@ Project-reference alias targets remain future work. Current aliases resolve only
 
 ## TypeSharp Project References
 
-TypeSharp project references are also a manifest-owned source graph feature. They are not JavaScript package references, npm workspace links, or TypeScript declaration-only project references. A referenced TypeSharp project must produce a generated `net48` assembly and explicit module/export metadata before a dependent project can compile against it.
+TypeSharp project references are also a manifest-owned source graph feature. They are not JavaScript package references, npm workspace links, or TypeScript declaration-only project references. A referenced TypeSharp project must have a manifest and source graph that the compiler can load, and `typesharp build` must produce its generated `net48` assembly before the dependent project is emitted.
 
-Reserved manifest shape:
+Manifest shape:
 
 ```toml
 [projectReferences]
 paths = ["../Shared/TypeSharp.toml"]
 ```
 
-Project reference rules for the implementation slice:
+Direct project source imports use the referenced project's `project.name` and the source-root-relative module path:
+
+```tysh
+import { helper } from "Shared/Api"
+```
+
+That import resolves when `../Shared/TypeSharp.toml` contains `project.name = "Shared"` and the referenced project has a discovered `src/Api.tysh` module that exports `helper`.
+
+Project reference rules:
 
 - Each path names another `TypeSharp.toml`, not a generated DLL. DLLs stay under `references.paths`.
-- The referenced project is checked and built first, using its own `generatedOutputRoot`, target framework, source roots, and diagnostics policy.
-- The dependent project consumes the referenced generated assembly and TypeSharp export metadata through explicit generated artifact paths. No source import may cross into another project by walking parent directories.
+- `typesharp check` loads direct referenced manifests and derives source-module export metadata for diagnostics without writing generated output.
+- `typesharp build` builds direct referenced projects first, using their own `generatedOutputRoot`, target framework, source roots, and diagnostics policy.
+- The dependent project consumes direct referenced generated assemblies through explicit generated artifact paths. No source import may cross into another project by walking parent directories.
 - Project reference imports must preserve CLR-visible identity. Public records, classes, interfaces, delegates, enums, and nominal unions cross the boundary through generated C# metadata; compile-time-only structural shapes and type-level unions do not.
-- Direct references are required for source-level project imports. TypeSharp must not assume hidden transitive project-reference visibility for generated `net48` artifacts.
-- Cycles, missing manifests, incompatible target frameworks, stale or missing referenced artifacts, and missing exported module members must report deterministic diagnostics before emission.
+- Cross-project source imports are implemented for direct `import` declarations. Cross-project `export ... from` forwarding remains backlog and reports unsupported export forwarding.
+- Direct references are required for source-level project imports. TypeSharp does not assume hidden transitive project-reference visibility for generated `net48` artifacts.
+- Cycles, missing manifests, invalid referenced manifests, incompatible target frameworks, duplicate direct project names, unresolved direct project module specifiers, missing referenced build artifacts, and missing exported module members report deterministic diagnostics before dependent emission.
 
 ## Export Surface
 
@@ -260,9 +270,8 @@ Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`
 
 Near-term module work should focus on:
 
-- manifest-owned source path aliases that preserve generated C# identity and cannot silently diverge from runtime references;
 - stricter diagnostics for unsupported non-relative source imports, non-lowerable re-exports, and side-effect-only imports;
-- project-graph references between TypeSharp projects, modeled through generated assemblies and source-module metadata rather than JavaScript package resolution;
+- richer project-reference metadata and re-export forms between TypeSharp projects, modeled through generated assemblies and source-module metadata rather than JavaScript package resolution;
 - editor navigation metadata for generated source and public exports, analogous to TypeScript declaration maps but grounded in TypeSharp source spans and C# artifacts.
 
 ## Related Pages

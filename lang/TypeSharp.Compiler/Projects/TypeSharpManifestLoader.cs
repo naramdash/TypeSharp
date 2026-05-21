@@ -63,6 +63,13 @@ public static class TypeSharpManifestLoader
                 .Select(entry => new SourceAliasOption(entry.Key, entry.Value, fullManifestPath, entry.Line, entry.Column))
                 .ToArray());
 
+        document.TryGetLocation("projectReferences", "paths", out var projectReferenceLine, out var projectReferenceColumn);
+        var projectReferences = new ProjectReferenceOptions(
+            document
+                .GetStringArray("projectReferences", "paths", ProjectReferenceOptions.Empty.Paths.Select(path => path.Path).ToArray(), diagnostics)
+                .Select(path => new ProjectReferencePathOption(path, fullManifestPath, projectReferenceLine, projectReferenceColumn))
+                .ToArray());
+
         var references = new ReferenceOptions(
             document.GetStringArray("references", "assemblies", ReferenceOptions.Empty.Assemblies, diagnostics),
             document.GetStringArray("references", "paths", ReferenceOptions.Empty.Paths, diagnostics),
@@ -81,7 +88,7 @@ public static class TypeSharpManifestLoader
         }
 
         return new ManifestLoadResult(
-            new TypeSharpManifest(fullManifestPath, projectDirectory, project, language, modules, references, tooling),
+            new TypeSharpManifest(fullManifestPath, projectDirectory, project, language, modules, projectReferences, references, tooling),
             diagnostics);
     }
 

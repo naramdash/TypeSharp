@@ -53,6 +53,7 @@ var tests = new (string Name, Action Body)[]
     ("lowering pipeline injects runtime helper imports", LoweringPipelineInjectsRuntimeHelperImports),
     ("manifest loader reads explicit manifest path", ManifestLoaderReadsExplicitManifestPath),
     ("manifest loader reads source aliases", ManifestLoaderReadsSourceAliases),
+    ("manifest loader reads project references", ManifestLoaderReadsProjectReferences),
     ("manifest locator searches parent directories", ManifestLocatorSearchesParentDirectories),
     ("source discovery defaults to src root", SourceDiscoveryDefaultsToSrcRoot),
     ("source discovery excludes build and generated folders", SourceDiscoveryExcludesBuildAndGeneratedFolders),
@@ -218,8 +219,16 @@ var tests = new (string Name, Action Body)[]
     ("CLI check emits JSON duplicate source module diagnostics", CliCheckEmitsJsonDuplicateSourceModuleDiagnostics),
     ("CLI check accepts relative source module import aliases", CliCheckAcceptsRelativeSourceModuleImportAliases),
     ("CLI check accepts source module alias imports", CliCheckAcceptsSourceModuleAliasImports),
+    ("CLI check accepts project reference source imports", CliCheckAcceptsProjectReferenceSourceImports),
+    ("CLI check accepts referenced project own project reference source imports", CliCheckAcceptsReferencedProjectOwnProjectReferenceSourceImports),
     ("CLI check emits JSON unresolved source module diagnostics", CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics),
     ("CLI check emits JSON source alias diagnostics", CliCheckEmitsJsonSourceAliasDiagnostics),
+    ("CLI check emits JSON project reference diagnostics", CliCheckEmitsJsonProjectReferenceDiagnostics),
+    ("CLI check emits JSON project reference cycle diagnostics", CliCheckEmitsJsonProjectReferenceCycleDiagnostics),
+    ("CLI check emits JSON incompatible project reference target diagnostics", CliCheckEmitsJsonIncompatibleProjectReferenceTargetDiagnostics),
+    ("CLI check emits JSON missing project reference export diagnostics", CliCheckEmitsJsonMissingProjectReferenceExportDiagnostics),
+    ("CLI check rejects hidden transitive project source imports", CliCheckRejectsHiddenTransitiveProjectSourceImports),
+    ("CLI check rejects project reference re-exports until supported", CliCheckRejectsProjectReferenceReExportsUntilSupported),
     ("CLI check emits JSON missing source module export diagnostics", CliCheckEmitsJsonMissingSourceModuleExportDiagnostics),
     ("CLI check emits JSON missing source module re-export diagnostics", CliCheckEmitsJsonMissingSourceModuleReExportDiagnostics),
     ("CLI check emits JSON missing source module namespace member diagnostics", CliCheckEmitsJsonMissingSourceModuleNamespaceMemberDiagnostics),
@@ -228,6 +237,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build stops before emission on duplicate source modules", CliBuildStopsBeforeEmissionOnDuplicateSourceModules),
     ("CLI build lowers relative source module import aliases", CliBuildLowersRelativeSourceModuleImportAliases),
     ("CLI build lowers source module alias imports", CliBuildLowersSourceModuleAliasImports),
+    ("CLI build builds project references before dependent", CliBuildBuildsProjectReferencesBeforeDependent),
     ("CLI build stops before emission on missing source module exports", CliBuildStopsBeforeEmissionOnMissingSourceModuleExports),
     ("CLI build stops before emission on missing source module re-exports", CliBuildStopsBeforeEmissionOnMissingSourceModuleReExports),
     ("CLI build stops before emission on missing source module namespace members", CliBuildStopsBeforeEmissionOnMissingSourceModuleNamespaceMembers),
@@ -1256,6 +1266,28 @@ static void ManifestLoaderReadsSourceAliases()
         AssertEqual("src/*", manifest.Modules.Aliases[0].Target);
         AssertEqual("@shared", manifest.Modules.Aliases[1].Pattern);
         AssertEqual("src/Shared", manifest.Modules.Aliases[1].Target);
+    });
+}
+
+static void ManifestLoaderReadsProjectReferences()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "App"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml", "../Core/TypeSharp.toml"]
+            """);
+
+        var result = TypeSharpManifestLoader.Load(manifestPath);
+
+        AssertFalse(result.HasErrors, "Manifest with project references should load without errors.");
+        var manifest = Require(result.Manifest, "Manifest should be available.");
+        AssertEqual(2, manifest.ProjectReferences.Paths.Count);
+        AssertEqual("../Shared/TypeSharp.toml", manifest.ProjectReferences.Paths[0].Path);
+        AssertEqual("../Core/TypeSharp.toml", manifest.ProjectReferences.Paths[1].Path);
     });
 }
 
@@ -7979,6 +8011,115 @@ static void CliCheckAcceptsSourceModuleAliasImports()
     });
 }
 
+static void CliCheckAcceptsProjectReferenceSourceImports()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            rootNamespace = "Samples.ProjectReference.Shared"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.ProjectReference.Shared
+
+            export fun helper(): string = "shared"
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.ProjectReference.App
+
+            import { helper } from "Shared/Api"
+
+            export fun read(): string = helper()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("\"diagnostics\": []", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertFalse(File.Exists(Path.Combine(sharedRoot, "generated", "bin", "Debug", "net48", "Shared.dll")), "typesharp check should not build referenced projects.");
+    });
+}
+
+static void CliCheckAcceptsReferencedProjectOwnProjectReferenceSourceImports()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var libraryRoot = Path.Combine(root, "Library");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(libraryRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            rootNamespace = "Samples.NestedProjectReference.Shared"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.NestedProjectReference.Shared
+
+            export fun helper(): string = "shared"
+            """);
+        WriteManifest(libraryRoot, """
+            [project]
+            name = "Library"
+            rootNamespace = "Samples.NestedProjectReference.Library"
+            generatedOutputRoot = "generated"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(libraryRoot, "src/Api.tysh", """
+            namespace Samples.NestedProjectReference.Library
+
+            import { helper } from "Shared/Api"
+
+            export fun libraryValue(): string = helper()
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+            rootNamespace = "Samples.NestedProjectReference.App"
+            generatedOutputRoot = "generated"
+
+            [projectReferences]
+            paths = ["../Library/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.NestedProjectReference.App
+
+            import { libraryValue } from "Library/Api"
+
+            export fun read(): string = libraryValue()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("\"diagnostics\": []", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+    });
+}
+
 static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
 {
     WithWorkspace(root =>
@@ -8028,6 +8169,261 @@ static void CliCheckEmitsJsonSourceAliasDiagnostics()
         AssertContains("\"code\": \"TS0103\"", error.ToString());
         AssertContains("Source alias '@shared/*' target '../Shared/*' escapes the project directory.", error.ToString());
         AssertContains("TypeSharp.toml", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonProjectReferenceDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(appRoot);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "BadProjectReferenceJson"
+
+            [projectReferences]
+            paths = ["../Missing/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.BadProjectReferenceJson
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0100\"", error.ToString());
+        AssertContains("Could not find referenced TypeSharp manifest '../Missing/TypeSharp.toml'.", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonProjectReferenceCycleDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var appRoot = Path.Combine(root, "App");
+        var sharedRoot = Path.Combine(root, "Shared");
+        Directory.CreateDirectory(appRoot);
+        Directory.CreateDirectory(sharedRoot);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.ProjectCycle.App
+            """);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+
+            [projectReferences]
+            paths = ["../App/TypeSharp.toml"]
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.ProjectCycle.Shared
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0103\"", error.ToString());
+        AssertContains("Project reference cycle detected", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonIncompatibleProjectReferenceTargetDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            targetFramework = "net481"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.IncompatibleProjectTarget.Shared
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+            targetFramework = "net48"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.IncompatibleProjectTarget.App
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0103\"", error.ToString());
+        AssertContains("targets 'net481', but the dependent project targets 'net48'", error.ToString());
+    });
+}
+
+static void CliCheckEmitsJsonMissingProjectReferenceExportDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.MissingProjectExport.Shared
+
+            export fun helper(): string = "shared"
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.MissingProjectExport.App
+
+            import { missing } from "Shared/Api"
+
+            export fun read(): string = missing()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0114\"", error.ToString());
+        AssertContains("Source module import 'Shared/Api' resolves to 'Shared/Api', but exported name 'missing' was not found.", error.ToString());
+    });
+}
+
+static void CliCheckRejectsHiddenTransitiveProjectSourceImports()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var libraryRoot = Path.Combine(root, "Library");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(libraryRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.Transitive.Shared
+
+            export fun helper(): string = "shared"
+            """);
+        WriteManifest(libraryRoot, """
+            [project]
+            name = "Library"
+            generatedOutputRoot = "generated"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(libraryRoot, "src/Api.tysh", """
+            namespace Samples.Transitive.Library
+
+            export fun libraryValue(): string = "library"
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+            generatedOutputRoot = "generated"
+
+            [projectReferences]
+            paths = ["../Library/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.Transitive.App
+
+            import { helper } from "Shared/Api"
+
+            export fun read(): string = helper()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS0112\"", error.ToString());
+        AssertContains("Project source module specifier 'Shared/Api' does not resolve to a current source alias or direct project reference.", error.ToString());
+    });
+}
+
+static void CliCheckRejectsProjectReferenceReExportsUntilSupported()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.ProjectReferenceReExport.Shared
+
+            export fun helper(): string = "shared"
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+            generatedOutputRoot = "generated"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.ProjectReferenceReExport.App
+
+            export { helper } from "Shared/Api"
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["check", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(1, exitCode);
+        AssertEqual(string.Empty, output.ToString());
+        AssertContains("\"code\": \"TS2003\"", error.ToString());
+        AssertContains("This export specifier form is parsed but not implemented yet.", error.ToString());
     });
 }
 
@@ -8290,6 +8686,63 @@ static void CliBuildLowersSourceModuleAliasImports()
         AssertFalse(generatedMain.Contains("using @app", StringComparison.Ordinal), "Alias source import should not lower as a C# namespace import.");
         AssertContains("return keep();", generatedMain);
         AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "ManifestSourceModuleAlias.dll")), "Generated manifest source alias project should compile to a net48 DLL.");
+    });
+}
+
+static void CliBuildBuildsProjectReferencesBeforeDependent()
+{
+    WithWorkspace(root =>
+    {
+        var sharedRoot = Path.Combine(root, "Shared");
+        var appRoot = Path.Combine(root, "App");
+        Directory.CreateDirectory(sharedRoot);
+        Directory.CreateDirectory(appRoot);
+        WriteManifest(sharedRoot, """
+            [project]
+            name = "Shared"
+            rootNamespace = "Samples.BuildProjectReference.Shared"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(sharedRoot, "src/Api.tysh", """
+            namespace Samples.BuildProjectReference.Shared
+
+            export fun helper(): string = "shared"
+            """);
+        var appManifest = WriteManifest(appRoot, """
+            [project]
+            name = "App"
+            rootNamespace = "Samples.BuildProjectReference.App"
+            generatedOutputRoot = "generated"
+
+            [projectReferences]
+            paths = ["../Shared/TypeSharp.toml"]
+            """);
+        WriteFile(appRoot, "src/Main.tysh", """
+            namespace Samples.BuildProjectReference.App
+
+            import { helper } from "Shared/Api"
+
+            export fun read(): string = helper()
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", appManifest, "--diagnostic-format", "json"], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/App.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "generated", "bin", "Debug", "net48", "Shared.dll")), "Project reference should be built before the dependent project.");
+        AssertTrue(File.Exists(Path.Combine(appRoot, "generated", "bin", "Debug", "net48", "App.dll")), "Dependent project should compile after project reference assembly is available.");
+
+        var generatedMain = File.ReadAllText(Path.Combine(appRoot, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Samples.BuildProjectReference.Shared;", generatedMain);
+        AssertContains("using static Samples.BuildProjectReference.Shared.Module;", generatedMain);
+        AssertContains("return helper();", generatedMain);
+
+        var generatedProject = File.ReadAllText(Path.Combine(appRoot, "generated", "App.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("<Reference Include=\"Shared\">", generatedProject);
+        AssertContains("Shared/generated/bin/Debug/net48/Shared.dll", generatedProject);
     });
 }
 

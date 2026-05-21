@@ -16,6 +16,15 @@ public static class TypeSharpBuilder
     {
         configuration = NormalizeBuildConfiguration(configuration);
         targetFrameworkOverride = NormalizeTargetFrameworkOverride(targetFrameworkOverride);
+        return BuildInternal(manifestPath, configuration, targetFrameworkOverride, new Dictionary<string, BuildResult>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static BuildResult BuildInternal(
+        string manifestPath,
+        string configuration,
+        string? targetFrameworkOverride,
+        Dictionary<string, BuildResult> builtProjectReferences)
+    {
         var diagnostics = new List<Diagnostic>();
         var generatedFiles = new List<GeneratedCSharpFile>();
         GeneratedCSharpProject? generatedProject = null;
@@ -30,10 +39,35 @@ public static class TypeSharpBuilder
             return new BuildResult([], null, null, diagnostics);
         }
 
+        var targetFramework = ResolveTargetFramework(manifestResult.Manifest, targetFrameworkOverride);
+        var projectReferences = TypeSharpProjectReferenceResolver.Resolve(manifestResult.Manifest, targetFrameworkOverride);
+        diagnostics.AddRange(projectReferences.Diagnostics);
+        if (projectReferences.HasErrors)
+        {
+            return new BuildResult([], null, null, diagnostics);
+        }
+
+        var projectReferenceAssemblyReferences = BuildProjectReferences(
+            manifestResult.Manifest,
+            projectReferences.DirectReferences,
+            configuration,
+            targetFrameworkOverride,
+            builtProjectReferences,
+            diagnostics);
+        if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        {
+            return new BuildResult([], null, null, diagnostics);
+        }
+
         var sourceDiscovery = SourceDiscovery.Discover(manifestResult.Manifest);
         diagnostics.AddRange(sourceDiscovery.Diagnostics);
 
-        var referenceResult = TypeSharpReferenceResolver.Resolve(manifestResult.Manifest);
+        var externalSourceModules = projectReferences.ExternalSourceModules;
+        var sourceModuleSpecifiers = externalSourceModules
+            .Select(module => module.Specifier)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var referenceResult = TypeSharpReferenceResolver.Resolve(manifestResult.Manifest, projectReferenceAssemblyReferences);
         var metadataResult = TypeSharpMetadataReader.Read(referenceResult);
         diagnostics.AddRange(metadataResult.Diagnostics);
         if (metadataResult.HasErrors)
@@ -48,7 +82,8 @@ public static class TypeSharpBuilder
                 sourceFile,
                 metadataResult.Assemblies,
                 manifestResult.Manifest.Language.Nullable,
-                manifestResult.Manifest.Modules.Aliases))
+                manifestResult.Manifest.Modules.Aliases,
+                sourceModuleSpecifiers))
             .ToArray();
         foreach (var sourceAnalysisResult in sourceAnalysisResults)
         {
@@ -62,7 +97,7 @@ public static class TypeSharpBuilder
         var sourceModules = parsedSources
             .Select(source => new SourceModule(source.SourceFile, source.Root))
             .ToArray();
-        var sourceModuleGraph = SourceModuleGraph.Build(sourceModules, manifestResult.Manifest.Modules.Aliases);
+        var sourceModuleGraph = SourceModuleGraph.Build(sourceModules, manifestResult.Manifest.Modules.Aliases, externalSourceModules);
         diagnostics.AddRange(sourceModuleGraph.Diagnostics);
 
         if (diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -81,7 +116,7 @@ public static class TypeSharpBuilder
             manifestResult.Manifest.Project.GeneratedOutputRoot));
 
         var rootNamespace = GetRootNamespace(manifestResult.Manifest);
-        var sourceModuleTargets = BuildSourceModuleTargets(parsedSources, rootNamespace, sourceModuleGraph);
+        var sourceModuleTargets = BuildSourceModuleTargets(parsedSources, rootNamespace, sourceModuleGraph, projectReferences.DirectReferences);
         foreach (var (sourceFile, root) in parsedSources)
         {
             var relativePath = ToGeneratedRelativePath(sourceFile.RelativePath, backend);
@@ -122,7 +157,6 @@ public static class TypeSharpBuilder
         var projectRelativePath = $"{SanitizeFileName(manifestResult.Manifest.Project.Name)}.Generated.csproj";
         var projectPath = Path.Combine(outputRoot, projectRelativePath);
         Directory.CreateDirectory(outputRoot);
-        var targetFramework = ResolveTargetFramework(manifestResult.Manifest, targetFrameworkOverride);
         File.WriteAllText(projectPath, EmitGeneratedProject(manifestResult.Manifest, referenceResult.References, outputRoot, targetFramework));
         File.WriteAllText(Path.Combine(outputRoot, "NuGet.config"), EmitOfflineNuGetConfig());
         generatedProject = new GeneratedCSharpProject(projectPath, projectRelativePath);
@@ -142,6 +176,56 @@ public static class TypeSharpBuilder
         generatedAssembly = new GeneratedAssembly(assemblyPath, assemblyRelativePath);
 
         return new BuildResult(generatedFiles, generatedProject, generatedAssembly, diagnostics);
+    }
+
+    private static IReadOnlyList<ResolvedReference> BuildProjectReferences(
+        TypeSharpManifest manifest,
+        IReadOnlyList<ProjectReferenceInfo> projectReferences,
+        string configuration,
+        string? targetFrameworkOverride,
+        Dictionary<string, BuildResult> builtProjectReferences,
+        List<Diagnostic> diagnostics)
+    {
+        var references = new List<ResolvedReference>();
+        foreach (var projectReference in projectReferences)
+        {
+            var manifestPath = Path.GetFullPath(projectReference.Manifest.ManifestPath);
+            if (!builtProjectReferences.TryGetValue(manifestPath, out var buildResult))
+            {
+                buildResult = BuildInternal(
+                    projectReference.Manifest.ManifestPath,
+                    configuration,
+                    targetFrameworkOverride,
+                    builtProjectReferences);
+                builtProjectReferences[manifestPath] = buildResult;
+            }
+
+            diagnostics.AddRange(buildResult.Diagnostics);
+            if (buildResult.HasErrors)
+            {
+                continue;
+            }
+
+            if (buildResult.GeneratedAssembly is null)
+            {
+                diagnostics.Add(DiagnosticFactory.Manifest(
+                    DiagnosticDescriptors.GeneratedProjectBuildFailed,
+                    $"Project reference '{projectReference.Option.Path}' did not produce a generated assembly.",
+                    projectReference.Option.File,
+                    projectReference.Option.Line,
+                    projectReference.Option.Column));
+                continue;
+            }
+
+            references.Add(new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                Path.GetFileNameWithoutExtension(buildResult.GeneratedAssembly.Path),
+                projectReference.Option.Path,
+                buildResult.GeneratedAssembly.Path,
+                NormalizePath(Path.GetRelativePath(manifest.ProjectDirectory, buildResult.GeneratedAssembly.Path))));
+        }
+
+        return references;
     }
 
     private static string ToGeneratedRelativePath(string sourceRelativePath, ITypeSharpBackend backend)
@@ -611,7 +695,8 @@ public static class TypeSharpBuilder
     private static IReadOnlyDictionary<string, CSharpSourceImportTarget> BuildSourceModuleTargets(
         IReadOnlyList<(SourceFile SourceFile, SyntaxNode Root)> parsedSources,
         string defaultNamespace,
-        SourceModuleGraph sourceModuleGraph)
+        SourceModuleGraph sourceModuleGraph,
+        IReadOnlyList<ProjectReferenceInfo> projectReferences)
     {
         var targets = new Dictionary<string, CSharpSourceImportTarget>(StringComparer.OrdinalIgnoreCase);
         foreach (var (sourceFile, root) in parsedSources)
@@ -620,6 +705,17 @@ public static class TypeSharpBuilder
                 string.Empty,
                 GetNamespaceName(root, defaultNamespace),
                 GeneratedModuleContainerNaming.GetContainerName(sourceFile, parsedSources.Count));
+        }
+
+        foreach (var reference in projectReferences)
+        {
+            foreach (var module in reference.Modules)
+            {
+                targets[module.Specifier] = new CSharpSourceImportTarget(
+                    module.Specifier,
+                    module.NamespaceName,
+                    module.ModuleContainerName);
+            }
         }
 
         var typeExportTargetCache = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -2136,7 +2232,8 @@ public static class TypeSharpBuilder
         SourceFile sourceFile,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         string nullableMode,
-        IReadOnlyList<SourceAliasOption> sourceAliases)
+        IReadOnlyList<SourceAliasOption> sourceAliases,
+        IReadOnlySet<string> sourceModuleSpecifiers)
     {
         var diagnostics = new List<Diagnostic>();
         var parseResult = TypeSharpParser.ParseText(File.ReadAllText(sourceFile.Path), sourceFile.RelativePath);
@@ -2151,7 +2248,8 @@ public static class TypeSharpBuilder
             assemblies,
             sourceFile.RelativePath,
             nullableMode,
-            sourceAliases));
+            sourceAliases,
+            sourceModuleSpecifiers));
         var bindingResult = TypeSharpBinder.Bind(parseResult.Root, sourceFile.RelativePath, sourceAliases);
         diagnostics.AddRange(bindingResult.Diagnostics);
         if (!bindingResult.HasErrors)
@@ -2160,7 +2258,8 @@ public static class TypeSharpBuilder
                 parseResult.Root,
                 sourceFile.RelativePath,
                 assemblies,
-                sourceAliases).Diagnostics);
+                sourceAliases,
+                sourceModuleSpecifiers).Diagnostics);
         }
 
         return new SourceAnalysisResult(sourceFile, parseResult.Root, diagnostics);

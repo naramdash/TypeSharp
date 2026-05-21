@@ -6,19 +6,24 @@ namespace TypeSharp.Compiler.Projects;
 public sealed record SourceModuleGraph(
     IReadOnlyList<SourceModule> Modules,
     IReadOnlyList<SourceModuleDependency> Dependencies,
+    IReadOnlyDictionary<string, SourceModuleExports> ExportsByModulePath,
     IReadOnlyList<Diagnostic> Diagnostics)
 {
     public bool HasErrors => Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
     public static SourceModuleGraph Build(
         IReadOnlyList<SourceModule> modules,
-        IReadOnlyList<SourceAliasOption>? sourceAliases = null)
+        IReadOnlyList<SourceAliasOption>? sourceAliases = null,
+        IReadOnlyList<ExternalSourceModule>? externalModules = null)
     {
         var diagnostics = new List<Diagnostic>();
         var dependencies = new List<SourceModuleDependency>();
         var moduleByPath = new Dictionary<string, SourceModule>(StringComparer.OrdinalIgnoreCase);
         var localExportsByPath = new Dictionary<string, SourceModuleExports>(StringComparer.OrdinalIgnoreCase);
         var exportsByPath = new Dictionary<string, SourceModuleExports>(StringComparer.OrdinalIgnoreCase);
+        var externalModuleBySpecifier = (externalModules ?? [])
+            .GroupBy(module => module.Specifier, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var aliases = CreateSourceAliasContext(sourceAliases ?? [], modules, diagnostics);
         foreach (var module in modules)
         {
@@ -33,27 +38,42 @@ public sealed record SourceModuleGraph(
 
         foreach (var module in modules)
         {
-            CollectDependencies(module, module.Root, aliases, moduleByPath, exportsByPath, dependencies, diagnostics);
-            ValidateNamespaceImportMemberAccesses(module, aliases, moduleByPath, exportsByPath, diagnostics);
+            CollectDependencies(module, module.Root, aliases, externalModuleBySpecifier, moduleByPath, exportsByPath, dependencies, diagnostics);
+            ValidateNamespaceImportMemberAccesses(module, aliases, externalModuleBySpecifier, moduleByPath, exportsByPath, diagnostics);
         }
 
-        return new SourceModuleGraph(modules, dependencies, diagnostics);
+        return new SourceModuleGraph(modules, dependencies, new Dictionary<string, SourceModuleExports>(exportsByPath, StringComparer.OrdinalIgnoreCase), diagnostics);
     }
 
     private static void CollectDependencies(
         SourceModule module,
         SyntaxNode node,
         SourceAliasContext aliases,
+        IReadOnlyDictionary<string, ExternalSourceModule> externalModuleBySpecifier,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
         IReadOnlyDictionary<string, SourceModuleExports> exportsByPath,
         List<SourceModuleDependency> dependencies,
         List<Diagnostic> diagnostics)
     {
         if (TryGetDependencyKind(node, out var kind) &&
-            TryGetModuleSpecifier(node, out var specifierToken, out var specifier) &&
-            TryResolveSourceModulePath(module, specifier, specifierToken, aliases, diagnostics, out var resolvedModulePath))
+            TryGetModuleSpecifier(node, out var specifierToken, out var specifier))
         {
-            if (!moduleByPath.ContainsKey(resolvedModulePath))
+            if (!TryResolveSourceModulePath(module, specifier, specifierToken, aliases, externalModuleBySpecifier, diagnostics, out var resolvedModulePath, out var externalModule))
+            {
+                if (LooksLikeProjectSourceModuleSpecifier(specifier))
+                {
+                    diagnostics.Add(new Diagnostic(
+                        DiagnosticDescriptors.UnresolvedSourceModule.Code,
+                        DiagnosticDescriptors.UnresolvedSourceModule.DefaultSeverity,
+                        $"Project source module specifier '{specifier}' does not resolve to a current source alias or direct project reference.",
+                        module.SourceFile.RelativePath,
+                        specifierToken.Span));
+                }
+
+                goto VisitChildren;
+            }
+
+            if (externalModule is null && !moduleByPath.ContainsKey(resolvedModulePath))
             {
                 diagnostics.Add(new Diagnostic(
                     DiagnosticDescriptors.UnresolvedSourceModule.Code,
@@ -64,6 +84,7 @@ public sealed record SourceModuleGraph(
             }
             else
             {
+                var targetExports = externalModule?.Exports;
                 dependencies.Add(new SourceModuleDependency(
                     kind,
                     module.SourceFile.ModulePath,
@@ -73,11 +94,11 @@ public sealed record SourceModuleGraph(
                     specifierToken.Span));
 
                 if (kind == SourceModuleDependencyKind.Import &&
-                    exportsByPath.TryGetValue(resolvedModulePath, out var exports))
+                    (targetExports is not null || exportsByPath.TryGetValue(resolvedModulePath, out targetExports)))
                 {
                     ValidateSourceImportExports(
                         node,
-                        exports,
+                        targetExports,
                         specifier,
                         resolvedModulePath,
                         module.SourceFile.RelativePath,
@@ -85,11 +106,11 @@ public sealed record SourceModuleGraph(
                 }
                 else if (kind == SourceModuleDependencyKind.Export &&
                     IsSupportedSourceReExport(node, aliases) &&
-                    exportsByPath.TryGetValue(resolvedModulePath, out var reExportTargetExports))
+                    (targetExports is not null || exportsByPath.TryGetValue(resolvedModulePath, out targetExports)))
                 {
                     ValidateSourceReExportExports(
                         node,
-                        reExportTargetExports,
+                        targetExports,
                         specifier,
                         resolvedModulePath,
                         module.SourceFile.RelativePath,
@@ -98,9 +119,10 @@ public sealed record SourceModuleGraph(
             }
         }
 
+    VisitChildren:
         foreach (var child in node.Children)
         {
-            CollectDependencies(module, child, aliases, moduleByPath, exportsByPath, dependencies, diagnostics);
+            CollectDependencies(module, child, aliases, externalModuleBySpecifier, moduleByPath, exportsByPath, dependencies, diagnostics);
         }
     }
 
@@ -271,11 +293,12 @@ public sealed record SourceModuleGraph(
     private static void ValidateNamespaceImportMemberAccesses(
         SourceModule module,
         SourceAliasContext aliases,
+        IReadOnlyDictionary<string, ExternalSourceModule> externalModuleBySpecifier,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
         IReadOnlyDictionary<string, SourceModuleExports> exportsByPath,
         List<Diagnostic> diagnostics)
     {
-        var namespaceImports = CollectRelativeNamespaceImports(module, aliases, moduleByPath, exportsByPath, diagnostics);
+        var namespaceImports = CollectRelativeNamespaceImports(module, aliases, externalModuleBySpecifier, moduleByPath, exportsByPath, diagnostics);
         if (namespaceImports.Count == 0)
         {
             return;
@@ -287,6 +310,7 @@ public sealed record SourceModuleGraph(
     private static IReadOnlyDictionary<string, SourceModuleNamespaceImport> CollectRelativeNamespaceImports(
         SourceModule module,
         SourceAliasContext aliases,
+        IReadOnlyDictionary<string, ExternalSourceModule> externalModuleBySpecifier,
         IReadOnlyDictionary<string, SourceModule> moduleByPath,
         IReadOnlyDictionary<string, SourceModuleExports> exportsByPath,
         List<Diagnostic> diagnostics)
@@ -301,13 +325,14 @@ public sealed record SourceModuleGraph(
             }
 
             var specifierToken = child.Children.First(grandchild => grandchild.Kind == SyntaxKind.StringLiteralToken);
-            if (!TryResolveSourceModulePath(module, specifier, specifierToken, aliases, diagnostics, out var resolvedModulePath))
+            if (!TryResolveSourceModulePath(module, specifier, specifierToken, aliases, externalModuleBySpecifier, diagnostics, out var resolvedModulePath, out var externalModule))
             {
                 continue;
             }
 
-            if (!moduleByPath.ContainsKey(resolvedModulePath) ||
-                !exportsByPath.TryGetValue(resolvedModulePath, out var exports))
+            var exports = externalModule?.Exports;
+            if ((externalModule is null && !moduleByPath.ContainsKey(resolvedModulePath)) ||
+                (exports is null && !exportsByPath.TryGetValue(resolvedModulePath, out exports)))
             {
                 continue;
             }
@@ -530,12 +555,21 @@ public sealed record SourceModuleGraph(
         string specifier,
         SyntaxNode specifierToken,
         SourceAliasContext aliases,
+        IReadOnlyDictionary<string, ExternalSourceModule> externalModuleBySpecifier,
         List<Diagnostic>? diagnostics,
-        out string resolvedModulePath)
+        out string resolvedModulePath,
+        out ExternalSourceModule? externalModule)
     {
+        externalModule = null;
         if (IsRelativeSpecifier(specifier))
         {
             resolvedModulePath = ResolveRelativeModulePath(module.SourceFile.ModulePath, specifier);
+            return true;
+        }
+
+        if (externalModuleBySpecifier.TryGetValue(specifier, out externalModule))
+        {
+            resolvedModulePath = externalModule.ModulePath;
             return true;
         }
 
@@ -602,6 +636,11 @@ public sealed record SourceModuleGraph(
 
     private static bool MatchesSourceAlias(string specifier, SourceAliasContext aliases) =>
         aliases.Rules.Any(alias => alias.Matches(specifier));
+
+    private static bool LooksLikeProjectSourceModuleSpecifier(string specifier) =>
+        specifier.Contains('/', StringComparison.Ordinal) &&
+        !specifier.StartsWith("./", StringComparison.Ordinal) &&
+        !specifier.StartsWith("../", StringComparison.Ordinal);
 
     private static int CountWildcards(string value) =>
         value.Count(character => character == '*');
@@ -792,7 +831,7 @@ public sealed record SourceModuleGraph(
         foreach (var exportDeclaration in module.Root.Children.Where(child => IsSupportedSourceReExport(child, aliases)))
         {
             if (!TryGetModuleSpecifier(exportDeclaration, out var specifierToken, out var specifier) ||
-                !TryResolveSourceModulePath(module, specifier, specifierToken, aliases, diagnostics: null, out var resolvedModulePath))
+                !TryResolveSourceModulePath(module, specifier, specifierToken, aliases, new Dictionary<string, ExternalSourceModule>(StringComparer.Ordinal), diagnostics: null, out var resolvedModulePath, out _))
             {
                 continue;
             }
@@ -1235,13 +1274,6 @@ public sealed record SourceModuleGraph(
             }
         }
     }
-
-    private sealed record SourceModuleExports(
-        IReadOnlySet<string> ValueNames,
-        IReadOnlySet<string> TypeNames,
-        IReadOnlySet<string> ImportAliasValueNames,
-        IReadOnlySet<string> FunctionNames,
-        IReadOnlySet<string> ModuleNames);
 
     private sealed record SourceModuleNamespaceImport(
         string Alias,

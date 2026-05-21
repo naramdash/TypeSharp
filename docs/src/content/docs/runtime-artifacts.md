@@ -65,7 +65,9 @@ sequenceDiagram
   participant MSBuild as dotnet build
 
   User->>CLI: typesharp build TypeSharp.toml
-  CLI->>Manifest: load project, language, references, tooling
+  CLI->>Manifest: load project, language, references, project references, tooling
+  Compiler->>Compiler: validate direct project-reference graph
+  CLI->>CLI: build direct referenced projects first
   CLI->>Compiler: discover sources and references
   Compiler->>Compiler: parse, bind, validate interop, type check
   Compiler->>Compiler: validate source module graph and public ABI
@@ -78,7 +80,7 @@ sequenceDiagram
   CLI-->>User: generated paths or diagnostics
 ```
 
-Emission happens only when blocking diagnostics are absent. Reference diagnostics, parser errors, type errors, public boundary diagnostics, unsupported packages, and interop validation failures stop before generated C# project build.
+Emission happens only when blocking diagnostics are absent. Reference diagnostics, project-reference diagnostics, parser errors, type errors, public boundary diagnostics, unsupported packages, and interop validation failures stop before generated C# project build.
 
 ## Generated Project Shape
 
@@ -114,7 +116,7 @@ Executable projects use `OutputType` `Exe` and produce `.exe` instead of `.dll`.
 
 ## Reference Flow
 
-The manifest is the only current source of generated project references. Framework assemblies, local DLLs, `TypeSharp.Core.dll`, and `TypeSharp.Runtime.dll` enter the generated project through `[references]`.
+The manifest is the only current source of generated project references. Framework assemblies, local DLLs, `TypeSharp.Core.dll`, and `TypeSharp.Runtime.dll` enter the generated project through `[references]`. Direct TypeSharp project references enter through `[projectReferences]` and resolve to generated assemblies after the referenced projects build.
 
 ```toml
 [project]
@@ -135,24 +137,28 @@ paths = [
   "lib/TypeSharp.Runtime.dll"
 ]
 packages = []
+
+[projectReferences]
+paths = ["../Shared/TypeSharp.toml"]
 ```
 
 Reference rules:
 
 - `references.assemblies` becomes framework `<Reference Include="..."/>` items.
 - `references.paths` becomes local `<Reference>` items with generated-project-relative `<HintPath>` values.
+- `projectReferences.paths` names direct TypeSharp manifests. `typesharp build` builds those projects first and then writes local `<Reference>` items with hint paths to the referenced generated assemblies.
 - `references.packages` is reserved and currently reports `TS2405`; TypeSharp does not restore NuGet packages during build.
 - The generated project writes an offline `NuGet.config` with package sources cleared so normal builds do not accidentally resolve hidden packages.
 
-## Future TypeSharp Project References
+## TypeSharp Project References
 
-The current preview does not write generated MSBuild `<ProjectReference>` items from `TypeSharp.toml`. Planned TypeSharp project references start from `[projectReferences] paths = [...]` entries that point at other TypeSharp manifests, not DLLs.
+The current preview reads `[projectReferences] paths = [...]` entries that point at other TypeSharp manifests, not DLLs. It does not write generated MSBuild `<ProjectReference>` items yet; the dependent generated project uses explicit local `<Reference>` items to the referenced generated assemblies after build ordering has been enforced by the TypeSharp builder.
 
 The artifact policy is:
 
 - A referenced TypeSharp project is checked and built before the dependent project.
-- The dependent project receives explicit generated assembly paths and TypeSharp module/export metadata.
-- The generated `net48` project may use local `<Reference>` items or generated `<ProjectReference>` items only when build ordering, output paths, and metadata inputs are deterministic.
+- The dependent project receives explicit generated assembly paths and compiler-derived TypeSharp module/export metadata for direct referenced source imports.
+- The generated `net48` project currently uses local `<Reference>` items. Generated `<ProjectReference>` items remain future work until output paths and metadata inputs are deterministic enough for that shape.
 - Source-level imports across project boundaries require direct manifest project references; TypeSharp does not infer visibility from arbitrary sibling folders or hidden transitive references.
 - Project-reference diagnostics must stop before the dependent generated project is emitted when a referenced manifest, artifact, target framework, or exported module member is invalid.
 

@@ -9,7 +9,7 @@ public static class TypeSharpTypeChecker
 {
     public static TypeCheckResult Check(SyntaxNode root, string file)
     {
-        var checker = new Checker(file, [], []);
+        var checker = new Checker(file, [], [], new HashSet<string>(StringComparer.Ordinal));
         return checker.Check(root);
     }
 
@@ -18,7 +18,7 @@ public static class TypeSharpTypeChecker
         string file,
         IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies)
     {
-        var checker = new Checker(file, metadataAssemblies, []);
+        var checker = new Checker(file, metadataAssemblies, [], new HashSet<string>(StringComparer.Ordinal));
         return checker.Check(root);
     }
 
@@ -26,9 +26,10 @@ public static class TypeSharpTypeChecker
         SyntaxNode root,
         string file,
         IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies,
-        IReadOnlyList<SourceAliasOption> sourceAliases)
+        IReadOnlyList<SourceAliasOption> sourceAliases,
+        IReadOnlySet<string>? sourceModuleSpecifiers = null)
     {
-        var checker = new Checker(file, metadataAssemblies, sourceAliases);
+        var checker = new Checker(file, metadataAssemblies, sourceAliases, sourceModuleSpecifiers ?? new HashSet<string>(StringComparer.Ordinal));
         return checker.Check(root);
     }
 
@@ -61,6 +62,7 @@ public static class TypeSharpTypeChecker
         private readonly string _file;
         private readonly IReadOnlyList<MetadataAssemblySymbol> _metadataAssemblies;
         private readonly IReadOnlyList<SourceAliasOption> _sourceAliases;
+        private readonly IReadOnlySet<string> _sourceModuleSpecifiers;
         private readonly List<Diagnostic> _diagnostics = [];
         private readonly TypeSharpInferenceEngine _inference = new();
         private HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
@@ -68,11 +70,13 @@ public static class TypeSharpTypeChecker
         public Checker(
             string file,
             IReadOnlyList<MetadataAssemblySymbol> metadataAssemblies,
-            IReadOnlyList<SourceAliasOption> sourceAliases)
+            IReadOnlyList<SourceAliasOption> sourceAliases,
+            IReadOnlySet<string> sourceModuleSpecifiers)
         {
             _file = file;
             _metadataAssemblies = metadataAssemblies;
             _sourceAliases = sourceAliases;
+            _sourceModuleSpecifiers = sourceModuleSpecifiers;
         }
 
         public TypeCheckResult Check(SyntaxNode root)
@@ -103,7 +107,7 @@ public static class TypeSharpTypeChecker
                     case SyntaxKind.ImportTypeDeclaration:
                         var isRelativeSourceImport = child.Kind == SyntaxKind.ImportNamedDeclaration &&
                             TryGetModuleSpecifier(child, out var moduleSpecifier) &&
-                            (IsRelativeSpecifier(moduleSpecifier) || MatchesSourceAlias(moduleSpecifier));
+                            IsSourceModuleSpecifier(moduleSpecifier);
                         foreach (var importName in GetNamedImportIdentifiers(child))
                         {
                             var name = importName.Text ?? string.Empty;
@@ -3059,6 +3063,11 @@ public static class TypeSharpTypeChecker
 
         private bool MatchesSourceAlias(string specifier) =>
             _sourceAliases.Any(alias => SourceAliasPatternMatches(alias.Pattern.Trim(), specifier));
+
+        private bool IsSourceModuleSpecifier(string specifier) =>
+            IsRelativeSpecifier(specifier) ||
+            MatchesSourceAlias(specifier) ||
+            _sourceModuleSpecifiers.Contains(specifier);
 
         private static bool SourceAliasPatternMatches(string pattern, string specifier)
         {

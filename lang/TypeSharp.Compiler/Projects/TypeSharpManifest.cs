@@ -6,5 +6,6 @@ public sealed record TypeSharpManifest(
     ProjectOptions Project,
     LanguageOptions Language,
     ModuleOptions Modules,
+    ProjectReferenceOptions ProjectReferences,
     ReferenceOptions References,
     ToolingOptions Tooling);

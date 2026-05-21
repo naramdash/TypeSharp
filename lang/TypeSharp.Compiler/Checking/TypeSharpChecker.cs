@@ -20,6 +20,13 @@ public static class TypeSharpChecker
             return new CheckResult([], diagnostics);
         }
 
+        var projectReferences = TypeSharpProjectReferenceResolver.Resolve(manifestResult.Manifest);
+        diagnostics.AddRange(projectReferences.Diagnostics);
+        var externalSourceModules = projectReferences.ExternalSourceModules;
+        var sourceModuleSpecifiers = externalSourceModules
+            .Select(module => module.Specifier)
+            .ToHashSet(StringComparer.Ordinal);
+
         var sourceDiscovery = SourceDiscovery.Discover(manifestResult.Manifest);
         diagnostics.AddRange(sourceDiscovery.Diagnostics);
 
@@ -41,7 +48,7 @@ public static class TypeSharpChecker
             }
         }
 
-        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources, manifestResult.Manifest.Modules.Aliases).Diagnostics);
+        diagnostics.AddRange(SourceModuleGraph.Build(parsedSources, manifestResult.Manifest.Modules.Aliases, externalSourceModules).Diagnostics);
 
         var sourceDiagnostics = parsedSources
             .AsParallel()
@@ -50,7 +57,8 @@ public static class TypeSharpChecker
                 parsedSource,
                 metadataResult.Assemblies,
                 manifestResult.Manifest.Language.Nullable,
-                manifestResult.Manifest.Modules.Aliases))
+                manifestResult.Manifest.Modules.Aliases,
+                sourceModuleSpecifiers))
             .ToArray();
         foreach (var sourceDiagnostic in sourceDiagnostics)
         {
@@ -75,7 +83,8 @@ public static class TypeSharpChecker
         SourceModule parsedSource,
         IReadOnlyList<MetadataAssemblySymbol> assemblies,
         string nullableMode,
-        IReadOnlyList<SourceAliasOption> sourceAliases)
+        IReadOnlyList<SourceAliasOption> sourceAliases,
+        IReadOnlySet<string> sourceModuleSpecifiers)
     {
         var diagnostics = new List<Diagnostic>();
         diagnostics.AddRange(TypeSharpInteropValidator.Validate(
@@ -83,7 +92,8 @@ public static class TypeSharpChecker
             assemblies,
             parsedSource.SourceFile.RelativePath,
             nullableMode,
-            sourceAliases));
+            sourceAliases,
+            sourceModuleSpecifiers));
         var bindingResult = TypeSharpBinder.Bind(parsedSource.Root, parsedSource.SourceFile.RelativePath, sourceAliases);
         diagnostics.AddRange(bindingResult.Diagnostics);
         if (!bindingResult.HasErrors)
@@ -92,7 +102,8 @@ public static class TypeSharpChecker
                 parsedSource.Root,
                 parsedSource.SourceFile.RelativePath,
                 assemblies,
-                sourceAliases).Diagnostics);
+                sourceAliases,
+                sourceModuleSpecifiers).Diagnostics);
         }
 
         return new SourceDiagnostics(diagnostics);

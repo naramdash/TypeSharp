@@ -1603,6 +1603,47 @@ Primary evidence:
 - [Diagnostics](../docs/src/content/docs/diagnostics.md)
 - [tasks.md](tasks.md)
 
+## Task 0304 TypeSharp Project Reference Build Graph
+
+Completed implementation work established:
+
+- Added manifest options and TOML loading for `[projectReferences] paths = [...]`, including stable source locations for diagnostics.
+- Implemented direct TypeSharp project-reference graph loading with missing manifest, invalid referenced manifest, cycle, duplicate direct project name, and target-framework compatibility diagnostics.
+- Derived direct referenced source-module export metadata from referenced manifests and source graphs, including nested referenced-project imports inside referenced projects.
+- Routed direct project source specifiers such as `"Shared/Api"` through checker, source graph validation, interop validation, type checking, generated C# source imports, and generated project reference resolution.
+- Implemented `typesharp build` ordering so direct referenced projects build before dependents and dependent generated C# projects consume referenced generated assemblies through explicit local `<Reference>` hint paths.
+- Preserved direct-reference visibility: hidden transitive source imports are rejected, and cross-project `export ... from` forwarding remains unsupported until richer project-reference re-export metadata is designed.
+- Updated CLI, module, configuration, runtime artifact, diagnostics, feature status, API, and work-ledger docs for the implemented boundary and remaining gaps.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "project reference"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "transitive"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj -- "source alias"
+dotnet run --no-build --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [ProjectReferenceOptions.cs](../lang/TypeSharp.Compiler/Projects/ProjectReferenceOptions.cs)
+- [TypeSharpProjectReferenceResolver.cs](../lang/TypeSharp.Compiler/Projects/TypeSharpProjectReferenceResolver.cs)
+- [ProjectReferenceResolutionResult.cs](../lang/TypeSharp.Compiler/Projects/ProjectReferenceResolutionResult.cs)
+- [SourceModuleGraph.cs](../lang/TypeSharp.Compiler/Projects/SourceModuleGraph.cs)
+- [TypeSharpBuilder.cs](../lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs)
+- [TypeSharpChecker.cs](../lang/TypeSharp.Compiler/Checking/TypeSharpChecker.cs)
+- [TypeSharpReferenceResolver.cs](../lang/TypeSharp.Compiler/Interop/TypeSharpReferenceResolver.cs)
+- [Program.cs](../test/TypeSharp.Compiler.Tests/Program.cs)
+- [Modules And Imports](../docs/src/content/docs/modules.md)
+- [Project Configuration](../docs/src/content/docs/project-configuration.md)
+- [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

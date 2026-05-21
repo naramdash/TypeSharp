@@ -5,7 +5,7 @@ description: TypeSharp.toml, source roots, generated output, references, and bui
 
 TypeSharp projects are described by `TypeSharp.toml`. The manifest is the stable contract between the CLI, compiler, generated C# backend, examples, and host projects.
 
-TypeScript's TSConfig is useful input for project ergonomics, but TypeSharp does not copy JavaScript runtime options. `module`, `moduleResolution`, `target`, `jsx`, `allowJs`, `checkJs`, package `exports`, and `paths` only become TypeSharp features when they have a deterministic `TypeSharp.toml` meaning and a generated `net48` artifact shape.
+TypeScript's TSConfig is useful input for project ergonomics, but TypeSharp does not copy JavaScript runtime options. `module`, `moduleResolution`, `target`, `jsx`, `allowJs`, `checkJs`, package `exports`, `paths`, and project references only become TypeSharp features when they have a deterministic `TypeSharp.toml` meaning and a generated `net48` artifact shape.
 
 ## Minimal Manifest
 
@@ -79,36 +79,37 @@ Manifest-owned source aliases are project configuration, not source syntax and n
 ```toml
 [modules.aliases]
 "@app/*" = "src/*"
-"@shared/*" = "../Shared/src/*"
+"@features/*" = "src/Feature/*"
 ```
 
-The compiler treats an alias import as a source graph lookup that either resolves to the same module identity as a relative `.tysh` import or stops before emission. An alias target must normalize under a declared `sourceRoots` entry in the current project. Targets that only help type checking, depend on a JavaScript runtime resolver, point at npm/package `exports` behavior, or cross project boundaries without implemented TypeSharp project references are outside the current contract.
+The compiler treats an alias import as a source graph lookup that either resolves to the same module identity as a relative `.tysh` import or stops before emission. An alias target must normalize under a declared `sourceRoots` entry in the current project. Targets that only help type checking, depend on a JavaScript runtime resolver, point at npm/package `exports` behavior, or cross project boundaries are outside the current alias contract. Cross-project source imports use direct TypeSharp project references instead.
 
 Examples:
 
 ```tysh
 import { rule } from "@app/Feature/Rules"
-export { sharedRule } from "@shared/Rules"
+export { rule as featureRule } from "@features/Rules"
 ```
 
-## Planned Project References
+## Project References
 
-TypeSharp project references are reserved for multi-project build graphs where each project has its own manifest and generated `net48` assembly.
+TypeSharp project references describe direct multi-project build graph edges. Each referenced project has its own manifest, source roots, generated output root, and generated `net48` assembly.
 
 ```toml
 [projectReferences]
 paths = ["../Shared/TypeSharp.toml"]
 ```
 
-The planned behavior is:
+Implemented rules:
 
-- load each referenced `TypeSharp.toml`;
-- check and build referenced projects before the dependent project;
-- consume referenced generated assemblies and TypeSharp export metadata through explicit artifact paths;
-- require direct project references for source-level imports across project boundaries;
-- reject cycles, missing manifests, missing generated metadata, incompatible target frameworks, and missing exports before generated C# is emitted.
+- `typesharp check` loads each referenced `TypeSharp.toml`, validates the graph, and derives direct referenced source-module export metadata without writing generated output.
+- `typesharp build` builds direct referenced projects before the dependent project and adds their generated assemblies to the dependent generated C# project as explicit local `<Reference>` items with deterministic hint paths.
+- Source imports across project boundaries use the direct referenced project name plus source-root-relative module path, for example `import { helper } from "Shared/Api"` when `../Shared/TypeSharp.toml` has `project.name = "Shared"` and `src/Api.tysh`.
+- Cross-project `export ... from` forwarding is not part of the current slice; use direct imports from referenced modules instead.
+- Direct references are required for source-level project imports. A project cannot import modules that are visible only through a referenced project's own transitive references.
+- Missing manifests, invalid referenced manifests, cycles, duplicate direct project names, incompatible target frameworks, unresolved project module specifiers, and missing exported module members report diagnostics before dependent emission.
 
-The current preview compiler does not implement `[projectReferences]`. Reference an already-built local `net48` DLL through `references.paths` when a project needs external CLR metadata today.
+Use `references.paths` for already-built local DLL metadata that is not a TypeSharp project manifest.
 
 ## Configuration And Target Overrides
 

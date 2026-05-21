@@ -48,7 +48,9 @@ public static class TypeSharpBinder
         private readonly HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
         private bool _hasStaticImport;
 
-        public Binder(string file, IReadOnlyList<SourceAliasOption> sourceAliases)
+        public Binder(
+            string file,
+            IReadOnlyList<SourceAliasOption> sourceAliases)
         {
             _file = file;
             _sourceAliases = sourceAliases;
@@ -875,11 +877,7 @@ public static class TypeSharpBinder
                 }
 
                 var specifier = Unquote(node.Children[index + 1].Text ?? string.Empty);
-                return specifier == "." ||
-                    specifier == ".." ||
-                    specifier.StartsWith("./", StringComparison.Ordinal) ||
-                    specifier.StartsWith("../", StringComparison.Ordinal) ||
-                    MatchesSourceAlias(specifier);
+                return IsSourceModuleSpecifier(specifier);
             }
 
             return false;
@@ -887,6 +885,13 @@ public static class TypeSharpBinder
 
         private bool MatchesSourceAlias(string specifier) =>
             _sourceAliases.Any(alias => SourceAliasPatternMatches(alias.Pattern.Trim(), specifier));
+
+        private bool IsSourceModuleSpecifier(string specifier) =>
+            specifier == "." ||
+            specifier == ".." ||
+            specifier.StartsWith("./", StringComparison.Ordinal) ||
+            specifier.StartsWith("../", StringComparison.Ordinal) ||
+            MatchesSourceAlias(specifier);
 
         private static bool SourceAliasPatternMatches(string pattern, string specifier)
         {

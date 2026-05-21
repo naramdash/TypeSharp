@@ -35,9 +35,14 @@ generatedOutputRoot = "generated"
 [references]
 paths = ["lib/Legacy.Tools.dll"]
 packages = []
+
+[projectReferences]
+paths = ["../Shared/TypeSharp.toml"]
 ```
 
-`references.packages` is reserved for future NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `paths` for now.
+`references.packages` is reserved for future NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `references.paths`.
+
+`projectReferences.paths` names direct TypeSharp manifests. `typesharp check` validates the direct project graph and exported source members; `typesharp build` builds referenced projects first and consumes their generated assemblies through explicit local references.
 
 Canonical pages: [CLI](../cli/) and [Project Configuration](../project-configuration/).
 

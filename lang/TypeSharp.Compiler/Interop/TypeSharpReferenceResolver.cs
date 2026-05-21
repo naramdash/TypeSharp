@@ -5,7 +5,9 @@ namespace TypeSharp.Compiler.Interop;
 
 public static class TypeSharpReferenceResolver
 {
-    public static ReferenceResolutionResult Resolve(TypeSharpManifest manifest)
+    public static ReferenceResolutionResult Resolve(
+        TypeSharpManifest manifest,
+        IReadOnlyList<ResolvedReference>? projectReferences = null)
     {
         var diagnostics = new List<Diagnostic>();
         var references = new List<ResolvedReference>();
@@ -58,6 +60,16 @@ public static class TypeSharpReferenceResolver
                 path,
                 fullPath,
                 NormalizeRelativePath(System.IO.Path.GetRelativePath(manifest.ProjectDirectory, fullPath))));
+        }
+
+        foreach (var projectReference in projectReferences ?? [])
+        {
+            if (projectReference.Path is null || !seenPaths.Add(projectReference.Path))
+            {
+                continue;
+            }
+
+            references.Add(projectReference);
         }
 
         foreach (var package in manifest.References.Packages)

@@ -74,6 +74,8 @@ Required behavior:
 - public ABI diagnostics,
 - feature gate diagnostics.
 
+For `[projectReferences]`, `check` loads direct referenced manifests, validates cycles and target compatibility, derives source-module export metadata for direct referenced imports, and still stops before writing generated output.
+
 `check` uses the same diagnostic codes as VS Code and LSP. Use [Diagnostics](../diagnostics/) for the canonical code taxonomy and `typesharp explain` metadata.
 
 ### `typesharp build`
@@ -85,6 +87,8 @@ The MVP backend is `--emit csharp`; future direct IL emission is Stable Backlog.
 `typesharp build` and `typesharp run` accept `--configuration Debug|Release`; the selected value is passed to the generated SDK-style C# project build and reflected in the reported `bin/<Configuration>/net48` assembly or executable path.
 
 Project build/run commands also accept `--target net48`. The override is validated by the CLI and takes precedence over the manifest `targetFramework` when writing the generated C# project and output path.
+
+When a manifest contains `[projectReferences]`, `build` builds direct referenced projects before the dependent project and writes explicit local references to the referenced generated assemblies into the dependent generated C# project.
 
 `typesharp build --verbosity quiet|minimal|normal|diagnostic` controls success logging: quiet suppresses artifact logs, minimal reports only the final assembly, normal reports generated source/project/assembly paths, and diagnostic adds option summary lines.
 
@@ -193,6 +197,9 @@ assemblies = [
 paths = []
 packages = []
 
+[projectReferences]
+paths = []
+
 [tooling]
 diagnosticFormat = "text"
 treatWarningsAsErrors = false
@@ -218,6 +225,7 @@ Manifest rules:
 - `references.assemblies` names framework/GAC/reference assemblies.
 - `references.paths` names explicit local DLL references.
 - `references.packages` is reserved; the current compiler reports `TS2405` instead of restoring NuGet packages.
+- `projectReferences.paths` names direct TypeSharp manifests. Direct project source imports use `ProjectName/ModulePath`, referenced projects build before dependents, and hidden transitive project source imports are not visible.
 - MSBuild first-class integration is Stable Backlog and must not conflict with manifest semantics.
 
 Use [Modules And Imports](../modules/) and [Grammar And Language Reference](../reference/) for source module import/export lowering details.
