@@ -4586,7 +4586,51 @@ Primary evidence:
 
 Remaining:
 
-- Roadmap refresh after CI regression gate is active in task 0375.
+- Completed in task 0375: roadmap refresh after the CI regression gate selected optional/default parameter declarations.
+
+## Task 0375 Roadmap Refresh After CI Regression Gate
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET test platform, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals on 2026-05-22 after the Windows regression CI gate landed.
+- Confirmed no generated-artifact baseline change: generated TypeSharp assemblies stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and compiler/CLI/LSP/test hosts may continue using modern .NET and Node tooling.
+- Confirmed the CI posture now has a Windows push/PR/manual regression gate over the package-free shard runner plus focused MSTest/MTP discovery smoke. Full MSTest catalog execution and xUnit.net v3 remain optional future evidence, not replacements for the shard runner.
+- Recorded GitHub Actions as a watch item: `windows-latest`, setup-dotnet, and setup-node remain valid for the regression workflow, while the June 2026 Windows Server 2025 + Visual Studio 2026 hosted-runner image migration should be monitored by CI rather than changing TypeSharp's baseline now.
+- Selected the next bounded implementation slice: `0376 Optional/default parameter declarations`, focused on TypeSharp-owned direct function parameters with deterministic diagnostics and C# 7.3-compatible generated output.
+- Kept generated target changes, compiler NuGet restore, xUnit.net v3 adoption, VS Code Marketplace publication, `dotnet new` template packs, and host packaging automation out of this roadmap-refresh slice.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [GitHub Actions runner images](https://github.com/actions/runner-images)
+- [GitHub Actions image migrations](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Optional/default parameter declarations are active in task 0376.
 
 ## Verification Summary
 
@@ -4612,13 +4656,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0374 is compressed here.
+- Completed historical work through task 0375 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0375 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0376 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

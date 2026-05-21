@@ -243,6 +243,8 @@ After the test-host NuGet hardening roadmap refresh, official C#, TypeScript, .N
 
 After the CI regression gate, `.github/workflows/regression.yml` runs on Windows for compiler, test, example, VS Code, and workflow changes. The gate pins .NET 10 and Node 24, restores the MSTest bridge in locked mode, builds the package-free main and shard runners, runs the four shard projects in parallel, and runs a focused MSTest bridge discovery smoke. Generated artifacts stay `net48`, generated C# stays C# 7.3-compatible, runtime/core stay package-free, and the next bounded slice is a roadmap refresh after this CI adoption step.
 
+After the CI regression gate roadmap refresh, official C#, F#, TypeScript, .NET Framework, NuGet, .NET test platform, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions sources were rechecked on 2026-05-22. C# language versioning still maps `.NET Framework` targets to C# 7.3; C# 14 is the current stable .NET 10 signal and C# 15 stays preview on .NET 11; TypeScript 7.0 remains a Beta/native-preview transition signal; .NET Framework 4.8.1 remains the latest Framework while `net48` stays TypeSharp's broad generated target; MSTest/MTP remains the selected package bridge and xUnit.net v3 remains a future comparison candidate. The GitHub Actions Windows Server 2025 + Visual Studio 2026 image migration scheduled for June 2026 is a CI monitoring item, not a TypeSharp baseline change. The next bounded implementation slice is TypeSharp-owned optional/default parameter declarations for direct functions.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
