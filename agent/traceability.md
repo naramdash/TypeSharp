@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
+| Task 0322 explicit enum member aliases | [0322-explicit-enum-member-aliases-slice.md](0322-explicit-enum-member-aliases-slice.md) | Parser enum initializer shape, type-checker alias diagnostics, C# enum lowering snapshots, canonical enum docs, and task rollup updates. |
 
 ## Completed Evidence Index
 

@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Apply the roadmap-refresh rule because user inbox, agent queue, and checklist currently have no unchecked work. |
+| Active task packet | `agent/0322-explicit-enum-member-aliases-slice.md` |
+| Next top-priority task | Complete task 0322 by allowing TypeSharp-owned enum members to alias previously declared members before generated C# emission. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0320-explicit-enum-numeric-range-validation-slice` completed explicit enum numeric range validation for TypeSharp-owned enums. |
-| Completed work covered | 0001-0320 |
+| Current tooling slice | Task `0322-explicit-enum-member-aliases-slice` is in progress after the 0321 roadmap refresh. |
+| Completed work covered | 0001-0321 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
