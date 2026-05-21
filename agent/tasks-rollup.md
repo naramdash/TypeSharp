@@ -4705,7 +4705,7 @@ npm run build          # in docs
 git diff --check
 ```
 
-Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only.
+Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
 
 Primary evidence:
 
@@ -4777,7 +4777,55 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0379: roadmap refresh after direct named argument binding.
+- Completed in task 0379: roadmap refresh after direct named argument binding selected generic TypeSharp named argument binding next.
+
+## Task 0379 Roadmap Refresh After Direct Named Arguments
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals on 2026-05-22 after the direct TypeSharp named argument binding implementation slice.
+- Confirmed no generated-artifact baseline change: generated TypeSharp assemblies stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and compiler/CLI/LSP/test hosts may continue using modern .NET and Node tooling.
+- Kept C# 14 stable and C# 15 preview as language-design inputs only. C# language versioning still maps `.NET Framework` targets to C# 7.3, while C# 15 union and collection-expression argument signals remain preview/watch items rather than generated-source requirements.
+- Kept F# 10 and TypeScript 7.0 Beta as tooling, diagnostics, and compiler-engineering signals only. They do not introduce an F# runtime, TypeScript runtime, Go toolchain, or preview compiler dependency into TypeSharp.
+- Confirmed .NET Framework 4.8.1 remains the latest Framework, while `net48` remains TypeSharp's broad generated target and `net481` stays a separate qualified-profile backlog item.
+- Confirmed NuGet lock/source-mapping/audit guidance, .NET 10 MTP mode, MSTest SDK/MTP, and xUnit.net v3 package guidance do not require replacing the current package-free shard runner or pinned MSTest bridge.
+- Confirmed VS Code LSP guidance and GitHub Actions runner-image signals do not change current editor or CI baselines. The Windows Server 2025 + Visual Studio 2026 hosted image migration scheduled for June 2026 remains a CI monitoring item, not a TypeSharp generated-artifact baseline change.
+- Selected the next bounded implementation slice: `0380 Generic TypeSharp named argument binding`, focused on known TypeSharp-owned generic direct calls and first-argument pipeline targets. The slice should reuse the existing parameter-name binding, existing bounded generic inference shapes, and positional C# lowering, while keeping overload ranking, `params` broadening, and imported C# behavior changes out of scope.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [GitHub Actions runner images](https://github.com/actions/runner-images)
+- [GitHub Actions image migrations](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0380: generic TypeSharp named argument binding for known TypeSharp-owned generic functions.
 
 ## Verification Summary
 
@@ -4803,13 +4851,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0377 is compressed here.
+- Completed historical work through task 0379 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0378 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0380 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

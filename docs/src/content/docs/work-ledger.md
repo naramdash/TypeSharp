@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | `agent/0379-roadmap-refresh-after-direct-named-arguments.md` |
-| Next top-priority task | Task 0379 Roadmap refresh after direct named arguments. |
+| Active task packet | `agent/0380-generic-typesharp-named-arguments.md` |
+| Next top-priority task | Task 0380 Generic TypeSharp named argument binding. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0379 is rechecking roadmap signals after direct TypeSharp named argument binding and selecting the next bounded implementation slice. |
-| Completed work covered | 0001-0378 |
+| Current tooling slice | Task 0380 is extending TypeSharp-owned named argument binding to known generic direct and first-argument pipeline calls without overload ranking or `params` broadening. |
+| Completed work covered | 0001-0379 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
