@@ -211,6 +211,8 @@ After direct generic TypeSharp function call inference, the empty-queue refresh 
 
 The constructed generic TypeSharp function call inference slice completed direct-call inference/substitution for bounded constructed parameter and return shapes including arrays and matching single-argument generic wrappers. Repeated constructed type parameters must infer consistently, explicit constructed arguments are checked after substitution, generated C# call lowering remains unchanged, and imported C# generic call validation, generic pipeline/composition inference, broader constraints, optional/default/params TypeSharp parameter policy, higher-order calls, currying, partial application, TypeSharp function overload ranking, and general type-constructor unification remain backlog.
 
+After constructed generic TypeSharp function call inference, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is direct generic pipeline inference for known TypeSharp-declared generic function targets. Imported C# pipeline targets, generic composition inference, higher-order pipeline targets, function values, currying, partial application, optional/default/params TypeSharp parameter policy, pipeline overload ranking, broader generic constraints, and type-constructor policy remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

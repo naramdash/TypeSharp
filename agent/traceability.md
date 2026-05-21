@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| 0358 Direct generic pipeline inference slice | [0358-direct-generic-pipeline-inference-slice.md](0358-direct-generic-pipeline-inference-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, generic pipeline type-checker fixtures, backend pipeline lowering fixture, `test/TypeSharp.Compiler.Tests/Program.cs`, docs canonical pages. |
 
 ## Completed Evidence Index
 
