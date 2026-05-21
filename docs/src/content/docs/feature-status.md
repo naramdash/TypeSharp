@@ -24,6 +24,39 @@ TypeSharp evaluates every C#, F#, and TypeScript feature through four practical 
 - F#-style functional consistency: immutable data, option/result modeling, nominal closed unions, pattern matching, pipeline, and composition.
 - C#/.NET practicality: generated public metadata, attributes, records/classes/interfaces/delegates/events, async `Task`, generics, and local C# DLL/framework assembly interop.
 
+## F# Functional Consistency Review
+
+Official F# sources refreshed on 2026-05-21:
+
+- [F# documentation](https://learn.microsoft.com/en-us/dotnet/fsharp/)
+- [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [F# functions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/functions/)
+- [F# pattern matching](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/pattern-matching)
+- [F# discriminated unions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/discriminated-unions)
+- [F# options](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/options)
+- [F# computation expressions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/computation-expressions)
+- [F# task expressions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/task-expressions)
+
+Current boundary:
+
+- TypeSharp uses F# as the functional-consistency benchmark, not as a syntax compatibility target.
+- Generated artifacts remain `net48` assemblies with C# 7.3-compatible generated source and no `FSharp.Core` runtime dependency by default.
+- F# 10 features are design signals only when they improve clarity, diagnostics, or .NET task interop without introducing F# compiler/runtime requirements.
+
+| F# Signal | TypeSharp Status | TypeSharp Direction |
+| --- | --- | --- |
+| Immutable values, expression-result functions, local inference, first-class functions | MVP | TypeSharp keeps `let`, expression/block-bodied `fun`, function type values, and local inference, while public CLR boundaries continue to prefer explicit annotations. |
+| Pipelines and composition | MVP limited | `|>`, `>>`, and `<<` are implemented with C# 7.3-compatible lowering. Broader partial-application/currying remains backlog because generated delegate shapes must stay predictable for C# consumers. |
+| Records and discriminated unions | MVP | TypeSharp records and nominal unions are the stable public data/domain model. Recursive and mutually recursive union ergonomics remain backlog after exhaustiveness and ABI shape are stronger. |
+| Pattern matching and exhaustiveness | MVP expanding | Existing nominal-union match diagnostics prove the path. Next work should broaden exhaustive checking across payload-free cases, wildcard/guard interactions, bool/enums, and known local type-level unions. |
+| Option, ValueOption, and result ergonomics | MVP plus Stable Backlog | `Option<T>` and `Result<T,E>` are core nominal unions. Struct-backed value options and richer bind/map/default helpers are backlog until ABI and allocation tradeoffs are documented for `net48`. |
+| Computation expressions, task workflows, and `and!`-style concurrency | Stable Backlog | TypeSharp keeps direct `async fun`/`Task<T>` interop as MVP. General builder-based computation expressions need a design that avoids macros, user-code execution during build, and non-obvious lowering. |
+| Active patterns | Stable Backlog | Useful as named match extractors, but they need deterministic binder/type-checker rules and diagnostics before syntax is accepted. |
+| Type providers | Experimental | Build-time external schema/code execution remains behind a security, cache, reproducibility, and sandbox policy. |
+| Units of measure | Experimental | Attractive compile-time numeric safety, but TypeSharp needs a public ABI erasure policy, diagnostics, and operator rules before adopting it. |
+| F# 10 warning/attribute tightening | Stable Backlog | Scoped warning control and stricter attribute-target diagnostics are useful tooling signals, but they belong in TypeSharp diagnostic/attribute policy rather than F# directive syntax. |
+
 ## C# Stable And Preview Parity Review
 
 Official C# sources refreshed on 2026-05-21:
@@ -99,7 +132,10 @@ Current boundary:
 | NuGet restore inside the compiler | Requires lock files, transitive dependency policy, license handling, and checksum/security rules. |
 | ASP.NET/WCF/Windows Service templates and packaging automation | Current support proves host reference/build shape; generation and deployment automation are separate adoption work. |
 | Richer extension method conversion diagnostics | Current receiver metadata matching is useful, but full C#-style conversion/conflict behavior is broader. |
-| F# option/tuple/record interop layer | Valuable for .NET ecosystem fit, but not required for the initial C#-first interop path. |
+| F# option/tuple/record interop layer | Valuable for .NET ecosystem fit, but not required for the initial C#-first interop path. TypeSharp's own functional model must stay independent of `FSharp.Core` by default. |
+| General partial application and currying | Valuable for functional ergonomics, but generated delegate and overload shapes need a predictable C# consumption policy first. |
+| Computation-expression-style workflows | Useful for options/results/tasks, but requires explicit builder contracts, no build-time user-code execution, and deterministic lowering before it can be stable. |
+| Active-pattern-style extractors | Useful for pattern readability, but requires binder/type-checker design for extractor names, payload types, and exhaustiveness impact. |
 
 ## Preview Watch And Experimental
 
@@ -109,6 +145,7 @@ Current boundary:
 | C# preview collection expression arguments | Preview Watch | Directional input only; TypeSharp collection expression constructor/factory arguments need stable C# semantics and independent `net48` lowering before adoption. |
 | TypeScript native compiler and 7.0 behavior | Preview Watch | Tooling strategy input only; not a TypeSharp runtime or syntax requirement. |
 | Type providers | Experimental | Build-time external schema/code execution needs permission, cache, reproducibility, and sandbox policy first. |
+| Units of measure | Experimental | Compile-time numeric dimensions need erasure, ABI, operator, and diagnostic design before TypeSharp adopts them. |
 | Effect annotations | Experimental | Small `async`, `throws`, `io`, `unsafe`, or `dynamic` annotations may inform diagnostics before runtime effect systems. |
 | Decorator-like metaprogramming | Experimental or rejected for MVP | .NET attributes, analyzers, and generators must be settled first. |
 

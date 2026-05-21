@@ -16,8 +16,8 @@
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
 | Active task packet | None                               |
-| Active summary     | None. Next requested Q2 queue item is `0296 F# functional consistency roadmap`. |
-| Completed range    | 0001-0294, 0298                    |
+| Active summary     | None. Next requested Q2 queue item is `0299 Match exhaustiveness expansion`. |
+| Completed range    | 0001-0294, 0296, 0298              |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q2       | Requested   | Task 0296 F# roadmap      | 0299 Match exhaustiveness expansion      | Create packet when selected                                              | Broaden TypeSharp match exhaustiveness diagnostics for payload-free nominal unions, wildcard/guard interactions, bool/enums, and known local type-level unions. |
 | Q2       | Done        | Task 0294 parity review   | 0298 C# unbound generic nameof parity    | [tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity](tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity) | Implemented `nameof(List<>)`-style parsing, type-root binding, and C# 7.3 string constant lowering with positive/negative coverage. |
 | Q4       | Requested   | Task 0293 roadmap refresh | 0297 .NET ecosystem tooling roadmap      | Create packet when selected                                              | Plan NuGet restore/security policy, `net48`/`net481` profile handling, VS Code/LSP workflow parity, templates, release packaging, and adoption gates. |
-| Q2       | Requested   | Task 0293 roadmap refresh | 0296 F# functional consistency roadmap   | Create packet when selected                                              | Plan pattern exhaustiveness, computation/workflow modeling, pipelines/composition, records/unions, async, and result ergonomics from the F# baseline. |
+| Q2       | Done        | Task 0293 roadmap refresh | 0296 F# functional consistency roadmap   | [tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap](tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap) | Refreshed official F# sources, classified TypeSharp functional roadmap boundaries, and queued match exhaustiveness expansion. |
 | Q2       | Requested   | Task 0293 roadmap refresh | 0295 TypeScript structural module roadmap | Create packet when selected                                             | Plan structural type operators, narrowing, declaration/module ergonomics, and project config behavior without leaking structural shapes into public ABI. |
-| Q1       | Done        | Task 0293 roadmap refresh | 0294 C# stable preview parity plan       | [tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan](tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan) | Classified current C# stable/preview signals against TypeSharp lowering, public ABI, diagnostics, and feature gates, then queued `0298`. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

@@ -12,10 +12,10 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | Item | State |
 | --- | --- |
 | Active task packet | None |
-| Next top-priority task | Select requested Q2 task `0296 F# functional consistency roadmap`. |
+| Next top-priority task | Select requested Q2 task `0299 Match exhaustiveness expansion`. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0298-csharp-unbound-generic-nameof-parity` is complete; TypeSharp now parses unbound generic `nameof` targets and lowers them to C# 7.3-compatible string constants. |
-| Completed work covered | 0001-0294, 0298 |
+| Current tooling slice | Task `0296-fsharp-functional-consistency-roadmap` is complete; Feature Status now maps current F# functional-language signals into TypeSharp's `net48`-compatible roadmap. |
+| Completed work covered | 0001-0294, 0296, 0298 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

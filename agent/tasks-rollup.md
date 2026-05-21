@@ -1390,6 +1390,34 @@ Primary evidence:
 - [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
 - [tasks.md](tasks.md)
 
+## Task 0296 FSharp Functional Consistency Roadmap
+
+Completed F# roadmap work established:
+
+- Refreshed official Microsoft F# documentation, strategy, F# 10 release notes, functions, pattern matching, discriminated unions, options, computation expressions, and task expressions on 2026-05-21.
+- Added a Feature Status F# functional consistency review that keeps TypeSharp independent of F# syntax compatibility and `FSharp.Core` runtime dependencies by default.
+- Classified immutable values, expression-result functions, local inference, first-class functions, records, nominal unions, `Option<T>`, `Result<T,E>`, pattern matching, pipeline, composition, and direct `Task` interop against the MVP path.
+- Classified richer currying/partial application, computation-expression-style workflows, active-pattern-style extractors, F# interop layers, and recursive union ergonomics as Stable Backlog until generated delegate shapes, lowering, and diagnostics are explicit.
+- Kept type providers and units of measure Experimental because they need security, reproducibility, erasure, operator, ABI, and diagnostic policies.
+- Updated Grammar, Type System, Lowering, Project Policy, Work Ledger, and task state to reflect the roadmap.
+- Queued `0299 Match exhaustiveness expansion` as the next bounded F#-driven Q2 implementation slice.
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [tasks.md](tasks.md)
+
 ## Task 0298 CSharp Unbound Generic Nameof Parity
 
 Completed language/backend work established:

@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | Next requested Q2 item is `0296 F# functional consistency roadmap` from [tasks.md](tasks.md). | Completed 0298 evidence is in [tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity](tasks-rollup.md#task-0298-csharp-unbound-generic-nameof-parity). |
+| None | Next requested Q2 item is `0299 Match exhaustiveness expansion` from [tasks.md](tasks.md). | Completed 0296 evidence is in [tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap](tasks-rollup.md#task-0296-fsharp-functional-consistency-roadmap). |
 
 ## Completed Evidence Index
 
