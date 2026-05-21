@@ -3275,6 +3275,45 @@ Remaining:
 
 - Numeric shifts, shift assignment, user-defined operators, broader composition type inference, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0345 Roadmap Refresh After Composition Shift Ambiguity Diagnostics
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 after composition/shift ambiguity diagnostics landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, current composition parsing/lowering behavior, and the remaining function composition/operator backlog.
+- Selected the next bounded implementation slice: direct named-function composition compatibility diagnostics for unary TypeSharp-declared function pairs.
+- Kept higher-order function values, currying, partial application, generic/imported composition inference, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra out of the slice.
+- Created active task `0346 Composition function compatibility diagnostics slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [C# bitwise and shift operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/bitwise-and-shift-operators)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [F# task expressions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/task-expressions)
+- [TypeScript official blog](https://devblogs.microsoft.com/typescript/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Direct named-function composition compatibility diagnostics are active in task 0346. Higher-order function values, currying, partial application, generic/imported composition inference, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task. |
+| Active task packet | `agent/0346-composition-function-compatibility-diagnostics-slice.md` |
+| Next top-priority task | Task 0346 composition function compatibility diagnostics is in progress. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0344 completed bounded diagnostics for value-shaped `>>`/`<<` composition/shift ambiguity while preserving function composition lowering. |
-| Completed work covered | 0001-0344 |
+| Current tooling slice | Task 0345 refreshed the roadmap after composition/shift ambiguity diagnostics and opened bounded direct named-function composition compatibility diagnostics as task 0346. |
+| Completed work covered | 0001-0345 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

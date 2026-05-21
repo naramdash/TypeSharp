@@ -187,6 +187,8 @@ After local assignment target analysis, the empty-queue refresh rechecked offici
 
 The composition/shift ambiguity slice completed `TS2201` diagnostics for known value-shaped `>>` and `<<` operands, covering numeric, `bool`, `string`, nullable primitive, and enum-shaped expressions while preserving existing function composition parsing and C# 7.3-compatible delegate-lambda lowering. Numeric shifts, shift assignment, user-defined operators, broader composition type inference, flag-aware enum algebra, and richer pattern algebra remain backlog.
 
+After composition/shift ambiguity diagnostics, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is direct named-function composition compatibility diagnostics for unary `f >> g` and `g << f` pairs with known TypeSharp-declared function signatures. Higher-order function values, currying, partial application, generic/imported composition inference, numeric shifts, shift assignment, user-defined operators, flag-aware enum algebra, and richer pattern algebra remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

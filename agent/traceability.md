@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| Task 0346 composition function compatibility diagnostics | [0346-composition-function-compatibility-diagnostics-slice.md](0346-composition-function-compatibility-diagnostics-slice.md) | Type-checker direct function composition diagnostics, positive composition fixture preservation, negative compatibility fixture, Feature Status, Work Ledger, and tasks rollup. |
 
 ## Completed Evidence Index
 
