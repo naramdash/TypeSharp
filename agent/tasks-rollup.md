@@ -5907,6 +5907,54 @@ Remaining:
 
 - Next ready task 0399 should recheck official language/platform/package/test/editor/CI signals after null-conditional assignment landed and select the next bounded TypeSharp implementation slice.
 
+## Task 0399 Roadmap Refresh After Null-conditional Assignment Imported Member Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions sources after Task 0398 landed `receiver?.Member = value`.
+- Confirmed no generated-artifact baseline change: TypeSharp generated artifacts remain package-free `net48`, generated C# remains C# 7.3-compatible, and .NET Framework targets still default to C# 7.3.
+- Confirmed no test-host package change: `MSTest.Sdk/4.2.3` remains current on NuGet, is still the selected `net10.0` Microsoft Testing Platform bridge, and xUnit.net v3 remains a future bridge candidate rather than a necessary duplicate now.
+- Confirmed external preview boundaries: C# 15 collection expression arguments and union types stay Preview Watch, TypeScript 7.0 Beta remains a native/compiler transition signal, and F# 10 remains a refinement/tooling signal without an FSharp.Core dependency for TypeSharp generated artifacts.
+- Selected Task 0400 as the next bounded implementation slice: metadata-backed imported C# instance indexer null-conditional assignment `receiver?[index] = value`, preserving skipped right-side evaluation on null receivers, single receiver/index evaluation, C# 7.3-compatible generated `net48` source, and no generated package/runtime baseline change.
+- Updated Feature Status, Project Policy, Work Ledger, tasks.md, and traceability.
+
+Official sources reviewed:
+
+- Microsoft Learn C# language versioning, C# 14, and C# 15 pages.
+- TypeScript 6.0 release notes, TypeScript 6.0 announcement, TypeScript 7.0 Beta announcement, and TypeScript modules reference.
+- Microsoft Learn F# 10, F# strategy, computation expressions, and task expressions pages.
+- Microsoft Learn target-framework monikers, .NET Framework versions/dependencies, and .NET Framework support policy.
+- Microsoft Learn .NET test platforms and `dotnet test` MTP mode pages.
+- NuGet `MSTest.Sdk/4.2.3`, NuGet `MSTest/4.2.3`, and xUnit.net v3 package guidance.
+- VS Code LSP and extension publishing docs.
+- GitHub Actions runner images and the 2026-05-14 image migration changelog.
+
+Verification:
+
+```powershell
+cd docs
+npm run build
+git diff --check
+```
+
+Result: docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0400 should implement imported C# instance indexer null-conditional assignment `receiver?[index] = value`; compound assignment, null-conditional reads, events, static targets, TypeSharp-owned targets, and package/runtime baseline changes remain out of scope.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -5931,7 +5979,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0398 is compressed here.
+- Completed historical work through task 0399 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

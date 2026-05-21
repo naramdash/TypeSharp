@@ -73,7 +73,7 @@ Test-host NuGet package selection:
 
 | Candidate | Fit | TypeSharp decision |
 | --- | --- | --- |
-| `MSTest.Sdk/4.2.3` | Microsoft-supported SDK package, defaults to Microsoft Testing Platform, uses the repo's `.NET 10` `dotnet test` MTP mode, and exposes the extracted catalog with minimal bridge code. | Selected for the package-based discovery bridge. It is pinned in `Project Sdk`, checked by `packages.lock.json` for its generated adapter/framework graph, covered by root NuGet source controls, and already split into package-based shard projects for parallel `dotnet test`/MTP coverage. NuGet listed `4.2.3` as the current package version when rechecked on 2026-05-22. Task 0397 reaffirmed this as the broadest current `net10.0` test-host package path for TypeSharp; the project is using NuGet packages at the test-host boundary, not in generated `net48` artifacts. |
+| `MSTest.Sdk/4.2.3` | Microsoft-supported SDK package, defaults to Microsoft Testing Platform, uses the repo's `.NET 10` `dotnet test` MTP mode, and exposes the extracted catalog with minimal bridge code. | Selected for the package-based discovery bridge. It is pinned in `Project Sdk`, checked by `packages.lock.json` for its generated adapter/framework graph, covered by root NuGet source controls, and already split into package-based shard projects for parallel `dotnet test`/MTP coverage. NuGet listed `4.2.3` as the current package version when rechecked on 2026-05-22, with a 2026-05-14 package update. Tasks 0397 and 0399 reaffirmed this as the broadest current `net10.0` test-host package path for TypeSharp; the project is using NuGet packages at the test-host boundary, not in generated `net48` artifacts. |
 | `xunit.v3` / `xunit.v3.mtp-v2` | Viable general-purpose .NET test framework with native Microsoft Testing Platform support and broad ecosystem familiarity. | Keep as a future bridge candidate. Adding it now would duplicate the existing `net10.0` package-host coverage without improving the measured release-confidence path or generated `net48` compatibility; if adopted, it must be a separate bridge over `TypeSharpCompilerTestCases.All`, not a replacement catalog. |
 
 Test-host NuGet restore controls:
@@ -125,7 +125,7 @@ Target framework rule:
 - Older profiles such as `net462` require a separate compatibility profile and explicit cost review.
 - Compiler/CLI/LSP modern .NET targets must not be confused with generated runtime targets.
 
-Official .NET/NuGet/VS Code and .NET test-platform ecosystem sources refreshed and reaffirmed on 2026-05-22:
+Official .NET/NuGet/VS Code and .NET test-platform ecosystem sources refreshed and reaffirmed on 2026-05-22, including the Task 0399 refresh after null-conditional member assignment landed:
 
 - Microsoft Learn [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks): `net48` and `net481` are .NET Framework TFMs, and `.NET Framework 4.8.1` maps to `net481`.
 - Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies) and the [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework): `.NET Framework 4.8.1` is the latest .NET Framework version; Windows 10 22H2 includes 4.8 and can install 4.8.1, while recent Windows 11 releases include 4.8.1.
