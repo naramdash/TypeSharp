@@ -265,6 +265,8 @@ After generic optional/default parameters, official C#, F#, TypeScript, .NET Fra
 
 The primitive integral shift expression slice completed bounded `<<` and `>>` support for known non-null primitive integral operands. Accepted shifts infer C# 7.3-compatible result types, promote small left operands to `int`, require an `int`-compatible non-null count, lower to ordinary generated C# shifts, and preserve function-shaped `>>`/`<<` composition. Invalid value-shaped shift operands now report deterministic `TS2201` diagnostics before backend emission, and the 523-case shared catalog includes generated `net48` C# consumer evidence.
 
+After integral numeric shift expressions, official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions sources were rechecked on 2026-05-22. No generated-artifact baseline changed: .NET Framework targets still default to C# 7.3, C# 14 remains the stable .NET 10 C# signal, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains a Beta/native-preview tooling signal, .NET Framework 4.8.1 remains the latest Framework while `net48` stays TypeSharp's broad generated target, MSTest/MTP remains the selected package bridge, and the June 2026 GitHub Actions Windows image migration remains a CI watch item. The next bounded implementation slice is shift assignment expressions for `<<=` and `>>=` over the already supported assignment surface, reusing the primitive integral shift count/result policy and keeping logical unsigned `>>>=`, user-defined operators, enum flag algebra, imported operator overload resolution, and broad assignment target analysis out of scope.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

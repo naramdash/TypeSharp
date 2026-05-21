@@ -5206,7 +5206,60 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0387: roadmap refresh after integral shift expressions.
+- Completed in task 0387: roadmap refresh after integral shift expressions.
+- Active in task 0388: shift assignment expressions.
+
+## Task 0387 Roadmap Refresh After Integral Shift Expressions
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals after integral numeric shifts landed.
+- Confirmed no generated-artifact baseline change: TypeSharp-generated assemblies stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and modern .NET/Node/package dependencies remain isolated to compiler, test, docs, CI, or editor tooling.
+- Confirmed C# language versioning still maps `.NET Framework` targets to C# 7.3. C# 14 remains the current stable .NET 10 C# signal; C# 15 remains preview on .NET 11 preview with collection expression arguments and union types as directional signals only.
+- Confirmed TypeScript 6.0 remains the transition release toward the TypeScript 7.0 native compiler, while TypeScript 7.0 Beta remains a side-by-side `@typescript/native-preview`/`tsgo` tooling signal rather than a TypeSharp runtime or syntax dependency.
+- Confirmed F# 10 remains a refinement/tooling signal for diagnostics, task workflows, and deterministic compiler work without adding an F# compiler/runtime dependency.
+- Confirmed `.NET Framework 4.8.1` remains the latest Framework, while `net48` remains TypeSharp's broad generated target and `net481` stays a qualified-profile backlog item.
+- Confirmed the current test-package answer still holds: TypeSharp already uses pinned `MSTest.Sdk/4.2.3` with .NET 10 MTP mode and package-based shards; xUnit.net v3 remains a future bridge candidate but would duplicate current package-host coverage now.
+- Confirmed VS Code LSP guidance and GitHub Actions runner-image signals do not change current editor or generated-artifact baselines. The Windows Server 2025 + Visual Studio 2026 `windows-latest` migration beginning June 2026 remains a CI watch item.
+- Selected the next bounded implementation slice: `0388 Shift assignment expressions`. The slice should implement `<<=` and `>>=` over the existing assignment surface, reuse the primitive integral shift count/result policy, preserve generated C# 7.3 `net48` lowering, and keep logical unsigned `>>>=`, user-defined operators, enum flag algebra, imported operator overload resolution, and broad assignment target analysis out of scope.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [C# bitwise and shift operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/bitwise-and-shift-operators)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [GitHub Actions image migrations](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [actions/setup-dotnet](https://github.com/actions/setup-dotnet)
+- [actions/setup-node](https://github.com/actions/setup-node)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0388: shift assignment expressions.
 
 ## Verification Summary
 
@@ -5232,13 +5285,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0386 is compressed here.
+- Completed historical work through task 0387 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0387 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0388 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
