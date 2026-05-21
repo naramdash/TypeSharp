@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Next work is selected from user inbox, agent queue, checklist, or roadmap-refresh rule. |
+| Task 0340 Bitwise compound assignment slice | [0340-bitwise-compound-assignment-slice.md](0340-bitwise-compound-assignment-slice.md) | Parser fixture, backend fixture, generated `net48` CLI smoke, docs, and work-ledger updates for `|=`, `&=`, and `^=` assignment lowering. |
 
 ## Completed Evidence Index
 
