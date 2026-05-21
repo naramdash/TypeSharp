@@ -1,0 +1,25 @@
+namespace Samples.LogicalUnsignedShiftAssignment
+
+fun adjust(value: int, count: byte): int {
+  let mut result = value
+  result >>>= count
+  result
+}
+
+fun adjustLong(value: long, count: short): long {
+  let mut result = value
+  result >>>= count
+  result
+}
+
+fun adjustSmall(value: byte, count: int): byte {
+  let mut result = value
+  result >>>= count
+  result
+}
+
+fun adjustUnsigned(value: uint, count: int): uint {
+  let mut result = value
+  result >>>= count
+  result
+}

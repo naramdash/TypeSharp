@@ -1,0 +1,25 @@
+namespace Samples.TypeChecker.LogicalUnsignedShiftAssignmentExpression
+
+fun signed(value: int, count: byte): int {
+  let mut result = value
+  result >>>= count
+  result
+}
+
+fun signedLong(value: long, count: short): long {
+  let mut result = value
+  result >>>= count
+  result
+}
+
+fun small(value: byte, count: int): byte {
+  let mut result = value
+  result >>>= count
+  result
+}
+
+fun unsigned(value: uint, count: int): uint {
+  let mut result = value
+  result >>>= count
+  result
+}

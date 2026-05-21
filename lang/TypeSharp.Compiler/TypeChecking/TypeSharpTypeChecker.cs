@@ -1018,7 +1018,7 @@ public static class TypeSharpTypeChecker
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
-                    SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken =>
+                    SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken or SyntaxKind.LogicalUnsignedShiftEqualsToken =>
                         CheckShiftCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     _ => CheckCompoundAssignmentValue(value, scope, targetInfo.Type)
                 };
@@ -1028,6 +1028,13 @@ public static class TypeSharpTypeChecker
             {
                 var targetType = CheckExpression(target, scope);
                 CheckExpression(value, scope);
+                if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
+                {
+                    ReportMismatch(
+                        node,
+                        "Logical unsigned shift assignment '>>>=' is currently supported only for mutable local primitive integral targets; imported C# member, indexer, or event targets need a single-evaluation lowering policy.");
+                }
+
                 return targetType;
             }
 
@@ -1088,6 +1095,7 @@ public static class TypeSharpTypeChecker
             {
                 SyntaxKind.LessLessEqualsToken => "<<=",
                 SyntaxKind.GreaterGreaterEqualsToken => ">>=",
+                SyntaxKind.LogicalUnsignedShiftEqualsToken => ">>>=",
                 _ => "?="
             };
 
@@ -3657,7 +3665,8 @@ public static class TypeSharpTypeChecker
                 or SyntaxKind.AmpersandEqualsToken
                 or SyntaxKind.CaretEqualsToken
                 or SyntaxKind.LessLessEqualsToken
-                or SyntaxKind.GreaterGreaterEqualsToken;
+                or SyntaxKind.GreaterGreaterEqualsToken
+                or SyntaxKind.LogicalUnsignedShiftEqualsToken;
 
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {

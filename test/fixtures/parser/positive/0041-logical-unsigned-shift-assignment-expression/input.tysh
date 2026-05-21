@@ -1,0 +1,7 @@
+namespace Samples.LogicalUnsignedShiftAssignmentExpression
+
+fun adjust(): int {
+  let mut value = 8
+  value >>>= 1
+  value
+}

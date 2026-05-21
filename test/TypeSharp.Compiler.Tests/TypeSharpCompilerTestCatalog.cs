@@ -490,6 +490,7 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("CLI build compiles integral bitwise expression API", CliBuildCompilesIntegralBitwiseExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles integral shift expression API", CliBuildCompilesIntegralShiftExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles logical unsigned shift expression API", CliBuildCompilesLogicalUnsignedShiftExpressionApi),
+        new TypeSharpCompilerTestCase("CLI build compiles logical unsigned shift assignment expression API", CliBuildCompilesLogicalUnsignedShiftAssignmentExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles shift assignment expression API", CliBuildCompilesShiftAssignmentExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles boolean bitwise expression API", CliBuildCompilesBooleanBitwiseExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles bitwise compound assignment API", CliBuildCompilesBitwiseCompoundAssignmentApi),

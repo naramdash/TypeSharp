@@ -1632,6 +1632,13 @@ public static class CSharpSourceBackend
             if (TryGetDirectTypeAnnotation(node, out var sourceAnnotation))
             {
                 _valueTypes[name] = GetSourceTypeName(sourceAnnotation);
+                return;
+            }
+
+            var initializerType = InferEmitterExpressionType(GetInitializerExpression(node));
+            if (!string.Equals(initializerType, "object", StringComparison.Ordinal))
+            {
+                _valueTypes[name] = initializerType;
             }
         }
 
@@ -2377,6 +2384,11 @@ public static class CSharpSourceBackend
                 return "default(object)";
             }
 
+            if (operatorToken.Kind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
+            {
+                return EmitLogicalUnsignedShiftAssignment(expressions[0], expressions[1]);
+            }
+
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
         }
 
@@ -2438,6 +2450,22 @@ public static class CSharpSourceBackend
                 "long" => $"unchecked((long)(unchecked((ulong){ParenthesizeForCastOperand(leftExpression)}) >> {rightExpression}))",
                 _ => $"unchecked((int)(unchecked((uint){ParenthesizeForCastOperand(leftExpression)}) >> {rightExpression}))"
             };
+        }
+
+        private string EmitLogicalUnsignedShiftAssignment(SyntaxNode target, SyntaxNode right)
+        {
+            var targetExpression = EmitExpression(target);
+            var rightExpression = EmitExpression(right);
+            var targetType = InferEmitterExpressionType(target);
+            var shifted = targetType switch
+            {
+                "uint" or "ulong" => $"{targetExpression} >> {rightExpression}",
+                "long" => $"unchecked((long)(unchecked((ulong){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))",
+                "byte" or "sbyte" or "short" or "ushort" => $"unchecked(({targetType})(unchecked((uint){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))",
+                _ => $"unchecked((int)(unchecked((uint){ParenthesizeForCastOperand(targetExpression)}) >> {rightExpression}))"
+            };
+
+            return $"{targetExpression} = {shifted}";
         }
 
         private static string ParenthesizeForCastOperand(string expression) =>

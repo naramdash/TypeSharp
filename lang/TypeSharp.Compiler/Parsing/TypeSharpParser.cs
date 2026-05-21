@@ -1982,5 +1982,6 @@ public sealed class TypeSharpParser
             or SyntaxKind.AmpersandEqualsToken
             or SyntaxKind.CaretEqualsToken
             or SyntaxKind.LessLessEqualsToken
-            or SyntaxKind.GreaterGreaterEqualsToken;
+            or SyntaxKind.GreaterGreaterEqualsToken
+            or SyntaxKind.LogicalUnsignedShiftEqualsToken;
 }

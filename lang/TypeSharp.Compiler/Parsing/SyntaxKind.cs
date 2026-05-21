@@ -81,6 +81,7 @@ public enum SyntaxKind
     CaretEqualsToken,
     LessLessEqualsToken,
     GreaterGreaterEqualsToken,
+    LogicalUnsignedShiftEqualsToken,
     GreaterToken,
     NullCoalescingToken,
     PlusToken,
