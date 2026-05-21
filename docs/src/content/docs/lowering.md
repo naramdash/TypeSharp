@@ -45,6 +45,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | `import static` | C# `using static`. |
 | Manifest references | Generated project `<Reference>` items. |
 | Records | Immutable sealed C# classes with constructor, get-only properties, equality, and hash code. |
+| Enums | Ordinary C# enum declarations; enum member access remains `EnumName.Member`. |
 | Nominal unions | Abstract base type plus sealed case types and runtime pattern helper metadata. |
 | Pattern matching over nominal unions | Ordered C# case checks using runtime pattern helpers; `_` lowers to an unconditional fallback arm. |
 | Pattern matching over bool and local literal unions | Ordered C# conditional comparisons using `object.Equals`; `_` lowers to an unconditional fallback arm. |
@@ -85,9 +86,11 @@ Evidence:
 - CLI smokes for basic semantics, framework calls, local DLL calls, manifest reference propagation, and module-path containers.
 - CLI smokes for annotated and inferred function-valued top-level `let` exports, including collection return bodies.
 
-## Records, Public Types, And Partial Declarations
+## Records, Enums, Public Types, And Partial Declarations
 
 Records lower to immutable C# classes with constructor parameters, get-only properties, value equality, and hash code. Record construction, record update, and nominal record spread lower to constructor calls in record parameter order.
+
+Simple enum declarations lower to ordinary generated C# enum declarations. Member references such as `Color.Green` stay as direct C# enum member access. Explicit underlying types, explicit numeric member values, flags, enum member attributes, and enum match exhaustiveness are not lowered yet.
 
 Public class, interface, generic type, generic function, and delegate-compatible function value surfaces lower only when their CLR shape is explicit. `partial` is preserved for declarations that lower to generated C# type declarations: modules, records, unions, classes, and interfaces.
 
@@ -102,6 +105,8 @@ Evidence:
 - `test/fixtures/backend/csharp/positive/0025-record-expression-construction`
 - `test/fixtures/backend/csharp/positive/0026-partial-declarations`
 - `test/fixtures/backend/csharp/positive/0035-record-spread-lowering`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs` enum declaration API CLI build smoke
 
 ## Union And Pattern Lowering
 

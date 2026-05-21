@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2002",
+      "severity": "error",
+      "message": "Duplicate symbol 'Red' in the same scope.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 3 },
+      "end": { "line": 6, "column": 6 }
+    }
+  ]
+}

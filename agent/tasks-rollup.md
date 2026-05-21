@@ -1858,6 +1858,52 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 
+## Task 0310 Enum Declaration Implementation Slice
+
+Completed language/compiler work established:
+
+- Added parser and lexer support for simple TypeSharp-owned enum declarations with `EnumDeclaration` and `EnumMember` syntax nodes.
+- Bound enum declarations as type-space symbols and reported duplicate enum members deterministically with `TS2002`.
+- Added enum symbol facts to type checking so same-enum member access such as `Color.Green` has the enum type, unrelated enum values report `TS2201`, and missing enum members report `TS2201`.
+- Lowered supported enum declarations and enum member references to C# 7.3-compatible generated source using ordinary CLR enum declarations.
+- Included enum declarations in local type export/source graph/build surfaces so generated assemblies can expose enum-backed public APIs.
+- Added parser, binder, type-checker positive/negative, backend snapshot, and CLI `net48` build/consumer smoke coverage.
+- Updated canonical grammar, reference, type-system, lowering, feature-status, diagnostics, and work-ledger docs for the implemented enum boundary.
+
+Verification:
+
+```powershell
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [SyntaxKind.cs](../lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs)
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpBinder.cs](../lang/TypeSharp.Compiler/Binding/TypeSharpBinder.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [TypeSharpBuilder.cs](../lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs)
+- [SourceModuleGraph.cs](../lang/TypeSharp.Compiler/Projects/SourceModuleGraph.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/diagnostics/binder/negative/duplicate-enum-member`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/enum-declaration-mismatch`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Enum match exhaustiveness, flags, explicit underlying types, explicit numeric enum values, enum member attributes, imported C# enum exhaustiveness, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -1882,7 +1928,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0294 is compressed here.
+- Completed historical work through task 0310 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

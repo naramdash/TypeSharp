@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0310-enum-declaration-implementation-slice.md](0310-enum-declaration-implementation-slice.md) |
-| Active summary     | Implement TypeSharp enum declaration parsing, checking, and lowering groundwork before enum match exhaustiveness. |
-| Completed range    | 0001-0309                         |
+| Active task packet | None |
+| Active summary     | None |
+| Completed range    | 0001-0310                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0309 roadmap refresh | 0310 Enum declaration implementation slice | [0310-enum-declaration-implementation-slice.md](0310-enum-declaration-implementation-slice.md) | Implement TypeSharp-owned simple enum declarations and C# 7.3 lowering before enum match exhaustiveness. |
+| Q2       | Done        | Task 0309 roadmap refresh | 0310 Enum declaration implementation slice | [tasks-rollup.md#task-0310-enum-declaration-implementation-slice](tasks-rollup.md#task-0310-enum-declaration-implementation-slice) | Implemented TypeSharp-owned simple enum declarations and C# 7.3 lowering before enum match exhaustiveness. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0309 Roadmap refresh after literal match exhaustiveness | [tasks-rollup.md#task-0309-roadmap-refresh-after-literal-match-exhaustiveness](tasks-rollup.md#task-0309-roadmap-refresh-after-literal-match-exhaustiveness) | Rechecked official source signals after literal match exhaustiveness, confirmed the baseline, and selected enum declaration groundwork as the next bounded implementation slice. |
 | Q2       | Done        | Task 0307 roadmap refresh | 0308 Literal match exhaustiveness slice | [tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice](tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice) | Implemented literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering; enum exhaustiveness and richer pattern algebra remain follow-ups. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0307 Roadmap refresh after match guards | [tasks-rollup.md#task-0307-roadmap-refresh-after-match-guards](tasks-rollup.md#task-0307-roadmap-refresh-after-match-guards) | Rechecked official source signals after match guards, confirmed the baseline, and selected literal/bool match exhaustiveness as the next bounded implementation slice. |

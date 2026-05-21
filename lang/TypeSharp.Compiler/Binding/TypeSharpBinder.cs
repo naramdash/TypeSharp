@@ -140,12 +140,18 @@ public static class TypeSharpBinder
 
                     case SyntaxKind.TypeAliasDeclaration:
                     case SyntaxKind.RecordDeclaration:
+                    case SyntaxKind.EnumDeclaration:
                     case SyntaxKind.ClassDeclaration:
                     case SyntaxKind.InterfaceDeclaration:
                     case SyntaxKind.DelegateDeclaration:
                         if (TryGetDeclarationName(child, out var typeName, out var typeSpan))
                         {
                             AddSymbol(scope, typeName, BoundSymbolKind.Type, typeSpan, declareValue: false, declareType: true);
+                        }
+
+                        if (child.Kind == SyntaxKind.EnumDeclaration)
+                        {
+                            CheckEnumMemberSymbols(child);
                         }
 
                         break;
@@ -220,6 +226,7 @@ public static class TypeSharpBinder
                 case SyntaxKind.TypeAliasDeclaration:
                 case SyntaxKind.RecordDeclaration:
                 case SyntaxKind.UnionDeclaration:
+                case SyntaxKind.EnumDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
                 case SyntaxKind.DelegateDeclaration:
@@ -425,6 +432,9 @@ public static class TypeSharpBinder
                     break;
 
                 case SyntaxKind.MemberAccessExpression:
+                    BindMemberAccessExpression(node, scope);
+                    break;
+
                 case SyntaxKind.IndexerExpression:
                     if (node.Children.Count > 0)
                     {
@@ -576,6 +586,31 @@ public static class TypeSharpBinder
             foreach (var child in node.Children.Skip(1).Where(child => !child.IsToken))
             {
                 BindNode(child, scope);
+            }
+        }
+
+        private void BindMemberAccessExpression(SyntaxNode node, BindingScope scope)
+        {
+            if (node.Children.Count == 0)
+            {
+                return;
+            }
+
+            var receiver = node.Children[0];
+            if (receiver.Kind == SyntaxKind.IdentifierExpression &&
+                TryGetFirstIdentifier(receiver, out var identifier) &&
+                scope.ResolveType(identifier.Text ?? string.Empty))
+            {
+                // Type-qualified member access is valid for TypeSharp enum members.
+            }
+            else
+            {
+                BindNode(receiver, scope);
+            }
+
+            for (var index = 2; index < node.Children.Count; index++)
+            {
+                BindNode(node.Children[index], scope);
             }
         }
 
@@ -1094,6 +1129,25 @@ public static class TypeSharpBinder
             _symbols.Add(new BoundSymbol(name, kind, _file, span));
         }
 
+        private void CheckEnumMemberSymbols(SyntaxNode enumDeclaration)
+        {
+            var members = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var member in enumDeclaration.Children.Where(child => child.Kind == SyntaxKind.EnumMember))
+            {
+                var identifier = member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken);
+                var name = identifier?.Text ?? string.Empty;
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                if (!members.Add(name))
+                {
+                    ReportDuplicateSymbol(identifier!.Span, name);
+                }
+            }
+        }
+
         private static bool IsCallableName(string name) =>
             name.Length > 0 && char.IsUpper(name[0]);
 
@@ -1104,7 +1158,7 @@ public static class TypeSharpBinder
             var seenDeclarationKeyword = false;
             foreach (var child in node.Children)
             {
-                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.ModuleKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
+                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.ModuleKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.EnumKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
                 {
                     seenDeclarationKeyword = true;
                     continue;

@@ -1,0 +1,7 @@
+namespace Samples.Binder.DuplicateEnumMember
+
+enum Color {
+  Red,
+  Green,
+  Red
+}

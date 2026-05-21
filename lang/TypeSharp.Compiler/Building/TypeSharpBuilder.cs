@@ -851,7 +851,7 @@ public static class TypeSharpBuilder
     private static IReadOnlyDictionary<string, string> CollectLocalTypeExportTargets(SyntaxNode root, string namespaceName)
     {
         var declaredTypes = root.Children
-            .Where(child => child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration or SyntaxKind.DelegateDeclaration)
+            .Where(child => child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.EnumDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration or SyntaxKind.DelegateDeclaration)
             .Select(GetTypeDeclarationName)
             .Where(name => name.Length > 0)
             .ToHashSet(StringComparer.Ordinal);
@@ -1712,6 +1712,7 @@ public static class TypeSharpBuilder
             SyntaxKind.TypeAliasDeclaration or
             SyntaxKind.RecordDeclaration or
             SyntaxKind.UnionDeclaration or
+            SyntaxKind.EnumDeclaration or
             SyntaxKind.ClassDeclaration or
             SyntaxKind.InterfaceDeclaration or
             SyntaxKind.DelegateDeclaration;

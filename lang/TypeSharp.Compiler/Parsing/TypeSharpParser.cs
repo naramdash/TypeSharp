@@ -50,6 +50,7 @@ public sealed class TypeSharpParser
                 SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
                 SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
                 SyntaxKind.UnionKeyword => ParseUnionDeclaration(),
+                SyntaxKind.EnumKeyword => ParseEnumDeclaration(),
                 SyntaxKind.ClassKeyword => ParseClassDeclaration(),
                 SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(),
                 SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
@@ -104,6 +105,7 @@ public sealed class TypeSharpParser
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(),
+            SyntaxKind.EnumKeyword => ParseEnumDeclaration(),
             SyntaxKind.ClassKeyword => ParseClassDeclaration(),
             SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(),
@@ -178,6 +180,7 @@ public sealed class TypeSharpParser
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(children),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(children),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(children),
+            SyntaxKind.EnumKeyword => ParseEnumDeclaration(children),
             SyntaxKind.ClassKeyword => ParseClassDeclaration(children),
             SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(children),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(children),
@@ -338,6 +341,7 @@ public sealed class TypeSharpParser
             SyntaxKind.TypeKeyword => ParseTypeAliasDeclaration(declarationChildren),
             SyntaxKind.RecordKeyword => ParseRecordDeclaration(declarationChildren),
             SyntaxKind.UnionKeyword => ParseUnionDeclaration(declarationChildren),
+            SyntaxKind.EnumKeyword => ParseEnumDeclaration(declarationChildren),
             SyntaxKind.ClassKeyword => ParseClassDeclaration(declarationChildren),
             SyntaxKind.InterfaceKeyword => ParseInterfaceDeclaration(declarationChildren),
             SyntaxKind.DelegateKeyword => ParseDelegateDeclaration(declarationChildren),
@@ -523,6 +527,31 @@ public sealed class TypeSharpParser
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
         return Node(SyntaxKind.UnionDeclaration, children);
+    }
+
+    private SyntaxNode ParseEnumDeclaration(List<SyntaxNode>? prefixChildren = null)
+    {
+        var children = prefixChildren ?? [];
+        children.Add(TokenNode(Expect(SyntaxKind.EnumKeyword)));
+        children.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
+        children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
+
+        while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
+        {
+            var memberChildren = new List<SyntaxNode>
+            {
+                TokenNode(Expect(SyntaxKind.IdentifierToken))
+            };
+            children.Add(Node(SyntaxKind.EnumMember, memberChildren));
+
+            if (Current.Kind == SyntaxKind.CommaToken)
+            {
+                children.Add(TokenNode(NextToken()));
+            }
+        }
+
+        children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
+        return Node(SyntaxKind.EnumDeclaration, children);
     }
 
     private SyntaxNode ParseTypeParameterList()

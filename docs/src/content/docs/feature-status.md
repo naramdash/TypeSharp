@@ -147,7 +147,7 @@ The bounded implementation slices after the refresh added match guard support an
 - Literal match patterns parse for bool, string, and numeric literal arms; `bool` and local literal-union matches report missing cases/members and lower to C# 7.3-compatible conditional comparisons.
 - Enum exhaustiveness and richer pattern algebra remain separate follow-ups.
 
-After literal match exhaustiveness, the empty-queue refresh rechecked the same official sources on 2026-05-21 and found no baseline change. The next bounded implementation slice is simple TypeSharp enum declaration parsing/checking/lowering, because enum match exhaustiveness needs a stable TypeSharp-owned enum symbol and generated C# shape first.
+After literal match exhaustiveness, the empty-queue refresh rechecked the same official sources on 2026-05-21 and found no baseline change. The next bounded implementation slice completed simple TypeSharp enum declaration parsing/checking/lowering, giving enum match exhaustiveness a stable TypeSharp-owned enum symbol and generated C# shape.
 
 ## MVP Language Features
 
@@ -163,6 +163,7 @@ After literal match exhaustiveness, the empty-queue refresh rechecked the same o
 | Indexed access types | MVP limited | Known record/shape member types can be selected with `T["Member"]`; public ABI leakage is rejected. |
 | Local type inference | MVP | Locals, literals, calls, binary expressions, lambdas, and supported pipeline flows infer common types. |
 | Records | MVP | Immutable public data shapes lower to C#-friendly nominal types. |
+| Enums | MVP limited | Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member values, and lower to ordinary C# enums. Flags, explicit underlying types, explicit numeric values, enum member attributes, and enum match exhaustiveness remain backlog. |
 | Async `Task` interop | MVP | `async fun` lowers to `Task` or `Task<T>` for .NET Framework compatibility. |
 | Pipeline and composition | MVP limited | First-argument pipeline and unary composition lower to C# 7.3-compatible calls and delegate lambdas. |
 | Collection expressions | MVP limited | Array and `List<T>` targets are supported, including known array/List spread lowering. |

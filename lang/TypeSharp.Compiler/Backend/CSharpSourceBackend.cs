@@ -139,6 +139,10 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.RecordDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
+            var enums = root.Children
+                .Where(child => child.Kind == SyntaxKind.EnumDeclaration && !IsAmbientDeclaration(child))
+                .ToArray();
+
             var unions = root.Children
                 .Where(child => child.Kind == SyntaxKind.UnionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
@@ -376,6 +380,12 @@ public static class CSharpSourceBackend
             {
                 _builder.AppendLine();
                 EmitRecordDeclaration(recordDeclaration);
+            }
+
+            foreach (var enumDeclaration in enums)
+            {
+                _builder.AppendLine();
+                EmitEnumDeclaration(enumDeclaration);
             }
 
             foreach (var unionDeclaration in unions)
@@ -708,6 +718,22 @@ public static class CSharpSourceBackend
             EmitRecordEquals(name, parameters);
             _builder.AppendLine();
             EmitRecordGetHashCode(parameters);
+
+            _builder.AppendLine("    }");
+        }
+
+        private void EmitEnumDeclaration(SyntaxNode node)
+        {
+            var name = GetEnumDeclarationName(node);
+            var visibility = GetVisibility(node);
+            var members = GetEnumMembers(node);
+            _builder.AppendLine($"    {visibility} enum {name}");
+            _builder.AppendLine("    {");
+            for (var index = 0; index < members.Count; index++)
+            {
+                var suffix = index == members.Count - 1 ? string.Empty : ",";
+                _builder.AppendLine($"        {members[index]}{suffix}");
+            }
 
             _builder.AppendLine("    }");
         }
@@ -3766,7 +3792,7 @@ public static class CSharpSourceBackend
         {
             var names = new HashSet<string>(StringComparer.Ordinal);
             var declaredTypes = root.Children
-                .Where(child => child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration)
+                .Where(child => child.Kind is SyntaxKind.TypeAliasDeclaration or SyntaxKind.RecordDeclaration or SyntaxKind.UnionDeclaration or SyntaxKind.EnumDeclaration or SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration)
                 .Select(GetLocalTypeDeclarationName)
                 .Where(name => name.Length > 0)
                 .ToHashSet(StringComparer.Ordinal);
@@ -3876,6 +3902,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.TypeAliasDeclaration => GetTypeAliasDeclarationName(node),
                 SyntaxKind.RecordDeclaration => GetRecordDeclarationName(node),
                 SyntaxKind.UnionDeclaration => GetUnionDeclarationName(node),
+                SyntaxKind.EnumDeclaration => GetEnumDeclarationName(node),
                 SyntaxKind.ClassDeclaration => GetClassDeclarationName(node),
                 SyntaxKind.InterfaceDeclaration => GetInterfaceDeclarationName(node),
                 _ => string.Empty
@@ -3892,6 +3919,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.TypeAliasDeclaration => GetTypeAliasDeclarationName(node),
                 SyntaxKind.RecordDeclaration => GetRecordDeclarationName(node),
                 SyntaxKind.UnionDeclaration => GetUnionDeclarationName(node),
+                SyntaxKind.EnumDeclaration => GetEnumDeclarationName(node),
                 SyntaxKind.ClassDeclaration => GetClassDeclarationName(node),
                 SyntaxKind.InterfaceDeclaration => GetInterfaceDeclarationName(node),
                 _ => string.Empty
@@ -4048,6 +4076,33 @@ public static class CSharpSourceBackend
 
             return "Generated";
         }
+
+        private static string GetEnumDeclarationName(SyntaxNode node)
+        {
+            var seenEnumKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.EnumKeyword)
+                {
+                    seenEnumKeyword = true;
+                    continue;
+                }
+
+                if (seenEnumKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Generated";
+                }
+            }
+
+            return "Generated";
+        }
+
+        private static IReadOnlyList<string> GetEnumMembers(SyntaxNode node) =>
+            node.Children
+                .Where(child => child.Kind == SyntaxKind.EnumMember)
+                .Select(member => member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty)
+                .Where(name => name.Length > 0)
+                .ToArray();
 
         private static string GetInterfaceDeclarationName(SyntaxNode node)
         {

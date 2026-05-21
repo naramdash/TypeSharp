@@ -1,0 +1,15 @@
+namespace Samples.TypeChecker.EnumDeclarationMismatch
+
+enum Color {
+  Red
+}
+
+enum Size {
+  Small
+}
+
+fun wrongEnum(): Color =
+  Size.Small
+
+fun missingMember(): Color =
+  Color.Blue

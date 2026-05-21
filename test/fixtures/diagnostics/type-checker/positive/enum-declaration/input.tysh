@@ -1,0 +1,12 @@
+namespace Samples.TypeChecker.EnumDeclaration
+
+enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+let favorite: Color = Color.Green
+
+fun choose(): Color =
+  Color.Red

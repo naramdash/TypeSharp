@@ -18,6 +18,7 @@ public sealed class TypeSharpLexer
         ["type"] = SyntaxKind.TypeKeyword,
         ["record"] = SyntaxKind.RecordKeyword,
         ["union"] = SyntaxKind.UnionKeyword,
+        ["enum"] = SyntaxKind.EnumKeyword,
         ["match"] = SyntaxKind.MatchKeyword,
         ["as"] = SyntaxKind.AsKeyword,
         ["from"] = SyntaxKind.FromKeyword,

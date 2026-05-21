@@ -1,0 +1,10 @@
+namespace Samples.Enums
+
+public enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+export fun favorite(): Color =
+  Color.Green

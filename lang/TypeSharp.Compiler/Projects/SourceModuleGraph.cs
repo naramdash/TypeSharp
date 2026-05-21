@@ -1100,6 +1100,7 @@ public sealed record SourceModuleGraph(
             SyntaxKind.TypeAliasDeclaration or
             SyntaxKind.RecordDeclaration or
             SyntaxKind.UnionDeclaration or
+            SyntaxKind.EnumDeclaration or
             SyntaxKind.ClassDeclaration or
             SyntaxKind.InterfaceDeclaration or
             SyntaxKind.DelegateDeclaration;

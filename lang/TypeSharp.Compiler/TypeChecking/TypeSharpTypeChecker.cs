@@ -183,6 +183,7 @@ public static class TypeSharpTypeChecker
 
                     case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.UnionDeclaration:
+                    case SyntaxKind.EnumDeclaration:
                     case SyntaxKind.ClassDeclaration:
                     case SyntaxKind.InterfaceDeclaration:
                     case SyntaxKind.DelegateDeclaration:
@@ -197,6 +198,11 @@ public static class TypeSharpTypeChecker
                             if (child.Kind == SyntaxKind.RecordDeclaration)
                             {
                                 scope.DeclareRecordShape(typeName, GetRecordShape(typeName, child).Members);
+                            }
+
+                            if (child.Kind == SyntaxKind.EnumDeclaration)
+                            {
+                                scope.DeclareEnum(typeName, GetEnumMembers(child));
                             }
                         }
 
@@ -260,6 +266,7 @@ public static class TypeSharpTypeChecker
                     break;
 
                 case SyntaxKind.RecordDeclaration:
+                case SyntaxKind.EnumDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
                 case SyntaxKind.DelegateDeclaration:
@@ -642,6 +649,17 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
+            if (TryGetEnumMemberAccess(receiver, scope, out var enumName, out var enumMembers))
+            {
+                if (enumMembers.Contains(member.Text))
+                {
+                    return SimpleType.Named(enumName);
+                }
+
+                ReportMismatch(node, $"Enum '{enumName}' does not contain member '{member.Text}'.");
+                return SimpleType.Unknown;
+            }
+
             var receiverType = CheckExpression(receiver, scope);
             if (IsUnknownType(receiverType))
             {
@@ -663,6 +681,24 @@ public static class TypeSharpTypeChecker
             }
 
             return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
+        }
+
+        private static bool TryGetEnumMemberAccess(
+            SyntaxNode receiver,
+            TypeScope scope,
+            out string enumName,
+            out IReadOnlyList<string> members)
+        {
+            enumName = string.Empty;
+            members = [];
+            if (receiver.Kind != SyntaxKind.IdentifierExpression ||
+                !TryGetFirstIdentifier(receiver, out var identifier))
+            {
+                return false;
+            }
+
+            enumName = identifier.Text ?? string.Empty;
+            return scope.ResolveEnum(enumName, out members);
         }
 
         private SimpleType InferIndexer(SyntaxNode node, TypeScope scope)
@@ -2170,6 +2206,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.TypeAliasDeclaration => TryGetDeclarationName(node, out var aliasName) ? aliasName : string.Empty,
                 SyntaxKind.RecordDeclaration => TryGetDeclarationName(node, out var recordName) ? recordName : string.Empty,
                 SyntaxKind.UnionDeclaration => TryGetDeclarationName(node, out var unionName) ? unionName : string.Empty,
+                SyntaxKind.EnumDeclaration => TryGetDeclarationName(node, out var enumName) ? enumName : string.Empty,
                 SyntaxKind.ClassDeclaration => TryGetDeclarationName(node, out var className) ? className : string.Empty,
                 SyntaxKind.InterfaceDeclaration => TryGetDeclarationName(node, out var interfaceName) ? interfaceName : string.Empty,
                 _ => string.Empty
@@ -2973,6 +3010,14 @@ public static class TypeSharpTypeChecker
             return cases;
         }
 
+        private static IReadOnlyList<string> GetEnumMembers(SyntaxNode declaration) =>
+            declaration.Children
+                .Where(child => child.Kind == SyntaxKind.EnumMember)
+                .Select(member => member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty)
+                .Where(name => name.Length > 0)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
         private static IReadOnlyList<ParameterInfo> GetParameters(SyntaxNode declaration)
         {
             var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
@@ -3186,7 +3231,7 @@ public static class TypeSharpTypeChecker
             var seenDeclarationKeyword = false;
             foreach (var child in node.Children)
             {
-                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.ModuleKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
+                if (child.IsToken && child.Kind is SyntaxKind.FunKeyword or SyntaxKind.ModuleKeyword or SyntaxKind.TypeKeyword or SyntaxKind.RecordKeyword or SyntaxKind.UnionKeyword or SyntaxKind.EnumKeyword or SyntaxKind.ClassKeyword or SyntaxKind.DelegateKeyword or SyntaxKind.LetKeyword or SyntaxKind.LiteralKeyword)
                 {
                     seenDeclarationKeyword = true;
                     continue;
@@ -3349,6 +3394,7 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, TypeLevelUnionInfo> _typeLevelUnions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, UnionInfo> _unions = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, IReadOnlyList<string>> _enums = new(StringComparer.Ordinal);
         private readonly Dictionary<string, ShapeInfo> _structuralShapes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, ShapeInfo> _recordShapes = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
@@ -3382,6 +3428,8 @@ public static class TypeSharpTypeChecker
         public void DeclareTypeLevelUnion(string name, IReadOnlyList<TypeLevelUnionMemberInfo> members) => _typeLevelUnions[name] = new TypeLevelUnionInfo(name, members);
 
         public void DeclareUnion(string name, IReadOnlyList<UnionCaseInfo> cases) => _unions[name] = new UnionInfo(name, cases);
+
+        public void DeclareEnum(string name, IReadOnlyList<string> members) => _enums[name] = members;
 
         public void DeclareStructuralShape(string name, IReadOnlyList<ShapeMemberInfo> members) => _structuralShapes[name] = new ShapeInfo(name, members);
 
@@ -3497,6 +3545,23 @@ public static class TypeSharpTypeChecker
             }
 
             union = default;
+            return false;
+        }
+
+        public bool ResolveEnum(string name, out IReadOnlyList<string> members)
+        {
+            if (_enums.TryGetValue(name, out var resolvedMembers))
+            {
+                members = resolvedMembers;
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveEnum(name, out members);
+            }
+
+            members = [];
             return false;
         }
 

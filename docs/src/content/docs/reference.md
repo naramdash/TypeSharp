@@ -13,9 +13,11 @@ Canonical page: [Grammar](../grammar/)
 
 ## Declarations
 
-Implemented and planned declaration forms include functions, values, literals, records, classes, interfaces, delegates, unions, type aliases, modules, namespaces, imports, attributes, and `partial` type/module declarations.
+Implemented and planned declaration forms include functions, values, literals, records, classes, interfaces, simple enums, delegates, unions, type aliases, modules, namespaces, imports, attributes, and `partial` type/module declarations.
 
 `partial` is implemented for declarations that currently lower to generated C# types: modules, records, unions, classes, and interfaces. Partial methods, partial constructors, partial events, and source augmentation hooks remain future work.
+
+Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member access, and lower to ordinary generated C# enum declarations. Enum match exhaustiveness, flag enums, explicit underlying types, explicit numeric member values, and enum member attributes remain future work.
 
 Source files without an explicit file-scoped `namespace` still lower under the manifest `rootNamespace`; they are not emitted into a global namespace.
 
@@ -55,7 +57,7 @@ Detailed C#/.NET reference: [C# And CLR Type Model](../csharp-type-model/)
 
 ## Patterns
 
-Pattern syntax supports nominal union, `bool`, and local type-level union narrowing paths in the current smoke-tested scope, including local literal-union match arms. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover.
+Pattern syntax supports nominal union, `bool`, and local type-level union narrowing paths in the current smoke-tested scope, including local literal-union match arms. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover. Enum match exhaustiveness remains a follow-up to the implemented enum declaration baseline.
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/)
 
@@ -107,7 +109,7 @@ Core language feature specs:
 | Parser precedence and ambiguity | [Grammar](../grammar/), [Project Policy](../project-policy/) | Parser snapshots and recovery fixtures. |
 | Module graph, namespace, import/export, `open`, ambient signatures | [Modules And Imports](../modules/), [Grammar](../grammar/) | Parser fixtures, binder/source module diagnostics, backend import/open/alias snapshots, build/run smokes. |
 | Functions, values, literals | [Grammar](../grammar/), [Lowering](../lowering/) | Parser fixtures, binder/type checker smokes, generated C# snapshots. |
-| Records, classes, interfaces, delegates, nominal unions | [Grammar](../grammar/), [Type System](../type-system/), [Lowering](../lowering/) | Backend snapshots, diagnostics fixtures, generated `net48` build, C# consumer smokes. |
+| Records, classes, interfaces, enums, delegates, nominal unions | [Grammar](../grammar/), [Type System](../type-system/), [Lowering](../lowering/) | Backend snapshots, diagnostics fixtures, generated `net48` build, C# consumer smokes. |
 | Type-level unions, structural shapes, intersections, `keyof`, indexed access, `satisfies` | [Type System](../type-system/), [Grammar](../grammar/), [.NET Interop](../dotnet-interop/) | Parser snapshots, type checker fixtures, backend snapshots, generated build smokes. |
 | Advanced mapped, conditional, template-literal, and utility type operators | [Type System](../type-system/), [Feature Status](../feature-status/) | Documented evaluator budget only; implementation evidence is required before promotion. |
 | `unknown`, nullability, capability boundaries | [Type System](../type-system/), [Diagnostics](../diagnostics/), [.NET Interop](../dotnet-interop/) | `TS2202`, `TS2206`, `TS2207`, `TS2208`, `TS2209`, `TS2404` fixtures and CLI smokes. |
