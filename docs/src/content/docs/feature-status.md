@@ -191,6 +191,8 @@ After composition/shift ambiguity diagnostics, the empty-queue refresh rechecked
 
 The direct named-function composition compatibility slice completed `TS2201` diagnostics for incompatible unary `f >> g` and `g << f` pairs when both TypeSharp-declared function signatures are known. Existing composition parsing and C# 7.3-compatible delegate-lambda lowering remain unchanged. Higher-order function values, currying, partial application, generic/imported composition inference, numeric shifts, shift assignment, user-defined operators, flag-aware enum algebra, and richer pattern algebra remain backlog.
 
+After direct named-function composition compatibility diagnostics, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is direct pipeline input compatibility diagnostics for `value |> f` and `value |> f(args...)` when the target's first TypeSharp-declared parameter type is known. Higher-order pipeline targets, imported functions, generic inference, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, flag-aware enum algebra, and richer pattern algebra remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

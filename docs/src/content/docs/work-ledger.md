@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task. |
+| Active task packet | [`agent/0348-pipeline-function-input-compatibility-diagnostics-slice.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/0348-pipeline-function-input-compatibility-diagnostics-slice.md) |
+| Next top-priority task | Task 0348 pipeline function input compatibility diagnostics is in progress. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0346 completed bounded direct named-function composition compatibility diagnostics while preserving function composition parsing and lowering. |
-| Completed work covered | 0001-0346 |
+| Current tooling slice | Task 0347 rechecked official source signals after direct named-function composition compatibility diagnostics and opened task 0348 for direct pipeline input compatibility diagnostics. |
+| Completed work covered | 0001-0347 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | No active task. |
+| Pipeline function input compatibility diagnostics | [0348-pipeline-function-input-compatibility-diagnostics-slice.md](0348-pipeline-function-input-compatibility-diagnostics-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility`, pipeline parser/backend fixture stability, docs diagnostics/lowering/reference updates. |
 
 ## Completed Evidence Index
 
