@@ -925,6 +925,11 @@ public static class TypeSharpTypeChecker
                 return CheckAssignmentExpression(node, scope);
             }
 
+            if (IsLogicalUnsignedShiftExpression(node))
+            {
+                return CheckLogicalUnsignedShiftExpression(node, scope);
+            }
+
             if (IsCompositionExpression(node))
             {
                 return CheckCompositionExpression(node, scope);
@@ -3170,6 +3175,36 @@ public static class TypeSharpTypeChecker
             return SimpleType.Unknown;
         }
 
+        private SimpleType CheckLogicalUnsignedShiftExpression(SyntaxNode node, TypeScope scope)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length != 2)
+            {
+                foreach (var expression in expressions)
+                {
+                    CheckExpression(expression, scope);
+                }
+
+                return SimpleType.Unknown;
+            }
+
+            var leftType = CheckExpression(expressions[0], scope);
+            var rightType = CheckExpression(expressions[1], scope);
+            if (TryGetBinaryIntegralShiftResultType(leftType, rightType, out var shiftResultType))
+            {
+                return shiftResultType;
+            }
+
+            if (ShouldReportLogicalUnsignedShiftOperandDiagnostic(scope, expressions[0], leftType, expressions[1], rightType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found '{leftType}' and '{rightType}'.");
+            }
+
+            return SimpleType.Unknown;
+        }
+
         private void CheckNamedFunctionComposition(
             SyntaxNode node,
             TypeScope scope,
@@ -3451,8 +3486,18 @@ public static class TypeSharpTypeChecker
             node.Kind == SyntaxKind.BinaryExpression &&
             TryGetCompositionOperatorText(node.Children, out _);
 
+        private static bool IsLogicalUnsignedShiftExpression(SyntaxNode node) =>
+            node.Kind == SyntaxKind.BinaryExpression &&
+            TryGetLogicalUnsignedShiftOperatorText(node.Children, out _);
+
         private static bool TryGetCompositionOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
         {
+            if (TryGetLogicalUnsignedShiftOperatorText(children, out _))
+            {
+                operatorText = string.Empty;
+                return false;
+            }
+
             for (var index = 0; index + 1 < children.Count; index++)
             {
                 if (!children[index].IsToken || !children[index + 1].IsToken)
@@ -3469,6 +3514,26 @@ public static class TypeSharpTypeChecker
                 if (children[index].Kind == SyntaxKind.LessToken && children[index + 1].Kind == SyntaxKind.LessToken)
                 {
                     operatorText = "<<";
+                    return true;
+                }
+            }
+
+            operatorText = string.Empty;
+            return false;
+        }
+
+        private static bool TryGetLogicalUnsignedShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+        {
+            for (var index = 0; index + 2 < children.Count; index++)
+            {
+                if (children[index].IsToken &&
+                    children[index + 1].IsToken &&
+                    children[index + 2].IsToken &&
+                    children[index].Kind == SyntaxKind.GreaterToken &&
+                    children[index + 1].Kind == SyntaxKind.GreaterToken &&
+                    children[index + 2].Kind == SyntaxKind.GreaterToken)
+                {
+                    operatorText = ">>>";
                     return true;
                 }
             }
@@ -3512,6 +3577,20 @@ public static class TypeSharpTypeChecker
                 IsShiftOperandCandidate(scope, rightType) ||
                 (leftType.IsKnown && rightType.IsKnown);
         }
+
+        private static bool ShouldReportLogicalUnsignedShiftOperandDiagnostic(
+            TypeScope scope,
+            SyntaxNode leftExpression,
+            SimpleType leftType,
+            SyntaxNode rightExpression,
+            SimpleType rightType) =>
+            ShouldReportShiftOperandDiagnostic(scope, leftType, rightType) ||
+            IsDirectKnownFunctionReference(scope, leftExpression) ||
+            IsDirectKnownFunctionReference(scope, rightExpression);
+
+        private static bool IsDirectKnownFunctionReference(TypeScope scope, SyntaxNode expression) =>
+            TryGetDirectIdentifierName(expression, out var name) &&
+            scope.ResolveFunctionInfo(name, out _);
 
         private static bool IsShiftOperandCandidate(TypeScope scope, SimpleType type)
         {

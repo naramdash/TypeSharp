@@ -1,0 +1,19 @@
+namespace Samples.LogicalUnsignedShift
+
+export fun signed(value: int, count: byte): int =
+  value >>> count
+
+export fun signedLong(value: long, count: short): long =
+  value >>> count
+
+export fun small(value: sbyte, count: int): int =
+  value >>> count
+
+export fun unsigned(value: uint, count: int): uint =
+  value >>> count
+
+export fun unsignedLong(value: ulong, count: int): ulong =
+  value >>> count
+
+export fun combined(value: int): int =
+  (value >>> 2) >>> 1

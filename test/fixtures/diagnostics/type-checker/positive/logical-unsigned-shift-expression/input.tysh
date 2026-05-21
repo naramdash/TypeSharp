@@ -1,0 +1,21 @@
+namespace Samples.TypeChecker.LogicalUnsignedShiftExpression
+
+let sample = 16 >>> 2
+
+fun shiftInt(value: int, count: byte): int =
+  value >>> count
+
+fun shiftSmall(value: sbyte, count: ushort): int =
+  value >>> count
+
+fun shiftUnsigned(value: uint, count: int): uint =
+  value >>> count
+
+fun shiftLong(value: long, count: short): long =
+  value >>> count
+
+fun shiftUnsignedLong(value: ulong, count: int): ulong =
+  value >>> count
+
+fun combined(value: int): int =
+  (value >>> 2) >>> 1

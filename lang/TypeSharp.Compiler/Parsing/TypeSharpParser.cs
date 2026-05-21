@@ -1942,12 +1942,18 @@ public sealed class TypeSharpParser
         };
 
     private int GetCurrentBinaryPrecedence() =>
+        IsLogicalUnsignedShiftOperatorStart(Current, Peek(1), Peek(2)) ||
         IsCompositionOperatorStart(Current, Peek(1))
             ? 1
             : GetBinaryPrecedence(Current.Kind);
 
     private IReadOnlyList<SyntaxNode> ParseBinaryOperatorTokens()
     {
+        if (IsLogicalUnsignedShiftOperatorStart(Current, Peek(1), Peek(2)))
+        {
+            return [TokenNode(NextToken()), TokenNode(NextToken()), TokenNode(NextToken())];
+        }
+
         if (IsCompositionOperatorStart(Current, Peek(1)))
         {
             return [TokenNode(NextToken()), TokenNode(NextToken())];
@@ -1960,6 +1966,13 @@ public sealed class TypeSharpParser
         !HasLeadingNewline(next) &&
         ((current.Kind == SyntaxKind.GreaterToken && next.Kind == SyntaxKind.GreaterToken) ||
          (current.Kind == SyntaxKind.LessToken && next.Kind == SyntaxKind.LessToken));
+
+    private static bool IsLogicalUnsignedShiftOperatorStart(SyntaxToken current, SyntaxToken next, SyntaxToken afterNext) =>
+        !HasLeadingNewline(next) &&
+        !HasLeadingNewline(afterNext) &&
+        current.Kind == SyntaxKind.GreaterToken &&
+        next.Kind == SyntaxKind.GreaterToken &&
+        afterNext.Kind == SyntaxKind.GreaterToken;
 
     private static bool IsAssignmentOperator(SyntaxKind kind) =>
         kind is SyntaxKind.EqualsToken

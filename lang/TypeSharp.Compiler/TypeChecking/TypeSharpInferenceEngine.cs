@@ -119,13 +119,13 @@ internal sealed class TypeSharpInferenceEngine
     {
         var children = node.Children;
         var expressions = children.Where(child => !child.IsToken).ToArray();
+        if (TryInferBinaryShiftExpression(children, expressions, inferNested, out var shiftType))
+        {
+            return shiftType;
+        }
+
         if (IsCompositionExpression(children))
         {
-            if (TryInferBinaryShiftExpression(children, expressions, inferNested, out var shiftType))
-            {
-                return shiftType;
-            }
-
             foreach (var child in expressions)
             {
                 inferNested(child);
@@ -443,6 +443,11 @@ internal sealed class TypeSharpInferenceEngine
 
     private static bool IsCompositionExpression(IReadOnlyList<SyntaxNode> children)
     {
+        if (TryGetLogicalUnsignedShiftOperatorText(children, out _))
+        {
+            return false;
+        }
+
         for (var index = 0; index < children.Count - 1; index++)
         {
             if (children[index].IsToken &&
@@ -459,6 +464,11 @@ internal sealed class TypeSharpInferenceEngine
 
     private static bool TryGetShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
     {
+        if (TryGetLogicalUnsignedShiftOperatorText(children, out operatorText))
+        {
+            return true;
+        }
+
         for (var index = 0; index < children.Count - 1; index++)
         {
             if (!children[index].IsToken || !children[index + 1].IsToken)
@@ -475,6 +485,26 @@ internal sealed class TypeSharpInferenceEngine
             if (children[index].Kind == SyntaxKind.LessToken && children[index + 1].Kind == SyntaxKind.LessToken)
             {
                 operatorText = "<<";
+                return true;
+            }
+        }
+
+        operatorText = string.Empty;
+        return false;
+    }
+
+    private static bool TryGetLogicalUnsignedShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+    {
+        for (var index = 0; index + 2 < children.Count; index++)
+        {
+            if (children[index].IsToken &&
+                children[index + 1].IsToken &&
+                children[index + 2].IsToken &&
+                children[index].Kind == SyntaxKind.GreaterToken &&
+                children[index + 1].Kind == SyntaxKind.GreaterToken &&
+                children[index + 2].Kind == SyntaxKind.GreaterToken)
+            {
+                operatorText = ">>>";
                 return true;
             }
         }

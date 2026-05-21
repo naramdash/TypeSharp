@@ -5383,7 +5383,68 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0390: logical unsigned shift expressions.
+- Completed in task 0390: logical unsigned shift expressions.
+
+## Task 0390 Logical Unsigned Shift Expressions
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Added parser support for expression-level `>>>` by grouping three adjacent `GreaterToken` nodes before the existing two-token `>>` composition/shift parsing path, preserving `>>`, `<<`, `<<=`, and `>>=` behavior.
+- Added type-checker and inference support for known non-null primitive integral `left >>> count` operands using the existing shift count/result policy: small left operands promote to `int`, and `int`, `uint`, `long`, and `ulong` keep the left shape.
+- Added deterministic `TS2201` diagnostics for nullable, non-integral, enum, record, unsupported-count, and composition-shaped `>>>` operands before backend emission.
+- Added C# 7.3-compatible lowering for signed logical unsigned shifts through explicit unchecked unsigned casts plus ordinary `>>`, while unsigned `uint`/`ulong` operands continue to emit ordinary `>>`.
+- Added parser, type-checker, backend, and generated `net48` C# consumer evidence, bringing the shared catalog to 525 cases with four-shard expected counts of `132`, `131`, `131`, and `131`.
+- Kept `>>>=`, user-defined operators, enum flag algebra, imported operator overload resolution, broad assignment target analysis, and any change to existing function composition semantics out of scope.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles logical unsigned shift expression API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+npm run build          # in docs
+git diff --check
+```
+
+Result: all commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs`
+- `test/fixtures/parser/positive/0040-logical-unsigned-shift-expression`
+- `test/fixtures/diagnostics/type-checker/positive/logical-unsigned-shift-expression`
+- `test/fixtures/diagnostics/type-checker/negative/logical-unsigned-shift-invalid`
+- `test/fixtures/backend/csharp/positive/0052-logical-unsigned-shift-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `test/README.md`
+- `.github/workflows/regression.yml`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Active in task 0391: roadmap refresh after logical unsigned shift expressions.
 
 ## Verification Summary
 
@@ -5409,13 +5470,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0389 is compressed here.
+- Completed historical work through task 0390 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0390 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0391 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

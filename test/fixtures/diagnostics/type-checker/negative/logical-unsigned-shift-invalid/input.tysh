@@ -1,0 +1,40 @@
+namespace Samples.TypeChecker.LogicalUnsignedShiftInvalid
+
+record Point(X: int)
+
+enum Permission {
+  None,
+  Read
+}
+
+fun boolShift(): int =
+  true >>> false
+
+fun stringShift(): int =
+  "left" >>> 1
+
+fun nullableShift(): int {
+  let maybe: int? = 1
+  maybe >>> 1
+  0
+}
+
+fun unsupportedCount(value: int, count: uint): int =
+  value >>> count
+
+fun enumShift(): int =
+  Permission.Read >>> 1
+
+fun structuralShift(point: Point): int {
+  point >>> point
+  0
+}
+
+fun compositionShaped(): int =
+  increment >>> format
+
+fun increment(value: int): int =
+  value + 1
+
+fun format(value: int): string =
+  "x"

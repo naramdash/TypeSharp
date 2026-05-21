@@ -1,0 +1,60 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'bool' and 'bool'.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 3 },
+      "end": { "line": 11, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'string' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 14, "column": 3 },
+      "end": { "line": 14, "column": 15 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int?' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 18, "column": 3 },
+      "end": { "line": 18, "column": 14 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'.",
+      "file": "input.tysh",
+      "start": { "line": 23, "column": 3 },
+      "end": { "line": 23, "column": 18 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'Permission' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 26, "column": 3 },
+      "end": { "line": 26, "column": 24 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'Point' and 'Point'.",
+      "file": "input.tysh",
+      "start": { "line": 29, "column": 3 },
+      "end": { "line": 29, "column": 18 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found 'unknown' and 'unknown'.",
+      "file": "input.tysh",
+      "start": { "line": 34, "column": 3 },
+      "end": { "line": 34, "column": 23 }
+    }
+  ]
+}

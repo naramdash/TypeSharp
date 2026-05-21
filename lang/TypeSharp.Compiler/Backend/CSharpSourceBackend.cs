@@ -2404,6 +2404,13 @@ public static class CSharpSourceBackend
                 return EmitPipeline(expressions[0], expressions[1]);
             }
 
+            if (TryGetLogicalUnsignedShiftOperatorText(node.Children, out _) &&
+                expressions.Length == 2 &&
+                TryInferShiftExpressionType(node, out _))
+            {
+                return EmitLogicalUnsignedShift(expressions[0], expressions[1]);
+            }
+
             if (TryGetShiftOperatorText(node.Children, out var shiftOperator) &&
                 expressions.Length == 2 &&
                 TryInferShiftExpressionType(node, out _))
@@ -2418,6 +2425,23 @@ public static class CSharpSourceBackend
 
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
         }
+
+        private string EmitLogicalUnsignedShift(SyntaxNode left, SyntaxNode right)
+        {
+            var leftExpression = EmitExpression(left);
+            var rightExpression = EmitExpression(right);
+            var leftType = InferEmitterExpressionType(left);
+
+            return leftType switch
+            {
+                "uint" or "ulong" => $"{leftExpression} >> {rightExpression}",
+                "long" => $"unchecked((long)(unchecked((ulong){ParenthesizeForCastOperand(leftExpression)}) >> {rightExpression}))",
+                _ => $"unchecked((int)(unchecked((uint){ParenthesizeForCastOperand(leftExpression)}) >> {rightExpression}))"
+            };
+        }
+
+        private static string ParenthesizeForCastOperand(string expression) =>
+            expression.StartsWith("(", StringComparison.Ordinal) ? expression : $"({expression})";
 
         private string EmitPipeline(SyntaxNode input, SyntaxNode target)
         {
@@ -2508,6 +2532,11 @@ public static class CSharpSourceBackend
         {
             direction = CompositionDirection.Forward;
             var children = node.Children;
+            if (TryGetLogicalUnsignedShiftOperatorText(children, out _))
+            {
+                return false;
+            }
+
             for (var index = 0; index < children.Count - 1; index++)
             {
                 if (!children[index].IsToken || !children[index + 1].IsToken)
@@ -2535,6 +2564,11 @@ public static class CSharpSourceBackend
 
         private static bool TryGetShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
         {
+            if (TryGetLogicalUnsignedShiftOperatorText(children, out operatorText))
+            {
+                return true;
+            }
+
             for (var index = 0; index < children.Count - 1; index++)
             {
                 if (!children[index].IsToken || !children[index + 1].IsToken)
@@ -2553,6 +2587,26 @@ public static class CSharpSourceBackend
                     children[index + 1].Kind == SyntaxKind.LessToken)
                 {
                     operatorText = "<<";
+                    return true;
+                }
+            }
+
+            operatorText = string.Empty;
+            return false;
+        }
+
+        private static bool TryGetLogicalUnsignedShiftOperatorText(IReadOnlyList<SyntaxNode> children, out string operatorText)
+        {
+            for (var index = 0; index + 2 < children.Count; index++)
+            {
+                if (children[index].IsToken &&
+                    children[index + 1].IsToken &&
+                    children[index + 2].IsToken &&
+                    children[index].Kind == SyntaxKind.GreaterToken &&
+                    children[index + 1].Kind == SyntaxKind.GreaterToken &&
+                    children[index + 2].Kind == SyntaxKind.GreaterToken)
+                {
+                    operatorText = ">>>";
                     return true;
                 }
             }
