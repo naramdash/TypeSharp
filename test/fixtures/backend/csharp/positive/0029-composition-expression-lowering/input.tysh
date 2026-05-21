@@ -19,3 +19,11 @@ export let formatAfterIdentity: int -> string = identity >> format
 export let identityAfterIncrement: int -> int = increment >> identity
 
 export let countAfterArrayIdentity: int[] -> int = arrayIdentity >> arrayCount
+
+let internalFormatAfterIncrement = increment >> format
+
+let internalFormatBeforeIncrement = format << increment
+
+let internalFormatAfterIdentity = identity >> format
+
+let internalIdentityAfterIncrement = increment >> identity

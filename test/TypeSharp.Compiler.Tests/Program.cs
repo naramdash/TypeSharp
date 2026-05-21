@@ -21793,6 +21793,14 @@ static void CliBuildCompilesCompositionLowering()
             export let identityAfterIncrement: int -> int = increment >> identity
 
             export let countAfterArrayIdentity: int[] -> int = arrayIdentity >> arrayCount
+
+            let internalFormatAfterIncrement = increment >> format
+
+            let internalFormatBeforeIncrement = format << increment
+
+            let internalFormatAfterIdentity = identity >> format
+
+            let internalIdentityAfterIncrement = increment >> identity
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -21809,6 +21817,10 @@ static void CliBuildCompilesCompositionLowering()
         AssertContains("public static readonly System.Func<int, string> formatAfterIdentity = __compose2 => format(identity(__compose2));", generatedSource);
         AssertContains("public static readonly System.Func<int, int> identityAfterIncrement = __compose3 => identity(increment(__compose3));", generatedSource);
         AssertContains("public static readonly System.Func<int[], int> countAfterArrayIdentity = __compose4 => arrayCount(arrayIdentity(__compose4));", generatedSource);
+        AssertContains("internal static readonly System.Func<int, string> internalFormatAfterIncrement = __compose5 => format(increment(__compose5));", generatedSource);
+        AssertContains("internal static readonly System.Func<int, string> internalFormatBeforeIncrement = __compose6 => format(increment(__compose6));", generatedSource);
+        AssertContains("internal static readonly System.Func<int, string> internalFormatAfterIdentity = __compose7 => format(identity(__compose7));", generatedSource);
+        AssertContains("internal static readonly System.Func<int, int> internalIdentityAfterIncrement = __compose8 => identity(increment(__compose8));", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CompositionLowering.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with composition lowering.");

@@ -654,6 +654,16 @@ public static class TypeSharpTypeChecker
                     : CheckExpressionWithExpected(initializerExpression, scope, annotationKnown ? expectedType : null);
             }
 
+            if (!functionAnnotationKnown &&
+                initializerExpression is not null &&
+                IsCompositionExpression(initializerExpression) &&
+                IsPublicBoundaryDeclaration(node))
+            {
+                ReportMismatch(
+                    node,
+                    "Public direct composition values require an explicit function type annotation.");
+            }
+
             if (functionAnnotationKnown && initializerExpression is not null)
             {
                 CheckCompositionFunctionTypeAnnotation(

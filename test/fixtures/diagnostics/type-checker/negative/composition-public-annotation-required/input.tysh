@@ -1,0 +1,15 @@
+namespace Samples.CompositionPublicAnnotationRequired
+
+fun increment(value: int): int = value + 1
+
+fun format(value: int): string = value.ToString()
+
+export let exportedComposition = increment >> format
+
+let localAliasComposition = increment >> format
+
+export { localAliasComposition as PublicComposition }
+
+let localNamedComposition = increment >> format
+
+export { localNamedComposition }

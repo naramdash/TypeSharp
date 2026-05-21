@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0364-direct-composition-value-inference-slice.md](0364-direct-composition-value-inference-slice.md) |
-| Active summary     | 0364 Direct composition value inference slice |
-| Completed range    | 0001-0363                         |
+| Active task packet | [0365-roadmap-refresh-after-direct-composition-value-inference.md](0365-roadmap-refresh-after-direct-composition-value-inference.md) |
+| Active summary     | 0365 Roadmap refresh after direct composition value inference |
+| Completed range    | 0001-0364                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0363 roadmap refresh | 0364 Direct composition value inference slice | [0364-direct-composition-value-inference-slice.md](0364-direct-composition-value-inference-slice.md) | Infer concrete delegate types for unannotated non-exported direct named-function composition values when the composed signature is fully known. |
+| Q1       | In Progress | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference | [0365-roadmap-refresh-after-direct-composition-value-inference.md](0365-roadmap-refresh-after-direct-composition-value-inference.md) | Recheck official source signals after private direct composition value inference and select the next bounded implementation slice. |
+| Q2       | Done        | Task 0363 roadmap refresh | 0364 Direct composition value inference slice | [tasks-rollup.md#task-0364-direct-composition-value-inference-slice](tasks-rollup.md#task-0364-direct-composition-value-inference-slice) | Inferred concrete delegates for unannotated non-exported direct named-function composition values with fully known signatures, while keeping public ABI inference closed. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0363 Roadmap refresh after composition annotation compatibility | [tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility](tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility) | Rechecked official source signals after explicit composition annotation compatibility, confirmed the baseline, and selected bounded private direct composition value inference. |
 | Q2       | Done        | Task 0361 roadmap refresh | 0362 Composition function-type annotation compatibility slice | [tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice](tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice) | Validated explicit function-type annotations on direct named-function composition values before C# emission, without enabling unannotated composition type inference. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0361 Roadmap refresh after direct generic composition inference | [tasks-rollup.md#task-0361-roadmap-refresh-after-direct-generic-composition-inference](tasks-rollup.md#task-0361-roadmap-refresh-after-direct-generic-composition-inference) | Rechecked official source signals after direct generic composition inference, confirmed the baseline, and selected bounded explicit composition annotation compatibility. |
-| Q2       | Done        | Task 0359 roadmap refresh | 0360 Direct generic composition inference slice | [tasks-rollup.md#task-0360-direct-generic-composition-inference-slice](tasks-rollup.md#task-0360-direct-generic-composition-inference-slice) | Extended direct named-function composition compatibility checks to bounded TypeSharp generic unary targets without changing C# lowering. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

@@ -100,6 +100,7 @@ public static class CSharpSourceBackend
         private readonly Dictionary<string, UnionShape> _unions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseFactories = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _unionCaseValues = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, CSharpFunctionSignature> _functionSignatures = new(StringComparer.Ordinal);
         private HashSet<string> _localExportedNames = new(StringComparer.Ordinal);
         private Dictionary<string, string> _valueTypes = new(StringComparer.Ordinal);
         private int _temporaryIndex;
@@ -206,6 +207,11 @@ public static class CSharpSourceBackend
                 {
                     _enums[enumImportShape.LocalName] = new EnumShape(enumImportShape.LocalName, enumImportShape.Members);
                 }
+            }
+
+            foreach (var function in functions)
+            {
+                RegisterFunctionSignature(function);
             }
 
             foreach (var value in values)
@@ -1142,7 +1148,7 @@ public static class CSharpSourceBackend
         {
             var targetName = GetLocalDeclarationName(exportAlias.Value);
             var initializer = GetInitializerExpression(exportAlias.Value);
-            var type = GetValueDeclarationType(exportAlias.Value, initializer);
+            var type = GetValueDeclarationType(exportAlias.Value, initializer, allowDirectCompositionInference: false);
 
             _builder.AppendLine($"        public static {type} {exportAlias.ExportedName}");
             _builder.AppendLine("        {");
@@ -1372,6 +1378,21 @@ public static class CSharpSourceBackend
             return parameters.Length == 0 ? string.Empty : $"<{string.Join(", ", parameters)}>";
         }
 
+        private static IReadOnlyList<string> GetTypeParameterNames(SyntaxNode declaration)
+        {
+            var typeParameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeParameterList);
+            if (typeParameterList is null)
+            {
+                return [];
+            }
+
+            return typeParameterList.Children
+                .Where(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                .Select(child => child.Text ?? string.Empty)
+                .Where(text => text.Length > 0)
+                .ToArray();
+        }
+
         private void EmitWhereClauses(SyntaxNode declaration, string indent)
         {
             foreach (var whereClause in GetWhereClauses(declaration))
@@ -1595,6 +1616,20 @@ public static class CSharpSourceBackend
             }
 
             _valueTypes[name] = GetValueDeclarationSourceType(node, GetInitializerExpression(node));
+        }
+
+        private void RegisterFunctionSignature(SyntaxNode node)
+        {
+            var name = GetDeclarationName(node);
+            if (name.Length == 0)
+            {
+                return;
+            }
+
+            _functionSignatures[name] = new CSharpFunctionSignature(
+                GetParameters(node).Select(parameter => parameter.Type).ToArray(),
+                GetReturnType(node),
+                GetTypeParameterNames(node));
         }
 
         private string EmitExpression(SyntaxNode? node, string? expectedType = null)
@@ -2242,6 +2277,18 @@ public static class CSharpSourceBackend
             left = expressions[0];
             right = expressions[1];
             return true;
+        }
+
+        private static bool TryGetDirectIdentifierName(SyntaxNode node, out string name)
+        {
+            name = string.Empty;
+            if (node.Kind != SyntaxKind.IdentifierExpression)
+            {
+                return false;
+            }
+
+            name = GetIdentifierText(node);
+            return name.Length > 0;
         }
 
         private static bool TryGetCompositionDirection(SyntaxNode node, out CompositionDirection direction)
@@ -3387,7 +3434,10 @@ public static class CSharpSourceBackend
             return InferLiteralType(initializer);
         }
 
-        private string GetValueDeclarationType(SyntaxNode value, SyntaxNode? initializer)
+        private string GetValueDeclarationType(
+            SyntaxNode value,
+            SyntaxNode? initializer,
+            bool allowDirectCompositionInference = true)
         {
             if (TryGetDirectTypeAnnotation(value, out var annotation))
             {
@@ -3397,6 +3447,13 @@ public static class CSharpSourceBackend
             if (TryInferLambdaFunctionType(initializer, out var lambdaType))
             {
                 return lambdaType;
+            }
+
+            if (allowDirectCompositionInference &&
+                !IsPublicDeclaration(value) &&
+                TryInferDirectCompositionFunctionType(initializer, out var compositionType))
+            {
+                return compositionType;
             }
 
             if (initializer?.Kind == SyntaxKind.CollectionExpression)
@@ -3411,7 +3468,10 @@ public static class CSharpSourceBackend
             return InferLiteralType(initializer);
         }
 
-        private string GetValueDeclarationSourceType(SyntaxNode value, SyntaxNode? initializer)
+        private string GetValueDeclarationSourceType(
+            SyntaxNode value,
+            SyntaxNode? initializer,
+            bool allowDirectCompositionInference = true)
         {
             if (TryGetDirectTypeAnnotation(value, out var annotation))
             {
@@ -3421,6 +3481,13 @@ public static class CSharpSourceBackend
             if (TryInferLambdaFunctionType(initializer, out var lambdaType))
             {
                 return lambdaType;
+            }
+
+            if (allowDirectCompositionInference &&
+                !IsPublicDeclaration(value) &&
+                TryInferDirectCompositionFunctionType(initializer, out var compositionType))
+            {
+                return compositionType;
             }
 
             if (initializer?.Kind == SyntaxKind.CollectionExpression)
@@ -3433,6 +3500,323 @@ public static class CSharpSourceBackend
             }
 
             return InferLiteralType(initializer);
+        }
+
+        private bool TryInferDirectCompositionFunctionType(SyntaxNode? initializer, out string type)
+        {
+            type = string.Empty;
+            if (initializer is null ||
+                !TryGetCompositionExpression(initializer, out var leftExpression, out var rightExpression, out var direction) ||
+                !TryGetDirectIdentifierName(leftExpression, out var leftName) ||
+                !TryGetDirectIdentifierName(rightExpression, out var rightName) ||
+                !_functionSignatures.TryGetValue(leftName, out var leftFunction) ||
+                !_functionSignatures.TryGetValue(rightName, out var rightFunction) ||
+                !TryGetUnaryFunctionSignature(leftFunction, out var leftParameterType, out var leftReturnType) ||
+                !TryGetUnaryFunctionSignature(rightFunction, out var rightParameterType, out var rightReturnType))
+            {
+                return false;
+            }
+
+            var firstFunction = leftFunction;
+            var firstParameterType = leftParameterType;
+            var firstReturnType = leftReturnType;
+            var secondFunction = rightFunction;
+            var secondParameterType = rightParameterType;
+            var secondReturnType = rightReturnType;
+            if (direction == CompositionDirection.Backward)
+            {
+                firstFunction = rightFunction;
+                firstParameterType = rightParameterType;
+                firstReturnType = rightReturnType;
+                secondFunction = leftFunction;
+                secondParameterType = leftParameterType;
+                secondReturnType = leftReturnType;
+            }
+
+            ResolveCompositionGenericSignatureTypes(
+                firstFunction,
+                firstParameterType,
+                firstReturnType,
+                secondFunction,
+                secondParameterType,
+                secondReturnType,
+                out firstParameterType,
+                out firstReturnType,
+                out secondParameterType,
+                out secondReturnType);
+
+            return TypesMatch(firstReturnType, secondParameterType) &&
+                TryBuildUnaryDelegateType(firstParameterType, secondReturnType, out type);
+        }
+
+        private static bool TryGetUnaryFunctionSignature(
+            CSharpFunctionSignature function,
+            out string parameterType,
+            out string returnType)
+        {
+            parameterType = string.Empty;
+            returnType = function.ReturnType;
+            if (function.ParameterTypes.Count != 1 ||
+                string.IsNullOrWhiteSpace(function.ParameterTypes[0]) ||
+                string.IsNullOrWhiteSpace(returnType))
+            {
+                return false;
+            }
+
+            parameterType = function.ParameterTypes[0];
+            return true;
+        }
+
+        private static void ResolveCompositionGenericSignatureTypes(
+            CSharpFunctionSignature firstFunction,
+            string firstParameterType,
+            string firstReturnType,
+            CSharpFunctionSignature secondFunction,
+            string secondParameterType,
+            string secondReturnType,
+            out string resolvedFirstParameterType,
+            out string resolvedFirstReturnType,
+            out string resolvedSecondParameterType,
+            out string resolvedSecondReturnType)
+        {
+            var firstTypeParameterNames = new HashSet<string>(firstFunction.TypeParameters, StringComparer.Ordinal);
+            var secondTypeParameterNames = new HashSet<string>(secondFunction.TypeParameters, StringComparer.Ordinal);
+            var firstSubstitutions = new Dictionary<string, string>(StringComparer.Ordinal);
+            var secondSubstitutions = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            TryInferCompositionTypeArgument(
+                firstReturnType,
+                secondParameterType,
+                firstTypeParameterNames,
+                secondTypeParameterNames,
+                firstSubstitutions);
+            TryInferCompositionTypeArgument(
+                secondParameterType,
+                firstReturnType,
+                secondTypeParameterNames,
+                firstTypeParameterNames,
+                secondSubstitutions);
+
+            resolvedFirstParameterType = SubstituteGenericType(firstParameterType, firstSubstitutions, firstTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            resolvedFirstReturnType = SubstituteGenericType(firstReturnType, firstSubstitutions, firstTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            resolvedSecondParameterType = SubstituteGenericType(secondParameterType, secondSubstitutions, secondTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            resolvedSecondReturnType = SubstituteGenericType(secondReturnType, secondSubstitutions, secondTypeParameterNames, unresolvedTypeParameterIsUnknown: true);
+        }
+
+        private static void TryInferCompositionTypeArgument(
+            string genericShape,
+            string sourceType,
+            IReadOnlySet<string> typeParameterNames,
+            IReadOnlySet<string> oppositeTypeParameterNames,
+            Dictionary<string, string> substitutions)
+        {
+            if (typeParameterNames.Count == 0 ||
+                !TryInferDirectGenericArgument(
+                    genericShape,
+                    sourceType,
+                    typeParameterNames,
+                    out var typeParameterName,
+                    out var inferredType) ||
+                GenericTypeReferencesAny(inferredType, oppositeTypeParameterNames, oppositeTypeParameterNames))
+            {
+                return;
+            }
+
+            substitutions[typeParameterName] = inferredType;
+        }
+
+        private static bool TryInferDirectGenericArgument(
+            string parameterType,
+            string argumentType,
+            IReadOnlySet<string> typeParameterNames,
+            out string typeParameterName,
+            out string inferredType)
+        {
+            typeParameterName = string.Empty;
+            inferredType = string.Empty;
+            if (string.IsNullOrWhiteSpace(parameterType) || string.IsNullOrWhiteSpace(argumentType))
+            {
+                return false;
+            }
+
+            if (TryGetSimpleGenericParameterName(parameterType, typeParameterNames, out typeParameterName))
+            {
+                inferredType = argumentType;
+                return true;
+            }
+
+            if (TryGetArrayElementTypeName(parameterType, out var parameterElementTypeName) &&
+                TryGetArrayElementTypeName(argumentType, out var argumentElementTypeName))
+            {
+                return TryInferDirectGenericArgument(
+                    parameterElementTypeName,
+                    argumentElementTypeName,
+                    typeParameterNames,
+                    out typeParameterName,
+                    out inferredType);
+            }
+
+            if (TryGetSingleGenericArgument(parameterType, out var parameterGenericName, out var parameterArgument) &&
+                TryGetSingleGenericArgument(argumentType, out var argumentGenericName, out var argumentArgument) &&
+                TypesMatch(argumentGenericName, parameterGenericName))
+            {
+                return TryInferDirectGenericArgument(
+                    parameterArgument,
+                    argumentArgument,
+                    typeParameterNames,
+                    out typeParameterName,
+                    out inferredType);
+            }
+
+            return false;
+        }
+
+        private static bool GenericTypeReferencesAny(
+            string type,
+            IReadOnlySet<string> candidates,
+            IReadOnlySet<string> typeParameterNames)
+        {
+            foreach (var candidate in candidates)
+            {
+                if (GenericTypeReferencesParameter(type, candidate, typeParameterNames))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool GenericTypeReferencesParameter(
+            string type,
+            string candidate,
+            IReadOnlySet<string> typeParameterNames)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+            {
+                return false;
+            }
+
+            if (TryGetSimpleGenericParameterName(type, typeParameterNames, out var typeParameterName))
+            {
+                return string.Equals(typeParameterName, candidate, StringComparison.Ordinal);
+            }
+
+            if (TryGetArrayElementTypeName(type, out var elementTypeName))
+            {
+                return GenericTypeReferencesParameter(elementTypeName, candidate, typeParameterNames);
+            }
+
+            return TryGetSingleGenericArgument(type, out _, out var argument) &&
+                GenericTypeReferencesParameter(argument, candidate, typeParameterNames);
+        }
+
+        private static string SubstituteGenericType(
+            string type,
+            IReadOnlyDictionary<string, string> substitutions,
+            IReadOnlySet<string> typeParameterNames,
+            bool unresolvedTypeParameterIsUnknown)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+            {
+                return string.Empty;
+            }
+
+            if (TryGetSimpleGenericParameterName(type, typeParameterNames, out var typeParameterName))
+            {
+                if (!substitutions.TryGetValue(typeParameterName, out var substitutedType))
+                {
+                    return unresolvedTypeParameterIsUnknown ? string.Empty : type;
+                }
+
+                return substitutedType;
+            }
+
+            if (TryGetArrayElementTypeName(type, out var elementTypeName))
+            {
+                var substitutedElementType = SubstituteGenericType(
+                    elementTypeName,
+                    substitutions,
+                    typeParameterNames,
+                    unresolvedTypeParameterIsUnknown);
+                return substitutedElementType.Length == 0 ? string.Empty : $"{substitutedElementType}[]";
+            }
+
+            if (TryGetSingleGenericArgument(type, out var genericName, out var argument))
+            {
+                var substitutedArgument = SubstituteGenericType(
+                    argument,
+                    substitutions,
+                    typeParameterNames,
+                    unresolvedTypeParameterIsUnknown);
+                return substitutedArgument.Length == 0 ? string.Empty : $"{genericName}<{substitutedArgument}>";
+            }
+
+            return type;
+        }
+
+        private static bool TryBuildUnaryDelegateType(string parameterType, string returnType, out string type)
+        {
+            type = string.Empty;
+            if (string.IsNullOrWhiteSpace(parameterType) ||
+                string.IsNullOrWhiteSpace(returnType) ||
+                string.Equals(parameterType, "void", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            type = string.Equals(returnType, "void", StringComparison.Ordinal)
+                ? $"System.Action<{parameterType}>"
+                : $"System.Func<{parameterType}, {returnType}>";
+            return true;
+        }
+
+        private static bool TryGetSimpleGenericParameterName(
+            string type,
+            IReadOnlySet<string> typeParameterNames,
+            out string typeParameterName)
+        {
+            typeParameterName = type.Trim();
+            return typeParameterNames.Contains(typeParameterName);
+        }
+
+        private static bool TryGetArrayElementTypeName(string type, out string elementTypeName)
+        {
+            elementTypeName = string.Empty;
+            var trimmed = type.Trim();
+            if (!trimmed.EndsWith("[]", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            elementTypeName = trimmed[..^2];
+            return elementTypeName.Length > 0;
+        }
+
+        private static bool TypesMatch(string left, string right)
+        {
+            if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+            {
+                return false;
+            }
+
+            return string.Equals(left, right, StringComparison.Ordinal) ||
+                string.Equals(GetUnqualifiedTypeName(left), right, StringComparison.Ordinal) ||
+                string.Equals(left, GetUnqualifiedTypeName(right), StringComparison.Ordinal) ||
+                string.Equals(StripGenericArity(left), StripGenericArity(right), StringComparison.Ordinal) ||
+                string.Equals(GetUnqualifiedTypeName(StripGenericArity(left)), GetUnqualifiedTypeName(StripGenericArity(right)), StringComparison.Ordinal);
+        }
+
+        private static string GetUnqualifiedTypeName(string name)
+        {
+            var index = name.LastIndexOf('.');
+            return index < 0 ? name : name[(index + 1)..];
+        }
+
+        private static string StripGenericArity(string name)
+        {
+            var index = name.IndexOf('`', StringComparison.Ordinal);
+            return index < 0 ? name : name[..index];
         }
 
         private static bool TryInferLambdaFunctionType(SyntaxNode? initializer, out string type)
@@ -4098,6 +4482,9 @@ public static class CSharpSourceBackend
                 ? "public"
                 : "internal";
 
+        private bool IsPublicDeclaration(SyntaxNode node) =>
+            string.Equals(GetVisibility(node), "public", StringComparison.Ordinal);
+
         private static HashSet<string> CollectLocalExportedNames(SyntaxNode root)
         {
             var names = new HashSet<string>(StringComparer.Ordinal);
@@ -4754,6 +5141,11 @@ public static class CSharpSourceBackend
         }
 
         private readonly record struct CSharpParameter(string Type, string Name, string SourceType);
+
+        private readonly record struct CSharpFunctionSignature(
+            IReadOnlyList<string> ParameterTypes,
+            string ReturnType,
+            IReadOnlyList<string> TypeParameters);
 
         private readonly record struct RecordShape(string Name, IReadOnlyList<CSharpParameter> Parameters);
 

@@ -4034,6 +4034,54 @@ Remaining:
 
 - Unannotated composition expression function-type inference, public ABI inference for composition expressions, imported C# composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0364 Direct Composition Value Inference Slice
+
+Completed implementation work established:
+
+- Added backend-local direct TypeSharp function signature tracking for top-level functions before value emission.
+- Inferred concrete generated delegate types for unannotated non-exported top-level direct composition values shaped like `let composed = f >> g` and `let composed = g << f` when both operands are direct TypeSharp-declared unary functions and the bounded generic edge substitution yields a fully known input/result signature.
+- Emitted representable private/internal composed values as `System.Func<TInput, TResult>` or `System.Action<TInput>` instead of `object`, while leaving unresolved, imported, nested, higher-order, and public ABI cases conservative.
+- Reused the bounded direct generic composition edge inference shapes for simple type parameters, arrays, and matching single-argument generic wrappers.
+- Added `TS2201` validation for public/exported direct composition values that omit an explicit function type annotation, keeping public ABI inference closed.
+- Extended the C# backend composition fixture and CLI composition smoke to cover unannotated non-exported concrete delegate lowering, including forward, backward, and bounded generic identity-edge cases.
+- Added a negative type-checker fixture for public direct composition values that require explicit function type annotations.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the completed behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles composition lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
+- `test/fixtures/diagnostics/type-checker/negative/composition-public-annotation-required`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Roadmap refresh after private direct composition value inference is active in task 0365. Exported public ABI inference for composition expressions, imported C# composition targets, nested/higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Task 0363 Roadmap Refresh After Composition Annotation Compatibility
 
 Completed roadmap refresh work established:
@@ -4096,13 +4144,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0363 is compressed here.
+- Completed historical work through task 0364 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0364 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0365 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

@@ -14,6 +14,14 @@ namespace Samples.Composition
 
         public static readonly System.Func<int[], int> countAfterArrayIdentity = __compose4 => arrayCount(arrayIdentity(__compose4));
 
+        internal static readonly System.Func<int, string> internalFormatAfterIncrement = __compose5 => format(increment(__compose5));
+
+        internal static readonly System.Func<int, string> internalFormatBeforeIncrement = __compose6 => format(increment(__compose6));
+
+        internal static readonly System.Func<int, string> internalFormatAfterIdentity = __compose7 => format(identity(__compose7));
+
+        internal static readonly System.Func<int, int> internalIdentityAfterIncrement = __compose8 => identity(increment(__compose8));
+
         public static int increment(int value)
         {
             return value + 1;
