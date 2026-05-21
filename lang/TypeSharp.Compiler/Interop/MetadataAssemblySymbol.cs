@@ -32,6 +32,10 @@ public sealed record MetadataTypeSymbol(
 
     public IReadOnlyList<string> EnumMembers { get; init; } = [];
 
+    public string? EnumUnderlyingTypeName { get; init; }
+
+    public IReadOnlyDictionary<string, string> EnumMemberValues { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
     public bool HasPublicParameterlessConstructor { get; init; }
 
     public IReadOnlyList<MetadataMethodSymbol> Constructors { get; init; } = [];
@@ -77,7 +81,10 @@ public sealed record MetadataFieldSymbol(
     string Type,
     bool IsStatic,
     bool IsLiteral,
-    bool IsReadOnly = false);
+    bool IsReadOnly = false)
+{
+    public string? LiteralValue { get; init; }
+}
 
 public sealed record MetadataEventSymbol(
     string Name,

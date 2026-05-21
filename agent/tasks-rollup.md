@@ -2389,7 +2389,44 @@ Primary evidence:
 
 Remaining:
 
-- Imported C# enum numeric metadata capture is active in task 0324. Flag semantics, enum member attributes, arbitrary TypeSharp-owned computed enum expressions, and richer pattern algebra remain future work.
+- Imported C# enum numeric metadata capture is complete in task 0324. Flag semantics, enum member attributes, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, and richer pattern algebra remain future work.
+
+## Task 0324 Imported Enum Numeric Metadata Slice
+
+Completed implementation work:
+
+- Added imported C# enum underlying type metadata to `MetadataTypeSymbol`.
+- Added field literal value metadata and populated deterministic imported enum member numeric values from ECMA-335 constant blobs.
+- Preserved existing imported enum match exhaustiveness and generated C# lowering behavior as name/member based.
+- Extended local `net48` metadata reader coverage with a `byte`-backed imported enum and deterministic `Name=Value` assertions.
+- Updated .NET interop, type-system, feature-status, lowering, reference, work-ledger, tasks, and traceability docs for the metadata-only boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports imported C# enum match exhaustiveness"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported C# enum match exhaustiveness"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [MetadataAssemblySymbol.cs](../lang/TypeSharp.Compiler/Interop/MetadataAssemblySymbol.cs)
+- [TypeSharpMetadataReader.cs](../lang/TypeSharp.Compiler/Interop/TypeSharpMetadataReader.cs)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+
+Remaining:
+
+- Flag semantics, enum member attributes, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
 
 ## Verification Summary
 

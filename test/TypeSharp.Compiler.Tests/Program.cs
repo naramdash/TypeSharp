@@ -2823,6 +2823,13 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertTrue(legacyColor.IsEnum, "LegacyColor should be marked as enum metadata.");
         AssertTrue(legacyColor.IsValueType, "LegacyColor enum should remain value-type metadata.");
         AssertSequence(["Red", "Green", "Blue"], legacyColor.EnumMembers.ToArray());
+        AssertEqual("byte", legacyColor.EnumUnderlyingTypeName);
+        AssertSequence(
+            ["Blue=4", "Green=2", "Red=1"],
+            legacyColor.EnumMemberValues
+                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                .Select(pair => $"{pair.Key}={pair.Value}")
+                .ToArray());
 
         var legacyExtensions = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyExtensions"), "LegacyExtensions metadata should be present.");
         var shout = Require(legacyExtensions.Methods.SingleOrDefault(method => method.Name == "Shout"), "LegacyExtensions.Shout metadata should be present.");
@@ -22664,11 +22671,11 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
             }
 
-            public enum LegacyColor
+            public enum LegacyColor : byte
             {
-                Red,
-                Green,
-                Blue
+                Red = 1,
+                Green = 2,
+                Blue = 4
             }
 
             public static class LegacyParams

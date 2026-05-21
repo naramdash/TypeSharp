@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0324-imported-enum-numeric-metadata-slice.md](0324-imported-enum-numeric-metadata-slice.md) |
-| Active summary     | Capture imported C# enum underlying type and literal numeric member values in metadata without changing TypeSharp enum matching or flag semantics. |
-| Completed range    | 0001-0323                         |
+| Active task packet | None |
+| Active summary     | No active task; apply the queue/checklist/roadmap selection rules on the next cycle. |
+| Completed range    | 0001-0324                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q3       | In Progress | Task 0323 roadmap refresh | 0324 Imported enum numeric metadata slice | [0324-imported-enum-numeric-metadata-slice.md](0324-imported-enum-numeric-metadata-slice.md) | Capture imported C# enum underlying type and literal member values as metadata for future interop decisions without adding flags, numeric pattern algebra, or TypeSharp-owned computed enum expressions. |
+| Q3       | Done        | Task 0323 roadmap refresh | 0324 Imported enum numeric metadata slice | [tasks-rollup.md#task-0324-imported-enum-numeric-metadata-slice](tasks-rollup.md#task-0324-imported-enum-numeric-metadata-slice) | Captured imported C# enum underlying type and literal member values as metadata for future interop decisions without adding flags, numeric pattern algebra, or TypeSharp-owned computed enum expressions. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0323 Roadmap refresh after enum member aliases | [tasks-rollup.md#task-0323-roadmap-refresh-after-enum-member-aliases](tasks-rollup.md#task-0323-roadmap-refresh-after-enum-member-aliases) | Rechecked official source signals after enum member aliases, confirmed the baseline, and selected imported enum numeric metadata as the next bounded implementation slice. |
 | Q2       | Done        | Task 0321 roadmap refresh | 0322 Explicit enum member aliases slice | [tasks-rollup.md#task-0322-explicit-enum-member-aliases-slice](tasks-rollup.md#task-0322-explicit-enum-member-aliases-slice) | Added a bounded TypeSharp-owned enum alias form such as `Crimson = Red` without taking on computed enum expressions, flags, attributes, or imported enum numeric metadata. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0321 Roadmap refresh after enum numeric range validation | [tasks-rollup.md#task-0321-roadmap-refresh-after-enum-numeric-range-validation](tasks-rollup.md#task-0321-roadmap-refresh-after-enum-numeric-range-validation) | Rechecked official source signals after enum numeric range validation, confirmed the baseline, and selected explicit enum member aliases as the next bounded implementation slice. |

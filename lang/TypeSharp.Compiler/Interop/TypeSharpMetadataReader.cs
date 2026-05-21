@@ -1,3 +1,4 @@
+using System.Globalization;
 using TypeSharp.Compiler.Diagnostics;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
@@ -107,6 +108,8 @@ public static class TypeSharpMetadataReader
                     IsInterface = type.Attributes.HasFlag(System.Reflection.TypeAttributes.Interface),
                     IsEnum = isEnum,
                     EnumMembers = isEnum ? GetEnumMemberNames(fields) : [],
+                    EnumUnderlyingTypeName = isEnum ? GetEnumUnderlyingTypeName(fields) : null,
+                    EnumMemberValues = isEnum ? GetEnumMemberValues(fields) : new Dictionary<string, string>(StringComparer.Ordinal),
                     IsValueType = string.Equals(baseTypeName, "System.ValueType", StringComparison.Ordinal) ||
                         string.Equals(baseTypeName, "System.Enum", StringComparison.Ordinal)
                 });
@@ -325,7 +328,10 @@ public static class TypeSharpMetadataReader
                 signature.Name,
                 field.Attributes.HasFlag(System.Reflection.FieldAttributes.Static),
                 field.Attributes.HasFlag(System.Reflection.FieldAttributes.Literal),
-                field.Attributes.HasFlag(System.Reflection.FieldAttributes.InitOnly)));
+                field.Attributes.HasFlag(System.Reflection.FieldAttributes.InitOnly))
+            {
+                LiteralValue = ReadLiteralValue(reader, field)
+            });
         }
 
         return fields;
@@ -339,6 +345,46 @@ public static class TypeSharpMetadataReader
                 !string.Equals(field.Name, "value__", StringComparison.Ordinal))
             .Select(field => field.Name)
             .ToArray();
+
+    private static string? GetEnumUnderlyingTypeName(IReadOnlyList<MetadataFieldSymbol> fields) =>
+        fields
+            .FirstOrDefault(field => string.Equals(field.Name, "value__", StringComparison.Ordinal))
+            ?.Type;
+
+    private static IReadOnlyDictionary<string, string> GetEnumMemberValues(IReadOnlyList<MetadataFieldSymbol> fields) =>
+        fields
+            .Where(field =>
+                field.IsStatic &&
+                field.IsLiteral &&
+                field.LiteralValue is { Length: > 0 } &&
+                !string.Equals(field.Name, "value__", StringComparison.Ordinal))
+            .ToDictionary(field => field.Name, field => field.LiteralValue!, StringComparer.Ordinal);
+
+    private static string? ReadLiteralValue(MetadataReader reader, FieldDefinition field)
+    {
+        var constantHandle = field.GetDefaultValue();
+        if (constantHandle.IsNil)
+        {
+            return null;
+        }
+
+        var constant = reader.GetConstant(constantHandle);
+        var value = reader.GetBlobReader(constant.Value);
+        return constant.TypeCode switch
+        {
+            ConstantTypeCode.Boolean => value.ReadBoolean().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Char => ((int)value.ReadUInt16()).ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.SByte => value.ReadSByte().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Byte => value.ReadByte().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Int16 => value.ReadInt16().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.UInt16 => value.ReadUInt16().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Int32 => value.ReadInt32().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.UInt32 => value.ReadUInt32().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Int64 => value.ReadInt64().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.UInt64 => value.ReadUInt64().ToString(CultureInfo.InvariantCulture),
+            _ => null
+        };
+    }
 
     private static IReadOnlyList<MetadataEventSymbol> ReadPublicEvents(MetadataReader reader, TypeDefinition type)
     {

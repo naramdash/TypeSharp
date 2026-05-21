@@ -59,7 +59,7 @@ Rules:
 
 - `assemblies` names .NET Framework reference assemblies or framework/GAC assemblies.
 - `paths` names explicit repository or build-environment DLL paths compatible with `net48`.
-- The metadata reader indexes available `net48` framework reference assemblies and local DLL public top-level types plus selected public members, including finite public enum member names for imported C# enums.
+- The metadata reader indexes available `net48` framework reference assemblies and local DLL public top-level types plus selected public members, including finite public enum member names, underlying type names, and literal numeric member values for imported C# enums.
 - Missing framework/local metadata is reported before generated C# emission when the compiler has enough metadata context. Examples include `TS2408` for missing framework types, `TS2407` for missing framework static methods, and `TS2409` for missing framework static members.
 - `packages` is a reserved manifest surface. The current compiler does not restore NuGet packages and reports `TS2405`.
 - Future package support must include `net48` asset selection, transitive dependencies, checked-in lock files, locked-mode CI, package source mapping, vulnerability audit policy, license inventory, checksum/signature policy, and offline-cache behavior.
