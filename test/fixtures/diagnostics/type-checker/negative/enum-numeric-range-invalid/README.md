@@ -1,1 +1,1 @@
-Reports enum member numeric initializers that cannot fit the selected enum underlying type.
+Reports enum member numeric initializers and composite numeric operands that cannot fit the selected enum underlying type.

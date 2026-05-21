@@ -39,6 +39,14 @@
       "file": "input.tysh",
       "start": { "line": 14, "column": 17 },
       "end": { "line": 14, "column": 21 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member value '300' is outside the range of underlying type 'byte'.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 21 },
+      "end": { "line": 19, "column": 32 }
     }
   ]
 }

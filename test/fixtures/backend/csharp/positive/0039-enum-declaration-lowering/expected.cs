@@ -19,6 +19,7 @@ namespace Samples.Enums
         Crimson = Red,
         [ObsoleteAttribute("Use Blue instead.")]
         Green,
-        Blue = 4
+        Blue = 4,
+        Purple = Red | Blue
     }
 }

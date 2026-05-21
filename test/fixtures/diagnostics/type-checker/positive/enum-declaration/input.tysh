@@ -4,7 +4,8 @@ enum Color : byte {
   Red = 1,
   Crimson = Red,
   Green,
-  Blue = 4
+  Blue = 4,
+  Purple = Red | Blue
 }
 
 let favorite: Color = Color.Green

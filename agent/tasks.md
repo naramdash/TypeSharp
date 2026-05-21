@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0328-enum-composite-member-expressions-slice.md](0328-enum-composite-member-expressions-slice.md) |
-| Active summary     | Parse, check, and lower TypeSharp-owned enum composite member initializers such as `ReadWrite = Read \| Write` without enabling general expression bitwise operators or flag-aware matching. |
-| Completed range    | 0001-0327                         |
+| Active task packet | None |
+| Active summary     | No active task; apply the queue/checklist/roadmap selection rules on the next cycle. |
+| Completed range    | 0001-0328                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0327 roadmap refresh | 0328 Enum composite member expressions slice | [0328-enum-composite-member-expressions-slice.md](0328-enum-composite-member-expressions-slice.md) | Add enum initializer-local composite `\|` forms over previously declared same-enum members and integer literals without general bitwise expressions, flag algebra, or numeric pattern algebra. |
+| Q2       | Done        | Task 0327 roadmap refresh | 0328 Enum composite member expressions slice | [tasks-rollup.md#task-0328-enum-composite-member-expressions-slice](tasks-rollup.md#task-0328-enum-composite-member-expressions-slice) | Added enum initializer-local composite `\|` forms over previously declared same-enum members and integer literals without general bitwise expressions, flag algebra, or numeric pattern algebra. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0327 Roadmap refresh after enum attribute lowering | [tasks-rollup.md#task-0327-roadmap-refresh-after-enum-attribute-lowering](tasks-rollup.md#task-0327-roadmap-refresh-after-enum-attribute-lowering) | Rechecked official source signals after enum attribute lowering, confirmed the baseline, and selected enum composite member expressions as the next bounded implementation slice. |
 | Q3       | Done        | Task 0325 roadmap refresh | 0326 Enum attribute lowering slice | [tasks-rollup.md#task-0326-enum-attribute-lowering-slice](tasks-rollup.md#task-0326-enum-attribute-lowering-slice) | Lowered TypeSharp-owned enum declaration/member attributes, including `[FlagsAttribute]` shape, without implementing flag algebra, numeric pattern algebra, or broad attribute target validation. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0325 Roadmap refresh after imported enum numeric metadata | [tasks-rollup.md#task-0325-roadmap-refresh-after-imported-enum-numeric-metadata](tasks-rollup.md#task-0325-roadmap-refresh-after-imported-enum-numeric-metadata) | Rechecked official source signals after imported enum numeric metadata, confirmed the baseline, and selected enum attribute lowering as the next bounded implementation slice. |

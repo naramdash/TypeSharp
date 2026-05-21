@@ -19706,9 +19706,11 @@ static void CliBuildCompilesEnumDeclarationApi()
             [FlagsAttribute]
             public enum Color : byte {
               Red = 1,
+              Crimson = Red,
               [ObsoleteAttribute("Use Blue instead.")]
               Green,
-              Blue = 4
+              Blue = 4,
+              Purple = Red | Blue
             }
 
             export fun favorite(): Color =
@@ -19728,8 +19730,10 @@ static void CliBuildCompilesEnumDeclarationApi()
         AssertContains("[FlagsAttribute]", generatedSource);
         AssertContains("public enum Color : byte", generatedSource);
         AssertContains("Red = 1", generatedSource);
+        AssertContains("Crimson = Red", generatedSource);
         AssertContains("[ObsoleteAttribute(\"Use Blue instead.\")]", generatedSource);
         AssertContains("Blue = 4", generatedSource);
+        AssertContains("Purple = Red | Blue", generatedSource);
         AssertContains("return Color.Green;", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "EnumDeclarationApi.dll");
@@ -19769,7 +19773,8 @@ static void CliBuildCompilesEnumDeclarationApi()
                     public static bool Read()
                     {
                         return Samples.Enums.Module.favorite() == Samples.Enums.Color.Green &&
-                            (int)Samples.Enums.Color.Blue == 4;
+                            (int)Samples.Enums.Color.Blue == 4 &&
+                            (int)Samples.Enums.Color.Purple == 5;
                     }
                 }
             }

@@ -558,18 +558,11 @@ public sealed class TypeSharpParser
                     TokenNode(NextToken())
                 };
 
-                if (Current.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)
+                ParseEnumInitializerOperand(initializerChildren);
+                while (Current.Kind == SyntaxKind.PipeToken)
                 {
                     initializerChildren.Add(TokenNode(NextToken()));
-                    initializerChildren.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
-                }
-                else if (Current.Kind == SyntaxKind.IdentifierToken)
-                {
-                    initializerChildren.Add(TokenNode(NextToken()));
-                }
-                else
-                {
-                    initializerChildren.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
+                    ParseEnumInitializerOperand(initializerChildren);
                 }
 
                 memberChildren.Add(Node(SyntaxKind.Initializer, initializerChildren));
@@ -585,6 +578,23 @@ public sealed class TypeSharpParser
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));
         return Node(SyntaxKind.EnumDeclaration, children);
+    }
+
+    private void ParseEnumInitializerOperand(List<SyntaxNode> children)
+    {
+        if (Current.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)
+        {
+            children.Add(TokenNode(NextToken()));
+            children.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
+        }
+        else if (Current.Kind == SyntaxKind.IdentifierToken)
+        {
+            children.Add(TokenNode(NextToken()));
+        }
+        else
+        {
+            children.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
+        }
     }
 
     private SyntaxNode ParseTypeParameterList()

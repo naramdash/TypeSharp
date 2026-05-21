@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member initializer 'ComboMissing' must reference only previously declared members of the same enum, but found 'Write'.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 25 },
+      "end": { "line": 6, "column": 30 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member initializer 'ComboForward' must reference only previously declared members of the same enum, but found 'Later'.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 18 },
+      "end": { "line": 7, "column": 23 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member initializer 'ComboSelf' must reference only previously declared members of the same enum, but found 'ComboSelf'.",
+      "file": "input.tysh",
+      "start": { "line": 8, "column": 15 },
+      "end": { "line": 8, "column": 24 }
+    }
+  ]
+}

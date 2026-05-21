@@ -82,7 +82,7 @@ The parser preserves leading/trailing trivia, doc comments, source spans, raw li
 Deterministic parser decisions:
 
 - lexer uses longest-token matching, so `|>`, `??=`, `??`, and `?.` win over shorter prefixes,
-- parser context chooses whether `|` means type union, pattern alternative, or expression operator candidate,
+- parser context chooses whether `|` means type union, pattern alternative, enum member initializer-local composite-or, or expression operator candidate,
 - type context chooses intersection `&`, pattern context chooses pattern-and `&`, and expression bitwise `&` remains unsupported until stabilized,
 - `=>` separates lambda bodies in expression context and match arms inside match blocks,
 - `->` is only a function type operator; function declarations use `:` for return types,
@@ -125,7 +125,7 @@ Stable declaration rules:
 - `let` is immutable binding; `let mut` is mutable binding.
 - `literal` is the compile-time constant spelling. Core grammar does not add `var`, `val`, or `const` aliases.
 - `fun` is the public callable declaration form; expression-bodied functions use `=`, and block-bodied functions use `{ ... }`.
-- Simple enum declarations use `enum Name { Member, Other }`; declarations and members can carry .NET attribute lists, members can include explicit integer numeric values such as `Member = 1` or aliases to previously declared members such as `Alias = Member`, and declarations can use explicit integral underlying types such as `enum Name : byte { Member = 1 }`. Explicit numeric member values must fit the selected underlying type, or `int` when no underlying type is declared. Arbitrary computed member values, flag policy, and broad attribute target validation remain planned.
+- Simple enum declarations use `enum Name { Member, Other }`; declarations and members can carry .NET attribute lists, members can include explicit integer numeric values such as `Member = 1`, aliases to previously declared members such as `Alias = Member`, or enum initializer-local composite-or forms such as `ReadWrite = Read | Write`, and declarations can use explicit integral underlying types such as `enum Name : byte { Member = 1 }`. Explicit numeric member values and numeric operands must fit the selected underlying type, or `int` when no underlying type is declared. General expression bitwise operators, `&`, `^`, `~`, shifts, parentheses, arbitrary computed member values, flag-aware match policy, and broad attribute target validation remain planned.
 - `partial` currently lowers for generated C# type declarations: modules, records, unions, classes, and interfaces.
 - `async` belongs on function declarations and lowers through `Task`/`Task<T>`.
 - `unsafe`, `dynamic`, `reflect`, and `interop` are capability markers, not ordinary type-system escapes.
@@ -255,7 +255,7 @@ Pattern precedence, high to low:
 | 3 | Pattern-and `p & q`. |
 | 4 | Pattern-or `p | q`. |
 
-Control forms such as `if`, `match`, `try`, `using`, async blocks, `yield`, and `lock` use dedicated parse forms instead of infix precedence. Planned operators such as `**`, expression bitwise operators, ranges, `===`, and `!==` are reserved or diagnostic-producing until stabilized.
+Control forms such as `if`, `match`, `try`, `using`, async blocks, `yield`, and `lock` use dedicated parse forms instead of infix precedence. Planned operators such as `**`, general expression bitwise operators, ranges, `===`, and `!==` are reserved or diagnostic-producing until stabilized; enum member initializer-local `|` is the only implemented bitwise-shaped exception.
 
 Recovery notes for precedence parsing live in [Project Policy](../project-policy/) parser fixture policy and [Diagnostics](../diagnostics/).
 

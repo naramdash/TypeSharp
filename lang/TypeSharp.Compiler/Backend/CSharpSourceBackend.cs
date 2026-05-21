@@ -4339,15 +4339,46 @@ public static class CSharpSourceBackend
                 return null;
             }
 
-            var sign = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)?.Text;
-            var value = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.NumericLiteralToken)?.Text;
-            if (!string.IsNullOrEmpty(value))
+            var parts = new List<string>();
+            for (var index = 0; index < initializer.Children.Count; index++)
             {
-                return $"{sign}{value}";
+                var child = initializer.Children[index];
+                if (!child.IsToken)
+                {
+                    continue;
+                }
+
+                switch (child.Kind)
+                {
+                    case SyntaxKind.EqualsToken:
+                        break;
+                    case SyntaxKind.PipeToken:
+                        parts.Add("|");
+                        break;
+                    case SyntaxKind.PlusToken:
+                    case SyntaxKind.MinusToken:
+                        if (index + 1 < initializer.Children.Count &&
+                            initializer.Children[index + 1].IsToken &&
+                            initializer.Children[index + 1].Kind == SyntaxKind.NumericLiteralToken &&
+                            initializer.Children[index + 1].Text is { Length: > 0 } signedValue)
+                        {
+                            parts.Add($"{child.Text}{signedValue}");
+                            index++;
+                        }
+
+                        break;
+                    case SyntaxKind.NumericLiteralToken:
+                    case SyntaxKind.IdentifierToken:
+                        if (child.Text is { Length: > 0 } text)
+                        {
+                            parts.Add(text);
+                        }
+
+                        break;
+                }
             }
 
-            var alias = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
-            return string.IsNullOrEmpty(alias) ? null : alias;
+            return parts.Count == 0 ? null : string.Join(" ", parts);
         }
 
         private static string GetInterfaceDeclarationName(SyntaxNode node)

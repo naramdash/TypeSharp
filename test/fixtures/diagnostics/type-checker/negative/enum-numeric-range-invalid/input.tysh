@@ -13,3 +13,8 @@ enum IntegralOnly {
   Fraction = 1.5,
   DecimalSuffix = 1m
 }
+
+enum ByteComposite : byte {
+  Red = 1,
+  TooLargeComposite = Red | 300
+}

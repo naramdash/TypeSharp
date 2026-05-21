@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 15:34:00 +09:00
+End Time: 2026-05-21 15:46:03 +09:00
 
 ## Objective
 
@@ -2541,7 +2541,54 @@ Primary evidence:
 
 Remaining:
 
-- Enum composite member expressions are active in task 0328. Flag semantics, broad attribute target validation, arbitrary/general computed enum member expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+- Enum composite member expressions are complete in task 0328. Flag semantics, broad attribute target validation, arbitrary/general computed enum member expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+
+## Task 0328 Enum Composite Member Expressions Slice
+
+Completed language/compiler work established:
+
+- Added parser support for TypeSharp-owned enum initializer-local `|` composite member expressions over integer literals, signed integer literals, and identifier operands.
+- Validated every composite identifier operand against previously declared members of the same enum while preserving the existing single-alias diagnostic wording for `Alias = Member`.
+- Extended enum numeric range/integrality validation to numeric operands inside composite initializers.
+- Lowered accepted composites to ordinary C# enum member assignments such as `Purple = Red | Blue`.
+- Kept general expression bitwise operators, `&`, `^`, `~`, shifts, parentheses, arbitrary/general computed enum expressions, flag-aware match exhaustiveness, numeric pattern algebra, imported enum flag reasoning, and broad attribute target validation out of scope.
+- Added parser, type-checker positive/negative, backend snapshot, generated `net48` CLI build, fixture README, canonical docs, work-ledger, tasks, and traceability coverage.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles enum declaration API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/enum-composite-invalid`
+- `test/fixtures/diagnostics/type-checker/negative/enum-numeric-range-invalid`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Flag semantics, general expression bitwise operators, broad attribute target validation, arbitrary/general computed enum member expressions beyond enum initializer-local `|`, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
 
 ## Verification Summary
 

@@ -1,0 +1,10 @@
+namespace Samples.TypeChecker.EnumCompositeInvalid
+
+enum Flags : byte {
+  None = 0,
+  Read = 1,
+  ComboMissing = Read | Write,
+  ComboForward = Later | Read,
+  ComboSelf = ComboSelf | Read,
+  Later = 2
+}

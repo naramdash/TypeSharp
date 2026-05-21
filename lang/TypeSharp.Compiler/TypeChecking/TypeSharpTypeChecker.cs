@@ -339,7 +339,7 @@ public static class TypeSharpTypeChecker
             }
 
             CheckEnumMemberInitializers(node, underlyingTypeName);
-            CheckEnumMemberAliases(node);
+            CheckEnumMemberReferences(node);
         }
 
         private void CheckEnumMemberInitializers(SyntaxNode node, string underlyingTypeName)
@@ -352,42 +352,55 @@ public static class TypeSharpTypeChecker
             foreach (var member in node.Children.Where(child => child.Kind == SyntaxKind.EnumMember))
             {
                 var initializer = member.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer);
-                if (initializer is null || !TryGetEnumInitializerText(initializer, out var literalText))
+                if (initializer is null)
                 {
                     continue;
                 }
 
-                if (!BigInteger.TryParse(literalText, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value))
+                foreach (var literalText in GetEnumInitializerLiteralTexts(initializer))
                 {
-                    ReportMismatch(
-                        initializer,
-                        $"Enum member value '{literalText}' must be an integer literal for underlying type '{underlyingTypeName}'.");
-                    continue;
-                }
+                    if (!BigInteger.TryParse(literalText, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value))
+                    {
+                        ReportMismatch(
+                            initializer,
+                            $"Enum member value '{literalText}' must be an integer literal for underlying type '{underlyingTypeName}'.");
+                        continue;
+                    }
 
-                if (value < minimum || value > maximum)
-                {
-                    ReportMismatch(
-                        initializer,
-                        $"Enum member value '{literalText}' is outside the range of underlying type '{underlyingTypeName}'.");
+                    if (value < minimum || value > maximum)
+                    {
+                        ReportMismatch(
+                            initializer,
+                            $"Enum member value '{literalText}' is outside the range of underlying type '{underlyingTypeName}'.");
+                    }
                 }
             }
         }
 
-        private void CheckEnumMemberAliases(SyntaxNode node)
+        private void CheckEnumMemberReferences(SyntaxNode node)
         {
             var declaredMembers = new HashSet<string>(StringComparer.Ordinal);
             foreach (var member in node.Children.Where(child => child.Kind == SyntaxKind.EnumMember))
             {
                 var memberName = member.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
                 var initializer = member.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer);
-                if (initializer is not null &&
-                    TryGetEnumAliasTarget(initializer, out var target, out var targetName) &&
-                    !declaredMembers.Contains(targetName))
+                if (initializer is not null)
                 {
-                    ReportMismatch(
-                        target,
-                        $"Enum member alias '{memberName}' must reference a previously declared member of the same enum, but found '{targetName}'.");
+                    var isAlias = IsSingleEnumAliasInitializer(initializer);
+                    foreach (var target in GetEnumInitializerIdentifierOperands(initializer))
+                    {
+                        var targetName = target.Text ?? string.Empty;
+                        if (declaredMembers.Contains(targetName))
+                        {
+                            continue;
+                        }
+
+                        ReportMismatch(
+                            target,
+                            isAlias
+                                ? $"Enum member alias '{memberName}' must reference a previously declared member of the same enum, but found '{targetName}'."
+                                : $"Enum member initializer '{memberName}' must reference only previously declared members of the same enum, but found '{targetName}'.");
+                    }
                 }
 
                 if (memberName.Length > 0)
@@ -1258,20 +1271,32 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private static bool TryGetEnumInitializerText(SyntaxNode initializer, out string literalText)
+        private static IEnumerable<string> GetEnumInitializerLiteralTexts(SyntaxNode initializer)
         {
-            var sign = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)?.Text ?? string.Empty;
-            var value = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.NumericLiteralToken)?.Text;
-            literalText = $"{sign}{value}";
-            return !string.IsNullOrEmpty(value);
+            var children = initializer.Children;
+            for (var index = 0; index < children.Count; index++)
+            {
+                var child = children[index];
+                if (!child.IsToken || child.Kind != SyntaxKind.NumericLiteralToken || string.IsNullOrEmpty(child.Text))
+                {
+                    continue;
+                }
+
+                var sign = index > 0 &&
+                    children[index - 1].IsToken &&
+                    children[index - 1].Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken
+                        ? children[index - 1].Text ?? string.Empty
+                        : string.Empty;
+                yield return $"{sign}{child.Text}";
+            }
         }
 
-        private static bool TryGetEnumAliasTarget(SyntaxNode initializer, out SyntaxNode target, out string targetName)
-        {
-            target = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken) ?? initializer;
-            targetName = target.Text ?? string.Empty;
-            return target.IsToken && target.Kind == SyntaxKind.IdentifierToken && targetName.Length > 0;
-        }
+        private static IEnumerable<SyntaxNode> GetEnumInitializerIdentifierOperands(SyntaxNode initializer) =>
+            initializer.Children.Where(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken && !string.IsNullOrEmpty(child.Text));
+
+        private static bool IsSingleEnumAliasInitializer(SyntaxNode initializer) =>
+            !initializer.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.PipeToken) &&
+            GetEnumInitializerIdentifierOperands(initializer).Take(2).Count() == 1;
 
         private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
         {
