@@ -1,0 +1,22 @@
+namespace Samples.TypeChecker.DirectFunctionCallArityAndArgument
+
+fun increment(value: int): int = value + 1
+
+fun add(left: int, right: int): int = left + right
+
+fun stringify(value: int): string = value.ToString()
+
+fun length(value: string): int = value.Length
+
+fun now(): int = 0
+
+let validZero = now()
+let validOne = increment(1)
+let validTwo = add(1, 2)
+let validNested = length(stringify(1))
+
+let invalidMissing = add(1)
+let invalidTooMany = increment(1, 2)
+let invalidType = increment("a")
+let invalidSecondType = add(1, "b")
+let invalidZeroTooMany = now(1)

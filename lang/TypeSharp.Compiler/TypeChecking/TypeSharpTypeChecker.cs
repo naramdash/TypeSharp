@@ -732,6 +732,13 @@ public static class TypeSharpTypeChecker
                 return CheckPipelineExpression(node, scope);
             }
 
+            if (node.Kind == SyntaxKind.CallExpression &&
+                TryGetDirectCallName(node, out var directCallName) &&
+                scope.ResolveFunctionInfo(directCallName, out var directFunction))
+            {
+                return CheckDirectFunctionCallExpression(node, scope, directCallName, directFunction);
+            }
+
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
                 return inferredType;
@@ -1069,6 +1076,84 @@ public static class TypeSharpTypeChecker
         private static bool IsBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken);
+
+        private SimpleType CheckDirectFunctionCallExpression(
+            SyntaxNode node,
+            TypeScope scope,
+            string functionName,
+            FunctionInfo function)
+        {
+            var arguments = GetCallArguments(node).ToArray();
+            if (function.ParameterTypes is not { } parameterTypes)
+            {
+                foreach (var argument in arguments)
+                {
+                    CheckExpression(argument, scope);
+                }
+
+                return function.ReturnType;
+            }
+
+            if (arguments.Length != parameterTypes.Count)
+            {
+                ReportMismatch(
+                    node,
+                    $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies {FormatArgumentCount(arguments.Length)}.");
+            }
+
+            for (var index = 0; index < arguments.Length; index++)
+            {
+                var argument = arguments[index];
+                if (index >= parameterTypes.Count || !parameterTypes[index].IsKnown)
+                {
+                    CheckExpression(argument, scope);
+                    continue;
+                }
+
+                CheckDirectFunctionArgument(node, scope, functionName, argument, index, parameterTypes[index]);
+            }
+
+            return function.ReturnType;
+        }
+
+        private void CheckDirectFunctionArgument(
+            SyntaxNode node,
+            TypeScope scope,
+            string functionName,
+            SyntaxNode argument,
+            int parameterIndex,
+            SimpleType expectedType)
+        {
+            var argumentType = CheckExpressionWithExpected(argument, scope, expectedType);
+            if (!argumentType.IsKnown)
+            {
+                return;
+            }
+
+            if (IsNullabilityViolation(expectedType, argumentType))
+            {
+                ReportMismatch(
+                    node,
+                    argumentType.IsNull
+                        ? $"Function '{functionName}' argument {parameterIndex + 1} cannot be null because it expects non-null type '{expectedType}'."
+                        : $"Function '{functionName}' argument {parameterIndex + 1} expects non-null type '{expectedType}', but found nullable type '{argumentType}'.");
+            }
+            else if (TryGetStructuralAssignmentDiagnostic(scope, expectedType, argumentType, out var structuralMessage))
+            {
+                ReportMismatch(node, structuralMessage);
+            }
+            else if (!CanAssign(scope, expectedType, argumentType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Function '{functionName}' argument {parameterIndex + 1} expects '{expectedType}', but found '{argumentType}'.");
+            }
+        }
+
+        private static IEnumerable<SyntaxNode> GetCallArguments(SyntaxNode call) =>
+            call.Kind == SyntaxKind.CallExpression
+                ? call.Children.Skip(1).Where(child => !child.IsToken)
+                : Enumerable.Empty<SyntaxNode>();
 
         private SimpleType CheckPipelineExpression(SyntaxNode node, TypeScope scope)
         {

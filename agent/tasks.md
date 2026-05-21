@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0352-direct-function-call-arity-and-argument-diagnostics-slice.md](0352-direct-function-call-arity-and-argument-diagnostics-slice.md) |
-| Active summary     | Add direct TypeSharp-declared function call arity and argument diagnostics. |
-| Completed range    | 0001-0351                         |
+| Active task packet | None                               |
+| Active summary     | None                               |
+| Completed range    | 0001-0352                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0351 roadmap refresh | 0352 Direct function call arity and argument diagnostics slice | [0352-direct-function-call-arity-and-argument-diagnostics-slice.md](0352-direct-function-call-arity-and-argument-diagnostics-slice.md) | Add direct TypeSharp-declared function call arity and argument `TS2201` diagnostics while preserving imported C# call validation. |
+| Q2       | Done        | Task 0351 roadmap refresh | 0352 Direct function call arity and argument diagnostics slice | [tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice) | Added direct TypeSharp-declared function call arity and argument `TS2201` diagnostics while preserving imported C# call validation. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0351 Roadmap refresh after pipeline target diagnostics | [tasks-rollup.md#task-0351-roadmap-refresh-after-pipeline-target-diagnostics](tasks-rollup.md#task-0351-roadmap-refresh-after-pipeline-target-diagnostics) | Rechecked official source signals after direct pipeline arity/argument diagnostics, confirmed the baseline, and selected bounded direct TypeSharp function call arity/argument diagnostics. |
 | Q2       | Done        | Task 0349 roadmap refresh | 0350 Pipeline target arity and argument diagnostics slice | [tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice) | Added direct pipeline target arity and non-piped call argument `TS2201` diagnostics for known TypeSharp-declared function targets while preserving pipeline lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0349 Roadmap refresh after pipeline input compatibility diagnostics | [tasks-rollup.md#task-0349-roadmap-refresh-after-pipeline-input-compatibility-diagnostics](tasks-rollup.md#task-0349-roadmap-refresh-after-pipeline-input-compatibility-diagnostics) | Rechecked official source signals after direct pipeline input compatibility diagnostics, confirmed the baseline, and selected bounded direct pipeline target arity/argument diagnostics. |

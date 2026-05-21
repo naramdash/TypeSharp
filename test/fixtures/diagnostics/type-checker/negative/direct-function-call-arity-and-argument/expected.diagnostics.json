@@ -1,0 +1,44 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'add' expects 2 arguments, but call supplies 1 argument.",
+      "file": "input.tysh",
+      "start": { "line": 18, "column": 22 },
+      "end": { "line": 18, "column": 28 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'increment' expects 1 argument, but call supplies 2 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 22 },
+      "end": { "line": 19, "column": 37 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'increment' argument 1 expects 'int', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 20, "column": 19 },
+      "end": { "line": 20, "column": 33 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'add' argument 2 expects 'int', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 21, "column": 25 },
+      "end": { "line": 21, "column": 36 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'now' expects 0 arguments, but call supplies 1 argument.",
+      "file": "input.tysh",
+      "start": { "line": 22, "column": 26 },
+      "end": { "line": 22, "column": 32 }
+    }
+  ]
+}

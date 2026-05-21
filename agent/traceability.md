@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Direct function call arity and argument diagnostics | [0352-direct-function-call-arity-and-argument-diagnostics-slice.md](0352-direct-function-call-arity-and-argument-diagnostics-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, focused direct function call diagnostics fixture, imported C# call stability, docs diagnostics/reference updates. |
+| None | [tasks.md](tasks.md) | No active task. |
 
 ## Completed Evidence Index
 
@@ -62,6 +62,7 @@
 | Composition function compatibility diagnostics | [tasks-rollup.md#task-0346-composition-function-compatibility-diagnostics-slice](tasks-rollup.md#task-0346-composition-function-compatibility-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/composition-function-compatibility`, `test/fixtures/parser/positive/0022-composition-expression`, `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Pipeline function input compatibility diagnostics | [tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice](tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility`, `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Pipeline target arity and argument diagnostics | [tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/pipeline-target-arity-and-argument`, `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Direct function call arity and argument diagnostics | [tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/direct-function-call-arity-and-argument`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

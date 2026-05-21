@@ -3566,6 +3566,51 @@ Remaining:
 
 - Direct TypeSharp-declared function call arity and argument diagnostics are active in task 0352. Imported C# call validation, generic TypeSharp function argument inference, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0352 Direct Function Call Arity And Argument Diagnostics Slice
+
+Completed implementation work established:
+
+- Added a direct call type-checking path for known TypeSharp-declared functions with known parameter lists.
+- Reported deterministic `TS2201` diagnostics for direct calls with too few arguments, too many arguments, or incompatible known argument types.
+- Reused existing assignment compatibility, nullability, and structural mismatch helpers for argument checks.
+- Preserved imported C# call validation, type constructor calls, generated C# call lowering, and existing TypeSharp call inference for unknown signatures.
+- Added `test/fixtures/diagnostics/type-checker/negative/direct-function-call-arity-and-argument` covering compatible zero/one/two-argument and nested calls plus missing-argument, extra-argument, and argument-type diagnostics.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the bounded direct function call diagnostics boundary.
+- Kept imported C# call validation, generic TypeSharp function argument inference, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra out of the slice.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles basic semantics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/negative/direct-function-call-arity-and-argument`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Imported C# call validation, generic TypeSharp function argument inference, optional/default/params TypeSharp function parameter policy, function-typed values, higher-order calls, currying, partial application, TypeSharp function overload ranking, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3590,7 +3635,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0351 is compressed here.
+- Completed historical work through task 0352 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
