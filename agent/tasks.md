@@ -1,6 +1,6 @@
 # Agentic Tasks
 
-문서 기준일: 2026-05-21
+문서 기준일: 2026-05-22
 
 이 파일은 goal-mode/Ralph/장기 실행 agent와 사용자가 공유하는 task control plane이다. 역할은 네 가지로만 나눈다.
 
@@ -15,9 +15,9 @@
 
 | Field              | Value                                                                                                                    |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Active task packet | [0369-roadmap-refresh-after-test-suite-runtime-reduction.md](0369-roadmap-refresh-after-test-suite-runtime-reduction.md) |
-| Active summary     | 0369 Roadmap refresh after test suite runtime reduction                                                                  |
-| Completed range    | 0001-0368                                                                                                                |
+| Active task packet | [0370-test-catalog-extraction-for-framework-migration.md](0370-test-catalog-extraction-for-framework-migration.md) |
+| Active summary     | 0370 Test catalog extraction for framework migration prerequisite                                                   |
+| Completed range    | 0001-0369                                                                                                          |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md)                                                                                       |
 
 ## User Task Inbox
@@ -40,11 +40,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                           | Task                                                            | Packet                                                                                                                                                                       | Notes                                                                                                                                                                                   |
 | -------- | ----------- | -------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q1       | In Progress | Empty queue roadmap-refresh rule | 0369 Roadmap refresh after test suite runtime reduction         | [0369-roadmap-refresh-after-test-suite-runtime-reduction.md](0369-roadmap-refresh-after-test-suite-runtime-reduction.md)                                                     | Recheck official source signals after the test-suite runtime reduction and select the next bounded implementation slice.                                                                |
+| Q4       | In Progress | Task 0369 roadmap refresh        | 0370 Test catalog extraction for framework migration prerequisite | [0370-test-catalog-extraction-for-framework-migration.md](0370-test-catalog-extraction-for-framework-migration.md)                                                           | Extract the custom runner catalog into reusable harness types before any MSTest SDK/Microsoft Testing Platform or xUnit.net v3 package migration.                                      |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0369 Roadmap refresh after test suite runtime reduction         | [tasks-rollup.md#task-0369-roadmap-refresh-after-test-suite-runtime-reduction](tasks-rollup.md#task-0369-roadmap-refresh-after-test-suite-runtime-reduction)                 | Rechecked official source signals including .NET test-platform docs, confirmed no generated-artifact baseline change, and selected the test catalog extraction prerequisite.             |
 | Q4       | Done        | User Task Inbox                  | 0368 Test suite runtime reduction plan and refactor             | [tasks-rollup.md#task-0368-test-suite-runtime-reduction-plan-and-refactor](tasks-rollup.md#task-0368-test-suite-runtime-reduction-plan-and-refactor)                         | Added process-safe legacy reference assembly caching plus four parallel shard projects; full runner remains available and parallel shard path ran 517 PASS in about 68 seconds.          |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0367 Roadmap refresh after params parameter declaration         | [tasks-rollup.md#task-0367-roadmap-refresh-after-params-parameter-declaration](tasks-rollup.md#task-0367-roadmap-refresh-after-params-parameter-declaration)                 | Rechecked official source signals after TypeSharp-owned `params` declarations, confirmed no baseline change, and promoted the pending user test-suite runtime task.                    |
 | Q2       | Done        | Task 0365 roadmap refresh        | 0366 Params parameter declaration slice                         | [tasks-rollup.md#task-0366-params-parameter-declaration-slice](tasks-rollup.md#task-0366-params-parameter-declaration-slice)                                                 | Implemented final-array `params` declarations for TypeSharp-declared functions, direct exact/expanded calls, pipeline validation, generic tail inference, and C# `params T[]` lowering. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference   | [tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference](tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference)     | Rechecked official source signals after private direct composition value inference, confirmed the baseline, and selected bounded TypeSharp-owned `params` parameter declarations.       |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

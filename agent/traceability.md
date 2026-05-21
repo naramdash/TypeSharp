@@ -1,6 +1,6 @@
 # TypeSharp Traceability
 
-문서 기준일: 2026-05-21
+문서 기준일: 2026-05-22
 
 이 파일은 agent가 목표, active work, evidence 위치를 빠르게 찾기 위한 운영용 bridge다. 상세 요구사항과 장기 사용자 문서는 docs canonical pages가 owner다.
 
@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| 0369 Roadmap refresh after test suite runtime reduction | [0369-roadmap-refresh-after-test-suite-runtime-reduction.md](0369-roadmap-refresh-after-test-suite-runtime-reduction.md) | Official C#/F#/TypeScript/.NET Framework/NuGet/VS Code/.NET testing references, completed test-suite runtime evidence, [Feature Status](../docs/src/content/docs/feature-status.md), [Project Policy](../docs/src/content/docs/project-policy.md), [Work Ledger](../docs/src/content/docs/work-ledger.md), [tasks-rollup.md](tasks-rollup.md), [tasks.md](tasks.md). |
+| 0370 Test catalog extraction for framework migration prerequisite | [0370-test-catalog-extraction-for-framework-migration.md](0370-test-catalog-extraction-for-framework-migration.md) | `test/TypeSharp.Compiler.Tests/Program.cs`, `test/TypeSharp.Compiler.Tests/TestShardDefaults.cs`, shard projects, [test README](../test/README.md), [Project Policy](../docs/src/content/docs/project-policy.md), [tasks-rollup.md#task-0369-roadmap-refresh-after-test-suite-runtime-reduction](tasks-rollup.md#task-0369-roadmap-refresh-after-test-suite-runtime-reduction). |
 
 ## Completed Evidence Index
 
@@ -73,6 +73,7 @@
 | Params parameter declarations | [tasks-rollup.md#task-0366-params-parameter-declaration-slice](tasks-rollup.md#task-0366-params-parameter-declaration-slice), `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`, `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/fixtures/parser/positive/0037-params-parameter-declaration`, `test/fixtures/diagnostics/type-checker/positive/params-parameter-declaration`, `test/fixtures/diagnostics/type-checker/negative/params-parameter-declaration`, `test/fixtures/backend/csharp/positive/0045-params-parameter-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Roadmap refresh after params parameter declaration | [tasks-rollup.md#task-0367-roadmap-refresh-after-params-parameter-declaration](tasks-rollup.md#task-0367-roadmap-refresh-after-params-parameter-declaration), official C#/F#/TypeScript/.NET Framework/NuGet/VS Code source links, [Feature Status](../docs/src/content/docs/feature-status.md), [Work Ledger](../docs/src/content/docs/work-ledger.md), [tasks.md](tasks.md) |
 | Test suite runtime reduction | [tasks-rollup.md#task-0368-test-suite-runtime-reduction-plan-and-refactor](tasks-rollup.md#task-0368-test-suite-runtime-reduction-plan-and-refactor), `test/TypeSharp.Compiler.Tests/Program.cs`, `test/TypeSharp.Compiler.Tests/TestShardDefaults.cs`, `test/TypeSharp.Compiler.Tests.Shard0`, `test/TypeSharp.Compiler.Tests.Shard1`, `test/TypeSharp.Compiler.Tests.Shard2`, `test/TypeSharp.Compiler.Tests.Shard3`, `test/README.md`, [Project Policy](../docs/src/content/docs/project-policy.md) |
+| Roadmap refresh after test suite runtime reduction | [tasks-rollup.md#task-0369-roadmap-refresh-after-test-suite-runtime-reduction](tasks-rollup.md#task-0369-roadmap-refresh-after-test-suite-runtime-reduction), official C#/F#/TypeScript/.NET Framework/NuGet/VS Code/.NET testing source links, [Feature Status](../docs/src/content/docs/feature-status.md), [Project Policy](../docs/src/content/docs/project-policy.md), [Work Ledger](../docs/src/content/docs/work-ledger.md), [tasks.md](tasks.md) |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

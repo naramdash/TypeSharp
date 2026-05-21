@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-22 00:21:49 +09:00
+End Time: 2026-05-22 00:28:29 +09:00
 
 ## Objective
 
@@ -1690,6 +1690,8 @@ Verification:
 npm run build          # in docs
 git diff --check
 ```
+
+Result: both commands passed on 2026-05-22.
 
 Primary evidence:
 
@@ -4310,6 +4312,54 @@ Remaining:
 
 - Roadmap refresh after test-suite runtime reduction is active in task 0369. A future MSTest SDK/Microsoft Testing Platform or xUnit.net v3 migration remains possible after extracting the custom test catalog into discoverable test cases.
 
+## Task 0369 Roadmap Refresh After Test Suite Runtime Reduction
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and .NET testing source signals on 2026-05-22 after test-suite runtime reduction landed.
+- Confirmed no generated-artifact baseline change: TypeSharp generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 14 remains the current stable .NET 10 C# signal, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 Beta remains a native-compiler/tooling signal, and F# 10 remains a refinement/tooling signal.
+- Confirmed NuGet policy still separates generated runtime dependencies from modern host/test tooling. MSTest SDK/Microsoft Testing Platform and xUnit.net v3 are viable package-based test-host targets for the `net10.0` test projects, but they do not replace the measured repeated legacy-reference build bottleneck already handled by task 0368.
+- Reviewed the completed shard/cache behavior against Project Policy and Work Ledger: the main custom runner remains the full release-confidence gate, shard projects execute disjoint catalog slices in parallel, shared generated inputs use a process-safe cache, and tests keep unique `test/tmp` workspaces.
+- Selected the next bounded implementation slice: `0370 Test catalog extraction for framework migration prerequisite`.
+- Kept full MSTest SDK/Microsoft Testing Platform or xUnit.net v3 migration, custom runner removal, test semantics changes, and new test NuGet package references out of this roadmap-refresh slice.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy)
+- [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers)
+- [VS Code Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview)
+- [MSTest SDK guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests)
+- [xUnit.net v3 packages](https://xunit.net/docs/nuget-packages-v3)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Test catalog extraction for framework migration prerequisite is active in task 0370. Full MSTest SDK/Microsoft Testing Platform or xUnit.net v3 migration remains future work after the catalog is reusable.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -4334,13 +4384,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0368 is compressed here.
+- Completed historical work through task 0369 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0369 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0370 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

@@ -233,6 +233,8 @@ The TypeSharp-owned `params` parameter declaration slice completed parser/checke
 
 After TypeSharp-owned `params` parameter declarations, the roadmap refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The next active work follows the pending user-owned test-suite request: profile and refactor `test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj` runtime without weakening TypeSharp's regression evidence. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, and `params` in function-type syntax remain language backlog.
 
+After the test-suite runtime reduction, the roadmap refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and .NET test-platform sources on 2026-05-22 and found no generated-artifact baseline change. Generated artifacts stay `net48`, generated C# stays C# 7.3-compatible, C# 14 remains the stable .NET 10 language signal, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 Beta remains a tooling/native-compiler signal, and F# 10 remains a refinement/tooling signal. Microsoft.Testing.Platform, MSTest SDK, and xUnit.net v3 are viable test-host-only migration targets for the modern `net10.0` test projects, but the selected bounded slice is first extracting the custom test catalog into reusable harness types so any package-based test framework can discover the same cases without weakening the current main runner and shard evidence.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
