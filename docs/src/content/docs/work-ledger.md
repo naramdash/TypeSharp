@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | Recheck `agent/tasks.md`, `agent/checklist.md`, and official baseline references before selecting the next slice. |
+| Active task packet | `agent/0360-direct-generic-composition-inference-slice.md` |
+| Next top-priority task | Task 0360 direct generic composition inference slice. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0358 completed direct generic pipeline inference for known TypeSharp-declared function targets using bounded direct-call inference semantics. |
-| Completed work covered | 0001-0358 |
+| Current tooling slice | Task 0360 is extending direct named-function composition checks to bounded TypeSharp generic unary targets without changing C# lowering. |
+| Completed work covered | 0001-0359 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 

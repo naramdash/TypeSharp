@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | Recheck the task index, checklist, and official baseline references before selecting the next bounded slice. |
+| 0360 Direct generic composition inference slice | [0360-direct-generic-composition-inference-slice.md](0360-direct-generic-composition-inference-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, generic composition type-checker fixtures, backend composition lowering fixture, `test/TypeSharp.Compiler.Tests/Program.cs`, docs canonical pages. |
 
 ## Completed Evidence Index
 

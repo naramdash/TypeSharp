@@ -215,6 +215,8 @@ After constructed generic TypeSharp function call inference, the empty-queue ref
 
 The direct generic pipeline inference slice completed inference/substitution for direct `value |> f` and `value |> f(args...)` targets when `f` is a known TypeSharp-declared generic function. The checker infers from the piped input and non-piped arguments for simple, array, and matching single-argument generic wrapper positions, reports `TS2201` for repeated inference conflicts and lowered arity mistakes, and leaves generated C# call lowering unchanged. Imported C# pipeline targets, generic composition inference, higher-order pipeline targets, function values, currying, partial application, optional/default/params TypeSharp parameter policy, pipeline overload ranking, broader generic constraints, and general type-constructor unification remain backlog.
 
+After direct generic pipeline inference, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is direct generic named-function composition inference for known TypeSharp-declared unary function targets. Imported C# composition targets, higher-order function values, currying, partial application, optional/default/params TypeSharp parameter policy, composition overload ranking, broader generic constraints, and general type-constructor unification remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
