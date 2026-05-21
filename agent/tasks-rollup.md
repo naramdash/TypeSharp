@@ -5566,7 +5566,69 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0393: roadmap refresh after logical unsigned shift assignment expressions.
+- Completed in task 0393: roadmap refresh after logical unsigned shift assignment expressions.
+
+## Task 0393 Roadmap Refresh After Logical Unsigned Shift Assignment Expressions
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals after bounded local `>>>=` landed.
+- Confirmed no generated-artifact baseline change: TypeSharp-generated assemblies stay `net48`, generated source stays C# 7.3-compatible, `TypeSharp.Core` and `TypeSharp.Runtime` stay package-free, and modern .NET/Node/package dependencies remain isolated to compiler, test, docs, CI, or editor tooling.
+- Confirmed C# language versioning still maps `.NET Framework` targets to C# 7.3. C# 14 remains the current stable .NET 10 C# signal, and C# 15 remains preview on .NET 11 preview with collection expression arguments and union types as directional signals only.
+- Confirmed C# documents `>>>` and `>>>=` in the bitwise/shift operator set, and documents compound assignment as `x = x op y` except that the left operand is evaluated once. The next `>>>=` expansion therefore needs an explicit single-evaluation receiver lowering policy instead of merely re-emitting the receiver twice.
+- Confirmed TypeScript 6.0 remains the latest stable TypeScript release and TypeScript 7.0 Beta remains a native/compiler tooling transition signal; its parallelization and deterministic behavior work remain compiler-engineering input only.
+- Confirmed F# 10 remains a .NET 10 refinement/tooling signal for diagnostics, task workflows, functional consistency, and performance without adding an F# compiler/runtime dependency.
+- Confirmed `.NET Framework 4.8.1` remains the latest Framework, while `net48` remains TypeSharp's broad generated target and `net481` stays a qualified-profile backlog item.
+- Confirmed the test-package answer still holds: TypeSharp already uses pinned `MSTest.Sdk/4.2.3`, .NET 10 Microsoft Testing Platform mode, locked restore/source mapping/audit controls, and four package-based MSTest shard projects over the shared catalog. Adding xUnit.net v3 now would duplicate test-host evidence instead of improving generated `net48` compatibility.
+- Confirmed VS Code LSP/Marketplace guidance and GitHub Actions runner-image/setup-action signals do not change current editor, CI, or generated-artifact baselines. The June 2026 Windows Server 2025 + Visual Studio 2026 image migration remains a CI watch item.
+- Selected the next bounded implementation slice: `0394 Logical unsigned shift assignment imported member targets`. The slice should implement supported metadata-backed imported C# member access `>>>=` with C# 7.3-compatible explicit assignment/cast lowering and single-evaluation receiver behavior, while keeping indexers, events, user-defined operators, enum flag algebra, imported operator overload resolution, broad assignment target analysis, and test-framework package changes out of scope.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Result: both commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [C# bitwise and shift operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/bitwise-and-shift-operators)
+- [C# assignment operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/assignment-operator)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [`dotnet restore` audit sources](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities)
+- [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [VS Code language server extensions](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [VS Code extension publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [GitHub Actions runner images](https://github.com/actions/runner-images)
+- [GitHub Actions image migrations](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [actions/setup-dotnet](https://github.com/actions/setup-dotnet)
+- [actions/setup-node](https://github.com/actions/setup-node)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0394: logical unsigned shift assignment imported member targets.
 
 ## Verification Summary
 
@@ -5592,13 +5654,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0392 is compressed here.
+- Completed historical work through task 0393 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0393 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0394 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
