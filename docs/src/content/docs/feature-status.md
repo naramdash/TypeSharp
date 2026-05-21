@@ -26,7 +26,7 @@ TypeSharp evaluates every C#, F#, and TypeScript feature through four practical 
 
 ## TypeScript Structural And Module Review
 
-Official TypeScript sources refreshed on 2026-05-21:
+Official TypeScript sources refreshed on 2026-05-22:
 
 - [Type compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility)
 - [Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
@@ -68,7 +68,7 @@ Current boundary:
 
 ## F# Functional Consistency Review
 
-Official F# sources refreshed on 2026-05-21:
+Official F# sources refreshed on 2026-05-22:
 
 - [F# documentation](https://learn.microsoft.com/en-us/dotnet/fsharp/)
 - [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy)
@@ -101,7 +101,7 @@ Current boundary:
 
 ## C# Stable And Preview Parity Review
 
-Official C# sources refreshed on 2026-05-21:
+Official C# sources refreshed on 2026-05-22:
 
 - [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
 - [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
@@ -234,6 +234,8 @@ The TypeSharp-owned `params` parameter declaration slice completed parser/checke
 After TypeSharp-owned `params` parameter declarations, the roadmap refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The next active work follows the pending user-owned test-suite request: profile and refactor `test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj` runtime without weakening TypeSharp's regression evidence. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, and `params` in function-type syntax remain language backlog.
 
 After the test catalog extraction and MSTest bridge, the custom regression catalog is exposed as `TypeSharpCompilerTestCases.All`, the package-free main/shard runners still consume the same 517 cases, and `TypeSharp.Compiler.Tests.MSTest` uses pinned `MSTest.Sdk/4.2.3` for `dotnet test` discovery through Microsoft Testing Platform. Generated artifacts stay `net48`, generated C# stays C# 7.3-compatible, and test-host NuGet packages remain isolated from generated runtime deployment. The four-shard custom runner remains the faster release-confidence path; future xUnit.net v3 or CI framework adoption should reuse the extracted catalog.
+
+After the MSTest catalog bridge roadmap refresh, official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, .NET testing, MSTest SDK, and xUnit.net v3 sources were rechecked on 2026-05-22 and found no generated-artifact baseline change. C# 14 remains the current stable .NET 10 C# signal, C# 15 remains preview on .NET 11 preview, TypeScript 6.0 is the transition release toward the TypeScript 7.0 native compiler, TypeScript 7.0 Beta remains side-by-side native-preview tooling, and F# 10 remains a refinement/tooling signal. The next bounded slice is test-host NuGet package selection and restore hardening: record why TypeSharp uses a `net10.0` package-based test bridge, compare MSTest SDK/MTP with xUnit.net v3 over the extracted catalog, then apply lock/source-mapping/audit posture where supported or document a compensating control where MSBuild SDK restore does not expose the same controls.
 
 ## MVP Language Features
 

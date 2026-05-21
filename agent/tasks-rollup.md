@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-22 00:57:00 +09:00
+End Time: 2026-05-22 01:03:29 +09:00
 
 ## Objective
 
@@ -4414,7 +4414,50 @@ Primary evidence:
 
 Remaining:
 
-- Roadmap refresh after the MSTest catalog bridge is active in task 0371. Future xUnit.net v3 or CI adoption should reuse `TypeSharpCompilerTestCases.All` rather than duplicating the catalog.
+- Completed in task 0371: the roadmap refresh after the MSTest catalog bridge selected test-host NuGet package selection plus restore hardening before broader CI adoption.
+
+## Task 0371 Roadmap Refresh After MSTest Catalog Bridge
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, .NET testing, MSTest SDK, and xUnit.net v3 source signals on 2026-05-22 after the pinned MSTest SDK/Microsoft Testing Platform bridge landed.
+- Confirmed no generated-artifact baseline change: TypeSharp generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 14 remains the current stable .NET 10 C# signal, C# 15 remains preview on .NET 11 preview, TypeScript 6.0 is the transition release toward TypeScript 7.0, TypeScript 7.0 Beta remains native-preview tooling, and F# 10 remains a refinement/tooling signal.
+- Confirmed TypeSharp is already using a `net10.0` NuGet test-host bridge: `MSTest.Sdk/4.2.3` remains the pinned package, .NET 10 `dotnet test` uses MTP mode through `global.json`, xUnit.net v3 remains a viable comparison point, and the package-free custom shard runner remains the faster release-confidence path.
+- Selected the next bounded task: `0372 Test-host NuGet package selection and restore hardening`, because introducing the first test-host package SDK should be followed by an explicit MSTest SDK versus xUnit.net v3 comparison plus lock/source-mapping/audit review before broader CI adoption.
+- Kept generated-artifact target changes, test framework package changes, xUnit.net v3 implementation, CI migration, and language feature work out of this roadmap-refresh slice.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework installation on Windows](https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-and-server)
+- [Target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet audit](https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages)
+- [`dotnet test` command](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform)
+- [xUnit.net v3 package guidance](https://xunit.net/docs/nuget-packages-v3)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Test-host NuGet package selection and restore hardening is active in task 0372. Future CI adoption should wait until the MSTest SDK versus xUnit.net v3 choice and package restore controls are clarified.
 
 ## Verification Summary
 
@@ -4446,7 +4489,7 @@ Done:
 
 Remaining:
 
-- Continue active task 0371 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0372 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

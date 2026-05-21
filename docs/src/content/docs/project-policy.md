@@ -67,7 +67,7 @@ Parallel execution policy:
 - Generated C# project emission and external `dotnet build` orchestration remain ordered unless a task proves output paths, generated project files, and external process logs cannot conflict.
 - The main `TypeSharp.Compiler.Tests` runner remains the package-free full release-confidence path. Shard projects may link the same runner and execute disjoint ordinal slices in parallel when shared generated inputs use process-safe caches and every test keeps a unique workspace under `test/tmp`.
 - `TypeSharp.Compiler.Tests.MSTest` is a `net10.0` MSTest SDK/Microsoft Testing Platform bridge over `TypeSharpCompilerTestCases.All`. It exists for `dotnet test` discovery and ecosystem integration, not as the fastest release gate; the current full MSTest catalog run is slower than the four-shard custom runner path.
-- Test framework packages are test-host tooling only. They must reuse the extracted catalog, keep generated `net48` artifacts package-free, and stay pinned and documented. Future xUnit.net v3 or CI adoption must preserve the same catalog coverage rather than duplicating the list.
+- Test framework packages are test-host tooling only. They must reuse the extracted catalog, keep generated `net48` artifacts package-free, and stay pinned and documented. The MSTest bridge introduced the first test-host package SDK; the active follow-up compares MSTest SDK/MTP with xUnit.net v3 over the same catalog, then hardens lock/source-mapping/audit posture for the selected package path before broader CI adoption. Future CI adoption must preserve the same catalog coverage rather than duplicating the list.
 
 ## Dependency And Target Policy
 
