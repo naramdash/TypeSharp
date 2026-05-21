@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
+| Task 0334 Enum value XOR and complement expression slice | [0334-enum-value-xor-complement-expression-slice.md](0334-enum-value-xor-complement-expression-slice.md) | Parser/type-checker/backend fixtures, generated `net48` smoke, canonical docs updates, and completed task rollup. |
 
 ## Completed Evidence Index
 

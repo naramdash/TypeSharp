@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 16:23:20 +09:00
+End Time: 2026-05-21 16:41:48 +09:00
 
 ## Objective
 
@@ -2756,6 +2756,42 @@ Primary evidence:
 Remaining:
 
 - Numeric/general bitwise operators, flag-aware match exhaustiveness, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
+## Task 0333 Roadmap Refresh After Enum Value AND Expressions
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 after enum value AND expressions landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, parser unary/binary precedence, same-enum value `|`/`&` type checking, C# backend unary/binary expression lowering, and the remaining enum flag operator backlog.
+- Selected the next bounded implementation slice: expression-level same-enum value `^` and unary `~` expressions such as `permission ^ Permission.Write` and `~permission`.
+- Kept numeric/general bitwise operators, shifts, compound assignment, flag-aware match exhaustiveness, numeric pattern algebra, imported enum flag reasoning, and arbitrary/general computed enum member declarations out of the slice.
+- Created active task `0334 Enum value XOR and complement expression slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Same-enum value `^` and unary `~` expressions are active in task 0334. Numeric/general bitwise operators, shifts, compound assignment, flag-aware match exhaustiveness, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
 ## Verification Summary
 
