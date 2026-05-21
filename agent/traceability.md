@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Next work is selected from user inbox, agent queue, checklist, or roadmap-refresh rule. |
+| Task 0344 composition shift ambiguity diagnostics | [0344-composition-shift-ambiguity-diagnostics-slice.md](0344-composition-shift-ambiguity-diagnostics-slice.md) | Type-checker composition diagnostics, positive composition fixture preservation, negative ambiguity fixture, Feature Status, Work Ledger, and tasks rollup. |
 
 ## Completed Evidence Index
 

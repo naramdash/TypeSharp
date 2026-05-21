@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | None                               |
-| Active summary     | No active task.                    |
-| Completed range    | 0001-0342                         |
+| Active task packet | [0344-composition-shift-ambiguity-diagnostics-slice.md](0344-composition-shift-ambiguity-diagnostics-slice.md) |
+| Active summary     | Diagnose numeric/value-shaped `>>` and `<<` expressions as composition/shift ambiguity instead of letting them lower as invalid composition lambdas. |
+| Completed range    | 0001-0343                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q2       | In Progress | Task 0343 roadmap refresh | 0344 Composition shift ambiguity diagnostics slice | [0344-composition-shift-ambiguity-diagnostics-slice.md](0344-composition-shift-ambiguity-diagnostics-slice.md) | Diagnose known value-shaped `>>` and `<<` expressions before lowering, preserving `>>`/`<<` as function composition while keeping numeric shifts and shift assignment out. |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0343 Roadmap refresh after local assignment target analysis | [tasks-rollup.md#task-0343-roadmap-refresh-after-local-assignment-target-analysis](tasks-rollup.md#task-0343-roadmap-refresh-after-local-assignment-target-analysis) | Rechecked official source signals after local assignment target analysis, confirmed the baseline, and selected composition/shift ambiguity diagnostics as the next bounded compiler slice. |
 | Q2       | Done        | Task 0341 roadmap refresh | 0342 Local assignment target analysis slice | [tasks-rollup.md#task-0342-local-assignment-target-analysis-slice](tasks-rollup.md#task-0342-local-assignment-target-analysis-slice) | Added local `let mut` assignment target tracking and focused simple/bitwise assignment compatibility diagnostics for identifier assignments; kept imported C# member/indexer/event assignment on the existing interop validator path. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0341 Roadmap refresh after bitwise compound assignments | [tasks-rollup.md#task-0341-roadmap-refresh-after-bitwise-compound-assignments](tasks-rollup.md#task-0341-roadmap-refresh-after-bitwise-compound-assignments) | Rechecked official source signals after bitwise compound assignments, confirmed the baseline, and selected bounded local assignment target diagnostics as the next implementation slice. |
 | Q2       | Done        | Task 0339 roadmap refresh | 0340 Bitwise compound assignment slice | [tasks-rollup.md#task-0340-bitwise-compound-assignment-slice](tasks-rollup.md#task-0340-bitwise-compound-assignment-slice) | Added parser and C# 7.3-compatible lowering for `\|=`, `&=`, and `^=` over the already supported assignment surface; kept shifts, `<<=`, `>>=`, user-defined operators, and broader assignment analysis out. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0339 Roadmap refresh after boolean bitwise expressions | [tasks-rollup.md#task-0339-roadmap-refresh-after-boolean-bitwise-expressions](tasks-rollup.md#task-0339-roadmap-refresh-after-boolean-bitwise-expressions) | Rechecked official source signals after boolean bitwise expressions, confirmed the baseline, and selected bitwise compound assignment `\|=`/`&=`/`^=` as the next bounded implementation slice. |
-| Q2       | Done        | Task 0337 roadmap refresh | 0338 Boolean bitwise expression slice | [tasks-rollup.md#task-0338-boolean-bitwise-expression-slice](tasks-rollup.md#task-0338-boolean-bitwise-expression-slice) | Added expression-level boolean `\|`, `&`, and `^` over known non-null `bool` operands with C# 7.3-compatible lowering; kept unary boolean complement, shifts, compound assignment, user-defined operators, and flag-aware enum algebra out. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

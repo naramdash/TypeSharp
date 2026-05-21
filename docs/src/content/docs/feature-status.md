@@ -183,6 +183,8 @@ After bitwise compound assignments, the empty-queue refresh rechecked official C
 
 The local assignment target slice completed `let mut` tracking for TypeSharp identifier assignments, known simple-assignment compatibility diagnostics, local bitwise compound assignment operand diagnostics, and invalid local assignment target diagnostics. Imported C# member, indexer, static member, and event assignment remains metadata validated by existing interop diagnostics.
 
+After local assignment target analysis, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, VS Code, and C# bitwise/shift operator sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is composition/shift ambiguity diagnostics for known value-shaped `>>` and `<<` expressions, preserving TypeSharp function composition while making numeric shift-looking code fail clearly. Numeric shifts, shift assignment, user-defined operators, broader composition type inference, flag-aware enum algebra, and richer pattern algebra remain separate backlog items.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |

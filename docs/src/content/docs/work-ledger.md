@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task; the agent will select from the user inbox, agent queue, checklist, or roadmap-refresh rule. |
+| Active task packet | `agent/0344-composition-shift-ambiguity-diagnostics-slice.md` |
+| Next top-priority task | Task 0344 composition shift ambiguity diagnostics is in progress. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0342 completed local `let mut` assignment target tracking and focused simple/bitwise assignment diagnostics for TypeSharp identifier assignments. |
-| Completed work covered | 0001-0342 |
+| Current tooling slice | Task 0343 refreshed the roadmap after local assignment target analysis and opened bounded diagnostics for value-shaped `>>`/`<<` composition/shift ambiguity as task 0344. |
+| Completed work covered | 0001-0343 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
