@@ -1,0 +1,60 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended.",
+      "file": "input.tysh",
+      "start": { "line": 16, "column": 3 },
+      "end": { "line": 16, "column": 8 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended.",
+      "file": "input.tysh",
+      "start": { "line": 21, "column": 3 },
+      "end": { "line": 21, "column": 8 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.",
+      "file": "input.tysh",
+      "start": { "line": 26, "column": 3 },
+      "end": { "line": 26, "column": 4 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign expression of type 'string' to 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 32, "column": 3 },
+      "end": { "line": 32, "column": 16 }
+    },
+    {
+      "code": "TS2202",
+      "severity": "error",
+      "message": "Cannot assign nullable expression of type 'string?' to non-null type 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 39, "column": 3 },
+      "end": { "line": 39, "column": 15 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Bitwise compound assignment '|=' operands must be integral numeric values or boolean values of a supported primitive type, but found 'int' and 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 45, "column": 3 },
+      "end": { "line": 45, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum compound assignment '&=' operands must be enum values of the same type, but found 'Permission' and 'Color'.",
+      "file": "input.tysh",
+      "start": { "line": 51, "column": 3 },
+      "end": { "line": 51, "column": 26 }
+    }
+  ]
+}

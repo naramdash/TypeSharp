@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0342-local-assignment-target-analysis-slice.md](0342-local-assignment-target-analysis-slice.md) |
-| Active summary     | Add bounded local assignment target diagnostics for `let mut` identifier assignments while leaving imported C# member assignment to the interop validator. |
-| Completed range    | 0001-0341                         |
+| Active task packet | None                               |
+| Active summary     | No active task.                    |
+| Completed range    | 0001-0342                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0341 roadmap refresh | 0342 Local assignment target analysis slice | [0342-local-assignment-target-analysis-slice.md](0342-local-assignment-target-analysis-slice.md) | Track local `let mut` assignment targets and focused assignment compatibility diagnostics for identifier assignments; keep imported C# member/indexer/event assignment on the existing interop validator path. |
+| Q2       | Done        | Task 0341 roadmap refresh | 0342 Local assignment target analysis slice | [tasks-rollup.md#task-0342-local-assignment-target-analysis-slice](tasks-rollup.md#task-0342-local-assignment-target-analysis-slice) | Added local `let mut` assignment target tracking and focused simple/bitwise assignment compatibility diagnostics for identifier assignments; kept imported C# member/indexer/event assignment on the existing interop validator path. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0341 Roadmap refresh after bitwise compound assignments | [tasks-rollup.md#task-0341-roadmap-refresh-after-bitwise-compound-assignments](tasks-rollup.md#task-0341-roadmap-refresh-after-bitwise-compound-assignments) | Rechecked official source signals after bitwise compound assignments, confirmed the baseline, and selected bounded local assignment target diagnostics as the next implementation slice. |
 | Q2       | Done        | Task 0339 roadmap refresh | 0340 Bitwise compound assignment slice | [tasks-rollup.md#task-0340-bitwise-compound-assignment-slice](tasks-rollup.md#task-0340-bitwise-compound-assignment-slice) | Added parser and C# 7.3-compatible lowering for `\|=`, `&=`, and `^=` over the already supported assignment surface; kept shifts, `<<=`, `>>=`, user-defined operators, and broader assignment analysis out. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0339 Roadmap refresh after boolean bitwise expressions | [tasks-rollup.md#task-0339-roadmap-refresh-after-boolean-bitwise-expressions](tasks-rollup.md#task-0339-roadmap-refresh-after-boolean-bitwise-expressions) | Rechecked official source signals after boolean bitwise expressions, confirmed the baseline, and selected bitwise compound assignment `\|=`/`&=`/`^=` as the next bounded implementation slice. |

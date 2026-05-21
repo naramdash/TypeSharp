@@ -1,0 +1,53 @@
+namespace Samples.TypeChecker.LocalAssignmentTargetInvalid
+
+enum Permission {
+  None,
+  Read,
+  Write
+}
+
+enum Color {
+  Red,
+  Blue
+}
+
+fun immutableLocal(): int {
+  let value = 1
+  value = 2
+  value
+}
+
+fun parameterAssignment(value: int): int {
+  value = 2
+  value
+}
+
+fun invalidTarget(): int {
+  1 = 2
+  0
+}
+
+fun simpleMismatch(): int {
+  let mut value: int = 1
+  value = "two"
+  value
+}
+
+fun nullableMismatch(): string {
+  let mut text: string = "ok"
+  let maybe: string? = null
+  text = maybe
+  text
+}
+
+fun bitwiseMismatch(): int {
+  let mut value: int = 1
+  value |= "two"
+  value
+}
+
+fun enumMismatch(): Permission {
+  let mut permission = Permission.Read
+  permission &= Color.Red
+  permission
+}

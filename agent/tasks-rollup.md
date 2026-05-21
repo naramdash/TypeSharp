@@ -3145,6 +3145,53 @@ Remaining:
 
 - Local assignment target analysis is active in task 0342. Shifts, shift assignment, user-defined operators, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0342 Local Assignment Target Analysis Slice
+
+Completed active implementation work for:
+
+- Start Time: 2026-05-21 18:21:53 +09:00
+- End Time: 2026-05-21 18:31:37 +09:00
+
+Completed work:
+
+- Added mutability tracking to the type-checker value scope while preserving existing value and function inference behavior.
+- Routed `AssignmentExpression` through a dedicated checker path for local identifier assignments.
+- Required `let mut` for local identifier assignment targets and reported deterministic `TS2201` diagnostics for immutable local bindings and function parameters.
+- Added known simple-assignment compatibility checks for local identifiers, including nullability, structural, and ordinary assignment compatibility.
+- Added known local `|=`, `&=`, and `^=` operand checks for same-enum, primitive integral, and bool targets.
+- Diagnosed obvious non-assignable local expression targets such as literals while leaving imported C# member, indexer, static member, and event assignment on the existing metadata-backed interop validator path.
+- Added positive and negative type-checker fixtures plus canonical docs, work-ledger, tasks, and traceability coverage.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/positive/local-assignment-target-analysis`
+- `test/fixtures/diagnostics/type-checker/negative/local-assignment-target-invalid`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

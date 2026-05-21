@@ -236,7 +236,7 @@ public static class TypeSharpTypeChecker
                         if (TryGetDirectTypeAnnotation(child, out var valueTypeNode) &&
                             TryGetType(valueTypeNode, scope, out var valueType))
                         {
-                            scope.DeclareValue(valueName, valueType);
+                            scope.DeclareValue(valueName, valueType, IsMutableValueDeclaration(child));
                             if (TryGetFunctionReturnType(valueTypeNode, out var valueFunctionReturnType))
                             {
                                 scope.DeclareFunction(valueName, valueFunctionReturnType);
@@ -663,7 +663,7 @@ public static class TypeSharpTypeChecker
                 var declaredType = annotationKnown ? expectedType : initializerType;
                 if (declaredType.IsKnown)
                 {
-                    scope.DeclareValue(name, declaredType);
+                    scope.DeclareValue(name, declaredType, IsMutableValueDeclaration(node));
                     if (annotationKnown && TryGetFunctionReturnType(typeNode, out var functionReturnType))
                     {
                         scope.DeclareFunction(name, functionReturnType);
@@ -717,6 +717,11 @@ public static class TypeSharpTypeChecker
                 return CheckBitwiseExpression(node, scope);
             }
 
+            if (node.Kind == SyntaxKind.AssignmentExpression)
+            {
+                return CheckAssignmentExpression(node, scope);
+            }
+
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
             {
                 return inferredType;
@@ -749,6 +754,164 @@ public static class TypeSharpTypeChecker
             }
 
             return SimpleType.Unknown;
+        }
+
+        private SimpleType CheckAssignmentExpression(SyntaxNode node, TypeScope scope)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2)
+            {
+                foreach (var expression in expressions)
+                {
+                    CheckExpression(expression, scope);
+                }
+
+                return SimpleType.Unknown;
+            }
+
+            var target = expressions[0];
+            var value = expressions[1];
+            var operatorKind = node.Children.FirstOrDefault(child => child.IsToken && IsAssignmentOperatorKind(child.Kind))?.Kind ?? SyntaxKind.UnknownToken;
+
+            if (TryGetAssignmentTargetIdentifier(target, out var targetIdentifier))
+            {
+                var targetName = targetIdentifier.Text ?? string.Empty;
+                if (!scope.ResolveValueInfo(targetName, out var targetInfo))
+                {
+                    CheckExpression(target, scope);
+                    CheckExpression(value, scope);
+                    return SimpleType.Unknown;
+                }
+
+                if (!targetInfo.IsMutable)
+                {
+                    ReportMismatch(targetIdentifier, $"Cannot assign to immutable binding '{targetName}'. Use 'let mut' when mutation is intended.");
+                }
+
+                return operatorKind switch
+                {
+                    SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
+                    SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
+                        CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
+                    _ => CheckCompoundAssignmentValue(value, scope, targetInfo.Type)
+                };
+            }
+
+            if (IsImportedAssignmentTargetCandidate(target))
+            {
+                var targetType = CheckExpression(target, scope);
+                CheckExpression(value, scope);
+                return targetType;
+            }
+
+            ReportMismatch(target, "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.");
+            CheckExpression(target, scope);
+            CheckExpression(value, scope);
+            return SimpleType.Unknown;
+        }
+
+        private SimpleType CheckSimpleAssignmentValue(SyntaxNode assignment, SyntaxNode value, TypeScope scope, SimpleType targetType)
+        {
+            var valueType = CheckExpressionWithExpected(value, scope, targetType.IsKnown ? targetType : null);
+            if (!targetType.IsKnown || !valueType.IsKnown)
+            {
+                return targetType.IsKnown ? targetType : valueType;
+            }
+
+            if (IsNullabilityViolation(targetType, valueType))
+            {
+                ReportNullabilityViolation(
+                    assignment,
+                    valueType.IsNull
+                        ? $"Cannot assign null to non-null type '{targetType}'."
+                        : $"Cannot assign nullable expression of type '{valueType}' to non-null type '{targetType}'.");
+            }
+            else if (TryGetStructuralAssignmentDiagnostic(scope, targetType, valueType, out var structuralMessage))
+            {
+                ReportMismatch(assignment, structuralMessage);
+            }
+            else if (!CanAssign(scope, targetType, valueType))
+            {
+                ReportMismatch(assignment, $"Cannot assign expression of type '{valueType}' to '{targetType}'.");
+            }
+
+            return targetType;
+        }
+
+        private SimpleType CheckCompoundAssignmentValue(SyntaxNode value, TypeScope scope, SimpleType targetType)
+        {
+            CheckExpression(value, scope);
+            return targetType;
+        }
+
+        private SimpleType CheckBitwiseCompoundAssignmentValue(
+            SyntaxNode assignment,
+            SyntaxNode value,
+            TypeScope scope,
+            SimpleType targetType,
+            SyntaxKind operatorKind)
+        {
+            var valueType = CheckExpression(value, scope);
+            if (!targetType.IsKnown || !valueType.IsKnown)
+            {
+                return targetType.IsKnown ? targetType : SimpleType.Unknown;
+            }
+
+            var operatorText = operatorKind switch
+            {
+                SyntaxKind.PipeEqualsToken => "|=",
+                SyntaxKind.AmpersandEqualsToken => "&=",
+                SyntaxKind.CaretEqualsToken => "^=",
+                _ => "?="
+            };
+
+            if (TryGetBitwiseCompoundResultType(scope, targetType, valueType, operatorText, assignment, out var resultType) &&
+                resultType.IsKnown &&
+                !CanAssign(scope, targetType, resultType))
+            {
+                ReportMismatch(assignment, $"Cannot assign compound assignment result of type '{resultType}' to '{targetType}'.");
+            }
+
+            return targetType;
+        }
+
+        private bool TryGetBitwiseCompoundResultType(
+            TypeScope scope,
+            SimpleType targetType,
+            SimpleType valueType,
+            string operatorText,
+            SyntaxNode node,
+            out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            var targetIsEnum = IsKnownEnumType(scope, targetType);
+            var valueIsEnum = IsKnownEnumType(scope, valueType);
+            if (targetIsEnum || valueIsEnum)
+            {
+                if (!targetIsEnum || !valueIsEnum || !string.Equals(targetType.Name, valueType.Name, StringComparison.Ordinal))
+                {
+                    ReportMismatch(node, $"Enum compound assignment '{operatorText}' operands must be enum values of the same type, but found '{targetType}' and '{valueType}'.");
+                    return false;
+                }
+
+                resultType = targetType;
+                return true;
+            }
+
+            if (TryGetBinaryIntegralBitwiseResultType(targetType, valueType, out resultType) ||
+                TryGetBinaryBooleanBitwiseResultType(targetType, valueType, out resultType))
+            {
+                return true;
+            }
+
+            if (IsKnownNonNullableBoolType(targetType) || IsKnownNonNullableBoolType(valueType))
+            {
+                ReportMismatch(node, $"Boolean compound assignment '{operatorText}' operands must both be 'bool', but found '{targetType}' and '{valueType}'.");
+                return false;
+            }
+
+            ReportMismatch(node, $"Bitwise compound assignment '{operatorText}' operands must be integral numeric values or boolean values of a supported primitive type, but found '{targetType}' and '{valueType}'.");
+            return false;
         }
 
         private SimpleType InferMemberAccess(SyntaxNode node, TypeScope scope)
@@ -896,6 +1059,23 @@ public static class TypeSharpTypeChecker
         private static bool IsBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken);
+
+        private static bool IsAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.EqualsToken
+                or SyntaxKind.PlusEqualsToken
+                or SyntaxKind.MinusEqualsToken
+                or SyntaxKind.PipeEqualsToken
+                or SyntaxKind.AmpersandEqualsToken
+                or SyntaxKind.CaretEqualsToken;
+
+        private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
+        {
+            identifier = node;
+            return node.Kind == SyntaxKind.IdentifierExpression && TryGetFirstIdentifier(node, out identifier);
+        }
+
+        private static bool IsImportedAssignmentTargetCandidate(SyntaxNode node) =>
+            node.Kind is SyntaxKind.MemberAccessExpression or SyntaxKind.IndexerExpression;
 
         private static bool IsKnownEnumType(TypeScope scope, SimpleType type) =>
             type.IsKnown &&
@@ -3776,6 +3956,10 @@ public static class TypeSharpTypeChecker
             return identifier.IsToken && identifier.Kind == SyntaxKind.IdentifierToken;
         }
 
+        private static bool IsMutableValueDeclaration(SyntaxNode node) =>
+            node.Kind == SyntaxKind.ValueDeclaration &&
+            node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
+
         private static IEnumerable<NamedImportSpecifier> GetNamedImportSpecifiers(SyntaxNode node)
         {
             var insideBraces = false;
@@ -3895,7 +4079,7 @@ public static class TypeSharpTypeChecker
     {
         private readonly TypeScope? _parent;
         private readonly FunctionCapabilities _allowedCapabilities;
-        private readonly Dictionary<string, SimpleType> _values = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, ValueInfo> _values = new(StringComparer.Ordinal);
         private readonly Dictionary<string, FunctionInfo> _functions = new(StringComparer.Ordinal);
         private readonly Dictionary<string, SimpleType> _typeAliases = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CompileTimeOnlyTypeKind> _compileTimeOnlyTypes = new(StringComparer.Ordinal);
@@ -3920,7 +4104,7 @@ public static class TypeSharpTypeChecker
 
         public bool AllowsUnsafe => _allowedCapabilities.RequiresUnsafe || (_parent?.AllowsUnsafe ?? false);
 
-        public void DeclareValue(string name, SimpleType type) => _values[name] = type;
+        public void DeclareValue(string name, SimpleType type, bool isMutable = false) => _values[name] = new ValueInfo(type, isMutable);
 
         public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default);
 
@@ -3944,8 +4128,9 @@ public static class TypeSharpTypeChecker
 
         public bool ResolveValue(string name, out SimpleType type)
         {
-            if (_values.TryGetValue(name, out type))
+            if (_values.TryGetValue(name, out var value))
             {
+                type = value.Type;
                 return true;
             }
 
@@ -4020,6 +4205,22 @@ public static class TypeSharpTypeChecker
             }
 
             type = SimpleType.Unknown;
+            return false;
+        }
+
+        public bool ResolveValueInfo(string name, out ValueInfo value)
+        {
+            if (_values.TryGetValue(name, out value))
+            {
+                return true;
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveValueInfo(name, out value);
+            }
+
+            value = default;
             return false;
         }
 
@@ -4122,6 +4323,8 @@ public static class TypeSharpTypeChecker
     private readonly record struct UnionCaseInfo(string Name, IReadOnlyList<ParameterInfo> Parameters);
 
     private readonly record struct ParameterInfo(string Name, string Type);
+
+    private readonly record struct ValueInfo(SimpleType Type, bool IsMutable);
 
     private readonly record struct TypeLevelUnionInfo(string Name, IReadOnlyList<TypeLevelUnionMemberInfo> Members);
 
