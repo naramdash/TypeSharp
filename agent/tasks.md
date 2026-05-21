@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | None |
-| Active summary     | No active task; apply the queue/checklist/roadmap selection rules on the next cycle. |
-| Completed range    | 0001-0324                         |
+| Active task packet | [0326-enum-attribute-lowering-slice.md](0326-enum-attribute-lowering-slice.md) |
+| Active summary     | Lower TypeSharp-owned enum declaration/member attributes to generated C# metadata shape without adding flag algebra or broad attribute target validation. |
+| Completed range    | 0001-0325                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,11 +41,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q3       | In Progress | Task 0325 roadmap refresh | 0326 Enum attribute lowering slice | [0326-enum-attribute-lowering-slice.md](0326-enum-attribute-lowering-slice.md) | Lower TypeSharp-owned enum declaration/member attributes, including `[FlagsAttribute]` shape, without implementing flag algebra, numeric pattern algebra, or broad attribute target validation. |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0325 Roadmap refresh after imported enum numeric metadata | [tasks-rollup.md#task-0325-roadmap-refresh-after-imported-enum-numeric-metadata](tasks-rollup.md#task-0325-roadmap-refresh-after-imported-enum-numeric-metadata) | Rechecked official source signals after imported enum numeric metadata, confirmed the baseline, and selected enum attribute lowering as the next bounded implementation slice. |
 | Q3       | Done        | Task 0323 roadmap refresh | 0324 Imported enum numeric metadata slice | [tasks-rollup.md#task-0324-imported-enum-numeric-metadata-slice](tasks-rollup.md#task-0324-imported-enum-numeric-metadata-slice) | Captured imported C# enum underlying type and literal member values as metadata for future interop decisions without adding flags, numeric pattern algebra, or TypeSharp-owned computed enum expressions. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0323 Roadmap refresh after enum member aliases | [tasks-rollup.md#task-0323-roadmap-refresh-after-enum-member-aliases](tasks-rollup.md#task-0323-roadmap-refresh-after-enum-member-aliases) | Rechecked official source signals after enum member aliases, confirmed the baseline, and selected imported enum numeric metadata as the next bounded implementation slice. |
 | Q2       | Done        | Task 0321 roadmap refresh | 0322 Explicit enum member aliases slice | [tasks-rollup.md#task-0322-explicit-enum-member-aliases-slice](tasks-rollup.md#task-0322-explicit-enum-member-aliases-slice) | Added a bounded TypeSharp-owned enum alias form such as `Crimson = Red` without taking on computed enum expressions, flags, attributes, or imported enum numeric metadata. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0321 Roadmap refresh after enum numeric range validation | [tasks-rollup.md#task-0321-roadmap-refresh-after-enum-numeric-range-validation](tasks-rollup.md#task-0321-roadmap-refresh-after-enum-numeric-range-validation) | Rechecked official source signals after enum numeric range validation, confirmed the baseline, and selected explicit enum member aliases as the next bounded implementation slice. |
-| Q2       | Done        | Task 0319 roadmap refresh | 0320 Explicit enum numeric range validation slice | [tasks-rollup.md#task-0320-explicit-enum-numeric-range-validation-slice](tasks-rollup.md#task-0320-explicit-enum-numeric-range-validation-slice) | Added deterministic `TS2201` diagnostics for out-of-range or non-integral explicit enum member values while leaving flags, aliases, computed expressions, and imported enum numeric metadata out of scope. |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

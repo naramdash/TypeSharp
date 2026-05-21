@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
+| Task 0326 enum attribute lowering | [0326-enum-attribute-lowering-slice.md](0326-enum-attribute-lowering-slice.md) | `TypeSharpParser.cs`, `CSharpSourceBackend.cs`, enum parser/backend fixtures, generated `net48` compile smoke, and enum docs/rollup updates. |
 
 ## Completed Evidence Index
 

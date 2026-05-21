@@ -2426,7 +2426,42 @@ Primary evidence:
 
 Remaining:
 
-- Flag semantics, enum member attributes, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+- Enum declaration/member attribute lowering is active in task 0326. Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+
+## Task 0325 Roadmap Refresh After Imported Enum Numeric Metadata
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 after imported enum numeric metadata landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, parser attribute support, backend enum lowering, and the remaining enum backlog after imported enum numeric metadata.
+- Selected the next bounded implementation slice: TypeSharp-owned enum declaration/member attribute lowering, without taking on flag algebra, broad attribute target validation, numeric pattern algebra, or arbitrary TypeSharp-owned computed enum expressions.
+- Created active task `0326 Enum attribute lowering slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Enum declaration/member attribute lowering is active in task 0326. Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
 
 ## Verification Summary
 
