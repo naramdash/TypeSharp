@@ -72,6 +72,39 @@ packages = []
 
 The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`.
 
+## Planned Source Aliases
+
+Manifest-owned source aliases are reserved for a future implementation slice. They are project configuration, not source syntax and not TypeScript `paths` compatibility.
+
+```toml
+[modules.aliases]
+"@app/*" = "src/*"
+"@shared/*" = "../Shared/src/*"
+```
+
+The compiler must treat an alias import as a source graph lookup that either resolves to the same module identity as a relative `.tysh` import or stops before emission. An alias target must normalize under a declared `sourceRoots` entry or through an explicit TypeSharp project reference. Targets that only help type checking, depend on a JavaScript runtime resolver, or point at npm/package `exports` behavior are outside the TypeSharp contract.
+
+Until alias implementation lands, use relative imports such as `./Feature/Rules`.
+
+## Planned Project References
+
+TypeSharp project references are reserved for multi-project build graphs where each project has its own manifest and generated `net48` assembly.
+
+```toml
+[projectReferences]
+paths = ["../Shared/TypeSharp.toml"]
+```
+
+The planned behavior is:
+
+- load each referenced `TypeSharp.toml`;
+- check and build referenced projects before the dependent project;
+- consume referenced generated assemblies and TypeSharp export metadata through explicit artifact paths;
+- require direct project references for source-level imports across project boundaries;
+- reject cycles, missing manifests, missing generated metadata, incompatible target frameworks, and missing exports before generated C# is emitted.
+
+The current preview compiler does not implement `[projectReferences]`. Reference an already-built local `net48` DLL through `references.paths` when a project needs external CLR metadata today.
+
 ## Configuration And Target Overrides
 
 The CLI supports build configuration and target framework overrides for generated build/run paths.

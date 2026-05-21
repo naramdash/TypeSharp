@@ -1543,6 +1543,32 @@ Primary evidence:
 - [Type System](../docs/src/content/docs/type-system.md)
 - [tasks.md](tasks.md)
 
+## Task 0301 Source Module Alias And Project Reference Policy
+
+Completed docs/policy work established:
+
+- Refreshed official TypeScript `paths`, TypeScript project references, and MSBuild `ProjectReference` reference signals for the module/configuration boundary.
+- Documented reserved `[modules.aliases]` policy: aliases must be manifest-owned, deterministic, source graph affecting, and pre-emission diagnostic producing instead of TypeScript-style type-check-only paths.
+- Documented reserved `[projectReferences]` policy: each path names another `TypeSharp.toml`; referenced projects build first and are consumed through generated `net48` assemblies plus explicit export metadata.
+- Kept current preview behavior clear: relative imports remain the active source module feature, `[projectReferences]` is not implemented, and current external CLR metadata still uses `references.paths`.
+- Queued bounded follow-up tasks for manifest source alias diagnostics (0303) and TypeSharp project reference build graph implementation (0304).
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [Modules And Imports](../docs/src/content/docs/modules.md)
+- [Project Configuration](../docs/src/content/docs/project-configuration.md)
+- [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

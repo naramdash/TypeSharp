@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | Select the next requested queue item before adding active evidence. |
+| None | [tasks.md](tasks.md) | Select the next `Requested` or `Ready` task from the queue. |
 
 ## Completed Evidence Index
 
@@ -82,6 +82,7 @@
 | Unary numeric C# argument inference | [tasks-rollup.md#task-0292-unary-numeric-csharp-argument-inference](tasks-rollup.md#task-0292-unary-numeric-csharp-argument-inference), `lang/TypeSharp.Compiler/Interop/TypeSharpCSharpOverloadResolver.cs`, `lang/TypeSharp.Compiler/Interop/TypeSharpInteropValidator.cs`, [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md), `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Language ecosystem roadmap | [tasks-rollup.md#task-0293-language-ecosystem-roadmap](tasks-rollup.md#task-0293-language-ecosystem-roadmap), `agent.md`, [tasks.md](tasks.md), [agentic-execution.md](agentic-execution.md), [Agentic Workflow](../docs/src/content/docs/agentic-workflow.md), [Work Ledger](../docs/src/content/docs/work-ledger.md) |
 | C# stable preview parity plan | [tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan](tasks-rollup.md#task-0294-csharp-stable-preview-parity-plan), [Feature Status](../docs/src/content/docs/feature-status.md), [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md), [.NET Interop](../docs/src/content/docs/dotnet-interop.md), [tasks.md](tasks.md) |
+| Source module alias and project reference policy | [tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy](tasks-rollup.md#task-0301-source-module-alias-and-project-reference-policy), [Modules And Imports](../docs/src/content/docs/modules.md), [Project Configuration](../docs/src/content/docs/project-configuration.md), [Runtime Artifacts](../docs/src/content/docs/runtime-artifacts.md), [Feature Status](../docs/src/content/docs/feature-status.md), [tasks.md](tasks.md) |
 | Modules, imports, exports, safety gates | [tasks-rollup.md#language-safety-modules-and-import-export](tasks-rollup.md#language-safety-modules-and-import-export), source module and diagnostics fixtures |
 | Test suite quality audit | [tasks-rollup.md#task-0256-test-suite-quality-audit](tasks-rollup.md#task-0256-test-suite-quality-audit), `test/TypeSharp.Compiler.Tests/Program.cs`, `test/fixtures`, `vscode/typesharp/test`, `examples/runnable` |
 

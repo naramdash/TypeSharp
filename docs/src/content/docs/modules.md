@@ -104,6 +104,48 @@ import * as Helper from "./Feature/Helper"
 
 Relative named and type imports must refer to names exported by the target source module. Namespace alias member access, such as `Helper.hidden()`, must also reference exported target members. Missing exports report `TS0114` before generated C# emission.
 
+## Manifest-Owned Source Aliases
+
+Source aliases are accepted as roadmap policy only when `TypeSharp.toml` owns the mapping and generated output can keep the same module identity as a relative source import. They are not the same feature as TypeScript `paths`: TypeSharp aliases must affect the source graph and generated C# identity, or they must stop with diagnostics before emission.
+
+Reserved manifest shape:
+
+```toml
+[modules.aliases]
+"@app/*" = "src/*"
+"@shared/*" = "../Shared/src/*"
+```
+
+Alias rules for the implementation slice:
+
+- A key may contain at most one `*`, and a value that uses `*` must use the same captured segment.
+- A resolved target must normalize to a discovered `.tysh` source module in the current project or to an explicitly referenced TypeSharp project export.
+- Alias resolution must be deterministic across platforms: normalized slash form, case-insensitive collision checks on Windows-compatible paths, and longest matching alias prefix before shorter wildcard matches.
+- Resolved aliases reuse the normal source module graph. Missing target modules report the same unresolved source module class as `TS0112`; missing exported names still report `TS0114`.
+- Unsupported alias syntax, ambiguous matches, or targets outside declared source roots/project references must report manifest or project diagnostics before generated C# is written.
+
+Current preview projects should keep using relative source imports. The reserved alias spelling is for the queued implementation work, not a currently active compiler feature.
+
+## TypeSharp Project References
+
+TypeSharp project references are also a manifest-owned source graph feature. They are not JavaScript package references, npm workspace links, or TypeScript declaration-only project references. A referenced TypeSharp project must produce a generated `net48` assembly and explicit module/export metadata before a dependent project can compile against it.
+
+Reserved manifest shape:
+
+```toml
+[projectReferences]
+paths = ["../Shared/TypeSharp.toml"]
+```
+
+Project reference rules for the implementation slice:
+
+- Each path names another `TypeSharp.toml`, not a generated DLL. DLLs stay under `references.paths`.
+- The referenced project is checked and built first, using its own `generatedOutputRoot`, target framework, source roots, and diagnostics policy.
+- The dependent project consumes the referenced generated assembly and TypeSharp export metadata through explicit generated artifact paths. No source import may cross into another project by walking parent directories.
+- Project reference imports must preserve CLR-visible identity. Public records, classes, interfaces, delegates, enums, and nominal unions cross the boundary through generated C# metadata; compile-time-only structural shapes and type-level unions do not.
+- Direct references are required for source-level project imports. TypeSharp must not assume hidden transitive project-reference visibility for generated `net48` artifacts.
+- Cycles, missing manifests, incompatible target frameworks, stale or missing referenced artifacts, and missing exported module members must report deterministic diagnostics before emission.
+
 ## Export Surface
 
 `export` marks public TypeSharp declarations for generated API shape where the declaration is implemented by the backend.

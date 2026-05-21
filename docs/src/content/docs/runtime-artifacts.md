@@ -144,6 +144,20 @@ Reference rules:
 - `references.packages` is reserved and currently reports `TS2405`; TypeSharp does not restore NuGet packages during build.
 - The generated project writes an offline `NuGet.config` with package sources cleared so normal builds do not accidentally resolve hidden packages.
 
+## Future TypeSharp Project References
+
+The current preview does not write generated MSBuild `<ProjectReference>` items from `TypeSharp.toml`. Planned TypeSharp project references start from `[projectReferences] paths = [...]` entries that point at other TypeSharp manifests, not DLLs.
+
+The artifact policy is:
+
+- A referenced TypeSharp project is checked and built before the dependent project.
+- The dependent project receives explicit generated assembly paths and TypeSharp module/export metadata.
+- The generated `net48` project may use local `<Reference>` items or generated `<ProjectReference>` items only when build ordering, output paths, and metadata inputs are deterministic.
+- Source-level imports across project boundaries require direct manifest project references; TypeSharp does not infer visibility from arbitrary sibling folders or hidden transitive references.
+- Project-reference diagnostics must stop before the dependent generated project is emitted when a referenced manifest, artifact, target framework, or exported module member is invalid.
+
+This keeps TypeSharp's build graph aligned with ordinary .NET artifact consumption while preserving the source module graph as the compiler-owned authority.
+
 ## Core And Runtime Roles
 
 `TypeSharp.Core` and `TypeSharp.Runtime` solve different problems.
