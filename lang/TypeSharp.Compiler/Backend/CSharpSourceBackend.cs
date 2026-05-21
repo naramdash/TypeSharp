@@ -2153,9 +2153,20 @@ public static class CSharpSourceBackend
 
             if (!TryGetUnionShape(input, out var union))
             {
-                return TryGetTypeLevelUnionShape(input, out var typeLevelUnion)
-                    ? EmitTypeLevelUnionMatch(node, input, typeLevelUnion, resultType)
-                    : "default(object)";
+                if (TryGetExpressionType(input, out var inputTypeName) &&
+                    string.Equals(inputTypeName, "bool", StringComparison.Ordinal))
+                {
+                    return EmitLiteralMatch(node, input, resultType);
+                }
+
+                if (TryGetTypeLevelUnionShape(input, out var typeLevelUnion))
+                {
+                    return IsLiteralTypeLevelUnion(typeLevelUnion)
+                        ? EmitLiteralMatch(node, input, resultType)
+                        : EmitTypeLevelUnionMatch(node, input, typeLevelUnion, resultType);
+                }
+
+                return "default(object)";
             }
 
             var matchValueName = $"__match{_temporaryIndex++}";
@@ -2207,6 +2218,77 @@ public static class CSharpSourceBackend
                         builder.AppendLine($"                    var {payloadVariable} = TypeSharpPattern.RequirePayload<{unionCase.Parameters[0].Type}>({matchValueName}, {unionCase.Tag});");
                     }
 
+                    if (guard is null)
+                    {
+                        builder.AppendLine($"                    return {resultExpression};");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                    if ({EmitExpression(guard)})");
+                        builder.AppendLine("                    {");
+                        builder.AppendLine($"                        return {resultExpression};");
+                        builder.AppendLine("                    }");
+                    }
+
+                    builder.AppendLine("                }");
+                }
+
+                wroteArm = true;
+            }
+
+            if (wroteArm)
+            {
+                builder.AppendLine();
+            }
+
+            builder.AppendLine($"                throw TypeSharpPattern.NoMatch({matchValueName});");
+            builder.Append("            })()");
+            return builder.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
+        }
+
+        private string EmitLiteralMatch(SyntaxNode node, SyntaxNode input, string resultType)
+        {
+            var matchValueName = $"__match{_temporaryIndex++}";
+            var builder = new StringBuilder();
+            builder.AppendLine($"new System.Func<{resultType}>(delegate()");
+            builder.AppendLine("            {");
+            builder.AppendLine($"                var {matchValueName} = {EmitExpression(input)};");
+
+            var wroteArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                if (!TryGetLiteralPatternMatchArm(arm, out var literalExpression, out var expression, out var isDiscard))
+                {
+                    continue;
+                }
+
+                var guard = GetMatchArmGuard(arm);
+                var resultExpression = EmitExpression(expression);
+                if (wroteArm)
+                {
+                    builder.AppendLine();
+                }
+
+                if (isDiscard)
+                {
+                    if (guard is null)
+                    {
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                if ({EmitExpression(guard)})");
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
+                }
+                else
+                {
+                    builder.AppendLine($"                if (object.Equals({matchValueName}, {literalExpression}))");
+                    builder.AppendLine("                {");
                     if (guard is null)
                     {
                         builder.AppendLine($"                    return {resultExpression};");
@@ -2465,6 +2547,37 @@ public static class CSharpSourceBackend
             return expression is not null;
         }
 
+        private static bool TryGetLiteralPatternMatchArm(
+            SyntaxNode arm,
+            out string literalExpression,
+            out SyntaxNode? expression,
+            out bool isDiscard)
+        {
+            literalExpression = string.Empty;
+            expression = null;
+            isDiscard = false;
+
+            var pattern = GetMatchArmPattern(arm);
+            var identifier = pattern?
+                .Children
+                .FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?
+                .Text ?? string.Empty;
+            if (identifier == "_")
+            {
+                expression = GetMatchArmExpression(arm);
+                isDiscard = expression is not null;
+                return isDiscard;
+            }
+
+            if (pattern is null || !TryGetLiteralPatternExpression(pattern, out literalExpression))
+            {
+                return false;
+            }
+
+            expression = GetMatchArmExpression(arm);
+            return expression is not null;
+        }
+
         private bool TryGetTypePatternMatchArm(
             SyntaxNode arm,
             TypeLevelUnionShape union,
@@ -2504,6 +2617,24 @@ public static class CSharpSourceBackend
         private static SyntaxNode? GetMatchArmExpression(SyntaxNode arm) =>
             arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
 
+        private static SyntaxNode? GetMatchArmPattern(SyntaxNode arm) =>
+            arm.Children.FirstOrDefault(child => child.Kind is SyntaxKind.Pattern or SyntaxKind.RecordPattern);
+
+        private static bool TryGetLiteralPatternExpression(SyntaxNode pattern, out string expression)
+        {
+            var token = pattern.Children.FirstOrDefault(child => child.IsToken);
+            expression = token?.Kind switch
+            {
+                SyntaxKind.StringLiteralToken => token.Text ?? "\"\"",
+                SyntaxKind.NumericLiteralToken => token.Text ?? "0",
+                SyntaxKind.TrueKeyword => "true",
+                SyntaxKind.FalseKeyword => "false",
+                _ => string.Empty
+            };
+
+            return expression.Length > 0;
+        }
+
         private static SyntaxNode? GetMatchArmGuard(SyntaxNode arm)
         {
             var children = arm.Children;
@@ -2517,6 +2648,15 @@ public static class CSharpSourceBackend
 
             return null;
         }
+
+        private static bool IsLiteralTypeLevelUnion(TypeLevelUnionShape union) =>
+            union.Members.Count > 0 &&
+            union.Members.All(member => IsLiteralSourceType(member.SourceType));
+
+        private static bool IsLiteralSourceType(string sourceType) =>
+            sourceType is "true" or "false" ||
+            (sourceType.StartsWith("\"", StringComparison.Ordinal) && sourceType.EndsWith("\"", StringComparison.Ordinal)) ||
+            (sourceType.Length > 0 && char.IsDigit(sourceType[0]));
 
         private bool TryGetExpressionType(SyntaxNode node, out string typeName)
         {
@@ -3415,6 +3555,11 @@ public static class CSharpSourceBackend
             if (node.Kind == SyntaxKind.FunctionType)
             {
                 return GetSourceFunctionTypeName(node);
+            }
+
+            if (node.Kind == SyntaxKind.LiteralType)
+            {
+                return node.Children.FirstOrDefault(child => child.IsToken)?.Text ?? "object";
             }
 
             if (node.Kind == SyntaxKind.TypeName)

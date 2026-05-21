@@ -1271,6 +1271,11 @@ public static class TypeSharpTypeChecker
             var inputType = input is null ? SimpleType.Unknown : CheckExpression(input, scope);
             var branchTypes = new List<SimpleType>();
 
+            if (IsKnownBoolType(inputType))
+            {
+                return InferBoolMatch(node, scope, branchTypes);
+            }
+
             if (inputType.IsKnown && scope.ResolveUnion(inputType.Name, out var union))
             {
                 var coveredCases = new HashSet<string>(StringComparer.Ordinal);
@@ -1336,6 +1341,11 @@ public static class TypeSharpTypeChecker
 
             if (inputType.IsKnown && scope.ResolveTypeLevelUnion(inputType.Name, out var typeLevelUnion))
             {
+                if (IsLiteralTypeLevelUnion(typeLevelUnion))
+                {
+                    return InferLiteralTypeLevelUnionMatch(node, scope, typeLevelUnion, branchTypes);
+                }
+
                 var coveredMembers = new HashSet<string>(StringComparer.Ordinal);
                 var hasDiscardArm = false;
                 foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
@@ -1421,6 +1431,127 @@ public static class TypeSharpTypeChecker
             return MergeBranchTypes(branchTypes);
         }
 
+        private SimpleType InferBoolMatch(SyntaxNode node, TypeScope scope, List<SimpleType> branchTypes)
+        {
+            var coveredCases = new HashSet<string>(StringComparer.Ordinal);
+            var hasDiscardArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                var armScope = new TypeScope(scope);
+                var guard = GetMatchArmGuard(arm);
+                if (guard is not null)
+                {
+                    CheckMatchGuard(guard, armScope);
+                }
+
+                if (IsDiscardPattern(arm))
+                {
+                    if (guard is null)
+                    {
+                        hasDiscardArm = true;
+                    }
+                }
+                else if (TryGetLiteralPatternType(arm, out var literalType, out var pattern))
+                {
+                    if (!TryGetLiteralRuntimeType(literalType, out var runtimeType) ||
+                        !string.Equals(runtimeType.Name, "bool", StringComparison.Ordinal))
+                    {
+                        ReportMismatch(pattern, $"Match pattern of type '{runtimeType}' is not compatible with input type 'bool'.");
+                    }
+                    else if (guard is null)
+                    {
+                        coveredCases.Add(literalType.Name);
+                    }
+                }
+
+                var expression = GetMatchArmExpression(arm);
+                if (expression is not null)
+                {
+                    branchTypes.Add(CheckExpression(expression, armScope));
+                }
+            }
+
+            var missingCases = hasDiscardArm
+                ? []
+                : new[] { "true", "false" }
+                    .Where(value => !coveredCases.Contains(value))
+                    .ToArray();
+            if (missingCases.Length > 0)
+            {
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.NonExhaustiveMatch.Code,
+                    DiagnosticDescriptors.NonExhaustiveMatch.DefaultSeverity,
+                    $"Non-exhaustive match for bool. Missing cases: {string.Join(", ", missingCases)}.",
+                    _file,
+                    node.Span));
+            }
+
+            return MergeBranchTypes(branchTypes);
+        }
+
+        private SimpleType InferLiteralTypeLevelUnionMatch(
+            SyntaxNode node,
+            TypeScope scope,
+            TypeLevelUnionInfo typeLevelUnion,
+            List<SimpleType> branchTypes)
+        {
+            var coveredMembers = new HashSet<string>(StringComparer.Ordinal);
+            var memberNames = typeLevelUnion.Members.Select(member => member.Type.Name).ToArray();
+            var memberSet = new HashSet<string>(memberNames, StringComparer.Ordinal);
+            var hasDiscardArm = false;
+            foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
+            {
+                var armScope = new TypeScope(scope);
+                var guard = GetMatchArmGuard(arm);
+                if (guard is not null)
+                {
+                    CheckMatchGuard(guard, armScope);
+                }
+
+                if (IsDiscardPattern(arm))
+                {
+                    if (guard is null)
+                    {
+                        hasDiscardArm = true;
+                    }
+                }
+                else if (TryGetLiteralPatternType(arm, out var literalType, out var pattern))
+                {
+                    if (!memberSet.Contains(literalType.Name))
+                    {
+                        ReportMismatch(pattern, $"Match pattern '{literalType}' is not part of type-level union '{typeLevelUnion.Name}'.");
+                    }
+                    else if (guard is null)
+                    {
+                        coveredMembers.Add(literalType.Name);
+                    }
+                }
+
+                var expression = GetMatchArmExpression(arm);
+                if (expression is not null)
+                {
+                    branchTypes.Add(CheckExpression(expression, armScope));
+                }
+            }
+
+            var missingMembers = hasDiscardArm
+                ? []
+                : memberNames
+                    .Where(member => !coveredMembers.Contains(member))
+                    .ToArray();
+            if (missingMembers.Length > 0)
+            {
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.NonExhaustiveMatch.Code,
+                    DiagnosticDescriptors.NonExhaustiveMatch.DefaultSeverity,
+                    $"Non-exhaustive match for type-level union '{typeLevelUnion.Name}'. Missing members: {string.Join(", ", missingMembers)}.",
+                    _file,
+                    node.Span));
+            }
+
+            return MergeBranchTypes(branchTypes);
+        }
+
         private void CheckMatchGuard(SyntaxNode guard, TypeScope scope)
         {
             var guardType = CheckExpression(guard, scope);
@@ -1432,6 +1563,16 @@ public static class TypeSharpTypeChecker
                 ReportMismatch(guard, $"Match guard expression must be 'bool', but found '{guardType}'.");
             }
         }
+
+        private static bool IsKnownBoolType(SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            !type.IsNullable &&
+            string.Equals(type.Name, "bool", StringComparison.Ordinal);
+
+        private static bool IsLiteralTypeLevelUnion(TypeLevelUnionInfo union) =>
+            union.Members.Count > 0 &&
+            union.Members.All(member => TryGetLiteralRuntimeType(member.Type, out _));
 
         private static SimpleType MergeBranchTypes(IReadOnlyList<SimpleType> branchTypes)
         {
@@ -2984,6 +3125,27 @@ public static class TypeSharpTypeChecker
 
         private static SyntaxNode? GetMatchArmExpression(SyntaxNode arm) =>
             arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+
+        private static bool IsDiscardPattern(SyntaxNode arm) =>
+            GetMatchArmPattern(arm)?
+                .Children
+                .FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?
+                .Text == "_";
+
+        private static bool TryGetLiteralPatternType(SyntaxNode arm, out SimpleType type, out SyntaxNode pattern)
+        {
+            type = SimpleType.Unknown;
+            pattern = GetMatchArmPattern(arm) ?? arm;
+            if (pattern.Kind != SyntaxKind.Pattern)
+            {
+                return false;
+            }
+
+            return TryGetLiteralTokenType(pattern.Children.FirstOrDefault(child => child.IsToken), out type);
+        }
+
+        private static SyntaxNode? GetMatchArmPattern(SyntaxNode arm) =>
+            arm.Children.FirstOrDefault(child => child.Kind is SyntaxKind.Pattern or SyntaxKind.RecordPattern);
 
         private static SyntaxNode? GetMatchArmGuard(SyntaxNode arm)
         {

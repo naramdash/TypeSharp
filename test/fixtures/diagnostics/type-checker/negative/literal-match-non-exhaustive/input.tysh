@@ -1,0 +1,19 @@
+namespace Samples.TypeChecker.LiteralMatchNonExhaustive
+
+type Mode = "on" | "off"
+
+fun describeFlag(flag: bool): string =
+  match flag {
+    true => "yes"
+  }
+
+fun describeMode(mode: Mode): string =
+  match mode {
+    "on" => "On"
+  }
+
+fun guardedOnly(mode: Mode): string =
+  match mode {
+    "on" when true => "On"
+    "off" when true => "Off"
+  }

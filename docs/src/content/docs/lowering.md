@@ -47,6 +47,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | Records | Immutable sealed C# classes with constructor, get-only properties, equality, and hash code. |
 | Nominal unions | Abstract base type plus sealed case types and runtime pattern helper metadata. |
 | Pattern matching over nominal unions | Ordered C# case checks using runtime pattern helpers; `_` lowers to an unconditional fallback arm. |
+| Pattern matching over bool and local literal unions | Ordered C# conditional comparisons using `object.Equals`; `_` lowers to an unconditional fallback arm. |
 | Type-level unions in local code | Local erased representation, usually `object`, with narrowing checks. |
 | Structural shape proofs | Compile-time checks; no public metadata shape. |
 | `async fun` | C# `async` method returning `Task` or `Task<T>`. |
@@ -108,14 +109,17 @@ Nominal unions lower to an abstract base type with sealed nested case types. Pay
 
 Nominal union matches lower to ordered C# checks. Payload extraction uses runtime helpers. `when` guards lower to nested C# conditionals after the arm's payload or type binding is available, guarded `_` arms lower to conditional fallbacks, and unguarded `_` arms lower to unconditional fallback returns in source order. Non-exhaustive matches should be reported before backend emission.
 
-Type-level unions are local compile-time constructs. Their matches lower to C# type checks where supported, including guarded arms that evaluate after the type-pattern variable is bound, and public boundary leaks report diagnostics.
+Type-level unions are local compile-time constructs. Their type-pattern matches lower to C# type checks where supported, and their literal-union matches lower to ordered `object.Equals` comparisons. Guarded arms evaluate after the relevant type binding or literal comparison, and public boundary leaks report diagnostics.
 
 Evidence:
 
 - `test/fixtures/backend/csharp/positive/0017-nominal-union-api`
 - `test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`
 - `test/fixtures/backend/csharp/positive/0019-type-level-union-narrowing`
+- `test/fixtures/backend/csharp/positive/0038-literal-match-lowering`
 - `test/fixtures/diagnostics/type-checker/positive/match-guards`
+- `test/fixtures/diagnostics/type-checker/positive/literal-match-exhaustiveness`
+- `test/fixtures/diagnostics/type-checker/negative/literal-match-non-exhaustive`
 - `test/fixtures/diagnostics/type-checker/negative/guarded-only-non-exhaustive-match`
 - `test/fixtures/diagnostics/type-checker/negative/non-exhaustive-union-match`
 - `test/fixtures/diagnostics/type-checker/negative/public-boundary-union-alias`

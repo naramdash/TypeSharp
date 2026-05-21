@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Literal match exhaustiveness slice | [0308-literal-match-exhaustiveness-slice.md](0308-literal-match-exhaustiveness-slice.md) | Parser literal pattern fixture, bool exhaustive/non-exhaustive diagnostics, local literal-union exhaustive/non-exhaustive diagnostics, C# backend lowering, docs and verification |
+| None | [tasks.md](tasks.md) | No active packet after task 0308 completion. The empty-queue rule should select a roadmap-refresh task next. |
 
 ## Completed Evidence Index
 
@@ -42,6 +42,7 @@
 | Parser, binder, semantic skeleton | [tasks-rollup.md#foundation-parser-and-semantic-skeleton](tasks-rollup.md#foundation-parser-and-semantic-skeleton), `test/fixtures/parser`, `test/fixtures/diagnostics` |
 | Runtime, backend, generated C# lowering | [tasks-rollup.md#runtime-build-backend-and-language-lowering](tasks-rollup.md#runtime-build-backend-and-language-lowering), `test/fixtures/backend/csharp`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Match guards | [tasks-rollup.md#task-0306-match-guard-implementation-slice](tasks-rollup.md#task-0306-match-guard-implementation-slice), `test/fixtures/diagnostics/type-checker/positive/match-guards`, `test/fixtures/diagnostics/type-checker/negative/match-guard-non-bool`, `test/fixtures/diagnostics/type-checker/negative/guarded-only-non-exhaustive-match`, `test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`, `test/fixtures/backend/csharp/positive/0019-type-level-union-narrowing` |
+| Literal match exhaustiveness | [tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice](tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice), `test/fixtures/parser/positive/0034-literal-match-patterns`, `test/fixtures/diagnostics/type-checker/positive/literal-match-exhaustiveness`, `test/fixtures/diagnostics/type-checker/negative/literal-match-non-exhaustive`, `test/fixtures/backend/csharp/positive/0038-literal-match-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

@@ -1,0 +1,13 @@
+namespace Samples.LiteralMatchPatterns
+
+type Mode = "on" | "off" | 1
+
+fun describe(flag: bool, mode: Mode): string =
+  match flag {
+    true => "yes"
+    false => match mode {
+      "on" => "On"
+      "off" => "Off"
+      1 => "One"
+    }
+  }

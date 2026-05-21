@@ -1763,7 +1763,7 @@ Primary evidence:
 
 Remaining:
 
-- Bool, enum, literal-union exhaustiveness and richer pattern algebra remain future match work.
+- Enum exhaustiveness and richer pattern algebra remain future match work.
 
 ## Task 0307 Roadmap Refresh After Match Guards
 
@@ -1787,6 +1787,46 @@ Primary evidence:
 - [Feature Status](../docs/src/content/docs/feature-status.md)
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
+
+## Task 0308 Literal Match Exhaustiveness Slice
+
+Completed language/compiler work established:
+
+- Added parser support for `true`, `false`, string, and numeric literal patterns in `match` arms.
+- Added `bool` match exhaustiveness diagnostics that track unguarded `true`/`false` coverage, allow unguarded `_` fallback coverage, and keep guarded literal arms non-covering.
+- Added local literal type-level union match exhaustiveness diagnostics for string, numeric, and bool literal members, including deterministic missing-member messages and incompatible literal-pattern diagnostics.
+- Lowered supported literal matches to C# 7.3-compatible immediately invoked `System.Func<T>` delegates with ordered `object.Equals` comparisons and runtime `TypeSharpPattern.NoMatch` fallback.
+- Preserved compile-time-only public ABI boundaries for local literal unions; exported wrappers continue to expose CLR-visible signatures.
+- Added parser, type-checker positive/negative, backend snapshot, and CLI `net48` build/consumer smoke coverage for literal pattern parsing, bool/local literal-union coverage, guarded-only non-coverage, and C# lowering.
+- Updated canonical grammar, feature status, type-system, lowering, reference, diagnostics, and work-ledger docs for the implemented boundary.
+
+Verification:
+
+```powershell
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0034-literal-match-patterns`
+- `test/fixtures/diagnostics/type-checker/positive/literal-match-exhaustiveness`
+- `test/fixtures/diagnostics/type-checker/negative/literal-match-non-exhaustive`
+- `test/fixtures/backend/csharp/positive/0038-literal-match-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Enum exhaustiveness and richer pattern algebra remain future match work.
 
 ## Verification Summary
 

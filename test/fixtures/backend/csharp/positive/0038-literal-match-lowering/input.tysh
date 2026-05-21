@@ -1,0 +1,18 @@
+namespace Samples.LiteralMatches
+
+type Mode = "on" | "off"
+
+fun describeModeInternal(mode: Mode): string =
+  match mode {
+    "on" => "On"
+    "off" => "Off"
+  }
+
+export fun describeOn(): string =
+  describeModeInternal("on")
+
+export fun describeFlag(flag: bool): string =
+  match flag {
+    true => "Yes"
+    false => "No"
+  }

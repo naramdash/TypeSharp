@@ -1299,6 +1299,11 @@ public sealed class TypeSharpParser
             return ParseRecordPattern();
         }
 
+        if (IsLiteralPatternStart(Current.Kind))
+        {
+            return Node(SyntaxKind.Pattern, [TokenNode(NextToken())]);
+        }
+
         var children = new List<SyntaxNode>
         {
             TokenNode(Expect(SyntaxKind.IdentifierToken))
@@ -1335,6 +1340,12 @@ public sealed class TypeSharpParser
 
         return Node(SyntaxKind.Pattern, children);
     }
+
+    private static bool IsLiteralPatternStart(SyntaxKind kind) =>
+        kind is SyntaxKind.StringLiteralToken
+            or SyntaxKind.NumericLiteralToken
+            or SyntaxKind.TrueKeyword
+            or SyntaxKind.FalseKeyword;
 
     private SyntaxNode ParseRecordPattern()
     {

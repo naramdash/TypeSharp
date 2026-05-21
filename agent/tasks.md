@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0308-literal-match-exhaustiveness-slice.md](0308-literal-match-exhaustiveness-slice.md) |
-| Active summary     | Implement literal pattern parsing and bool/local literal-union match exhaustiveness and lowering. |
-| Completed range    | 0001-0307                         |
+| Active task packet | None                               |
+| Active summary     | None                               |
+| Completed range    | 0001-0308                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0307 roadmap refresh | 0308 Literal match exhaustiveness slice | [0308-literal-match-exhaustiveness-slice.md](0308-literal-match-exhaustiveness-slice.md) | Implement literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering; keep enum exhaustiveness and richer pattern algebra as follow-ups. |
+| Q2       | Done        | Task 0307 roadmap refresh | 0308 Literal match exhaustiveness slice | [tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice](tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice) | Implemented literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering; enum exhaustiveness and richer pattern algebra remain follow-ups. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0307 Roadmap refresh after match guards | [tasks-rollup.md#task-0307-roadmap-refresh-after-match-guards](tasks-rollup.md#task-0307-roadmap-refresh-after-match-guards) | Rechecked official source signals after match guards, confirmed the baseline, and selected literal/bool match exhaustiveness as the next bounded implementation slice. |
 | Q2       | Done        | Task 0305 roadmap refresh | 0306 Match guard implementation slice | [tasks-rollup.md#task-0306-match-guard-implementation-slice](tasks-rollup.md#task-0306-match-guard-implementation-slice) | Implemented `match` arm `when` guard parsing/checking/lowering for nominal and local type-level union matches; guarded arms do not prove exhaustiveness without an unguarded cover. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0305 Roadmap refresh after ecosystem plan | [tasks-rollup.md#task-0305-roadmap-refresh-after-ecosystem-plan](tasks-rollup.md#task-0305-roadmap-refresh-after-ecosystem-plan) | Refreshed official source signals, confirmed TypeSharp baseline, and queued 0306 match guard implementation slice. |

@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for bool. Missing cases: false.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 3 },
+      "end": { "line": 8, "column": 4 }
+    },
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for type-level union 'Mode'. Missing members: \"off\".",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 3 },
+      "end": { "line": 13, "column": 4 }
+    },
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for type-level union 'Mode'. Missing members: \"on\", \"off\".",
+      "file": "input.tysh",
+      "start": { "line": 16, "column": 3 },
+      "end": { "line": 19, "column": 4 }
+    }
+  ]
+}

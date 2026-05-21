@@ -1,0 +1,85 @@
+SourceFile TextSpan=1:1-13:4
+  NamespaceDeclaration TextSpan=1:1-1:39
+    Token NamespaceKeyword "namespace" TextSpan=1:1-1:10
+    TypeName TextSpan=1:11-1:39
+      Token IdentifierToken "Samples" TextSpan=1:11-1:18
+      Token DotToken "." TextSpan=1:18-1:19
+      Token IdentifierToken "LiteralMatchPatterns" TextSpan=1:19-1:39
+  TypeAliasDeclaration TextSpan=3:1-3:29
+    Token TypeKeyword "type" TextSpan=3:1-3:5
+    Token IdentifierToken "Mode" TextSpan=3:6-3:10
+    Token EqualsToken "=" TextSpan=3:11-3:12
+    UnionType TextSpan=3:13-3:29
+      LiteralType TextSpan=3:13-3:17
+        Token StringLiteralToken "\"on\"" TextSpan=3:13-3:17
+      Token PipeToken "|" TextSpan=3:18-3:19
+      LiteralType TextSpan=3:20-3:25
+        Token StringLiteralToken "\"off\"" TextSpan=3:20-3:25
+      Token PipeToken "|" TextSpan=3:26-3:27
+      LiteralType TextSpan=3:28-3:29
+        Token NumericLiteralToken "1" TextSpan=3:28-3:29
+  FunctionDeclaration TextSpan=5:1-13:4
+    Token FunKeyword "fun" TextSpan=5:1-5:4
+    Token IdentifierToken "describe" TextSpan=5:5-5:13
+    ParameterList TextSpan=5:13-5:37
+      Token OpenParenToken "(" TextSpan=5:13-5:14
+      Parameter TextSpan=5:14-5:24
+        Token IdentifierToken "flag" TextSpan=5:14-5:18
+        TypeAnnotation TextSpan=5:18-5:24
+          Token ColonToken ":" TextSpan=5:18-5:19
+          TypeName TextSpan=5:20-5:24
+            Token IdentifierToken "bool" TextSpan=5:20-5:24
+      Token CommaToken "," TextSpan=5:24-5:25
+      Parameter TextSpan=5:26-5:36
+        Token IdentifierToken "mode" TextSpan=5:26-5:30
+        TypeAnnotation TextSpan=5:30-5:36
+          Token ColonToken ":" TextSpan=5:30-5:31
+          TypeName TextSpan=5:32-5:36
+            Token IdentifierToken "Mode" TextSpan=5:32-5:36
+      Token CloseParenToken ")" TextSpan=5:36-5:37
+    TypeAnnotation TextSpan=5:37-5:45
+      Token ColonToken ":" TextSpan=5:37-5:38
+      TypeName TextSpan=5:39-5:45
+        Token IdentifierToken "string" TextSpan=5:39-5:45
+    FunctionBody TextSpan=5:46-13:4
+      Token EqualsToken "=" TextSpan=5:46-5:47
+      MatchExpression TextSpan=6:3-13:4
+        Token MatchKeyword "match" TextSpan=6:3-6:8
+        IdentifierExpression TextSpan=6:9-6:13
+          Token IdentifierToken "flag" TextSpan=6:9-6:13
+        Token OpenBraceToken "{" TextSpan=6:14-6:15
+        MatchArm TextSpan=7:5-7:18
+          Pattern TextSpan=7:5-7:9
+            Token TrueKeyword "true" TextSpan=7:5-7:9
+          Token EqualsGreaterToken "=>" TextSpan=7:10-7:12
+          LiteralExpression TextSpan=7:13-7:18
+            Token StringLiteralToken "\"yes\"" TextSpan=7:13-7:18
+        MatchArm TextSpan=8:5-12:6
+          Pattern TextSpan=8:5-8:10
+            Token FalseKeyword "false" TextSpan=8:5-8:10
+          Token EqualsGreaterToken "=>" TextSpan=8:11-8:13
+          MatchExpression TextSpan=8:14-12:6
+            Token MatchKeyword "match" TextSpan=8:14-8:19
+            IdentifierExpression TextSpan=8:20-8:24
+              Token IdentifierToken "mode" TextSpan=8:20-8:24
+            Token OpenBraceToken "{" TextSpan=8:25-8:26
+            MatchArm TextSpan=9:7-9:19
+              Pattern TextSpan=9:7-9:11
+                Token StringLiteralToken "\"on\"" TextSpan=9:7-9:11
+              Token EqualsGreaterToken "=>" TextSpan=9:12-9:14
+              LiteralExpression TextSpan=9:15-9:19
+                Token StringLiteralToken "\"On\"" TextSpan=9:15-9:19
+            MatchArm TextSpan=10:7-10:21
+              Pattern TextSpan=10:7-10:12
+                Token StringLiteralToken "\"off\"" TextSpan=10:7-10:12
+              Token EqualsGreaterToken "=>" TextSpan=10:13-10:15
+              LiteralExpression TextSpan=10:16-10:21
+                Token StringLiteralToken "\"Off\"" TextSpan=10:16-10:21
+            MatchArm TextSpan=11:7-11:17
+              Pattern TextSpan=11:7-11:8
+                Token NumericLiteralToken "1" TextSpan=11:7-11:8
+              Token EqualsGreaterToken "=>" TextSpan=11:9-11:11
+              LiteralExpression TextSpan=11:12-11:17
+                Token StringLiteralToken "\"One\"" TextSpan=11:12-11:17
+            Token CloseBraceToken "}" TextSpan=12:5-12:6
+        Token CloseBraceToken "}" TextSpan=13:3-13:4

@@ -91,7 +91,7 @@ Current boundary:
 | Immutable values, expression-result functions, local inference, first-class functions | MVP | TypeSharp keeps `let`, expression/block-bodied `fun`, function type values, and local inference, while public CLR boundaries continue to prefer explicit annotations. |
 | Pipelines and composition | MVP limited | `|>`, `>>`, and `<<` are implemented with C# 7.3-compatible lowering. Broader partial-application/currying remains backlog because generated delegate shapes must stay predictable for C# consumers. |
 | Records and discriminated unions | MVP | TypeSharp records and nominal unions are the stable public data/domain model. Recursive and mutually recursive union ergonomics remain backlog after exhaustiveness and ABI shape are stronger. |
-| Pattern matching and exhaustiveness | MVP expanding | Nominal-union and local type-level union match diagnostics cover known missing cases/members, `_` discard arms can cover the remaining nominal or type-level union space, and `when` guards are checked in narrowed arm scope without proving coverage by themselves. Next work should broaden bool/enums and richer pattern algebra. |
+| Pattern matching and exhaustiveness | MVP expanding | Nominal-union, `bool`, and local type-level union match diagnostics cover known missing cases/members, including local literal-union members. `_` discard arms can cover the remaining known space, and `when` guards are checked in narrowed arm scope without proving coverage by themselves. Enum exhaustiveness and richer pattern algebra remain backlog. |
 | Option, ValueOption, and result ergonomics | MVP plus Stable Backlog | `Option<T>` and `Result<T,E>` are core nominal unions. Struct-backed value options and richer bind/map/default helpers are backlog until ABI and allocation tradeoffs are documented for `net48`. |
 | Computation expressions, task workflows, and `and!`-style concurrency | Stable Backlog | TypeSharp keeps direct `async fun`/`Task<T>` interop as MVP. General builder-based computation expressions need a design that avoids macros, user-code execution during build, and non-obvious lowering. |
 | Active patterns | Stable Backlog | Useful as named match extractors, but they need deterministic binder/type-checker rules and diagnostics before syntax is accepted. |
@@ -140,11 +140,12 @@ Refresh notes:
 - F# 10 remains a refinement release for clarity, tooling, and performance; its scoped warnings, task improvements, and trimming signals continue to inform diagnostics/tooling policy rather than adding an F# runtime dependency.
 - .NET Framework lifecycle, NuGet lock/source-mapping/audit requirements, and VS Code LSP/Marketplace publication requirements do not change the current TypeSharp baseline.
 
-The current bounded implementation slice added match guard support:
+The bounded implementation slices after the refresh added match guard support and literal match exhaustiveness:
 
 - `match` arm `when` guards parse, bind, type-check, and lower for nominal unions and existing local type-level union match paths.
 - Guarded arms do not satisfy exhaustiveness by themselves unless a later unguarded arm or discard arm covers the same closed set.
-- The next bounded implementation slice should add literal pattern parsing plus bool and local literal-union match exhaustiveness/lowering. Enum exhaustiveness and richer pattern algebra remain separate follow-ups.
+- Literal match patterns parse for bool, string, and numeric literal arms; `bool` and local literal-union matches report missing cases/members and lower to C# 7.3-compatible conditional comparisons.
+- Enum exhaustiveness and richer pattern algebra remain separate follow-ups.
 
 ## MVP Language Features
 
@@ -153,7 +154,7 @@ The current bounded implementation slice added match guard support:
 | Null safety | MVP | Reference-like types are non-null by default; nullable values use `T?` or `Option<T>`; unknown C# nullability is reported in strict contexts. |
 | Nominal closed unions | MVP | `union` declarations are the runtime/domain union model and lower to a C#-compatible class hierarchy for the implemented slice. |
 | Type-level unions | MVP local only | `A \| B` is compile-time-only for local inference, literal unions, structural narrowing, and overload reasoning; public ABI reports diagnostics. |
-| Pattern matching | MVP | `match` is expression-oriented with nominal-union and local type-level union exhaustiveness, discard fallback coverage, and narrowed `when` guard checks for the implemented paths. |
+| Pattern matching | MVP | `match` is expression-oriented with nominal-union, `bool`, and local type-level union exhaustiveness, including local literal-union cases. Discard fallback coverage and narrowed `when` guard checks are implemented for the supported paths. |
 | Structural shapes | MVP local only | Shape checks and `satisfies` are compile-time proof tools; public APIs must expose nominal alternatives. |
 | Structural intersection aliases | MVP limited | Named structural shape aliases can compose with `A & B`; general intersection normalization remains backlog. |
 | `keyof` | MVP limited | Known records and named structural shapes can produce local string literal key unions. |

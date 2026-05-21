@@ -20589,6 +20589,7 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
             namespace Samples.TypeLevelUnion
 
             type PrimitiveId = string | int
+            type Mode = "on" | "off"
 
             fun normalizeInternal(id: PrimitiveId): string =
               match id {
@@ -20597,11 +20598,20 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
                 _ => ""
               }
 
+            fun describeModeInternal(mode: Mode): string =
+              match mode {
+                "on" => "On"
+                "off" => "Off"
+              }
+
             export fun normalizeText(text: string): string =
               normalizeInternal(text)
 
             export fun normalizeNumber(number: int): string =
               normalizeInternal(number)
+
+            export fun describeModeOn(): string =
+              describeModeInternal("on")
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -20619,6 +20629,9 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
         AssertContains("if (__match0 is int number)", generatedSource);
         AssertContains("if (number > 0)", generatedSource);
         AssertContains("throw TypeSharpPattern.NoMatch(__match0);", generatedSource);
+        AssertContains("if (object.Equals(__match1, \"on\"))", generatedSource);
+        AssertContains("if (object.Equals(__match1, \"off\"))", generatedSource);
+        AssertContains("throw TypeSharpPattern.NoMatch(__match1);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeLevelUnionNarrowing.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with type-level union narrowing.");
@@ -20661,7 +20674,9 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
                     {
                         return Samples.TypeLevelUnion.Module.normalizeText("abc")
                             + ":"
-                            + Samples.TypeLevelUnion.Module.normalizeNumber(7);
+                            + Samples.TypeLevelUnion.Module.normalizeNumber(7)
+                            + ":"
+                            + Samples.TypeLevelUnion.Module.describeModeOn();
                     }
                 }
             }
