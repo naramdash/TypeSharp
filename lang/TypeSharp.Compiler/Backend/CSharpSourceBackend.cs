@@ -1692,6 +1692,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.LiteralExpression => EmitLiteral(node),
                 SyntaxKind.IdentifierExpression => EmitIdentifier(node),
                 SyntaxKind.MemberAccessExpression => EmitMemberAccess(node),
+                SyntaxKind.NullConditionalMemberAccessExpression => EmitNullConditionalMemberAccess(node),
                 SyntaxKind.IndexerExpression => EmitIndexer(node),
                 SyntaxKind.GenericNameExpression => EmitGenericName(node),
                 SyntaxKind.CallExpression => EmitCall(node),
@@ -2399,7 +2400,50 @@ public static class CSharpSourceBackend
                 return EmitLogicalUnsignedShiftAssignment(expressions[0], expressions[1]);
             }
 
+            if (operatorToken.Kind == SyntaxKind.EqualsToken &&
+                expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return EmitNullConditionalMemberAssignment(expressions[0], expressions[1]);
+            }
+
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
+        }
+
+        private string EmitNullConditionalMemberAssignment(SyntaxNode target, SyntaxNode value)
+        {
+            if (!TryGetNullConditionalImportedMemberAssignmentTarget(
+                    target,
+                    out var receiver,
+                    out var memberName,
+                    out var targetType,
+                    out var receiverType))
+            {
+                return "default(object)";
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({receiverParameter}.{memberName} = {EmitExpression(value)})";
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
+        }
+
+        private string EmitNullConditionalMemberAccess(SyntaxNode node)
+        {
+            if (!TryGetNullConditionalImportedMemberAccess(
+                    node,
+                    requireWritable: false,
+                    out var receiver,
+                    out var memberName,
+                    out var targetType,
+                    out var receiverType))
+            {
+                return "default(object)";
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAccess = $"{receiverParameter} == null ? default({normalizedTargetType}) : {receiverParameter}.{memberName}";
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAccess})({EmitExpression(receiver)})";
         }
 
         private string EmitBinary(SyntaxNode node)
@@ -4598,6 +4642,61 @@ public static class CSharpSourceBackend
                 out isStatic);
         }
 
+        private bool TryGetNullConditionalImportedMemberAssignmentTarget(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out string memberName,
+            out string targetType,
+            out string receiverType)
+        {
+            return TryGetNullConditionalImportedMemberAccess(
+                node,
+                requireWritable: true,
+                out receiver,
+                out memberName,
+                out targetType,
+                out receiverType);
+        }
+
+        private bool TryGetNullConditionalImportedMemberAccess(
+            SyntaxNode node,
+            bool requireWritable,
+            out SyntaxNode receiver,
+            out string memberName,
+            out string targetType,
+            out string receiverType)
+        {
+            receiver = default!;
+            memberName = string.Empty;
+            targetType = string.Empty;
+            receiverType = string.Empty;
+            if (node.Kind != SyntaxKind.NullConditionalMemberAccessExpression ||
+                !TryGetMemberAccessParts(node, out receiver, out memberName))
+            {
+                return false;
+            }
+
+            receiverType = InferEmitterExpressionType(receiver);
+            if (string.IsNullOrWhiteSpace(receiverType) ||
+                string.Equals(receiverType, "object", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var receiverTypes = FindMetadataTypes(receiverType);
+            if (!receiverTypes.Any(type => !type.IsValueType))
+            {
+                return false;
+            }
+
+            return TryFindImportedMemberAccessType(
+                receiverTypes,
+                memberName,
+                isStatic: false,
+                requireWritable,
+                out targetType);
+        }
+
         private bool TryGetImportedMemberAccess(
             SyntaxNode node,
             bool requireWritable,
@@ -4963,7 +5062,7 @@ public static class CSharpSourceBackend
         {
             receiver = default!;
             memberName = string.Empty;
-            if (node.Kind != SyntaxKind.MemberAccessExpression)
+            if (node.Kind is not (SyntaxKind.MemberAccessExpression or SyntaxKind.NullConditionalMemberAccessExpression))
             {
                 return false;
             }

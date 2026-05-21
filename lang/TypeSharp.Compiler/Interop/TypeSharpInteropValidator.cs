@@ -91,19 +91,24 @@ public static class TypeSharpInteropValidator
             ValidateNamedImport(node, assemblies, file, diagnostics, sourceAliases, sourceModuleSpecifiers);
         }
 
-        if (node.Kind == SyntaxKind.MemberAccessExpression)
+        if (node.Kind is SyntaxKind.MemberAccessExpression or SyntaxKind.NullConditionalMemberAccessExpression)
         {
             var isCallCallee = IsCallCallee(node, parent, grandParent);
             var isAssignmentTarget = IsAssignmentTarget(node, parent);
-            if (!isCallCallee)
+            var isNullConditionalMemberAccess = node.Kind == SyntaxKind.NullConditionalMemberAccessExpression;
+            if (!isCallCallee && !isNullConditionalMemberAccess)
             {
                 ValidateStaticMemberAccess(node, assemblies, file, diagnostics);
             }
 
             if (isAssignmentTarget)
             {
-                ValidateStaticPropertySetterAccess(node, parent, assemblies, file, diagnostics);
-                ValidateStaticFieldAssignmentAccess(node, parent, assemblies, file, diagnostics);
+                if (!isNullConditionalMemberAccess)
+                {
+                    ValidateStaticPropertySetterAccess(node, parent, assemblies, file, diagnostics);
+                    ValidateStaticFieldAssignmentAccess(node, parent, assemblies, file, diagnostics);
+                }
+
                 ValidateInstanceEventAssignmentAccess(node, parent, localInstances, file, diagnostics);
                 ValidateInstancePropertySetterAccess(node, parent, localInstances, file, diagnostics);
                 ValidateInstanceFieldAssignmentAccess(node, parent, localInstances, file, diagnostics);
@@ -1686,7 +1691,7 @@ public static class TypeSharpInteropValidator
         receiverName = string.Empty;
         memberName = string.Empty;
 
-        if (node.Kind != SyntaxKind.MemberAccessExpression)
+        if (node.Kind is not (SyntaxKind.MemberAccessExpression or SyntaxKind.NullConditionalMemberAccessExpression))
         {
             return false;
         }

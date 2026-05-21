@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(530, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(532, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(133, shardCounts[0]);
     AssertEqual(133, shardCounts[1]);
-    AssertEqual(132, shardCounts[2]);
-    AssertEqual(132, shardCounts[3]);
+    AssertEqual(133, shardCounts[2]);
+    AssertEqual(133, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -20213,6 +20213,199 @@ static void CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentIndex
                 diagnostic.Code == "TS2402" &&
                 diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
             "Ambiguous imported indexer argument should reuse existing interop ambiguity diagnostics.");
+    });
+}
+
+static void CliBuildCompilesNullConditionalAssignmentImportedMemberTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            fun makeFields(value: int): LegacyFields {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = value
+              fields
+            }
+
+            fun missingFields(): LegacyFields? =
+              null
+
+            fun makeValue(): int =
+              41
+
+            export fun simple(): int {
+              let fields: LegacyFields = makeFields(1)
+              fields?.MutableCount = makeValue()
+            }
+
+            export fun skipped(): int {
+              let fields: LegacyFields? = missingFields()
+              fields?.MutableCount = makeValue()
+              7
+            }
+
+            export fun nonTrivial(): int {
+              makeFields(2)?.MutableCount = makeValue()
+            }
+
+            export fun fieldTarget(value: long): long {
+              let fields: LegacyFields = makeFields(3)
+              fields?.MutableLong = value
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional assignment imported member build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyFields, int>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int) : (__tsReceiver", generatedSource);
+        AssertContains(".MutableCount = makeValue())", generatedSource);
+        AssertContains(")(fields)", generatedSource);
+        AssertContains(")(makeFields(2))", generatedSource);
+        AssertContains("new System.Func<LegacyFields, long>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(long) : (__tsReceiver", generatedSource);
+        AssertContains(".MutableLong = value)", generatedSource);
+        AssertFalse(generatedSource.Contains("?.", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional assignment syntax.");
+        AssertFalse(generatedSource.Contains("makeFields(2).MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional assignment receiver.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalAssignment.Module.simple() == 41 &&
+                            Samples.NullConditionalAssignment.Module.skipped() == 7 &&
+                            Samples.NullConditionalAssignment.Module.nonTrivial() == 41 &&
+                            Samples.NullConditionalAssignment.Module.fieldTarget(42L) == 42L;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalAssignment
+
+            import { LegacyEvents, LegacyFields } from "Legacy.Tools"
+
+            export fun compound(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableCount += 1
+              0
+            }
+
+            export fun readonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.InstanceCode = "x"
+              0
+            }
+
+            export fun eventTarget(): int {
+              let events: LegacyEvents = LegacyEvents()
+              events?.Transform = null
+              0
+            }
+
+            export fun staticTarget(): int {
+              LegacyFields?.MutableStaticCount = 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# assignment targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("supports only simple '='", StringComparison.Ordinal)),
+            "Null-conditional compound assignment should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
+            "Unsupported null-conditional member targets should be rejected before emission.");
     });
 }
 

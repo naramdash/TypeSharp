@@ -166,7 +166,7 @@ jobs:
           $mstestShards = 0..3 | ForEach-Object {
             "test\TypeSharp.Compiler.Tests.MSTest.Shard$_\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj"
           }
-          $expectedTests = @(132, 132, 131, 131)
+          $expectedTests = @(133, 133, 133, 133)
 
           $jobs = for ($index = 0; $index -lt $mstestShards.Count; $index++) {
             Start-Job -Name (Split-Path $mstestShards[$index] -LeafBase) -ScriptBlock {

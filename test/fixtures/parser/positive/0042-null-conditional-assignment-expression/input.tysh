@@ -1,0 +1,5 @@
+namespace Samples.NullConditionalAssignment
+
+fun update(): unit {
+  value?.count = 1
+}

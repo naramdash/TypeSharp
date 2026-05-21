@@ -961,6 +961,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.IfExpression => InferIf(node, scope),
                 SyntaxKind.MatchExpression => InferMatch(node, scope),
                 SyntaxKind.MemberAccessExpression => InferMemberAccess(node, scope),
+                SyntaxKind.NullConditionalMemberAccessExpression => CheckNullConditionalMemberAccess(node, scope),
                 SyntaxKind.AwaitExpression => InferAwait(node, scope),
                 SyntaxKind.IndexerExpression => InferIndexer(node, scope),
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
@@ -997,6 +998,11 @@ public static class TypeSharpTypeChecker
             var target = expressions[0];
             var value = expressions[1];
             var operatorKind = node.Children.FirstOrDefault(child => child.IsToken && IsAssignmentOperatorKind(child.Kind))?.Kind ?? SyntaxKind.UnknownToken;
+
+            if (target.Kind == SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return CheckNullConditionalMemberAssignment(node, target, value, scope, operatorKind);
+            }
 
             if (TryGetAssignmentTargetIdentifier(target, out var targetIdentifier))
             {
@@ -1068,6 +1074,52 @@ public static class TypeSharpTypeChecker
             }
 
             return targetType;
+        }
+
+        private SimpleType CheckNullConditionalMemberAssignment(
+            SyntaxNode assignment,
+            SyntaxNode target,
+            SyntaxNode value,
+            TypeScope scope,
+            SyntaxKind operatorKind)
+        {
+            if (operatorKind != SyntaxKind.EqualsToken)
+            {
+                CheckNullConditionalReceiver(target, scope);
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    assignment,
+                    "Null-conditional assignment '?.' supports only simple '=' over metadata-backed imported C# instance field/property targets; compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
+                return SimpleType.Unknown;
+            }
+
+            if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var targetType))
+            {
+                return CheckSimpleAssignmentValue(assignment, value, scope, targetType);
+            }
+
+            CheckExpression(value, scope);
+            ReportMismatch(
+                target,
+                "Null-conditional assignment '?.' is supported only for writable metadata-backed imported C# instance field/property targets.");
+            return SimpleType.Unknown;
+        }
+
+        private SimpleType CheckNullConditionalMemberAccess(SyntaxNode node, TypeScope scope)
+        {
+            CheckNullConditionalReceiver(node, scope);
+            ReportMismatch(
+                node,
+                "Null-conditional member access '?.' is currently supported only as a simple assignment target over metadata-backed imported C# instance field/property targets.");
+            return SimpleType.Unknown;
+        }
+
+        private void CheckNullConditionalReceiver(SyntaxNode target, TypeScope scope)
+        {
+            if (TryGetMemberAccessParts(target, out var receiver, out _))
+            {
+                CheckExpression(receiver, scope);
+            }
         }
 
         private SimpleType CheckCompoundAssignmentValue(SyntaxNode value, TypeScope scope, SimpleType targetType)
@@ -1295,6 +1347,21 @@ public static class TypeSharpTypeChecker
             return TryGetImportedInstanceMemberAccessType(receiverType, memberName, requireWritable: true, out targetType);
         }
 
+        private bool TryGetNullConditionalImportedMemberAssignmentTargetType(
+            SyntaxNode target,
+            TypeScope scope,
+            out SimpleType targetType)
+        {
+            targetType = SimpleType.Unknown;
+            if (!TryGetMemberAccessParts(target, out var receiver, out var memberName))
+            {
+                return false;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            return TryGetImportedNullConditionalInstanceMemberAccessType(receiverType, memberName, requireWritable: true, out targetType);
+        }
+
         private bool TryGetImportedStaticMemberAccessType(
             SyntaxNode receiver,
             string memberName,
@@ -1334,6 +1401,33 @@ public static class TypeSharpTypeChecker
 
             return TryFindImportedMemberAccessType(
                 FindMetadataTypes(receiverType.Name),
+                memberName,
+                isStatic: false,
+                requireWritable,
+                out type);
+        }
+
+        private bool TryGetImportedNullConditionalInstanceMemberAccessType(
+            SimpleType receiverType,
+            string memberName,
+            bool requireWritable,
+            out SimpleType type)
+        {
+            type = SimpleType.Unknown;
+            if (!receiverType.IsKnown || receiverType.IsNull)
+            {
+                return false;
+            }
+
+            var lookupType = receiverType with { IsNullable = false };
+            var receiverTypes = FindMetadataTypes(lookupType.Name);
+            if (!receiverTypes.Any(candidate => !candidate.IsValueType))
+            {
+                return false;
+            }
+
+            return TryFindImportedMemberAccessType(
+                receiverTypes,
                 memberName,
                 isStatic: false,
                 requireWritable,
@@ -4128,7 +4222,7 @@ public static class TypeSharpTypeChecker
         {
             receiver = default!;
             memberName = string.Empty;
-            if (node.Kind != SyntaxKind.MemberAccessExpression)
+            if (node.Kind is not (SyntaxKind.MemberAccessExpression or SyntaxKind.NullConditionalMemberAccessExpression))
             {
                 return false;
             }

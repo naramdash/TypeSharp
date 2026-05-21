@@ -5849,6 +5849,64 @@ Remaining:
 
 - Active in task 0398: null-conditional assignment imported member targets.
 
+## Task 0398 Null-conditional assignment imported member targets
+
+Status: Done
+Queue: Q2
+Completed: 2026-05-22
+
+Summary:
+
+- Added `?.` token/syntax support with a parser fixture for the bounded null-conditional member assignment target shape.
+- Implemented checker support for simple `receiver?.Member = value` when `receiver` is a nullable or reference-like metadata-backed imported C# instance receiver and `Member` resolves to a writable public imported C# field or property.
+- Rejected null-conditional compound assignment, static targets, events, readonly/unwritable members, indexers, local binding targets, TypeSharp-owned members, and null-conditional reads with deterministic diagnostics before backend emission.
+- Lowered accepted assignments to C# 7.3-compatible `System.Func<TReceiver,TMember>` null guards, preserving single receiver evaluation and skipping right-side evaluation when the receiver is null, without emitted `?.` syntax or generated package dependencies.
+- Added generated `net48` C# consumer evidence, updated the shared custom/MSTest catalog count to 532, and set package-based shard expectations to `133, 133, 133, 133`.
+- Updated Grammar, Type System, Lowering, Diagnostics, Feature Status, .NET Interop, Work Ledger, test README, regression workflow counts, and traceability.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet restore/build/test over test\TypeSharp.Compiler.Tests.MSTest.Shard0-3 with --locked-mode restore, --no-restore build, --no-build CatalogCase runs, and minimum expected tests 133 per shard
+npm run build
+git diff --check
+```
+
+Result: compiler test host build passed; focused parser/generated-consumer/negative-checker/shard-count tests passed; full 532-case package-free catalog passed; MSTest package bridge smoke passed; all four MSTest package shard bridge `dotnet test` runs passed with 133 tests per shard; docs build succeeded with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpLexer.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/Interop/TypeSharpInteropValidator.cs`
+- `test/fixtures/parser/positive/0042-null-conditional-assignment-expression`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Next ready task 0399 should recheck official language/platform/package/test/editor/CI signals after null-conditional assignment landed and select the next bounded TypeSharp implementation slice.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -5873,13 +5931,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0397 is compressed here.
+- Completed historical work through task 0398 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0398 from [tasks.md](tasks.md) when work resumes.
+- Continue the next ready task from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

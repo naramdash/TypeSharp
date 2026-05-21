@@ -400,6 +400,7 @@ public sealed class TypeSharpLexer
     private static readonly (string Text, SyntaxKind Kind)[] MultiCharacterTokens =
     [
         ("...", SyntaxKind.DotDotDotToken),
+        ("?.", SyntaxKind.QuestionDotToken),
         ("??", SyntaxKind.NullCoalescingToken),
         ("=>", SyntaxKind.EqualsGreaterToken),
         ("->", SyntaxKind.ArrowToken),
