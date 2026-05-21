@@ -1,0 +1,22 @@
+namespace Samples.TypeChecker.OptionalDefaultParameterDeclaration
+
+fun decorate(value: string, prefix: string = "[", suffix: string = "]"): string = prefix + value + suffix
+
+fun increment(value: int, amount: int = 1): int = value + amount
+
+fun choose(enabled: bool = true): bool = enabled
+
+fun maybe(value: string? = null): string? = value
+
+let decoratedDefault = decorate("value")
+let decoratedPrefix = decorate("value", "<")
+let decoratedFull = decorate("value", "<", ">")
+let incrementDefault = increment(1)
+let incrementFull = increment(1, 2)
+let boolDefault = choose()
+let boolFull = choose(false)
+let maybeDefault = maybe()
+let maybeFull = maybe("text")
+let pipedDefault = "value" |> decorate
+let pipedOne = "value" |> decorate("<")
+let pipedFull = "value" |> decorate("<", ">")

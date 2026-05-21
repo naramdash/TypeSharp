@@ -4630,7 +4630,61 @@ Primary evidence:
 
 Remaining:
 
-- Optional/default parameter declarations are active in task 0376.
+- Completed in task 0376: optional/default parameter declarations for TypeSharp-owned direct functions.
+
+## Task 0376 Optional Default Parameter Declaration Slice
+
+Completed implementation work established:
+
+- Added parser support for defaulted parameters on direct top-level/module/exported `fun` declarations as `name: Type = literal`, while keeping interface/class/extension signatures outside the initial parser surface.
+- Added type-checker support for trailing defaulted suffixes on non-generic TypeSharp-owned direct functions, including omitted direct-call and first-argument pipeline arguments.
+- Added deterministic `TS2201` diagnostics for non-trailing defaults, missing explicit parameter types, unsupported default expressions, default/type and nullability mismatches, `params` interaction, generic functions, and ambient/`extern` signatures.
+- Added C# source lowering for optional parameters with C# 7.3-compatible literal defaults and nullable value-type mapping for generated signatures.
+- Added parser, type-checker, and backend fixtures for accepted and rejected optional/default parameter declarations.
+- Added a generated `net48` library smoke that asserts emitted C# optional parameter signatures, public ABI optional metadata, and C# 7.3 `net48` consumer calls with omitted arguments.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, .NET Interop, Feature Status, Project Policy, and test/MSTest catalog documentation for the 518-case catalog.
+- Kept imported C# optional/default behavior, TypeSharp named arguments, generic defaults, overload ranking, constructors, delegates, union cases, function types, lambdas, and higher-order values out of this slice.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "optional/default parameter"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build -- --filter "fixture scenario README coverage is stable"
+dotnet restore test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --locked-mode --verbosity minimal
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-restore --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+# Built all four shard projects and ran the package-free shard runners in parallel with PowerShell Start-Job; all 518 catalog cases passed.
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/fixtures/parser/positive/0038-optional-default-parameter-declaration`
+- `test/fixtures/parser/negative/0002-missing-default-parameter-expression`
+- `test/fixtures/diagnostics/type-checker/positive/optional-default-parameter-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/optional-default-parameter-declaration`
+- `test/fixtures/backend/csharp/positive/0046-optional-default-parameter-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+
+Remaining:
+
+- Active in task 0377: roadmap refresh after optional/default parameter declarations.
 
 ## Verification Summary
 
@@ -4656,13 +4710,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0375 is compressed here.
+- Completed historical work through task 0376 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0376 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0377 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

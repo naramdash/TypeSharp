@@ -1,0 +1,28 @@
+namespace Samples.TypeChecker.OptionalDefaultParameterDeclarationInvalid
+
+fun defaultBeforeRequired(first: string = "x", second: string): string = second
+
+fun defaultParams(prefix: string, params values: string[] = null): string = prefix
+
+fun defaultExpression(value: int = 1 + 2): int = value
+
+fun defaultTypeMismatch(value: int = "x"): int = value
+
+fun defaultNullMismatch(value: string = null): string = value
+
+fun defaultGeneric<T>(value: T, fallback: int = 0): T = value
+
+fun inferredDefault(value = 1): int = 0
+
+ambient fun hostDefault(value: string = "x"): string
+
+interop extern fun NativeDefault(value: int = 1): int
+
+fun decorate(value: string, prefix: string = "[", suffix: string = "]"): string = prefix + value + suffix
+
+fun increment(value: int, amount: int = 1): int = value + amount
+
+let missingRequired = decorate()
+let tooManyArguments = decorate("value", "<", ">", "!")
+let wrongSupplied = increment(1, "x")
+let pipelineTooMany = "value" |> decorate("<", ">", "!")

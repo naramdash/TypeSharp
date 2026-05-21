@@ -1,0 +1,5 @@
+namespace Samples.OptionalDefaultParameterDeclaration
+
+fun greet(name: string = "world", punctuation: string = "!"): string = name + punctuation
+
+fun limit(value: int, fallback: int = 1, enabled: bool = true, text: string? = null): int = value

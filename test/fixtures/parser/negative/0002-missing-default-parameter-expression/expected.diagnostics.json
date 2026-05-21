@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS1003",
+      "severity": "error",
+      "message": "Expected expression before ')'.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 27 },
+      "end": { "line": 3, "column": 27 }
+    }
+  ]
+}

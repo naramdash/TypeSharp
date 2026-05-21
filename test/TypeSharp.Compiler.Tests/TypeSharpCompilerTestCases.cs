@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(517, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(518, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -21370,6 +21370,124 @@ static void CliBuildCompilesTypeSharpParamsParameterLowering()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated TypeSharp params API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesTypeSharpOptionalDefaultParameterLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "TypeSharpOptionalDefaultParameterLowering"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.OptionalDefaultParameter"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.OptionalDefaultParameter
+
+            export fun greet(prefix: string, name: string = "world", punctuation: string = "!"): string = prefix + name + punctuation
+
+            export fun count(value: int = 1): int = value
+
+            export fun enabled(value: bool = true): bool = value
+
+            export fun maybe(value: string? = null): string? = value
+
+            export fun smoke(): string {
+              let greeting = greet("hello ")
+              let countText = count().ToString()
+              let enabledText = enabled().ToString()
+              greeting + countText + enabledText
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/TypeSharpOptionalDefaultParameterLowering.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static string greet(string prefix, string name = \"world\", string punctuation = \"!\")", generatedSource);
+        AssertContains("public static int count(int value = 1)", generatedSource);
+        AssertContains("public static bool enabled(bool value = true)", generatedSource);
+        AssertContains("public static string maybe(string value = null)", generatedSource);
+        AssertContains("var greeting = greet(\"hello \");", generatedSource);
+        AssertContains("var countText = count().ToString();", generatedSource);
+        AssertContains("var enabledText = enabled().ToString();", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeSharpOptionalDefaultParameterLowering.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with TypeSharp optional/default parameter lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "TypeSharpOptionalDefaultParameterLowering",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/TypeSharpOptionalDefaultParameterLowering.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated optional/default parameter assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("  method string greet(string prefix, string name = optional, string punctuation = optional)", abiSnapshotText);
+        AssertContains("  method int count(int value = optional)", abiSnapshotText);
+        AssertContains("  method bool enabled(bool value = optional)", abiSnapshotText);
+        AssertContains("  method string maybe(string value = optional)", abiSnapshotText);
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "OptionalDefaultParameterConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>OptionalDefaultParameterConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="TypeSharpOptionalDefaultParameterLowering">
+                  <HintPath>../generated/bin/Debug/net48/TypeSharpOptionalDefaultParameterLowering.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace OptionalDefaultParameterConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.OptionalDefaultParameter.Module.greet("hello ")
+                            + Samples.OptionalDefaultParameter.Module.count().ToString()
+                            + Samples.OptionalDefaultParameter.Module.enabled().ToString()
+                            + (Samples.OptionalDefaultParameter.Module.maybe() ?? "");
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build OptionalDefaultParameterConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated TypeSharp optional/default parameter API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

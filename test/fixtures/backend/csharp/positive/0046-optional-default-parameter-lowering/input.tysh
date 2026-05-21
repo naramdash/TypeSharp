@@ -1,0 +1,17 @@
+namespace Samples.OptionalDefaultParameterLowering
+
+export fun decorate(value: string, prefix: string = "[", suffix: string = "]"): string = prefix + value + suffix
+
+export fun increment(value: int, amount: int = 1): int = value + amount
+
+export fun choose(enabled: bool = true): bool = enabled
+
+export fun maybe(value: string? = null): string? = value
+
+export fun main(): string {
+  let decorated = decorate("value")
+  let full = decorate("value", "<", ">")
+  let incremented = increment(1)
+  let chosen = choose()
+  decorated + full + incremented.ToString() + chosen.ToString()
+}

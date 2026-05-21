@@ -1,0 +1,124 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Required parameter 'second' cannot follow a defaulted parameter.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 48 },
+      "end": { "line": 3, "column": 62 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Defaulted parameters cannot be combined with params parameters in the initial optional-parameter slice.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 35 },
+      "end": { "line": 5, "column": 65 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Params parameter 'values' cannot declare a default value.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 35 },
+      "end": { "line": 5, "column": 65 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Default value for parameter 'values' cannot be null because it expects non-null type 'string[]'.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 61 },
+      "end": { "line": 5, "column": 65 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Defaulted parameter 'value' must use a string, numeric, bool, or null literal.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 36 },
+      "end": { "line": 7, "column": 41 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Default value for parameter 'value' expects 'int', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 38 },
+      "end": { "line": 9, "column": 41 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Default value for parameter 'value' cannot be null because it expects non-null type 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 41 },
+      "end": { "line": 11, "column": 45 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Defaulted parameter 'fallback' is not supported on generic functions in the initial optional-parameter slice.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 33 },
+      "end": { "line": 13, "column": 50 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Defaulted parameter 'value' must declare an explicit type.",
+      "file": "input.tysh",
+      "start": { "line": 15, "column": 21 },
+      "end": { "line": 15, "column": 30 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Defaulted parameter 'value' is supported only on TypeSharp-owned function declarations.",
+      "file": "input.tysh",
+      "start": { "line": 17, "column": 25 },
+      "end": { "line": 17, "column": 44 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Defaulted parameter 'value' is supported only on TypeSharp-owned function declarations.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 34 },
+      "end": { "line": 19, "column": 48 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'decorate' expects at least 1 argument, but call supplies 0 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 25, "column": 23 },
+      "end": { "line": 25, "column": 33 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'decorate' expects at most 3 arguments, but call supplies 4 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 26, "column": 24 },
+      "end": { "line": 26, "column": 56 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'increment' argument 2 expects 'int', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 27, "column": 21 },
+      "end": { "line": 27, "column": 38 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'decorate' expects at most 3 arguments after pipeline lowering, but pipeline supplies 4 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 28, "column": 23 },
+      "end": { "line": 28, "column": 57 }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+SourceFile TextSpan=1:1-3:43
+  NamespaceDeclaration TextSpan=1:1-1:47
+    Token NamespaceKeyword "namespace" TextSpan=1:1-1:10
+    TypeName TextSpan=1:11-1:47
+      Token IdentifierToken "Samples" TextSpan=1:11-1:18
+      Token DotToken "." TextSpan=1:18-1:19
+      Token IdentifierToken "ParserDefaultParameterErrors" TextSpan=1:19-1:47
+  FunctionDeclaration TextSpan=3:1-3:43
+    Token FunKeyword "fun" TextSpan=3:1-3:4
+    Token IdentifierToken "broken" TextSpan=3:5-3:11
+    ParameterList TextSpan=3:11-3:28
+      Token OpenParenToken "(" TextSpan=3:11-3:12
+      Parameter TextSpan=3:12-3:27
+        Token IdentifierToken "name" TextSpan=3:12-3:16
+        TypeAnnotation TextSpan=3:16-3:24
+          Token ColonToken ":" TextSpan=3:16-3:17
+          TypeName TextSpan=3:18-3:24
+            Token IdentifierToken "string" TextSpan=3:18-3:24
+        Initializer TextSpan=3:25-3:27
+          Token EqualsToken "=" TextSpan=3:25-3:26
+          Missing MissingExpression TextSpan=3:27-3:27
+      Token CloseParenToken ")" TextSpan=3:27-3:28
+    TypeAnnotation TextSpan=3:28-3:36
+      Token ColonToken ":" TextSpan=3:28-3:29
+      TypeName TextSpan=3:30-3:36
+        Token IdentifierToken "string" TextSpan=3:30-3:36
+    FunctionBody TextSpan=3:37-3:43
+      Token EqualsToken "=" TextSpan=3:37-3:38
+      IdentifierExpression TextSpan=3:39-3:43
+        Token IdentifierToken "name" TextSpan=3:39-3:43

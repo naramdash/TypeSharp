@@ -352,7 +352,10 @@ public sealed class TypeSharpParser
         };
     }
 
-    private SyntaxNode ParseFunctionDeclaration(List<SyntaxNode>? prefixChildren = null, bool allowSignatureOnly = false)
+    private SyntaxNode ParseFunctionDeclaration(
+        List<SyntaxNode>? prefixChildren = null,
+        bool allowSignatureOnly = false,
+        bool allowParameterInitializers = true)
     {
         var children = prefixChildren ?? [];
         var isExtern = false;
@@ -372,7 +375,7 @@ public sealed class TypeSharpParser
             children.Add(ParseTypeParameterList());
         }
 
-        children.Add(ParseParameterList());
+        children.Add(ParseParameterList(allowInitializers: allowParameterInitializers));
 
         if (Current.Kind == SyntaxKind.ColonToken)
         {
@@ -733,7 +736,7 @@ public sealed class TypeSharpParser
 
         return Current.Kind switch
         {
-            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children, allowSignatureOnly: true),
+            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children, allowSignatureOnly: true, allowParameterInitializers: false),
             _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
         };
     }
@@ -744,7 +747,7 @@ public sealed class TypeSharpParser
 
         return Current.Kind switch
         {
-            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children),
+            _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children, allowParameterInitializers: false),
             SyntaxKind.LetKeyword => ParseValueDeclaration(children),
             SyntaxKind.EventKeyword => ParseEventDeclaration(children),
             _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
@@ -763,7 +766,7 @@ public sealed class TypeSharpParser
             var memberPrefix = ParseDeclarationPrefix();
             children.Add(
                 IsFunctionDeclarationStart(Current)
-                    ? ParseFunctionDeclaration(memberPrefix)
+                    ? ParseFunctionDeclaration(memberPrefix, allowParameterInitializers: false)
                     : Node(SyntaxKind.SkippedToken, [..memberPrefix, ParseSkippedToken()]));
         }
 
@@ -938,7 +941,7 @@ public sealed class TypeSharpParser
         return Node(SyntaxKind.AccessorBlock, children);
     }
 
-    private SyntaxNode ParseParameterList()
+    private SyntaxNode ParseParameterList(bool allowInitializers = false)
     {
         var children = new List<SyntaxNode>
         {
@@ -959,6 +962,16 @@ public sealed class TypeSharpParser
             if (Current.Kind == SyntaxKind.ColonToken)
             {
                 parameterChildren.Add(ParseTypeAnnotation());
+            }
+
+            if (allowInitializers && Current.Kind == SyntaxKind.EqualsToken)
+            {
+                var initializerChildren = new List<SyntaxNode>
+                {
+                    TokenNode(NextToken()),
+                    ParseExpression()
+                };
+                parameterChildren.Add(Node(SyntaxKind.Initializer, initializerChildren));
             }
 
             children.Add(Node(SyntaxKind.Parameter, parameterChildren));

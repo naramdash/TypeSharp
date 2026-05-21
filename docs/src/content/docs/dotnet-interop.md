@@ -203,6 +203,8 @@ Avoid exposing these compile-time-only shapes directly:
 
 If C# callers need the concept, wrap it in a named public type.
 
+Public TypeSharp-owned `fun` declarations may expose trailing literal default parameters. Generated C# emits ordinary optional parameter metadata for supported string, numeric, `bool`, and `null` defaults, so C# 7.3 `net48` consumers can omit those arguments. Generic TypeSharp functions, ambient/`extern` signatures, `params` combinations, constructors, delegates, union cases, function types, lambdas, named TypeSharp arguments, and higher-order values do not expose TypeSharp-owned defaults in the current slice.
+
 ## Runtime Dependencies
 
 Generated assemblies can reference:

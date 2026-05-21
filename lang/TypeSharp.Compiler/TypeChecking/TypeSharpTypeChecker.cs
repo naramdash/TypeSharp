@@ -227,7 +227,8 @@ public static class TypeSharpTypeChecker
                                 GetFunctionCapabilities(child),
                                 GetFunctionParameterTypes(child, scope),
                                 GetTypeParameterNames(child),
-                                GetFunctionParamsParameterIndex(child, scope));
+                                GetFunctionParamsParameterIndex(child, scope),
+                                GetFunctionOptionalParameterFlags(child));
                         }
 
                         break;
@@ -433,6 +434,7 @@ public static class TypeSharpTypeChecker
             var scope = new TypeScope(parentScope, allowedCapabilities: GetFunctionCapabilities(node));
             CheckFunctionDynamicCapability(node, scope);
             CheckParamsParameterDeclarations(node, scope);
+            CheckDefaultParameterDeclarations(node, scope);
             foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
             {
                 if (TryGetFirstIdentifier(parameter, out var parameterIdentifier) &&
@@ -518,6 +520,122 @@ public static class TypeSharpTypeChecker
                     var name = item.Parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "parameter";
                     ReportMismatch(item.Parameter, $"Params parameter '{name}' must have an array type.");
                 }
+            }
+        }
+
+        private void CheckDefaultParameterDeclarations(SyntaxNode node, TypeScope scope)
+        {
+            var parameters = GetParameterNodes(node).ToArray();
+            var defaultedParameters = parameters
+                .Select((parameter, index) => (Parameter: parameter, Index: index))
+                .Where(item => IsDefaultedParameter(item.Parameter))
+                .ToArray();
+
+            if (defaultedParameters.Length == 0)
+            {
+                return;
+            }
+
+            if (GetTypeParameterNames(node).Count > 0)
+            {
+                foreach (var item in defaultedParameters)
+                {
+                    var name = GetParameterName(item.Parameter) ?? "parameter";
+                    ReportMismatch(
+                        item.Parameter,
+                        $"Defaulted parameter '{name}' is not supported on generic functions in the initial optional-parameter slice.");
+                }
+            }
+
+            if (IsExternalSignatureFunction(node))
+            {
+                foreach (var item in defaultedParameters)
+                {
+                    var name = GetParameterName(item.Parameter) ?? "parameter";
+                    ReportMismatch(
+                        item.Parameter,
+                        $"Defaulted parameter '{name}' is supported only on TypeSharp-owned function declarations.");
+                }
+            }
+
+            if (parameters.Any(IsParamsParameter))
+            {
+                ReportMismatch(
+                    defaultedParameters[0].Parameter,
+                    "Defaulted parameters cannot be combined with params parameters in the initial optional-parameter slice.");
+            }
+
+            var defaultedSuffixStarted = false;
+            foreach (var parameter in parameters)
+            {
+                if (IsDefaultedParameter(parameter))
+                {
+                    defaultedSuffixStarted = true;
+                    CheckDefaultParameterInitializer(parameter, scope);
+                    continue;
+                }
+
+                if (defaultedSuffixStarted)
+                {
+                    var name = GetParameterName(parameter) ?? "parameter";
+                    ReportMismatch(parameter, $"Required parameter '{name}' cannot follow a defaulted parameter.");
+                }
+            }
+        }
+
+        private void CheckDefaultParameterInitializer(SyntaxNode parameter, TypeScope scope)
+        {
+            var name = GetParameterName(parameter) ?? "parameter";
+            if (!TryGetDirectTypeAnnotation(parameter, out var annotation) ||
+                !TryGetType(annotation, scope, out var parameterType) ||
+                !parameterType.IsKnown)
+            {
+                ReportMismatch(parameter, $"Defaulted parameter '{name}' must declare an explicit type.");
+                return;
+            }
+
+            if (IsParamsParameter(parameter))
+            {
+                ReportMismatch(parameter, $"Params parameter '{name}' cannot declare a default value.");
+            }
+
+            var initializerExpression = GetParameterInitializerExpression(parameter);
+            if (initializerExpression is null)
+            {
+                return;
+            }
+
+            if (!IsSupportedDefaultParameterExpression(initializerExpression))
+            {
+                ReportMismatch(
+                    initializerExpression,
+                    $"Defaulted parameter '{name}' must use a string, numeric, bool, or null literal.");
+                return;
+            }
+
+            var initializerType = CheckExpressionWithExpected(initializerExpression, scope, parameterType);
+            if (!initializerType.IsKnown)
+            {
+                return;
+            }
+
+            if (IsNullabilityViolation(parameterType, initializerType))
+            {
+                ReportMismatch(
+                    initializerExpression,
+                    initializerType.IsNull
+                        ? $"Default value for parameter '{name}' cannot be null because it expects non-null type '{parameterType}'."
+                        : $"Default value for parameter '{name}' expects non-null type '{parameterType}', but found nullable type '{initializerType}'.");
+            }
+            else if (TryGetStructuralAssignmentDiagnostic(scope, parameterType, initializerType, out var structuralMessage))
+            {
+                ReportMismatch(initializerExpression, structuralMessage);
+            }
+            else if (!CanAssign(scope, parameterType, initializerType))
+            {
+                ReportMismatch(
+                    initializerExpression,
+                    $"Default value for parameter '{name}' expects '{parameterType}', but found '{initializerType}'.");
             }
         }
 
@@ -1200,12 +1318,12 @@ public static class TypeSharpTypeChecker
                     paramsElementType);
             }
 
-            if (arguments.Length != parameterTypes.Count)
-            {
-                ReportMismatch(
-                    node,
-                    $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies {FormatArgumentCount(arguments.Length)}.");
-            }
+            ReportDirectFunctionArityMismatch(
+                node,
+                functionName,
+                parameterTypes,
+                function.OptionalParameterFlags,
+                arguments.Length);
 
             for (var index = 0; index < arguments.Length; index++)
             {
@@ -1334,11 +1452,14 @@ public static class TypeSharpTypeChecker
                     node,
                     $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
             }
-            else if (!hasParams && arguments.Count != parameterTypes.Count)
+            else if (!hasParams)
             {
-                ReportMismatch(
+                ReportDirectFunctionArityMismatch(
                     node,
-                    $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
+                    functionName,
+                    parameterTypes,
+                    function.OptionalParameterFlags,
+                    arguments.Count);
             }
 
             if (explicitTypeArguments.Count > 0)
@@ -1608,6 +1729,86 @@ public static class TypeSharpTypeChecker
                 CanAssign(scope, expectedType, argumentType);
         }
 
+        private void ReportDirectFunctionArityMismatch(
+            SyntaxNode node,
+            string functionName,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<bool>? optionalParameterFlags,
+            int suppliedArgumentCount)
+        {
+            var requiredCount = GetRequiredParameterCount(parameterTypes, optionalParameterFlags);
+            if (suppliedArgumentCount < requiredCount)
+            {
+                var expects = requiredCount == parameterTypes.Count
+                    ? FormatArgumentCount(parameterTypes.Count)
+                    : $"at least {FormatArgumentCount(requiredCount)}";
+                ReportMismatch(
+                    node,
+                    $"Function '{functionName}' expects {expects}, but call supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                return;
+            }
+
+            if (suppliedArgumentCount > parameterTypes.Count)
+            {
+                var expects = requiredCount == parameterTypes.Count
+                    ? FormatArgumentCount(parameterTypes.Count)
+                    : $"at most {FormatArgumentCount(parameterTypes.Count)}";
+                ReportMismatch(
+                    node,
+                    $"Function '{functionName}' expects {expects}, but call supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+            }
+        }
+
+        private void ReportPipelineArityMismatch(
+            SyntaxNode node,
+            string targetName,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<bool>? optionalParameterFlags,
+            int suppliedArgumentCount)
+        {
+            var requiredCount = GetRequiredParameterCount(parameterTypes, optionalParameterFlags);
+            if (suppliedArgumentCount < requiredCount)
+            {
+                var expects = requiredCount == parameterTypes.Count
+                    ? FormatArgumentCount(parameterTypes.Count)
+                    : $"at least {FormatArgumentCount(requiredCount)}";
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects {expects} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                return;
+            }
+
+            if (suppliedArgumentCount > parameterTypes.Count)
+            {
+                var expects = requiredCount == parameterTypes.Count
+                    ? FormatArgumentCount(parameterTypes.Count)
+                    : $"at most {FormatArgumentCount(parameterTypes.Count)}";
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects {expects} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+            }
+        }
+
+        private static int GetRequiredParameterCount(
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<bool>? optionalParameterFlags)
+        {
+            if (optionalParameterFlags is null || optionalParameterFlags.Count != parameterTypes.Count)
+            {
+                return parameterTypes.Count;
+            }
+
+            for (var index = 0; index < optionalParameterFlags.Count; index++)
+            {
+                if (optionalParameterFlags[index])
+                {
+                    return index;
+                }
+            }
+
+            return parameterTypes.Count;
+        }
+
         private void CheckDirectFunctionArgument(
             SyntaxNode node,
             TypeScope scope,
@@ -1735,11 +1936,14 @@ public static class TypeSharpTypeChecker
             {
                 ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
             }
-            else if (suppliedArgumentCount != parameterTypes.Count)
+            else
             {
-                ReportMismatch(
+                ReportPipelineArityMismatch(
                     node,
-                    $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                    targetName,
+                    parameterTypes,
+                    targetFunction.OptionalParameterFlags,
+                    suppliedArgumentCount);
             }
 
             if (inputType.IsKnown &&
@@ -1913,11 +2117,14 @@ public static class TypeSharpTypeChecker
                     node,
                     $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
             }
-            else if (!hasParams && suppliedArgumentCount != parameterTypes.Count)
+            else if (!hasParams)
             {
-                ReportMismatch(
+                ReportPipelineArityMismatch(
                     node,
-                    $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                    targetName,
+                    parameterTypes,
+                    targetFunction.OptionalParameterFlags,
+                    suppliedArgumentCount);
             }
 
             if (explicitTypeArguments.Count > 0)
@@ -4882,6 +5089,36 @@ public static class TypeSharpTypeChecker
         private static bool IsParamsParameter(SyntaxNode parameter) =>
             parameter.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.ParamsKeyword);
 
+        private static bool IsExternalSignatureFunction(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind is SyntaxKind.AmbientModifier or SyntaxKind.ExternModifier);
+
+        private static bool IsDefaultedParameter(SyntaxNode parameter) =>
+            parameter.Children.Any(child => child.Kind == SyntaxKind.Initializer);
+
+        private static SyntaxNode? GetParameterInitializerExpression(SyntaxNode parameter) =>
+            parameter.Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.Initializer)?
+                .Children
+                .FirstOrDefault(child => !child.IsToken);
+
+        private static string? GetParameterName(SyntaxNode parameter) =>
+            parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
+
+        private static bool IsSupportedDefaultParameterExpression(SyntaxNode node)
+        {
+            if (node.Kind != SyntaxKind.LiteralExpression)
+            {
+                return false;
+            }
+
+            var token = node.Children.FirstOrDefault(child => child.IsToken);
+            return token?.Kind is SyntaxKind.StringLiteralToken
+                or SyntaxKind.NumericLiteralToken
+                or SyntaxKind.TrueKeyword
+                or SyntaxKind.FalseKeyword
+                or SyntaxKind.NullKeyword;
+        }
+
         private static bool SameSimpleType(SimpleType left, SimpleType right) =>
             left.IsKnown == right.IsKnown &&
             left.IsNull == right.IsNull &&
@@ -5466,6 +5703,20 @@ public static class TypeSharpTypeChecker
             return item.Index;
         }
 
+        private static IReadOnlyList<bool>? GetFunctionOptionalParameterFlags(SyntaxNode declaration)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return null;
+            }
+
+            return parameterList.Children
+                .Where(child => child.Kind == SyntaxKind.Parameter)
+                .Select(IsDefaultedParameter)
+                .ToArray();
+        }
+
         private static IReadOnlyList<string> GetTypeParameterNames(SyntaxNode declaration)
         {
             var typeParameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeParameterList);
@@ -5881,16 +6132,16 @@ public static class TypeSharpTypeChecker
 
         public void DeclareValue(string name, SimpleType type, bool isMutable = false) => _values[name] = new ValueInfo(type, isMutable);
 
-        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null, [], null);
+        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null, [], null, null);
 
-        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null, [], null);
+        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null, [], null, null);
 
         public void DeclareFunction(
             string name,
             SimpleType returnType,
             FunctionCapabilities capabilities,
             IReadOnlyList<SimpleType>? parameterTypes) =>
-            DeclareFunction(name, returnType, capabilities, parameterTypes, [], null);
+            DeclareFunction(name, returnType, capabilities, parameterTypes, [], null, null);
 
         public void DeclareFunction(
             string name,
@@ -5898,8 +6149,9 @@ public static class TypeSharpTypeChecker
             FunctionCapabilities capabilities,
             IReadOnlyList<SimpleType>? parameterTypes,
             IReadOnlyList<string> typeParameters,
-            int? paramsParameterIndex) =>
-            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes, typeParameters, paramsParameterIndex);
+            int? paramsParameterIndex,
+            IReadOnlyList<bool>? optionalParameterFlags) =>
+            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes, typeParameters, paramsParameterIndex, optionalParameterFlags);
 
         public void DeclareType(string name) => _types.Add(name);
 
@@ -6134,7 +6386,8 @@ public static class TypeSharpTypeChecker
         FunctionCapabilities Capabilities,
         IReadOnlyList<SimpleType>? ParameterTypes,
         IReadOnlyList<string> TypeParameters,
-        int? ParamsParameterIndex);
+        int? ParamsParameterIndex,
+        IReadOnlyList<bool>? OptionalParameterFlags);
 
     private readonly record struct FunctionCapabilities(
         bool RequiresDynamic,

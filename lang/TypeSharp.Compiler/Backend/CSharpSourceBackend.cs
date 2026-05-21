@@ -1317,7 +1317,10 @@ public static class CSharpSourceBackend
         private static string FormatParameter(CSharpParameter parameter)
         {
             var paramsPrefix = parameter.IsParams ? "params " : string.Empty;
-            return $"{paramsPrefix}{parameter.Type} {parameter.Name}";
+            var defaultSuffix = string.IsNullOrWhiteSpace(parameter.DefaultValue)
+                ? string.Empty
+                : $" = {parameter.DefaultValue}";
+            return $"{paramsPrefix}{parameter.Type} {parameter.Name}{defaultSuffix}";
         }
 
         private static string FormatExtensionParameters(IReadOnlyList<CSharpParameter> parameters, string receiverType)
@@ -1474,11 +1477,23 @@ public static class CSharpSourceBackend
                 MapType(typeNode),
                 !string.IsNullOrWhiteSpace(name) ? name : "_",
                 GetSourceTypeName(typeNode),
-                IsParamsParameter(parameter));
+                IsParamsParameter(parameter),
+                GetParameterDefaultValue(parameter));
         }
 
         private static bool IsParamsParameter(SyntaxNode parameter) =>
             parameter.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.ParamsKeyword);
+
+        private static string? GetParameterDefaultValue(SyntaxNode parameter)
+        {
+            var initializerExpression = parameter.Children
+                .FirstOrDefault(child => child.Kind == SyntaxKind.Initializer)?
+                .Children
+                .FirstOrDefault(child => !child.IsToken);
+            return initializerExpression?.Kind == SyntaxKind.LiteralExpression
+                ? EmitLiteral(initializerExpression)
+                : null;
+        }
 
         private void EmitBlock(
             SyntaxNode node,
@@ -3063,6 +3078,12 @@ public static class CSharpSourceBackend
                 return $"{MapType(elementType)}[]";
             }
 
+            if (node.Kind == SyntaxKind.NullableType)
+            {
+                var innerType = MapType(node.Children.FirstOrDefault(child => !child.IsToken));
+                return IsCSharpNonNullableValueType(innerType) ? $"{innerType}?" : innerType;
+            }
+
             if (node.Kind == SyntaxKind.FunctionType)
             {
                 return MapFunctionType(node);
@@ -3092,6 +3113,21 @@ public static class CSharpSourceBackend
 
             return "object";
         }
+
+        private static bool IsCSharpNonNullableValueType(string typeName) =>
+            typeName is "bool"
+                or "byte"
+                or "char"
+                or "decimal"
+                or "double"
+                or "float"
+                or "int"
+                or "long"
+                or "sbyte"
+                or "short"
+                or "uint"
+                or "ulong"
+                or "ushort";
 
         private bool TryMapIndexedAccessType(SyntaxNode node, out string mappedType)
         {
@@ -5153,7 +5189,7 @@ public static class CSharpSourceBackend
             public bool IsAlias => !string.Equals(ImportedName, LocalName, StringComparison.Ordinal);
         }
 
-        private readonly record struct CSharpParameter(string Type, string Name, string SourceType, bool IsParams);
+        private readonly record struct CSharpParameter(string Type, string Name, string SourceType, bool IsParams, string? DefaultValue = null);
 
         private readonly record struct CSharpFunctionSignature(
             IReadOnlyList<string> ParameterTypes,
