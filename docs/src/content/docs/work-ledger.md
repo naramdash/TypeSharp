@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | None |
-| Next top-priority task | No active task; the next cycle should apply the queue/checklist/roadmap selection rules. |
+| Active task packet | [`agent/0328-enum-composite-member-expressions-slice.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/0328-enum-composite-member-expressions-slice.md) |
+| Next top-priority task | Task `0328-enum-composite-member-expressions-slice` parses, checks, and lowers TypeSharp-owned enum composite member initializers such as `ReadWrite = Read \| Write`. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task `0326-enum-attribute-lowering-slice` completed TypeSharp-owned enum declaration/member attribute lowering. |
-| Completed work covered | 0001-0326 |
+| Current tooling slice | Task `0328-enum-composite-member-expressions-slice` is in progress after task `0327-roadmap-refresh-after-enum-attribute-lowering` confirmed the baseline. |
+| Completed work covered | 0001-0327 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
@@ -39,7 +39,7 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 - Non-relative re-export and non-lowerable source re-export forms beyond the current function/literal/value/lambda-valued value/type/module alias forwarding and remapping slice.
 - .NET ecosystem follow-ups: NuGet package restore implementation behind lock/source-mapping/audit/license/checksum gates, a qualified `net481` profile, VS Code Marketplace publication, `dotnet new` template packs, and host packaging automation.
 - TypeScript-derived structural/module follow-ups: implement budgeted advanced type operators in bounded slices and design richer cross-project project-reference re-export metadata.
-- Richer match exhaustiveness beyond current known nominal, TypeSharp-owned enum, named imported C# enum, bool, and local type-level union cases, discard arms, guarded-arm non-coverage, and local literal-union cases. Flag-style enum algebra, broad attribute target validation, arbitrary computed enum member expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and fuller pattern algebra remain follow-ups.
+- Richer match exhaustiveness beyond current known nominal, TypeSharp-owned enum, named imported C# enum, bool, and local type-level union cases, discard arms, guarded-arm non-coverage, and local literal-union cases. Enum composite member expressions are active; flag-style enum algebra, broad attribute target validation, arbitrary/general computed enum member expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and fuller pattern algebra remain follow-ups.
 - Fuller indexer conversion/ranking beyond exact/object/null/parenthesized/unary numeric/known numeric/metadata relationship checks, broader contextual generic inference beyond direct, homogeneous collection expression `T[]`, and explicit constructed generic argument positions, fuller C# overload conversion/contextual ranking beyond current literal/unary numeric/null metadata-specificity/imported metadata relationship/collection expression array argument/single collection expression params-array argument/parenthesized overload argument unwrapping/delegate arity, known return checks, identity lambda parameter return checks, known lambda return conversion ranking, metadata member-chain return inference, metadata instance method-call return inference, imported extension method-call return inference, imported static method-call return inference, comparison/logical binary predicate return inference, string/numeric binary value return inference, `nameof` return inference, checked/unchecked return inference, `satisfies` return inference, parenthesized return inference, unary logical-not return inference, unary numeric return inference, `if` expression return inference, block final-expression return inference, collection expression return inference, null-coalescing return inference, and indexer-expression return inference, richer lambda body contextual typing beyond those known/literal, identity, member-chain, instance/extension/static method-call, binary predicate, binary value, `nameof`, checked/unchecked, `satisfies`, parenthesized, unary logical-not, unary numeric, `if`, block final-expression, collection expression, null-coalescing, and indexer bodies, and richer extension conversion/conflict diagnostics.
 - Future IL backend work after the C# 7.3 source backend remains stable.
 

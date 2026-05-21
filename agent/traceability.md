@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
+| Task 0328 enum composite member expressions | [0328-enum-composite-member-expressions-slice.md](0328-enum-composite-member-expressions-slice.md) | `TypeSharpParser.cs`, `TypeSharpTypeChecker.cs`, `CSharpSourceBackend.cs`, parser/type-checker/backend fixtures, generated `net48` compile smoke, docs and rollup updates. |
 
 ## Completed Evidence Index
 

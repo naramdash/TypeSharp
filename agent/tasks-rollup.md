@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 08:36:54 +09:00
+End Time: 2026-05-21 15:34:00 +09:00
 
 ## Objective
 
@@ -2506,6 +2506,42 @@ Primary evidence:
 Remaining:
 
 - Flag semantics, broad attribute target validation, arbitrary TypeSharp-owned computed enum expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
+
+## Task 0327 Roadmap Refresh After Enum Attribute Lowering
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 after enum attribute lowering landed.
+- Confirmed no baseline change: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 remains preview on .NET 11 preview, TypeScript 7.0 remains Beta/native-preview tooling direction, and package/Marketplace/template publication remains gated by Project Policy.
+- Reviewed Feature Status, Work Ledger, parser enum initializer shape, type-checker enum initializer validation, C# backend enum member lowering, and the remaining enum backlog after declaration/member attribute lowering.
+- Selected the next bounded implementation slice: TypeSharp-owned enum composite member expressions using enum initializer-local `|` over previously declared same-enum members and integer literals.
+- Kept general bitwise expressions, flag-aware match exhaustiveness, numeric pattern algebra, imported enum flag reasoning, broad attribute target validation, and arbitrary computed enum expressions out of the slice.
+- Created active task `0328 Enum composite member expressions slice`.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [TypeScript 7.0 Beta announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files)
+- [VS Code Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Enum composite member expressions are active in task 0328. Flag semantics, broad attribute target validation, arbitrary/general computed enum member expressions, numeric pattern algebra, flag-style reasoning over imported numeric enum metadata, and richer pattern algebra remain future work.
 
 ## Verification Summary
 
