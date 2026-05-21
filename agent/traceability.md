@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from inbox, queue, checklist, or roadmap-refresh rules. |
+| Task 0338 Boolean bitwise expression slice | [0338-boolean-bitwise-expression-slice.md](0338-boolean-bitwise-expression-slice.md) | Type checker, backend fixtures, generated `net48` CLI smoke, docs, and work-ledger updates for boolean `|`/`&`/`^` expressions. |
 
 ## Completed Evidence Index
 

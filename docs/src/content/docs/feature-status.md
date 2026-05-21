@@ -175,6 +175,8 @@ After expression-level same-enum value `&`, the empty-queue refresh rechecked of
 
 After expression-level same-enum value `^` and unary `~`, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice completed expression-level integral numeric `|`, `&`, `^`, and unary `~` over known non-null primitive integral operands, without enabling shifts, compound assignment, boolean bitwise expressions, flag-aware match algebra, imported enum flag reasoning, broad attribute target validation, arbitrary/general computed enum member declarations, numeric pattern algebra, or richer pattern algebra.
 
+After expression-level integral numeric bitwise expressions, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is expression-level boolean `|`, `&`, and `^` over known non-null `bool` operands, without enabling unary boolean complement, shifts, compound assignment, user-defined operators, flag-aware enum algebra, imported enum flag reasoning, broad attribute target validation, arbitrary/general computed enum member declarations, numeric pattern algebra, or richer pattern algebra. Shifts stay separate because `>>` and `<<` already serve TypeSharp function composition and need a dedicated grammar/design pass.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
