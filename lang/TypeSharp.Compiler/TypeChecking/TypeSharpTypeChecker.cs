@@ -226,6 +226,7 @@ public static class TypeSharpTypeChecker
                                 functionReturnType,
                                 GetFunctionCapabilities(child),
                                 GetFunctionParameterTypes(child, scope),
+                                GetFunctionParameterNames(child),
                                 GetTypeParameterNames(child),
                                 GetFunctionParamsParameterIndex(child, scope),
                                 GetFunctionOptionalParameterFlags(child));
@@ -1282,9 +1283,19 @@ public static class TypeSharpTypeChecker
             FunctionInfo function)
         {
             var arguments = GetCallArguments(node).ToArray();
+            var hasNamedArguments = arguments.Any(IsNamedArgument);
             var explicitTypeArguments = GetDirectCallTypeArguments(node, scope);
             if (function.TypeParameters.Count > 0 || explicitTypeArguments.Count > 0)
             {
+                if (hasNamedArguments)
+                {
+                    ReportMismatch(
+                        node,
+                        $"Named arguments are supported only on non-generic TypeSharp function calls in this slice; function '{functionName}' is generic.");
+                    CheckArgumentExpressions(arguments, scope);
+                    return SimpleType.Unknown;
+                }
+
                 return CheckDirectGenericFunctionCallExpression(
                     node,
                     scope,
@@ -1296,12 +1307,35 @@ public static class TypeSharpTypeChecker
 
             if (function.ParameterTypes is not { } parameterTypes)
             {
-                foreach (var argument in arguments)
+                if (hasNamedArguments)
                 {
-                    CheckExpression(argument, scope);
+                    ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
                 }
 
+                CheckArgumentExpressions(arguments, scope);
                 return function.ReturnType;
+            }
+
+            if (hasNamedArguments)
+            {
+                if (TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out _, out _, out _))
+                {
+                    ReportMismatch(
+                        node,
+                        $"Named arguments cannot be used with TypeSharp params parameter function '{functionName}' in this slice.");
+                    CheckArgumentExpressions(arguments, scope);
+                    return function.ReturnType;
+                }
+
+                return CheckDirectNamedFunctionCallExpression(
+                    node,
+                    scope,
+                    functionName,
+                    function.ReturnType,
+                    parameterTypes,
+                    function.ParameterNames,
+                    function.OptionalParameterFlags,
+                    arguments);
             }
 
             if (TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out var paramsIndex, out var paramsArrayType, out var paramsElementType))
@@ -1397,6 +1431,98 @@ public static class TypeSharpTypeChecker
             for (var index = paramsIndex; index < arguments.Count; index++)
             {
                 CheckDirectFunctionArgument(node, scope, functionName, arguments[index], index, paramsElementType);
+            }
+
+            return returnType;
+        }
+
+        private SimpleType CheckDirectNamedFunctionCallExpression(
+            SyntaxNode node,
+            TypeScope scope,
+            string functionName,
+            SimpleType returnType,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<string>? parameterNames,
+            IReadOnlyList<bool>? optionalParameterFlags,
+            IReadOnlyList<SyntaxNode> arguments)
+        {
+            if (!TryBuildParameterIndex(parameterNames, parameterTypes.Count, out var parameterIndexes))
+            {
+                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                CheckArgumentExpressions(arguments, scope);
+                return returnType;
+            }
+
+            var knownParameterNames = parameterNames!;
+            var suppliedParameters = new bool[parameterTypes.Count];
+            var boundArguments = new List<BoundCallArgument>();
+            var nextPositionalParameter = 0;
+            var sawNamedArgument = false;
+
+            foreach (var argument in arguments)
+            {
+                if (TryGetNamedArgumentName(argument, out var argumentName))
+                {
+                    sawNamedArgument = true;
+                    var argumentExpression = GetArgumentExpression(argument);
+                    if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
+                    {
+                        ReportMismatch(argument, $"Function '{functionName}' has no parameter named '{argumentName}'.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    if (suppliedParameters[parameterIndex])
+                    {
+                        ReportMismatch(argument, $"Function '{functionName}' parameter '{argumentName}' is supplied more than once.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    suppliedParameters[parameterIndex] = true;
+                    boundArguments.Add(new BoundCallArgument(argument, parameterIndex));
+                    continue;
+                }
+
+                if (sawNamedArgument)
+                {
+                    ReportMismatch(argument, $"Function '{functionName}' positional arguments cannot follow named arguments.");
+                }
+
+                var positionalIndex = nextPositionalParameter++;
+                if (positionalIndex >= parameterTypes.Count)
+                {
+                    ReportMismatch(
+                        argument,
+                        $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies more arguments.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                if (suppliedParameters[positionalIndex])
+                {
+                    var parameterName = knownParameterNames[positionalIndex];
+                    ReportMismatch(argument, $"Function '{functionName}' parameter '{parameterName}' is supplied more than once.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                suppliedParameters[positionalIndex] = true;
+                boundArguments.Add(new BoundCallArgument(argument, positionalIndex));
+            }
+
+            ReportMissingNamedArguments(node, functionName, parameterTypes, knownParameterNames, optionalParameterFlags, suppliedParameters);
+            foreach (var boundArgument in boundArguments)
+            {
+                var expectedType = parameterTypes[boundArgument.ParameterIndex];
+                var expression = GetArgumentExpression(boundArgument.Argument);
+                if (!expectedType.IsKnown)
+                {
+                    CheckExpression(expression, scope);
+                    continue;
+                }
+
+                CheckDirectFunctionArgument(node, scope, functionName, expression, boundArgument.ParameterIndex, expectedType);
             }
 
             return returnType;
@@ -1809,6 +1935,76 @@ public static class TypeSharpTypeChecker
             return parameterTypes.Count;
         }
 
+        private static bool IsOptionalParameter(int parameterIndex, IReadOnlyList<bool>? optionalParameterFlags) =>
+            optionalParameterFlags is not null &&
+            parameterIndex >= 0 &&
+            parameterIndex < optionalParameterFlags.Count &&
+            optionalParameterFlags[parameterIndex];
+
+        private static bool TryBuildParameterIndex(
+            IReadOnlyList<string>? parameterNames,
+            int parameterCount,
+            out IReadOnlyDictionary<string, int> parameterIndexes)
+        {
+            var indexes = new Dictionary<string, int>(StringComparer.Ordinal);
+            parameterIndexes = indexes;
+            if (parameterNames is null || parameterNames.Count != parameterCount)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < parameterNames.Count; index++)
+            {
+                var name = parameterNames[index];
+                if (string.IsNullOrWhiteSpace(name) || indexes.ContainsKey(name))
+                {
+                    return false;
+                }
+
+                indexes[name] = index;
+            }
+
+            return true;
+        }
+
+        private void ReportMissingNamedArguments(
+            SyntaxNode node,
+            string functionName,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<string> parameterNames,
+            IReadOnlyList<bool>? optionalParameterFlags,
+            IReadOnlyList<bool> suppliedParameters)
+        {
+            for (var index = 0; index < parameterTypes.Count; index++)
+            {
+                if (suppliedParameters[index] || IsOptionalParameter(index, optionalParameterFlags))
+                {
+                    continue;
+                }
+
+                ReportMismatch(node, $"Function '{functionName}' requires argument for parameter '{parameterNames[index]}'.");
+            }
+        }
+
+        private void ReportMissingPipelineNamedArguments(
+            SyntaxNode node,
+            string targetName,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<string> parameterNames,
+            IReadOnlyList<bool>? optionalParameterFlags,
+            IReadOnlyList<bool> suppliedParameters)
+        {
+            for (var index = 0; index < parameterTypes.Count; index++)
+            {
+                if (suppliedParameters[index] || IsOptionalParameter(index, optionalParameterFlags))
+                {
+                    continue;
+                }
+
+                ReportMismatch(node, $"Pipeline target '{targetName}' requires argument for parameter '{parameterNames[index]}' after pipeline lowering.");
+            }
+        }
+
         private void CheckDirectFunctionArgument(
             SyntaxNode node,
             TypeScope scope,
@@ -1859,6 +2055,34 @@ public static class TypeSharpTypeChecker
                 ? call.Children.Skip(1).Where(child => !child.IsToken)
                 : Enumerable.Empty<SyntaxNode>();
 
+        private void CheckArgumentExpressions(IEnumerable<SyntaxNode> arguments, TypeScope scope)
+        {
+            foreach (var argument in arguments)
+            {
+                CheckExpression(GetArgumentExpression(argument), scope);
+            }
+        }
+
+        private static bool IsNamedArgument(SyntaxNode argument) =>
+            argument.Kind == SyntaxKind.NamedArgument;
+
+        private static bool TryGetNamedArgumentName(SyntaxNode argument, out string name)
+        {
+            name = string.Empty;
+            if (argument.Kind != SyntaxKind.NamedArgument)
+            {
+                return false;
+            }
+
+            name = argument.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            return name.Length > 0;
+        }
+
+        private static SyntaxNode GetArgumentExpression(SyntaxNode argument) =>
+            argument.Kind == SyntaxKind.NamedArgument
+                ? argument.Children.LastOrDefault(child => !child.IsToken) ?? argument
+                : argument;
+
         private SimpleType CheckPipelineExpression(SyntaxNode node, TypeScope scope)
         {
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
@@ -1894,8 +2118,18 @@ public static class TypeSharpTypeChecker
             SimpleType inputType)
         {
             IReadOnlyList<SyntaxNode> targetArguments = GetPipelineTargetArguments(target).ToArray();
+            var hasNamedArguments = targetArguments.Any(IsNamedArgument);
             if (targetFunction.TypeParameters.Count > 0)
             {
+                if (hasNamedArguments)
+                {
+                    ReportMismatch(
+                        node,
+                        $"Named arguments are supported only on non-generic TypeSharp pipeline targets in this slice; target '{targetName}' is generic.");
+                    CheckArgumentExpressions(targetArguments, scope);
+                    return SimpleType.Unknown;
+                }
+
                 return CheckGenericPipelineFunctionApplication(
                     node,
                     scope,
@@ -1908,12 +2142,36 @@ public static class TypeSharpTypeChecker
 
             if (targetFunction.ParameterTypes is not { } parameterTypes)
             {
-                foreach (var argument in targetArguments)
+                if (hasNamedArguments)
                 {
-                    CheckExpression(argument, scope);
+                    ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
                 }
 
+                CheckArgumentExpressions(targetArguments, scope);
                 return targetFunction.ReturnType;
+            }
+
+            if (hasNamedArguments)
+            {
+                if (TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out _, out _, out _))
+                {
+                    ReportMismatch(
+                        node,
+                        $"Named arguments cannot be used with TypeSharp params parameter pipeline target '{targetName}' in this slice.");
+                    CheckArgumentExpressions(targetArguments, scope);
+                    return targetFunction.ReturnType;
+                }
+
+                return CheckPipelineNamedFunctionApplication(
+                    node,
+                    scope,
+                    targetName,
+                    targetFunction.ReturnType,
+                    inputType,
+                    targetArguments,
+                    parameterTypes,
+                    targetFunction.ParameterNames,
+                    targetFunction.OptionalParameterFlags);
             }
 
             if (TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out var paramsIndex, out var paramsArrayType, out var paramsElementType))
@@ -1970,6 +2228,120 @@ public static class TypeSharpTypeChecker
             }
 
             return targetFunction.ReturnType;
+        }
+
+        private SimpleType CheckPipelineNamedFunctionApplication(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            SimpleType returnType,
+            SimpleType inputType,
+            IReadOnlyList<SyntaxNode> targetArguments,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<string>? parameterNames,
+            IReadOnlyList<bool>? optionalParameterFlags)
+        {
+            if (!TryBuildParameterIndex(parameterNames, parameterTypes.Count, out var parameterIndexes))
+            {
+                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                CheckArgumentExpressions(targetArguments, scope);
+                return returnType;
+            }
+
+            var knownParameterNames = parameterNames!;
+            var suppliedParameters = new bool[parameterTypes.Count];
+            var boundArguments = new List<BoundCallArgument>();
+            if (parameterTypes.Count == 0)
+            {
+                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+            }
+            else
+            {
+                suppliedParameters[0] = true;
+                if (parameterTypes[0].IsKnown)
+                {
+                    ValidatePipelineInputType(node, scope, targetName, parameterTypes[0], inputType);
+                }
+            }
+
+            var nextPositionalParameter = 1;
+            var sawNamedArgument = false;
+            foreach (var argument in targetArguments)
+            {
+                if (TryGetNamedArgumentName(argument, out var argumentName))
+                {
+                    sawNamedArgument = true;
+                    var argumentExpression = GetArgumentExpression(argument);
+                    if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
+                    {
+                        ReportMismatch(argument, $"Pipeline target '{targetName}' has no parameter named '{argumentName}'.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    if (parameterIndex == 0)
+                    {
+                        ReportMismatch(
+                            argument,
+                            $"Pipeline target '{targetName}' already receives parameter '{argumentName}' from the pipeline input.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    if (suppliedParameters[parameterIndex])
+                    {
+                        ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{argumentName}' is supplied more than once.");
+                        CheckExpression(argumentExpression, scope);
+                        continue;
+                    }
+
+                    suppliedParameters[parameterIndex] = true;
+                    boundArguments.Add(new BoundCallArgument(argument, parameterIndex));
+                    continue;
+                }
+
+                if (sawNamedArgument)
+                {
+                    ReportMismatch(argument, $"Pipeline target '{targetName}' positional arguments cannot follow named arguments.");
+                }
+
+                var positionalIndex = nextPositionalParameter++;
+                if (positionalIndex >= parameterTypes.Count)
+                {
+                    ReportMismatch(
+                        argument,
+                        $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies more arguments.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                if (suppliedParameters[positionalIndex])
+                {
+                    var parameterName = knownParameterNames[positionalIndex];
+                    ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{parameterName}' is supplied more than once.");
+                    CheckExpression(GetArgumentExpression(argument), scope);
+                    continue;
+                }
+
+                suppliedParameters[positionalIndex] = true;
+                boundArguments.Add(new BoundCallArgument(argument, positionalIndex));
+            }
+
+            ReportMissingPipelineNamedArguments(node, targetName, parameterTypes, knownParameterNames, optionalParameterFlags, suppliedParameters);
+            foreach (var boundArgument in boundArguments)
+            {
+                var expectedType = parameterTypes[boundArgument.ParameterIndex];
+                var expression = GetArgumentExpression(boundArgument.Argument);
+                if (!expectedType.IsKnown)
+                {
+                    CheckExpression(expression, scope);
+                    continue;
+                }
+
+                CheckPipelineArgument(node, scope, targetName, expression, boundArgument.ParameterIndex, expectedType);
+            }
+
+            return returnType;
         }
 
         private SimpleType CheckPipelineParamsFunctionApplication(
@@ -5678,6 +6050,20 @@ public static class TypeSharpTypeChecker
             return parameterTypes;
         }
 
+        private static IReadOnlyList<string>? GetFunctionParameterNames(SyntaxNode declaration)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return null;
+            }
+
+            return parameterList.Children
+                .Where(child => child.Kind == SyntaxKind.Parameter)
+                .Select(parameter => GetParameterName(parameter) ?? string.Empty)
+                .ToArray();
+        }
+
         private static int? GetFunctionParamsParameterIndex(SyntaxNode declaration, TypeScope scope)
         {
             var parameters = GetParameterNodes(declaration);
@@ -6132,26 +6518,27 @@ public static class TypeSharpTypeChecker
 
         public void DeclareValue(string name, SimpleType type, bool isMutable = false) => _values[name] = new ValueInfo(type, isMutable);
 
-        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null, [], null, null);
+        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null, null, [], null, null);
 
-        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null, [], null, null);
+        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null, null, [], null, null);
 
         public void DeclareFunction(
             string name,
             SimpleType returnType,
             FunctionCapabilities capabilities,
             IReadOnlyList<SimpleType>? parameterTypes) =>
-            DeclareFunction(name, returnType, capabilities, parameterTypes, [], null, null);
+            DeclareFunction(name, returnType, capabilities, parameterTypes, null, [], null, null);
 
         public void DeclareFunction(
             string name,
             SimpleType returnType,
             FunctionCapabilities capabilities,
             IReadOnlyList<SimpleType>? parameterTypes,
+            IReadOnlyList<string>? parameterNames,
             IReadOnlyList<string> typeParameters,
             int? paramsParameterIndex,
             IReadOnlyList<bool>? optionalParameterFlags) =>
-            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes, typeParameters, paramsParameterIndex, optionalParameterFlags);
+            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes, parameterNames, typeParameters, paramsParameterIndex, optionalParameterFlags);
 
         public void DeclareType(string name) => _types.Add(name);
 
@@ -6381,10 +6768,13 @@ public static class TypeSharpTypeChecker
 
     private readonly record struct BranchNarrowing(string VariableName, SimpleType Type);
 
+    private readonly record struct BoundCallArgument(SyntaxNode Argument, int ParameterIndex);
+
     private readonly record struct FunctionInfo(
         SimpleType ReturnType,
         FunctionCapabilities Capabilities,
         IReadOnlyList<SimpleType>? ParameterTypes,
+        IReadOnlyList<string>? ParameterNames,
         IReadOnlyList<string> TypeParameters,
         int? ParamsParameterIndex,
         IReadOnlyList<bool>? OptionalParameterFlags);

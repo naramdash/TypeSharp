@@ -1,0 +1,14 @@
+namespace Samples.DirectNamedArgumentLowering
+
+export fun decorate(value: string, prefix: string = "[", suffix: string = "]"): string = prefix + value + suffix
+
+export fun add(left: int, right: int): int = left + right
+
+export fun main(): string {
+  let direct = decorate(value: "value", prefix: "<", suffix: ">")
+  let reordered = decorate(suffix: ">", value: "value")
+  let mixed = decorate("value", suffix: ">")
+  let sum = add(right: 2, left: 1)
+  let piped = "value" |> decorate(suffix: ">")
+  direct + reordered + mixed + sum.ToString() + piped
+}

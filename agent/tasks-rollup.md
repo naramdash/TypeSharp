@@ -4733,6 +4733,52 @@ Remaining:
 
 - Active in task 0378: direct TypeSharp named argument binding for known TypeSharp-owned direct functions.
 
+## Task 0378 Direct TypeSharp Named Argument Binding
+
+Completed bounded TypeSharp-owned named argument binding:
+
+- Added declared parameter names to TypeSharp function metadata and used them for known non-generic direct `fun` calls.
+- Added checker binding for named arguments after any positional prefix, including `TS2201` diagnostics for unknown names, duplicate names, positional arguments after named arguments, missing required parameters, argument type mismatches, generic functions, and `params` combinations.
+- Added first-argument pipeline support where the target is a known TypeSharp-owned function and non-piped arguments use names, while keeping the piped input bound to parameter 1.
+- Updated C# lowering so accepted TypeSharp-owned named calls emit ordinary positional C# calls, preserving generated `net48` and C# 7.3 compatibility. Imported C# named calls remain on the metadata-backed interop path.
+- Added type-checker positive/negative fixtures, a backend C# snapshot, and a generated `net48` CLI/C# consumer smoke. The shared catalog is now 519 cases.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, test README, and traceability.
+
+Verification:
+
+```powershell
+dotnet build lang/TypeSharp.Compiler/TypeSharp.Compiler.csproj
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj -- --filter "TypeSharp named argument lowering"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj -- --filter "test runner shard selection"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj -- --filter "C# backend fixture snapshots match"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj -- --filter "type checker fixture diagnostics match"
+dotnet test test/TypeSharp.Compiler.Tests.MSTest/TypeSharp.Compiler.Tests.MSTest.csproj --filter "CatalogIsExposedForPackageRunners" --no-restore --verbosity quiet
+npm run build          # in docs
+git diff --check
+```
+
+Result: all listed commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/fixtures/diagnostics/type-checker/positive/direct-named-argument-binding`
+- `test/fixtures/diagnostics/type-checker/negative/direct-named-argument-binding`
+- `test/fixtures/backend/csharp/positive/0047-direct-named-argument-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+
+Remaining:
+
+- Active in task 0379: roadmap refresh after direct named argument binding.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

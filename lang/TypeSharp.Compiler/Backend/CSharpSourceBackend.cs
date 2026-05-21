@@ -1654,8 +1654,11 @@ public static class CSharpSourceBackend
                 return;
             }
 
+            var parameters = GetParameters(node);
             _functionSignatures[name] = new CSharpFunctionSignature(
-                GetParameters(node).Select(parameter => parameter.Type).ToArray(),
+                parameters.Select(parameter => parameter.Type).ToArray(),
+                parameters.Select(parameter => parameter.Name).ToArray(),
+                parameters.Select(parameter => parameter.DefaultValue).ToArray(),
                 GetReturnType(node),
                 GetTypeParameterNames(node));
         }
@@ -1977,11 +1980,12 @@ public static class CSharpSourceBackend
                 return "default(object)";
             }
 
-            var arguments = node.Children
+            var argumentNodes = node.Children
                 .SkipWhile(child => !ReferenceEquals(child, callee))
                 .Skip(1)
                 .Where(child => !child.IsToken)
-                .Select(child => EmitExpression(child));
+                .ToArray();
+            var arguments = EmitTypeSharpOwnedArguments(callee, argumentNodes);
 
             return EmitInvocation(callee, arguments);
         }
@@ -2021,6 +2025,181 @@ public static class CSharpSourceBackend
             return name.Length == 0
                 ? EmitExpression(expression)
                 : $"{name}: {EmitExpression(expression)}";
+        }
+
+        private IReadOnlyList<string> EmitTypeSharpOwnedArguments(
+            SyntaxNode callee,
+            IReadOnlyList<SyntaxNode> argumentNodes,
+            string? pipedExpression = null)
+        {
+            var fallbackArguments = argumentNodes
+                .Select(argument => EmitExpression(argument))
+                .ToArray();
+            var emittedArgumentValues = argumentNodes
+                .Select(argument => EmitArgumentValue(argument))
+                .ToArray();
+            if (!argumentNodes.Any(IsNamedArgument) ||
+                !TryGetTypeSharpOwnedFunctionSignature(callee, out var signature))
+            {
+                return BuildInvocationArguments(fallbackArguments, pipedExpression);
+            }
+
+            return ReorderNamedArguments(argumentNodes, emittedArgumentValues, fallbackArguments, signature, pipedExpression);
+        }
+
+        private IReadOnlyList<string> ReorderNamedArguments(
+            IReadOnlyList<SyntaxNode> argumentNodes,
+            IReadOnlyList<string> emittedArgumentValues,
+            IReadOnlyList<string> fallbackArguments,
+            CSharpFunctionSignature signature,
+            string? pipedExpression)
+        {
+            if (signature.ParameterNames.Count == 0 ||
+                signature.ParameterNames.Count != signature.ParameterDefaultValues.Count)
+            {
+                return BuildInvocationArguments(fallbackArguments, pipedExpression);
+            }
+
+            var parameterIndexes = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (var index = 0; index < signature.ParameterNames.Count; index++)
+            {
+                var parameterName = signature.ParameterNames[index];
+                if (string.IsNullOrWhiteSpace(parameterName) || parameterIndexes.ContainsKey(parameterName))
+                {
+                    return BuildInvocationArguments(fallbackArguments, pipedExpression);
+                }
+
+                parameterIndexes[parameterName] = index;
+            }
+
+            var positionalArguments = new string?[signature.ParameterNames.Count];
+            var nextPositionalParameter = 0;
+            var maxSuppliedIndex = -1;
+            if (pipedExpression is not null)
+            {
+                positionalArguments[0] = pipedExpression;
+                nextPositionalParameter = 1;
+                maxSuppliedIndex = 0;
+            }
+
+            for (var argumentIndex = 0; argumentIndex < argumentNodes.Count; argumentIndex++)
+            {
+                var argument = argumentNodes[argumentIndex];
+                if (TryGetNamedArgumentName(argument, out var name))
+                {
+                    if (!parameterIndexes.TryGetValue(name, out var parameterIndex) ||
+                        parameterIndex >= positionalArguments.Length)
+                    {
+                        return BuildInvocationArguments(fallbackArguments, pipedExpression);
+                    }
+
+                    positionalArguments[parameterIndex] = emittedArgumentValues[argumentIndex];
+                    maxSuppliedIndex = Math.Max(maxSuppliedIndex, parameterIndex);
+                    continue;
+                }
+
+                if (nextPositionalParameter >= positionalArguments.Length)
+                {
+                    return BuildInvocationArguments(fallbackArguments, pipedExpression);
+                }
+
+                positionalArguments[nextPositionalParameter] = emittedArgumentValues[argumentIndex];
+                maxSuppliedIndex = Math.Max(maxSuppliedIndex, nextPositionalParameter);
+                nextPositionalParameter++;
+            }
+
+            for (var index = 0; index <= maxSuppliedIndex; index++)
+            {
+                if (positionalArguments[index] is not null)
+                {
+                    continue;
+                }
+
+                var defaultValue = signature.ParameterDefaultValues[index];
+                if (string.IsNullOrWhiteSpace(defaultValue))
+                {
+                    return BuildInvocationArguments(fallbackArguments, pipedExpression);
+                }
+
+                positionalArguments[index] = defaultValue;
+            }
+
+            return positionalArguments
+                .Take(maxSuppliedIndex + 1)
+                .Where(argument => argument is not null)
+                .Select(argument => argument!)
+                .ToArray();
+        }
+
+        private static IReadOnlyList<string> BuildInvocationArguments(
+            IReadOnlyList<string> arguments,
+            string? pipedExpression) =>
+            pipedExpression is null
+                ? arguments
+                : arguments.Prepend(pipedExpression).ToArray();
+
+        private static bool IsNamedArgument(SyntaxNode argument) =>
+            argument.Kind == SyntaxKind.NamedArgument;
+
+        private static bool TryGetNamedArgumentName(SyntaxNode argument, out string name)
+        {
+            name = string.Empty;
+            if (argument.Kind != SyntaxKind.NamedArgument)
+            {
+                return false;
+            }
+
+            name = argument.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            return name.Length > 0;
+        }
+
+        private string EmitArgumentValue(SyntaxNode argument)
+        {
+            if (argument.Kind != SyntaxKind.NamedArgument)
+            {
+                return EmitExpression(argument);
+            }
+
+            var expression = argument.Children.LastOrDefault(child => !child.IsToken);
+            return EmitExpression(expression);
+        }
+
+        private bool TryGetTypeSharpOwnedFunctionSignature(
+            SyntaxNode callee,
+            out CSharpFunctionSignature signature)
+        {
+            signature = default;
+            if (!TryGetTypeSharpOwnedFunctionName(callee, out var functionName) ||
+                !_functionSignatures.TryGetValue(functionName, out var resolvedSignature) ||
+                resolvedSignature.TypeParameters.Count > 0)
+            {
+                return false;
+            }
+
+            signature = resolvedSignature;
+            return true;
+        }
+
+        private static bool TryGetTypeSharpOwnedFunctionName(SyntaxNode callee, out string functionName)
+        {
+            functionName = string.Empty;
+            if (callee.Kind == SyntaxKind.IdentifierExpression)
+            {
+                functionName = GetIdentifierText(callee);
+                return functionName.Length > 0;
+            }
+
+            if (callee.Kind == SyntaxKind.GenericNameExpression)
+            {
+                var target = callee.Children.FirstOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.TypeArgumentList);
+                if (target?.Kind == SyntaxKind.IdentifierExpression)
+                {
+                    functionName = GetIdentifierText(target);
+                    return functionName.Length > 0;
+                }
+            }
+
+            return false;
         }
 
         private string EmitInArgument(SyntaxNode node)
@@ -2248,12 +2427,12 @@ public static class CSharpSourceBackend
                 return "default(object)";
             }
 
-            var arguments = target.Children
+            var argumentNodes = target.Children
                 .SkipWhile(child => !ReferenceEquals(child, callee))
                 .Skip(1)
                 .Where(child => !child.IsToken)
-                .Select(child => EmitExpression(child))
-                .Prepend(pipedExpression);
+                .ToArray();
+            var arguments = EmitTypeSharpOwnedArguments(callee, argumentNodes, pipedExpression);
 
             return EmitInvocation(callee, arguments);
         }
@@ -5193,6 +5372,8 @@ public static class CSharpSourceBackend
 
         private readonly record struct CSharpFunctionSignature(
             IReadOnlyList<string> ParameterTypes,
+            IReadOnlyList<string> ParameterNames,
+            IReadOnlyList<string?> ParameterDefaultValues,
             string ReturnType,
             IReadOnlyList<string> TypeParameters);
 

@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(518, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(519, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -21488,6 +21488,102 @@ static void CliBuildCompilesTypeSharpOptionalDefaultParameterLowering()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated TypeSharp optional/default parameter API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesTypeSharpNamedArgumentLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "TypeSharpNamedArgumentLowering"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NamedArgument"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NamedArgument
+
+            export fun decorate(value: string, prefix: string = "[", suffix: string = "]"): string = prefix + value + suffix
+
+            export fun add(left: int, right: int): int = left + right
+
+            export fun smoke(): string {
+              let direct = decorate(value: "value", prefix: "<", suffix: ">")
+              let reordered = decorate(suffix: ">", value: "value")
+              let mixed = decorate("value", suffix: ">")
+              let sum = add(right: 2, left: 1)
+              let piped = "value" |> decorate(suffix: ">")
+              direct + reordered + mixed + sum.ToString() + piped
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/TypeSharpNamedArgumentLowering.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("var direct = decorate(\"value\", \"<\", \">\");", generatedSource);
+        AssertContains("var reordered = decorate(\"value\", \"[\", \">\");", generatedSource);
+        AssertContains("var mixed = decorate(\"value\", \"[\", \">\");", generatedSource);
+        AssertContains("var sum = add(1, 2);", generatedSource);
+        AssertContains("var piped = decorate(\"value\", \"[\", \">\");", generatedSource);
+        AssertFalse(generatedSource.Contains("value:", StringComparison.Ordinal), "Generated TypeSharp-owned named calls should lower without C# named argument syntax.");
+        AssertFalse(generatedSource.Contains("suffix:", StringComparison.Ordinal), "Generated TypeSharp-owned named calls should lower without C# named argument syntax.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeSharpNamedArgumentLowering.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with TypeSharp named argument lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NamedArgumentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NamedArgumentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="TypeSharpNamedArgumentLowering">
+                  <HintPath>../generated/bin/Debug/net48/TypeSharpNamedArgumentLowering.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NamedArgumentConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.NamedArgument.Module.smoke();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NamedArgumentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated TypeSharp named argument lowering API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

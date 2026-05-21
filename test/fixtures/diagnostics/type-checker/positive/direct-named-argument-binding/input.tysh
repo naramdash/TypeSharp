@@ -1,0 +1,14 @@
+namespace Samples.TypeChecker.DirectNamedArgumentBinding
+
+fun decorate(value: string, prefix: string = "[", suffix: string = "]"): string = prefix + value + suffix
+
+fun add(left: int, right: int): int = left + right
+
+fun format(value: int, label: string, suffix: string = "!"): string = label + value.ToString() + suffix
+
+let directOrdered = decorate(value: "value", prefix: "<", suffix: ">")
+let directMixed = decorate("value", suffix: ">")
+let directReordered = decorate(suffix: ">", value: "value")
+let addNamed = add(right: 2, left: 1)
+let pipedNamed = "value" |> decorate(suffix: ">")
+let pipedMixed = 1 |> format(label: "count:", suffix: ".")
