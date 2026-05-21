@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(528, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(530, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -86,8 +86,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(132, shardCounts[0]);
-    AssertEqual(132, shardCounts[1]);
+    AssertEqual(133, shardCounts[0]);
+    AssertEqual(133, shardCounts[1]);
     AssertEqual(132, shardCounts[2]);
     AssertEqual(132, shardCounts[3]);
 
@@ -2340,7 +2340,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -2462,6 +2462,14 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         var nullItems = legacyNullIndexer.Properties.Where(property => property.Name == "Item").ToArray();
         AssertEqual(3, nullItems.Length);
         AssertSequence(["int", "object", "string"], nullItems.Select(property => property.ParameterTypes.Single()).OrderBy(type => type, StringComparer.Ordinal).ToArray());
+
+        var legacyMutableIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyMutableIndexer"), "LegacyMutableIndexer metadata should be present.");
+        var mutableItem = Require(legacyMutableIndexer.Properties.SingleOrDefault(property => property.Name == "Item"), "LegacyMutableIndexer indexer metadata should be present.");
+        AssertTrue(mutableItem.IsIndexer, "LegacyMutableIndexer.Item should be marked as an indexer.");
+        AssertEqual("int", mutableItem.Type);
+        AssertTrue(mutableItem.HasPublicGetter, "LegacyMutableIndexer.Item should expose a public getter.");
+        AssertTrue(mutableItem.HasPublicSetter, "LegacyMutableIndexer.Item should expose a public setter.");
+        AssertSequence(["int"], mutableItem.ParameterTypes.ToArray());
 
         var legacyNumeric = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNumeric"), "LegacyNumeric metadata should be present.");
         var formatSByte = Require(legacyNumeric.Methods.SingleOrDefault(method => method.Name == "FormatSByte"), "LegacyNumeric.FormatSByte metadata should be present.");
@@ -20024,11 +20032,187 @@ static void CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentTarge
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Shift assignment '>>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
             "Imported member target should still reject unsupported shift counts.");
-        AssertEqual(
-            2,
-            result.Diagnostics.Count(diagnostic =>
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("indexer, event, and unresolved imported member targets are not supported", StringComparison.Ordinal)));
+                diagnostic.Message.Contains("indexer targets require a matching public getter and setter", StringComparison.Ordinal)),
+            "Imported indexer target without a matching getter/setter should remain rejected.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("event and unresolved imported member targets are not supported", StringComparison.Ordinal)),
+            "Imported event target should remain rejected.");
+    });
+}
+
+static void CliBuildCompilesImportedLogicalUnsignedShiftAssignmentIndexerTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedLogicalUnsignedShiftAssignmentIndexerApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedLogicalUnsignedShiftAssignmentIndexers"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedLogicalUnsignedShiftAssignmentIndexers
+
+            import { LegacyMutableIndexer } from "Legacy.Tools"
+
+            fun makeIndexer(value: int): LegacyMutableIndexer {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun makeIndex(): int = 1
+
+            export fun simple(value: int, count: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              indexer[0] >>>= count
+              indexer[0]
+            }
+
+            export fun nonTrivial(value: int, count: int): int {
+              makeIndexer(value)[makeIndex()] >>>= count
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedLogicalUnsignedShiftAssignmentIndexerApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("indexer[0] = unchecked((int)(unchecked((uint)(indexer[0])) >> count));", generatedSource);
+        AssertContains("new System.Func<LegacyMutableIndexer, int, int>((__tsReceiver", generatedSource);
+        AssertContains(")(makeIndexer(value), makeIndex())", generatedSource);
+        AssertFalse(generatedSource.Contains("makeIndexer(value)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial imported indexer receiver or argument.");
+        AssertFalse(generatedSource.Contains(">>>", StringComparison.Ordinal), "Generated C# 7.3 source should not emit logical shift tokens.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedLogicalUnsignedShiftAssignmentIndexerApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported indexer logical unsigned shift assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ImportedLogicalUnsignedShiftAssignmentIndexerConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ImportedLogicalUnsignedShiftAssignmentIndexerConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ImportedLogicalUnsignedShiftAssignmentIndexerApi">
+                  <HintPath>../generated/bin/Debug/net48/ImportedLogicalUnsignedShiftAssignmentIndexerApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ImportedLogicalUnsignedShiftAssignmentIndexerConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ImportedLogicalUnsignedShiftAssignmentIndexers.Module.simple(-8, 1) == 2147483644 &&
+                            Samples.ImportedLogicalUnsignedShiftAssignmentIndexers.Module.nonTrivial(-8, 1) == 2147483644;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ImportedLogicalUnsignedShiftAssignmentIndexerConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated imported indexer logical unsigned shift assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentIndexerTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidImportedLogicalUnsignedShiftAssignmentIndexers"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidImportedLogicalUnsignedShiftAssignmentIndexers"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidImportedLogicalUnsignedShiftAssignmentIndexers
+
+            import { LegacyAmbiguousIndexer, LegacyByteIndexer, LegacyDualNamed, LegacyMutableIndexer } from "Legacy.Tools"
+
+            export fun missingSetter(): int {
+              let indexer: LegacyByteIndexer = LegacyByteIndexer()
+              indexer[1] >>>= 1
+              0
+            }
+
+            export fun mismatchedArgument(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[true] >>>= 1
+              0
+            }
+
+            export fun ambiguousArgument(): int {
+              let indexer: LegacyAmbiguousIndexer = LegacyAmbiguousIndexer()
+              indexer[LegacyDualNamed("value")] >>>= 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported imported C# indexer logical unsigned shift assignment targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("indexer targets require a matching public getter and setter", StringComparison.Ordinal)),
+            "Getter-only imported indexer target should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2411" &&
+                diagnostic.Message.Contains("does not contain a public instance indexer compatible with argument type(s) 'bool'", StringComparison.Ordinal)),
+            "Mismatched imported indexer argument should reuse existing interop diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2402" &&
+                diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
+            "Ambiguous imported indexer argument should reuse existing interop ambiguity diagnostics.");
     });
 }
 
@@ -24561,6 +24745,17 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public string this[int index]
                 {
                     get { return "int:" + index.ToString(); }
+                }
+            }
+
+            public sealed class LegacyMutableIndexer
+            {
+                private readonly int[] _values = new int[8];
+
+                public int this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
                 }
             }
 

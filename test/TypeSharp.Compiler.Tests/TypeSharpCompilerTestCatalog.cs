@@ -493,6 +493,8 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("CLI build compiles logical unsigned shift assignment expression API", CliBuildCompilesLogicalUnsignedShiftAssignmentExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles imported logical unsigned shift assignment member targets", CliBuildCompilesImportedLogicalUnsignedShiftAssignmentMemberTargets),
         new TypeSharpCompilerTestCase("checker rejects unsupported imported logical unsigned shift assignment targets", CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentTargets),
+        new TypeSharpCompilerTestCase("CLI build compiles imported logical unsigned shift assignment indexer targets", CliBuildCompilesImportedLogicalUnsignedShiftAssignmentIndexerTargets),
+        new TypeSharpCompilerTestCase("checker rejects unsupported imported logical unsigned shift assignment indexer targets", CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentIndexerTargets),
         new TypeSharpCompilerTestCase("CLI build compiles shift assignment expression API", CliBuildCompilesShiftAssignmentExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles boolean bitwise expression API", CliBuildCompilesBooleanBitwiseExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles bitwise compound assignment API", CliBuildCompilesBitwiseCompoundAssignmentApi),

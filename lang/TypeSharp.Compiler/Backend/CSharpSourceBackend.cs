@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Numerics;
 using System.Text;
 using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Lowering;
@@ -2473,6 +2475,11 @@ public static class CSharpSourceBackend
                 return loweredMemberAssignment;
             }
 
+            if (TryGetLogicalUnsignedShiftIndexerAssignment(target, right, out var loweredIndexerAssignment))
+            {
+                return loweredIndexerAssignment;
+            }
+
             var targetExpression = EmitExpression(target);
             var rightExpression = EmitExpression(right);
             var targetType = InferEmitterExpressionType(target);
@@ -2526,6 +2533,53 @@ public static class CSharpSourceBackend
                 rightExpression,
                 targetType);
             lowered = $"new System.Func<{receiverType}, {NormalizePrimitiveTypeName(targetType)}>({receiverParameter} => {targetExpressionWithTemporary} = {shiftedWithTemporary})({EmitExpression(receiver)})";
+            return true;
+        }
+
+        private bool TryGetLogicalUnsignedShiftIndexerAssignment(
+            SyntaxNode target,
+            SyntaxNode right,
+            out string lowered)
+        {
+            lowered = string.Empty;
+            if (!TryGetImportedIndexerAssignmentTarget(
+                    target,
+                    out var receiver,
+                    out var arguments,
+                    out var targetType,
+                    out var receiverType,
+                    out var indexParameterTypes))
+            {
+                return false;
+            }
+
+            var rightExpression = EmitExpression(right);
+            if (IsTrivialMemberReceiver(receiver) && arguments.All(IsTrivialIndexerArgument))
+            {
+                var targetExpression = EmitExpression(target);
+                var shifted = BuildLogicalUnsignedShiftAssignmentValue(targetExpression, rightExpression, targetType);
+                lowered = $"{targetExpression} = {shifted}";
+                return true;
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var indexParameters = arguments
+                .Select(_ => $"__tsIndex{_temporaryIndex++}")
+                .ToArray();
+            var targetExpressionWithTemporaries = $"{receiverParameter}[{string.Join(", ", indexParameters)}]";
+            var shiftedWithTemporaries = BuildLogicalUnsignedShiftAssignmentValue(
+                targetExpressionWithTemporaries,
+                rightExpression,
+                targetType);
+            var delegateTypes = new[] { receiverType }
+                .Concat(indexParameterTypes.Select(type => NormalizePrimitiveTypeName(type)))
+                .Concat([NormalizePrimitiveTypeName(targetType)])
+                .ToArray();
+            var lambdaParameters = new[] { receiverParameter }.Concat(indexParameters).ToArray();
+            var invocationArguments = new[] { EmitExpression(receiver) }
+                .Concat(arguments.Select(argument => EmitExpression(argument)))
+                .ToArray();
+            lowered = $"new System.Func<{string.Join(", ", delegateTypes)}>(({string.Join(", ", lambdaParameters)}) => {targetExpressionWithTemporaries} = {shiftedWithTemporaries})({string.Join(", ", invocationArguments)})";
             return true;
         }
 
@@ -4588,6 +4642,260 @@ public static class CSharpSourceBackend
                     out targetType);
         }
 
+        private bool TryGetImportedIndexerAssignmentTarget(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out IReadOnlyList<SyntaxNode> arguments,
+            out string targetType,
+            out string receiverType,
+            out IReadOnlyList<string> indexParameterTypes)
+        {
+            targetType = string.Empty;
+            receiverType = string.Empty;
+            indexParameterTypes = [];
+            if (!TryGetIndexerAccessParts(node, out receiver, out arguments) ||
+                arguments.Count == 0)
+            {
+                return false;
+            }
+
+            receiverType = InferEmitterExpressionType(receiver);
+            if (string.IsNullOrWhiteSpace(receiverType) ||
+                string.Equals(receiverType, "object", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var argumentTypes = arguments
+                .Select(GetIndexerArgumentType)
+                .ToArray();
+            if (!TryFindImportedIndexerAssignmentTarget(
+                    FindMetadataTypes(receiverType),
+                    argumentTypes,
+                    out var property))
+            {
+                return false;
+            }
+
+            targetType = NormalizePrimitiveTypeName(property.Type);
+            indexParameterTypes = property.ParameterTypes.Select(NormalizePrimitiveTypeName).ToArray();
+            return true;
+        }
+
+        private IndexerArgumentType GetIndexerArgumentType(SyntaxNode argument)
+        {
+            var expression = UnwrapParenthesizedExpression(argument);
+            var type = InferEmitterExpressionType(argument);
+            var numericLiteralText = TryGetNumericLiteralText(expression, out var literalText)
+                ? literalText
+                : null;
+            return new IndexerArgumentType(type, numericLiteralText);
+        }
+
+        private bool TryFindImportedIndexerAssignmentTarget(
+            IReadOnlyList<MetadataTypeSymbol> receiverTypes,
+            IReadOnlyList<IndexerArgumentType> argumentTypes,
+            out MetadataPropertySymbol property)
+        {
+            property = default!;
+            var candidates = receiverTypes
+                .SelectMany(type => type.Properties)
+                .Where(candidate =>
+                    !candidate.IsStatic &&
+                    candidate.IsIndexer &&
+                    candidate.HasPublicGetter &&
+                    candidate.HasPublicSetter &&
+                    candidate.ParameterCount == argumentTypes.Count)
+                .ToArray();
+            if (candidates.Length == 0)
+            {
+                return false;
+            }
+
+            var scoredCandidates = candidates
+                .Select(candidate => TryScoreIndexerArguments(candidate, argumentTypes, out var score)
+                    ? new IndexerCandidateScore(candidate, score)
+                    : (IndexerCandidateScore?)null)
+                .Where(score => score is not null)
+                .Select(score => score!.Value)
+                .ToArray();
+            if (scoredCandidates.Length == 0)
+            {
+                if (candidates.Length == 1 && argumentTypes.Any(argument => string.Equals(argument.Type, "object", StringComparison.Ordinal)))
+                {
+                    property = candidates[0];
+                    return true;
+                }
+
+                return false;
+            }
+
+            var bestScore = scoredCandidates.Min(candidate => candidate.Score);
+            var bestCandidates = scoredCandidates
+                .Where(candidate => candidate.Score == bestScore)
+                .Select(candidate => candidate.Property)
+                .ToArray();
+            if (bestCandidates.Length != 1)
+            {
+                return false;
+            }
+
+            property = bestCandidates[0];
+            return true;
+        }
+
+        private static bool TryScoreIndexerArguments(
+            MetadataPropertySymbol property,
+            IReadOnlyList<IndexerArgumentType> argumentTypes,
+            out int score)
+        {
+            score = 0;
+            if (property.ParameterTypes.Count != argumentTypes.Count)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < argumentTypes.Count; index++)
+            {
+                if (!TryScoreIndexerArgument(argumentTypes[index], property.ParameterTypes[index], out var argumentScore))
+                {
+                    return false;
+                }
+
+                score += argumentScore;
+            }
+
+            return true;
+        }
+
+        private static bool TryScoreIndexerArgument(
+            IndexerArgumentType argument,
+            string parameterType,
+            out int score)
+        {
+            score = 0;
+            var normalizedArgumentType = NormalizePrimitiveTypeName(argument.Type);
+            var normalizedParameterType = NormalizePrimitiveTypeName(parameterType);
+            if (string.Equals(normalizedArgumentType, normalizedParameterType, StringComparison.Ordinal) ||
+                MetadataTypeNameMatches(normalizedArgumentType, normalizedParameterType))
+            {
+                return true;
+            }
+
+            if (argument.NumericLiteralText is not null &&
+                CanPassNumericLiteralToIndexerParameter(argument.NumericLiteralText, normalizedParameterType))
+            {
+                score = 10;
+                return true;
+            }
+
+            if (string.Equals(normalizedParameterType, "object", StringComparison.Ordinal) &&
+                !string.Equals(normalizedArgumentType, "object", StringComparison.Ordinal))
+            {
+                score = 1000;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool CanPassNumericLiteralToIndexerParameter(string literalText, string parameterType)
+        {
+            if (!TryParseIntegerLiteral(literalText, out var value))
+            {
+                return false;
+            }
+
+            return parameterType switch
+            {
+                "byte" => value >= byte.MinValue && value <= byte.MaxValue,
+                "sbyte" => value >= sbyte.MinValue && value <= sbyte.MaxValue,
+                "short" => value >= short.MinValue && value <= short.MaxValue,
+                "ushort" => value >= ushort.MinValue && value <= ushort.MaxValue,
+                "int" => value >= int.MinValue && value <= int.MaxValue,
+                "uint" => value >= uint.MinValue && value <= uint.MaxValue,
+                "long" => value >= long.MinValue && value <= long.MaxValue,
+                "ulong" => value >= ulong.MinValue && value <= ulong.MaxValue,
+                _ => false
+            };
+        }
+
+        private static bool TryParseIntegerLiteral(string literalText, out BigInteger value)
+        {
+            literalText = literalText.Trim();
+            if (literalText.Length == 0 ||
+                literalText.Contains('.', StringComparison.Ordinal))
+            {
+                value = default;
+                return false;
+            }
+
+            return BigInteger.TryParse(literalText, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        }
+
+        private static bool TryGetIndexerAccessParts(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out IReadOnlyList<SyntaxNode> arguments)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (node.Kind != SyntaxKind.IndexerExpression || expressions.Length < 2)
+            {
+                receiver = default!;
+                arguments = [];
+                return false;
+            }
+
+            receiver = expressions[0];
+            arguments = expressions.Skip(1).ToArray();
+            return true;
+        }
+
+        private static bool IsTrivialIndexerArgument(SyntaxNode argument) =>
+            argument.Kind is SyntaxKind.IdentifierExpression or SyntaxKind.LiteralExpression ||
+            (argument.Kind == SyntaxKind.ParenthesizedExpression &&
+                argument.Children.FirstOrDefault(child => !child.IsToken) is { } inner &&
+                IsTrivialIndexerArgument(inner));
+
+        private static SyntaxNode UnwrapParenthesizedExpression(SyntaxNode node)
+        {
+            var current = node;
+            while (current.Kind == SyntaxKind.ParenthesizedExpression &&
+                current.Children.FirstOrDefault(child => !child.IsToken) is { } inner)
+            {
+                current = inner;
+            }
+
+            return current;
+        }
+
+        private static bool TryGetNumericLiteralText(SyntaxNode expression, out string text)
+        {
+            text = string.Empty;
+            expression = UnwrapParenthesizedExpression(expression);
+            if (expression.Kind == SyntaxKind.LiteralExpression)
+            {
+                var token = expression.Children.FirstOrDefault(child => child.IsToken);
+                if (token?.Kind == SyntaxKind.NumericLiteralToken &&
+                    token.Text is { Length: > 0 } literalText)
+                {
+                    text = literalText;
+                    return true;
+                }
+            }
+
+            if (expression.Kind == SyntaxKind.BinaryExpression &&
+                expression.Children.FirstOrDefault(child => child.IsToken) is { Kind: SyntaxKind.MinusToken } &&
+                expression.Children.Count(child => !child.IsToken) == 1 &&
+                TryGetNumericLiteralText(expression.Children.First(child => !child.IsToken), out var operandText))
+            {
+                text = "-" + operandText;
+                return true;
+            }
+
+            return false;
+        }
+
         private IReadOnlyList<MetadataTypeSymbol> FindMetadataTypes(string typeName) =>
             _metadataAssemblies
                 .SelectMany(assembly => assembly.Types)
@@ -5856,6 +6164,10 @@ public static class CSharpSourceBackend
             IReadOnlyList<string?> ParameterDefaultValues,
             string ReturnType,
             IReadOnlyList<string> TypeParameters);
+
+        private readonly record struct IndexerArgumentType(string Type, string? NumericLiteralText);
+
+        private readonly record struct IndexerCandidateScore(MetadataPropertySymbol Property, int Score);
 
         private readonly record struct RecordShape(string Name, IReadOnlyList<CSharpParameter> Parameters);
 

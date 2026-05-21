@@ -1093,11 +1093,30 @@ public static class TypeSharpTypeChecker
                     SyntaxKind.LogicalUnsignedShiftEqualsToken);
             }
 
+            if (target.Kind == SyntaxKind.IndexerExpression)
+            {
+                if (TryGetImportedIndexerAssignmentTargetType(target, scope, out var indexerTargetType))
+                {
+                    return CheckShiftCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        indexerTargetType,
+                        SyntaxKind.LogicalUnsignedShiftEqualsToken);
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    assignment,
+                    "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter.");
+                return SimpleType.Unknown;
+            }
+
             var fallbackTargetType = CheckExpression(target, scope);
             CheckExpression(value, scope);
             ReportMismatch(
                 assignment,
-                "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property member targets; indexer, event, and unresolved imported member targets are not supported.");
+                "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; event and unresolved imported member targets are not supported.");
             return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
 
@@ -1356,6 +1375,296 @@ public static class TypeSharpTypeChecker
             }
 
             return false;
+        }
+
+        private bool TryGetImportedIndexerAssignmentTargetType(
+            SyntaxNode target,
+            TypeScope scope,
+            out SimpleType targetType)
+        {
+            targetType = SimpleType.Unknown;
+            if (!TryGetIndexerAccessParts(target, out var receiver, out var arguments) ||
+                arguments.Count == 0)
+            {
+                return false;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            var argumentTypes = arguments
+                .Select(argument => GetIndexerArgumentType(argument, scope))
+                .ToArray();
+
+            if (IsUnknownType(receiverType))
+            {
+                ReportUnknownAccessRequiresNarrowing(target);
+                return false;
+            }
+
+            if (!receiverType.IsKnown || receiverType.IsNull || receiverType.IsNullable)
+            {
+                return false;
+            }
+
+            if (!TrySelectImportedIndexerProperty(
+                    FindMetadataTypes(receiverType.Name),
+                    arguments,
+                    argumentTypes,
+                    requireWritable: true,
+                    out var property))
+            {
+                return false;
+            }
+
+            targetType = SimpleType.Named(NormalizePrimitiveTypeName(property.Type));
+            return true;
+        }
+
+        private IndexerArgumentType GetIndexerArgumentType(SyntaxNode argument, TypeScope scope)
+        {
+            var expression = UnwrapParenthesizedExpression(argument);
+            var type = CheckExpression(argument, scope);
+            var numericLiteralText = TryGetNumericLiteralText(expression, out var literalText)
+                ? literalText
+                : null;
+            var isNullLiteral = IsNullLiteralExpression(expression);
+            return new IndexerArgumentType(type, numericLiteralText, isNullLiteral);
+        }
+
+        private bool TrySelectImportedIndexerProperty(
+            IReadOnlyList<MetadataTypeSymbol> receiverTypes,
+            IReadOnlyList<SyntaxNode> arguments,
+            IReadOnlyList<IndexerArgumentType> argumentTypes,
+            bool requireWritable,
+            out MetadataPropertySymbol property)
+        {
+            property = default!;
+            var candidates = receiverTypes
+                .SelectMany(type => type.Properties)
+                .Where(candidate =>
+                    !candidate.IsStatic &&
+                    candidate.IsIndexer &&
+                    candidate.HasPublicGetter &&
+                    (!requireWritable || candidate.HasPublicSetter) &&
+                    candidate.ParameterCount == arguments.Count)
+                .ToArray();
+            if (candidates.Length == 0)
+            {
+                return false;
+            }
+
+            var scoredCandidates = candidates
+                .Select(candidate => TryScoreIndexerArguments(candidate, argumentTypes, out var score)
+                    ? new IndexerCandidateScore(candidate, score)
+                    : (IndexerCandidateScore?)null)
+                .Where(score => score is not null)
+                .Select(score => score!.Value)
+                .ToArray();
+            if (scoredCandidates.Length == 0)
+            {
+                if (candidates.Length == 1 && argumentTypes.Any(argument => !argument.Type.IsKnown))
+                {
+                    property = candidates[0];
+                    return true;
+                }
+
+                return false;
+            }
+
+            var bestScore = scoredCandidates.Min(candidate => candidate.Score);
+            var bestCandidates = scoredCandidates
+                .Where(candidate => candidate.Score == bestScore)
+                .Select(candidate => candidate.Property)
+                .ToArray();
+            if (bestCandidates.Length != 1)
+            {
+                return false;
+            }
+
+            property = bestCandidates[0];
+            return true;
+        }
+
+        private bool TryScoreIndexerArguments(
+            MetadataPropertySymbol property,
+            IReadOnlyList<IndexerArgumentType> argumentTypes,
+            out int score)
+        {
+            score = 0;
+            if (property.ParameterTypes.Count != argumentTypes.Count)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < argumentTypes.Count; index++)
+            {
+                if (!TryScoreIndexerArgument(argumentTypes[index], property.ParameterTypes[index], out var argumentScore))
+                {
+                    return false;
+                }
+
+                score += argumentScore;
+            }
+
+            return true;
+        }
+
+        private bool TryScoreIndexerArgument(
+            IndexerArgumentType argument,
+            string parameterType,
+            out int score)
+        {
+            score = 0;
+            var normalizedParameterType = NormalizePrimitiveTypeName(parameterType);
+            if (!argument.Type.IsKnown)
+            {
+                score = 10_000;
+                return true;
+            }
+
+            if (argument.IsNullLiteral)
+            {
+                if (string.Equals(normalizedParameterType, "object", StringComparison.Ordinal) ||
+                    FindMetadataTypes(parameterType).Any(type => !type.IsValueType))
+                {
+                    score = string.Equals(normalizedParameterType, "object", StringComparison.Ordinal) ? 1000 : 100;
+                    return true;
+                }
+
+                return false;
+            }
+
+            var normalizedArgumentType = NormalizePrimitiveTypeName(argument.Type.Name);
+            if (TypeNamesMatch(normalizedArgumentType, normalizedParameterType))
+            {
+                score = 0;
+                return true;
+            }
+
+            if (argument.NumericLiteralText is not null &&
+                CanPassNumericLiteralToIndexerParameter(argument.NumericLiteralText, normalizedParameterType))
+            {
+                score = 10;
+                return true;
+            }
+
+            if (CanAssignMetadataType(SimpleType.Named(parameterType), argument.Type))
+            {
+                score = 100;
+                return true;
+            }
+
+            if (string.Equals(normalizedParameterType, "object", StringComparison.Ordinal) &&
+                !argument.Type.IsNull)
+            {
+                score = 1000;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TypeNamesMatch(string actual, string expected) =>
+            string.Equals(actual, expected, StringComparison.Ordinal) ||
+            MetadataTypeNameMatches(actual, expected);
+
+        private static bool CanPassNumericLiteralToIndexerParameter(string literalText, string parameterType)
+        {
+            if (!TryParseIntegerLiteral(literalText, out var value))
+            {
+                return false;
+            }
+
+            return parameterType switch
+            {
+                "byte" => value >= byte.MinValue && value <= byte.MaxValue,
+                "sbyte" => value >= sbyte.MinValue && value <= sbyte.MaxValue,
+                "short" => value >= short.MinValue && value <= short.MaxValue,
+                "ushort" => value >= ushort.MinValue && value <= ushort.MaxValue,
+                "int" => value >= int.MinValue && value <= int.MaxValue,
+                "uint" => value >= uint.MinValue && value <= uint.MaxValue,
+                "long" => value >= long.MinValue && value <= long.MaxValue,
+                "ulong" => value >= ulong.MinValue && value <= ulong.MaxValue,
+                _ => false
+            };
+        }
+
+        private static bool TryParseIntegerLiteral(string literalText, out BigInteger value)
+        {
+            literalText = literalText.Trim();
+            if (literalText.Length == 0 ||
+                literalText.Contains('.', StringComparison.Ordinal))
+            {
+                value = default;
+                return false;
+            }
+
+            return BigInteger.TryParse(literalText, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        }
+
+        private static bool TryGetIndexerAccessParts(
+            SyntaxNode node,
+            out SyntaxNode receiver,
+            out IReadOnlyList<SyntaxNode> arguments)
+        {
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (node.Kind != SyntaxKind.IndexerExpression || expressions.Length < 2)
+            {
+                receiver = default!;
+                arguments = [];
+                return false;
+            }
+
+            receiver = expressions[0];
+            arguments = expressions.Skip(1).ToArray();
+            return true;
+        }
+
+        private static SyntaxNode UnwrapParenthesizedExpression(SyntaxNode node)
+        {
+            var current = node;
+            while (current.Kind == SyntaxKind.ParenthesizedExpression &&
+                current.Children.FirstOrDefault(child => !child.IsToken) is { } inner)
+            {
+                current = inner;
+            }
+
+            return current;
+        }
+
+        private static bool TryGetNumericLiteralText(SyntaxNode expression, out string text)
+        {
+            text = string.Empty;
+            expression = UnwrapParenthesizedExpression(expression);
+            if (expression.Kind == SyntaxKind.LiteralExpression)
+            {
+                var token = expression.Children.FirstOrDefault(child => child.IsToken);
+                if (token?.Kind == SyntaxKind.NumericLiteralToken &&
+                    token.Text is { Length: > 0 } literalText)
+                {
+                    text = literalText;
+                    return true;
+                }
+            }
+
+            if (expression.Kind == SyntaxKind.BinaryExpression &&
+                expression.Children.FirstOrDefault(child => child.IsToken) is { Kind: SyntaxKind.MinusToken } &&
+                expression.Children.Count(child => !child.IsToken) == 1 &&
+                TryGetNumericLiteralText(expression.Children.First(child => !child.IsToken), out var operandText))
+            {
+                text = "-" + operandText;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsNullLiteralExpression(SyntaxNode expression)
+        {
+            expression = UnwrapParenthesizedExpression(expression);
+            var token = expression.Kind == SyntaxKind.LiteralExpression
+                ? expression.Children.FirstOrDefault(child => child.IsToken)
+                : null;
+            return token?.Kind == SyntaxKind.NullKeyword;
         }
 
         private SimpleType CheckBitwiseExpression(SyntaxNode node, TypeScope scope)
@@ -7550,6 +7859,10 @@ public static class TypeSharpTypeChecker
     private readonly record struct BranchNarrowing(string VariableName, SimpleType Type);
 
     private readonly record struct BoundCallArgument(SyntaxNode Argument, int ParameterIndex);
+
+    private readonly record struct IndexerArgumentType(SimpleType Type, string? NumericLiteralText, bool IsNullLiteral);
+
+    private readonly record struct IndexerCandidateScore(MetadataPropertySymbol Property, int Score);
 
     private readonly record struct FunctionInfo(
         SimpleType ReturnType,

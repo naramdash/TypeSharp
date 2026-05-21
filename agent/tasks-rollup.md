@@ -5670,6 +5670,7 @@ Primary evidence:
 - `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
 - `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
 - `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `test/README.md`
 - [Type System](../docs/src/content/docs/type-system.md)
 - [Lowering](../docs/src/content/docs/lowering.md)
 - [Feature Status](../docs/src/content/docs/feature-status.md)
@@ -5739,7 +5740,55 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0396: logical unsigned shift assignment imported indexer targets.
+- Completed in task 0396: logical unsigned shift assignment imported indexer targets.
+
+## Task 0396 Logical Unsigned Shift Assignment Imported Indexer Targets
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Added checker support for metadata-backed imported C# `target[index] >>>= count` when overload resolution selects a public instance indexer with getter/setter, the indexer value type is a known non-null primitive integral value, and the count is `byte`, `sbyte`, `short`, `ushort`, or `int`.
+- Reused imported indexer validation/ranking boundaries for mismatched and ambiguous argument diagnostics while keeping missing setter, unsupported count, nullable, non-integral, enum, record, event, and unresolved targets deterministic before emission.
+- Added C# 7.3-compatible backend lowering with no generated `>>>` or `>>>=`; simple receiver/index arguments lower as ordinary indexer assignments, and non-trivial receiver or index arguments lower through generated `System.Func<...>` expressions so the receiver and index arguments are evaluated once.
+- Added the `LegacyMutableIndexer` fixture, metadata assertions, positive/negative catalog cases, generated `net48` C# consumer evidence, shared catalog count 530, and shard counts 133/133/132/132.
+- Updated Type System, Lowering, Reference, Diagnostics, Feature Status, Work Ledger, task queue, and traceability docs.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "imported logical unsigned shift assignment indexer"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "imported logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet test test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+npm run build
+git diff --check
+```
+
+Result: commands succeeded on 2026-05-22. The docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted Git line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Reference](../docs/src/content/docs/reference.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Active in task 0397: roadmap refresh after logical unsigned shift assignment imported indexer targets.
 
 ## Verification Summary
 
@@ -5765,13 +5814,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0395 is compressed here.
+- Completed historical work through task 0396 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0396 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0397 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
