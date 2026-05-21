@@ -48,7 +48,7 @@ Implemented pipeline behavior includes the `csharp-runtime-import` pass, which a
 | Enums | Ordinary C# enum declarations; enum member access remains `EnumName.Member`. |
 | Nominal unions | Abstract base type plus sealed case types and runtime pattern helper metadata. |
 | Pattern matching over nominal unions | Ordered C# case checks using runtime pattern helpers; `_` lowers to an unconditional fallback arm. |
-| Pattern matching over TypeSharp-owned enums | Ordered C# enum member comparisons; `_` lowers to an unconditional fallback arm. |
+| Pattern matching over TypeSharp-owned and named imported C# enums | Ordered C# enum member comparisons; `_` lowers to an unconditional fallback arm. |
 | Pattern matching over bool and local literal unions | Ordered C# conditional comparisons using `object.Equals`; `_` lowers to an unconditional fallback arm. |
 | Type-level unions in local code | Local erased representation, usually `object`, with narrowing checks. |
 | Structural shape proofs | Compile-time checks; no public metadata shape. |
@@ -91,7 +91,7 @@ Evidence:
 
 Records lower to immutable C# classes with constructor parameters, get-only properties, value equality, and hash code. Record construction, record update, and nominal record spread lower to constructor calls in record parameter order.
 
-Simple enum declarations lower to ordinary generated C# enum declarations. Member references such as `Color.Green` stay as direct C# enum member access. Exhaustive enum matches over TypeSharp-owned enums lower to ordered `object.Equals` comparisons against generated enum members. Explicit underlying types, explicit numeric member values, flags, enum member attributes, and imported C# enum exhaustiveness are not lowered yet.
+Simple enum declarations lower to ordinary generated C# enum declarations. Member references such as `Color.Green` stay as direct C# enum member access. Exhaustive enum matches over TypeSharp-owned enums and named imported C# enums lower to ordered `object.Equals` comparisons against generated or imported enum members. Explicit underlying types, explicit numeric member values, flags, and enum member attributes are not lowered yet.
 
 Public class, interface, generic type, generic function, and delegate-compatible function value surfaces lower only when their CLR shape is explicit. `partial` is preserved for declarations that lower to generated C# type declarations: modules, records, unions, classes, and interfaces.
 
@@ -110,6 +110,7 @@ Evidence:
 - `test/fixtures/backend/csharp/positive/0040-enum-match-exhaustiveness-lowering`
 - `test/TypeSharp.Compiler.Tests/Program.cs` enum declaration API CLI build smoke
 - `test/TypeSharp.Compiler.Tests/Program.cs` enum match exhaustiveness CLI build smoke
+- `test/TypeSharp.Compiler.Tests/Program.cs` imported C# enum match CLI build smoke
 
 ## Union And Pattern Lowering
 

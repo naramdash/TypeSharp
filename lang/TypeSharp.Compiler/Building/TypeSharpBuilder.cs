@@ -125,12 +125,13 @@ public static class TypeSharpBuilder
             var sourceImports = BuildSourceImports(sourceFile, sourceModuleGraph, sourceModuleTargets);
             var valueImportAliases = BuildSourceValueImportAliases(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources);
             var valueReExports = BuildSourceValueReExports(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources);
+            var enumImportShapes = BuildImportedEnumShapes(root, metadataResult.Assemblies, sourceImports);
             var functionImportAliases = BuildSourceFunctionImportAliases(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources);
             var functionReExports = BuildLocalFunctionExportAliases(sourceFile, root, sourceModuleTargets)
                 .Concat(BuildSourceFunctionReExports(sourceFile, root, sourceModuleGraph, sourceModuleTargets, parsedSources))
                 .ToArray();
             var artifact = backend is CSharpSourceBackendAdapter csharpBackend
-                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, functionImportAliases, functionReExports)
+                ? csharpBackend.Emit(root, rootNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports)
                 : backend.Emit(root);
             if (artifact.Kind != TypeSharpBackendArtifactKind.SourceText)
             {
@@ -524,6 +525,51 @@ public static class TypeSharpBuilder
             .GroupBy(reExport => reExport.ExportedName, StringComparer.Ordinal)
             .Select(group => group.First())
             .ToArray();
+    }
+
+    private static IReadOnlyList<CSharpSourceEnumImportShape> BuildImportedEnumShapes(
+        SyntaxNode root,
+        IReadOnlyList<MetadataAssemblySymbol> assemblies,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports)
+    {
+        var enumShapes = new List<CSharpSourceEnumImportShape>();
+        var seenLocalNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var importDeclaration in root.Children.Where(child => child.Kind is SyntaxKind.ImportNamedDeclaration or SyntaxKind.ImportTypeDeclaration))
+        {
+            if (!TryGetModuleSpecifier(importDeclaration, out var specifier) ||
+                sourceImports.ContainsKey(specifier))
+            {
+                continue;
+            }
+
+            var namespaceTypes = assemblies
+                .SelectMany(assembly => assembly.Types)
+                .Where(type => string.Equals(type.Namespace, specifier, StringComparison.Ordinal))
+                .ToArray();
+            if (namespaceTypes.Length == 0)
+            {
+                continue;
+            }
+
+            foreach (var importSpecifier in GetNamedImportSpecifiers(importDeclaration))
+            {
+                if (!seenLocalNames.Add(importSpecifier.LocalName))
+                {
+                    continue;
+                }
+
+                var enumType = namespaceTypes.FirstOrDefault(type =>
+                    type.IsEnum &&
+                    MetadataTypeMatchesImportedName(type, importSpecifier.ImportedName) &&
+                    type.EnumMembers.Count > 0);
+                if (enumType is not null)
+                {
+                    enumShapes.Add(new CSharpSourceEnumImportShape(importSpecifier.LocalName, enumType.EnumMembers));
+                }
+            }
+        }
+
+        return enumShapes;
     }
 
     private static IReadOnlyList<CSharpSourceFunctionImportAlias> BuildSourceFunctionImportAliases(
@@ -2464,6 +2510,16 @@ public static class TypeSharpBuilder
     private readonly record struct NamedImportSpecifier(string ImportedName, string LocalName)
     {
         public bool IsAlias => !string.Equals(ImportedName, LocalName, StringComparison.Ordinal);
+    }
+
+    private static bool MetadataTypeMatchesImportedName(MetadataTypeSymbol type, string importedName) =>
+        string.Equals(type.Name, importedName, StringComparison.Ordinal) ||
+        string.Equals(StripGenericArity(type.Name), importedName, StringComparison.Ordinal);
+
+    private static string StripGenericArity(string name)
+    {
+        var index = name.IndexOf('`', StringComparison.Ordinal);
+        return index < 0 ? name : name[..index];
     }
 
     private readonly record struct NamedExportSpecifier(string TargetName, string ExportedName)

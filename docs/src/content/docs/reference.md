@@ -17,7 +17,7 @@ Implemented and planned declaration forms include functions, values, literals, r
 
 `partial` is implemented for declarations that currently lower to generated C# types: modules, records, unions, classes, and interfaces. Partial methods, partial constructors, partial events, and source augmentation hooks remain future work.
 
-Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member access, and lower to ordinary generated C# enum declarations. Enum match exhaustiveness, flag enums, explicit underlying types, explicit numeric member values, and enum member attributes remain future work.
+Simple TypeSharp-owned enum declarations parse, bind duplicate members, type-check same-enum member access, lower to ordinary generated C# enum declarations, and participate in match exhaustiveness. Named imported C# enums also participate in match exhaustiveness when metadata exposes finite public enum members. Flag enums, explicit underlying types, explicit numeric member values, and enum member attributes remain future work.
 
 Source files without an explicit file-scoped `namespace` still lower under the manifest `rootNamespace`; they are not emitted into a global namespace.
 
@@ -57,7 +57,7 @@ Detailed C#/.NET reference: [C# And CLR Type Model](../csharp-type-model/)
 
 ## Patterns
 
-Pattern syntax supports nominal union, TypeSharp-owned enum, `bool`, and local type-level union narrowing paths in the current smoke-tested scope, including local literal-union match arms. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover.
+Pattern syntax supports nominal union, TypeSharp-owned enum, named imported C# enum, `bool`, and local type-level union narrowing paths in the current smoke-tested scope, including local literal-union match arms. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover.
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/)
 

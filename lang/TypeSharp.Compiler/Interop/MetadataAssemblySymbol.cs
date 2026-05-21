@@ -28,6 +28,10 @@ public sealed record MetadataTypeSymbol(
 
     public bool IsInterface { get; init; }
 
+    public bool IsEnum { get; init; }
+
+    public IReadOnlyList<string> EnumMembers { get; init; } = [];
+
     public bool HasPublicParameterlessConstructor { get; init; }
 
     public IReadOnlyList<MetadataMethodSymbol> Constructors { get; init; } = [];

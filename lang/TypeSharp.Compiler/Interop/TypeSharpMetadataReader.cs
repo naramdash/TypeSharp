@@ -90,12 +90,14 @@ public static class TypeSharpMetadataReader
                 }
 
                 var baseTypeName = GetMetadataTypeName(reader, type.BaseType);
+                var fields = ReadPublicFields(reader, type);
+                var isEnum = string.Equals(baseTypeName, "System.Enum", StringComparison.Ordinal);
                 types.Add(new MetadataTypeSymbol(
                     reader.GetString(type.Namespace),
                     reader.GetString(type.Name),
                     ReadPublicMethods(reader, type, assemblyHasNullableMetadata),
                     ReadPublicProperties(reader, type),
-                    ReadPublicFields(reader, type),
+                    fields,
                     ReadPublicEvents(reader, type))
                 {
                     BaseTypeName = baseTypeName,
@@ -103,6 +105,8 @@ public static class TypeSharpMetadataReader
                     HasPublicParameterlessConstructor = HasPublicParameterlessConstructor(reader, type),
                     InterfaceNames = ReadInterfaceNames(reader, type),
                     IsInterface = type.Attributes.HasFlag(System.Reflection.TypeAttributes.Interface),
+                    IsEnum = isEnum,
+                    EnumMembers = isEnum ? GetEnumMemberNames(fields) : [],
                     IsValueType = string.Equals(baseTypeName, "System.ValueType", StringComparison.Ordinal) ||
                         string.Equals(baseTypeName, "System.Enum", StringComparison.Ordinal)
                 });
@@ -326,6 +330,15 @@ public static class TypeSharpMetadataReader
 
         return fields;
     }
+
+    private static IReadOnlyList<string> GetEnumMemberNames(IReadOnlyList<MetadataFieldSymbol> fields) =>
+        fields
+            .Where(field =>
+                field.IsStatic &&
+                field.IsLiteral &&
+                !string.Equals(field.Name, "value__", StringComparison.Ordinal))
+            .Select(field => field.Name)
+            .ToArray();
 
     private static IReadOnlyList<MetadataEventSymbol> ReadPublicEvents(MetadataReader reader, TypeDefinition type)
     {

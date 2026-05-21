@@ -2008,7 +2008,45 @@ Primary evidence:
 
 Remaining:
 
-- Imported C# enum exhaustiveness is active in task 0314. Flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, and richer pattern algebra remain future work.
+- Imported C# enum exhaustiveness was completed in task 0314. Flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, and richer pattern algebra remain future work.
+
+## Task 0314 Imported C# Enum Exhaustiveness Slice
+
+Completed compiler and interop work established:
+
+- Added enum metadata shape to imported C# type symbols, including deterministic public enum member names from literal static fields.
+- Registered named imported C# enums, including import aliases, in the type-checker enum scope.
+- Reused the existing finite enum match logic so missing imported enum members report `TS2203`, guarded arms remain non-covering, and `_` covers the remaining known member space.
+- Passed imported enum shapes into C# source emission so matches over imported enums lower to C# 7.3-compatible `object.Equals` comparisons against imported enum members.
+- Added local `net48` C# DLL coverage for metadata enum members, `typesharp check` imported enum exhaustiveness diagnostics, and `typesharp build` generated assembly plus C# consumer compilation.
+- Updated canonical type-system, reference, lowering, .NET interop, diagnostics, feature-status, and work-ledger docs for the implemented boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [MetadataAssemblySymbol.cs](../lang/TypeSharp.Compiler/Interop/MetadataAssemblySymbol.cs)
+- [TypeSharpMetadataReader.cs](../lang/TypeSharp.Compiler/Interop/TypeSharpMetadataReader.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [TypeSharpBuilder.cs](../lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs)
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Flag semantics, explicit enum underlying types, explicit numeric enum values, enum member attributes, enum aliases, and richer pattern algebra remain future work.
 
 ## Verification Summary
 

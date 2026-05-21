@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0314-imported-csharp-enum-exhaustiveness-slice.md](0314-imported-csharp-enum-exhaustiveness-slice.md) |
-| Active summary     | Extend enum match exhaustiveness from TypeSharp-owned enums to finite imported C# enum metadata. |
-| Completed range    | 0001-0313                         |
+| Active task packet | None |
+| Active summary     | None |
+| Completed range    | 0001-0314                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q3       | In Progress | Task 0313 roadmap refresh | 0314 Imported C# enum exhaustiveness slice | [0314-imported-csharp-enum-exhaustiveness-slice.md](0314-imported-csharp-enum-exhaustiveness-slice.md) | Extend finite enum-member coverage from TypeSharp-owned enums to imported C# enum metadata without taking on flags or numeric-value semantics. |
+| Q3       | Done        | Task 0313 roadmap refresh | 0314 Imported C# enum exhaustiveness slice | [tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice](tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice) | Extended finite enum-member coverage from TypeSharp-owned enums to named imported C# enum metadata without taking on flags or numeric-value semantics. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0313 Roadmap refresh after enum match exhaustiveness | [tasks-rollup.md#task-0313-roadmap-refresh-after-enum-match-exhaustiveness](tasks-rollup.md#task-0313-roadmap-refresh-after-enum-match-exhaustiveness) | Rechecked official source signals after enum match exhaustiveness, confirmed the baseline, and selected imported C# enum exhaustiveness as the next bounded implementation slice. |
 | Q2       | Done        | Task 0311 roadmap refresh | 0312 Enum match exhaustiveness slice | [tasks-rollup.md#task-0312-enum-match-exhaustiveness-slice](tasks-rollup.md#task-0312-enum-match-exhaustiveness-slice) | Implemented TypeSharp-owned enum match exhaustiveness now that enum declaration groundwork exists. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0311 Roadmap refresh after enum declarations | [tasks-rollup.md#task-0311-roadmap-refresh-after-enum-declarations](tasks-rollup.md#task-0311-roadmap-refresh-after-enum-declarations) | Rechecked official source signals after enum declarations and selected enum match exhaustiveness as the next bounded implementation slice. |

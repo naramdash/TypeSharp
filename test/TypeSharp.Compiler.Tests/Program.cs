@@ -128,6 +128,7 @@ var tests = new (string Name, Action Body)[]
     ("checker reports missing C# method diagnostics", CheckerReportsMissingCSharpMethodDiagnostics),
     ("checker reports missing C# type diagnostics", CheckerReportsMissingCSharpTypeDiagnostics),
     ("checker reports missing framework C# type diagnostics", CheckerReportsMissingFrameworkCSharpTypeDiagnostics),
+    ("checker reports imported C# enum match exhaustiveness", CheckerReportsImportedCSharpEnumMatchExhaustiveness),
     ("checker reports missing framework C# method diagnostics", CheckerReportsMissingFrameworkCSharpMethodDiagnostics),
     ("checker reports missing C# static member diagnostics", CheckerReportsMissingCSharpStaticMemberDiagnostics),
     ("checker reports missing framework C# static member diagnostics", CheckerReportsMissingFrameworkCSharpStaticMemberDiagnostics),
@@ -503,6 +504,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles interface declaration API", CliBuildCompilesInterfaceDeclarationApi),
     ("CLI build compiles enum declaration API", CliBuildCompilesEnumDeclarationApi),
     ("CLI build compiles enum match exhaustiveness", CliBuildCompilesEnumMatchExhaustiveness),
+    ("CLI build compiles imported C# enum match exhaustiveness", CliBuildCompilesImportedCSharpEnumMatchExhaustiveness),
     ("CLI build compiles partial declaration API", CliBuildCompilesPartialDeclarationApi),
     ("CLI build compiles generic type declaration API", CliBuildCompilesGenericTypeDeclarationApi),
     ("CLI build compiles generic constraint API", CliBuildCompilesGenericConstraintApi),
@@ -2804,7 +2806,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -2816,6 +2818,11 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsParams).ToArray());
         AssertSequence([false], legacyApi.Methods.Single().Parameters.Select(parameter => parameter.IsOptional).ToArray());
         AssertFalse(legacyApi.Methods.Single().IsExtension, "Normal static methods should not be marked as extension methods.");
+
+        var legacyColor = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyColor"), "LegacyColor metadata should be present.");
+        AssertTrue(legacyColor.IsEnum, "LegacyColor should be marked as enum metadata.");
+        AssertTrue(legacyColor.IsValueType, "LegacyColor enum should remain value-type metadata.");
+        AssertSequence(["Red", "Green", "Blue"], legacyColor.EnumMembers.ToArray());
 
         var legacyExtensions = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyExtensions"), "LegacyExtensions metadata should be present.");
         var shout = Require(legacyExtensions.Methods.SingleOrDefault(method => method.Name == "Shout"), "LegacyExtensions.Shout metadata should be present.");
@@ -4333,6 +4340,43 @@ static void CheckerReportsMissingFrameworkCSharpTypeDiagnostics()
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertContains("System", diagnostic.Message);
         AssertContains("does not contain a public type named 'DefinitelyMissing'", diagnostic.Message);
+    });
+}
+
+static void CheckerReportsImportedCSharpEnumMatchExhaustiveness()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedEnumExhaustiveness"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedEnumExhaustiveness"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedEnumExhaustiveness
+
+            import { LegacyColor } from "Legacy.Tools"
+
+            export fun describe(color: LegacyColor): string =
+              match color {
+                Red => "red"
+                Green => "green"
+              }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Non-exhaustive imported C# enum match should produce diagnostics.");
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2203");
+        AssertEqual("src/Main.tysh", diagnostic.File);
+        AssertEqual("Non-exhaustive match for enum 'LegacyColor'. Missing members: Blue.", diagnostic.Message);
     });
 }
 
@@ -19828,6 +19872,116 @@ static void CliBuildCompilesEnumMatchExhaustiveness()
     });
 }
 
+static void CliBuildCompilesImportedCSharpEnumMatchExhaustiveness()
+{
+    WithWorkspace(root =>
+    {
+        var runtimeAssemblyPath = BuildRepositoryAssembly(
+            "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+            "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        File.Copy(runtimeAssemblyPath, Path.Combine(root, "lib", "TypeSharp.Runtime.dll"));
+
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedEnumMatchApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedEnumMatches"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = [
+              "lib/Legacy.Tools.dll",
+              "lib/TypeSharp.Runtime.dll"
+            ]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedEnumMatches
+
+            import { LegacyColor as Color } from "Legacy.Tools"
+
+            export fun describe(color: Color): string =
+              match color {
+                Red => "red"
+                Green => "green"
+                Blue => "blue"
+              }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported enum match API build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedEnumMatchApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("using Color = Legacy.Tools.LegacyColor;", generatedSource);
+        AssertContains("using TypeSharp.Runtime;", generatedSource);
+        AssertContains("object.Equals(__match", generatedSource);
+        AssertContains("Color.Red", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedEnumMatchApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported enum match API.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ImportedEnumMatchConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ImportedEnumMatchConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ImportedEnumMatchApi">
+                  <HintPath>../generated/bin/Debug/net48/ImportedEnumMatchApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Runtime">
+                  <HintPath>../lib/TypeSharp.Runtime.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ImportedEnumMatchConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ImportedEnumMatches.Module.describe(Legacy.Tools.LegacyColor.Green) == "green";
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ImportedEnumMatchConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated imported enum match API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
 static void CliBuildCompilesPartialDeclarationApi()
 {
     WithWorkspace(root =>
@@ -22505,6 +22659,13 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 {
                     return value;
                 }
+            }
+
+            public enum LegacyColor
+            {
+                Red,
+                Green,
+                Blue
             }
 
             public static class LegacyParams

@@ -105,16 +105,22 @@ public static class TypeSharpTypeChecker
                 {
                     case SyntaxKind.ImportNamedDeclaration:
                     case SyntaxKind.ImportTypeDeclaration:
-                        var isRelativeSourceImport = child.Kind == SyntaxKind.ImportNamedDeclaration &&
-                            TryGetModuleSpecifier(child, out var moduleSpecifier) &&
-                            IsSourceModuleSpecifier(moduleSpecifier);
-                        foreach (var importName in GetNamedImportIdentifiers(child))
+                        var hasModuleSpecifier = TryGetModuleSpecifier(child, out var moduleSpecifier);
+                        var isSourceImport = hasModuleSpecifier && IsSourceModuleSpecifier(moduleSpecifier);
+                        foreach (var importSpecifier in GetNamedImportSpecifiers(child))
                         {
-                            var name = importName.Text ?? string.Empty;
+                            var name = importSpecifier.LocalName;
                             scope.DeclareType(name);
-                            if (isRelativeSourceImport)
+                            if (child.Kind == SyntaxKind.ImportNamedDeclaration && isSourceImport)
                             {
                                 scope.DeclareFunction(name, SimpleType.Unknown);
+                            }
+
+                            if (!isSourceImport &&
+                                hasModuleSpecifier &&
+                                TryFindImportedEnumMembers(moduleSpecifier, importSpecifier.ImportedName, out var importedEnumMembers))
+                            {
+                                scope.DeclareEnum(name, importedEnumMembers);
                             }
                         }
 
@@ -699,6 +705,28 @@ public static class TypeSharpTypeChecker
 
             enumName = identifier.Text ?? string.Empty;
             return scope.ResolveEnum(enumName, out members);
+        }
+
+        private bool TryFindImportedEnumMembers(
+            string moduleSpecifier,
+            string importedName,
+            out IReadOnlyList<string> members)
+        {
+            var enumType = _metadataAssemblies
+                .SelectMany(assembly => assembly.Types)
+                .FirstOrDefault(type =>
+                    type.IsEnum &&
+                    string.Equals(type.Namespace, moduleSpecifier, StringComparison.Ordinal) &&
+                    MetadataTypeMatchesImportedName(type, importedName) &&
+                    type.EnumMembers.Count > 0);
+            if (enumType is not null)
+            {
+                members = enumType.EnumMembers;
+                return true;
+            }
+
+            members = [];
+            return false;
         }
 
         private SimpleType InferIndexer(SyntaxNode node, TypeScope scope)
@@ -3358,7 +3386,7 @@ public static class TypeSharpTypeChecker
             return identifier.IsToken && identifier.Kind == SyntaxKind.IdentifierToken;
         }
 
-        private static IEnumerable<SyntaxNode> GetNamedImportIdentifiers(SyntaxNode node)
+        private static IEnumerable<NamedImportSpecifier> GetNamedImportSpecifiers(SyntaxNode node)
         {
             var insideBraces = false;
             for (var index = 0; index < node.Children.Count; index++)
@@ -3375,24 +3403,29 @@ public static class TypeSharpTypeChecker
                     yield break;
                 }
 
-                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                if (insideBraces && child.IsToken && child.Kind == SyntaxKind.IdentifierToken && child.Text is { Length: > 0 } name)
                 {
                     if (index + 2 < node.Children.Count &&
                         node.Children[index + 1].IsToken &&
                         node.Children[index + 1].Kind == SyntaxKind.AsKeyword &&
                         node.Children[index + 2].IsToken &&
-                        node.Children[index + 2].Kind == SyntaxKind.IdentifierToken)
+                        node.Children[index + 2].Kind == SyntaxKind.IdentifierToken &&
+                        node.Children[index + 2].Text is { Length: > 0 } alias)
                     {
-                        yield return node.Children[index + 2];
+                        yield return new NamedImportSpecifier(name, alias);
                         index += 2;
                     }
                     else
                     {
-                        yield return child;
+                        yield return new NamedImportSpecifier(name, name);
                     }
                 }
             }
         }
+
+        private static bool MetadataTypeMatchesImportedName(MetadataTypeSymbol type, string importedName) =>
+            string.Equals(type.Name, importedName, StringComparison.Ordinal) ||
+            string.Equals(StripGenericArity(type.Name), importedName, StringComparison.Ordinal);
 
         private static bool TryGetModuleSpecifier(SyntaxNode node, out string specifier)
         {
@@ -3464,6 +3497,8 @@ public static class TypeSharpTypeChecker
             alias = node;
             return false;
         }
+
+        private readonly record struct NamedImportSpecifier(string ImportedName, string LocalName);
     }
 
     private sealed class TypeScope : ITypeSharpInferenceScope

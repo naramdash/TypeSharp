@@ -145,7 +145,7 @@ C# consumers see generated CLR metadata. That means public TypeSharp APIs need s
 
 If a compile-time-only type-level union, intersection alias, or structural shape appears in a public boundary, the compiler reports a public ABI diagnostic.
 
-Simple TypeSharp-owned enums expose ordinary CLR enum metadata. The current checker accepts same-enum member values such as `Color.Green` where `Color` is expected, rejects unrelated enum values, reports missing enum members, and checks enum match exhaustiveness over TypeSharp-owned enum members. Flags, explicit underlying types, explicit numeric values, imported C# enum exhaustiveness, and enum member attributes are not part of the implemented slice.
+Simple TypeSharp-owned enums expose ordinary CLR enum metadata. The current checker accepts same-enum member values such as `Color.Green` where `Color` is expected, rejects unrelated enum values, reports missing enum members, and checks enum match exhaustiveness over TypeSharp-owned enum members. Named imported C# enums participate in the same match exhaustiveness path when referenced assembly metadata exposes finite public enum members. Flags, explicit underlying types, explicit numeric values, and enum member attributes are not part of the implemented slice.
 
 ## Type-Level And Nominal Unions
 
@@ -182,7 +182,7 @@ Pattern matching over nominal unions is the path toward exhaustive domain logic.
 TypeSharp follows F#'s functional consistency where the behavior can remain explainable to C# and .NET Framework consumers:
 
 - immutable values, expression-oriented functions, records, nominal unions, `Option<T>`, `Result<T,E>`, pattern matching, pipeline, and composition are part of the MVP path;
-- richer exhaustiveness remains a functional correctness priority; known nominal unions, TypeSharp-owned enums, `bool`, and local type-level unions including literal unions report missing cases/members, `_` can cover the remainder, and guarded arms do not prove coverage without an unguarded cover;
+- richer exhaustiveness remains a functional correctness priority; known nominal unions, TypeSharp-owned enums, named imported C# enums, `bool`, and local type-level unions including literal unions report missing cases/members, `_` can cover the remainder, and guarded arms do not prove coverage without an unguarded cover;
 - struct-backed value options, recursive union ergonomics, and helper APIs such as bind/map/default are stable backlog items once their `net48` ABI and allocation tradeoffs are documented;
 - general currying, partial application, computation-expression-style workflows, active-pattern-style extractors, units of measure, and type providers stay backlog or experimental until TypeSharp has deterministic lowering, diagnostics, and security boundaries.
 

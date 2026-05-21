@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Task 0314 Imported C# enum exhaustiveness slice | [0314-imported-csharp-enum-exhaustiveness-slice.md](0314-imported-csharp-enum-exhaustiveness-slice.md) | Metadata enum members, imported enum scope registration, imported enum match diagnostics/lowering, CLI local C# DLL smoke, docs updates. |
+| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
 
 ## Completed Evidence Index
 
@@ -45,6 +45,7 @@
 | Literal match exhaustiveness | [tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice](tasks-rollup.md#task-0308-literal-match-exhaustiveness-slice), `test/fixtures/parser/positive/0034-literal-match-patterns`, `test/fixtures/diagnostics/type-checker/positive/literal-match-exhaustiveness`, `test/fixtures/diagnostics/type-checker/negative/literal-match-non-exhaustive`, `test/fixtures/backend/csharp/positive/0038-literal-match-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Enum declarations | [tasks-rollup.md#task-0310-enum-declaration-implementation-slice](tasks-rollup.md#task-0310-enum-declaration-implementation-slice), `test/fixtures/parser/positive/0035-enum-declaration`, `test/fixtures/diagnostics/binder/negative/duplicate-enum-member`, `test/fixtures/diagnostics/type-checker/positive/enum-declaration`, `test/fixtures/diagnostics/type-checker/negative/enum-declaration-mismatch`, `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Enum match exhaustiveness | [tasks-rollup.md#task-0312-enum-match-exhaustiveness-slice](tasks-rollup.md#task-0312-enum-match-exhaustiveness-slice), `test/fixtures/diagnostics/type-checker/positive/enum-match-exhaustiveness`, `test/fixtures/diagnostics/type-checker/negative/enum-match-non-exhaustive`, `test/fixtures/backend/csharp/positive/0040-enum-match-exhaustiveness-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Imported C# enum exhaustiveness | [tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice](tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice), `lang/TypeSharp.Compiler/Interop/TypeSharpMetadataReader.cs`, `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

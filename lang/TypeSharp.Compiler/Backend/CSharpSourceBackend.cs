@@ -68,9 +68,23 @@ public static class CSharpSourceBackend
         IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
         IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
     {
+        return Emit(root, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, [], functionImportAliases, functionReExports);
+    }
+
+    public static string Emit(
+        SyntaxNode root,
+        string? defaultNamespace,
+        string moduleContainerName,
+        IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
+        IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
+        IReadOnlyList<CSharpSourceValueReExport> valueReExports,
+        IReadOnlyList<CSharpSourceEnumImportShape> enumImportShapes,
+        IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
+        IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
+    {
         var loweredRoot = TypeSharpLoweringPipeline.Default.Lower(root);
         var emitter = new Emitter();
-        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, functionImportAliases, functionReExports);
+        return emitter.Emit(loweredRoot, defaultNamespace, moduleContainerName, sourceImports, valueImportAliases, valueReExports, enumImportShapes, functionImportAliases, functionReExports);
     }
 
     private sealed class Emitter
@@ -103,6 +117,7 @@ public static class CSharpSourceBackend
             IReadOnlyDictionary<string, CSharpSourceImportTarget> sourceImports,
             IReadOnlyList<CSharpSourceValueImportAlias> valueImportAliases,
             IReadOnlyList<CSharpSourceValueReExport> valueReExports,
+            IReadOnlyList<CSharpSourceEnumImportShape> enumImportShapes,
             IReadOnlyList<CSharpSourceFunctionImportAlias> functionImportAliases,
             IReadOnlyList<CSharpSourceFunctionReExport> functionReExports)
         {
@@ -183,6 +198,14 @@ public static class CSharpSourceBackend
             foreach (var enumDeclaration in enums)
             {
                 RegisterEnum(enumDeclaration);
+            }
+
+            foreach (var enumImportShape in enumImportShapes)
+            {
+                if (!_enums.ContainsKey(enumImportShape.LocalName))
+                {
+                    _enums[enumImportShape.LocalName] = new EnumShape(enumImportShape.LocalName, enumImportShape.Members);
+                }
             }
 
             foreach (var value in values)
