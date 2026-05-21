@@ -558,9 +558,17 @@ public sealed class TypeSharpParser
                 if (Current.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)
                 {
                     initializerChildren.Add(TokenNode(NextToken()));
+                    initializerChildren.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
+                }
+                else if (Current.Kind == SyntaxKind.IdentifierToken)
+                {
+                    initializerChildren.Add(TokenNode(NextToken()));
+                }
+                else
+                {
+                    initializerChildren.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
                 }
 
-                initializerChildren.Add(TokenNode(Expect(SyntaxKind.NumericLiteralToken)));
                 memberChildren.Add(Node(SyntaxKind.Initializer, initializerChildren));
             }
 

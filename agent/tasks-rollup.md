@@ -2309,6 +2309,55 @@ Remaining:
 
 - Explicit enum member aliases are active in task 0322. Flag semantics, enum member attributes, imported C# enum numeric/underlying metadata, and richer pattern algebra remain future work.
 
+## Task 0322 Explicit Enum Member Aliases Slice
+
+Completed language/compiler work established:
+
+- Added parser support for TypeSharp-owned enum member aliases such as `Crimson = Red`.
+- Kept enum alias initializers token-shaped like numeric enum initializers so general expression binding does not reinterpret alias targets.
+- Added deterministic `TS2201` diagnostics for aliases that do not target a previously declared member of the same enum, covering missing, forward, and self aliases.
+- Lowered valid aliases to ordinary C# enum member assignments while preserving explicit underlying type and numeric member value lowering.
+- Preserved existing numeric range validation, same-enum value type checking, enum match exhaustiveness, and imported C# enum policy.
+- Kept arbitrary computed enum expressions, flags, enum member attributes, and imported C# enum numeric/underlying metadata out of scope.
+- Updated parser, type-checker positive/negative, backend snapshot, canonical enum docs, diagnostics docs, feature status, and work-ledger state.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles enum declaration API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0035-enum-declaration`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/enum-alias-invalid`
+- `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Flag semantics, enum member attributes, imported C# enum numeric/underlying metadata, arbitrary computed enum member expressions, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

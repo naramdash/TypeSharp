@@ -1,0 +1,9 @@
+namespace Samples.TypeChecker.EnumAliasInvalid
+
+enum Color {
+  Red = 1,
+  Missing = Blue,
+  Forward = Later,
+  Self = Self,
+  Later = 2
+}

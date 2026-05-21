@@ -13,6 +13,7 @@ namespace Samples.Enums
     public enum Color : byte
     {
         Red = 1,
+        Crimson = Red,
         Green,
         Blue = 4
     }

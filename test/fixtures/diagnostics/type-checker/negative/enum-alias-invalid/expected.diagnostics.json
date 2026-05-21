@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member alias 'Missing' must reference a previously declared member of the same enum, but found 'Blue'.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 13 },
+      "end": { "line": 5, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member alias 'Forward' must reference a previously declared member of the same enum, but found 'Later'.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 13 },
+      "end": { "line": 6, "column": 18 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member alias 'Self' must reference a previously declared member of the same enum, but found 'Self'.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 10 },
+      "end": { "line": 7, "column": 14 }
+    }
+  ]
+}

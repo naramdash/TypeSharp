@@ -4294,12 +4294,13 @@ public static class CSharpSourceBackend
 
             var sign = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)?.Text;
             var value = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.NumericLiteralToken)?.Text;
-            if (string.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
-                return null;
+                return $"{sign}{value}";
             }
 
-            return $"{sign}{value}";
+            var alias = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
+            return string.IsNullOrEmpty(alias) ? null : alias;
         }
 
         private static string GetInterfaceDeclarationName(SyntaxNode node)

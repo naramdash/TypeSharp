@@ -2,6 +2,7 @@ namespace Samples.TypeChecker.EnumDeclaration
 
 enum Color : byte {
   Red = 1,
+  Crimson = Red,
   Green,
   Blue = 4
 }

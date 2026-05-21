@@ -125,7 +125,7 @@ Stable declaration rules:
 - `let` is immutable binding; `let mut` is mutable binding.
 - `literal` is the compile-time constant spelling. Core grammar does not add `var`, `val`, or `const` aliases.
 - `fun` is the public callable declaration form; expression-bodied functions use `=`, and block-bodied functions use `{ ... }`.
-- Simple enum declarations use `enum Name { Member, Other }`; members can include explicit integer numeric values such as `Member = 1`, and declarations can use explicit integral underlying types such as `enum Name : byte { Member = 1 }`. Explicit numeric member values must fit the selected underlying type, or `int` when no underlying type is declared. Computed member values, flag policy, enum aliases, and enum-member attributes remain planned.
+- Simple enum declarations use `enum Name { Member, Other }`; members can include explicit integer numeric values such as `Member = 1` or aliases to previously declared members such as `Alias = Member`, and declarations can use explicit integral underlying types such as `enum Name : byte { Member = 1 }`. Explicit numeric member values must fit the selected underlying type, or `int` when no underlying type is declared. Arbitrary computed member values, flag policy, and enum-member attributes remain planned.
 - `partial` currently lowers for generated C# type declarations: modules, records, unions, classes, and interfaces.
 - `async` belongs on function declarations and lowers through `Task`/`Task<T>`.
 - `unsafe`, `dynamic`, `reflect`, and `interop` are capability markers, not ordinary type-system escapes.
