@@ -79,6 +79,8 @@ public enum SyntaxKind
     PipeEqualsToken,
     AmpersandEqualsToken,
     CaretEqualsToken,
+    LessLessEqualsToken,
+    GreaterGreaterEqualsToken,
     GreaterToken,
     NullCoalescingToken,
     PlusToken,

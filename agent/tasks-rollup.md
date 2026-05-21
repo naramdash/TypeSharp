@@ -5207,7 +5207,7 @@ Primary evidence:
 Remaining:
 
 - Completed in task 0387: roadmap refresh after integral shift expressions.
-- Active in task 0388: shift assignment expressions.
+- Completed in task 0388: shift assignment expressions.
 
 ## Task 0387 Roadmap Refresh After Integral Shift Expressions
 
@@ -5259,7 +5259,76 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0388: shift assignment expressions.
+- Completed in task 0388: shift assignment expressions.
+
+## Task 0388 Shift Assignment Expressions
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Added lexer/parser support for `<<=` and `>>=` as assignment operators while keeping plain `<<`/`>>` composition and shift parsing on the existing two-token path.
+- Added type-checker validation for mutable local primitive integral shift assignments, reusing the non-null primitive integral target and int-compatible count policy from task 0386.
+- Preserved immutable local diagnostics, invalid assignment target diagnostics, and existing imported C# member/indexer/event assignment validation behavior.
+- Lowered accepted shift assignments to ordinary generated C# `<<=` and `>>=` operators and added backend snapshot coverage.
+- Added parser, positive/negative type-checker, backend, generated `net48` C# consumer, catalog-count, MSTest bridge, docs, and traceability evidence.
+- Updated the shared catalog to 524 cases with four-shard expected counts of `131`, `131`, `131`, and `131`.
+- Kept logical unsigned `>>>=`, logical unsigned shift assignment, user-defined operators, enum flag algebra, imported operator overload resolution, and broad assignment target analysis out of scope.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "CLI build compiles shift assignment expression API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet build test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --verbosity quiet
+npm run build          # in docs
+git diff --check
+```
+
+Result: compiler build, focused harness filters, all four package-free shard runners, MSTest bridge build/smoke, docs build, and diff check succeeded on 2026-05-22. The docs build emitted the existing Vite chunk-size warning, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpLexer.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/parser/positive/0039-shift-assignment-expression`
+- `test/fixtures/diagnostics/type-checker/positive/shift-assignment-expression`
+- `test/fixtures/diagnostics/type-checker/negative/shift-assignment-invalid`
+- `test/fixtures/backend/csharp/positive/0051-shift-assignment-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `test/README.md`
+- `.github/workflows/regression.yml`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Active in task 0389: roadmap refresh after shift assignment expressions.
 
 ## Verification Summary
 
@@ -5285,13 +5354,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0387 is compressed here.
+- Completed historical work through task 0388 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0388 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0389 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

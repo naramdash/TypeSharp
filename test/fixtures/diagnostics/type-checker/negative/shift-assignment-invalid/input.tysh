@@ -1,0 +1,49 @@
+namespace Samples.TypeChecker.ShiftAssignmentInvalid
+
+record Point(X: int)
+
+enum Permission {
+  None,
+  Read
+}
+
+fun immutableLocal(): int {
+  let value = 1
+  value <<= 1
+  value
+}
+
+fun invalidTarget(): int {
+  1 >>= 1
+  0
+}
+
+fun nullableTarget(): int {
+  let mut maybe: int? = 1
+  maybe >>= 1
+  0
+}
+
+fun nonIntegralTarget(): string {
+  let mut text = "ok"
+  text <<= 1
+  text
+}
+
+fun unsupportedCount(value: int, count: uint): int {
+  let mut result = value
+  result <<= count
+  result
+}
+
+fun enumTarget(): Permission {
+  let mut permission = Permission.Read
+  permission >>= 1
+  permission
+}
+
+fun structuralTarget(point: Point): int {
+  let mut current = point
+  current <<= 1
+  0
+}

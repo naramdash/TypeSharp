@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(523, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(524, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -89,7 +89,7 @@ static void MSTestPackageShardBridgeProjectsAreStable()
     AssertEqual(131, shardCounts[0]);
     AssertEqual(131, shardCounts[1]);
     AssertEqual(131, shardCounts[2]);
-    AssertEqual(130, shardCounts[3]);
+    AssertEqual(131, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -19618,6 +19618,118 @@ static void CliBuildCompilesIntegralShiftExpressionApi()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated integral shift APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesShiftAssignmentExpressionApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ShiftAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ShiftAssignment"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ShiftAssignment
+
+            export fun adjust(value: int, count: ushort): int {
+              let mut result = value
+              result <<= count
+              result >>= 1
+              result
+            }
+
+            export fun adjustUnsigned(value: uint, count: int): uint {
+              let mut result = value
+              result >>= count
+              result <<= 2
+              result
+            }
+
+            export fun adjustLong(value: long, count: short): long {
+              let mut result = value
+              result <<= count
+              result >>= 2
+              result
+            }
+
+            export fun adjustSmall(value: byte, count: int): byte {
+              let mut result = value
+              result <<= count
+              result >>= 1
+              result
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ShiftAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("result <<= count;", generatedSource);
+        AssertContains("result >>= 1;", generatedSource);
+        AssertContains("result >>= count;", generatedSource);
+        AssertContains("result <<= 2;", generatedSource);
+        AssertContains("result >>= 2;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ShiftAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with shift assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ShiftAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ShiftAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ShiftAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/ShiftAssignmentApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ShiftAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ShiftAssignment.Module.adjust(3, (ushort)2) == 6 &&
+                            Samples.ShiftAssignment.Module.adjustUnsigned(32u, 1) == 64u &&
+                            Samples.ShiftAssignment.Module.adjustLong(5L, (short)3) == 10L &&
+                            Samples.ShiftAssignment.Module.adjustSmall(3, 2) == 6;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ShiftAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated shift assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

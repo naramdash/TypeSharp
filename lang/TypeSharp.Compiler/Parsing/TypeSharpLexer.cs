@@ -409,6 +409,8 @@ public sealed class TypeSharpLexer
         ("|=", SyntaxKind.PipeEqualsToken),
         ("&=", SyntaxKind.AmpersandEqualsToken),
         ("^=", SyntaxKind.CaretEqualsToken),
+        ("<<=", SyntaxKind.LessLessEqualsToken),
+        (">>=", SyntaxKind.GreaterGreaterEqualsToken),
         ("==", SyntaxKind.EqualsEqualsToken),
         ("!=", SyntaxKind.BangEqualsToken),
         ("<=", SyntaxKind.LessOrEqualsToken),

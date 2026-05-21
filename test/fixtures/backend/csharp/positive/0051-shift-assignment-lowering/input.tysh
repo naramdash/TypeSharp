@@ -1,0 +1,22 @@
+namespace Samples.ShiftAssignment
+
+export fun adjust(value: int, count: ushort): int {
+  let mut result = value
+  result <<= count
+  result >>= 1
+  result
+}
+
+export fun adjustUnsigned(value: uint, count: int): uint {
+  let mut result = value
+  result >>= count
+  result <<= 2
+  result
+}
+
+export fun adjustSmall(value: byte, count: int): byte {
+  let mut result = value
+  result <<= count
+  result >>= 1
+  result
+}

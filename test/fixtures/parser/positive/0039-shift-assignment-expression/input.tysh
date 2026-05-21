@@ -1,0 +1,8 @@
+namespace Samples.ShiftAssignmentExpression
+
+fun adjust(): int {
+  let mut value = 1
+  value <<= 2
+  value >>= 1
+  value
+}

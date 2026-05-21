@@ -1,0 +1,60 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended.",
+      "file": "input.tysh",
+      "start": { "line": 12, "column": 3 },
+      "end": { "line": 12, "column": 8 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.",
+      "file": "input.tysh",
+      "start": { "line": 17, "column": 3 },
+      "end": { "line": 17, "column": 4 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift assignment '>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int?' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 23, "column": 3 },
+      "end": { "line": 23, "column": 14 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift assignment '<<=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'string' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 29, "column": 3 },
+      "end": { "line": 29, "column": 13 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift assignment '<<=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'.",
+      "file": "input.tysh",
+      "start": { "line": 35, "column": 3 },
+      "end": { "line": 35, "column": 19 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift assignment '>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'Permission' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 41, "column": 3 },
+      "end": { "line": 41, "column": 19 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Shift assignment '<<=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'Point' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 47, "column": 3 },
+      "end": { "line": 47, "column": 16 }
+    }
+  ]
+}

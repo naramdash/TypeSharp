@@ -1967,5 +1967,7 @@ public sealed class TypeSharpParser
             or SyntaxKind.MinusEqualsToken
             or SyntaxKind.PipeEqualsToken
             or SyntaxKind.AmpersandEqualsToken
-            or SyntaxKind.CaretEqualsToken;
+            or SyntaxKind.CaretEqualsToken
+            or SyntaxKind.LessLessEqualsToken
+            or SyntaxKind.GreaterGreaterEqualsToken;
 }

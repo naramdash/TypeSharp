@@ -1013,6 +1013,8 @@ public static class TypeSharpTypeChecker
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
+                    SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken =>
+                        CheckShiftCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     _ => CheckCompoundAssignmentValue(value, scope, targetInfo.Type)
                 };
             }
@@ -1061,6 +1063,37 @@ public static class TypeSharpTypeChecker
         private SimpleType CheckCompoundAssignmentValue(SyntaxNode value, TypeScope scope, SimpleType targetType)
         {
             CheckExpression(value, scope);
+            return targetType;
+        }
+
+        private SimpleType CheckShiftCompoundAssignmentValue(
+            SyntaxNode assignment,
+            SyntaxNode value,
+            TypeScope scope,
+            SimpleType targetType,
+            SyntaxKind operatorKind)
+        {
+            var valueType = CheckExpression(value, scope);
+            if (!targetType.IsKnown || !valueType.IsKnown)
+            {
+                return targetType.IsKnown ? targetType : SimpleType.Unknown;
+            }
+
+            var operatorText = operatorKind switch
+            {
+                SyntaxKind.LessLessEqualsToken => "<<=",
+                SyntaxKind.GreaterGreaterEqualsToken => ">>=",
+                _ => "?="
+            };
+
+            if (!TryGetBinaryIntegralShiftResultType(targetType, valueType, out _))
+            {
+                ReportMismatch(
+                    assignment,
+                    $"Shift assignment '{operatorText}' operands must be non-null primitive integral values with an int-compatible shift count, but found '{targetType}' and '{valueType}'.");
+                return targetType;
+            }
+
             return targetType;
         }
 
@@ -3543,7 +3576,9 @@ public static class TypeSharpTypeChecker
                 or SyntaxKind.MinusEqualsToken
                 or SyntaxKind.PipeEqualsToken
                 or SyntaxKind.AmpersandEqualsToken
-                or SyntaxKind.CaretEqualsToken;
+                or SyntaxKind.CaretEqualsToken
+                or SyntaxKind.LessLessEqualsToken
+                or SyntaxKind.GreaterGreaterEqualsToken;
 
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {
