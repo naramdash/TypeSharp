@@ -221,7 +221,7 @@ public static class TypeSharpTypeChecker
                             TryGetDirectTypeAnnotation(child, out var functionReturnTypeNode) &&
                             TryGetType(functionReturnTypeNode, scope, out var functionReturnType))
                         {
-                            scope.DeclareFunction(functionName, functionReturnType, GetFunctionCapabilities(child));
+                            scope.DeclareFunction(functionName, functionReturnType, GetFunctionCapabilities(child), GetFunctionParameterTypes(child, scope));
                         }
 
                         break;
@@ -1093,15 +1093,87 @@ public static class TypeSharpTypeChecker
                 ReportMismatch(
                     node,
                     $"Operator '{operatorText}' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operand '{valueOperandTypes[0]}' cannot be composed.");
+                return SimpleType.Unknown;
             }
             else if (valueOperandTypes.Length > 1)
             {
                 ReportMismatch(
                     node,
                     $"Operator '{operatorText}' is TypeSharp function composition syntax; numeric shifts and shift assignment are not implemented, and known value operands '{valueOperandTypes[0]}' and '{valueOperandTypes[1]}' cannot be composed.");
+                return SimpleType.Unknown;
             }
 
+            CheckNamedFunctionComposition(node, scope, expressions[0], expressions[1], operatorText);
             return SimpleType.Unknown;
+        }
+
+        private void CheckNamedFunctionComposition(
+            SyntaxNode node,
+            TypeScope scope,
+            SyntaxNode leftExpression,
+            SyntaxNode rightExpression,
+            string operatorText)
+        {
+            if (!TryGetDirectIdentifierName(leftExpression, out var leftName) ||
+                !TryGetDirectIdentifierName(rightExpression, out var rightName) ||
+                !scope.ResolveFunctionInfo(leftName, out var leftFunction) ||
+                !scope.ResolveFunctionInfo(rightName, out var rightFunction) ||
+                !TryGetUnaryFunctionSignature(leftFunction, out var leftParameterType, out var leftReturnType) ||
+                !TryGetUnaryFunctionSignature(rightFunction, out var rightParameterType, out var rightReturnType))
+            {
+                return;
+            }
+
+            var firstName = leftName;
+            var firstReturnType = leftReturnType;
+            var secondName = rightName;
+            var secondParameterType = rightParameterType;
+            if (operatorText == "<<")
+            {
+                firstName = rightName;
+                firstReturnType = rightReturnType;
+                secondName = leftName;
+                secondParameterType = leftParameterType;
+            }
+
+            if (CanAssign(scope, secondParameterType, firstReturnType))
+            {
+                return;
+            }
+
+            ReportMismatch(
+                node,
+                $"Composition operator '{operatorText}' cannot compose '{firstName}' with '{secondName}': '{firstName}' returns '{firstReturnType}', but '{secondName}' expects '{secondParameterType}'.");
+        }
+
+        private static bool TryGetUnaryFunctionSignature(
+            FunctionInfo function,
+            out SimpleType parameterType,
+            out SimpleType returnType)
+        {
+            parameterType = SimpleType.Unknown;
+            returnType = function.ReturnType;
+            if (!returnType.IsKnown ||
+                function.ParameterTypes is not { Count: 1 } parameterTypes ||
+                !parameterTypes[0].IsKnown)
+            {
+                return false;
+            }
+
+            parameterType = parameterTypes[0];
+            return true;
+        }
+
+        private static bool TryGetDirectIdentifierName(SyntaxNode node, out string name)
+        {
+            name = string.Empty;
+            if (node.Kind != SyntaxKind.IdentifierExpression || !TryGetFirstIdentifier(node, out var identifier))
+            {
+                return false;
+            }
+
+            name = identifier.Text ?? string.Empty;
+            return name.Length > 0;
         }
 
         private static bool IsCompositionExpression(SyntaxNode node) =>
@@ -3814,6 +3886,31 @@ public static class TypeSharpTypeChecker
             return parameters;
         }
 
+        private static IReadOnlyList<SimpleType>? GetFunctionParameterTypes(SyntaxNode declaration, TypeScope scope)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            if (parameterList is null)
+            {
+                return null;
+            }
+
+            var parameters = parameterList.Children.Where(child => child.Kind == SyntaxKind.Parameter).ToArray();
+            var parameterTypes = new List<SimpleType>();
+            foreach (var parameter in parameters)
+            {
+                if (!TryGetDirectTypeAnnotation(parameter, out var annotation) ||
+                    !TryGetType(annotation, scope, out var type) ||
+                    !type.IsKnown)
+                {
+                    return null;
+                }
+
+                parameterTypes.Add(type);
+            }
+
+            return parameterTypes;
+        }
+
         private static ShapeInfo GetRecordShape(string name, SyntaxNode declaration)
         {
             var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
@@ -4213,9 +4310,16 @@ public static class TypeSharpTypeChecker
 
         public void DeclareValue(string name, SimpleType type, bool isMutable = false) => _values[name] = new ValueInfo(type, isMutable);
 
-        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default);
+        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null);
 
-        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities);
+        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null);
+
+        public void DeclareFunction(
+            string name,
+            SimpleType returnType,
+            FunctionCapabilities capabilities,
+            IReadOnlyList<SimpleType>? parameterTypes) =>
+            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes);
 
         public void DeclareType(string name) => _types.Add(name);
 
@@ -4445,7 +4549,10 @@ public static class TypeSharpTypeChecker
 
     private readonly record struct BranchNarrowing(string VariableName, SimpleType Type);
 
-    private readonly record struct FunctionInfo(SimpleType ReturnType, FunctionCapabilities Capabilities);
+    private readonly record struct FunctionInfo(
+        SimpleType ReturnType,
+        FunctionCapabilities Capabilities,
+        IReadOnlyList<SimpleType>? ParameterTypes);
 
     private readonly record struct FunctionCapabilities(
         bool RequiresDynamic,

@@ -150,13 +150,14 @@ becomes equivalent to:
 g(f(value), arg)
 ```
 
-Composition expressions lower to unary delegate lambdas. Known value-shaped `>>` and `<<` operands report `TS2201` before lowering because numeric shifts are not implemented and those tokens remain composition syntax. Value-producing `if` expressions lower to C# 7.3-compatible `if`/`else` blocks inside an immediately invoked `System.Func<T>` when they appear where C# needs an expression value. Block-bodied lambdas lower to C# block lambdas and return the final block expression for value-returning delegate targets. Collection expression lambda bodies use the delegate return target when it is an array or `List<T>`, so `text => [text]` lowers with the expected element type. `yield` lowers to C# iterator statements when the function return type is an explicit `IEnumerable<T>` or `IEnumerator<T>`. `lock` lowers to C# lock statements and requires a non-null reference gate. F#-inspired computation-expression workflows, active patterns, and general partial application are not lowered yet; they need explicit TypeSharp semantics before generated C# can stay readable and deterministic.
+Composition expressions lower to unary delegate lambdas. Known value-shaped `>>` and `<<` operands report `TS2201` before lowering because numeric shifts are not implemented and those tokens remain composition syntax. Direct named unary function pairs with known TypeSharp signatures are checked before lowering so incompatible `f >> g` or `g << f` pairs stop before invalid generated C#. Value-producing `if` expressions lower to C# 7.3-compatible `if`/`else` blocks inside an immediately invoked `System.Func<T>` when they appear where C# needs an expression value. Block-bodied lambdas lower to C# block lambdas and return the final block expression for value-returning delegate targets. Collection expression lambda bodies use the delegate return target when it is an array or `List<T>`, so `text => [text]` lowers with the expected element type. `yield` lowers to C# iterator statements when the function return type is an explicit `IEnumerable<T>` or `IEnumerator<T>`. `lock` lowers to C# lock statements and requires a non-null reference gate. F#-inspired computation-expression workflows, active patterns, and general partial application are not lowered yet; they need explicit TypeSharp semantics before generated C# can stay readable and deterministic.
 
 Evidence:
 
 - `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`
 - `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
 - `test/fixtures/diagnostics/type-checker/negative/composition-shift-ambiguity`
+- `test/fixtures/diagnostics/type-checker/negative/composition-function-compatibility`
 - `test/TypeSharp.Compiler.Tests/Program.cs` if-expression, block lambda, and collection lambda delegate plus inferred function-valued export CLI build smokes
 - `test/fixtures/backend/csharp/positive/0031-yield-expression-lowering`
 - `test/fixtures/backend/csharp/positive/0032-lock-statement-lowering`

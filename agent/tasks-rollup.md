@@ -3314,6 +3314,51 @@ Remaining:
 
 - Direct named-function composition compatibility diagnostics are active in task 0346. Higher-order function values, currying, partial application, generic/imported composition inference, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0346 Composition Function Compatibility Diagnostics Slice
+
+Completed implementation work established:
+
+- Extended TypeSharp function symbol metadata with optional known parameter types for TypeSharp-declared functions while preserving existing return-type and capability checks.
+- Added direct named-function composition validation for unary `f >> g` and `g << f` pairs when both signatures are known.
+- Reported deterministic `TS2201` diagnostics when the first-applied function's return type cannot flow into the next function's parameter type.
+- Preserved value-shaped `>>`/`<<` ambiguity diagnostics, positive composition parser/backend fixtures, and existing C# 7.3-compatible composition lowering.
+- Added `test/fixtures/diagnostics/type-checker/negative/composition-function-compatibility` covering valid direct named-function composition, invalid `>>`, invalid `<<`, and multi-parameter function out-of-scope behavior.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the bounded direct named-function compatibility boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/negative/composition-function-compatibility`
+- `test/fixtures/parser/positive/0022-composition-expression`
+- `test/fixtures/backend/csharp/positive/0029-composition-expression-lowering`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Higher-order function values, currying, partial application, generic/imported composition inference, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

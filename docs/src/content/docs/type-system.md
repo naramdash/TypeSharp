@@ -188,6 +188,8 @@ TypeSharp follows F#'s functional consistency where the behavior can remain expl
 
 The default TypeSharp functional model must not require `FSharp.Core` at runtime. Direct F# option, tuple, record, or union interop can be added later as a compatibility layer.
 
+Direct named unary function composition is checked when both TypeSharp-declared function signatures are known: for `f >> g`, `f` must return a type assignable to `g`'s single parameter, and for `g << f`, `f` must return a type assignable to `g`'s single parameter. This keeps common F#-style composition mistakes deterministic without committing to higher-order function inference, currying, partial application, generic/imported composition inference, or multi-parameter composition.
+
 ## Generics
 
 Generic functions and generic public types lower to C#-compatible shapes for the implemented subset. Generic constraints are represented with C# `where` clauses when supported by the backend.

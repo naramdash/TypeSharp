@@ -1,0 +1,19 @@
+namespace Samples.TypeChecker.CompositionFunctionCompatibility
+
+fun increment(value: int): int = value + 1
+
+fun stringify(value: int): string = value.ToString()
+
+fun length(value: string): int = value.Length
+
+let validForward: int -> int = stringify >> length
+
+let validReverse: int -> int = length << stringify
+
+let invalidForward: int -> int = stringify >> increment
+
+let invalidReverse: int -> int = increment << stringify
+
+fun combine(left: int, right: int): int = left + right
+
+let multiParameterOutOfScope: int -> int = increment >> combine

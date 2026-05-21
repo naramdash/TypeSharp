@@ -150,7 +150,7 @@ Stable expression rules:
 - Lambdas use `=>` and can be assigned to local or module `let` bindings. Lambda bodies can be blocks; when the target delegate expects a value, the final block expression is returned.
 - `match` arms use `Pattern => expr` or `Pattern when boolExpr => expr`. Guard expressions are checked in the narrowed arm scope.
 - Pipeline `value |> f(args...)` lowers as `f(value, args...)`.
-- Composition `f >> g` and `g << f` lower to unary delegate lambdas. If either side is a known ordinary value such as a numeric, `bool`, `string`, nullable primitive, or enum value, the checker reports `TS2201` because `>>` and `<<` are not numeric shift operators in TypeSharp.
+- Composition `f >> g` and `g << f` lower to unary delegate lambdas. If either side is a known ordinary value such as a numeric, `bool`, `string`, nullable primitive, or enum value, the checker reports `TS2201` because `>>` and `<<` are not numeric shift operators in TypeSharp. Direct named unary function pairs with known TypeSharp signatures are compatibility-checked so the first function's return type must flow into the next function's parameter type. Higher-order function values, currying, partial application, generic/imported composition inference, and multi-parameter function composition remain backlog.
 - `satisfies` checks a named type or named structural shape proof and erases to the left expression in generated C#.
 - Nominal record expressions can use `...` spread from a known nominal record value.
 - Collection spread is stable for known arrays and `List<T>` targets.
