@@ -12,6 +12,4 @@ enum Color {
 
 let mixedEnum: Permission = Permission.Read & Color.Red
 
-let numericAnd = 1 & 2
-
 let enumAndNumber: Permission = Permission.Read & 1

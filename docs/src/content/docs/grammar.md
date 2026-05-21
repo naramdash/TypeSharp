@@ -82,9 +82,9 @@ The parser preserves leading/trailing trivia, doc comments, source spans, raw li
 Deterministic parser decisions:
 
 - lexer uses longest-token matching, so `|>`, `??=`, `??`, and `?.` win over shorter prefixes,
-- parser context chooses whether `|` means type union, pattern alternative, enum member initializer-local composite-or, or same-enum value expression-or,
-- parser context chooses whether `&` means type intersection, pattern-and, or same-enum value expression-and,
-- parser context treats `^` and unary `~` as enum-only value expressions unless a later numeric/general bitwise slice broadens them,
+- parser context chooses whether `|` means type union, pattern alternative, enum member initializer-local composite-or, same-enum value expression-or, or integral numeric bitwise-or,
+- parser context chooses whether `&` means type intersection, pattern-and, same-enum value expression-and, or integral numeric bitwise-and,
+- parser context treats `^` and unary `~` as same-enum value or integral numeric bitwise expressions,
 - `=>` separates lambda bodies in expression context and match arms inside match blocks,
 - `->` is only a function type operator; function declarations use `:` for return types,
 - `{ ... }` is interpreted by context first, then by contents in expression context; empty braces may stay neutral until semantic binding,
@@ -126,7 +126,7 @@ Stable declaration rules:
 - `let` is immutable binding; `let mut` is mutable binding.
 - `literal` is the compile-time constant spelling. Core grammar does not add `var`, `val`, or `const` aliases.
 - `fun` is the public callable declaration form; expression-bodied functions use `=`, and block-bodied functions use `{ ... }`.
-- Simple enum declarations use `enum Name { Member, Other }`; declarations and members can carry .NET attribute lists, members can include explicit integer numeric values such as `Member = 1`, aliases to previously declared members such as `Alias = Member`, or enum initializer-local composite-or forms such as `ReadWrite = Read | Write`, and declarations can use explicit integral underlying types such as `enum Name : byte { Member = 1 }`. Explicit numeric member values and numeric operands must fit the selected underlying type, or `int` when no underlying type is declared. Expression-level same-enum value `|` forms such as `Permission.Read | Permission.Write`, `&` forms such as `permission & Permission.Read`, `^` forms such as `permission ^ Permission.Write`, and unary `~` forms such as `~permission` are supported. Numeric/general bitwise operators, shifts, parentheses in enum member initializers, arbitrary computed member values, flag-aware match policy, and broad attribute target validation remain planned.
+- Simple enum declarations use `enum Name { Member, Other }`; declarations and members can carry .NET attribute lists, members can include explicit integer numeric values such as `Member = 1`, aliases to previously declared members such as `Alias = Member`, or enum initializer-local composite-or forms such as `ReadWrite = Read | Write`, and declarations can use explicit integral underlying types such as `enum Name : byte { Member = 1 }`. Explicit numeric member values and numeric operands must fit the selected underlying type, or `int` when no underlying type is declared. Expression-level same-enum value `|` forms such as `Permission.Read | Permission.Write`, `&` forms such as `permission & Permission.Read`, `^` forms such as `permission ^ Permission.Write`, and unary `~` forms such as `~permission` are supported. Expression-level integral numeric `|`, `&`, `^`, and unary `~` are supported for known non-null primitive integral operands. Shifts, compound assignment, boolean bitwise expressions, parentheses in enum member initializers, arbitrary computed member values, flag-aware match policy, and broad attribute target validation remain planned.
 - `partial` currently lowers for generated C# type declarations: modules, records, unions, classes, and interfaces.
 - `async` belongs on function declarations and lowers through `Task`/`Task<T>`.
 - `unsafe`, `dynamic`, `reflect`, and `interop` are capability markers, not ordinary type-system escapes.
@@ -145,7 +145,7 @@ Stable expression rules:
 - Parenthesized expressions group an inner expression and preserve the inner expression type for checking and lowering.
 - Unary logical-not `!expr` is stable for `bool` operands and lowers to C# `!expr`.
 - Unary numeric sign expressions `+expr` and `-expr` are stable for supported numeric operands and lower to C# unary sign operators.
-- Same-enum value `left | right`, `left & right`, `left ^ right`, and unary `~value` expressions are stable when the operands type-check as enum values and binary operands have the same enum type. They lower to C# `|`, `&`, `^`, or `~`. They do not enable numeric bitwise operations or flag-aware match reasoning.
+- Same-enum value `left | right`, `left & right`, `left ^ right`, and unary `~value` expressions are stable when the operands type-check as enum values and binary operands have the same enum type. Integral numeric `left | right`, `left & right`, `left ^ right`, and unary `~value` expressions are stable for known non-null primitive integral operands, with small integral operands promoting to `int` and mixed integral operands following the supported C# numeric promotion rules. They lower to C# `|`, `&`, `^`, or `~`. They do not enable shifts, compound assignment, boolean bitwise expressions, or flag-aware match reasoning.
 - Collection expressions can be lambda bodies. Known array or `List<T>` delegate return targets provide the element target for checking and lowering, and homogeneous collection expression arguments can filter imported C# array overloads.
 - Lambdas use `=>` and can be assigned to local or module `let` bindings. Lambda bodies can be blocks; when the target delegate expects a value, the final block expression is returned.
 - `match` arms use `Pattern => expr` or `Pattern when boolExpr => expr`. Guard expressions are checked in the narrowed arm scope.
@@ -257,7 +257,7 @@ Pattern precedence, high to low:
 | 3 | Pattern-and `p & q`. |
 | 4 | Pattern-or `p | q`. |
 
-Control forms such as `if`, `match`, `try`, `using`, async blocks, `yield`, and `lock` use dedicated parse forms instead of infix precedence. Planned operators such as `**`, numeric/general expression bitwise operators, ranges, `===`, and `!==` are reserved or diagnostic-producing until stabilized; enum member initializer-local `|` plus same-enum value expression `|`, `&`, `^`, and unary `~` are the implemented bitwise-shaped exceptions.
+Control forms such as `if`, `match`, `try`, `using`, async blocks, `yield`, and `lock` use dedicated parse forms instead of infix precedence. Planned operators such as `**`, shifts, compound bitwise assignment, ranges, `===`, and `!==` are reserved or diagnostic-producing until stabilized; enum member initializer-local `|`, same-enum value expression `|`, `&`, `^`, unary `~`, and integral numeric expression `|`, `&`, `^`, unary `~` are the implemented bitwise-shaped exceptions.
 
 Recovery notes for precedence parsing live in [Project Policy](../project-policy/) parser fixture policy and [Diagnostics](../diagnostics/).
 

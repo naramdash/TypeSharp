@@ -503,6 +503,7 @@ var tests = new (string Name, Action Body)[]
     ("CLI build compiles class declaration API", CliBuildCompilesClassDeclarationApi),
     ("CLI build compiles interface declaration API", CliBuildCompilesInterfaceDeclarationApi),
     ("CLI build compiles enum declaration API", CliBuildCompilesEnumDeclarationApi),
+    ("CLI build compiles integral bitwise expression API", CliBuildCompilesIntegralBitwiseExpressionApi),
     ("CLI build compiles enum match exhaustiveness", CliBuildCompilesEnumMatchExhaustiveness),
     ("CLI build compiles imported C# enum match exhaustiveness", CliBuildCompilesImportedCSharpEnumMatchExhaustiveness),
     ("CLI build compiles partial declaration API", CliBuildCompilesPartialDeclarationApi),
@@ -19800,6 +19801,108 @@ static void CliBuildCompilesEnumDeclarationApi()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated enum declaration API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesIntegralBitwiseExpressionApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "IntegralBitwiseApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.IntegralBitwise"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.IntegralBitwise
+
+            export fun literalFlags(): int =
+              1 | 2
+
+            export fun literalInvert(): int =
+              ~0
+
+            export fun mask(value: int): int =
+              value & 3
+
+            export fun toggle(value: int): int =
+              value ^ 1
+
+            export fun invert(value: int): int =
+              ~value
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/IntegralBitwiseApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static int literalFlags()", generatedSource);
+        AssertContains("return 1 | 2;", generatedSource);
+        AssertContains("public static int literalInvert()", generatedSource);
+        AssertContains("return ~0;", generatedSource);
+        AssertContains("return value & 3;", generatedSource);
+        AssertContains("return value ^ 1;", generatedSource);
+        AssertContains("return ~value;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "IntegralBitwiseApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with integral bitwise APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "IntegralBitwiseConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>IntegralBitwiseConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="IntegralBitwiseApi">
+                  <HintPath>../generated/bin/Debug/net48/IntegralBitwiseApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace IntegralBitwiseConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.IntegralBitwise.Module.literalFlags() == 3 &&
+                            Samples.IntegralBitwise.Module.literalInvert() == ~0 &&
+                            Samples.IntegralBitwise.Module.mask(7) == 3 &&
+                            Samples.IntegralBitwise.Module.toggle(3) == 2 &&
+                            Samples.IntegralBitwise.Module.invert(0) == ~0;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build IntegralBitwiseConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated integral bitwise APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

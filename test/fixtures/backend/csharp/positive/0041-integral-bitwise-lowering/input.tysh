@@ -1,0 +1,13 @@
+namespace Samples.IntegralBitwise
+
+export fun literalFlags(): int =
+  1 | 2
+
+export fun literalInvert(): int =
+  ~0
+
+export fun mask(value: int): int =
+  value & 3
+
+export fun toggle(value: int): int =
+  value ^ 1

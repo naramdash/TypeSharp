@@ -147,6 +147,16 @@ internal sealed class TypeSharpInferenceEngine
             return unaryNumericType;
         }
 
+        if (TryInferUnaryIntegralBitwiseExpression(children, expressions, inferNested, out var unaryBitwiseType))
+        {
+            return unaryBitwiseType;
+        }
+
+        if (TryInferBinaryIntegralBitwiseExpression(children, expressions, inferNested, out var binaryBitwiseType))
+        {
+            return binaryBitwiseType;
+        }
+
         foreach (var child in expressions)
         {
             inferNested(child);
@@ -235,6 +245,127 @@ internal sealed class TypeSharpInferenceEngine
             _ => false
         };
     }
+
+    private static bool TryInferUnaryIntegralBitwiseExpression(
+        IReadOnlyList<SyntaxNode> children,
+        IReadOnlyList<SyntaxNode> expressions,
+        Func<SyntaxNode, SimpleType> inferNested,
+        out SimpleType type)
+    {
+        type = SimpleType.Unknown;
+        if (expressions.Count != 1 ||
+            children.FirstOrDefault(child => child.IsToken)?.Kind != SyntaxKind.TildeToken)
+        {
+            return false;
+        }
+
+        var operandType = inferNested(expressions[0]);
+        type = TryGetUnaryIntegralBitwiseResultType(operandType, out var resultType)
+            ? resultType
+            : SimpleType.Unknown;
+        return true;
+    }
+
+    private static bool TryInferBinaryIntegralBitwiseExpression(
+        IReadOnlyList<SyntaxNode> children,
+        IReadOnlyList<SyntaxNode> expressions,
+        Func<SyntaxNode, SimpleType> inferNested,
+        out SimpleType type)
+    {
+        type = SimpleType.Unknown;
+        var operatorKind = children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+        if (expressions.Count != 2 ||
+            operatorKind is not (SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken))
+        {
+            return false;
+        }
+
+        var leftType = inferNested(expressions[0]);
+        var rightType = inferNested(expressions[1]);
+        type = TryGetBinaryIntegralBitwiseResultType(leftType, rightType, out var resultType)
+            ? resultType
+            : SimpleType.Unknown;
+        return true;
+    }
+
+    private static bool TryGetUnaryIntegralBitwiseResultType(SimpleType operandType, out SimpleType resultType)
+    {
+        resultType = SimpleType.Unknown;
+        if (!IsKnownNonNullableIntegralType(operandType))
+        {
+            return false;
+        }
+
+        return operandType.Name switch
+        {
+            "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
+            "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(operandType.Name), out resultType),
+            _ => false
+        };
+    }
+
+    private static bool TryGetBinaryIntegralBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+    {
+        resultType = SimpleType.Unknown;
+        if (!IsKnownNonNullableIntegralType(leftType) ||
+            !IsKnownNonNullableIntegralType(rightType) ||
+            !TryPromoteIntegralBinaryType(leftType.Name, rightType.Name, out var promotedType))
+        {
+            return false;
+        }
+
+        resultType = SimpleType.Named(promotedType);
+        return true;
+    }
+
+    private static bool IsKnownNonNullableIntegralType(SimpleType type) =>
+        type.IsKnown &&
+        !type.IsNull &&
+        !type.IsNullable &&
+        IsIntegralPrimitiveType(type.Name);
+
+    private static bool IsIntegralPrimitiveType(string typeName) =>
+        typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+    private static bool TryPromoteIntegralBinaryType(string left, string right, out string resultType)
+    {
+        resultType = string.Empty;
+        if (!IsIntegralPrimitiveType(left) || !IsIntegralPrimitiveType(right))
+        {
+            return false;
+        }
+
+        if (left is "ulong" || right is "ulong")
+        {
+            if (CanImplicitlyPromoteToUnsignedLong(left) && CanImplicitlyPromoteToUnsignedLong(right))
+            {
+                resultType = "ulong";
+                return true;
+            }
+
+            return false;
+        }
+
+        if (left is "long" || right is "long")
+        {
+            resultType = "long";
+            return true;
+        }
+
+        if (left is "uint" || right is "uint")
+        {
+            resultType = left is "sbyte" or "short" or "int" || right is "sbyte" or "short" or "int"
+                ? "long"
+                : "uint";
+            return true;
+        }
+
+        resultType = "int";
+        return true;
+    }
+
+    private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
+        type is "byte" or "ushort" or "uint" or "ulong";
 
     private static bool SetResult(SimpleType value, out SimpleType result)
     {

@@ -1,0 +1,13 @@
+namespace Samples.TypeChecker.IntegralBitwiseInvalid
+
+let stringOr = "a" | "b"
+
+let boolAnd = true & false
+
+let decimalXor = 1m ^ 2m
+
+let nullable: int? = 1
+
+let nullableComplement = ~nullable
+
+let stringComplement = ~"a"

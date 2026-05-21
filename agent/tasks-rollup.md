@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 17:03:40 +09:00
+End Time: 2026-05-21 17:18:35 +09:00
 
 ## Objective
 
@@ -2877,6 +2877,56 @@ Primary evidence:
 Remaining:
 
 - Integral numeric `|`/`&`/`^`/`~` expressions are active in task 0336. Shifts, compound assignment, boolean bitwise expressions, flag-aware match algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
+## Task 0336 Integral Numeric Bitwise Expression Slice
+
+Completed language/compiler work established:
+
+- Generalized the expression bitwise checker so same-enum value `|`/`&`/`^`/`~` behavior remains intact while known non-null primitive integral operands are accepted for `|`, `&`, `^`, and unary `~`.
+- Added C#-style integral promotion for supported bitwise expressions: small integral operands promote to `int`, `uint`/`long`/`ulong` combinations follow the bounded C# integral promotion rules, and nullable, boolean, decimal, string, and unsupported operands report deterministic `TS2201` diagnostics.
+- Preserved the narrow boundary: shifts, compound assignment, boolean bitwise expressions, flag-aware match algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, broad attribute target validation, numeric pattern algebra, and richer pattern algebra remain out of scope.
+- Reused existing C# unary/binary expression emission so accepted expressions lower to ordinary C# 7.3-compatible `|`, `&`, `^`, and `~`.
+- Added type-checker positive/negative fixtures, backend snapshot, generated `net48` CLI build and C# consumer smoke, fixture README coverage, canonical docs, work-ledger, tasks, and traceability coverage.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles integral bitwise expression API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [TypeSharpInferenceEngine.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpInferenceEngine.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- [TypeSharpBuilder.cs](../lang/TypeSharp.Compiler/Building/TypeSharpBuilder.cs)
+- `test/fixtures/diagnostics/type-checker/positive/integral-bitwise-expression`
+- `test/fixtures/diagnostics/type-checker/negative/integral-bitwise-invalid`
+- `test/fixtures/diagnostics/type-checker/negative/enum-value-bitwise-or-invalid`
+- `test/fixtures/diagnostics/type-checker/negative/enum-value-bitwise-and-invalid`
+- `test/fixtures/diagnostics/type-checker/negative/enum-value-bitwise-xor-complement-invalid`
+- `test/fixtures/backend/csharp/positive/0041-integral-bitwise-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Shifts, compound assignment, boolean bitwise expressions, flag-aware match algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
 ## Verification Summary
 

@@ -1,0 +1,18 @@
+namespace Samples.TypeChecker.IntegralBitwiseExpression
+
+let flags = 1 | 2
+
+let masked = flags & 3
+
+let toggled = flags ^ 1
+
+let inverted = ~flags
+
+fun unsignedMask(left: uint, right: ushort): uint =
+  left | right
+
+fun signedMask(left: uint, right: int): long =
+  left & right
+
+fun complementByte(value: byte): int =
+  ~value

@@ -1,1 +1,1 @@
-Verifies that expression-level enum value `^` and unary `~` only accept enum operands and reject numeric or mixed enum operands.
+Verifies that expression-level enum value `^` still rejects mixed enum operands and enum/numeric operands after numeric `^` and `~` expressions became supported.

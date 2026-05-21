@@ -712,9 +712,9 @@ public static class TypeSharpTypeChecker
                 return CheckSatisfiesExpression(node, scope);
             }
 
-            if (IsEnumValueBitwiseExpression(node))
+            if (IsBitwiseExpression(node))
             {
-                return CheckEnumValueBitwiseExpression(node, scope);
+                return CheckBitwiseExpression(node, scope);
             }
 
             if (_inference.TryInferExpression(node, scope, child => CheckExpression(child, scope), out var inferredType))
@@ -794,7 +794,7 @@ public static class TypeSharpTypeChecker
             return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
         }
 
-        private SimpleType CheckEnumValueBitwiseExpression(SyntaxNode node, TypeScope scope)
+        private SimpleType CheckBitwiseExpression(SyntaxNode node, TypeScope scope)
         {
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
             var operatorText = node.Children.FirstOrDefault(child =>
@@ -819,13 +819,22 @@ public static class TypeSharpTypeChecker
                     return SimpleType.Unknown;
                 }
 
-                if (operandType.IsNull || operandType.IsNullable || !scope.ResolveEnum(operandType.Name, out _))
+                if (IsKnownEnumType(scope, operandType))
                 {
-                    ReportMismatch(node, $"Enum value '~' operand must be an enum value, but found '{operandType}'.");
-                    return SimpleType.Unknown;
+                    return operandType;
                 }
 
-                return operandType;
+                if (TryGetUnaryIntegralBitwiseResultType(operandType, out var unaryIntegralResultType))
+                {
+                    return unaryIntegralResultType;
+                }
+
+                if (operandType.IsKnown)
+                {
+                    ReportMismatch(node, $"Bitwise operator '~' operand must be an integral numeric value or enum value, but found '{operandType}'.");
+                }
+
+                return SimpleType.Unknown;
             }
 
             if (expressions.Length != 2)
@@ -845,26 +854,128 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
-            var leftIsEnum = !leftType.IsNull && !leftType.IsNullable && scope.ResolveEnum(leftType.Name, out _);
-            var rightIsEnum = !rightType.IsNull && !rightType.IsNullable && scope.ResolveEnum(rightType.Name, out _);
-            if (!leftIsEnum || !rightIsEnum)
+            var leftIsEnum = IsKnownEnumType(scope, leftType);
+            var rightIsEnum = IsKnownEnumType(scope, rightType);
+            if (leftIsEnum || rightIsEnum)
             {
-                ReportMismatch(node, $"Enum value '{operatorText}' operands must be enum values of the same type, but found '{leftType}' and '{rightType}'.");
-                return SimpleType.Unknown;
+                if (!leftIsEnum || !rightIsEnum)
+                {
+                    ReportMismatch(node, $"Enum value '{operatorText}' operands must be enum values of the same type, but found '{leftType}' and '{rightType}'.");
+                    return SimpleType.Unknown;
+                }
+
+                if (!string.Equals(leftType.Name, rightType.Name, StringComparison.Ordinal))
+                {
+                    ReportMismatch(node, $"Enum value '{operatorText}' operands must have the same enum type, but found '{leftType}' and '{rightType}'.");
+                    return SimpleType.Unknown;
+                }
+
+                return leftType;
             }
 
-            if (!string.Equals(leftType.Name, rightType.Name, StringComparison.Ordinal))
+            if (TryGetBinaryIntegralBitwiseResultType(leftType, rightType, out var integralResultType))
             {
-                ReportMismatch(node, $"Enum value '{operatorText}' operands must have the same enum type, but found '{leftType}' and '{rightType}'.");
-                return SimpleType.Unknown;
+                return integralResultType;
             }
 
-            return leftType;
+            ReportMismatch(node, $"Bitwise operator '{operatorText}' operands must be integral numeric values of a supported primitive type, but found '{leftType}' and '{rightType}'.");
+            return SimpleType.Unknown;
         }
 
-        private static bool IsEnumValueBitwiseExpression(SyntaxNode node) =>
+        private static bool IsBitwiseExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&
             node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken or SyntaxKind.TildeToken);
+
+        private static bool IsKnownEnumType(TypeScope scope, SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            !type.IsNullable &&
+            scope.ResolveEnum(type.Name, out _);
+
+        private static bool TryGetUnaryIntegralBitwiseResultType(SimpleType operandType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullableIntegralType(operandType))
+            {
+                return false;
+            }
+
+            return operandType.Name switch
+            {
+                "byte" or "sbyte" or "short" or "ushort" => SetResult(SimpleType.Named("int"), out resultType),
+                "int" or "uint" or "long" or "ulong" => SetResult(SimpleType.Named(operandType.Name), out resultType),
+                _ => false
+            };
+        }
+
+        private static bool TryGetBinaryIntegralBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullableIntegralType(leftType) ||
+                !IsKnownNonNullableIntegralType(rightType) ||
+                !TryPromoteIntegralBinaryType(leftType.Name, rightType.Name, out var promotedType))
+            {
+                return false;
+            }
+
+            resultType = SimpleType.Named(promotedType);
+            return true;
+        }
+
+        private static bool IsKnownNonNullableIntegralType(SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            !type.IsNullable &&
+            IsIntegralPrimitiveType(type.Name);
+
+        private static bool IsIntegralPrimitiveType(string typeName) =>
+            typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+        private static bool TryPromoteIntegralBinaryType(string left, string right, out string resultType)
+        {
+            resultType = string.Empty;
+            if (!IsIntegralPrimitiveType(left) || !IsIntegralPrimitiveType(right))
+            {
+                return false;
+            }
+
+            if (left is "ulong" || right is "ulong")
+            {
+                if (CanImplicitlyPromoteToUnsignedLong(left) && CanImplicitlyPromoteToUnsignedLong(right))
+                {
+                    resultType = "ulong";
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (left is "long" || right is "long")
+            {
+                resultType = "long";
+                return true;
+            }
+
+            if (left is "uint" || right is "uint")
+            {
+                resultType = left is "sbyte" or "short" or "int" || right is "sbyte" or "short" or "int"
+                    ? "long"
+                    : "uint";
+                return true;
+            }
+
+            resultType = "int";
+            return true;
+        }
+
+        private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
+            type is "byte" or "ushort" or "uint" or "ulong";
+
+        private static bool SetResult(SimpleType value, out SimpleType result)
+        {
+            result = value;
+            return true;
+        }
 
         private static bool TryGetEnumMemberAccess(
             SyntaxNode receiver,

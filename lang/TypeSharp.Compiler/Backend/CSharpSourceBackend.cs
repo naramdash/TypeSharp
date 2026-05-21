@@ -3507,6 +3507,11 @@ public static class CSharpSourceBackend
                 return unaryNumericType;
             }
 
+            if (TryInferIntegralBitwiseExpressionType(node, out var bitwiseType))
+            {
+                return bitwiseType;
+            }
+
             if (node.Kind == SyntaxKind.BinaryExpression &&
                 node.Children.Any(child => child.IsToken && child.Kind is SyntaxKind.EqualsEqualsToken or SyntaxKind.BangEqualsToken or SyntaxKind.LessToken or SyntaxKind.LessOrEqualsToken or SyntaxKind.GreaterToken or SyntaxKind.GreaterOrEqualsToken))
             {
@@ -3607,6 +3612,87 @@ public static class CSharpSourceBackend
             };
             return resultType.Length > 0;
         }
+
+        private static bool TryInferIntegralBitwiseExpressionType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            var operatorKind = node.Children.FirstOrDefault(child => child.IsToken)?.Kind ?? SyntaxKind.UnknownToken;
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (node.Kind != SyntaxKind.BinaryExpression)
+            {
+                return false;
+            }
+
+            if (operatorKind == SyntaxKind.TildeToken && expressions.Length == 1)
+            {
+                return TryGetUnaryIntegralBitwiseResultType(InferExpressionType(expressions[0]), out type);
+            }
+
+            if (operatorKind is SyntaxKind.PipeToken or SyntaxKind.AmpersandToken or SyntaxKind.CaretToken &&
+                expressions.Length == 2)
+            {
+                return TryGetBinaryIntegralBitwiseResultType(
+                    InferExpressionType(expressions[0]),
+                    InferExpressionType(expressions[1]),
+                    out type);
+            }
+
+            return false;
+        }
+
+        private static bool TryGetUnaryIntegralBitwiseResultType(string operandType, out string resultType)
+        {
+            resultType = operandType switch
+            {
+                "byte" or "sbyte" or "short" or "ushort" => "int",
+                "int" or "uint" or "long" or "ulong" => operandType,
+                _ => string.Empty
+            };
+            return resultType.Length > 0;
+        }
+
+        private static bool TryGetBinaryIntegralBitwiseResultType(string left, string right, out string resultType)
+        {
+            resultType = string.Empty;
+            if (!IsIntegralPrimitiveType(left) || !IsIntegralPrimitiveType(right))
+            {
+                return false;
+            }
+
+            if (left is "ulong" || right is "ulong")
+            {
+                if (CanImplicitlyPromoteToUnsignedLong(left) && CanImplicitlyPromoteToUnsignedLong(right))
+                {
+                    resultType = "ulong";
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (left is "long" || right is "long")
+            {
+                resultType = "long";
+                return true;
+            }
+
+            if (left is "uint" || right is "uint")
+            {
+                resultType = left is "sbyte" or "short" or "int" || right is "sbyte" or "short" or "int"
+                    ? "long"
+                    : "uint";
+                return true;
+            }
+
+            resultType = "int";
+            return true;
+        }
+
+        private static bool IsIntegralPrimitiveType(string typeName) =>
+            typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+        private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
+            type is "byte" or "ushort" or "uint" or "ulong";
 
         private static string InferLiteralType(SyntaxNode? initializer)
         {

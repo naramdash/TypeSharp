@@ -1,0 +1,44 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Bitwise operator '|' operands must be integral numeric values of a supported primitive type, but found 'string' and 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 16 },
+      "end": { "line": 3, "column": 25 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Bitwise operator '&' operands must be integral numeric values of a supported primitive type, but found 'bool' and 'bool'.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 15 },
+      "end": { "line": 5, "column": 27 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Bitwise operator '^' operands must be integral numeric values of a supported primitive type, but found 'decimal' and 'decimal'.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 18 },
+      "end": { "line": 7, "column": 25 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Bitwise operator '~' operand must be an integral numeric value or enum value, but found 'int?'.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 26 },
+      "end": { "line": 11, "column": 35 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Bitwise operator '~' operand must be an integral numeric value or enum value, but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 24 },
+      "end": { "line": 13, "column": 28 }
+    }
+  ]
+}
