@@ -2233,6 +2233,49 @@ Remaining:
 
 - Explicit enum numeric range validation is active in task 0320. Flag semantics, enum member attributes, enum aliases, imported C# enum numeric/underlying metadata, and richer pattern algebra remain future work.
 
+## Task 0320 Explicit Enum Numeric Range Validation Slice
+
+Completed language/compiler work established:
+
+- Added TypeSharp-owned enum numeric initializer validation against the selected enum underlying type range.
+- Used `int` as the default range for enums without explicit underlying type declarations.
+- Reported deterministic `TS2201` diagnostics for explicit enum member values outside `byte`, `sbyte`, `short`, `ushort`, `int`, `uint`, `long`, or `ulong` ranges.
+- Reported deterministic `TS2201` diagnostics for non-integral numeric enum member tokens such as decimal or decimal-suffix literals.
+- Preserved existing enum name/member reasoning, same-enum member type checking, match exhaustiveness, and C# enum lowering shape.
+- Kept computed enum expressions, flags, aliases, enum member attributes, and imported C# enum numeric/underlying metadata out of scope.
+- Added negative type-checker fixture coverage for default `int` overflow, explicit `byte` range failures, and non-integral member values.
+- Updated canonical grammar, reference, type-system, lowering, diagnostics, feature-status, and work-ledger docs for the implemented boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "generated C# compiles in net48 project"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/negative/enum-numeric-range-invalid`
+- `test/fixtures/diagnostics/type-checker/positive/enum-declaration`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+
+Remaining:
+
+- Flag semantics, enum member attributes, enum aliases, imported C# enum numeric/underlying metadata, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

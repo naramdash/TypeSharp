@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| Task 0320 explicit enum numeric range validation | [0320-explicit-enum-numeric-range-validation-slice.md](0320-explicit-enum-numeric-range-validation-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, enum diagnostic fixtures, canonical enum docs, and task rollup updates. |
+| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
 
 ## Completed Evidence Index
 
@@ -48,6 +48,7 @@
 | Imported C# enum exhaustiveness | [tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice](tasks-rollup.md#task-0314-imported-csharp-enum-exhaustiveness-slice), `lang/TypeSharp.Compiler/Interop/TypeSharpMetadataReader.cs`, `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Explicit enum numeric values | [tasks-rollup.md#task-0316-explicit-enum-numeric-values-slice](tasks-rollup.md#task-0316-explicit-enum-numeric-values-slice), `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/fixtures/parser/positive/0035-enum-declaration`, `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Explicit enum underlying types | [tasks-rollup.md#task-0318-explicit-enum-underlying-types-slice](tasks-rollup.md#task-0318-explicit-enum-underlying-types-slice), `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`, `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`, `test/fixtures/parser/positive/0035-enum-declaration`, `test/fixtures/diagnostics/type-checker/negative/enum-underlying-type-invalid`, `test/fixtures/backend/csharp/positive/0039-enum-declaration-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Explicit enum numeric range validation | [tasks-rollup.md#task-0320-explicit-enum-numeric-range-validation-slice](tasks-rollup.md#task-0320-explicit-enum-numeric-range-validation-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/enum-numeric-range-invalid`, `test/fixtures/diagnostics/type-checker/positive/enum-declaration`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

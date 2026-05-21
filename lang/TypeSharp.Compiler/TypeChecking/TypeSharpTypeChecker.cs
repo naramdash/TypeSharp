@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Numerics;
 using TypeSharp.Compiler.Diagnostics;
 using TypeSharp.Compiler.Interop;
 using TypeSharp.Compiler.Parsing;
@@ -317,16 +319,57 @@ public static class TypeSharpTypeChecker
         private void CheckEnumDeclaration(SyntaxNode node)
         {
             var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
-            if (annotation is null || !TryGetType(annotation, out var underlyingType))
+            var underlyingTypeName = "int";
+            if (annotation is not null)
+            {
+                if (!TryGetType(annotation, out var underlyingType))
+                {
+                    return;
+                }
+
+                if (!IsValidEnumUnderlyingType(underlyingType.Name))
+                {
+                    ReportMismatch(
+                        annotation,
+                        $"Enum underlying type must be one of 'byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', or 'ulong', but found '{underlyingType}'.");
+                    return;
+                }
+
+                underlyingTypeName = underlyingType.Name;
+            }
+
+            CheckEnumMemberInitializers(node, underlyingTypeName);
+        }
+
+        private void CheckEnumMemberInitializers(SyntaxNode node, string underlyingTypeName)
+        {
+            if (!TryGetEnumUnderlyingRange(underlyingTypeName, out var minimum, out var maximum))
             {
                 return;
             }
 
-            if (!IsValidEnumUnderlyingType(underlyingType.Name))
+            foreach (var member in node.Children.Where(child => child.Kind == SyntaxKind.EnumMember))
             {
-                ReportMismatch(
-                    annotation,
-                    $"Enum underlying type must be one of 'byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', or 'ulong', but found '{underlyingType}'.");
+                var initializer = member.Children.FirstOrDefault(child => child.Kind == SyntaxKind.Initializer);
+                if (initializer is null || !TryGetEnumInitializerText(initializer, out var literalText))
+                {
+                    continue;
+                }
+
+                if (!BigInteger.TryParse(literalText, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value))
+                {
+                    ReportMismatch(
+                        initializer,
+                        $"Enum member value '{literalText}' must be an integer literal for underlying type '{underlyingTypeName}'.");
+                    continue;
+                }
+
+                if (value < minimum || value > maximum)
+                {
+                    ReportMismatch(
+                        initializer,
+                        $"Enum member value '{literalText}' is outside the range of underlying type '{underlyingTypeName}'.");
+                }
             }
         }
 
@@ -1147,6 +1190,57 @@ public static class TypeSharpTypeChecker
 
         private static bool IsValidEnumUnderlyingType(string typeName) =>
             typeName is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+        private static bool TryGetEnumUnderlyingRange(string typeName, out BigInteger minimum, out BigInteger maximum)
+        {
+            switch (typeName)
+            {
+                case "sbyte":
+                    minimum = sbyte.MinValue;
+                    maximum = sbyte.MaxValue;
+                    return true;
+                case "byte":
+                    minimum = byte.MinValue;
+                    maximum = byte.MaxValue;
+                    return true;
+                case "short":
+                    minimum = short.MinValue;
+                    maximum = short.MaxValue;
+                    return true;
+                case "ushort":
+                    minimum = ushort.MinValue;
+                    maximum = ushort.MaxValue;
+                    return true;
+                case "int":
+                    minimum = int.MinValue;
+                    maximum = int.MaxValue;
+                    return true;
+                case "uint":
+                    minimum = uint.MinValue;
+                    maximum = uint.MaxValue;
+                    return true;
+                case "long":
+                    minimum = long.MinValue;
+                    maximum = long.MaxValue;
+                    return true;
+                case "ulong":
+                    minimum = BigInteger.Zero;
+                    maximum = ulong.MaxValue;
+                    return true;
+                default:
+                    minimum = BigInteger.Zero;
+                    maximum = BigInteger.Zero;
+                    return false;
+            }
+        }
+
+        private static bool TryGetEnumInitializerText(SyntaxNode initializer, out string literalText)
+        {
+            var sign = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.PlusToken or SyntaxKind.MinusToken)?.Text ?? string.Empty;
+            var value = initializer.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.NumericLiteralToken)?.Text;
+            literalText = $"{sign}{value}";
+            return !string.IsNullOrEmpty(value);
+        }
 
         private SimpleType InferAwait(SyntaxNode node, TypeScope scope)
         {

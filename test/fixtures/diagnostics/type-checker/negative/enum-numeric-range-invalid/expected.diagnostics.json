@@ -1,0 +1,44 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member value '2147483648' is outside the range of underlying type 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 4, "column": 12 },
+      "end": { "line": 4, "column": 24 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member value '300' is outside the range of underlying type 'byte'.",
+      "file": "input.tysh",
+      "start": { "line": 8, "column": 12 },
+      "end": { "line": 8, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member value '-1' is outside the range of underlying type 'byte'.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 12 },
+      "end": { "line": 9, "column": 16 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member value '1.5' must be an integer literal for underlying type 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 12 },
+      "end": { "line": 13, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Enum member value '1m' must be an integer literal for underlying type 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 14, "column": 17 },
+      "end": { "line": 14, "column": 21 }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+namespace Samples.TypeChecker.EnumNumericRange
+
+enum DefaultRange {
+  TooLarge = 2147483648
+}
+
+enum ByteRange : byte {
+  TooLarge = 300,
+  Negative = -1
+}
+
+enum IntegralOnly {
+  Fraction = 1.5,
+  DecimalSuffix = 1m
+}
