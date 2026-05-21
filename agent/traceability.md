@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| No active task | [tasks.md](tasks.md) | Select the next task from user inbox, queue, checklist, or roadmap-refresh rule. |
+| Task 0324 imported enum numeric metadata | [0324-imported-enum-numeric-metadata-slice.md](0324-imported-enum-numeric-metadata-slice.md) | `MetadataAssemblySymbol.cs`, `TypeSharpMetadataReader.cs`, metadata reader tests, interop/type-system docs, and task rollup updates. |
 
 ## Completed Evidence Index
 

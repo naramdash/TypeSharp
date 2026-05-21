@@ -161,6 +161,8 @@ After explicit TypeSharp enum underlying types, the empty-queue refresh rechecke
 
 After explicit TypeSharp enum numeric range validation, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is explicit enum member aliases for TypeSharp-owned enums. This keeps aliasing separate from arbitrary computed enum expressions, flag algebra, enum member attributes, and imported enum underlying/numeric metadata.
 
+After explicit TypeSharp enum member aliases, the empty-queue refresh rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 and found no baseline change. The selected bounded implementation slice is imported C# enum numeric metadata capture. This keeps metadata capture separate from flag algebra, numeric pattern matching, enum member attributes, and arbitrary TypeSharp-owned computed enum expressions.
+
 ## MVP Language Features
 
 | Area | Status | Current TypeSharp Direction |
