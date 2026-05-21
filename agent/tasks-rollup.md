@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 23:50:38 +09:00
+End Time: 2026-05-22 00:21:49 +09:00
 
 ## Objective
 
@@ -4255,6 +4255,61 @@ Remaining:
 
 - Test suite runtime reduction planning/refactor is active in task 0368. The user-owned inbox item remains unchecked until the refactor is actually completed.
 
+## Task 0368 Test Suite Runtime Reduction Plan And Refactor
+
+Completed test-runtime work established:
+
+- Profiled the current custom `TypeSharp.Compiler.Tests` runner and found 212 `BuildLegacyReferenceDll(` call sites, mostly in C# interop checker and generated compile smokes.
+- Confirmed the measured bottleneck was repeated `dotnet build Legacy.Tools.csproj`/legacy `net48` reference assembly setup, not assertion framework dispatch.
+- Added a content-hash keyed cache for generated legacy reference assemblies under ignored `test/tmp/legacy-reference-cache`; each test still copies the cached DLL into its own workspace-local `lib` folder.
+- Added a named mutex around cache population so parallel test processes cannot race the same generated project output.
+- Added `--shard <zero-based-index>/<count>` runner selection and four shard projects that link the same runner with stable `index % 4` test slices.
+- Kept the original main runner as the full release-confidence path and documented the faster parallel shard path in `test/README.md`.
+- Evaluated NuGet test framework adoption: MSTest SDK/Microsoft Testing Platform and xUnit.net v3 are viable future migration paths, but this slice avoided adding a package before extracting the custom `(name, Action)` catalog into discoverable test cases because that would not address the measured repeated-build bottleneck.
+- Updated Project Policy with the shard-runner invariant: shared generated inputs need process-safe caches and each test keeps a unique `test/tmp` workspace.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection"
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- `test/TypeSharp.Compiler.Tests/TestShardDefaults.cs`
+- `test/TypeSharp.Compiler.Tests.Shard0`
+- `test/TypeSharp.Compiler.Tests.Shard1`
+- `test/TypeSharp.Compiler.Tests.Shard2`
+- `test/TypeSharp.Compiler.Tests.Shard3`
+- `test/README.md`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [MSTest SDK guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests)
+- [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview)
+- [xUnit.net v3 packages](https://xunit.net/docs/nuget-packages-v3)
+
+Measured result:
+
+- Main full runner: 517 PASS, about 209.0s.
+- Four parallel shard projects: 517 total PASS, about 68.0s wall-clock.
+
+Remaining:
+
+- Roadmap refresh after test-suite runtime reduction is active in task 0369. A future MSTest SDK/Microsoft Testing Platform or xUnit.net v3 migration remains possible after extracting the custom test catalog into discoverable test cases.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -4279,13 +4334,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0367 is compressed here.
+- Completed historical work through task 0368 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0368 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0369 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

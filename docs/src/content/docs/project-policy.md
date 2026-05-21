@@ -65,6 +65,7 @@ Parallel execution policy:
 - Diagnostics must still be appended in deterministic source order so CLI, LSP, fixture, and JSON output remain stable.
 - Cross-file module graph validation runs after all parse-clean source modules have been collected.
 - Generated C# project emission and external `dotnet build` orchestration remain ordered unless a task proves output paths, generated project files, and external process logs cannot conflict.
+- The main `TypeSharp.Compiler.Tests` runner remains the full release-confidence path. Shard projects may link the same runner and execute disjoint ordinal slices in parallel when shared generated inputs use process-safe caches and every test keeps a unique workspace under `test/tmp`.
 
 ## Dependency And Target Policy
 

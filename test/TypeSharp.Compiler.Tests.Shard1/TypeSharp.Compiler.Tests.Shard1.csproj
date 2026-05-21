@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>TypeSharp.Compiler.Tests.Shard1</AssemblyName>
+    <RootNamespace>TypeSharp.Compiler.Tests.Shard1</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\TypeSharp.Compiler.Tests\Program.cs" Link="Program.cs" />
+    <ProjectReference Include="..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
+    <ProjectReference Include="..\..\cli\TypeSharp.Cli\TypeSharp.Cli.csproj" />
+    <ProjectReference Include="..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
+    <Compile Include="..\..\lang\TypeSharp.Core\Option.cs" Link="TypeSharpCore\Option.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Core\Result.cs" Link="TypeSharpCore\Result.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Core\Unit.cs" Link="TypeSharpCore\Unit.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpRuntimeInfo.cs" Link="TypeSharpRuntime\TypeSharpRuntimeInfo.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpAsync.cs" Link="TypeSharpRuntime\TypeSharpAsync.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpEquality.cs" Link="TypeSharpRuntime\TypeSharpEquality.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpPattern.cs" Link="TypeSharpRuntime\TypeSharpPattern.cs" />
+    <Compile Include="..\..\lang\TypeSharp.Runtime\TypeSharpUnion.cs" Link="TypeSharpRuntime\TypeSharpUnion.cs" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Xml.Linq;
 using TypeSharp.Compiler;
 using TypeSharp.Cli;
@@ -23,6 +25,7 @@ using TypeSharp.Runtime;
 var tests = new (string Name, Action Body)[]
 {
     ("version defaults match the documented CLI contract", VersionDefaultsMatchCliContract),
+    ("test runner shard selection is stable", TestRunnerShardSelectionIsStable),
     ("diagnostic descriptor registry is stable", DiagnosticDescriptorRegistryIsStable),
     ("diagnostic text follows CLI text shape", DiagnosticTextUsesCliShape),
     ("CLI new creates console project", CliNewCreatesConsoleProject),
@@ -541,13 +544,14 @@ var tests = new (string Name, Action Body)[]
 };
 
 var failures = 0;
-var filter = args.Length == 0 ? null : args[0];
+var runnerSettings = TestRunnerSettings.Create(args);
 var executed = 0;
+var testOrdinal = 0;
 
 foreach (var (name, body) in tests)
 {
-    if (!string.IsNullOrWhiteSpace(filter) &&
-        !name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+    var currentOrdinal = testOrdinal++;
+    if (!runnerSettings.Includes(name, currentOrdinal))
     {
         continue;
     }
@@ -570,7 +574,7 @@ foreach (var (name, body) in tests)
 if (executed == 0)
 {
     failures++;
-    Console.Error.WriteLine($"No tests matched filter '{filter}'.");
+    Console.Error.WriteLine(runnerSettings.FormatNoTestsMessage());
     Console.Error.Flush();
 }
 
@@ -583,6 +587,32 @@ static void VersionDefaultsMatchCliContract()
     AssertEqual("preview", TypeSharpCompilerInfo.LanguageVersion);
     AssertEqual(0, TypeSharpCompilerInfo.RuntimeAbiVersion);
     AssertEqual("net48", TypeSharpCompilerInfo.DefaultTargetFramework);
+}
+
+static void TestRunnerShardSelectionIsStable()
+{
+    var defaults = TestRunnerSettings.Create([]);
+    AssertEqual(TestShardDefaults.ShardIndex, defaults.ShardIndex);
+    AssertEqual(TestShardDefaults.ShardCount, defaults.ShardCount);
+
+    var all = TestRunnerSettings.Create(["--shard", "0/1"]);
+    AssertTrue(all.Includes("alpha smoke", 0), "Unsharded runner should include first test.");
+    AssertTrue(all.Includes("beta smoke", 1), "Unsharded runner should include later tests.");
+
+    var filtered = TestRunnerSettings.Create(["--filter", "beta"]);
+    AssertFalse(filtered.Includes("alpha smoke", 0), "Filter should exclude non-matching tests.");
+    AssertTrue(filtered.Includes("beta smoke", 1), "Filter should include matching tests.");
+
+    var shard = TestRunnerSettings.Create(["--shard", "2/4"]);
+    AssertFalse(shard.Includes("alpha smoke", 1), "Shard should exclude other ordinal buckets.");
+    AssertTrue(shard.Includes("alpha smoke", 2), "Shard should include its ordinal bucket.");
+    AssertTrue(shard.Includes("alpha smoke", 6), "Shard should include later tests in the same bucket.");
+
+    var combined = TestRunnerSettings.Create(["--filter=alpha", "--shard=1/4"]);
+    AssertFalse(combined.Includes("beta smoke", 1), "Combined filter should still exclude name mismatches.");
+    AssertTrue(combined.Includes("alpha smoke", 5), "Combined filter and shard should include matching bucket tests.");
+
+    AssertThrows<InvalidOperationException>(() => TestRunnerSettings.Create(["--shard", "4/4"]));
 }
 
 static void DiagnosticDescriptorRegistryIsStable()
@@ -23171,9 +23201,7 @@ static void WriteLspFrame(Stream stream, string json)
 
 static void BuildLegacyReferenceDll(string root, string assemblyName)
 {
-    var projectRoot = Path.Combine(root, "legacy-src");
-    Directory.CreateDirectory(projectRoot);
-    WriteFile(projectRoot, $"{assemblyName}.csproj", $$"""
+    var projectFile = $$"""
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
             <TargetFramework>net48</TargetFramework>
@@ -23183,16 +23211,16 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
             <AssemblyName>{{assemblyName}}</AssemblyName>
           </PropertyGroup>
         </Project>
-        """);
-    WriteFile(projectRoot, "NuGet.config", """
+        """;
+    var nugetConfig = """
         <?xml version="1.0" encoding="utf-8"?>
         <configuration>
           <packageSources>
             <clear />
           </packageSources>
         </configuration>
-        """);
-    WriteFile(projectRoot, "LegacyApi.cs", """
+        """;
+    var source = """
         using System.Runtime.CompilerServices;
 
         namespace Legacy.Tools
@@ -24125,18 +24153,60 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 }
             }
         }
-        """);
+        """;
 
-    var build = RunProcess("dotnet", $"build {assemblyName}.csproj --nologo --verbosity quiet --ignore-failed-sources", projectRoot);
-    AssertTrue(
-        build.ExitCode == 0,
-        $"Legacy reference assembly should compile.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
-
+    // Keep each test's local lib reference while avoiding hundreds of identical net48 builds.
+    var cacheKey = GetLegacyReferenceCacheKey(assemblyName, projectFile, nugetConfig, source);
+    var projectRoot = GetLegacyReferenceProjectRoot(cacheKey);
     var builtDll = Path.Combine(projectRoot, "bin", "Debug", "net48", $"{assemblyName}.dll");
+
+    using var buildLock = new Mutex(initiallyOwned: false, $"TypeSharp.Compiler.Tests.LegacyReference.{cacheKey}");
+    var ownsLock = false;
+    try
+    {
+        ownsLock = buildLock.WaitOne(TimeSpan.FromMinutes(2));
+        AssertTrue(ownsLock, $"Timed out waiting for legacy reference assembly cache '{cacheKey}'.");
+
+        if (!File.Exists(builtDll))
+        {
+            Directory.CreateDirectory(projectRoot);
+            WriteFile(projectRoot, $"{assemblyName}.csproj", projectFile);
+            WriteFile(projectRoot, "NuGet.config", nugetConfig);
+            WriteFile(projectRoot, "LegacyApi.cs", source);
+
+            var build = RunProcess("dotnet", $"build {assemblyName}.csproj --nologo --verbosity quiet --ignore-failed-sources", projectRoot);
+            AssertTrue(
+                build.ExitCode == 0,
+                $"Legacy reference assembly should compile.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+        }
+    }
+    finally
+    {
+        if (ownsLock)
+        {
+            buildLock.ReleaseMutex();
+        }
+    }
+
     var targetDll = Path.Combine(root, "lib", $"{assemblyName}.dll");
     Directory.CreateDirectory(Path.GetDirectoryName(targetDll) ?? root);
     File.Copy(builtDll, targetDll, overwrite: true);
 }
+
+static string GetLegacyReferenceCacheKey(string assemblyName, string projectFile, string nugetConfig, string source)
+{
+    var hashInput = string.Join(
+        "\n",
+        assemblyName,
+        projectFile.Replace("\r\n", "\n", StringComparison.Ordinal),
+        nugetConfig.Replace("\r\n", "\n", StringComparison.Ordinal),
+        source.Replace("\r\n", "\n", StringComparison.Ordinal));
+    var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(hashInput))).ToLowerInvariant();
+    return $"{assemblyName}-{hash}";
+}
+
+static string GetLegacyReferenceProjectRoot(string cacheKey) =>
+    Path.Combine(Directory.GetCurrentDirectory(), "test", "tmp", "legacy-reference-cache", cacheKey);
 
 static string BuildRepositoryAssembly(string projectRelativePath, string assemblyRelativePath)
 {
@@ -24283,6 +24353,113 @@ static ProcessResult RunProcess(string fileName, string arguments, string workin
     }
 
     return new ProcessResult(process.ExitCode, standardOutput, standardError);
+}
+
+internal sealed class TestRunnerSettings
+{
+    private TestRunnerSettings(string? filter, int shardIndex, int shardCount)
+    {
+        Filter = filter;
+        ShardIndex = shardIndex;
+        ShardCount = shardCount;
+    }
+
+    public string? Filter { get; }
+
+    public int ShardIndex { get; }
+
+    public int ShardCount { get; }
+
+    public static TestRunnerSettings Create(string[] args)
+    {
+        string? filter = null;
+        var shardIndex = TestShardDefaults.ShardIndex;
+        var shardCount = TestShardDefaults.ShardCount;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (string.Equals(arg, "--filter", StringComparison.OrdinalIgnoreCase))
+            {
+                index++;
+                if (index >= args.Length)
+                {
+                    throw new InvalidOperationException("Missing value after --filter.");
+                }
+
+                filter ??= args[index];
+                continue;
+            }
+
+            if (arg.StartsWith("--filter=", StringComparison.OrdinalIgnoreCase))
+            {
+                filter ??= arg.Substring("--filter=".Length);
+                continue;
+            }
+
+            if (string.Equals(arg, "--shard", StringComparison.OrdinalIgnoreCase))
+            {
+                index++;
+                if (index >= args.Length)
+                {
+                    throw new InvalidOperationException("Missing value after --shard.");
+                }
+
+                (shardIndex, shardCount) = ParseShard(args[index]);
+                continue;
+            }
+
+            if (arg.StartsWith("--shard=", StringComparison.OrdinalIgnoreCase))
+            {
+                (shardIndex, shardCount) = ParseShard(arg.Substring("--shard=".Length));
+                continue;
+            }
+
+            filter ??= arg;
+        }
+
+        if (shardCount <= 0)
+        {
+            throw new InvalidOperationException("Shard count must be greater than zero.");
+        }
+
+        if (shardIndex < 0 || shardIndex >= shardCount)
+        {
+            throw new InvalidOperationException("Shard index must be zero-based and less than shard count.");
+        }
+
+        return new TestRunnerSettings(filter, shardIndex, shardCount);
+    }
+
+    public bool Includes(string name, int ordinal)
+    {
+        if (!string.IsNullOrWhiteSpace(Filter) &&
+            !name.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return ordinal % ShardCount == ShardIndex;
+    }
+
+    public string FormatNoTestsMessage()
+    {
+        var filterText = string.IsNullOrWhiteSpace(Filter) ? "<none>" : Filter;
+        return $"No tests matched filter '{filterText}' in shard {ShardIndex}/{ShardCount}.";
+    }
+
+    private static (int ShardIndex, int ShardCount) ParseShard(string value)
+    {
+        var parts = value.Split('/');
+        if (parts.Length != 2 ||
+            !int.TryParse(parts[0], out var shardIndex) ||
+            !int.TryParse(parts[1], out var shardCount))
+        {
+            throw new InvalidOperationException("Shard value must use '<zero-based-index>/<count>' format.");
+        }
+
+        return (shardIndex, shardCount);
+    }
 }
 
 internal abstract class RuntimeUnionSmoke

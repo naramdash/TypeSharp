@@ -11,11 +11,11 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 
 | Item | State |
 | --- | --- |
-| Active task packet | `agent/0368-test-suite-runtime-reduction.md` |
-| Next top-priority task | Task 0368 test suite runtime reduction plan and refactor. |
+| Active task packet | `agent/0369-roadmap-refresh-after-test-suite-runtime-reduction.md` |
+| Next top-priority task | Task 0369 roadmap refresh after test suite runtime reduction. |
 | Task queue owner | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
-| Current tooling slice | Task 0368 is planning and refactoring `test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj` runtime while preserving the suite's project-purpose regression evidence. |
-| Completed work covered | 0001-0367 |
+| Current tooling slice | Task 0369 is rechecking official source signals after the test-suite runtime reduction and selecting the next bounded implementation slice. |
+| Completed work covered | 0001-0368 |
 | Canonical task index | [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md) |
 | Compressed work ledger | [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md) |
 
@@ -31,7 +31,7 @@ Codex CLI goal and other long-running agents should still read the temporary ope
 | Repository layout | Task 0270 split the monorepo into explicit top-level ownership folders: `cli/` for the CLI host, `lang/` for compiler/LSP/runtime/core projects, `test/` for the regression suite and fixtures, `docs/` for the public Starlight site, `agent/` for temporary operational records, `examples/` for runnable artifacts, and `vscode/` for editor integration. Each top-level ownership folder now has a README contract and a layout regression test. |
 | Agentic bootstrap | Post-0257 bootstrap docs now direct agents to docs canonical standard ledger pages, keep `agent/` as the temporary work surface, require task-end commit/push handoff in `agent.md`, keep the public docs source under `docs/`, keep `User Task Inbox` user-editable at any time, limit the visible `Agent Task Queue` to the latest five rows, and require roadmap-refresh planning when the queue/checklist would otherwise appear empty. |
 | Source modules and safety gates | Capability diagnostics, `unknown` narrowing, root namespace fallback, ambient signatures, `open`, import aliases, source module path identity, relative source graph/lowering, multi-source containers, export parsing, local export-list public surface, local/relative named function import/export/re-export alias forwarding, local literal export alias forwarding, local top-level value export alias lowering, explicitly annotated and conservatively inferred lambda-valued top-level `let` export and alias lowering with block and collection return bodies, relative top-level value import/re-export alias lowering, local/relative type import/export alias lowering including regular named exported type aliases, relative named module import alias lowering, relative named module re-export alias remapping, relative type-only re-export remapping, relative star re-exports over the currently lowerable function/value/type surface, current-project manifest-owned source alias parsing/validation/resolution for imports and function/value/type/module/star re-export barrels, direct TypeSharp project-reference manifest loading, graph diagnostics, direct source imports, referenced-project build ordering, generated assembly consumption, missing project export diagnostics, hidden transitive source import rejection, and project-reference re-export backlog boundaries. |
-| Regression quality | Task 0256 audited parser/backend/diagnostic fixtures, CLI/run/example smokes, metadata/C# interop, runtime/core, VS Code mocked/live/host tests, docs build smoke, and generated residue handling; it hardened fixture README coverage, diagnostic polarity, runnable CLI stderr checks, and Extension Host exit semantics. |
+| Regression quality | Task 0256 audited parser/backend/diagnostic fixtures, CLI/run/example smokes, metadata/C# interop, runtime/core, VS Code mocked/live/host tests, docs build smoke, and generated residue handling; it hardened fixture README coverage, diagnostic polarity, runnable CLI stderr checks, and Extension Host exit semantics. Task 0368 kept the main full runner as the release-confidence gate while adding process-safe cached legacy reference assemblies and four parallel shard projects that ran the full 517-test catalog in about 68 seconds. |
 | Parallel execution | Task 0259 parallelized source-file parse and per-file semantic validation for compiler `check` and `build`, while preserving deterministic source-order diagnostics and documenting safe parallel work rules. |
 
 ## Remaining Known Future Areas

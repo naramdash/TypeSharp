@@ -15,9 +15,9 @@
 
 | Field              | Value                                                                                                                    |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Active task packet | [0368-test-suite-runtime-reduction.md](0368-test-suite-runtime-reduction.md)                                             |
-| Active summary     | 0368 Test suite runtime reduction plan and refactor                                                                      |
-| Completed range    | 0001-0367                                                                                                                |
+| Active task packet | [0369-roadmap-refresh-after-test-suite-runtime-reduction.md](0369-roadmap-refresh-after-test-suite-runtime-reduction.md) |
+| Active summary     | 0369 Roadmap refresh after test suite runtime reduction                                                                  |
+| Completed range    | 0001-0368                                                                                                                |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md)                                                                                       |
 
 ## User Task Inbox
@@ -32,7 +32,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 <!-- user tasks below -->
 
-- [ ] test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj 테스트 시간을 축소하기 위한 계획을 세우고 이 프로젝트의 목적에 부합하는지 따져서 구체화하기. 구체화한 계획에 따라 test 구성을 리팩토링할 것.
+- [x] test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj 테스트 시간을 축소하기 위한 계획을 세우고 이 프로젝트의 목적에 부합하는지 따져서 구체화하기. 구체화한 계획에 따라 test 구성을 리팩토링할 것.
 
 ## Agent Task Queue
 
@@ -40,11 +40,11 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                           | Task                                                            | Packet                                                                                                                                                                       | Notes                                                                                                                                                                                   |
 | -------- | ----------- | -------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q4       | In Progress | User Task Inbox                  | 0368 Test suite runtime reduction plan and refactor             | [0368-test-suite-runtime-reduction.md](0368-test-suite-runtime-reduction.md)                                                                                                 | Plan and refactor `test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj` runtime while preserving the suite's project-purpose regression evidence.                             |
+| Q1       | In Progress | Empty queue roadmap-refresh rule | 0369 Roadmap refresh after test suite runtime reduction         | [0369-roadmap-refresh-after-test-suite-runtime-reduction.md](0369-roadmap-refresh-after-test-suite-runtime-reduction.md)                                                     | Recheck official source signals after the test-suite runtime reduction and select the next bounded implementation slice.                                                                |
+| Q4       | Done        | User Task Inbox                  | 0368 Test suite runtime reduction plan and refactor             | [tasks-rollup.md#task-0368-test-suite-runtime-reduction-plan-and-refactor](tasks-rollup.md#task-0368-test-suite-runtime-reduction-plan-and-refactor)                         | Added process-safe legacy reference assembly caching plus four parallel shard projects; full runner remains available and parallel shard path ran 517 PASS in about 68 seconds.          |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0367 Roadmap refresh after params parameter declaration         | [tasks-rollup.md#task-0367-roadmap-refresh-after-params-parameter-declaration](tasks-rollup.md#task-0367-roadmap-refresh-after-params-parameter-declaration)                 | Rechecked official source signals after TypeSharp-owned `params` declarations, confirmed no baseline change, and promoted the pending user test-suite runtime task.                    |
 | Q2       | Done        | Task 0365 roadmap refresh        | 0366 Params parameter declaration slice                         | [tasks-rollup.md#task-0366-params-parameter-declaration-slice](tasks-rollup.md#task-0366-params-parameter-declaration-slice)                                                 | Implemented final-array `params` declarations for TypeSharp-declared functions, direct exact/expanded calls, pipeline validation, generic tail inference, and C# `params T[]` lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference   | [tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference](tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference)     | Rechecked official source signals after private direct composition value inference, confirmed the baseline, and selected bounded TypeSharp-owned `params` parameter declarations.       |
-| Q2       | Done        | Task 0363 roadmap refresh        | 0364 Direct composition value inference slice                   | [tasks-rollup.md#task-0364-direct-composition-value-inference-slice](tasks-rollup.md#task-0364-direct-composition-value-inference-slice)                                     | Inferred concrete delegates for unannotated non-exported direct named-function composition values with fully known signatures, while keeping public ABI inference closed.               |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 
