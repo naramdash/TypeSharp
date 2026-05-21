@@ -1,8 +1,14 @@
 namespace Samples.DirectGenericFunctionCallLowering
 
+import { List } from "System.Collections.Generic"
+
 fun identity<T>(value: T): T = value
 
 fun choose<T>(left: T, right: T): T = left
+
+fun keepArray<T>(items: T[]): T[] = items
+
+fun keepList<T>(items: List<T>): List<T> = items
 
 fun asText(value: string): string = value
 
@@ -10,5 +16,11 @@ export fun main(): string {
   let text: string = identity("a")
   let typed: string = identity<string>(text)
   let chosen: string = choose(text, typed)
+  let numbers: int[] = [1, 2]
+  let copiedNumbers: int[] = keepArray(numbers)
+  let explicitNumbers: int[] = keepArray<int>(copiedNumbers)
+  let names: List<string> = ["a", "b"]
+  let copiedNames: List<string> = keepList(names)
+  let explicitNames: List<string> = keepList<string>(copiedNames)
   asText(chosen)
 }

@@ -1,10 +1,20 @@
 namespace Samples.TypeChecker.DirectGenericFunctionCallInference
 
+import { List } from "System.Collections.Generic"
+
 fun identity<T>(value: T): T = value
 
 fun choose<T>(left: T, right: T): T = left
 
 fun swap<T, U>(left: T, right: U): U = right
+
+fun keepArray<T>(items: T[]): T[] = items
+
+fun chooseArray<T>(left: T[], right: T[]): T[] = left
+
+fun keepList<T>(items: List<T>): List<T> = items
+
+fun chooseList<T>(left: List<T>, right: List<T>): List<T> = left
 
 let explicitMismatch = identity<string>(1)
 let explicitArityTooMany = identity<string, int>("a")
@@ -12,3 +22,13 @@ let explicitArityTooFew = swap<string>("a", 1)
 let repeatedMismatch = choose(1, "a")
 let returnMismatch: string = identity(1)
 let explicitReturnMismatch: int = swap<string, bool>("a", true)
+let intArray: int[] = [1, 2]
+let textArray: string[] = ["a"]
+let arrayRepeatedMismatch = chooseArray(intArray, textArray)
+let arrayExplicitMismatch = keepArray<string>(intArray)
+let arrayReturnMismatch: string[] = keepArray(intArray)
+let intList: List<int> = [1, 2]
+let textList: List<string> = ["a"]
+let listRepeatedMismatch = chooseList(intList, textList)
+let listExplicitMismatch = keepList<int>(textList)
+let listReturnMismatch: List<string> = keepList(intList)

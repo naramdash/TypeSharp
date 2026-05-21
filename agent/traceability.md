@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| 0356 Constructed generic function call inference slice | [0356-constructed-generic-function-call-inference-slice.md](0356-constructed-generic-function-call-inference-slice.md) | `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, constructed generic type-checker fixtures, backend lowering fixture, `test/TypeSharp.Compiler.Tests/Program.cs`, docs canonical pages. |
+| None | [tasks.md](tasks.md) | No active task. |
 
 ## Completed Evidence Index
 
@@ -64,6 +64,7 @@
 | Pipeline target arity and argument diagnostics | [tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/pipeline-target-arity-and-argument`, `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Direct function call arity and argument diagnostics | [tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0352-direct-function-call-arity-and-argument-diagnostics-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/negative/direct-function-call-arity-and-argument`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | Direct generic function call inference | [tasks-rollup.md#task-0354-direct-generic-function-call-inference-slice](tasks-rollup.md#task-0354-direct-generic-function-call-inference-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/positive/direct-generic-function-call-inference`, `test/fixtures/diagnostics/type-checker/negative/direct-generic-function-call-inference`, `test/fixtures/backend/csharp/positive/0044-direct-generic-function-call-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Constructed generic function call inference | [tasks-rollup.md#task-0356-constructed-generic-function-call-inference-slice](tasks-rollup.md#task-0356-constructed-generic-function-call-inference-slice), `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`, `test/fixtures/diagnostics/type-checker/positive/direct-generic-function-call-inference`, `test/fixtures/diagnostics/type-checker/negative/direct-generic-function-call-inference`, `test/fixtures/backend/csharp/positive/0044-direct-generic-function-call-lowering`, `test/TypeSharp.Compiler.Tests/Program.cs` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

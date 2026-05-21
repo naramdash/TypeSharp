@@ -1230,8 +1230,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 var parameterType = parameterTypes[index];
-                if (TryGetSimpleGenericParameterName(parameterType, typeParameterNames, out var typeParameterName) &&
-                    inconsistentTypeParameters.Contains(typeParameterName))
+                if (GenericTypeReferencesAny(parameterType, inconsistentTypeParameters, typeParameterNames))
                 {
                     continue;
                 }
@@ -1262,25 +1261,24 @@ public static class TypeSharpTypeChecker
             var limit = Math.Min(arguments.Count, parameterTypes.Count);
             for (var index = 0; index < limit; index++)
             {
-                if (!TryGetSimpleGenericParameterName(parameterTypes[index], typeParameterNames, out var typeParameterName))
-                {
-                    continue;
-                }
-
-                var argumentType = argumentTypes[index];
-                if (!argumentType.IsKnown || argumentType.IsNull)
+                if (!TryInferDirectGenericArgument(
+                    parameterTypes[index],
+                    argumentTypes[index],
+                    typeParameterNames,
+                    out var typeParameterName,
+                    out var inferredArgumentType))
                 {
                     continue;
                 }
 
                 if (!substitutions.TryGetValue(typeParameterName, out var inferredType))
                 {
-                    substitutions[typeParameterName] = argumentType;
+                    substitutions[typeParameterName] = inferredArgumentType;
                     inferredFromArgument[typeParameterName] = index;
                     continue;
                 }
 
-                if (SameSimpleType(inferredType, argumentType))
+                if (SameSimpleType(inferredType, inferredArgumentType))
                 {
                     continue;
                 }
@@ -1291,7 +1289,7 @@ public static class TypeSharpTypeChecker
                     : 1;
                 ReportMismatch(
                     node,
-                    $"Function '{functionName}' cannot infer generic type parameter '{typeParameterName}' consistently: argument {previousIndex} inferred '{inferredType}', but argument {index + 1} inferred '{argumentType}'.");
+                    $"Function '{functionName}' cannot infer generic type parameter '{typeParameterName}' consistently: argument {previousIndex} inferred '{inferredType}', but argument {index + 1} inferred '{inferredArgumentType}'.");
             }
 
             return inconsistentTypeParameters;
@@ -3879,23 +3877,158 @@ public static class TypeSharpTypeChecker
             return type.IsKnown && !type.IsNull && typeParameterNames.Contains(type.Name);
         }
 
+        private static bool TryInferDirectGenericArgument(
+            SimpleType parameterType,
+            SimpleType argumentType,
+            IReadOnlySet<string> typeParameterNames,
+            out string typeParameterName,
+            out SimpleType inferredType)
+        {
+            typeParameterName = string.Empty;
+            inferredType = SimpleType.Unknown;
+            if (!parameterType.IsKnown || parameterType.IsNull || !argumentType.IsKnown || argumentType.IsNull)
+            {
+                return false;
+            }
+
+            if (TryGetSimpleGenericParameterName(parameterType, typeParameterNames, out typeParameterName))
+            {
+                inferredType = argumentType;
+                return true;
+            }
+
+            if (TryGetArrayElementTypeName(parameterType, out var parameterElementTypeName) &&
+                TryGetArrayElementTypeName(argumentType, out var argumentElementTypeName))
+            {
+                return TryInferDirectGenericArgument(
+                    SimpleType.Named(parameterElementTypeName),
+                    SimpleType.Named(argumentElementTypeName),
+                    typeParameterNames,
+                    out typeParameterName,
+                    out inferredType);
+            }
+
+            if (TryGetSingleGenericArgument(parameterType.Name, out var parameterGenericName, out var parameterArgument) &&
+                TryGetSingleGenericArgument(argumentType.Name, out var argumentGenericName, out var argumentArgument) &&
+                MetadataTypeNameMatches(argumentGenericName, parameterGenericName))
+            {
+                return TryInferDirectGenericArgument(
+                    GetTypeFromGenericArgument(parameterArgument),
+                    GetTypeFromGenericArgument(argumentArgument),
+                    typeParameterNames,
+                    out typeParameterName,
+                    out inferredType);
+            }
+
+            return false;
+        }
+
+        private static bool GenericTypeReferencesAny(
+            SimpleType type,
+            IReadOnlySet<string> candidates,
+            IReadOnlySet<string> typeParameterNames)
+        {
+            foreach (var candidate in candidates)
+            {
+                if (GenericTypeReferencesParameter(type, candidate, typeParameterNames))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool GenericTypeReferencesParameter(
+            SimpleType type,
+            string candidate,
+            IReadOnlySet<string> typeParameterNames)
+        {
+            if (!type.IsKnown || type.IsNull)
+            {
+                return false;
+            }
+
+            if (TryGetSimpleGenericParameterName(type, typeParameterNames, out var typeParameterName))
+            {
+                return string.Equals(typeParameterName, candidate, StringComparison.Ordinal);
+            }
+
+            if (TryGetArrayElementTypeName(type, out var elementTypeName))
+            {
+                return GenericTypeReferencesParameter(SimpleType.Named(elementTypeName), candidate, typeParameterNames);
+            }
+
+            return TryGetSingleGenericArgument(type.Name, out _, out var argument) &&
+                GenericTypeReferencesParameter(GetTypeFromGenericArgument(argument), candidate, typeParameterNames);
+        }
+
         private static SimpleType SubstituteGenericType(
             SimpleType type,
             IReadOnlyDictionary<string, SimpleType> substitutions,
             IReadOnlySet<string> typeParameterNames,
             bool unresolvedTypeParameterIsUnknown)
         {
-            if (!TryGetSimpleGenericParameterName(type, typeParameterNames, out var typeParameterName))
+            if (!type.IsKnown || type.IsNull)
             {
                 return type;
             }
 
-            if (!substitutions.TryGetValue(typeParameterName, out var substitutedType))
+            if (TryGetSimpleGenericParameterName(type, typeParameterNames, out var typeParameterName))
             {
-                return unresolvedTypeParameterIsUnknown ? SimpleType.Unknown : type;
+                if (!substitutions.TryGetValue(typeParameterName, out var substitutedType))
+                {
+                    return unresolvedTypeParameterIsUnknown ? SimpleType.Unknown : type;
+                }
+
+                return type.IsNullable ? substitutedType.AsNullable() : substitutedType;
             }
 
-            return type.IsNullable ? substitutedType.AsNullable() : substitutedType;
+            if (TryGetArrayElementTypeName(type, out var elementTypeName))
+            {
+                var substitutedElementType = SubstituteGenericType(
+                    SimpleType.Named(elementTypeName),
+                    substitutions,
+                    typeParameterNames,
+                    unresolvedTypeParameterIsUnknown);
+                if (!substitutedElementType.IsKnown)
+                {
+                    return SimpleType.Unknown;
+                }
+
+                var substitutedArrayType = SimpleType.Named($"{substitutedElementType.Name}[]");
+                return type.IsNullable ? substitutedArrayType.AsNullable() : substitutedArrayType;
+            }
+
+            if (TryGetSingleGenericArgument(type.Name, out var genericName, out var argument))
+            {
+                var substitutedArgument = SubstituteGenericType(
+                    GetTypeFromGenericArgument(argument),
+                    substitutions,
+                    typeParameterNames,
+                    unresolvedTypeParameterIsUnknown);
+                if (!substitutedArgument.IsKnown)
+                {
+                    return SimpleType.Unknown;
+                }
+
+                var substitutedGenericType = SimpleType.Named($"{genericName}<{substitutedArgument}>");
+                return type.IsNullable ? substitutedGenericType.AsNullable() : substitutedGenericType;
+            }
+
+            return type;
+        }
+
+        private static bool TryGetArrayElementTypeName(SimpleType type, out string elementTypeName)
+        {
+            elementTypeName = string.Empty;
+            if (!type.IsKnown || type.IsNull || !type.Name.EndsWith("[]", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            elementTypeName = type.Name[..^2];
+            return elementTypeName.Length > 0;
         }
 
         private static bool SameSimpleType(SimpleType left, SimpleType right) =>

@@ -1,10 +1,18 @@
 namespace Samples.TypeChecker.DirectGenericFunctionCallInference
 
+import { List } from "System.Collections.Generic"
+
 fun identity<T>(value: T): T = value
 
 fun choose<T>(left: T, right: T): T = left
 
 fun pairLeft<T, U>(left: T, right: U): T = left
+
+fun keepArray<T>(items: T[]): T[] = items
+
+fun chooseArray<T>(left: T[], right: T[]): T[] = left
+
+fun keepList<T>(items: List<T>): List<T> = items
 
 fun asText(value: string): string = value
 
@@ -14,3 +22,11 @@ let explicitString: string = identity<string>("a")
 let repeated: int = choose(1, 2)
 let mixed: string = pairLeft("a", 1)
 let nested: string = asText(identity("a"))
+let sourceNumbers: int[] = [1, 2]
+let copiedNumbers: int[] = keepArray(sourceNumbers)
+let literalNumbers: int[] = keepArray([1, 2])
+let explicitNumbers: int[] = keepArray<int>(sourceNumbers)
+let chosenNumbers: int[] = chooseArray(sourceNumbers, copiedNumbers)
+let sourceNames: List<string> = ["a", "b"]
+let copiedNames: List<string> = keepList(sourceNames)
+let explicitNames: List<string> = keepList<string>(sourceNames)

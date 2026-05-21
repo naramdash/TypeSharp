@@ -19460,11 +19460,23 @@ static void CliBuildCompilesGenericFunctionApi()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.GenericApi
 
+            import { List } from "System.Collections.Generic"
+
             export fun identity<T>(value: T): T = value
+
+            export fun keepArray<T>(items: T[]): T[] = items
+
+            export fun keepList<T>(items: List<T>): List<T> = items
 
             export fun echo(): string {
               let text: string = identity("value")
               let typed: string = identity<string>(text)
+              let numbers: int[] = [1, 2]
+              let copiedNumbers: int[] = keepArray(numbers)
+              let explicitNumbers: int[] = keepArray<int>(copiedNumbers)
+              let names: List<string> = ["a", "b"]
+              let copiedNames: List<string> = keepList(names)
+              let explicitNames: List<string> = keepList<string>(copiedNames)
               typed
             }
             """);
@@ -19479,8 +19491,14 @@ static void CliBuildCompilesGenericFunctionApi()
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("public static T identity<T>(T value)", generatedSource);
+        AssertContains("public static T[] keepArray<T>(T[] items)", generatedSource);
+        AssertContains("public static List<T> keepList<T>(List<T> items)", generatedSource);
         AssertContains("var text = identity(\"value\");", generatedSource);
         AssertContains("var typed = identity<string>(text);", generatedSource);
+        AssertContains("var copiedNumbers = keepArray(numbers);", generatedSource);
+        AssertContains("var explicitNumbers = keepArray<int>(copiedNumbers);", generatedSource);
+        AssertContains("var copiedNames = keepList(names);", generatedSource);
+        AssertContains("var explicitNames = keepList<string>(copiedNames);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic function API.");
@@ -19512,13 +19530,23 @@ static void CliBuildCompilesGenericFunctionApi()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System.Collections.Generic;
+
             namespace GenericApiConsumer
             {
                 public static class Consumer
                 {
                     public static string Read()
                     {
+                        var numbers = new int[] { 1, 2 };
+                        var copiedNumbers = Samples.GenericApi.Module.keepArray<int>(numbers);
+                        var names = new List<string> { "a", "b" };
+                        var copiedNames = Samples.GenericApi.Module.keepList<string>(names);
                         return Samples.GenericApi.Module.identity<string>("value")
+                            + ":"
+                            + copiedNumbers.Length.ToString()
+                            + ":"
+                            + copiedNames.Count.ToString()
                             + ":"
                             + Samples.GenericApi.Module.echo();
                     }
