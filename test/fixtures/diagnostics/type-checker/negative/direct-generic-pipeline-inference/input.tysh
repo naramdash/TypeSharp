@@ -1,0 +1,33 @@
+namespace Samples.TypeChecker.DirectGenericPipelineInference
+
+import { List } from "System.Collections.Generic"
+
+fun identity<T>(value: T): T = value
+
+fun choose<T>(left: T, right: T): T = left
+
+fun keepArray<T>(items: T[]): T[] = items
+
+fun chooseArray<T>(left: T[], right: T[]): T[] = left
+
+fun keepList<T>(items: List<T>): List<T> = items
+
+fun chooseList<T>(left: List<T>, right: List<T>): List<T> = left
+
+fun appendTo<T>(value: T, items: T[]): T[] = items
+
+let explicitMismatch = 1 |> identity<string>()
+let explicitArityTooMany = 1 |> identity<string, int>()
+let repeatedMismatch = 1 |> choose("a")
+let returnMismatch: string = 1 |> identity
+let intArray: int[] = [1, 2]
+let textArray: string[] = ["a"]
+let arrayRepeatedMismatch = intArray |> chooseArray(textArray)
+let arrayReturnMismatch: string[] = intArray |> keepArray
+let intList: List<int> = [1, 2]
+let textList: List<string> = ["a"]
+let listRepeatedMismatch = intList |> chooseList(textList)
+let listReturnMismatch: List<string> = intList |> keepList
+let argumentMismatch = 1 |> appendTo(textArray)
+let missingArgument = 1 |> choose
+let tooManyArguments = 1 |> identity(2)

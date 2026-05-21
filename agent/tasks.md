@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0358-direct-generic-pipeline-inference-slice.md](0358-direct-generic-pipeline-inference-slice.md) |
-| Active summary     | 0358 Direct generic pipeline inference slice |
-| Completed range    | 0001-0357                         |
+| Active task packet | None |
+| Active summary     | None |
+| Completed range    | 0001-0358                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0357 roadmap refresh | 0358 Direct generic pipeline inference slice | [0358-direct-generic-pipeline-inference-slice.md](0358-direct-generic-pipeline-inference-slice.md) | Extend direct `value |> f` and `value |> f(args...)` checks to known TypeSharp generic targets using the same bounded inference/substitution as direct calls. |
+| Q2       | Done        | Task 0357 roadmap refresh | 0358 Direct generic pipeline inference slice | [tasks-rollup.md#task-0358-direct-generic-pipeline-inference-slice](tasks-rollup.md#task-0358-direct-generic-pipeline-inference-slice) | Extended direct `value |> f` and `value |> f(args...)` checks to known TypeSharp generic targets using the same bounded inference/substitution as direct calls. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0357 Roadmap refresh after constructed generic function call inference | [tasks-rollup.md#task-0357-roadmap-refresh-after-constructed-generic-function-call-inference](tasks-rollup.md#task-0357-roadmap-refresh-after-constructed-generic-function-call-inference) | Rechecked official source signals after constructed generic function call inference, confirmed the baseline, and selected bounded direct generic pipeline inference. |
 | Q2       | Done        | Task 0355 roadmap refresh | 0356 Constructed generic function call inference slice | [tasks-rollup.md#task-0356-constructed-generic-function-call-inference-slice](tasks-rollup.md#task-0356-constructed-generic-function-call-inference-slice) | Extended direct TypeSharp generic calls from simple `T` inference to bounded constructed parameter/return positions such as arrays and single-argument generic wrappers. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0355 Roadmap refresh after direct generic function call inference | [tasks-rollup.md#task-0355-roadmap-refresh-after-direct-generic-function-call-inference](tasks-rollup.md#task-0355-roadmap-refresh-after-direct-generic-function-call-inference) | Rechecked official source signals after direct generic function call inference, confirmed the baseline, and selected bounded constructed generic function call inference. |

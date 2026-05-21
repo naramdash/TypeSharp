@@ -21668,11 +21668,27 @@ static void CliBuildCompilesPipelineLowering()
 
             export fun format(value: int): string = value.ToString()
 
+            fun identity<T>(value: T): T = value
+
+            fun choose<T>(left: T, right: T): T = left
+
+            fun keepArray<T>(items: T[]): T[] = items
+
             export fun compute(): string =
               1
               |> increment
               |> add(2)
               |> format
+
+            export fun genericCompute(): string {
+              let text: string = "a" |> identity
+              let typed: string = text |> identity<string>()
+              let chosen: string = typed |> choose("b")
+              let numbers: int[] = [1, 2]
+              let copiedNumbers: int[] = numbers |> keepArray
+              let explicitNumbers: int[] = copiedNumbers |> keepArray<int>()
+              chosen
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -21687,6 +21703,11 @@ static void CliBuildCompilesPipelineLowering()
         AssertContains("return value + 1;", generatedSource);
         AssertContains("return value + amount;", generatedSource);
         AssertContains("return format(add(increment(1), 2));", generatedSource);
+        AssertContains("var text = identity(\"a\");", generatedSource);
+        AssertContains("var typed = identity<string>(text);", generatedSource);
+        AssertContains("var chosen = choose(typed, \"b\");", generatedSource);
+        AssertContains("var copiedNumbers = keepArray(numbers);", generatedSource);
+        AssertContains("var explicitNumbers = keepArray<int>(copiedNumbers);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "PipelineLowering.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with pipeline lowering.");
@@ -21724,7 +21745,7 @@ static void CliBuildCompilesPipelineLowering()
                 {
                     public static string Read()
                     {
-                        return Samples.Pipeline.Module.compute();
+                        return Samples.Pipeline.Module.compute() + Samples.Pipeline.Module.genericCompute();
                     }
                 }
             }

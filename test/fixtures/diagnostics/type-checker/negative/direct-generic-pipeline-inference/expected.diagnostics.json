@@ -1,0 +1,92 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'identity' expects 'string' for its first parameter, but pipeline input has type 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 24 },
+      "end": { "line": 19, "column": 47 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'identity' expects 1 generic type argument, but pipeline supplies 2 generic type arguments.",
+      "file": "input.tysh",
+      "start": { "line": 20, "column": 28 },
+      "end": { "line": 20, "column": 56 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'choose' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 21, "column": 24 },
+      "end": { "line": 21, "column": 40 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign expression of type 'int' to 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 22, "column": 1 },
+      "end": { "line": 22, "column": 43 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'chooseArray' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 25, "column": 29 },
+      "end": { "line": 25, "column": 63 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign expression of type 'int[]' to 'string[]'.",
+      "file": "input.tysh",
+      "start": { "line": 26, "column": 1 },
+      "end": { "line": 26, "column": 58 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'chooseList' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 29, "column": 28 },
+      "end": { "line": 29, "column": 59 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign expression of type 'List<int>' to 'List<string>'.",
+      "file": "input.tysh",
+      "start": { "line": 30, "column": 1 },
+      "end": { "line": 30, "column": 59 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'appendTo' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 31, "column": 24 },
+      "end": { "line": 31, "column": 48 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'choose' expects 2 arguments after pipeline lowering, but pipeline supplies 1 argument.",
+      "file": "input.tysh",
+      "start": { "line": 32, "column": 23 },
+      "end": { "line": 32, "column": 34 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'identity' expects 1 argument after pipeline lowering, but pipeline supplies 2 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 33, "column": 24 },
+      "end": { "line": 33, "column": 40 }
+    }
+  ]
+}

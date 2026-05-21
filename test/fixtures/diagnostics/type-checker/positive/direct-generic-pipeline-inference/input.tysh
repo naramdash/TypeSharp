@@ -1,0 +1,34 @@
+namespace Samples.TypeChecker.DirectGenericPipelineInference
+
+import { List } from "System.Collections.Generic"
+
+fun identity<T>(value: T): T = value
+
+fun choose<T>(left: T, right: T): T = left
+
+fun pairLeft<T, U>(left: T, right: U): T = left
+
+fun keepArray<T>(items: T[]): T[] = items
+
+fun chooseArray<T>(left: T[], right: T[]): T[] = left
+
+fun keepList<T>(items: List<T>): List<T> = items
+
+fun appendTo<T>(value: T, items: T[]): T[] = items
+
+fun asText(value: string): string = value
+
+let inferredString: string = "a" |> identity
+let inferredInt: int = 1 |> identity
+let explicitString: string = "a" |> identity<string>()
+let repeated: int = 1 |> choose(2)
+let mixed: string = "a" |> pairLeft(1)
+let nested: string = asText("a" |> identity)
+let sourceNumbers: int[] = [1, 2]
+let copiedNumbers: int[] = sourceNumbers |> keepArray
+let explicitNumbers: int[] = copiedNumbers |> keepArray<int>()
+let literalNumbers: int[] = [1, 2] |> keepArray
+let chosenNumbers: int[] = sourceNumbers |> chooseArray(copiedNumbers)
+let sourceNames: List<string> = ["a", "b"]
+let copiedNames: List<string> = sourceNames |> keepList
+let appended: string[] = "a" |> appendTo(["b"])

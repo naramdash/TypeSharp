@@ -19,9 +19,35 @@ namespace Samples.Pipeline
             return value.ToString();
         }
 
+        internal static T identity<T>(T value)
+        {
+            return value;
+        }
+
+        internal static T choose<T>(T left, T right)
+        {
+            return left;
+        }
+
+        internal static T[] keepArray<T>(T[] items)
+        {
+            return items;
+        }
+
         public static string compute()
         {
             return format(add(increment(1), 2));
+        }
+
+        public static string genericCompute()
+        {
+            var text = identity("a");
+            var typed = identity<string>(text);
+            var chosen = choose(typed, "b");
+            var numbers = new int[] { 1, 2 };
+            var copiedNumbers = keepArray(numbers);
+            var explicitNumbers = keepArray<int>(copiedNumbers);
+            return chosen;
         }
     }
 }

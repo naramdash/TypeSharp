@@ -1215,9 +1215,9 @@ public static class TypeSharpTypeChecker
 
             var inconsistentTypeParameters = InferDirectGenericFunctionTypeArguments(
                 node,
-                functionName,
+                $"Function '{functionName}'",
                 parameterTypes,
-                arguments,
+                arguments.Count,
                 argumentTypes,
                 typeParameterNames,
                 substitutions);
@@ -1249,16 +1249,16 @@ public static class TypeSharpTypeChecker
 
         private HashSet<string> InferDirectGenericFunctionTypeArguments(
             SyntaxNode node,
-            string functionName,
+            string subjectDescription,
             IReadOnlyList<SimpleType> parameterTypes,
-            IReadOnlyList<SyntaxNode> arguments,
+            int argumentCount,
             IReadOnlyList<SimpleType> argumentTypes,
             IReadOnlySet<string> typeParameterNames,
             Dictionary<string, SimpleType> substitutions)
         {
             var inferredFromArgument = new Dictionary<string, int>(StringComparer.Ordinal);
             var inconsistentTypeParameters = new HashSet<string>(StringComparer.Ordinal);
-            var limit = Math.Min(arguments.Count, parameterTypes.Count);
+            var limit = Math.Min(argumentCount, parameterTypes.Count);
             for (var index = 0; index < limit; index++)
             {
                 if (!TryInferDirectGenericArgument(
@@ -1289,7 +1289,7 @@ public static class TypeSharpTypeChecker
                     : 1;
                 ReportMismatch(
                     node,
-                    $"Function '{functionName}' cannot infer generic type parameter '{typeParameterName}' consistently: argument {previousIndex} inferred '{inferredType}', but argument {index + 1} inferred '{inferredArgumentType}'.");
+                    $"{subjectDescription} cannot infer generic type parameter '{typeParameterName}' consistently: argument {previousIndex} inferred '{inferredType}', but argument {index + 1} inferred '{inferredArgumentType}'.");
             }
 
             return inconsistentTypeParameters;
@@ -1368,27 +1368,28 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
-            var targetArguments = GetPipelineTargetArguments(target).ToArray();
-            CheckPipelineFunctionApplication(node, scope, targetName, targetFunction, inputType, targetArguments);
-            return targetFunction.ReturnType;
+            return CheckPipelineFunctionApplication(node, scope, targetName, targetFunction, target, inputType);
         }
 
-        private void CheckPipelineFunctionApplication(
+        private SimpleType CheckPipelineFunctionApplication(
             SyntaxNode node,
             TypeScope scope,
             string targetName,
             FunctionInfo targetFunction,
-            SimpleType inputType,
-            IReadOnlyList<SyntaxNode> targetArguments)
+            SyntaxNode target,
+            SimpleType inputType)
         {
+            IReadOnlyList<SyntaxNode> targetArguments = GetPipelineTargetArguments(target).ToArray();
             if (targetFunction.TypeParameters.Count > 0)
             {
-                foreach (var argument in targetArguments)
-                {
-                    CheckExpression(argument, scope);
-                }
-
-                return;
+                return CheckGenericPipelineFunctionApplication(
+                    node,
+                    scope,
+                    targetName,
+                    targetFunction,
+                    target,
+                    inputType,
+                    targetArguments);
             }
 
             if (targetFunction.ParameterTypes is not { } parameterTypes)
@@ -1398,7 +1399,7 @@ public static class TypeSharpTypeChecker
                     CheckExpression(argument, scope);
                 }
 
-                return;
+                return targetFunction.ReturnType;
             }
 
             var suppliedArgumentCount = targetArguments.Count + 1;
@@ -1435,6 +1436,183 @@ public static class TypeSharpTypeChecker
 
                 CheckPipelineArgument(node, scope, targetName, argument, parameterIndex, parameterTypes[parameterIndex]);
             }
+
+            return targetFunction.ReturnType;
+        }
+
+        private SimpleType CheckGenericPipelineFunctionApplication(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            FunctionInfo targetFunction,
+            SyntaxNode target,
+            SimpleType inputType,
+            IReadOnlyList<SyntaxNode> targetArguments)
+        {
+            var substitutions = new Dictionary<string, SimpleType>(StringComparer.Ordinal);
+            var typeParameterNames = new HashSet<string>(targetFunction.TypeParameters, StringComparer.Ordinal);
+            var explicitTypeArguments = GetDirectCallTypeArguments(target, scope);
+
+            if (explicitTypeArguments.Count > 0)
+            {
+                if (explicitTypeArguments.Count != targetFunction.TypeParameters.Count)
+                {
+                    ReportMismatch(
+                        node,
+                        $"Pipeline target '{targetName}' expects {FormatGenericTypeArgumentCount(targetFunction.TypeParameters.Count)}, but pipeline supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+
+                    foreach (var argument in targetArguments)
+                    {
+                        CheckExpression(argument, scope);
+                    }
+
+                    return SimpleType.Unknown;
+                }
+
+                for (var index = 0; index < explicitTypeArguments.Count; index++)
+                {
+                    substitutions[targetFunction.TypeParameters[index]] = explicitTypeArguments[index];
+                }
+            }
+
+            if (targetFunction.ParameterTypes is not { } parameterTypes)
+            {
+                foreach (var argument in targetArguments)
+                {
+                    CheckExpression(argument, scope);
+                }
+
+                return SubstituteGenericType(targetFunction.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            }
+
+            var suppliedArgumentCount = targetArguments.Count + 1;
+            if (parameterTypes.Count == 0)
+            {
+                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+            }
+            else if (suppliedArgumentCount != parameterTypes.Count)
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+            }
+
+            if (explicitTypeArguments.Count > 0)
+            {
+                ValidateGenericPipelineArgumentsWithSubstitutions(
+                    node,
+                    scope,
+                    targetName,
+                    inputType,
+                    targetArguments,
+                    parameterTypes,
+                    substitutions,
+                    typeParameterNames);
+
+                return SubstituteGenericType(targetFunction.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+            }
+
+            var argumentTypes = new SimpleType[suppliedArgumentCount];
+            argumentTypes[0] = inputType;
+            for (var index = 0; index < targetArguments.Count; index++)
+            {
+                argumentTypes[index + 1] = CheckExpression(targetArguments[index], scope);
+            }
+
+            var inconsistentTypeParameters = InferDirectGenericFunctionTypeArguments(
+                node,
+                $"Pipeline target '{targetName}'",
+                parameterTypes,
+                suppliedArgumentCount,
+                argumentTypes,
+                typeParameterNames,
+                substitutions);
+
+            for (var index = 0; index < suppliedArgumentCount; index++)
+            {
+                if (index >= parameterTypes.Count)
+                {
+                    continue;
+                }
+
+                var parameterType = parameterTypes[index];
+                if (GenericTypeReferencesAny(parameterType, inconsistentTypeParameters, typeParameterNames))
+                {
+                    continue;
+                }
+
+                var expectedType = SubstituteGenericType(parameterType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+                if (!expectedType.IsKnown)
+                {
+                    continue;
+                }
+
+                if (index == 0)
+                {
+                    ValidatePipelineInputType(node, scope, targetName, expectedType, inputType);
+                    continue;
+                }
+
+                ValidatePipelineArgumentType(node, scope, targetName, index, expectedType, argumentTypes[index]);
+            }
+
+            return SubstituteGenericType(targetFunction.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+        }
+
+        private void ValidateGenericPipelineArgumentsWithSubstitutions(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            SimpleType inputType,
+            IReadOnlyList<SyntaxNode> targetArguments,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyDictionary<string, SimpleType> substitutions,
+            IReadOnlySet<string> typeParameterNames)
+        {
+            if (parameterTypes.Count > 0)
+            {
+                var expectedInputType = SubstituteGenericType(parameterTypes[0], substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+                if (expectedInputType.IsKnown)
+                {
+                    ValidatePipelineInputType(node, scope, targetName, expectedInputType, inputType);
+                }
+            }
+
+            for (var index = 0; index < targetArguments.Count; index++)
+            {
+                var argument = targetArguments[index];
+                var parameterIndex = index + 1;
+                if (parameterIndex >= parameterTypes.Count)
+                {
+                    CheckExpression(argument, scope);
+                    continue;
+                }
+
+                var expectedType = SubstituteGenericType(parameterTypes[parameterIndex], substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+                if (!expectedType.IsKnown)
+                {
+                    CheckExpression(argument, scope);
+                    continue;
+                }
+
+                CheckPipelineArgument(node, scope, targetName, argument, parameterIndex, expectedType);
+            }
+        }
+
+        private void ValidatePipelineInputType(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            SimpleType expectedType,
+            SimpleType inputType)
+        {
+            if (inputType.IsKnown &&
+                !CanAssign(scope, expectedType, inputType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects '{expectedType}' for its first parameter, but pipeline input has type '{inputType}'.");
+            }
         }
 
         private void CheckPipelineArgument(
@@ -1446,6 +1624,17 @@ public static class TypeSharpTypeChecker
             SimpleType expectedType)
         {
             var argumentType = CheckExpressionWithExpected(argument, scope, expectedType);
+            ValidatePipelineArgumentType(node, scope, targetName, parameterIndex, expectedType, argumentType);
+        }
+
+        private void ValidatePipelineArgumentType(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            int parameterIndex,
+            SimpleType expectedType,
+            SimpleType argumentType)
+        {
             if (!argumentType.IsKnown)
             {
                 return;
