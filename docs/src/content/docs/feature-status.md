@@ -117,7 +117,7 @@ Current boundary:
 | C# Signal | TypeSharp Status | TypeSharp Direction |
 | --- | --- | --- |
 | C# 14 extension members, including extension properties and static extension members | Stable Backlog | TypeSharp-authored explicit-receiver extension methods are already MVP limited. Richer extension properties/static extension members need a metadata/lowering design that emits ordinary C# 7.3-compatible extension/static members. |
-| C# 14 null-conditional assignment | Stable Backlog | Useful TypeSharp ergonomics if lowered to explicit null guards in generated C# 7.3. Design must preserve left/right evaluation order and diagnostics before implementation. |
+| C# 14 null-conditional assignment | Selected Slice | Task 0398 starts with the bounded `receiver?.Member = value` shape for metadata-backed imported C# instance field/property targets, lowered to explicit C# 7.3 null guards. Null-conditional indexers, compound assignment, increment/decrement, events, local binding assignment, and broader TypeSharp-owned member assignment remain separate follow-ups. |
 | C# 14 `nameof` on unbound generic types | MVP | Implemented as TypeSharp `nameof(Generic<>)` and higher-arity `nameof(Generic<,>)` targets with type-root binding and string constant lowering instead of C# 14 syntax. |
 | C# 14 simple lambda parameter modifiers | Stable Backlog | Useful for imported delegate/byref interop. TypeSharp should accept only explicitly modeled `ref`/`out`/`in` lambda boundaries and lower to C# 7.3-compatible typed lambdas. |
 | C# 14 partial constructors and partial events | Stable Backlog | Relevant only after TypeSharp has a broader partial member/public ABI merge policy. Generated code can keep complete members until that policy exists. |
@@ -129,6 +129,8 @@ Current boundary:
 | C# 15 union types | Preview Watch | Directional input only. TypeSharp's stable union model remains nominal closed unions plus local type-level unions until C# union runtime/metadata contracts settle. |
 
 ## Roadmap Refresh Result
+
+On 2026-05-22, after imported C# indexer `>>>=` landed, official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions sources were rechecked. The refresh did not change TypeSharp's baseline: generated artifacts stay package-free `net48`, generated C# stays C# 7.3-compatible, and the `net10.0` test package path remains the existing pinned `MSTest.Sdk/4.2.3`/Microsoft Testing Platform bridge with shard projects, lock files, source mapping, audit controls, and repo-local package cache. Adding xUnit.net v3 now would duplicate package-host evidence rather than improve generated artifact compatibility. The next bounded implementation slice is C# 14-inspired null-conditional assignment for imported member targets because the docs already reserve `?.`, but the current lexer/parser do not yet implement it.
 
 Official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources were rechecked on 2026-05-21 after the match guard implementation. The refresh did not change TypeSharp's baseline: generated artifacts remain `net48`, generated C# remains C# 7.3-compatible, external preview features stay behind Preview Watch, and package/Marketplace/template publication remains gated by Project Policy.
 

@@ -5788,7 +5788,66 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0397: roadmap refresh after logical unsigned shift assignment imported indexer targets.
+- Completed in task 0397: roadmap refresh after logical unsigned shift assignment imported indexer targets.
+
+## Task 0397 Roadmap Refresh After Logical Unsigned Shift Assignment Imported Indexer Targets
+
+Completed on 2026-05-22.
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, .NET testing, MSTest SDK, xUnit.net v3, VS Code, and GitHub Actions source signals after metadata-backed imported C# indexer `>>>=` landed.
+- Reaffirmed the generated artifact baseline: generated assemblies, `TypeSharp.Core`, and `TypeSharp.Runtime` remain package-free `net48`; generated C# remains C# 7.3-compatible because Microsoft C# language versioning still maps all .NET Framework targets to C# 7.3.
+- Reaffirmed platform signals: C# 14 is the current stable .NET 10 C# signal, C# 15 remains .NET 11 preview-only, F# 10 is a tooling/design signal only, TypeScript 6.0/7.0 are editor/compiler architecture signals only, and .NET Framework 4.8.1 being latest does not replace the broad `net48` profile.
+- Answered the `net10.0` NuGet test-package question explicitly: TypeSharp already uses NuGet packages at the test-host boundary through pinned `MSTest.Sdk/4.2.3`, Microsoft Testing Platform, package lock files, source mapping, audit controls, repo-local package cache, and package-based shard projects over `TypeSharpCompilerTestCases.All`. It avoids NuGet only for generated `net48` artifacts, where package-free compatibility is a core project constraint.
+- Kept xUnit.net v3 as a future bridge candidate. Its native Microsoft Testing Platform support is valid, but adding it now would duplicate the existing `net10.0` MSTest SDK/MTP shard evidence without improving generated artifact compatibility or the current release-confidence path.
+- Selected task 0398, null-conditional assignment imported member targets, because C# 14 null-conditional assignment is stable and the current TypeSharp docs reserve `?.` while the lexer/parser do not yet implement it.
+
+Official source evidence:
+
+- [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
+- [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
+- [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15)
+- [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10)
+- [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
+- [.NET target frameworks](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies)
+- [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework)
+- [NuGet PackageReference lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies)
+- [NuGet package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping)
+- [NuGet restore audit](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities)
+- [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview)
+- [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
+- [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk)
+- [NuGet MSTest.Sdk](https://www.nuget.org/packages/MSTest.Sdk)
+- [xUnit.net v3 Microsoft Testing Platform](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform)
+- [VS Code language server extension guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide)
+- [VS Code extension publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [GitHub Actions image migration changelog](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/)
+- [actions/setup-dotnet](https://github.com/actions/setup-dotnet)
+- [actions/setup-node](https://github.com/actions/setup-node)
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Result: docs build succeeded on 2026-05-22 with the existing Vite chunk-size warning only, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Active in task 0398: null-conditional assignment imported member targets.
 
 ## Verification Summary
 
@@ -5814,13 +5873,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0396 is compressed here.
+- Completed historical work through task 0397 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0397 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0398 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
