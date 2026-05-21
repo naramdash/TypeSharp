@@ -1,0 +1,24 @@
+namespace Samples.TypeChecker.MatchGuards
+
+union PaymentStatus {
+  Pending
+  Paid(at: string)
+  Failed(reason: string)
+}
+
+type PrimitiveId = string | int
+
+fun describe(status: PaymentStatus): string =
+  match status {
+    Paid(at) when at != "" => at
+    Paid(at) => at
+    Pending => "Waiting"
+    Failed(reason) => reason
+  }
+
+fun normalize(id: PrimitiveId): string =
+  match id {
+    text: string when text != "" => text
+    text: string => text
+    number: int => "number"
+  }

@@ -1727,6 +1727,44 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 
+## Task 0306 Match Guard Implementation Slice
+
+Completed match guard implementation work established:
+
+- Added `when` as a reserved parser keyword for match arms and kept single-identifier guards from being parsed as lambdas before the arm `=>`.
+- Type-checked match guard expressions as `bool` inside the narrowed arm scope for nominal union payload bindings and local type-level union pattern variables.
+- Preserved exhaustiveness behavior by treating guarded nominal and type-level union arms as non-covering unless a later unguarded arm or `_` discard covers the remaining closed set.
+- Lowered guarded nominal union arms, guarded type-level union arms, and guarded `_` arms to C# 7.3-compatible conditional code in source order.
+- Added parser, type-checker positive/negative, backend snapshot, and CLI build smoke coverage for guarded matches, non-boolean guards, and guarded-only non-exhaustive matches.
+- Updated canonical grammar, feature status, type-system, lowering, reference, diagnostics, and work-ledger docs for the implemented boundary.
+
+Verification:
+
+```powershell
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- `test/fixtures/parser/positive/0003-unions-patterns`
+- `test/fixtures/diagnostics/type-checker/positive/match-guards`
+- `test/fixtures/diagnostics/type-checker/negative/match-guard-non-bool`
+- `test/fixtures/diagnostics/type-checker/negative/guarded-only-non-exhaustive-match`
+- `test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`
+- `test/fixtures/backend/csharp/positive/0019-type-level-union-narrowing`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+
+Remaining:
+
+- Bool, enum, literal-union exhaustiveness and richer pattern algebra remain future match work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

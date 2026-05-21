@@ -1077,11 +1077,11 @@ public sealed class TypeSharpParser
         return Node(SyntaxKind.TypeArgumentList, children);
     }
 
-    private SyntaxNode ParseExpression(int parentPrecedence = 0)
+    private SyntaxNode ParseExpression(int parentPrecedence = 0, bool allowLambda = true)
     {
         SyntaxNode left;
 
-        if (Current.Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.EqualsGreaterToken)
+        if (allowLambda && Current.Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.EqualsGreaterToken)
         {
             left = ParseLambdaExpression();
         }
@@ -1112,7 +1112,7 @@ public sealed class TypeSharpParser
         else if (GetUnaryPrecedence(Current.Kind) is var unaryPrecedence && unaryPrecedence != 0 && unaryPrecedence >= parentPrecedence)
         {
             var operatorToken = TokenNode(NextToken());
-            var operand = ParseExpression(unaryPrecedence);
+            var operand = ParseExpression(unaryPrecedence, allowLambda);
             left = Node(SyntaxKind.BinaryExpression, [operatorToken, operand]);
         }
         else
@@ -1129,7 +1129,7 @@ public sealed class TypeSharpParser
             }
 
             var operatorTokens = ParseBinaryOperatorTokens();
-            var right = ParseExpression(precedence);
+            var right = ParseExpression(precedence, allowLambda);
             var children = new List<SyntaxNode> { left };
             children.AddRange(operatorTokens);
             children.Add(right);
@@ -1227,10 +1227,17 @@ public sealed class TypeSharpParser
         {
             var armChildren = new List<SyntaxNode>
             {
-                ParsePattern(),
-                TokenNode(Expect(SyntaxKind.EqualsGreaterToken)),
-                ParseExpression()
+                ParsePattern()
             };
+
+            if (Current.Kind == SyntaxKind.WhenKeyword)
+            {
+                armChildren.Add(TokenNode(NextToken()));
+                armChildren.Add(ParseExpression(allowLambda: false));
+            }
+
+            armChildren.Add(TokenNode(Expect(SyntaxKind.EqualsGreaterToken)));
+            armChildren.Add(ParseExpression());
             children.Add(Node(SyntaxKind.MatchArm, armChildren));
         }
 

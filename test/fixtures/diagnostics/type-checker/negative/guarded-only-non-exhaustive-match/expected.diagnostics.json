@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for union 'PaymentStatus'. Missing cases: Pending, Paid, Failed.",
+      "file": "input.tysh",
+      "start": { "line": 12, "column": 3 },
+      "end": { "line": 16, "column": 4 }
+    },
+    {
+      "code": "TS2203",
+      "severity": "error",
+      "message": "Non-exhaustive match for type-level union 'PrimitiveId'. Missing members: string, int.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 3 },
+      "end": { "line": 22, "column": 4 }
+    }
+  ]
+}

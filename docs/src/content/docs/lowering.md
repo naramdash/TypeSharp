@@ -106,15 +106,17 @@ Evidence:
 
 Nominal unions lower to an abstract base type with sealed nested case types. Payload-free cases expose static properties; payload cases expose factory methods. Generated cases implement runtime helper metadata so pattern helpers can inspect tags, names, and payloads.
 
-Nominal union matches lower to ordered C# checks. Payload extraction uses runtime helpers, and `_` arms lower to an unconditional fallback return in source order. Non-exhaustive matches should be reported before backend emission.
+Nominal union matches lower to ordered C# checks. Payload extraction uses runtime helpers. `when` guards lower to nested C# conditionals after the arm's payload or type binding is available, guarded `_` arms lower to conditional fallbacks, and unguarded `_` arms lower to unconditional fallback returns in source order. Non-exhaustive matches should be reported before backend emission.
 
-Type-level unions are local compile-time constructs. Their matches lower to C# type checks where supported, and public boundary leaks report diagnostics.
+Type-level unions are local compile-time constructs. Their matches lower to C# type checks where supported, including guarded arms that evaluate after the type-pattern variable is bound, and public boundary leaks report diagnostics.
 
 Evidence:
 
 - `test/fixtures/backend/csharp/positive/0017-nominal-union-api`
 - `test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`
 - `test/fixtures/backend/csharp/positive/0019-type-level-union-narrowing`
+- `test/fixtures/diagnostics/type-checker/positive/match-guards`
+- `test/fixtures/diagnostics/type-checker/negative/guarded-only-non-exhaustive-match`
 - `test/fixtures/diagnostics/type-checker/negative/non-exhaustive-union-match`
 - `test/fixtures/diagnostics/type-checker/negative/public-boundary-union-alias`
 

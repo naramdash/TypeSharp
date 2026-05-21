@@ -15,6 +15,7 @@ export fun describe(status: PaymentStatus): string =
 
 export fun describeWithFallback(status: PaymentStatus): string =
   match status {
-    Pending => "Waiting"
+    Pending when true => "Waiting"
+    _ when false => "Never"
     _ => "Settled"
   }

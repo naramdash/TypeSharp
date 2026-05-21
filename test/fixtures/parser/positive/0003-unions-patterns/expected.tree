@@ -130,7 +130,7 @@ SourceFile TextSpan=4:1-39:4
           Token EqualsGreaterToken "=>" TextSpan=23:13-23:15
           LiteralExpression TextSpan=23:16-23:37
             Token StringLiteralToken "\"Waiting for payment\"" TextSpan=23:16-23:37
-        MatchArm TextSpan=24:5-24:32
+        MatchArm TextSpan=24:5-24:48
           Pattern TextSpan=24:5-24:13
             Token IdentifierToken "Paid" TextSpan=24:5-24:9
             PatternArgumentList TextSpan=24:9-24:13
@@ -138,9 +138,16 @@ SourceFile TextSpan=4:1-39:4
               Pattern TextSpan=24:10-24:12
                 Token IdentifierToken "at" TextSpan=24:10-24:12
               Token CloseParenToken ")" TextSpan=24:12-24:13
-          Token EqualsGreaterToken "=>" TextSpan=24:14-24:16
-          LiteralExpression TextSpan=24:17-24:32
-            Token InterpolatedStringLiteralToken "$\"Paid at {at}\"" TextSpan=24:17-24:32
+          Token WhenKeyword "when" TextSpan=24:14-24:18
+          BinaryExpression TextSpan=24:19-24:29
+            IdentifierExpression TextSpan=24:19-24:21
+              Token IdentifierToken "at" TextSpan=24:19-24:21
+            Token BangEqualsToken "!=" TextSpan=24:22-24:24
+            LiteralExpression TextSpan=24:25-24:29
+              Token NullKeyword "null" TextSpan=24:25-24:29
+          Token EqualsGreaterToken "=>" TextSpan=24:30-24:32
+          LiteralExpression TextSpan=24:33-24:48
+            Token InterpolatedStringLiteralToken "$\"Paid at {at}\"" TextSpan=24:33-24:48
         MatchArm TextSpan=25:5-25:42
           Pattern TextSpan=25:5-25:19
             Token IdentifierToken "Failed" TextSpan=25:5-25:11

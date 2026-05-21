@@ -13,12 +13,22 @@ namespace Samples.TypeLevelUnion
                 var __match0 = id;
                 if (__match0 is string text)
                 {
-                    return text;
+                    if (text != "")
+                    {
+                        return text;
+                    }
                 }
 
                 if (__match0 is int number)
                 {
-                    return number.ToString();
+                    if (number > 0)
+                    {
+                        return number.ToString();
+                    }
+                }
+
+                {
+                    return "";
                 }
 
                 throw TypeSharpPattern.NoMatch(__match0);

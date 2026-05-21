@@ -145,7 +145,7 @@ Stable expression rules:
 - Unary numeric sign expressions `+expr` and `-expr` are stable for supported numeric operands and lower to C# unary sign operators.
 - Collection expressions can be lambda bodies. Known array or `List<T>` delegate return targets provide the element target for checking and lowering, and homogeneous collection expression arguments can filter imported C# array overloads.
 - Lambdas use `=>` and can be assigned to local or module `let` bindings. Lambda bodies can be blocks; when the target delegate expects a value, the final block expression is returned.
-- `match` arms use `=>`; `when` guards remain planned until parser and checker support land together.
+- `match` arms use `Pattern => expr` or `Pattern when boolExpr => expr`. Guard expressions are checked in the narrowed arm scope.
 - Pipeline `value |> f(args...)` lowers as `f(value, args...)`.
 - Composition `f >> g` and `g << f` lower to unary delegate lambdas.
 - `satisfies` checks a named type or named structural shape proof and erases to the left expression in generated C#.
@@ -165,10 +165,10 @@ Stable pattern rules:
 - Literal, identifier, type, union-case, tuple, record, and list patterns form the stable design surface.
 - Pattern `|` is an or-pattern; pattern `&` combines constraints.
 - `not` negates a pattern.
-- Guard syntax with `when` remains planned.
+- Guard syntax uses `when`; guarded arms do not prove nominal or type-level union exhaustiveness without a later unguarded arm or discard.
 - `expr is pattern` introduces narrowing and pattern bindings with scoped lifetime.
 - Nominal closed unions and known local type-level unions report missing cases/members when the checker can prove non-exhaustiveness.
-- Bool, enum, literal union, and guarded-arm exhaustiveness are checked only where the closed set and guard behavior are known.
+- Bool, enum, literal union, and richer guarded-arm exhaustiveness remain planned beyond the current nominal and local type-level union guard rules.
 
 ### Name Resolution
 

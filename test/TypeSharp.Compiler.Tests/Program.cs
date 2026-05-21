@@ -20485,6 +20485,7 @@ static void CliBuildCompilesNominalUnionMatchLowering()
             export fun describe(status: PaymentStatus): string =
               match status {
                 Pending => "Waiting"
+                Paid(at) when at != "" => $"Paid:{at}"
                 Paid(at) => $"Paid:{at}"
                 Failed(reason) => $"Failed:{reason}"
               }
@@ -20502,6 +20503,7 @@ static void CliBuildCompilesNominalUnionMatchLowering()
         AssertContains("TypeSharpPattern.IsPayloadlessCase(__match0, 0)", generatedSource);
         AssertContains("TypeSharpPattern.IsPayloadCase(__match0, 1)", generatedSource);
         AssertContains("var at = TypeSharpPattern.RequirePayload<string>(__match0, 1);", generatedSource);
+        AssertContains("if (at != \"\")", generatedSource);
         AssertContains("throw TypeSharpPattern.NoMatch(__match0);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "UnionMatchApi.dll");
@@ -20590,8 +20592,9 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
 
             fun normalizeInternal(id: PrimitiveId): string =
               match id {
-                text: string => text
-                number: int => number.ToString()
+                text: string when text != "" => text
+                number: int when number > 0 => number.ToString()
+                _ => ""
               }
 
             export fun normalizeText(text: string): string =
@@ -20612,7 +20615,9 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("internal static string normalizeInternal(object id)", generatedSource);
         AssertContains("if (__match0 is string text)", generatedSource);
+        AssertContains("if (text != \"\")", generatedSource);
         AssertContains("if (__match0 is int number)", generatedSource);
+        AssertContains("if (number > 0)", generatedSource);
         AssertContains("throw TypeSharpPattern.NoMatch(__match0);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeLevelUnionNarrowing.dll");

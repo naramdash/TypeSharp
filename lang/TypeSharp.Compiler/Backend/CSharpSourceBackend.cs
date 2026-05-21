@@ -2172,6 +2172,8 @@ public static class CSharpSourceBackend
                     continue;
                 }
 
+                var guard = GetMatchArmGuard(arm);
+                var resultExpression = EmitExpression(expression);
                 if (wroteArm)
                 {
                     builder.AppendLine();
@@ -2179,9 +2181,19 @@ public static class CSharpSourceBackend
 
                 if (isDiscard)
                 {
-                    builder.AppendLine("                {");
-                    builder.AppendLine($"                    return {EmitExpression(expression)};");
-                    builder.AppendLine("                }");
+                    if (guard is null)
+                    {
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                if ({EmitExpression(guard)})");
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
                 }
                 else
                 {
@@ -2195,7 +2207,18 @@ public static class CSharpSourceBackend
                         builder.AppendLine($"                    var {payloadVariable} = TypeSharpPattern.RequirePayload<{unionCase.Parameters[0].Type}>({matchValueName}, {unionCase.Tag});");
                     }
 
-                    builder.AppendLine($"                    return {EmitExpression(expression)};");
+                    if (guard is null)
+                    {
+                        builder.AppendLine($"                    return {resultExpression};");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                    if ({EmitExpression(guard)})");
+                        builder.AppendLine("                    {");
+                        builder.AppendLine($"                        return {resultExpression};");
+                        builder.AppendLine("                    }");
+                    }
+
                     builder.AppendLine("                }");
                 }
 
@@ -2228,6 +2251,8 @@ public static class CSharpSourceBackend
                     continue;
                 }
 
+                var guard = GetMatchArmGuard(arm);
+                var resultExpression = EmitExpression(expression);
                 if (wroteArm)
                 {
                     builder.AppendLine();
@@ -2235,15 +2260,36 @@ public static class CSharpSourceBackend
 
                 if (isDiscard)
                 {
-                    builder.AppendLine("                {");
-                    builder.AppendLine($"                    return {EmitExpression(expression)};");
-                    builder.AppendLine("                }");
+                    if (guard is null)
+                    {
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                if ({EmitExpression(guard)})");
+                        builder.AppendLine("                {");
+                        builder.AppendLine($"                    return {resultExpression};");
+                        builder.AppendLine("                }");
+                    }
                 }
                 else
                 {
                     builder.AppendLine($"                if ({matchValueName} is {member.CSharpType} {variableName})");
                     builder.AppendLine("                {");
-                    builder.AppendLine($"                    return {EmitExpression(expression)};");
+                    if (guard is null)
+                    {
+                        builder.AppendLine($"                    return {resultExpression};");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"                    if ({EmitExpression(guard)})");
+                        builder.AppendLine("                    {");
+                        builder.AppendLine($"                        return {resultExpression};");
+                        builder.AppendLine("                    }");
+                    }
+
                     builder.AppendLine("                }");
                 }
 
@@ -2392,7 +2438,7 @@ public static class CSharpSourceBackend
             var caseName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
             if (caseName == "_")
             {
-                expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+                expression = GetMatchArmExpression(arm);
                 isDiscard = expression is not null;
                 return isDiscard;
             }
@@ -2415,7 +2461,7 @@ public static class CSharpSourceBackend
                 .Children
                 .FirstOrDefault(child => child.Kind == SyntaxKind.Pattern);
             payloadVariable = argumentPattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
-            expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+            expression = GetMatchArmExpression(arm);
             return expression is not null;
         }
 
@@ -2436,7 +2482,7 @@ public static class CSharpSourceBackend
             variableName = pattern?.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
             if (variableName == "_")
             {
-                expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+                expression = GetMatchArmExpression(arm);
                 isDiscard = expression is not null;
                 return isDiscard;
             }
@@ -2451,8 +2497,25 @@ public static class CSharpSourceBackend
             }
 
             member = foundMember;
-            expression = arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern);
+            expression = GetMatchArmExpression(arm);
             return variableName.Length > 0 && expression is not null;
+        }
+
+        private static SyntaxNode? GetMatchArmExpression(SyntaxNode arm) =>
+            arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+
+        private static SyntaxNode? GetMatchArmGuard(SyntaxNode arm)
+        {
+            var children = arm.Children;
+            for (var index = 0; index < children.Count - 1; index++)
+            {
+                if (children[index].IsToken && children[index].Kind == SyntaxKind.WhenKeyword)
+                {
+                    return children[index + 1].IsToken ? null : children[index + 1];
+                }
+            }
+
+            return null;
         }
 
         private bool TryGetExpressionType(SyntaxNode node, out string typeName)

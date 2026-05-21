@@ -4,8 +4,9 @@ type PrimitiveId = string | int
 
 fun normalizeInternal(id: PrimitiveId): string =
   match id {
-    text: string => text
-    number: int => number.ToString()
+    text: string when text != "" => text
+    number: int when number > 0 => number.ToString()
+    _ => ""
   }
 
 export fun normalizeText(text: string): string =

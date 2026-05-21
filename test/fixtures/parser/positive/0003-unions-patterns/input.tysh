@@ -21,7 +21,7 @@ export record Receipt(id: string, paidAt: DateTime)
 export fun describe(status: PaymentStatus): string =
   match status {
     Pending => "Waiting for payment"
-    Paid(at) => $"Paid at {at}"
+    Paid(at) when at != null => $"Paid at {at}"
     Failed(reason) => $"Failed: {reason}"
   }
 

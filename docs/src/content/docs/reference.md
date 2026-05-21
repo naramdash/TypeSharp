@@ -55,7 +55,7 @@ Detailed C#/.NET reference: [C# And CLR Type Model](../csharp-type-model/)
 
 ## Patterns
 
-Pattern syntax supports nominal union and type-level union narrowing paths in the current smoke-tested scope.
+Pattern syntax supports nominal union and type-level union narrowing paths in the current smoke-tested scope. Match arms can use `when` guards; the guard is checked in the narrowed arm scope and does not prove exhaustiveness without a later unguarded cover.
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/)
 

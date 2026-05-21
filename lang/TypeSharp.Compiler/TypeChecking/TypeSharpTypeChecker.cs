@@ -1278,7 +1278,26 @@ public static class TypeSharpTypeChecker
                 foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
                 {
                     var armScope = new TypeScope(scope);
-                    if (TryGetUnionArm(arm, union, out var unionCase, out var payloadName, out var expression, out var isDiscard))
+                    SyntaxNode? expression = null;
+                    var matchedArm = TryGetUnionArm(arm, union, out var unionCase, out var payloadName, out expression, out var isDiscard);
+                    if (matchedArm)
+                    {
+                        if (!isDiscard)
+                        {
+                            if (payloadName.Length > 0 && unionCase.Parameters.Count == 1)
+                            {
+                                armScope.DeclareValue(payloadName, SimpleType.Named(unionCase.Parameters[0].Type));
+                            }
+                        }
+                    }
+
+                    var guard = GetMatchArmGuard(arm);
+                    if (guard is not null)
+                    {
+                        CheckMatchGuard(guard, armScope);
+                    }
+
+                    if (matchedArm && guard is null)
                     {
                         if (isDiscard)
                         {
@@ -1287,10 +1306,6 @@ public static class TypeSharpTypeChecker
                         else
                         {
                             coveredCases.Add(unionCase.Name);
-                            if (payloadName.Length > 0 && unionCase.Parameters.Count == 1)
-                            {
-                                armScope.DeclareValue(payloadName, SimpleType.Named(unionCase.Parameters[0].Type));
-                            }
                         }
                     }
 
@@ -1326,7 +1341,26 @@ public static class TypeSharpTypeChecker
                 foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
                 {
                     var armScope = new TypeScope(scope);
-                    if (TryGetTypeLevelUnionArm(arm, typeLevelUnion, out var member, out var variableName, out var expression, out var isDiscard))
+                    SyntaxNode? expression = null;
+                    var matchedArm = TryGetTypeLevelUnionArm(arm, typeLevelUnion, out var member, out var variableName, out expression, out var isDiscard);
+                    if (matchedArm)
+                    {
+                        if (!isDiscard)
+                        {
+                            if (variableName.Length > 0)
+                            {
+                                armScope.DeclareValue(variableName, member.Type);
+                            }
+                        }
+                    }
+
+                    var guard = GetMatchArmGuard(arm);
+                    if (guard is not null)
+                    {
+                        CheckMatchGuard(guard, armScope);
+                    }
+
+                    if (matchedArm && guard is null)
                     {
                         if (isDiscard)
                         {
@@ -1335,10 +1369,6 @@ public static class TypeSharpTypeChecker
                         else
                         {
                             coveredMembers.Add(member.Type.Name);
-                            if (variableName.Length > 0)
-                            {
-                                armScope.DeclareValue(variableName, member.Type);
-                            }
                         }
                     }
 
@@ -1375,6 +1405,12 @@ public static class TypeSharpTypeChecker
                     armScope.DeclareValue(variableName, narrowedType);
                 }
 
+                var guard = GetMatchArmGuard(arm);
+                if (guard is not null)
+                {
+                    CheckMatchGuard(guard, armScope);
+                }
+
                 var expression = GetMatchArmExpression(arm);
                 if (expression is not null)
                 {
@@ -1383,6 +1419,18 @@ public static class TypeSharpTypeChecker
             }
 
             return MergeBranchTypes(branchTypes);
+        }
+
+        private void CheckMatchGuard(SyntaxNode guard, TypeScope scope)
+        {
+            var guardType = CheckExpression(guard, scope);
+            if (guardType.IsKnown &&
+                (guardType.IsNull ||
+                    guardType.IsNullable ||
+                    !string.Equals(guardType.Name, "bool", StringComparison.Ordinal)))
+            {
+                ReportMismatch(guard, $"Match guard expression must be 'bool', but found '{guardType}'.");
+            }
         }
 
         private static SimpleType MergeBranchTypes(IReadOnlyList<SimpleType> branchTypes)
@@ -2936,6 +2984,20 @@ public static class TypeSharpTypeChecker
 
         private static SyntaxNode? GetMatchArmExpression(SyntaxNode arm) =>
             arm.Children.LastOrDefault(child => !child.IsToken && child.Kind != SyntaxKind.Pattern && child.Kind != SyntaxKind.RecordPattern);
+
+        private static SyntaxNode? GetMatchArmGuard(SyntaxNode arm)
+        {
+            var children = arm.Children;
+            for (var index = 0; index < children.Count - 1; index++)
+            {
+                if (children[index].IsToken && children[index].Kind == SyntaxKind.WhenKeyword)
+                {
+                    return children[index + 1].IsToken ? null : children[index + 1];
+                }
+            }
+
+            return null;
+        }
 
         private static bool TryGetSimpleTypeName(SyntaxNode node, out string name)
         {

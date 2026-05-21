@@ -33,7 +33,7 @@
 
 | Work | Goal Link | Required Evidence |
 | --- | --- | --- |
-| None | [tasks.md](tasks.md) | Select the next requested task when work resumes. |
+| No active task | [tasks.md](tasks.md) | Next agent should select from User Task Inbox, Agent Task Queue, or checklist. |
 
 ## Completed Evidence Index
 
@@ -41,6 +41,7 @@
 | --- | --- |
 | Parser, binder, semantic skeleton | [tasks-rollup.md#foundation-parser-and-semantic-skeleton](tasks-rollup.md#foundation-parser-and-semantic-skeleton), `test/fixtures/parser`, `test/fixtures/diagnostics` |
 | Runtime, backend, generated C# lowering | [tasks-rollup.md#runtime-build-backend-and-language-lowering](tasks-rollup.md#runtime-build-backend-and-language-lowering), `test/fixtures/backend/csharp`, `test/TypeSharp.Compiler.Tests/Program.cs` |
+| Match guards | [tasks-rollup.md#task-0306-match-guard-implementation-slice](tasks-rollup.md#task-0306-match-guard-implementation-slice), `test/fixtures/diagnostics/type-checker/positive/match-guards`, `test/fixtures/diagnostics/type-checker/negative/match-guard-non-bool`, `test/fixtures/diagnostics/type-checker/negative/guarded-only-non-exhaustive-match`, `test/fixtures/backend/csharp/positive/0018-nominal-union-match-lowering`, `test/fixtures/backend/csharp/positive/0019-type-level-union-narrowing` |
 | C# interop and metadata diagnostics | [tasks-rollup.md#csharp-interop-and-metadata-diagnostics](tasks-rollup.md#csharp-interop-and-metadata-diagnostics), interop smoke tests in `test/TypeSharp.Compiler.Tests/Program.cs` |
 | CLI, VS Code, language server, docs build | [tasks-rollup.md#cli-vscode-and-tooling](tasks-rollup.md#cli-vscode-and-tooling), `vscode/typesharp`, docs build smoke |
 | Documentation process and adoption | [tasks-rollup.md#documentation-process-release-and-adoption](tasks-rollup.md#documentation-process-release-and-adoption), docs pages, `docs/research` |

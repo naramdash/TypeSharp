@@ -1,0 +1,15 @@
+namespace Samples.TypeChecker.MatchGuardNonBool
+
+union PaymentStatus {
+  Pending
+  Paid(at: string)
+  Failed(reason: string)
+}
+
+fun describe(status: PaymentStatus): string =
+  match status {
+    Paid(at) when at => at
+    Paid(at) => at
+    Pending => "Waiting"
+    Failed(reason) => reason
+  }

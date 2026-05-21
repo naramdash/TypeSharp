@@ -39,7 +39,15 @@ namespace Samples.Unions
                 var __match1 = status;
                 if (TypeSharpPattern.IsPayloadlessCase(__match1, 0))
                 {
-                    return "Waiting";
+                    if (true)
+                    {
+                        return "Waiting";
+                    }
+                }
+
+                if (false)
+                {
+                    return "Never";
                 }
 
                 {

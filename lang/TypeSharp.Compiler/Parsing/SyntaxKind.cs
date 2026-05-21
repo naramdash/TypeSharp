@@ -25,6 +25,7 @@ public enum SyntaxKind
     FromKeyword,
     WithKeyword,
     WhereKeyword,
+    WhenKeyword,
     AsyncKeyword,
     AwaitKeyword,
     TryKeyword,

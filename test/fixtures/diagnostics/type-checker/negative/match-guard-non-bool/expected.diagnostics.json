@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Match guard expression must be 'bool', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 19 },
+      "end": { "line": 11, "column": 21 }
+    }
+  ]
+}
