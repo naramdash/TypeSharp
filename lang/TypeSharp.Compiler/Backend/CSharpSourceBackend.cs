@@ -1312,7 +1312,13 @@ public static class CSharpSourceBackend
         }
 
         private static string FormatParameters(IReadOnlyList<CSharpParameter> parameters) =>
-            string.Join(", ", parameters.Select(parameter => $"{parameter.Type} {parameter.Name}"));
+            string.Join(", ", parameters.Select(FormatParameter));
+
+        private static string FormatParameter(CSharpParameter parameter)
+        {
+            var paramsPrefix = parameter.IsParams ? "params " : string.Empty;
+            return $"{paramsPrefix}{parameter.Type} {parameter.Name}";
+        }
 
         private static string FormatExtensionParameters(IReadOnlyList<CSharpParameter> parameters, string receiverType)
         {
@@ -1323,7 +1329,7 @@ public static class CSharpSourceBackend
 
             var first = parameters[0];
             var formatted = new List<string> { $"this {receiverType} {first.Name}" };
-            formatted.AddRange(parameters.Skip(1).Select(parameter => $"{parameter.Type} {parameter.Name}"));
+            formatted.AddRange(parameters.Skip(1).Select(FormatParameter));
             return string.Join(", ", formatted);
         }
 
@@ -1456,7 +1462,7 @@ public static class CSharpSourceBackend
         private string EmitParameter(SyntaxNode parameter)
         {
             var parameterInfo = GetParameter(parameter);
-            return $"{parameterInfo.Type} {parameterInfo.Name}";
+            return FormatParameter(parameterInfo);
         }
 
         private CSharpParameter GetParameter(SyntaxNode parameter)
@@ -1464,8 +1470,15 @@ public static class CSharpSourceBackend
             var name = parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text;
             var annotation = parameter.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
             var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
-            return new CSharpParameter(MapType(typeNode), !string.IsNullOrWhiteSpace(name) ? name : "_", GetSourceTypeName(typeNode));
+            return new CSharpParameter(
+                MapType(typeNode),
+                !string.IsNullOrWhiteSpace(name) ? name : "_",
+                GetSourceTypeName(typeNode),
+                IsParamsParameter(parameter));
         }
+
+        private static bool IsParamsParameter(SyntaxNode parameter) =>
+            parameter.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.ParamsKeyword);
 
         private void EmitBlock(
             SyntaxNode node,
@@ -3210,7 +3223,7 @@ public static class CSharpSourceBackend
                     continue;
                 }
 
-                members.Add(new CSharpParameter(MapType(memberType), memberName, GetSourceTypeName(memberType)));
+                members.Add(new CSharpParameter(MapType(memberType), memberName, GetSourceTypeName(memberType), IsParams: false));
             }
 
             return new RecordShape(name, members);
@@ -5140,7 +5153,7 @@ public static class CSharpSourceBackend
             public bool IsAlias => !string.Equals(ImportedName, LocalName, StringComparison.Ordinal);
         }
 
-        private readonly record struct CSharpParameter(string Type, string Name, string SourceType);
+        private readonly record struct CSharpParameter(string Type, string Name, string SourceType, bool IsParams);
 
         private readonly record struct CSharpFunctionSignature(
             IReadOnlyList<string> ParameterTypes,

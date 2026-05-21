@@ -226,7 +226,8 @@ public static class TypeSharpTypeChecker
                                 functionReturnType,
                                 GetFunctionCapabilities(child),
                                 GetFunctionParameterTypes(child, scope),
-                                GetTypeParameterNames(child));
+                                GetTypeParameterNames(child),
+                                GetFunctionParamsParameterIndex(child, scope));
                         }
 
                         break;
@@ -431,6 +432,7 @@ public static class TypeSharpTypeChecker
 
             var scope = new TypeScope(parentScope, allowedCapabilities: GetFunctionCapabilities(node));
             CheckFunctionDynamicCapability(node, scope);
+            CheckParamsParameterDeclarations(node, scope);
             foreach (var parameter in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList).SelectMany(child => child.Children).Where(child => child.Kind == SyntaxKind.Parameter))
             {
                 if (TryGetFirstIdentifier(parameter, out var parameterIdentifier) &&
@@ -480,6 +482,45 @@ public static class TypeSharpTypeChecker
             }
         }
 
+        private void CheckParamsParameterDeclarations(SyntaxNode node, TypeScope scope)
+        {
+            var parameters = GetParameterNodes(node).ToArray();
+            var paramsIndexes = parameters
+                .Select((parameter, index) => (Parameter: parameter, Index: index))
+                .Where(item => IsParamsParameter(item.Parameter))
+                .ToArray();
+
+            if (paramsIndexes.Length == 0)
+            {
+                return;
+            }
+
+            if (paramsIndexes.Length > 1)
+            {
+                foreach (var duplicate in paramsIndexes.Skip(1))
+                {
+                    ReportMismatch(duplicate.Parameter, "A parameter list can declare only one params parameter.");
+                }
+            }
+
+            var firstParams = paramsIndexes[0];
+            if (firstParams.Index != parameters.Length - 1)
+            {
+                ReportMismatch(firstParams.Parameter, "The params parameter must be the final parameter.");
+            }
+
+            foreach (var item in paramsIndexes)
+            {
+                if (!TryGetDirectTypeAnnotation(item.Parameter, out var annotation) ||
+                    !TryGetType(annotation, scope, out var parameterType) ||
+                    !TryGetArrayElementTypeName(parameterType, out _))
+                {
+                    var name = item.Parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "parameter";
+                    ReportMismatch(item.Parameter, $"Params parameter '{name}' must have an array type.");
+                }
+            }
+        }
+
         private void CheckExtensionDeclaration(SyntaxNode node, TypeScope scope)
         {
             var receiverTypeNode = node.Children.FirstOrDefault(child => IsTypeSyntax(child.Kind));
@@ -501,6 +542,10 @@ public static class TypeSharpTypeChecker
                     !TryGetType(parameterTypeNode, scope, out var parameterType))
                 {
                     ReportMismatch(function, $"Extension method requires a first receiver parameter of type '{receiverType}'.");
+                }
+                else if (IsParamsParameter(firstParameter))
+                {
+                    ReportMismatch(firstParameter, "Extension method receiver parameter cannot be a params parameter.");
                 }
                 else if (parameterType.IsKnown &&
                     receiverType.IsKnown &&
@@ -1141,6 +1186,20 @@ public static class TypeSharpTypeChecker
                 return function.ReturnType;
             }
 
+            if (TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out var paramsIndex, out var paramsArrayType, out var paramsElementType))
+            {
+                return CheckDirectFunctionParamsCallExpression(
+                    node,
+                    scope,
+                    functionName,
+                    function.ReturnType,
+                    parameterTypes,
+                    arguments,
+                    paramsIndex,
+                    paramsArrayType,
+                    paramsElementType);
+            }
+
             if (arguments.Length != parameterTypes.Count)
             {
                 ReportMismatch(
@@ -1161,6 +1220,68 @@ public static class TypeSharpTypeChecker
             }
 
             return function.ReturnType;
+        }
+
+        private SimpleType CheckDirectFunctionParamsCallExpression(
+            SyntaxNode node,
+            TypeScope scope,
+            string functionName,
+            SimpleType returnType,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<SyntaxNode> arguments,
+            int paramsIndex,
+            SimpleType paramsArrayType,
+            SimpleType paramsElementType)
+        {
+            if (arguments.Count < paramsIndex)
+            {
+                ReportMismatch(
+                    node,
+                    $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
+            }
+
+            for (var index = 0; index < Math.Min(arguments.Count, paramsIndex); index++)
+            {
+                if (!parameterTypes[index].IsKnown)
+                {
+                    CheckExpression(arguments[index], scope);
+                    continue;
+                }
+
+                CheckDirectFunctionArgument(node, scope, functionName, arguments[index], index, parameterTypes[index]);
+            }
+
+            if (arguments.Count < paramsIndex)
+            {
+                return returnType;
+            }
+
+            if (arguments.Count == parameterTypes.Count)
+            {
+                var paramsArgument = arguments[paramsIndex];
+                if (paramsArgument.Kind == SyntaxKind.CollectionExpression)
+                {
+                    CheckDirectFunctionArgument(node, scope, functionName, paramsArgument, paramsIndex, paramsArrayType);
+                    return returnType;
+                }
+
+                var argumentType = CheckExpression(paramsArgument, scope);
+                if (!argumentType.IsKnown || CanPassToExpectedSilently(scope, paramsArrayType, argumentType))
+                {
+                    ValidateDirectFunctionArgumentType(node, scope, functionName, paramsIndex, paramsArrayType, argumentType);
+                    return returnType;
+                }
+
+                ValidateDirectFunctionArgumentType(node, scope, functionName, paramsIndex, paramsElementType, argumentType);
+                return returnType;
+            }
+
+            for (var index = paramsIndex; index < arguments.Count; index++)
+            {
+                CheckDirectFunctionArgument(node, scope, functionName, arguments[index], index, paramsElementType);
+            }
+
+            return returnType;
         }
 
         private SimpleType CheckDirectGenericFunctionCallExpression(
@@ -1206,7 +1327,14 @@ public static class TypeSharpTypeChecker
                 return SubstituteGenericType(function.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
             }
 
-            if (arguments.Count != parameterTypes.Count)
+            var hasParams = TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out var paramsIndex, out _, out _);
+            if (hasParams && arguments.Count < paramsIndex)
+            {
+                ReportMismatch(
+                    node,
+                    $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
+            }
+            else if (!hasParams && arguments.Count != parameterTypes.Count)
             {
                 ReportMismatch(
                     node,
@@ -1215,16 +1343,25 @@ public static class TypeSharpTypeChecker
 
             if (explicitTypeArguments.Count > 0)
             {
+                var effectiveParameterTypes = GetEffectiveParamsParameterTypes(
+                    scope,
+                    parameterTypes,
+                    arguments,
+                    argumentTypes: null,
+                    function.ParamsParameterIndex,
+                    substitutions,
+                    typeParameterNames);
+
                 for (var index = 0; index < arguments.Count; index++)
                 {
                     var argument = arguments[index];
-                    if (index >= parameterTypes.Count)
+                    if (index >= effectiveParameterTypes.Count)
                     {
                         CheckExpression(argument, scope);
                         continue;
                     }
 
-                    var expectedType = SubstituteGenericType(parameterTypes[index], substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
+                    var expectedType = SubstituteGenericType(effectiveParameterTypes[index], substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
                     if (!expectedType.IsKnown)
                     {
                         CheckExpression(argument, scope);
@@ -1243,10 +1380,19 @@ public static class TypeSharpTypeChecker
                 argumentTypes[index] = CheckExpression(arguments[index], scope);
             }
 
+            var inferredParameterTypes = GetEffectiveParamsParameterTypes(
+                scope,
+                parameterTypes,
+                arguments,
+                argumentTypes,
+                function.ParamsParameterIndex,
+                substitutions: null,
+                typeParameterNames);
+
             var inconsistentTypeParameters = InferDirectGenericFunctionTypeArguments(
                 node,
                 $"Function '{functionName}'",
-                parameterTypes,
+                inferredParameterTypes,
                 arguments.Count,
                 argumentTypes,
                 typeParameterNames,
@@ -1254,12 +1400,12 @@ public static class TypeSharpTypeChecker
 
             for (var index = 0; index < arguments.Count; index++)
             {
-                if (index >= parameterTypes.Count)
+                if (index >= inferredParameterTypes.Count)
                 {
                     continue;
                 }
 
-                var parameterType = parameterTypes[index];
+                var parameterType = inferredParameterTypes[index];
                 if (GenericTypeReferencesAny(parameterType, inconsistentTypeParameters, typeParameterNames))
                 {
                     continue;
@@ -1323,6 +1469,143 @@ public static class TypeSharpTypeChecker
             }
 
             return inconsistentTypeParameters;
+        }
+
+        private IReadOnlyList<SimpleType> GetEffectiveParamsParameterTypes(
+            TypeScope scope,
+            IReadOnlyList<SimpleType> parameterTypes,
+            IReadOnlyList<SyntaxNode> arguments,
+            IReadOnlyList<SimpleType>? argumentTypes,
+            int? paramsParameterIndex,
+            IReadOnlyDictionary<string, SimpleType>? substitutions,
+            IReadOnlySet<string>? typeParameterNames)
+        {
+            if (!TryGetParamsParameter(parameterTypes, paramsParameterIndex, out var paramsIndex, out var paramsArrayType, out var paramsElementType) ||
+                arguments.Count < paramsIndex)
+            {
+                return parameterTypes;
+            }
+
+            if (arguments.Count == parameterTypes.Count)
+            {
+                if (arguments[paramsIndex].Kind == SyntaxKind.CollectionExpression)
+                {
+                    return parameterTypes;
+                }
+
+                if (argumentTypes is not null)
+                {
+                    var comparisonArrayType = paramsArrayType;
+                    if (substitutions is not null && typeParameterNames is not null)
+                    {
+                        comparisonArrayType = SubstituteGenericType(
+                            comparisonArrayType,
+                            substitutions,
+                            typeParameterNames,
+                            unresolvedTypeParameterIsUnknown: true);
+                    }
+
+                    var argumentType = argumentTypes[paramsIndex];
+                    if (!argumentType.IsKnown ||
+                        CanPassToExpectedSilently(scope, comparisonArrayType, argumentType) ||
+                        (typeParameterNames is not null &&
+                            TryInferDirectGenericArgument(paramsArrayType, argumentType, typeParameterNames, out _, out _)))
+                    {
+                        return parameterTypes;
+                    }
+                }
+            }
+
+            var effectiveParameterTypes = new List<SimpleType>();
+            for (var index = 0; index < paramsIndex; index++)
+            {
+                effectiveParameterTypes.Add(parameterTypes[index]);
+            }
+
+            for (var index = paramsIndex; index < arguments.Count; index++)
+            {
+                effectiveParameterTypes.Add(paramsElementType);
+            }
+
+            return effectiveParameterTypes;
+        }
+
+        private IReadOnlyList<SimpleType> GetEffectiveParamsParameterTypesForArgumentTypes(
+            TypeScope scope,
+            IReadOnlyList<SimpleType> parameterTypes,
+            int argumentCount,
+            IReadOnlyList<SimpleType>? argumentTypes,
+            int? paramsParameterIndex,
+            IReadOnlyDictionary<string, SimpleType>? substitutions,
+            IReadOnlySet<string>? typeParameterNames)
+        {
+            if (!TryGetParamsParameter(parameterTypes, paramsParameterIndex, out var paramsIndex, out var paramsArrayType, out var paramsElementType) ||
+                argumentCount < paramsIndex)
+            {
+                return parameterTypes;
+            }
+
+            if (argumentCount == parameterTypes.Count && argumentTypes is not null)
+            {
+                var comparisonArrayType = paramsArrayType;
+                if (substitutions is not null && typeParameterNames is not null)
+                {
+                    comparisonArrayType = SubstituteGenericType(
+                        comparisonArrayType,
+                        substitutions,
+                        typeParameterNames,
+                        unresolvedTypeParameterIsUnknown: true);
+                }
+
+                var argumentType = argumentTypes[paramsIndex];
+                if (!argumentType.IsKnown ||
+                    CanPassToExpectedSilently(scope, comparisonArrayType, argumentType) ||
+                    (typeParameterNames is not null &&
+                        TryInferDirectGenericArgument(paramsArrayType, argumentType, typeParameterNames, out _, out _)))
+                {
+                    return parameterTypes;
+                }
+            }
+
+            var effectiveParameterTypes = new List<SimpleType>();
+            for (var index = 0; index < paramsIndex; index++)
+            {
+                effectiveParameterTypes.Add(parameterTypes[index]);
+            }
+
+            for (var index = paramsIndex; index < argumentCount; index++)
+            {
+                effectiveParameterTypes.Add(paramsElementType);
+            }
+
+            return effectiveParameterTypes;
+        }
+
+        private static bool TryGetParamsParameter(
+            IReadOnlyList<SimpleType> parameterTypes,
+            int? paramsParameterIndex,
+            out int paramsIndex,
+            out SimpleType paramsArrayType,
+            out SimpleType paramsElementType)
+        {
+            paramsIndex = paramsParameterIndex ?? -1;
+            paramsArrayType = SimpleType.Unknown;
+            paramsElementType = SimpleType.Unknown;
+            if (paramsIndex < 0 || paramsIndex >= parameterTypes.Count)
+            {
+                return false;
+            }
+
+            paramsArrayType = parameterTypes[paramsIndex];
+            return TryGetArrayElementType(paramsArrayType, out paramsElementType);
+        }
+
+        private bool CanPassToExpectedSilently(TypeScope scope, SimpleType expectedType, SimpleType argumentType)
+        {
+            return argumentType.IsKnown &&
+                !IsNullabilityViolation(expectedType, argumentType) &&
+                !TryGetStructuralAssignmentDiagnostic(scope, expectedType, argumentType, out _) &&
+                CanAssign(scope, expectedType, argumentType);
         }
 
         private void CheckDirectFunctionArgument(
@@ -1432,6 +1715,21 @@ public static class TypeSharpTypeChecker
                 return targetFunction.ReturnType;
             }
 
+            if (TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out var paramsIndex, out var paramsArrayType, out var paramsElementType))
+            {
+                return CheckPipelineParamsFunctionApplication(
+                    node,
+                    scope,
+                    targetName,
+                    targetFunction.ReturnType,
+                    inputType,
+                    targetArguments,
+                    parameterTypes,
+                    paramsIndex,
+                    paramsArrayType,
+                    paramsElementType);
+            }
+
             var suppliedArgumentCount = targetArguments.Count + 1;
             if (parameterTypes.Count == 0)
             {
@@ -1468,6 +1766,94 @@ public static class TypeSharpTypeChecker
             }
 
             return targetFunction.ReturnType;
+        }
+
+        private SimpleType CheckPipelineParamsFunctionApplication(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            SimpleType returnType,
+            SimpleType inputType,
+            IReadOnlyList<SyntaxNode> targetArguments,
+            IReadOnlyList<SimpleType> parameterTypes,
+            int paramsIndex,
+            SimpleType paramsArrayType,
+            SimpleType paramsElementType)
+        {
+            var suppliedArgumentCount = targetArguments.Count + 1;
+            if (suppliedArgumentCount < paramsIndex)
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+            }
+
+            if (paramsIndex > 0 && parameterTypes[0].IsKnown)
+            {
+                ValidatePipelineInputType(node, scope, targetName, parameterTypes[0], inputType);
+            }
+
+            for (var index = 0; index < targetArguments.Count && index + 1 < paramsIndex; index++)
+            {
+                var parameterIndex = index + 1;
+                if (!parameterTypes[parameterIndex].IsKnown)
+                {
+                    CheckExpression(targetArguments[index], scope);
+                    continue;
+                }
+
+                CheckPipelineArgument(node, scope, targetName, targetArguments[index], parameterIndex, parameterTypes[parameterIndex]);
+            }
+
+            if (suppliedArgumentCount < paramsIndex)
+            {
+                return returnType;
+            }
+
+            if (suppliedArgumentCount == parameterTypes.Count)
+            {
+                if (paramsIndex == 0)
+                {
+                    ValidatePipelineInputType(
+                        node,
+                        scope,
+                        targetName,
+                        !inputType.IsKnown || CanPassToExpectedSilently(scope, paramsArrayType, inputType)
+                            ? paramsArrayType
+                            : paramsElementType,
+                        inputType);
+                    return returnType;
+                }
+
+                var paramsArgument = targetArguments[paramsIndex - 1];
+                if (paramsArgument.Kind == SyntaxKind.CollectionExpression)
+                {
+                    CheckPipelineArgument(node, scope, targetName, paramsArgument, paramsIndex, paramsArrayType);
+                    return returnType;
+                }
+
+                var argumentType = CheckExpression(paramsArgument, scope);
+                if (!argumentType.IsKnown || CanPassToExpectedSilently(scope, paramsArrayType, argumentType))
+                {
+                    ValidatePipelineArgumentType(node, scope, targetName, paramsIndex, paramsArrayType, argumentType);
+                    return returnType;
+                }
+
+                ValidatePipelineArgumentType(node, scope, targetName, paramsIndex, paramsElementType, argumentType);
+                return returnType;
+            }
+
+            if (paramsIndex == 0)
+            {
+                ValidatePipelineInputType(node, scope, targetName, paramsElementType, inputType);
+            }
+
+            for (var index = Math.Max(0, paramsIndex - 1); index < targetArguments.Count; index++)
+            {
+                CheckPipelineArgument(node, scope, targetName, targetArguments[index], index + 1, paramsElementType);
+            }
+
+            return returnType;
         }
 
         private SimpleType CheckGenericPipelineFunctionApplication(
@@ -1516,11 +1902,18 @@ public static class TypeSharpTypeChecker
             }
 
             var suppliedArgumentCount = targetArguments.Count + 1;
+            var hasParams = TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out var paramsIndex, out _, out _);
             if (parameterTypes.Count == 0)
             {
                 ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
             }
-            else if (suppliedArgumentCount != parameterTypes.Count)
+            else if (hasParams && suppliedArgumentCount < paramsIndex)
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+            }
+            else if (!hasParams && suppliedArgumentCount != parameterTypes.Count)
             {
                 ReportMismatch(
                     node,
@@ -1529,13 +1922,22 @@ public static class TypeSharpTypeChecker
 
             if (explicitTypeArguments.Count > 0)
             {
+                var effectiveParameterTypes = GetEffectiveParamsParameterTypesForArgumentTypes(
+                    scope,
+                    parameterTypes,
+                    suppliedArgumentCount,
+                    argumentTypes: null,
+                    targetFunction.ParamsParameterIndex,
+                    substitutions,
+                    typeParameterNames);
+
                 ValidateGenericPipelineArgumentsWithSubstitutions(
                     node,
                     scope,
                     targetName,
                     inputType,
                     targetArguments,
-                    parameterTypes,
+                    effectiveParameterTypes,
                     substitutions,
                     typeParameterNames);
 
@@ -1549,10 +1951,19 @@ public static class TypeSharpTypeChecker
                 argumentTypes[index + 1] = CheckExpression(targetArguments[index], scope);
             }
 
+            var inferredParameterTypes = GetEffectiveParamsParameterTypesForArgumentTypes(
+                scope,
+                parameterTypes,
+                suppliedArgumentCount,
+                argumentTypes,
+                targetFunction.ParamsParameterIndex,
+                substitutions: null,
+                typeParameterNames);
+
             var inconsistentTypeParameters = InferDirectGenericFunctionTypeArguments(
                 node,
                 $"Pipeline target '{targetName}'",
-                parameterTypes,
+                inferredParameterTypes,
                 suppliedArgumentCount,
                 argumentTypes,
                 typeParameterNames,
@@ -1560,12 +1971,12 @@ public static class TypeSharpTypeChecker
 
             for (var index = 0; index < suppliedArgumentCount; index++)
             {
-                if (index >= parameterTypes.Count)
+                if (index >= inferredParameterTypes.Count)
                 {
                     continue;
                 }
 
-                var parameterType = parameterTypes[index];
+                var parameterType = inferredParameterTypes[index];
                 if (GenericTypeReferencesAny(parameterType, inconsistentTypeParameters, typeParameterNames))
                 {
                     continue;
@@ -4456,6 +4867,21 @@ public static class TypeSharpTypeChecker
             return elementTypeName.Length > 0;
         }
 
+        private static bool TryGetArrayElementType(SimpleType type, out SimpleType elementType)
+        {
+            if (TryGetArrayElementTypeName(type, out var elementTypeName))
+            {
+                elementType = SimpleType.Named(elementTypeName);
+                return true;
+            }
+
+            elementType = SimpleType.Unknown;
+            return false;
+        }
+
+        private static bool IsParamsParameter(SyntaxNode parameter) =>
+            parameter.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.ParamsKeyword);
+
         private static bool SameSimpleType(SimpleType left, SimpleType right) =>
             left.IsKnown == right.IsKnown &&
             left.IsNull == right.IsNull &&
@@ -4982,6 +5408,14 @@ public static class TypeSharpTypeChecker
             return parameters;
         }
 
+        private static IReadOnlyList<SyntaxNode> GetParameterNodes(SyntaxNode declaration)
+        {
+            var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
+            return parameterList is null
+                ? []
+                : parameterList.Children.Where(child => child.Kind == SyntaxKind.Parameter).ToArray();
+        }
+
         private static IReadOnlyList<SimpleType>? GetFunctionParameterTypes(SyntaxNode declaration, TypeScope scope)
         {
             var parameterList = declaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.ParameterList);
@@ -5005,6 +5439,31 @@ public static class TypeSharpTypeChecker
             }
 
             return parameterTypes;
+        }
+
+        private static int? GetFunctionParamsParameterIndex(SyntaxNode declaration, TypeScope scope)
+        {
+            var parameters = GetParameterNodes(declaration);
+            var paramsIndexes = parameters
+                .Select((parameter, index) => (Parameter: parameter, Index: index))
+                .Where(item => IsParamsParameter(item.Parameter))
+                .ToArray();
+
+            if (paramsIndexes.Length != 1)
+            {
+                return null;
+            }
+
+            var item = paramsIndexes[0];
+            if (item.Index != parameters.Count - 1 ||
+                !TryGetDirectTypeAnnotation(item.Parameter, out var annotation) ||
+                !TryGetType(annotation, scope, out var parameterType) ||
+                !TryGetArrayElementTypeName(parameterType, out _))
+            {
+                return null;
+            }
+
+            return item.Index;
         }
 
         private static IReadOnlyList<string> GetTypeParameterNames(SyntaxNode declaration)
@@ -5422,24 +5881,25 @@ public static class TypeSharpTypeChecker
 
         public void DeclareValue(string name, SimpleType type, bool isMutable = false) => _values[name] = new ValueInfo(type, isMutable);
 
-        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null, []);
+        public void DeclareFunction(string name, SimpleType returnType) => _functions[name] = new FunctionInfo(returnType, default, null, [], null);
 
-        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null, []);
+        public void DeclareFunction(string name, SimpleType returnType, FunctionCapabilities capabilities) => _functions[name] = new FunctionInfo(returnType, capabilities, null, [], null);
 
         public void DeclareFunction(
             string name,
             SimpleType returnType,
             FunctionCapabilities capabilities,
             IReadOnlyList<SimpleType>? parameterTypes) =>
-            DeclareFunction(name, returnType, capabilities, parameterTypes, []);
+            DeclareFunction(name, returnType, capabilities, parameterTypes, [], null);
 
         public void DeclareFunction(
             string name,
             SimpleType returnType,
             FunctionCapabilities capabilities,
             IReadOnlyList<SimpleType>? parameterTypes,
-            IReadOnlyList<string> typeParameters) =>
-            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes, typeParameters);
+            IReadOnlyList<string> typeParameters,
+            int? paramsParameterIndex) =>
+            _functions[name] = new FunctionInfo(returnType, capabilities, parameterTypes, typeParameters, paramsParameterIndex);
 
         public void DeclareType(string name) => _types.Add(name);
 
@@ -5673,7 +6133,8 @@ public static class TypeSharpTypeChecker
         SimpleType ReturnType,
         FunctionCapabilities Capabilities,
         IReadOnlyList<SimpleType>? ParameterTypes,
-        IReadOnlyList<string> TypeParameters);
+        IReadOnlyList<string> TypeParameters,
+        int? ParamsParameterIndex);
 
     private readonly record struct FunctionCapabilities(
         bool RequiresDynamic,

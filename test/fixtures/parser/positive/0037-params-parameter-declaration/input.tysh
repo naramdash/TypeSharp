@@ -1,0 +1,5 @@
+namespace Samples.ParamsParameterDeclaration
+
+fun join(separator: string, params values: string[]): string = separator
+
+fun sum(params values: int[]): int = 0

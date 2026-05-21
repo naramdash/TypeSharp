@@ -1,0 +1,16 @@
+namespace Samples.ParamsParameterLowering
+
+fun join(separator: string, params values: string[]): string = separator
+
+fun sum(params values: int[]): int = 0
+
+export fun main(): string {
+  let names: string[] = ["a", "b"]
+  let numbers: int[] = [1, 2]
+  let expanded = join(",", "a", "b")
+  let exact = join(",", names)
+  let total = sum(1, 2, 3)
+  let piped = 1 |> sum(2, 3)
+  let exactPipe = numbers |> sum
+  expanded + exact + total.ToString() + piped.ToString() + exactPipe.ToString()
+}

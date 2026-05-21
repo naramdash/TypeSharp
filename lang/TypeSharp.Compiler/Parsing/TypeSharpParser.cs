@@ -947,10 +947,14 @@ public sealed class TypeSharpParser
 
         while (Current.Kind != SyntaxKind.CloseParenToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
-            var parameterChildren = new List<SyntaxNode>
+            var parameterChildren = new List<SyntaxNode>();
+
+            if (Current.Kind == SyntaxKind.ParamsKeyword)
             {
-                TokenNode(Expect(SyntaxKind.IdentifierToken))
-            };
+                parameterChildren.Add(TokenNode(NextToken()));
+            }
+
+            parameterChildren.Add(TokenNode(Expect(SyntaxKind.IdentifierToken)));
 
             if (Current.Kind == SyntaxKind.ColonToken)
             {

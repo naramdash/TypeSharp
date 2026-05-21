@@ -48,6 +48,7 @@ public enum SyntaxKind
     ForKeyword,
     InKeyword,
     OutKeyword,
+    ParamsKeyword,
     RefKeyword,
     IfKeyword,
     ElseKeyword,

@@ -1,0 +1,16 @@
+namespace Samples.TypeChecker.ParamsParameterDeclarationInvalid
+
+fun nonFinal(params values: int[], suffix: string): int = 0
+
+fun repeated(params left: int[], params right: int[]): int = 0
+
+fun nonArray(params value: int): int = value
+
+fun join(separator: string, params values: string[]): string = separator
+
+fun sum(params values: int[]): int = 0
+
+let missingFixed = join()
+let wrongFixed = join(1, "a")
+let wrongExpanded = sum("a")
+let wrongExact = join(",", [1, 2])

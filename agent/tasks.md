@@ -13,12 +13,12 @@
 
 ## State
 
-| Field              | Value                              |
-| ------------------ | ---------------------------------- |
-| Active task packet | [0366-params-parameter-declaration-slice.md](0366-params-parameter-declaration-slice.md) |
-| Active summary     | 0366 Params parameter declaration slice |
-| Completed range    | 0001-0365                         |
-| Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
+| Field              | Value                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Active task packet | [0367-roadmap-refresh-after-params-parameter-declaration.md](0367-roadmap-refresh-after-params-parameter-declaration.md) |
+| Active summary     | 0367 Roadmap refresh after params parameter declaration                                                                  |
+| Completed range    | 0001-0366                                                                                                                |
+| Completed rollup   | [tasks-rollup.md](tasks-rollup.md)                                                                                       |
 
 ## User Task Inbox
 
@@ -32,20 +32,19 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 <!-- user tasks below -->
 
-- [x] agent/tasks.md 파일의 Agent Task Queue 섹션은 최근 5개만 남기도록 변경, User Task Inbox는 유저가 언제나 변경할 수 있음을 명시
-- [x] 모태가 된 언어들의 모든 기능, 환경, 이코시스템을 분석해서 이 언어에 적절한 계획을 세우고 tasks.md에 반영하기. goal 모드가 끝났다고 생각되었을때에는 이러한 작업을 반복하여 멈추지 않고 계속 계획을 세우고 실행하도록 agent.md 문서에 반영할것
+- [ ] test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj 테스트 시간을 축소하기 위한 계획을 세우고 이 프로젝트의 목적에 부합하는지 따져서 구체화하기. 구체화한 계획에 따라 test 구성을 리팩토링할 것.
 
 ## Agent Task Queue
 
 최근 5개 행만 유지한다. 이전 완료 이력은 [tasks-rollup.md](tasks-rollup.md)를 본다.
 
-| Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
-| -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0365 roadmap refresh | 0366 Params parameter declaration slice | [0366-params-parameter-declaration-slice.md](0366-params-parameter-declaration-slice.md) | Implement a bounded TypeSharp-owned `params` final array parameter declaration slice for direct TypeSharp-declared calls and C# 7.3-compatible generated signatures. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference | [tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference](tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference) | Rechecked official source signals after private direct composition value inference, confirmed the baseline, and selected bounded TypeSharp-owned `params` parameter declarations. |
-| Q2       | Done        | Task 0363 roadmap refresh | 0364 Direct composition value inference slice | [tasks-rollup.md#task-0364-direct-composition-value-inference-slice](tasks-rollup.md#task-0364-direct-composition-value-inference-slice) | Inferred concrete delegates for unannotated non-exported direct named-function composition values with fully known signatures, while keeping public ABI inference closed. |
-| Q1       | Done        | Empty queue roadmap-refresh rule | 0363 Roadmap refresh after composition annotation compatibility | [tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility](tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility) | Rechecked official source signals after explicit composition annotation compatibility, confirmed the baseline, and selected bounded private direct composition value inference. |
-| Q2       | Done        | Task 0361 roadmap refresh | 0362 Composition function-type annotation compatibility slice | [tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice](tasks-rollup.md#task-0362-composition-function-type-annotation-compatibility-slice) | Validated explicit function-type annotations on direct named-function composition values before C# emission, without enabling unannotated composition type inference. |
+| Priority | Status      | Source                           | Task                                                            | Packet                                                                                                                                                                       | Notes                                                                                                                                                                                   |
+| -------- | ----------- | -------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1       | In Progress | Empty queue roadmap-refresh rule | 0367 Roadmap refresh after params parameter declaration         | [0367-roadmap-refresh-after-params-parameter-declaration.md](0367-roadmap-refresh-after-params-parameter-declaration.md)                                                     | Recheck official source signals after TypeSharp-owned final-array `params` parameter declarations and select the next bounded implementation slice.                                     |
+| Q2       | Done        | Task 0365 roadmap refresh        | 0366 Params parameter declaration slice                         | [tasks-rollup.md#task-0366-params-parameter-declaration-slice](tasks-rollup.md#task-0366-params-parameter-declaration-slice)                                                 | Implemented final-array `params` declarations for TypeSharp-declared functions, direct exact/expanded calls, pipeline validation, generic tail inference, and C# `params T[]` lowering. |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0365 Roadmap refresh after direct composition value inference   | [tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference](tasks-rollup.md#task-0365-roadmap-refresh-after-direct-composition-value-inference)     | Rechecked official source signals after private direct composition value inference, confirmed the baseline, and selected bounded TypeSharp-owned `params` parameter declarations.       |
+| Q2       | Done        | Task 0363 roadmap refresh        | 0364 Direct composition value inference slice                   | [tasks-rollup.md#task-0364-direct-composition-value-inference-slice](tasks-rollup.md#task-0364-direct-composition-value-inference-slice)                                     | Inferred concrete delegates for unannotated non-exported direct named-function composition values with fully known signatures, while keeping public ABI inference closed.               |
+| Q1       | Done        | Empty queue roadmap-refresh rule | 0363 Roadmap refresh after composition annotation compatibility | [tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility](tasks-rollup.md#task-0363-roadmap-refresh-after-composition-annotation-compatibility) | Rechecked official source signals after explicit composition annotation compatibility, confirmed the baseline, and selected bounded private direct composition value inference.         |
 
 Status values: `Requested`, `Ready`, `In Progress`, `Blocked`, `Done`, `Dropped`.
 

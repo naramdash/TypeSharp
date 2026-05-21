@@ -1,0 +1,21 @@
+namespace Samples.TypeChecker.ParamsParameterDeclaration
+
+fun join(separator: string, params values: string[]): string = separator
+
+fun sum(params values: int[]): int = 0
+
+fun keep<T>(params values: T[]): T[] = values
+
+let none = sum()
+let expanded = sum(1, 2, 3)
+let numbers: int[] = [1, 2]
+let exact = sum(numbers)
+let pipedExpanded = 1 |> sum(2, 3)
+let pipedExact = numbers |> sum
+let names: string[] = ["a", "b"]
+let exactJoin = join(",", names)
+let expandedJoin = join(",", "a", "b")
+let genericExpanded: int[] = keep(1, 2)
+let genericExact: int[] = keep(numbers)
+let genericExplicit: int[] = keep<int>(1, 2)
+let genericExplicitExact: int[] = keep<int>([1, 2])

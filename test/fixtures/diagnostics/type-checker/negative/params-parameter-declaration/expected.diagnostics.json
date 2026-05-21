@@ -1,0 +1,68 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "The params parameter must be the final parameter.",
+      "file": "input.tysh",
+      "start": { "line": 3, "column": 14 },
+      "end": { "line": 3, "column": 34 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "A parameter list can declare only one params parameter.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 34 },
+      "end": { "line": 5, "column": 53 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "The params parameter must be the final parameter.",
+      "file": "input.tysh",
+      "start": { "line": 5, "column": 14 },
+      "end": { "line": 5, "column": 32 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Params parameter 'value' must have an array type.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 14 },
+      "end": { "line": 7, "column": 31 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'join' expects at least 1 argument, but call supplies 0 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 20 },
+      "end": { "line": 13, "column": 26 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'join' argument 1 expects 'string', but found 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 14, "column": 18 },
+      "end": { "line": 14, "column": 30 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Function 'sum' argument 1 expects 'int', but found 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 15, "column": 21 },
+      "end": { "line": 15, "column": 29 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Collection expression element expects 'string' but found 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 16, "column": 28 },
+      "end": { "line": 16, "column": 34 }
+    }
+  ]
+}

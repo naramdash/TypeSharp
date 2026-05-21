@@ -3,7 +3,7 @@
 Status: Done
 Queue: Q0-Q5
 Start Time: 2026-05-20 02:17:44 +09:00
-End Time: 2026-05-21 22:57:53 +09:00
+End Time: 2026-05-21 23:19:58 +09:00
 
 ## Objective
 
@@ -1873,13 +1873,14 @@ Completed language/compiler work established:
 Verification:
 
 ```powershell
-dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
 npm run build          # in docs
 git diff --check
 ```
 
 Primary evidence:
 
+- Full runner completed 516/516 PASS after the explicit test project build above.
 - [SyntaxKind.cs](../lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs)
 - [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
 - [TypeSharpBinder.cs](../lang/TypeSharp.Compiler/Binding/TypeSharpBinder.cs)
@@ -4159,6 +4160,60 @@ Remaining:
 
 - Params parameter declaration support is active in task 0366. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, `params` in function-type syntax, higher-order function values, currying, partial application, public composition ABI inference, imported composition targets, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0366 Params Parameter Declaration Slice
+
+Completed implementation work established:
+
+- Added lexer/parser support for preserving a `params` keyword before parameter names in TypeSharp parameter lists.
+- Added checker validation for TypeSharp-owned `params` declarations: only one `params` parameter is allowed, it must be final, and it must be array-typed.
+- Extended direct TypeSharp-declared function calls so final-array `params` parameters accept one exact array argument or expanded trailing element arguments, including zero trailing arguments after fixed parameters.
+- Extended direct generic function call inference/substitution through the implemented `params` tail for exact array and expanded element argument shapes.
+- Extended first-argument pipeline validation so known TypeSharp-declared targets account for final-array `params` tails after pipeline lowering.
+- Lowered accepted final-array `params` declarations to C# 7.3-compatible `params T[]` signatures while keeping generated calls ordinary C# invocations.
+- Added parser, type-checker positive/negative, backend snapshot, and CLI generated `net48` compile smoke coverage.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the implemented boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles TypeSharp params parameter lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [SyntaxKind.cs](../lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs)
+- [TypeSharpLexer.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpLexer.cs)
+- [TypeSharpParser.cs](../lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs)
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- [CSharpSourceBackend.cs](../lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs)
+- `test/fixtures/parser/positive/0037-params-parameter-declaration`
+- `test/fixtures/diagnostics/type-checker/positive/params-parameter-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/params-parameter-declaration`
+- `test/fixtures/backend/csharp/positive/0045-params-parameter-lowering`
+- `test/TypeSharp.Compiler.Tests/Program.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Roadmap refresh after params parameter declarations is active in task 0367. Optional/default parameter declarations, named argument binding for TypeSharp-declared functions, TypeSharp overload ranking, imported C# `params` behavior changes, constructor/delegate/union-case broadening, `params` in function-type syntax, higher-order function values, currying, partial application, public composition ABI inference, imported composition targets, broader generic constraints, type constructor policy, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -4183,13 +4238,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0365 is compressed here.
+- Completed historical work through task 0366 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0366 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0367 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:

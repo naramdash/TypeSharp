@@ -75,6 +75,8 @@ Member lookup prefers instance members, then applicable extension members, then 
 
 Overload resolution is nominal-first. Candidate checks include arity, named/optional/default parameters, `params`, `ref`/`out`/`in`, generic arity, generic constraints, receiver compatibility, nullability, type-level union narrowing, and structural proof availability.
 
+TypeSharp-owned functions support a bounded `params` declaration shape: the final parameter may be written as `params name: T[]`. Direct calls and first-argument pipeline lowering accept either an exact `T[]` argument or expanded trailing `T` arguments. Optional/default parameters, named argument binding for TypeSharp-declared functions, and TypeSharp function overload ranking remain backlog; imported C# overloads continue to use the metadata-backed interop path.
+
 Canonical pages: [Grammar](../grammar/), [Modules And Imports](../modules/), [.NET Interop](../dotnet-interop/), [Diagnostics](../diagnostics/)
 
 Detailed C#/.NET reference: [C# Members And Overloads](../csharp-members-overloads/)
