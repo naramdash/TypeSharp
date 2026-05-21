@@ -15,9 +15,9 @@
 
 | Field              | Value                              |
 | ------------------ | ---------------------------------- |
-| Active task packet | [0350-pipeline-target-arity-and-argument-diagnostics-slice.md](0350-pipeline-target-arity-and-argument-diagnostics-slice.md) |
-| Active summary     | Add direct pipeline target arity and non-piped call argument diagnostics for known TypeSharp-declared function targets. |
-| Completed range    | 0001-0349                         |
+| Active task packet | None                               |
+| Active summary     | None                               |
+| Completed range    | 0001-0350                         |
 | Completed rollup   | [tasks-rollup.md](tasks-rollup.md) |
 
 ## User Task Inbox
@@ -41,7 +41,7 @@ Agent는 사용자가 추가한 항목을 삭제하지 않는다. 처리 완료 
 
 | Priority | Status      | Source                    | Task                                     | Packet                                                                   | Notes                                                                                                                                         |
 | -------- | ----------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q2       | In Progress | Task 0349 roadmap refresh | 0350 Pipeline target arity and argument diagnostics slice | [0350-pipeline-target-arity-and-argument-diagnostics-slice.md](0350-pipeline-target-arity-and-argument-diagnostics-slice.md) | Add direct pipeline target arity and non-piped call argument `TS2201` diagnostics for known TypeSharp-declared function targets. |
+| Q2       | Done        | Task 0349 roadmap refresh | 0350 Pipeline target arity and argument diagnostics slice | [tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice](tasks-rollup.md#task-0350-pipeline-target-arity-and-argument-diagnostics-slice) | Added direct pipeline target arity and non-piped call argument `TS2201` diagnostics for known TypeSharp-declared function targets while preserving pipeline lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0349 Roadmap refresh after pipeline input compatibility diagnostics | [tasks-rollup.md#task-0349-roadmap-refresh-after-pipeline-input-compatibility-diagnostics](tasks-rollup.md#task-0349-roadmap-refresh-after-pipeline-input-compatibility-diagnostics) | Rechecked official source signals after direct pipeline input compatibility diagnostics, confirmed the baseline, and selected bounded direct pipeline target arity/argument diagnostics. |
 | Q2       | Done        | Task 0347 roadmap refresh | 0348 Pipeline function input compatibility diagnostics slice | [tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice](tasks-rollup.md#task-0348-pipeline-function-input-compatibility-diagnostics-slice) | Added direct `value |> f` and `value |> f(args...)` first-parameter `TS2201` diagnostics for known TypeSharp-declared function targets while preserving pipeline lowering. |
 | Q1       | Done        | Empty queue roadmap-refresh rule | 0347 Roadmap refresh after composition function compatibility diagnostics | [tasks-rollup.md#task-0347-roadmap-refresh-after-composition-function-compatibility-diagnostics](tasks-rollup.md#task-0347-roadmap-refresh-after-composition-function-compatibility-diagnostics) | Rechecked official source signals after direct named-function composition compatibility diagnostics, confirmed the baseline, and selected bounded direct pipeline input compatibility diagnostics. |

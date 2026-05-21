@@ -3482,6 +3482,53 @@ Remaining:
 
 - Direct pipeline target arity and non-piped call argument diagnostics are active in task 0350. Imported C# pipeline targets, generic inference, optional/default/params TypeSharp function parameter policy, higher-order pipeline targets, currying, partial application, pipeline overload ranking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
 
+## Task 0350 Pipeline Target Arity And Argument Diagnostics Slice
+
+Completed implementation work established:
+
+- Extended the direct pipeline type-checking path to validate known TypeSharp-declared target arity after first-argument lowering.
+- Reported deterministic `TS2201` diagnostics for zero-parameter pipeline targets, missing lowered arguments, extra lowered arguments, and incompatible non-piped call arguments.
+- Kept imported C# pipeline targets, generic inference, optional/default/params TypeSharp function parameter policy, higher-order pipeline targets, currying, partial application, pipeline overload ranking, and general direct TypeSharp function call argument checking outside pipeline targets out of the slice.
+- Preserved existing pipeline parsing, backend fixture output, valid pipeline CLI build behavior, and C# 7.3-compatible call lowering.
+- Added `test/fixtures/diagnostics/type-checker/negative/pipeline-target-arity-and-argument` covering valid direct/call pipeline targets plus zero-parameter, missing-argument, extra-argument, and incompatible non-piped argument diagnostics.
+- Kept `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility` focused on first-parameter input compatibility.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, and Traceability docs with the bounded direct pipeline arity and argument boundary.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "diagnostic fixture polarity is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles pipeline lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [TypeSharpTypeChecker.cs](../lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs)
+- `test/fixtures/diagnostics/type-checker/negative/pipeline-target-arity-and-argument`
+- `test/fixtures/diagnostics/type-checker/negative/pipeline-function-input-compatibility`
+- `test/fixtures/backend/csharp/positive/0023-pipeline-lowering`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [traceability.md](traceability.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Imported C# pipeline targets, generic inference, optional/default/params TypeSharp function parameter policy, higher-order pipeline targets, currying, partial application, pipeline overload ranking, general direct TypeSharp function call argument checking, numeric shifts, shift assignment, user-defined operators, TypeSharp member assignment policy, broad class-member body analysis, flag-aware enum algebra, broad attribute target validation, numeric pattern algebra, imported enum flag reasoning, arbitrary/general computed enum member declarations, and richer pattern algebra remain future work.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -3506,7 +3553,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0349 is compressed here.
+- Completed historical work through task 0350 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

@@ -1,0 +1,44 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'now' cannot receive a pipeline input because it declares no parameters.",
+      "file": "input.tysh",
+      "start": { "line": 17, "column": 28 },
+      "end": { "line": 17, "column": 36 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'add' expects 2 arguments after pipeline lowering, but pipeline supplies 1 argument.",
+      "file": "input.tysh",
+      "start": { "line": 18, "column": 30 },
+      "end": { "line": 18, "column": 38 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'combine' expects 3 arguments after pipeline lowering, but pipeline supplies 2 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 34 },
+      "end": { "line": 19, "column": 49 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'increment' expects 1 argument after pipeline lowering, but pipeline supplies 2 arguments.",
+      "file": "input.tysh",
+      "start": { "line": 20, "column": 31 },
+      "end": { "line": 20, "column": 48 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Pipeline target 'append' argument 2 expects 'string', but found 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 21, "column": 27 },
+      "end": { "line": 21, "column": 43 }
+    }
+  ]
+}

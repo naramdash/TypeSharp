@@ -1,0 +1,21 @@
+namespace Samples.TypeChecker.PipelineTargetArityAndArgument
+
+fun increment(value: int): int = value + 1
+
+fun add(value: int, amount: int): int = value + amount
+
+fun combine(value: int, left: int, right: int): int = value + left + right
+
+fun append(value: string, suffix: string): string = value + suffix
+
+fun now(): int = 0
+
+let validDirect = 1 |> increment
+let validCall = 1 |> add(2)
+let validMultiCall = 1 |> combine(2, 3)
+
+let invalidZeroParameter = 1 |> now
+let invalidMissingArgument = 1 |> add
+let invalidCallMissingArgument = 1 |> combine(2)
+let invalidTooManyArguments = 1 |> increment(2)
+let invalidArgumentType = "a" |> append(2)

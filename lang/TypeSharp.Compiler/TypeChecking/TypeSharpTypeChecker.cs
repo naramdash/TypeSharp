@@ -1093,48 +1093,106 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
-            CheckPipelineTargetArguments(target, scope);
-            CheckPipelineFunctionInput(node, scope, targetName, targetFunction, inputType);
+            var targetArguments = GetPipelineTargetArguments(target).ToArray();
+            CheckPipelineFunctionApplication(node, scope, targetName, targetFunction, inputType, targetArguments);
             return targetFunction.ReturnType;
         }
 
-        private void CheckPipelineTargetArguments(SyntaxNode target, TypeScope scope)
-        {
-            if (target.Kind != SyntaxKind.CallExpression)
-            {
-                return;
-            }
-
-            foreach (var argument in target.Children.Skip(1).Where(child => !child.IsToken))
-            {
-                CheckExpression(argument, scope);
-            }
-        }
-
-        private void CheckPipelineFunctionInput(
+        private void CheckPipelineFunctionApplication(
             SyntaxNode node,
             TypeScope scope,
             string targetName,
             FunctionInfo targetFunction,
-            SimpleType inputType)
+            SimpleType inputType,
+            IReadOnlyList<SyntaxNode> targetArguments)
         {
-            if (!inputType.IsKnown ||
-                targetFunction.ParameterTypes is not { Count: > 0 } parameterTypes ||
-                !parameterTypes[0].IsKnown)
+            if (targetFunction.ParameterTypes is not { } parameterTypes)
             {
+                foreach (var argument in targetArguments)
+                {
+                    CheckExpression(argument, scope);
+                }
+
                 return;
             }
 
-            var parameterType = parameterTypes[0];
-            if (CanAssign(scope, parameterType, inputType))
+            var suppliedArgumentCount = targetArguments.Count + 1;
+            if (parameterTypes.Count == 0)
             {
-                return;
+                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+            }
+            else if (suppliedArgumentCount != parameterTypes.Count)
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
             }
 
-            ReportMismatch(
-                node,
-                $"Pipeline target '{targetName}' expects '{parameterType}' for its first parameter, but pipeline input has type '{inputType}'.");
+            if (inputType.IsKnown &&
+                parameterTypes.Count > 0 &&
+                parameterTypes[0].IsKnown &&
+                !CanAssign(scope, parameterTypes[0], inputType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' expects '{parameterTypes[0]}' for its first parameter, but pipeline input has type '{inputType}'.");
+            }
+
+            for (var index = 0; index < targetArguments.Count; index++)
+            {
+                var argument = targetArguments[index];
+                var parameterIndex = index + 1;
+                if (parameterIndex >= parameterTypes.Count || !parameterTypes[parameterIndex].IsKnown)
+                {
+                    CheckExpression(argument, scope);
+                    continue;
+                }
+
+                CheckPipelineArgument(node, scope, targetName, argument, parameterIndex, parameterTypes[parameterIndex]);
+            }
         }
+
+        private void CheckPipelineArgument(
+            SyntaxNode node,
+            TypeScope scope,
+            string targetName,
+            SyntaxNode argument,
+            int parameterIndex,
+            SimpleType expectedType)
+        {
+            var argumentType = CheckExpressionWithExpected(argument, scope, expectedType);
+            if (!argumentType.IsKnown)
+            {
+                return;
+            }
+
+            if (IsNullabilityViolation(expectedType, argumentType))
+            {
+                ReportMismatch(
+                    node,
+                    argumentType.IsNull
+                        ? $"Pipeline target '{targetName}' argument {parameterIndex + 1} cannot be null because it expects non-null type '{expectedType}'."
+                        : $"Pipeline target '{targetName}' argument {parameterIndex + 1} expects non-null type '{expectedType}', but found nullable type '{argumentType}'.");
+            }
+            else if (TryGetStructuralAssignmentDiagnostic(scope, expectedType, argumentType, out var structuralMessage))
+            {
+                ReportMismatch(node, structuralMessage);
+            }
+            else if (!CanAssign(scope, expectedType, argumentType))
+            {
+                ReportMismatch(
+                    node,
+                    $"Pipeline target '{targetName}' argument {parameterIndex + 1} expects '{expectedType}', but found '{argumentType}'.");
+            }
+        }
+
+        private static IEnumerable<SyntaxNode> GetPipelineTargetArguments(SyntaxNode target) =>
+            target.Kind == SyntaxKind.CallExpression
+                ? target.Children.Skip(1).Where(child => !child.IsToken)
+                : Enumerable.Empty<SyntaxNode>();
+
+        private static string FormatArgumentCount(int count) =>
+            count == 1 ? "1 argument" : $"{count} arguments";
 
         private static bool IsPipelineExpression(SyntaxNode node) =>
             node.Kind == SyntaxKind.BinaryExpression &&

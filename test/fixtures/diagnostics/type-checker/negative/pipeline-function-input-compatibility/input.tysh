@@ -16,4 +16,3 @@ let validCall = "a" |> append("!")
 
 let invalidDirect = "a" |> increment
 let invalidCall = 1 |> append("!")
-let zeroParameterOutOfScope = 1 |> now
