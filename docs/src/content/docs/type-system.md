@@ -80,8 +80,58 @@ TypeSharp follows TypeScript's structural typing as a local proof model, not as 
 - keep shape checks, `satisfies`, intersections, local type-level unions, limited `keyof`, and indexed access local-only unless wrapped in a named public type;
 - support bounded TypeScript-style discriminant narrowing for `value.Tag == "literal"` and `value.Tag != "literal"` when a local type-level union's structural members expose a required literal tag property;
 - add optional-member and index-signature behavior only after the checker can report deterministic missing/possibly-undefined member diagnostics;
-- treat mapped, conditional, template-literal, and utility types as backlog until TypeSharp has a budgeted compile-time evaluator and recursion limits;
+- treat mapped, conditional, template-literal, and utility types as backlog until TypeSharp has the budgeted evaluator contract below implemented with diagnostics;
 - prefer generated nominal interfaces or wrappers for any future structural public ABI adapter.
+
+## Advanced Type Operator Evaluator Budget
+
+Mapped, conditional, template-literal, and utility types are accepted design direction only as bounded compile-time evaluation. They must never become an open-ended TypeScript compatibility layer or a way to smuggle structural/computed shapes into public CLR metadata.
+
+Initial evaluator inputs should be restricted to TypeSharp-owned type facts:
+
+- primitive, nominal, array, tuple, function, literal, nullable, and local type-level union types;
+- records, classes, interfaces, delegates, nominal unions, and named structural shapes known to the current compilation;
+- current limited `keyof` and indexed access facts over known records and named shapes;
+- generic type parameters with explicit constraints when the constraint has a finite property/member set.
+
+Initial evaluator outputs must normalize to one of:
+
+- a single CLR-visible type such as a primitive, nominal declaration, delegate-compatible function type, array, or nullable form;
+- a local compile-time-only structural shape, literal union, type-level union, or key set;
+- a deterministic diagnostic when evaluation would be ambiguous, too large, cyclic, unsupported, or public-ABI unsafe.
+
+Budget limits for the first implementation:
+
+| Budget | Limit | Purpose |
+| --- | --- | --- |
+| Alias instantiation depth | 16 nested type-operator expansions | Stops recursive utility aliases and mutually recursive conditional aliases. |
+| Total evaluator steps per root alias | 512 reductions | Keeps `typesharp check` responsive and deterministic. |
+| Normalized union width | 64 members | Prevents distributive conditionals and template products from exploding. |
+| Mapped key count | 64 keys | Keeps mapped record/shape transforms inspectable. |
+| Conditional distribution branches | 64 branches | Allows small local unions while rejecting unbounded distribution. |
+| Template literal product | 128 generated strings | Requires ahead-of-time generation or nominal alternatives for larger string sets. |
+| Diagnostic cascade per root alias | 8 direct evaluator diagnostics | Reports the root cause without flooding the user. |
+
+Evaluation rules:
+
+- Cache evaluations by alias symbol, normalized type arguments, and source scope so repeated references do not multiply work.
+- Detect cycles through the active instantiation stack before counting budget exhaustion.
+- Distribute conditional types over type-level unions only when the branch count stays under budget.
+- Do not infer through C# overload sets, dynamic calls, reflection, imported declaration files, or runtime values.
+- Do not evaluate user code, invoke generators, restore packages, or read JavaScript/TypeScript declaration files during type computation.
+- Prefer rejecting an advanced operator with a deterministic diagnostic over partially evaluating it and emitting misleading C#.
+
+Utility type admission:
+
+- `Pick`, `Omit`, `Readonly`, `Mutable`, `Partial`, `Required`, `Record`, `Extract`, `Exclude`, `NonNullable`, `ReturnType`, and `Parameters` can be considered only when each has a TypeSharp-owned lowering-independent definition inside the evaluator.
+- Utilities that depend on JavaScript object semantics, declaration merging, broad `any`, overload-last inference, or ambient TypeScript library behavior stay out of the stable contract.
+- A utility type may be documented as implemented only after it has parser/checker coverage, public-boundary diagnostics, and generated `net48` smoke evidence when it can affect emitted signatures.
+
+Public boundary rule:
+
+- An evaluated advanced type may appear in public API only after it fully normalizes to a CLR-visible type that TypeSharp can emit and C# consumers can understand.
+- If the normalized result is structural, a type-level union, a literal-only key set, a template-generated string union, or an unresolved computed form, public use reports the public-boundary diagnostic before generated C# emission.
+- Future structural public ABI adapters must use generated nominal wrappers or interfaces with a versioned naming policy; they are separate from the evaluator budget.
 
 ## Nominal Public API
 

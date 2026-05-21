@@ -34,7 +34,7 @@ Stable grammar is not just a design note. It should have syntax examples and par
 | Rule | Decision |
 | --- | --- |
 | Expression-oriented default | `if`, `match`, `try`, and blocks should be able to produce values where semantics allow it. |
-| Compile-time and public ABI separation | `A \| B`, structural shapes, intersections, `keyof`, and indexed access types are compile-time tools unless represented through nominal public declarations. |
+| Compile-time and public ABI separation | `A \| B`, structural shapes, intersections, `keyof`, indexed access types, and future computed type-operator results are compile-time tools unless they normalize to CLR-visible metadata or are represented through nominal public declarations. |
 | Modules by default | Source files do not become implicit global scripts. Ambient declarations must be explicit. |
 | Minimal declaration symbols | Type annotations use `:`, expression-bodied functions use `=`, block bodies use `{ ... }`, function types use `->`, and lambdas/match arms use `=>`. |
 | Official spelling over aliases | Immutable binding is `let`, mutable binding is `let mut`, and compile-time constants use `literal` instead of `const`. |
@@ -71,7 +71,7 @@ Reserved keywords include core language, module, declaration, control-flow, type
 
 Contextual keywords include words such as `ambient`, `checked`, `dynamic`, `event`, `extern`, `field`, `nameof`, `partial`, `readonly`, `record`, `reflect`, `required`, `throws`, `unknown`, and `unchecked`.
 
-Literal forms include `null`, `true`, `false`, integer literals, floating literals, decimal literals with `m`, char literals, string literals, interpolated strings, and raw string literals. TypeScript-style template literal types remain Planned/Experimental, not stable lexical behavior.
+Literal forms include `null`, `true`, `false`, integer literals, floating literals, decimal literals with `m`, char literals, string literals, interpolated strings, and raw string literals. TypeScript-style template literal types remain planned grammar behind the advanced type-operator evaluator budget; they are not stable lexical behavior.
 
 Reserved punctuation and operators include delimiters `()[]{}<>`, member/list separators `. , : ;`, nullable/optional tokens `? ?. ?? ??=`, lambda and function type tokens `=> ->`, pipeline and composition `|> >> <<`, spreads/range-reserved forms `... ..`, equality/relational/logical operators, assignment operators, and attribute/interpolation sigils. Stable parsing is context-sensitive for shared tokens such as `|`, `&`, `?`, `<`, `>`, and `{ ... }`.
 
@@ -243,6 +243,8 @@ Type precedence, high to low:
 | 5 | Type-level union `A | B`. |
 | 6 | Right-associative function type `A -> B`. |
 
+Planned advanced type operators such as mapped types, conditional types, template-literal types, and utility-type aliases must stay behind the evaluator budget in [Type System](../type-system/). They should not become stable grammar until the parser, checker, diagnostics, formatter/LSP surface, and public ABI rules land together.
+
 Pattern precedence, high to low:
 
 | Level | Forms |
@@ -262,7 +264,7 @@ Coverage status answers whether TypeSharp directly supports a feature, provides 
 
 | Source | Direct Or Equivalent Coverage Examples | Replacement Or Boundary Examples |
 | --- | --- | --- |
-| TypeScript | ES module import/export, type-only import/export, ambient declarations, type aliases, interfaces, structural object types, type-level unions, intersections, literal types, narrowing, `unknown`, generics, object/array literals, spread, optional chaining, nullish coalescing, lambdas, `keyof`, indexed access types, `satisfies`, classes, enums, async/await. | Unbounded `any` becomes an explicit compatibility escape, decorators defer to .NET attributes, JSX is rejected as core grammar, advanced mapped/conditional/template-literal types remain planned or experimental. |
+| TypeScript | ES module import/export, type-only import/export, ambient declarations, type aliases, interfaces, structural object types, type-level unions, intersections, literal types, narrowing, `unknown`, generics, object/array literals, spread, optional chaining, nullish coalescing, lambdas, `keyof`, indexed access types, `satisfies`, classes, enums, async/await. | Unbounded `any` becomes an explicit compatibility escape, decorators defer to .NET attributes, JSX is rejected as core grammar, advanced mapped/conditional/template-literal and utility types remain planned behind a finite evaluator budget. |
 | F# | `let`, `let mut`, `literal`, expression/block-bodied functions, modules, `open`, records, nominal closed unions, option/result modeling, pattern matching, guards, pipeline, composition, iterator-style `yield`, and direct `Task` async interop. | General currying/partial application, computation expressions, active patterns, units of measure, type providers, recursive union ergonomics, and richer member constraints remain backlog or experimental until they have deterministic `net48` lowering and diagnostics. |
 | C# | `namespace`, imports, classes, interfaces, structs, enums, delegates, events, properties, attributes, async/await, nullable syntax, literals, named/optional/params/byref parameters, pattern direction, records, collection expressions, extension methods, partial declarations, unsafe/dynamic markers, constructors, tuples, `required`/`init`, `lock`, iterator `yield`, local functions, `nameof`, checked/unchecked. | LINQ query syntax maps to pipeline/comprehension direction, source generators remain external build/generator work, preview union types map to TypeSharp nominal unions plus local type-level unions. |
 

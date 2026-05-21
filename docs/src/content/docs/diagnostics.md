@@ -87,6 +87,21 @@ Diagnostic codes use `TS` plus four digits. Once a public code is allocated, it 
 
 No reserved examples are currently listed. Future diagnostics should be added to this table only when implemented.
 
+## Planned Advanced Type Operator Diagnostics
+
+Mapped, conditional, template-literal, and utility type computation is a documented design boundary, not implemented behavior. Future evaluator diagnostics belong in the `TS2200`-`TS2399` type-checking range, but new descriptor codes should be allocated only when the parser/checker implementation lands.
+
+Expected diagnostic classes:
+
+- unsupported advanced type-operator syntax or unsupported utility alias;
+- recursive or cyclic type-operator instantiation;
+- evaluator budget exceeded, including alias depth, total reductions, union width, mapped key count, conditional distribution branches, or template literal product size;
+- unresolved mapped key, indexed member, conditional constraint, or utility input;
+- computed type result rejected at a public CLR boundary unless it fully normalizes to a CLR-visible type;
+- ambiguous or non-deterministic evaluation caused by imported metadata, dynamic values, overload sets, declaration-file assumptions, or runtime-dependent facts.
+
+Until those codes are allocated, docs should refer to these as planned diagnostic classes rather than stable public codes.
+
 ## Descriptor Metadata
 
 Every diagnostic descriptor must provide:

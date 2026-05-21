@@ -35,7 +35,7 @@ Required feasibility decisions:
 - Direct IL emission is a future backend, not the first stable emitter.
 - Type-level unions and structural shapes are compile-time tools and are rejected at public .NET ABI boundaries.
 - Nominal closed unions lower through a reference-type class hierarchy for the MVP representation.
-- Advanced TypeScript-style mapped, conditional, template-literal, and high-complexity type computation remains outside the MVP.
+- Advanced TypeScript-style mapped, conditional, template-literal, and high-complexity type computation remains outside the MVP and must stay behind the finite evaluator budget in [Type System](../type-system/).
 - Managed `net48` framework and local DLL metadata interop is the initial C# interop scope.
 - ASP.NET/WCF/worker compatibility is proven through generated `net48` library ABI and host reference/build smokes, not through host template or deployment automation in the MVP.
 
@@ -54,6 +54,24 @@ TypeSharp public API must be understandable to C# and CLR metadata consumers. Th
 - Runtime helper types must remain stable enough for generated assemblies and C# consumers.
 
 Use [.NET Interop](../dotnet-interop/) for the canonical public ABI and runtime ABI policy, including ABI version fields, covered surfaces, change rules, and compatibility gates. Use [Project Requirements](../requirements/) and [Feature Status](../feature-status/) for the wider platform and maturity policy.
+
+## Compile-Time Evaluator Budget
+
+Future advanced type operators are compile-time-only features. The evaluator must be deterministic, cached, and bounded before any syntax is promoted from backlog.
+
+The accepted first budget is:
+
+- 16 nested alias instantiations,
+- 512 evaluator reductions per root alias,
+- 64 normalized union members,
+- 64 mapped keys,
+- 64 distributive conditional branches,
+- 128 generated template-literal strings,
+- 8 direct evaluator diagnostics per root alias.
+
+The evaluator must not execute user code, import TypeScript declaration files as a compatibility layer, restore packages, inspect runtime values, or infer through C# overload sets. Public use is allowed only when the computed result fully normalizes to CLR-visible metadata; structural, union, template-generated, or unresolved computed results remain local-only and must diagnose before emission.
+
+Use [Type System](../type-system/) for the canonical evaluator budget and [Diagnostics](../diagnostics/) for planned diagnostic classes.
 
 ## Lowering
 

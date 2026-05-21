@@ -45,7 +45,7 @@ Canonical pages: [Grammar](../grammar/), [Language Tour](../language-tour/), [Ty
 
 ## Types
 
-Type syntax includes primitive names, nullable types, arrays, generic types, function types, structural shapes, structural intersection aliases, limited `keyof`, limited indexed access types, type-level unions, and nominal declarations.
+Type syntax includes primitive names, nullable types, arrays, generic types, function types, structural shapes, structural intersection aliases, limited `keyof`, limited indexed access types, type-level unions, and nominal declarations. Mapped, conditional, template-literal, and utility type syntax remains planned until the evaluator budget, diagnostics, formatter/LSP behavior, and public ABI rules are implemented together.
 
 Canonical pages: [Grammar](../grammar/), [Type System](../type-system/), [C# And CLR Type Model](../csharp-type-model/), [Feature Status](../feature-status/)
 
@@ -109,6 +109,7 @@ Core language feature specs:
 | Functions, values, literals | [Grammar](../grammar/), [Lowering](../lowering/) | Parser fixtures, binder/type checker smokes, generated C# snapshots. |
 | Records, classes, interfaces, delegates, nominal unions | [Grammar](../grammar/), [Type System](../type-system/), [Lowering](../lowering/) | Backend snapshots, diagnostics fixtures, generated `net48` build, C# consumer smokes. |
 | Type-level unions, structural shapes, intersections, `keyof`, indexed access, `satisfies` | [Type System](../type-system/), [Grammar](../grammar/), [.NET Interop](../dotnet-interop/) | Parser snapshots, type checker fixtures, backend snapshots, generated build smokes. |
+| Advanced mapped, conditional, template-literal, and utility type operators | [Type System](../type-system/), [Feature Status](../feature-status/) | Documented evaluator budget only; implementation evidence is required before promotion. |
 | `unknown`, nullability, capability boundaries | [Type System](../type-system/), [Diagnostics](../diagnostics/), [.NET Interop](../dotnet-interop/) | `TS2202`, `TS2206`, `TS2207`, `TS2208`, `TS2209`, `TS2404` fixtures and CLI smokes. |
 | Pattern matching, pipeline, composition, async, `yield`, `lock`, extension methods, collections, `nameof`, checked/unchecked | [Grammar](../grammar/), [Feature Status](../feature-status/), [Lowering](../lowering/) | Parser snapshots, type checker fixtures, backend snapshots, generated build and C# consumer smokes. |
 

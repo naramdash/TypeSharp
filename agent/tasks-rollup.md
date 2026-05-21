@@ -1644,6 +1644,34 @@ Primary evidence:
 - [Diagnostics](../docs/src/content/docs/diagnostics.md)
 - [tasks.md](tasks.md)
 
+## Task 0302 Advanced Type Operator Evaluator Budget
+
+Completed design work established:
+
+- Documented the future advanced type-operator evaluator budget for mapped, conditional, template-literal, and utility type computation.
+- Set first-implementation limits: 16 alias instantiation depth, 512 evaluator reductions per root alias, 64 normalized union members, 64 mapped keys, 64 conditional distribution branches, 128 template-literal products, and 8 direct evaluator diagnostics per root alias.
+- Restricted evaluator inputs to TypeSharp-owned type facts and banned user-code execution, package restore, TypeScript declaration-file compatibility, runtime-value inspection, and C# overload-set inference during type computation.
+- Defined utility type admission rules for future TypeSharp-owned versions of `Pick`, `Omit`, `Readonly`, `Mutable`, `Partial`, `Required`, `Record`, `Extract`, `Exclude`, `NonNullable`, `ReturnType`, and `Parameters`.
+- Kept public ABI safe: advanced computed types may appear in public signatures only after normalizing to CLR-visible metadata; structural, union, template-generated, or unresolved computed results remain local-only and must diagnose before emission.
+- Added planned advanced type-operator diagnostic classes without allocating unimplemented descriptor codes.
+
+Verification:
+
+```powershell
+npm run build
+git diff --check
+```
+
+Primary evidence:
+
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Advanced Topics](../docs/src/content/docs/advanced.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:
