@@ -1704,6 +1704,29 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 
+## Task 0305 Roadmap Refresh After Ecosystem Plan
+
+Completed roadmap refresh work established:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources on 2026-05-21 after the .NET ecosystem tooling roadmap.
+- Confirmed that TypeSharp's baseline remains unchanged: generated artifacts stay `net48`, generated source stays C# 7.3-compatible, C# 15 and TypeScript 7.0 remain preview/tooling-direction signals, and package/Marketplace/template publication remains gated by Project Policy.
+- Updated Feature Status with TypeScript 6.0 and TypeScript 7.0 Beta source links, clarified TypeScript native-port boundaries, recorded F# 10 diagnostic/async/parallel-compiler signals, and restated that C# 15 collection expression arguments and union types are directional only.
+- Compared the refreshed signals against Work Ledger remaining future areas and selected `match` arm `when` guard support as the next bounded language implementation slice.
+- Queued task `0306 Match guard implementation slice` for parser, checker, and lowering work over nominal and local type-level union matches where guarded arms do not prove exhaustiveness without an unguarded cover.
+
+Verification:
+
+```powershell
+npm run build          # in docs
+git diff --check
+```
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
 ## Verification Summary
 
 Representative commands used across the completed range:

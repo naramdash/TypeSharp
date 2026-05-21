@@ -37,6 +37,8 @@ Official TypeScript sources refreshed on 2026-05-21:
 - [Type declarations](https://www.typescriptlang.org/docs/handbook/2/type-declarations)
 - [TSConfig reference](https://www.typescriptlang.org/tsconfig/)
 - [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html)
+- [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/)
+- [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/)
 - [TypeScript 5.9 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html)
 
 Related .NET artifact source refreshed on 2026-05-21:
@@ -50,6 +52,7 @@ Current boundary:
 - TypeSharp keeps files as modules by default and uses an explicit source module graph; it does not model Node, bundler, CommonJS, package `exports`, `paths`, or JavaScript emit semantics as stable language behavior.
 - `TypeSharp.toml` is the project contract. It can learn from TSConfig options such as source includes, project references, declaration output, and stricter checking, but it must map to generated `net48` artifacts instead of JavaScript runtime settings.
 - Manifest-owned current-project source aliases are implemented for source graph imports/re-exports. TypeSharp direct project references are implemented for manifest-owned source imports, referenced-project build ordering, generated `net48` assembly consumption, and deterministic graph/export diagnostics before dependent emission.
+- TypeScript 7.0 Beta and the native compiler port are tooling strategy signals only. TypeSharp should learn from stable type ordering, faster project graph analysis, and side-by-side tooling migration, but it must not depend on TypeScript's Go toolchain or JavaScript compiler APIs.
 
 | TypeScript Signal | TypeSharp Status | TypeSharp Direction |
 | --- | --- | --- |
@@ -81,7 +84,7 @@ Current boundary:
 
 - TypeSharp uses F# as the functional-consistency benchmark, not as a syntax compatibility target.
 - Generated artifacts remain `net48` assemblies with C# 7.3-compatible generated source and no `FSharp.Core` runtime dependency by default.
-- F# 10 features are design signals only when they improve clarity, diagnostics, or .NET task interop without introducing F# compiler/runtime requirements.
+- F# 10 features are design signals only when they improve clarity, diagnostics, or .NET task interop without introducing F# compiler/runtime requirements. Scoped warning control, attribute target enforcement, `task` `and!`, and parallel compilation reinforce TypeSharp's need for deterministic diagnostics, explicit async lowering, and ordered parallel compiler work.
 
 | F# Signal | TypeSharp Status | TypeSharp Direction |
 | --- | --- | --- |
@@ -109,6 +112,7 @@ Current boundary:
 - C# 14 is the current stable C# release and is supported on .NET 10.
 - C# 15 is the current preview C# release and is supported on .NET 11 preview.
 - Microsoft documents .NET Framework projects as defaulting to C# 7.3, so TypeSharp generated source remains C# 7.3-compatible for `net48`.
+- C# 15 preview currently includes collection expression arguments and union types. Both remain directional only because TypeSharp already owns collection lowering and union semantics under its `net48` public ABI policy.
 
 | C# Signal | TypeSharp Status | TypeSharp Direction |
 | --- | --- | --- |
@@ -123,6 +127,16 @@ Current boundary:
 | C# 14 first-class `Span<T>` conversions | Experimental | Span-like APIs require `System.Memory`, `net48` deployment, and performance review before TypeSharp adopts a stable surface. |
 | C# 15 collection expression arguments | Preview Watch | Directional input for TypeSharp collection expressions only. Do not make `with(...)` collection arguments stable until C# 15 leaves preview and TypeSharp has C# 7.3 lowering semantics. |
 | C# 15 union types | Preview Watch | Directional input only. TypeSharp's stable union model remains nominal closed unions plus local type-level unions until C# union runtime/metadata contracts settle. |
+
+## Roadmap Refresh Result
+
+Official C#, F#, TypeScript, .NET Framework, NuGet, and VS Code sources were rechecked on 2026-05-21 after the .NET ecosystem tooling roadmap. The refresh did not change TypeSharp's baseline: generated artifacts remain `net48`, generated C# remains C# 7.3-compatible, external preview features stay behind Preview Watch, and package/Marketplace/template publication remains gated by Project Policy.
+
+The next bounded implementation slice is match guard support:
+
+- `match` arm `when` guards are already reserved in the grammar surface, but parser/checker/lowering support is not implemented.
+- Guarded arms should not satisfy exhaustiveness by themselves unless a later unguarded arm or discard arm covers the same closed set.
+- The first implementation should focus on nominal unions and existing local type-level union match paths, with bool/enum exhaustiveness and richer pattern algebra remaining separate follow-ups.
 
 ## MVP Language Features
 
