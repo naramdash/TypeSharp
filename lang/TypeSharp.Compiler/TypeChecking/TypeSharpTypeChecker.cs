@@ -537,16 +537,7 @@ public static class TypeSharpTypeChecker
                 return;
             }
 
-            if (GetTypeParameterNames(node).Count > 0)
-            {
-                foreach (var item in defaultedParameters)
-                {
-                    var name = GetParameterName(item.Parameter) ?? "parameter";
-                    ReportMismatch(
-                        item.Parameter,
-                        $"Defaulted parameter '{name}' is not supported on generic functions in the initial optional-parameter slice.");
-                }
-            }
+            var typeParameterNames = new HashSet<string>(GetTypeParameterNames(node), StringComparer.Ordinal);
 
             if (IsExternalSignatureFunction(node))
             {
@@ -572,7 +563,7 @@ public static class TypeSharpTypeChecker
                 if (IsDefaultedParameter(parameter))
                 {
                     defaultedSuffixStarted = true;
-                    CheckDefaultParameterInitializer(parameter, scope);
+                    CheckDefaultParameterInitializer(parameter, scope, typeParameterNames);
                     continue;
                 }
 
@@ -584,7 +575,10 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private void CheckDefaultParameterInitializer(SyntaxNode parameter, TypeScope scope)
+        private void CheckDefaultParameterInitializer(
+            SyntaxNode parameter,
+            TypeScope scope,
+            IReadOnlySet<string> containingTypeParameterNames)
         {
             var name = GetParameterName(parameter) ?? "parameter";
             if (!TryGetDirectTypeAnnotation(parameter, out var annotation) ||
@@ -592,6 +586,15 @@ public static class TypeSharpTypeChecker
                 !parameterType.IsKnown)
             {
                 ReportMismatch(parameter, $"Defaulted parameter '{name}' must declare an explicit type.");
+                return;
+            }
+
+            if (containingTypeParameterNames.Count > 0 &&
+                GenericTypeReferencesAny(parameterType, containingTypeParameterNames, containingTypeParameterNames))
+            {
+                ReportMismatch(
+                    parameter,
+                    $"Defaulted parameter '{name}' cannot use generic type parameter type '{parameterType}'.");
                 return;
             }
 

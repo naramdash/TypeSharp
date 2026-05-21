@@ -21743,6 +21743,119 @@ static void CliBuildCompilesTypeSharpGenericNamedArgumentLowering()
     });
 }
 
+static void CliBuildCompilesTypeSharpGenericOptionalDefaultParameterLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "TypeSharpGenericOptionalDefaultParameterLowering"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.GenericOptionalDefaultParameter"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.GenericOptionalDefaultParameter
+
+            export fun choose<T>(value: T, fallback: string = "fallback"): T = value
+
+            export fun isEnabled<T>(value: T, enabled: bool = true): bool = enabled
+
+            export fun count<T>(value: T, amount: int = 5): int = amount
+
+            export fun maybe<T>(value: T, label: string? = null): string? = label
+
+            export fun smoke(): string {
+              let direct: string = choose("value")
+              let explicitValue: int = choose<int>(42)
+              let full: string = choose("value", "manual")
+              let namedDefault: string = choose(value: "named")
+              let piped: string = "pipe" |> choose()
+              let pipedExplicit: int = 7 |> choose<int>()
+              let enabledText = isEnabled("value").ToString()
+              let countText = count("value").ToString()
+              let maybeValue = maybe("value")
+              direct + explicitValue.ToString() + full + namedDefault + piped + pipedExplicit.ToString() + enabledText + countText + (maybeValue ?? "")
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/TypeSharpGenericOptionalDefaultParameterLowering.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static T choose<T>(T value, string fallback = \"fallback\")", generatedSource);
+        AssertContains("public static bool isEnabled<T>(T value, bool enabled = true)", generatedSource);
+        AssertContains("public static int count<T>(T value, int amount = 5)", generatedSource);
+        AssertContains("public static string maybe<T>(T value, string label = null)", generatedSource);
+        AssertContains("var direct = choose(\"value\");", generatedSource);
+        AssertContains("var explicitValue = choose<int>(42);", generatedSource);
+        AssertContains("var full = choose(\"value\", \"manual\");", generatedSource);
+        AssertContains("var namedDefault = choose(\"named\");", generatedSource);
+        AssertContains("var piped = choose(\"pipe\");", generatedSource);
+        AssertContains("var pipedExplicit = choose<int>(7);", generatedSource);
+        AssertFalse(generatedSource.Contains("fallback:", StringComparison.Ordinal), "Generated TypeSharp-owned generic optional/default calls should stay positional C#.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeSharpGenericOptionalDefaultParameterLowering.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with TypeSharp generic optional/default parameter lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "GenericOptionalDefaultParameterConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>GenericOptionalDefaultParameterConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="TypeSharpGenericOptionalDefaultParameterLowering">
+                  <HintPath>../generated/bin/Debug/net48/TypeSharpGenericOptionalDefaultParameterLowering.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace GenericOptionalDefaultParameterConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.GenericOptionalDefaultParameter.Module.choose<int>(42).ToString()
+                            + Samples.GenericOptionalDefaultParameter.Module.choose<string>("value")
+                            + Samples.GenericOptionalDefaultParameter.Module.isEnabled<string>("value").ToString()
+                            + Samples.GenericOptionalDefaultParameter.Module.count<string>("value").ToString()
+                            + (Samples.GenericOptionalDefaultParameter.Module.maybe<int>(1) ?? "")
+                            + Samples.GenericOptionalDefaultParameter.Module.smoke();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build GenericOptionalDefaultParameterConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated TypeSharp generic optional/default parameter lowering API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
 static void CliBuildCompilesCompositionLowering()
 {
     WithWorkspace(root =>

@@ -1,0 +1,23 @@
+namespace Samples.TypeChecker.GenericOptionalDefaultParameterDeclaration
+
+fun choose<T>(value: T, fallback: string = "fallback"): T = value
+
+fun keepFlag<T>(value: T, enabled: bool = true): T = value
+
+fun countWith<T>(value: T, amount: int = 1): int = amount
+
+fun maybeLabel<T>(value: T, label: string? = null): string? = label
+
+fun decorate<T>(value: T, prefix: string = "item"): string = prefix
+
+let directInferred: int = choose(1)
+let directExplicit: string = choose<string>("value")
+let directFull: string = choose("value", "manual")
+let namedOmitted: int = choose(value: 1)
+let namedExplicit: string = choose<string>(value: "value")
+let flagDefault: int = keepFlag(1)
+let countDefault: int = countWith("value")
+let maybeDefault: string? = maybeLabel(1)
+let pipedCallDefault: string = "value" |> choose()
+let pipedExplicitDefault: int = 1 |> choose<int>()
+let pipedConcreteSuffix: string = "value" |> decorate()

@@ -510,6 +510,7 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("CLI build compiles TypeSharp optional/default parameter lowering", CliBuildCompilesTypeSharpOptionalDefaultParameterLowering),
         new TypeSharpCompilerTestCase("CLI build compiles TypeSharp named argument lowering", CliBuildCompilesTypeSharpNamedArgumentLowering),
         new TypeSharpCompilerTestCase("CLI build compiles TypeSharp generic named argument lowering", CliBuildCompilesTypeSharpGenericNamedArgumentLowering),
+        new TypeSharpCompilerTestCase("CLI build compiles TypeSharp generic optional/default parameter lowering", CliBuildCompilesTypeSharpGenericOptionalDefaultParameterLowering),
         new TypeSharpCompilerTestCase("CLI build compiles composition lowering", CliBuildCompilesCompositionLowering),
         new TypeSharpCompilerTestCase("CLI build compiles satisfies expression", CliBuildCompilesSatisfiesExpression),
         new TypeSharpCompilerTestCase("CLI build compiles yield iterator lowering", CliBuildCompilesYieldIteratorLowering),

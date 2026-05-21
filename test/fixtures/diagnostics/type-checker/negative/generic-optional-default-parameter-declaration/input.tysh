@@ -1,0 +1,5 @@
+namespace Samples.TypeChecker.GenericOptionalDefaultParameterDeclarationInvalid
+
+fun defaultGeneric<T>(value: T, fallback: T = null): T = value
+
+fun defaultGenericArray<T>(values: T[] = null): T[] = values

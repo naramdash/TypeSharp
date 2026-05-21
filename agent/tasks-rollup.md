@@ -5035,7 +5035,59 @@ Primary evidence:
 
 Remaining:
 
-- Active in task 0384: generic TypeSharp optional/default parameters.
+- Completed in task 0384: generic TypeSharp optional/default parameters.
+
+## Task 0384 Generic TypeSharp Optional Default Parameters
+
+Completed generic optional/default parameter work:
+
+- Removed the blanket `TS2201` rejection for TypeSharp-owned generic direct `fun` declarations with defaulted parameters.
+- Added a bounded generic-default rule: every defaulted parameter in a generic `fun` must have an explicit concrete TypeSharp type that does not reference a declared type parameter. Defaulted parameter types such as `T`, `T[]`, or matching wrappers that reference `T` report deterministic `TS2201` before C# emission.
+- Reused the existing direct generic explicit/inferred call, named generic call, and first-argument generic pipeline inference/substitution paths so accepted calls can omit the supported trailing concrete optional/default suffix.
+- Kept `params` combinations, ambient/`extern` signatures, constructors, delegates, union cases, function types, lambdas, higher-order values, overload ranking, imported C# behavior changes, and broader generic type-constructor unification out of scope.
+- Reused the existing C# backend optional-parameter emission so generated generic methods keep C# 7.3-compatible optional metadata in `net48` assemblies.
+- Added positive and negative type-checker fixtures, a C# backend snapshot, and a generated `net48` C# consumer smoke. The shared catalog is now 522 cases.
+- Updated Grammar, Reference, Type System, Lowering, Diagnostics, Feature Status, Work Ledger, task control, and traceability records for the new bounded behavior.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture scenario README coverage is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles TypeSharp optional/default parameter lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles TypeSharp generic named argument lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles TypeSharp generic optional/default parameter lowering"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --verbosity quiet
+npm run build          # in docs
+git diff --check
+```
+
+Result: all listed commands succeeded on 2026-05-22; the docs build emitted the existing Vite chunk-size warning only, and `git diff --check` emitted line-ending warnings only.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/positive/generic-optional-default-parameter-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/generic-optional-default-parameter-declaration`
+- `test/fixtures/backend/csharp/positive/0049-generic-optional-default-parameter-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+
+Remaining:
+
+- Active in task 0385: roadmap refresh after generic optional/default parameters.
 
 ## Verification Summary
 
@@ -5061,13 +5113,13 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0383 is compressed here.
+- Completed historical work through task 0384 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
 Remaining:
 
-- Continue active task 0384 from [tasks.md](tasks.md) when work resumes.
+- Continue active task 0385 from [tasks.md](tasks.md) when work resumes.
 - Fold each future completed active task back into this file and remove its completed packet.
 
 Blocked:
