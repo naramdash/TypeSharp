@@ -6416,7 +6416,7 @@ Primary evidence:
 
 Remaining:
 
-- Task 0412 completed the roadmap refresh after extension-property assignment diagnostics; Task 0413 is the active nullable receiver access diagnostic slice.
+- Task 0413 completed the nullable receiver access diagnostic slice; Task 0414 is the active roadmap-refresh slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0410 Roadmap Refresh After Extension Property Nullable Receiver Diagnostics
@@ -6464,7 +6464,7 @@ Primary evidence:
 
 Remaining:
 
-- Task 0412 completed the roadmap refresh after deterministic assignment diagnostics; Task 0413 is the active nullable receiver access diagnostic slice.
+- Task 0413 completed nullable receiver access diagnostics after deterministic assignment diagnostics; Task 0414 is the active roadmap-refresh slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0411 Extension Property Assignment Diagnostics
@@ -6559,7 +6559,54 @@ Primary evidence:
 
 Remaining:
 
-- Task 0413 should add deterministic nullable receiver access diagnostics for getter-only TypeSharp-authored extension properties.
+- Task 0413 completed deterministic nullable receiver access diagnostics for getter-only TypeSharp-authored extension properties; Task 0414 is the active roadmap-refresh slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0413 Extension Property Nullable Receiver Access Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added deterministic `TS2201` diagnostics when getter-only TypeSharp-authored extension properties are accessed through nullable receiver expressions before nullable receiver lifting is implemented.
+- Covered both read expressions and assignment targets whose extension property exists only for the exact non-null receiver type.
+- Preserved exact non-null getter-only extension property reads, existing getter-only assignment diagnostics, imported/shape member precedence, and C# 7.3-compatible helper lowering.
+- Added focused negative fixture coverage under `test/fixtures/diagnostics/type-checker/negative/extension-property-nullable-receiver-access`.
+- Updated canonical docs and ledgers to describe the nullable receiver access boundary.
+- Selected Task 0414 as the next ready bounded slice: roadmap refresh after extension-property nullable receiver access diagnostics.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports extension property generated helper collision diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles extension property lowering"
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler build and focused tests passed; docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-nullable-receiver-access`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0414 should perform the post-implementation roadmap refresh and select the next bounded slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -6586,7 +6633,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0409 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0413 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

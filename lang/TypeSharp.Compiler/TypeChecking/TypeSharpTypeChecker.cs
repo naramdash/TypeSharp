@@ -1232,6 +1232,13 @@ public static class TypeSharpTypeChecker
                 };
             }
 
+            if (TryGetNullableExtensionPropertyAssignmentTarget(target, scope, out var nullableAssignmentExtensionProperty, out var nullableReceiverType))
+            {
+                CheckExpression(value, scope);
+                ReportMismatch(target, FormatNullableExtensionPropertyAccessMessage(nullableReceiverType, nullableAssignmentExtensionProperty));
+                return nullableAssignmentExtensionProperty.Type;
+            }
+
             if (TryGetExtensionPropertyAssignmentTarget(target, scope, out var extensionProperty))
             {
                 CheckExpression(value, scope);
@@ -1290,6 +1297,46 @@ public static class TypeSharpTypeChecker
             }
 
             return scope.ResolveExtensionProperty(receiverType, memberName, out extensionProperty);
+        }
+
+        private bool TryGetNullableExtensionPropertyAssignmentTarget(
+            SyntaxNode target,
+            TypeScope scope,
+            out ExtensionPropertyInfo extensionProperty,
+            out SimpleType receiverType)
+        {
+            extensionProperty = default;
+            receiverType = SimpleType.Unknown;
+            if (target.Kind != SyntaxKind.MemberAccessExpression ||
+                !TryGetMemberAccessParts(target, out var receiver, out var memberName))
+            {
+                return false;
+            }
+
+            if (TryGetImportedStaticMemberAccessType(receiver, memberName, scope, requireWritable: false, out _))
+            {
+                return false;
+            }
+
+            receiverType = CheckExpression(receiver, scope);
+            if (IsUnknownType(receiverType))
+            {
+                return false;
+            }
+
+            var nonNullReceiverType = receiverType with { IsNullable = false };
+            if (TryGetImportedInstanceMemberAccessType(nonNullReceiverType, memberName, requireWritable: false, out _))
+            {
+                return false;
+            }
+
+            if (receiverType.IsKnown && scope.ResolveShape(receiverType.Name, out var shape) &&
+                shape.Members.Any(member => string.Equals(member.Name, memberName, StringComparison.Ordinal)))
+            {
+                return false;
+            }
+
+            return TryGetNullableExtensionPropertyAccess(receiverType, memberName, scope, out extensionProperty);
         }
 
         private SimpleType CheckSimpleAssignmentValue(SyntaxNode assignment, SyntaxNode value, TypeScope scope, SimpleType targetType)
@@ -1621,6 +1668,12 @@ public static class TypeSharpTypeChecker
                     return shapeExtensionProperty.Type;
                 }
 
+                if (TryGetNullableExtensionPropertyAccess(receiverType, memberName, scope, out var nullableShapeExtensionProperty))
+                {
+                    ReportMismatch(node, FormatNullableExtensionPropertyAccessMessage(receiverType, nullableShapeExtensionProperty));
+                    return nullableShapeExtensionProperty.Type;
+                }
+
                 ReportMismatch(node, $"Type '{receiverType}' does not contain member '{memberName}'.");
                 return SimpleType.Unknown;
             }
@@ -1630,7 +1683,35 @@ public static class TypeSharpTypeChecker
                 return extensionProperty.Type;
             }
 
+            if (TryGetNullableExtensionPropertyAccess(receiverType, memberName, scope, out var nullableExtensionProperty))
+            {
+                ReportMismatch(node, FormatNullableExtensionPropertyAccessMessage(receiverType, nullableExtensionProperty));
+                return nullableExtensionProperty.Type;
+            }
+
             return SimpleType.Unknown;
+        }
+
+        private static string FormatNullableExtensionPropertyAccessMessage(SimpleType receiverType, ExtensionPropertyInfo extensionProperty) =>
+            $"Extension property '{extensionProperty.Name}' requires non-null receiver type '{extensionProperty.ReceiverType}', but receiver expression has nullable type '{receiverType}'; nullable extension-property receiver access is not supported in this slice. Narrow the receiver before accessing the property until nullable receiver lifting is implemented.";
+
+        private bool TryGetNullableExtensionPropertyAccess(
+            SimpleType receiverType,
+            string memberName,
+            TypeScope scope,
+            out ExtensionPropertyInfo extensionProperty)
+        {
+            extensionProperty = default;
+            if (!receiverType.IsKnown ||
+                receiverType.IsNull ||
+                !receiverType.IsNullable ||
+                memberName.Length == 0)
+            {
+                return false;
+            }
+
+            var nonNullReceiverType = receiverType with { IsNullable = false };
+            return scope.ResolveExtensionProperty(nonNullReceiverType, memberName, out extensionProperty);
         }
 
         private bool TryGetImportedMemberAssignmentTargetType(

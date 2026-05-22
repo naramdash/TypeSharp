@@ -1,0 +1,15 @@
+namespace Samples.Extensions.NullableAccess
+
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}
+
+fun read(text: string?): int {
+  text.WordCount
+}
+
+fun assign(text: string?): int {
+  text.WordCount = 1
+  0
+}

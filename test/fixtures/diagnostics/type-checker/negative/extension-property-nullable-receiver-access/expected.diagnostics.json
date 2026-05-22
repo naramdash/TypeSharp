@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'WordCount' requires non-null receiver type 'string', but receiver expression has nullable type 'string?'; nullable extension-property receiver access is not supported in this slice. Narrow the receiver before accessing the property until nullable receiver lifting is implemented.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 3 },
+      "end": { "line": 9, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'WordCount' requires non-null receiver type 'string', but receiver expression has nullable type 'string?'; nullable extension-property receiver access is not supported in this slice. Narrow the receiver before accessing the property until nullable receiver lifting is implemented.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 3 },
+      "end": { "line": 13, "column": 17 }
+    }
+  ]
+}
