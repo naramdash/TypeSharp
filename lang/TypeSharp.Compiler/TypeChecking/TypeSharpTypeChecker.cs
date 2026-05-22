@@ -1422,7 +1422,7 @@ public static class TypeSharpTypeChecker
                         scope,
                         multiplicativeTargetType,
                         operatorKind,
-                        allowFloatingDecimal: false);
+                        allowFloatingDecimal: true);
                 }
 
                 if (TryGetNullConditionalExtensionPropertyTarget(

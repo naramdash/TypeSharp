@@ -23920,6 +23920,33 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
               fields?.MutableLong *= 3
             }
 
+            export fun multiplyFloat(value: float, factor: int): float {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableFloat = value
+              fields?.MutableFloat *= factor
+              fields?.MutableFloat /= factor
+              fields?.MutableFloat %= 2
+              fields.MutableFloat
+            }
+
+            export fun multiplyDouble(value: double, factor: float): double {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableDouble = value
+              fields?.MutableDouble *= factor
+              fields?.MutableDouble /= factor
+              fields?.MutableDouble %= 2
+              fields.MutableDouble
+            }
+
+            export fun multiplyDecimal(value: decimal, factor: int): decimal {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableDecimal = value
+              fields?.MutableDecimal *= factor
+              fields?.MutableDecimal /= factor
+              fields?.MutableDecimal %= 2m
+              fields.MutableDecimal
+            }
+
             export fun skipped(): string {
               LegacyFields.MutableStaticName = "ready"
               let fields: LegacyFields? = missingFields()
@@ -23951,6 +23978,18 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
         AssertContains(".MutableCount *= makeFactor())", generatedSource);
         AssertContains("new System.Func<LegacyFields, long>(__tsReceiver", generatedSource);
         AssertContains(".MutableLong *= 3)", generatedSource);
+        AssertContains("new System.Func<LegacyFields, float>(__tsReceiver", generatedSource);
+        AssertContains(".MutableFloat *= factor)", generatedSource);
+        AssertContains(".MutableFloat /= factor)", generatedSource);
+        AssertContains(".MutableFloat %= 2)", generatedSource);
+        AssertContains("new System.Func<LegacyFields, double>(__tsReceiver", generatedSource);
+        AssertContains(".MutableDouble *= factor)", generatedSource);
+        AssertContains(".MutableDouble /= factor)", generatedSource);
+        AssertContains(".MutableDouble %= 2)", generatedSource);
+        AssertContains("new System.Func<LegacyFields, decimal>(__tsReceiver", generatedSource);
+        AssertContains(".MutableDecimal *= factor)", generatedSource);
+        AssertContains(".MutableDecimal /= factor)", generatedSource);
+        AssertContains(".MutableDecimal %= 2m)", generatedSource);
         AssertContains(")(makeFields(value))", generatedSource);
         AssertFalse(generatedSource.Contains("?.", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional multiplicative assignment syntax.");
         AssertFalse(generatedSource.Contains("makeFields(value).MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional multiplicative receiver.");
@@ -23998,6 +24037,9 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.divideCount(21, 3) == 7 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.moduloCount(22, 5) == 2 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyLong(4L) == 12L &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyFloat(13f, 3) == 1f &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyDouble(13.0, 3f) == 1.0 &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyDecimal(13m, 3) == 1m &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.skipped() == "ready" &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33;
                     }
@@ -24068,6 +24110,24 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
               0
             }
 
+            export fun mixedDecimalFloating(value: double): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableDecimal *= value
+              0
+            }
+
+            export fun narrowingFloat(value: double): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableFloat *= value
+              0
+            }
+
+            export fun nullableFloat(value: float?): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableFloat /= value
+              0
+            }
+
             export fun readonlyField(): int {
               let fields: LegacyFields = LegacyFields()
               fields?.InstanceCode *= "x"
@@ -24111,29 +24171,44 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Null-conditional imported bool member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Null-conditional imported string member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Null-conditional imported enum member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Null-conditional imported member target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Null-conditional imported member target should reject multiplicative results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
+            "Null-conditional imported decimal member target should reject mixed decimal and floating-point operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
+            "Null-conditional imported float member target should reject floating-point results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
+            "Null-conditional imported float member target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
