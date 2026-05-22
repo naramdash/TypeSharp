@@ -7284,7 +7284,8 @@ Remaining:
 
 - Task 0426 has since completed the post-implementation roadmap refresh.
 - Task 0427 has since completed imported C# null-conditional bitwise compound assignment indexer targets.
-- Task 0428 is active and should recheck the roadmap after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0428 has since completed the roadmap refresh after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0429 is active and should implement imported C# null-conditional additive compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0426 Roadmap Refresh After Imported C# Null-Conditional Bitwise Compound Assignment Member Targets
@@ -7333,7 +7334,8 @@ Primary evidence:
 Remaining:
 
 - Task 0427 has since completed imported C# null-conditional bitwise compound assignment indexer targets.
-- Task 0428 is active and should recheck the roadmap after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0428 has since completed the roadmap refresh after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0429 is active and should implement imported C# null-conditional additive compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0427 Imported C# Null-Conditional Bitwise Compound Assignment Indexer Targets
@@ -7399,7 +7401,68 @@ Primary evidence:
 
 Remaining:
 
-- Task 0428 is active and should recheck official signals after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0428 has since completed the roadmap refresh after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0429 is active and should implement imported C# null-conditional additive compound assignment member targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0428 Roadmap Refresh After Imported C# Null-Conditional Bitwise Compound Assignment Indexer Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0427.
+- Confirmed no generated-artifact baseline drift: generated assemblies stay package-free `net48`, generated C# stays C# 7.3-compatible, C# 14 remains the stable .NET 10 C# signal, and C# 15 remains a .NET 11 preview signal.
+- Answered the `net10.0` NuGet package question directly: TypeSharp already uses NuGet at the test-host boundary through pinned `MSTest.Sdk/4.2.3`, Microsoft Testing Platform, package lock files, source mapping, audit controls, repo-local package cache, and four package-based shard projects over `TypeSharpCompilerTestCases.All`.
+- Reaffirmed MSTest SDK/MTP as the current broad package bridge. xUnit.net v3 and NUnit remain valid ecosystem choices, but adding either now would duplicate the same extracted-catalog evidence instead of improving the measured release-confidence path or generated `net48` compatibility.
+- Replaced the CI MSTest package shard PowerShell `Start-Job` loop with native .NET 10 MTP module-level parallelism using `dotnet test --test-modules`, `--root-directory`, `--max-parallel-test-modules 4`, and a 552-test minimum.
+- Updated the regression workflow contract test to assert the MTP module-level package shard command instead of the previous package shard `Start-Job` loop.
+- Verified the new MTP package shard command locally across the four shard assemblies. The count is 548 shared catalog cases plus one `CatalogIsExposedForPackageRunners` smoke in each shard.
+- Confirmed Task 0401 remains blocked: the GitHub Actions failure is still tracked as a C# process-launch issue around `npm`, not a setup-node/setup-dotnet availability failure or a missing NuGet test package.
+- Selected Task 0429 as the next bounded implementation slice: imported C# null-conditional additive compound assignment member targets `receiver?.Member += value` and `receiver?.Member -= value` for readable/writable metadata-backed instance fields/properties with supported primitive numeric operands, preserving single receiver evaluation, skipped right-side evaluation on null receivers, and C# 7.3-compatible guards/operator forms.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), and [C# 14 null-conditional assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/null-conditional-assignment).
+- Microsoft Learn [.NET 10 overview](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview), [.NET releases and support](https://learn.microsoft.com/en-us/dotnet/core/releases-and-support), [.NET Framework install/support surface](https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-and-server), and [F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript team [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) and [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/) posts.
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-mtp), and [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk).
+- NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [Microsoft Testing Platform guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [1.121 release notes](https://code.visualstudio.com/updates), [Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide), and [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+- GitHub [`actions/runner-images` Windows image migration issue](https://github.com/actions/runner-images/issues/14017), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and [`actions/setup-node`](https://github.com/actions/setup-node).
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "release and regression workflow contracts are stable"
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 552 --no-progress
+npm run build # in docs
+git diff --check
+```
+
+Result: all listed commands passed. The MTP module-level package shard run executed 552 tests successfully across the four shard assemblies. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0429 is active and should implement imported C# null-conditional additive compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -7426,7 +7489,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0418 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0428 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

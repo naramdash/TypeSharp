@@ -159,42 +159,14 @@ jobs:
           --no-build
           --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
 
-      - name: Run MSTest package shard bridges in parallel
+      - name: Run MSTest package shard bridges with MTP module parallelism
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
 
-          $mstestShards = 0..3 | ForEach-Object {
-            "test\TypeSharp.Compiler.Tests.MSTest.Shard$_\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj"
-          }
-          $expectedTests = @(137, 137, 137, 137)
-
-          $jobs = for ($index = 0; $index -lt $mstestShards.Count; $index++) {
-            Start-Job -Name (Split-Path $mstestShards[$index] -LeafBase) -ScriptBlock {
-              param($p, $minimum)
-
-              dotnet test `
-                --project $p `
-                --no-build `
-                --filter "FullyQualifiedName~CatalogCase" `
-                --minimum-expected-tests $minimum
-              if ($LASTEXITCODE -ne 0) {
-                throw "MSTest shard '$p' failed with exit code $LASTEXITCODE."
-              }
-            } -ArgumentList $mstestShards[$index], $expectedTests[$index]
-          }
-
-          $jobs | Wait-Job | Out-Null
-
-          $failed = $false
-          foreach ($job in $jobs) {
-            Receive-Job $job
-            if ($job.State -ne 'Completed') {
-              $failed = $true
-            }
-          }
-
-          $jobs | Remove-Job
-
-          if ($failed) {
-            throw 'One or more MSTest package shard bridges failed.'
-          }
+          dotnet test `
+            --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" `
+            --root-directory . `
+            --max-parallel-test-modules 4 `
+            --minimum-expected-tests 552 `
+            --no-progress

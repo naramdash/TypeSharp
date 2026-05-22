@@ -14184,9 +14184,11 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Receive-Job", regressionWorkflow);
     AssertContains("dotnet test", regressionWorkflow);
     AssertContains("FullyQualifiedName~CatalogIsExposedForPackageRunners", regressionWorkflow);
-    AssertContains("FullyQualifiedName~CatalogCase", regressionWorkflow);
+    AssertContains("--test-modules", regressionWorkflow);
+    AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
+    AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("One or more MSTest package shard bridges failed.", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 552", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
