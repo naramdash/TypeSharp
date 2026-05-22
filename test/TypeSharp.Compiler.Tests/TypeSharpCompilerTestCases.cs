@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(548, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(550, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -86,8 +86,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(137, shardCounts[0]);
-    AssertEqual(137, shardCounts[1]);
+    AssertEqual(138, shardCounts[0]);
+    AssertEqual(138, shardCounts[1]);
     AssertEqual(137, shardCounts[2]);
     AssertEqual(137, shardCounts[3]);
 
@@ -14188,7 +14188,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 552", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 554", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -20402,7 +20402,7 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTarg
 
             export fun compound(): int {
               let fields: LegacyFields = LegacyFields()
-              fields?.MutableCount += 1
+              fields?.MutableCount <<= 1
               0
             }
 
@@ -20437,6 +20437,254 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTarg
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message.Contains("writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Unsupported null-conditional member targets should be rejected before emission.");
+    });
+}
+
+static void CliBuildCompilesNullConditionalImportedMemberAdditiveCompoundAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalAdditiveCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalAdditiveCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalAdditiveCompoundAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            fun makeFields(value: int): LegacyFields {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = value
+              fields
+            }
+
+            fun missingFields(): LegacyFields? =
+              null
+
+            fun makeValue(): int {
+              LegacyFields.MutableStaticName = "called"
+              2
+            }
+
+            export fun addCount(value: int): int {
+              let fields: LegacyFields = makeFields(1)
+              fields?.MutableCount += value
+            }
+
+            export fun subtractCount(value: int): int {
+              let fields: LegacyFields = makeFields(7)
+              fields?.MutableCount -= value
+            }
+
+            export fun addLong(value: long): long {
+              let fields: LegacyFields = makeFields(1)
+              fields.MutableLong = value
+              fields?.MutableLong += value
+            }
+
+            export fun skipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let fields: LegacyFields? = missingFields()
+              fields?.MutableCount += makeValue()
+              LegacyFields.MutableStaticName
+            }
+
+            export fun nonTrivial(value: int): int {
+              makeFields(5)?.MutableCount += value
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported member additive compound assignment build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalAdditiveCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyFields, int>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int) : (__tsReceiver", generatedSource);
+        AssertContains(".MutableCount += value)", generatedSource);
+        AssertContains(".MutableCount -= value)", generatedSource);
+        AssertContains(".MutableCount += makeValue())", generatedSource);
+        AssertContains("new System.Func<LegacyFields, long>(__tsReceiver", generatedSource);
+        AssertContains(".MutableLong += value)", generatedSource);
+        AssertContains(")(makeFields(5))", generatedSource);
+        AssertFalse(generatedSource.Contains("?.", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional additive assignment syntax.");
+        AssertFalse(generatedSource.Contains("makeFields(5).MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional additive receiver.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalAdditiveCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional imported member additive compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalAdditiveCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalAdditiveCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalAdditiveCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalAdditiveCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalAdditiveCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalAdditiveCompoundAssignment.Module.addCount(2) == 3 &&
+                            Samples.NullConditionalAdditiveCompoundAssignment.Module.subtractCount(4) == 3 &&
+                            Samples.NullConditionalAdditiveCompoundAssignment.Module.addLong(4L) == 8L &&
+                            Samples.NullConditionalAdditiveCompoundAssignment.Module.skipped() == "ready" &&
+                            Samples.NullConditionalAdditiveCompoundAssignment.Module.nonTrivial(3) == 8;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalAdditiveCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional additive compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedMemberAdditiveCompoundAssignmentTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalAdditiveCompoundAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalAdditiveCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalAdditiveCompoundAssignment
+
+            import { LegacyColor, LegacyEvents, LegacyFields } from "Legacy.Tools"
+
+            export fun boolOperand(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableFlag += true
+              0
+            }
+
+            export fun stringOperand(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableCode += "x"
+              0
+            }
+
+            export fun enumOperand(color: LegacyColor): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableColor += color
+              0
+            }
+
+            export fun nullableOperand(value: int?): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableCount += value
+              0
+            }
+
+            export fun narrowing(value: long): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableCount += value
+              0
+            }
+
+            export fun readonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.InstanceCode += "x"
+              0
+            }
+
+            export fun eventTarget(): int {
+              let events: LegacyEvents = LegacyEvents()
+              events?.Transform += null
+              0
+            }
+
+            export fun staticTarget(): int {
+              LegacyFields?.MutableStaticCount += 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# additive compound assignment targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+            "Null-conditional imported bool member target should reject additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+            "Null-conditional imported string member target should reject additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
+            "Null-conditional imported enum member target should reject additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+            "Null-conditional imported member target should reject nullable additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign additive compound assignment result of type 'long' to 'int'."),
+            "Null-conditional imported member target should reject additive results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
+            "Readonly, event, and static null-conditional additive targets should be rejected before emission.");
     });
 }
 
@@ -20624,7 +20872,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsigne
 
             export fun otherCompound(): int {
               let fields: LegacyFields = LegacyFields()
-              fields?.MutableCount += 1
+              fields?.MutableCount <<= 1
               0
             }
             """);

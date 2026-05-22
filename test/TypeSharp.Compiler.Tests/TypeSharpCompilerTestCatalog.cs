@@ -498,6 +498,8 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("checker rejects unsupported imported logical unsigned shift assignment indexer targets", CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentIndexerTargets),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional assignment imported member targets", CliBuildCompilesNullConditionalAssignmentImportedMemberTargets),
         new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional assignment imported member targets", CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTargets),
+        new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported member additive compound assignment", CliBuildCompilesNullConditionalImportedMemberAdditiveCompoundAssignment),
+        new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported member additive compound assignment targets", CheckerRejectsUnsupportedNullConditionalImportedMemberAdditiveCompoundAssignmentTargets),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported member logical unsigned shift assignment", CliBuildCompilesNullConditionalImportedMemberLogicalUnsignedShiftAssignment),
         new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported member logical unsigned shift assignment targets", CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsignedShiftAssignmentTargets),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported member bitwise compound assignment", CliBuildCompilesNullConditionalImportedMemberBitwiseCompoundAssignment),

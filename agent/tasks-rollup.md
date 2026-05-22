@@ -7465,6 +7465,79 @@ Remaining:
 - Task 0429 is active and should implement imported C# null-conditional additive compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0429 Imported C# null-conditional additive compound assignment member targets
+
+Status: Done
+
+Summary:
+
+- Implemented `receiver?.Member += value` and `receiver?.Member -= value` for readable/writable metadata-backed imported C# instance field/property targets.
+- Added a bounded additive compound policy for null-conditional member assignments: operands must be known non-null primitive integral numeric values, and the promoted result must be assignable back to the member type.
+- Lowered accepted targets through C# 7.3-compatible `System.Func<TReceiver,TValue>` null guards with ordinary C# `+=`/`-=` in the non-null branch.
+- Preserved single receiver evaluation and skipped right-side evaluation when the receiver is null.
+- Added generated `net48` C# consumer coverage plus negative checker coverage for bool/string/enum/nullable operands, narrowing results, readonly fields, events, static targets, and unsupported target shapes.
+- Updated the shared catalog to 550 cases with package-free shard expectations `138`, `138`, `137`, and `137`; updated the MSTest bridge count, MTP package-shard minimum 554, workflow, test README, docs, Work Ledger, tasks, and traceability.
+- Confirmed the NuGet package answer remains concrete: TypeSharp uses NuGet at the `net10.0` test-host boundary through `MSTest.Sdk/4.2.3`, MTP, lock files, source mapping, audit controls, repo-local package cache, and package shards; generated `net48` artifacts remain package-free.
+
+Primary source reviewed:
+
+- Microsoft Learn [C# 14 null-conditional assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/null-conditional-assignment).
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet build lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member additive compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer bitwise compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "release and regression workflow contracts are stable"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 554 --no-progress
+dotnet build test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --no-build
+npm run build # in docs
+git diff --check
+```
+
+Result: all listed commands passed. The MTP module-level package shard run executed 554 tests successfully across the four shard assemblies. The package-free shard runners passed across the 550 shared catalog cases. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings. An initial concurrent build attempt hit a transient `VBCSCompiler` file lock while two projects wrote the same compiler obj output; rerunning the affected build after the other build finished passed.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0430 is active and should recheck official language/platform/package/test/editor/CI signals after Task 0429, keep Task 0401 blocked without explicit approval, and select the next bounded implementation slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -7489,7 +7562,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0428 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0429 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

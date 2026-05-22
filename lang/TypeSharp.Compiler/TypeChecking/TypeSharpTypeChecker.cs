@@ -1374,6 +1374,36 @@ public static class TypeSharpTypeChecker
             TypeScope scope,
             SyntaxKind operatorKind)
         {
+            if (IsAdditiveAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var additiveTargetType))
+                {
+                    return CheckAdditiveCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        additiveTargetType,
+                        operatorKind);
+                }
+
+                if (TryGetNullConditionalExtensionPropertyTarget(
+                        target,
+                        scope,
+                        out var additiveExtensionProperty,
+                        out var additiveReceiverType))
+                {
+                    CheckExpression(value, scope);
+                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(additiveReceiverType, additiveExtensionProperty));
+                    return additiveExtensionProperty.Type;
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional additive compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
+                return SimpleType.Unknown;
+            }
+
             if (IsBitwiseAssignmentOperatorKind(operatorKind))
             {
                 if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var bitwiseTargetType))
@@ -1440,7 +1470,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?.' supports only simple '=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?.' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
@@ -1671,6 +1701,42 @@ public static class TypeSharpTypeChecker
                     assignment,
                     $"Shift assignment '{operatorText}' operands must be non-null primitive integral values with an int-compatible shift count, but found '{targetType}' and '{valueType}'.");
                 return targetType;
+            }
+
+            return targetType;
+        }
+
+        private SimpleType CheckAdditiveCompoundAssignmentValue(
+            SyntaxNode assignment,
+            SyntaxNode value,
+            TypeScope scope,
+            SimpleType targetType,
+            SyntaxKind operatorKind)
+        {
+            var valueType = CheckExpression(value, scope);
+            if (!targetType.IsKnown || !valueType.IsKnown)
+            {
+                return targetType.IsKnown ? targetType : SimpleType.Unknown;
+            }
+
+            var operatorText = operatorKind switch
+            {
+                SyntaxKind.PlusEqualsToken => "+=",
+                SyntaxKind.MinusEqualsToken => "-=",
+                _ => "?="
+            };
+
+            if (!TryGetBinaryIntegralAdditiveResultType(targetType, valueType, out var resultType))
+            {
+                ReportMismatch(
+                    assignment,
+                    $"Additive compound assignment '{operatorText}' operands must be non-null primitive integral numeric values of a supported type, but found '{targetType}' and '{valueType}'.");
+                return targetType;
+            }
+
+            if (resultType.IsKnown && !CanAssign(scope, targetType, resultType))
+            {
+                ReportMismatch(assignment, $"Cannot assign additive compound assignment result of type '{resultType}' to '{targetType}'.");
             }
 
             return targetType;
@@ -4852,6 +4918,10 @@ public static class TypeSharpTypeChecker
                 or SyntaxKind.AmpersandEqualsToken
                 or SyntaxKind.CaretEqualsToken;
 
+        private static bool IsAdditiveAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.PlusEqualsToken
+                or SyntaxKind.MinusEqualsToken;
+
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {
             identifier = node;
@@ -4902,6 +4972,20 @@ public static class TypeSharpTypeChecker
         }
 
         private static bool TryGetBinaryIntegralBitwiseResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullableIntegralType(leftType) ||
+                !IsKnownNonNullableIntegralType(rightType) ||
+                !TryPromoteIntegralBinaryType(leftType.Name, rightType.Name, out var promotedType))
+            {
+                return false;
+            }
+
+            resultType = SimpleType.Named(promotedType);
+            return true;
+        }
+
+        private static bool TryGetBinaryIntegralAdditiveResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
         {
             resultType = SimpleType.Unknown;
             if (!IsKnownNonNullableIntegralType(leftType) ||

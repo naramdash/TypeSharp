@@ -2488,10 +2488,16 @@ public static class CSharpSourceBackend
                 return EmitLogicalUnsignedShiftAssignment(expressions[0], expressions[1]);
             }
 
+            if (IsAdditiveAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return EmitNullConditionalMemberCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
             if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
                 expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
             {
-                return EmitNullConditionalMemberBitwiseCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+                return EmitNullConditionalMemberCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
             }
 
             if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
@@ -2533,7 +2539,7 @@ public static class CSharpSourceBackend
             return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
         }
 
-        private string EmitNullConditionalMemberBitwiseCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
+        private string EmitNullConditionalMemberCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
         {
             if (!TryGetNullConditionalImportedMemberAssignmentTarget(
                     target,
@@ -3108,6 +3114,10 @@ public static class CSharpSourceBackend
             kind is SyntaxKind.PipeEqualsToken
                 or SyntaxKind.AmpersandEqualsToken
                 or SyntaxKind.CaretEqualsToken;
+
+        private static bool IsAdditiveAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.PlusEqualsToken
+                or SyntaxKind.MinusEqualsToken;
 
         private string EmitMatch(SyntaxNode node, string resultType)
         {
