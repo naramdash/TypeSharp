@@ -1768,11 +1768,30 @@ public static class TypeSharpTypeChecker
                     operatorKind);
             }
 
+            if (target.Kind == SyntaxKind.IndexerExpression)
+            {
+                if (TryGetImportedIndexerAssignmentTargetType(target, scope, out var indexerTargetType))
+                {
+                    return CheckMultiplicativeCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        indexerTargetType,
+                        operatorKind);
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    assignment,
+                    "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.");
+                return SimpleType.Unknown;
+            }
+
             var fallbackTargetType = CheckExpression(target, scope);
             CheckExpression(value, scope);
             ReportMismatch(
                 assignment,
-                "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# instance/static field/property targets in this slice; imported C# indexer, null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.");
+                "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.");
             return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
 
