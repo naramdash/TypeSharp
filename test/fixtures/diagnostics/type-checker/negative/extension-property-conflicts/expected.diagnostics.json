@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'Text' conflicts with existing member 'Text' on receiver type 'Label'. Ordinary and structural members take precedence over extension properties.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 3 },
+      "end": { "line": 6, "column": 39 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'Badge' is already declared for receiver type 'Label'.",
+      "file": "input.tysh",
+      "start": { "line": 14, "column": 3 },
+      "end": { "line": 14, "column": 40 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'Count' conflicts with existing member 'Count' on receiver type 'HasCount'. Ordinary and structural members take precedence over extension properties.",
+      "file": "input.tysh",
+      "start": { "line": 20, "column": 3 },
+      "end": { "line": 20, "column": 38 }
+    }
+  ]
+}

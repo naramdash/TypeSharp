@@ -66,7 +66,7 @@ public extension string text {
 }
 ```
 
-Member access resolves an extension property only after ordinary imported/instance members and structural shape members are considered, and only for an exact known non-null receiver type. Setters, static extension properties, operators, imported C# extension property metadata, nullable receiver lifting, and richer conflict ranking remain backlog.
+Member access resolves an extension property only after ordinary imported/instance members and structural shape members are considered, and only for an exact known non-null receiver type. The checker reports `TS2201` before backend emission when a TypeSharp-authored extension property duplicates an existing exact receiver/name pair or would be hidden by the currently implemented ordinary/structural member precedence. Setters, static extension properties, operators, imported C# extension property metadata, nullable receiver lifting, and richer conflict ranking remain backlog.
 
 Intersection aliases compose named structural shapes locally:
 

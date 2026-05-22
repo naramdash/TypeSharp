@@ -289,10 +289,79 @@ public static class TypeSharpTypeChecker
                         continue;
                     }
 
-                    scope.DeclareExtensionProperty(receiverType, propertyName, propertyType);
+                    if (!CanCollectExtensionProperty(extension, property, receiverType, propertyName, propertyType))
+                    {
+                        continue;
+                    }
+
+                    if (TryGetExtensionPropertyPrecedenceConflict(scope, receiverType, propertyName, out var conflictMessage))
+                    {
+                        ReportMismatch(property, conflictMessage);
+                        continue;
+                    }
+
+                    if (!scope.TryDeclareExtensionProperty(receiverType, propertyName, propertyType))
+                    {
+                        ReportMismatch(property, $"Extension property '{propertyName}' is already declared for receiver type '{receiverType}'.");
+                    }
                 }
             }
         }
+
+        private static bool CanCollectExtensionProperty(
+            SyntaxNode extension,
+            SyntaxNode property,
+            SimpleType receiverType,
+            string propertyName,
+            SimpleType propertyType) =>
+            GetExtensionReceiverIdentifier(extension) is not null &&
+            !IsMutableValueDeclaration(property) &&
+            HasInitializer(property) &&
+            !property.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock) &&
+            receiverType.IsKnown &&
+            !receiverType.IsNull &&
+            !receiverType.IsNullable &&
+            propertyName.Length > 0 &&
+            propertyType.IsKnown;
+
+        private bool TryGetExtensionPropertyPrecedenceConflict(
+            TypeScope scope,
+            SimpleType receiverType,
+            string propertyName,
+            out string message)
+        {
+            message = string.Empty;
+            if (!receiverType.IsKnown ||
+                receiverType.IsNull ||
+                receiverType.IsNullable ||
+                propertyName.Length == 0)
+            {
+                return false;
+            }
+
+            if (TryFindImportedMemberAccessType(
+                    FindMetadataTypes(receiverType.Name),
+                    propertyName,
+                    isStatic: false,
+                    requireWritable: false,
+                    out _))
+            {
+                message = FormatExtensionPropertyPrecedenceConflict(receiverType, propertyName);
+                return true;
+            }
+
+            if (scope.ResolveShape(receiverType.Name, out var shape) &&
+                shape.Members.Any(member => string.Equals(member.Name, propertyName, StringComparison.Ordinal)))
+            {
+                message = FormatExtensionPropertyPrecedenceConflict(receiverType, propertyName);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string FormatExtensionPropertyPrecedenceConflict(SimpleType receiverType, string propertyName) =>
+            $"Extension property '{propertyName}' conflicts with existing member '{propertyName}' on receiver type '{receiverType}'. Ordinary and structural members take precedence over extension properties.";
 
         private void CheckTopLevelDeclaration(SyntaxNode node, TypeScope scope)
         {
@@ -7961,11 +8030,16 @@ public static class TypeSharpTypeChecker
 
         public void DeclareRecordShape(string name, IReadOnlyList<ShapeMemberInfo> members) => _recordShapes[name] = new ShapeInfo(name, members);
 
-        public void DeclareExtensionProperty(SimpleType receiverType, string name, SimpleType type)
+        public bool TryDeclareExtensionProperty(SimpleType receiverType, string name, SimpleType type)
         {
-            if (!receiverType.IsKnown || receiverType.IsNull || name.Length == 0 || !type.IsKnown)
+            if (!receiverType.IsKnown || receiverType.IsNull || receiverType.IsNullable || name.Length == 0 || !type.IsKnown)
             {
-                return;
+                return true;
+            }
+
+            if (ResolveExtensionProperty(receiverType, name, out _))
+            {
+                return false;
             }
 
             if (!_extensionProperties.TryGetValue(receiverType.Name, out var properties))
@@ -7975,6 +8049,7 @@ public static class TypeSharpTypeChecker
             }
 
             properties.Add(new ExtensionPropertyInfo(receiverType, name, type));
+            return true;
         }
 
         public bool ResolveValue(string name, out SimpleType type)
@@ -8173,7 +8248,9 @@ public static class TypeSharpTypeChecker
                 !receiverType.IsNullable &&
                 _extensionProperties.TryGetValue(receiverType.Name, out var properties))
             {
-                property = properties.FirstOrDefault(candidate => string.Equals(candidate.Name, name, StringComparison.Ordinal));
+                property = properties.FirstOrDefault(candidate =>
+                    candidate.ReceiverType.Equals(receiverType) &&
+                    string.Equals(candidate.Name, name, StringComparison.Ordinal));
                 if (property.Name is not null)
                 {
                     return true;

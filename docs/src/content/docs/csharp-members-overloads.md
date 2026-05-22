@@ -216,7 +216,7 @@ When consuming imported C# events, the receiver must expose a public event and t
 
 Imported C# extension methods are available when the extension type namespace is imported or opened. TypeSharp-authored explicit-receiver extension methods lower to C# extension methods.
 
-TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match.
+TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match. Duplicate exact receiver/name declarations and declarations that would be hidden by the currently implemented ordinary/structural member precedence report `TS2201` before backend emission.
 
 ```tysh
 namespace Company.Billing
@@ -232,7 +232,7 @@ public extension string {
 }
 ```
 
-Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact receiver matching first, with setters, static extension properties, operators, imported extension property metadata, and richer conflicts left as backlog.
+Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact receiver matching first, duplicate/conflict diagnostics over the implemented lookup precedence, with setters, static extension properties, operators, imported extension property metadata, and richer ranking left as backlog.
 
 ## Exceptions And Domain Failures
 

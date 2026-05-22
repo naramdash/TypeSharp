@@ -6172,6 +6172,52 @@ Remaining:
 - Task 0405 should implement extension-property duplicate/conflict diagnostics.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0405 Extension Property Duplicate And Conflict Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added deterministic type-checker collection diagnostics for duplicate TypeSharp-authored extension properties with the same exact non-null receiver type and property name.
+- Added `TS2201` diagnostics when a TypeSharp-authored extension property would be hidden by currently implemented ordinary imported instance field/property lookup or structural/record shape member precedence.
+- Tightened extension property registration and resolution to exact non-null receiver matches so declaration collection mirrors member-access behavior.
+- Added focused negative fixture coverage for record-shape conflicts, structural-alias conflicts, and duplicate exact receiver/name declarations.
+- Updated grammar, type-system, C# member/overload, diagnostics, feature-status, work-ledger, task, and traceability docs. The shared catalog count stayed 535 because the new fixture is covered by the existing type-checker fixture catalog case.
+- Selected Task 0406 as the next ready bounded slice: roadmap refresh after extension-property duplicate/conflict diagnostics.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler build, focused type-checker fixture diagnostics, and the full 535-case compiler catalog passed. Docs build passed with the existing Vite chunk-size warning. `git diff --check` reported only Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-conflicts`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0406 should perform the post-implementation roadmap refresh and select the next bounded slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

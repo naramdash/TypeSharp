@@ -1,0 +1,21 @@
+namespace Samples.Extensions.Conflicts
+
+public record Label(Text: string)
+
+public extension Label value {
+  public let Text: string = value.Text
+}
+
+public extension Label value {
+  public let Badge: string = value.Text
+}
+
+public extension Label value {
+  public let Badge: string = value.Text
+}
+
+type HasCount = { Count: int }
+
+public extension HasCount value {
+  public let Count: int = value.Count
+}
