@@ -1,0 +1,28 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'WordCount' cannot be accessed with null-conditional member access '?.' for receiver type 'string?'; TypeSharp-owned null-conditional extension-property access is not supported in this slice. Use ordinary member access after narrowing nullable receivers until nullable receiver lifting is implemented.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 3 },
+      "end": { "line": 9, "column": 18 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'WordCount' cannot be assigned with null-conditional member access '?.' for receiver type 'string?'; extension properties are getter-only and TypeSharp-owned null-conditional extension-property assignment is not supported in this slice. Use ordinary member access after narrowing nullable receivers until nullable receiver lifting and setters are implemented.",
+      "file": "input.tysh",
+      "start": { "line": 13, "column": 3 },
+      "end": { "line": 13, "column": 18 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'WordCount' cannot be accessed with null-conditional member access '?.' for receiver type 'string'; TypeSharp-owned null-conditional extension-property access is not supported in this slice. Use ordinary member access after narrowing nullable receivers until nullable receiver lifting is implemented.",
+      "file": "input.tysh",
+      "start": { "line": 18, "column": 3 },
+      "end": { "line": 18, "column": 18 }
+    }
+  ]
+}

@@ -6657,6 +6657,58 @@ Remaining:
 - Task 0415 should implement extension-property-specific null-conditional access diagnostics.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0415 Extension Property Null-Conditional Access Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added deterministic `TS2201` diagnostics when getter-only TypeSharp-authored extension properties are targeted with null-conditional `?.` reads or simple assignment.
+- Covered nullable and non-null receiver expressions in a focused type-checker negative fixture.
+- Preserved imported C# null-conditional member/indexer assignment behavior, exact non-null extension property reads, existing extension property lowering, helper-name diagnostics, nullable receiver diagnostics, and getter-only assignment diagnostics.
+- Added focused negative fixture coverage under `test/fixtures/diagnostics/type-checker/negative/extension-property-null-conditional-access`.
+- Updated canonical docs and ledgers to describe the null-conditional extension-property boundary.
+- Kept the shared catalog count at 536.
+- Selected Task 0416 as the next ready bounded slice: roadmap refresh after extension-property null-conditional access diagnostics.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles extension property lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports extension property generated helper collision diagnostics"
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler build, focused diagnostics, imported null-conditional assignment smokes, extension-property smokes, docs build, and diff checks passed.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-null-conditional-access`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0416 should recheck official language/platform/package/test/editor/CI signals and select the next bounded slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -6681,7 +6733,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0414 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0415 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

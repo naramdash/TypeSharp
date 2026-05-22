@@ -1389,6 +1389,17 @@ public static class TypeSharpTypeChecker
                 return CheckSimpleAssignmentValue(assignment, value, scope, targetType);
             }
 
+            if (TryGetNullConditionalExtensionPropertyTarget(
+                    target,
+                    scope,
+                    out var extensionProperty,
+                    out var receiverType))
+            {
+                CheckExpression(value, scope);
+                ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(receiverType, extensionProperty));
+                return extensionProperty.Type;
+            }
+
             CheckExpression(value, scope);
             ReportMismatch(
                 target,
@@ -1398,6 +1409,16 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckNullConditionalMemberAccess(SyntaxNode node, TypeScope scope)
         {
+            if (TryGetNullConditionalExtensionPropertyTarget(
+                    node,
+                    scope,
+                    out var extensionProperty,
+                    out var receiverType))
+            {
+                ReportMismatch(node, FormatNullConditionalExtensionPropertyAccessMessage(receiverType, extensionProperty));
+                return extensionProperty.Type;
+            }
+
             CheckNullConditionalReceiver(node, scope);
             ReportMismatch(
                 node,
@@ -1695,6 +1716,12 @@ public static class TypeSharpTypeChecker
         private static string FormatNullableExtensionPropertyAccessMessage(SimpleType receiverType, ExtensionPropertyInfo extensionProperty) =>
             $"Extension property '{extensionProperty.Name}' requires non-null receiver type '{extensionProperty.ReceiverType}', but receiver expression has nullable type '{receiverType}'; nullable extension-property receiver access is not supported in this slice. Narrow the receiver before accessing the property until nullable receiver lifting is implemented.";
 
+        private static string FormatNullConditionalExtensionPropertyAccessMessage(SimpleType receiverType, ExtensionPropertyInfo extensionProperty) =>
+            $"Extension property '{extensionProperty.Name}' cannot be accessed with null-conditional member access '?.' for receiver type '{receiverType}'; TypeSharp-owned null-conditional extension-property access is not supported in this slice. Use ordinary member access after narrowing nullable receivers until nullable receiver lifting is implemented.";
+
+        private static string FormatNullConditionalExtensionPropertyAssignmentMessage(SimpleType receiverType, ExtensionPropertyInfo extensionProperty) =>
+            $"Extension property '{extensionProperty.Name}' cannot be assigned with null-conditional member access '?.' for receiver type '{receiverType}'; extension properties are getter-only and TypeSharp-owned null-conditional extension-property assignment is not supported in this slice. Use ordinary member access after narrowing nullable receivers until nullable receiver lifting and setters are implemented.";
+
         private bool TryGetNullableExtensionPropertyAccess(
             SimpleType receiverType,
             string memberName,
@@ -1712,6 +1739,35 @@ public static class TypeSharpTypeChecker
 
             var nonNullReceiverType = receiverType with { IsNullable = false };
             return scope.ResolveExtensionProperty(nonNullReceiverType, memberName, out extensionProperty);
+        }
+
+        private bool TryGetNullConditionalExtensionPropertyTarget(
+            SyntaxNode target,
+            TypeScope scope,
+            out ExtensionPropertyInfo extensionProperty,
+            out SimpleType receiverType)
+        {
+            extensionProperty = default;
+            receiverType = SimpleType.Unknown;
+            if (target.Kind != SyntaxKind.NullConditionalMemberAccessExpression ||
+                !TryGetMemberAccessParts(target, out var receiver, out var memberName))
+            {
+                return false;
+            }
+
+            receiverType = CheckExpression(receiver, scope);
+            if (IsUnknownType(receiverType) || memberName.Length == 0)
+            {
+                return false;
+            }
+
+            var lookupType = receiverType with { IsNullable = false };
+            if (scope.ResolveExtensionProperty(lookupType, memberName, out extensionProperty))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private bool TryGetImportedMemberAssignmentTargetType(

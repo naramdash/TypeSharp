@@ -1,0 +1,19 @@
+namespace Samples.Extensions.NullConditionalAccess
+
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}
+
+fun readNullable(text: string?): int {
+  text?.WordCount
+}
+
+fun assignNullable(text: string?): int {
+  text?.WordCount = 1
+  0
+}
+
+fun readNonNull(text: string): int {
+  text?.WordCount
+}
