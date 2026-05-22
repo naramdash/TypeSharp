@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(544, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(546, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -86,8 +86,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(136, shardCounts[0]);
-    AssertEqual(136, shardCounts[1]);
+    AssertEqual(137, shardCounts[0]);
+    AssertEqual(137, shardCounts[1]);
     AssertEqual(136, shardCounts[2]);
     AssertEqual(136, shardCounts[3]);
 
@@ -2712,7 +2712,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(Array.Empty<string>(), display.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyFields = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFields"), "LegacyFields metadata should be present.");
-        AssertSequence(["MutableCount", "MutableStaticCount", "MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["MutableColor", "MutableCount", "MutableFlag", "MutableStaticCount", "MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticName = Require(legacyFields.Properties.SingleOrDefault(property => property.Name == "StaticName"), "StaticName property metadata should be present.");
         AssertTrue(staticName.IsStatic, "StaticName should be marked static.");
         AssertTrue(staticName.HasPublicGetter, "StaticName should expose a public getter.");
@@ -20648,6 +20648,239 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsigne
     });
 }
 
+static void CliBuildCompilesNullConditionalImportedMemberBitwiseCompoundAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalBitwiseCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalBitwiseCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalBitwiseCompoundAssignment
+
+            import { LegacyColor, LegacyFields } from "Legacy.Tools"
+
+            fun makeFields(): LegacyFields {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = 1
+              fields.MutableLong = 7
+              fields.MutableFlag = true
+              fields.MutableColor = LegacyColor.Red
+              fields
+            }
+
+            fun missingFields(): LegacyFields? =
+              null
+
+            fun makeMask(): int {
+              LegacyFields.MutableStaticName = "called"
+              2
+            }
+
+            export fun updateCount(value: int): int {
+              let fields: LegacyFields = makeFields()
+              fields?.MutableCount |= value
+            }
+
+            export fun updateField(mask: long): long {
+              let fields: LegacyFields = makeFields()
+              fields?.MutableLong &= mask
+            }
+
+            export fun updateFlag(value: bool): bool {
+              let fields: LegacyFields = makeFields()
+              fields?.MutableFlag ^= value
+            }
+
+            export fun updateColor(value: LegacyColor): LegacyColor {
+              let fields: LegacyFields = makeFields()
+              fields?.MutableColor |= value
+            }
+
+            export fun skipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let fields: LegacyFields? = missingFields()
+              fields?.MutableCount |= makeMask()
+              LegacyFields.MutableStaticName
+            }
+
+            export fun nonTrivial(value: int): int {
+              makeFields()?.MutableCount ^= value
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported member bitwise compound assignment build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalBitwiseCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyFields, int>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int) : (__tsReceiver", generatedSource);
+        AssertContains(".MutableCount |= value)", generatedSource);
+        AssertContains(".MutableLong &= mask)", generatedSource);
+        AssertContains(".MutableFlag ^= value)", generatedSource);
+        AssertContains(".MutableColor |= value)", generatedSource);
+        AssertContains("makeMask()", generatedSource);
+        AssertContains(")(makeFields())", generatedSource);
+        AssertFalse(generatedSource.Contains("?.", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional assignment syntax.");
+        AssertFalse(generatedSource.Contains("makeFields().MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional bitwise receiver.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalBitwiseCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional imported member bitwise compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalBitwiseCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalBitwiseCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalBitwiseCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalBitwiseCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalBitwiseCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalBitwiseCompoundAssignment.Module.updateCount(2) == 3 &&
+                            Samples.NullConditionalBitwiseCompoundAssignment.Module.updateField(3L) == 3L &&
+                            Samples.NullConditionalBitwiseCompoundAssignment.Module.updateFlag(true) == false &&
+                            Samples.NullConditionalBitwiseCompoundAssignment.Module.updateColor(Legacy.Tools.LegacyColor.Blue) == (Legacy.Tools.LegacyColor.Red | Legacy.Tools.LegacyColor.Blue) &&
+                            Samples.NullConditionalBitwiseCompoundAssignment.Module.skipped() == "ready" &&
+                            Samples.NullConditionalBitwiseCompoundAssignment.Module.nonTrivial(3) == 2;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalBitwiseCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional bitwise compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedMemberBitwiseCompoundAssignmentTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalBitwiseCompoundAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalBitwiseCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalBitwiseCompoundAssignment
+
+            import { LegacyEvents, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+
+            export fun unsupportedValue(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableFlag |= 1
+              0
+            }
+
+            export fun unsupportedTarget(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableCode |= "x"
+              0
+            }
+
+            export fun readonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.InstanceCode |= "x"
+              0
+            }
+
+            export fun eventTarget(): int {
+              let events: LegacyEvents = LegacyEvents()
+              events?.Transform |= null
+              0
+            }
+
+            export fun staticTarget(): int {
+              LegacyFields?.MutableStaticCount |= 1
+              0
+            }
+
+            export fun indexerTarget(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] |= 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# bitwise compound assignment targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Boolean compound assignment '|=' operands must both be 'bool', but found 'bool' and 'int'."),
+            "Null-conditional imported bool member target should reject non-bool operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Bitwise compound assignment '|=' operands must be integral numeric values or boolean values of a supported primitive type, but found 'string' and 'string'."),
+            "Null-conditional imported string member target should reject unsupported bitwise operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
+            "Readonly, event, and static null-conditional bitwise targets should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("supports only simple '=' or bounded logical unsigned shift '>>>='", StringComparison.Ordinal)),
+            "Null-conditional indexer bitwise assignment should remain out of scope.");
+    });
+}
+
 static void CliBuildCompilesNullConditionalImportedIndexerLogicalUnsignedShiftAssignment()
 {
     WithWorkspace(root =>
@@ -26078,6 +26311,10 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public string MutableCode = "mutable";
 
                 public long MutableLong;
+
+                public bool MutableFlag { get; set; }
+
+                public LegacyColor MutableColor { get; set; }
             }
 
             public static class LegacyExtensions

@@ -2488,6 +2488,12 @@ public static class CSharpSourceBackend
                 return EmitLogicalUnsignedShiftAssignment(expressions[0], expressions[1]);
             }
 
+            if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return EmitNullConditionalMemberBitwiseCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
             if (operatorToken.Kind == SyntaxKind.EqualsToken &&
                 expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
             {
@@ -2518,6 +2524,24 @@ public static class CSharpSourceBackend
             var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
             var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
             var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({receiverParameter}.{memberName} = {EmitExpression(value)})";
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
+        }
+
+        private string EmitNullConditionalMemberBitwiseCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
+        {
+            if (!TryGetNullConditionalImportedMemberAssignmentTarget(
+                    target,
+                    out var receiver,
+                    out var memberName,
+                    out var targetType,
+                    out var receiverType))
+            {
+                return "default(object)";
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({receiverParameter}.{memberName} {operatorText} {EmitExpression(value)})";
             return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
         }
 
@@ -3048,6 +3072,11 @@ public static class CSharpSourceBackend
             operatorText = string.Empty;
             return false;
         }
+
+        private static bool IsBitwiseAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.PipeEqualsToken
+                or SyntaxKind.AmpersandEqualsToken
+                or SyntaxKind.CaretEqualsToken;
 
         private string EmitMatch(SyntaxNode node, string resultType)
         {

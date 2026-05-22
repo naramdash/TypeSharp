@@ -1374,6 +1374,36 @@ public static class TypeSharpTypeChecker
             TypeScope scope,
             SyntaxKind operatorKind)
         {
+            if (IsBitwiseAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var bitwiseTargetType))
+                {
+                    return CheckBitwiseCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        bitwiseTargetType,
+                        operatorKind);
+                }
+
+                if (TryGetNullConditionalExtensionPropertyTarget(
+                        target,
+                        scope,
+                        out var bitwiseExtensionProperty,
+                        out var bitwiseReceiverType))
+                {
+                    CheckExpression(value, scope);
+                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(bitwiseReceiverType, bitwiseExtensionProperty));
+                    return bitwiseExtensionProperty.Type;
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional bitwise compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
+                return SimpleType.Unknown;
+            }
+
             if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
             {
                 if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var logicalShiftTargetType))
@@ -1410,7 +1440,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?.' supports only simple '=' or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?.' supports only simple '=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
@@ -1671,7 +1701,7 @@ public static class TypeSharpTypeChecker
             var valueIsEnum = IsKnownEnumType(scope, valueType);
             if (targetIsEnum || valueIsEnum)
             {
-                if (!targetIsEnum || !valueIsEnum || !string.Equals(targetType.Name, valueType.Name, StringComparison.Ordinal))
+                if (!targetIsEnum || !valueIsEnum || !MetadataTypeNameMatches(targetType.Name, valueType.Name))
                 {
                     ReportMismatch(node, $"Enum compound assignment '{operatorText}' operands must be enum values of the same type, but found '{targetType}' and '{valueType}'.");
                     return false;
@@ -4798,6 +4828,11 @@ public static class TypeSharpTypeChecker
                 or SyntaxKind.GreaterGreaterEqualsToken
                 or SyntaxKind.LogicalUnsignedShiftEqualsToken;
 
+        private static bool IsBitwiseAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.PipeEqualsToken
+                or SyntaxKind.AmpersandEqualsToken
+                or SyntaxKind.CaretEqualsToken;
+
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {
             identifier = node;
@@ -4828,7 +4863,8 @@ public static class TypeSharpTypeChecker
             type.IsKnown &&
             !type.IsNull &&
             !type.IsNullable &&
-            scope.ResolveEnum(type.Name, out _);
+            (scope.ResolveEnum(type.Name, out _) ||
+             scope.ResolveEnum(GetUnqualifiedTypeName(type.Name), out _));
 
         private static bool TryGetUnaryIntegralBitwiseResultType(SimpleType operandType, out SimpleType resultType)
         {

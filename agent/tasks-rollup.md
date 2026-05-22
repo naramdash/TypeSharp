@@ -7208,11 +7208,81 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [0425-imported-csharp-null-conditional-bitwise-compound-assignment-member-targets.md](0425-imported-csharp-null-conditional-bitwise-compound-assignment-member-targets.md)
 
 Remaining:
 
 - Task 0425 is active and should implement imported C# null-conditional bitwise compound assignment member targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0425 Imported C# Null-Conditional Bitwise Compound Assignment Member Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Implemented bounded imported C# `receiver?.Member |= value`, `receiver?.Member &= value`, and `receiver?.Member ^= value` support for readable/writable metadata-backed instance field/property targets.
+- Reused the existing bitwise compound assignment target/value policy for primitive integral, named imported/TypeSharp enum, and bool operands.
+- Added checker diagnostics for unsupported null-conditional bitwise member targets, including invalid bool/string operands, readonly fields, event targets, static targets, and null-conditional indexer bitwise targets.
+- Lowered accepted targets to C# 7.3-compatible immediately invoked `System.Func<TReceiver,TValue>` null guards using ordinary C# compound assignment operators in the non-null branch, evaluating the receiver once, evaluating the right side only when the receiver is non-null, and emitting no C# `?.`.
+- Added generated `net48` C# consumer coverage for integral property, field, bool property, imported enum property, skipped right-side evaluation, and non-trivial receiver single-evaluation behavior.
+- Updated the shared catalog to 546 cases with shard expectations `137`, `137`, `136`, and `136`; updated the MSTest bridge catalog count, workflow shard minimums, test README, docs, Work Ledger, tasks, and traceability.
+- Created Task 0426 as the next roadmap-refresh packet after imported C# null-conditional bitwise compound assignment member targets, with the `net10.0` test NuGet package path explicitly in scope for review.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported member bitwise compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported member bitwise compound assignment targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported member logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported member logical unsigned shift assignment targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles bitwise compound assignment API"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "metadata reader indexes local public symbols"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 137 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 137 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 136 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 136 --no-progress
+npm run build # in docs
+git diff --check
+```
+
+Result: compiler build, focused null-conditional bitwise compound member positive/negative tests, preserved null-conditional member simple assignment and `>>>=` tests, bitwise compound API test, metadata reader local public symbol test, shard-count stability tests, full 546-case package-free custom catalog, MSTest bridge build/smoke, all four MSTest package shard bridge runs with expected counts, docs build, and diff checks passed. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0426 is active and should perform the post-implementation roadmap refresh.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
