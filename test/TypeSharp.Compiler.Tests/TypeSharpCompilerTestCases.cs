@@ -23385,6 +23385,39 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTarget
               LegacyFields.MutableStaticDecimal
             }
 
+            export fun checkedInstanceProperty(value: int, factor: short): int {
+              let fields: LegacyFields = makeFields(value)
+              checked(fields.MutableCount *= factor)
+              checked(fields.MutableCount /= 2)
+              checked(fields.MutableCount %= 5)
+              fields.MutableCount
+            }
+
+            export fun uncheckedInstanceField(value: long, divisor: int): long {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableLong = value
+              unchecked(fields.MutableLong *= 3)
+              unchecked(fields.MutableLong /= divisor)
+              unchecked(fields.MutableLong %= 7)
+              fields.MutableLong
+            }
+
+            export fun checkedStaticUnsigned(value: uint, factor: uint, divisor: uint, remainder: uint): uint {
+              LegacyFields.MutableStaticCount = value
+              checked(LegacyFields.MutableStaticCount *= factor)
+              checked(LegacyFields.MutableStaticCount /= divisor)
+              checked(LegacyFields.MutableStaticCount %= remainder)
+              LegacyFields.MutableStaticCount
+            }
+
+            export fun uncheckedStaticDecimal(value: decimal, factor: int): decimal {
+              LegacyFields.MutableStaticDecimal = value
+              unchecked(LegacyFields.MutableStaticDecimal *= factor)
+              unchecked(LegacyFields.MutableStaticDecimal /= factor)
+              unchecked(LegacyFields.MutableStaticDecimal %= 2m)
+              LegacyFields.MutableStaticDecimal
+            }
+
             export fun nonTrivialReceiver(value: int): int {
               makeFields(value).MutableCount *= 3
             }
@@ -23417,6 +23450,18 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTarget
         AssertContains("LegacyFields.MutableStaticDecimal *= factor;", generatedSource);
         AssertContains("LegacyFields.MutableStaticDecimal /= factor;", generatedSource);
         AssertContains("LegacyFields.MutableStaticDecimal %= 2m;", generatedSource);
+        AssertContains("checked\n            {\n                fields.MutableCount *= factor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                fields.MutableCount /= 2;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                fields.MutableCount %= 5;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                fields.MutableLong *= 3;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                fields.MutableLong /= divisor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                fields.MutableLong %= 7;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                LegacyFields.MutableStaticCount *= factor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                LegacyFields.MutableStaticCount /= divisor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                LegacyFields.MutableStaticCount %= remainder;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                LegacyFields.MutableStaticDecimal *= factor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                LegacyFields.MutableStaticDecimal /= factor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                LegacyFields.MutableStaticDecimal %= 2m;\n            }", generatedSource);
         AssertEqual(1, CountOccurrences(generatedSource, "makeFields(value).MutableCount *= 3;"));
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMultiplicativeCompoundAssignmentApi.dll");
@@ -23464,6 +23509,10 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTarget
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceDouble(13.0, 3f) == 1.0 &&
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.staticUnsigned(20u, 3u, 5u, 7u) == 5u &&
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.staticDecimal(13m, 3) == 1m &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.checkedInstanceProperty(13, (short)3) == 4 &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.uncheckedInstanceField(22L, 5) == 6L &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.checkedStaticUnsigned(20u, 3u, 5u, 7u) == 5u &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.uncheckedStaticDecimal(13m, 3) == 1m &&
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.nonTrivialReceiver(11) == 33;
                     }
                 }
@@ -23505,6 +23554,12 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMem
               0
             }
 
+            export fun checkedBoolOperand(): int {
+              let fields: LegacyFields = LegacyFields()
+              checked(fields.MutableFlag *= true)
+              0
+            }
+
             export fun stringOperand(): int {
               let fields: LegacyFields = LegacyFields()
               fields.MutableCode /= "x"
@@ -23520,6 +23575,12 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMem
             export fun nullableOperand(value: int?): int {
               let fields: LegacyFields = LegacyFields()
               fields.MutableCount %= value
+              0
+            }
+
+            export fun uncheckedNullableOperand(value: int?): int {
+              let fields: LegacyFields = LegacyFields()
+              unchecked(fields.MutableCount %= value)
               0
             }
 
@@ -23553,9 +23614,21 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMem
               0
             }
 
+            export fun checkedReadonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              checked(fields.InstanceCode *= "x")
+              0
+            }
+
             export fun eventTarget(): int {
               let events: LegacyEvents = LegacyEvents()
               events.Transform *= null
+              0
+            }
+
+            export fun uncheckedEventTarget(): int {
+              let events: LegacyEvents = LegacyEvents()
+              unchecked(events.Transform *= null)
               0
             }
 
@@ -24767,7 +24840,7 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
 
         var result = TypeSharpChecker.Check(manifestPath);
         const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
-        const string checkedLocalOnlyMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets.";
+        const string checkedRegularMemberOnlyMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets or readable and writable metadata-backed imported C# field/property member targets; imported indexer and null-conditional targets are not supported.";
         const string mixedDecimalFloatingMessage = "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'.";
         const string nullableFloatMessage = "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'.";
         var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
@@ -24826,8 +24899,8 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == checkedLocalOnlyMessage) >= 3,
-            "Checked and unchecked imported member/indexer/null-conditional multiplicative targets should remain out of scope.");
+                diagnostic.Message == checkedRegularMemberOnlyMessage) >= 2,
+            "Checked and unchecked imported indexer/null-conditional multiplicative targets should remain out of scope.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&

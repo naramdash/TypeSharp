@@ -1197,7 +1197,7 @@ public static class TypeSharpTypeChecker
             {
                 ReportMismatch(
                     target,
-                    "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets.");
+                    "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets or readable and writable metadata-backed imported C# field/property member targets; imported indexer and null-conditional targets are not supported.");
             }
 
             return CheckExpression(expression, scope);
@@ -5200,8 +5200,7 @@ public static class TypeSharpTypeChecker
         }
 
         private static bool IsCheckedMultiplicativeCompoundAssignmentUnsupportedTarget(SyntaxNode target) =>
-            target.Kind is SyntaxKind.MemberAccessExpression
-                or SyntaxKind.IndexerExpression
+            target.Kind is SyntaxKind.IndexerExpression
                 or SyntaxKind.NullConditionalMemberAccessExpression
                 or SyntaxKind.NullConditionalIndexerExpression;
 
