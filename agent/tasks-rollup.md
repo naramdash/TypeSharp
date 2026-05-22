@@ -7047,6 +7047,53 @@ Remaining:
 - Task 0422 is active and should perform the post-implementation roadmap refresh.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0422 Roadmap Refresh After Imported C# Null-Conditional Logical Unsigned Shift Assignment Member Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official C#/F#/TypeScript/.NET Framework/.NET/NuGet/.NET testing/MSTest SDK/xUnit.net/NUnit/VS Code/GitHub Actions signals after Task 0421.
+- Reaffirmed the generated-artifact baseline: TypeSharp generated assemblies stay package-free `net48`, and generated C# stays C# 7.3-compatible even while the compiler/test hosts use modern .NET.
+- Reaffirmed the test-host NuGet answer: the repository already uses the broad current `net10.0` `MSTest.Sdk/4.2.3` Microsoft Testing Platform bridge plus four package shard projects, lock files, source mapping, audit controls, and repo-local package cache.
+- Kept xUnit.net v3 and NUnit as future bridge candidates only; adding either now would duplicate the same extracted catalog evidence without improving generated `net48` compatibility or the faster package-free shard gate.
+- Kept Task 0401 blocked pending explicit approval for the GitHub Actions `npm` process-launch fix.
+- Selected Task 0423 as the next bounded implementation slice: imported C# `receiver?[index] >>>= count` for metadata-backed instance indexers with selected public getter/setter, primitive target/count policy reuse, single receiver/index evaluation, skipped index/count evaluation on null receivers, and C# 7.3-compatible guard/cast lowering.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [.NET 10](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview), and [.NET 11 preview](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-11/overview).
+- Microsoft Learn [F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10), [.NET Framework versions](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks).
+- TypeScript team [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) and [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/) announcements.
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test), [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk), and NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk).
+- xUnit.net [v3 package guidance](https://xunit.net/docs/nuget-packages-v3), xUnit.net [Microsoft Testing Platform guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), and NUnit [.NET Core guidance](https://docs.nunit.org/articles/nunit/getting-started/dotnet-core-and-dotnet-standard.html).
+- VS Code [language server extension guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide), GitHub [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), [`actions/setup-node`](https://github.com/actions/setup-node), and the [2026-05-14 GitHub Actions image migration changelog](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/).
+
+Verification:
+
+```powershell
+npm run build # in docs
+git diff --check
+```
+
+Result: docs build and diff checks passed. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [0423-imported-csharp-null-conditional-logical-unsigned-shift-assignment-indexer-targets.md](0423-imported-csharp-null-conditional-logical-unsigned-shift-assignment-indexer-targets.md)
+
+Remaining:
+
+- Task 0423 is active and should implement imported C# null-conditional logical unsigned shift assignment indexer targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
