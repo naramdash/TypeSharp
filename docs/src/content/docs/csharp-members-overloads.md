@@ -232,7 +232,7 @@ public extension string {
 }
 ```
 
-Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact receiver matching first, duplicate/conflict diagnostics over the implemented lookup precedence, with setters, static extension properties, operators, imported extension property metadata, and richer ranking left as backlog.
+Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact receiver matching first, duplicate/conflict diagnostics over the implemented lookup precedence, with nullable receiver lifting, setters, static extension properties, operators, imported extension property metadata, and richer ranking left as backlog.
 
 ## Exceptions And Domain Failures
 
