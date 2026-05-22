@@ -6123,6 +6123,55 @@ Remaining:
 - Task 0404 should perform the post-implementation roadmap refresh and select the next bounded slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0404 Roadmap Refresh After C# 14-inspired Extension Property Slice
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official language, platform, package, test-platform, editor, and CI sources after Task 0403 landed getter-only TypeSharp-authored extension properties.
+- Confirmed no generated-artifact baseline change: generated artifacts remain package-free `net48`, generated C# remains C# 7.3-compatible, C# 14 remains stable on .NET 10, and C# 15/.NET 11 preview stays Preview Watch input only.
+- Reaffirmed the NuGet test-host answer requested by the user: TypeSharp already uses the current broad `net10.0` package route through pinned `MSTest.Sdk/4.2.3` Microsoft Testing Platform bridge projects, four package-based shards, lock files, source mapping, audit controls, and repo-local package cache. Generated `net48` artifacts, `TypeSharp.Core`, and `TypeSharp.Runtime` remain package-free.
+- Confirmed xUnit.net v3 remains a viable future bridge candidate, but adding it now would duplicate the existing `MSTest.Sdk`/MTP package-host evidence unless it provides distinct ecosystem value over the same extracted catalog.
+- Left Task 0401 blocked pending explicit approval for the GitHub Actions `npm` process-launch implementation fix; the failure remains a C# process-launch issue rather than a missing setup-node/setup-dotnet step or missing NuGet test package.
+- Selected Task 0405 as the next bounded implementation slice: extension-property duplicate/conflict diagnostics over the current exact receiver matching and instance/structural precedence, before static extension members, setters, operators, nullable receiver lifting, or imported extension property metadata are added.
+
+Official sources reviewed:
+
+- Microsoft Learn C# language versioning, C# 14, and C# 15 pages.
+- TypeScript 6.0 announcement and TypeScript 7.0 Beta announcement.
+- Microsoft Learn F# 10 page.
+- Microsoft Learn target-framework monikers, .NET Framework system requirements, and .NET Framework lifecycle pages.
+- Microsoft Learn .NET test platforms, `dotnet test` MTP mode, MSTest runner guidance, and MSTest SDK configuration pages.
+- NuGet `MSTest.Sdk/4.2.3` and xUnit.net v3 package guidance.
+- VS Code LSP and extension publishing docs.
+- GitHub Actions runner images, `actions/setup-dotnet`, and `actions/setup-node` docs.
+
+Verification:
+
+```powershell
+cd docs
+npm run build
+git diff --check
+```
+
+Result: docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0405 should implement extension-property duplicate/conflict diagnostics.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -6147,7 +6196,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0403 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0404 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
