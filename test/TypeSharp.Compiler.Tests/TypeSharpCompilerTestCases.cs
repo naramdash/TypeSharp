@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(546, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(548, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(137, shardCounts[0]);
     AssertEqual(137, shardCounts[1]);
-    AssertEqual(136, shardCounts[2]);
-    AssertEqual(136, shardCounts[3]);
+    AssertEqual(137, shardCounts[2]);
+    AssertEqual(137, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -2340,7 +2340,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyBoolIndexer", "Legacy.Tools.LegacyColorIndexer", "Legacy.Tools.LegacyStringIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -20817,7 +20817,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberBitwiseCompoun
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidNullConditionalBitwiseCompoundAssignment
 
-            import { LegacyEvents, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyEvents, LegacyFields } from "Legacy.Tools"
 
             export fun unsupportedValue(): int {
               let fields: LegacyFields = LegacyFields()
@@ -20848,11 +20848,6 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberBitwiseCompoun
               0
             }
 
-            export fun indexerTarget(): int {
-              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
-              indexer?[1] |= 1
-              0
-            }
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -20873,11 +20868,272 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberBitwiseCompoun
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Readonly, event, and static null-conditional bitwise targets should be rejected before emission.");
+    });
+}
+
+static void CliBuildCompilesNullConditionalImportedIndexerBitwiseCompoundAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalIndexerBitwiseCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalIndexerBitwiseCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalIndexerBitwiseCompoundAssignment
+
+            import { LegacyBoolIndexer, LegacyColor, LegacyColorIndexer, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+
+            fun makeIndexer(value: int): LegacyMutableIndexer {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun makeBoolIndexer(value: bool): LegacyBoolIndexer {
+              let indexer: LegacyBoolIndexer = LegacyBoolIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun makeColorIndexer(value: LegacyColor): LegacyColorIndexer {
+              let indexer: LegacyColorIndexer = LegacyColorIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun missingIndexer(): LegacyMutableIndexer? =
+              null
+
+            fun makeIndex(): int {
+              LegacyFields.MutableStaticName = "index"
+              1
+            }
+
+            fun makeValue(): int {
+              LegacyFields.MutableStaticName = "value"
+              2
+            }
+
+            export fun updateOr(value: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(1)
+              indexer?[1] |= value
+            }
+
+            export fun updateAnd(mask: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(7)
+              indexer?[1] &= mask
+            }
+
+            export fun updateXor(value: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(5)
+              indexer?[1] ^= value
+            }
+
+            export fun updateFlag(value: bool): bool {
+              let indexer: LegacyBoolIndexer = makeBoolIndexer(true)
+              indexer?[1] ^= value
+            }
+
+            export fun updateColor(value: LegacyColor): LegacyColor {
+              let indexer: LegacyColorIndexer = makeColorIndexer(LegacyColor.Red)
+              indexer?[1] |= value
+            }
+
+            export fun skipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let indexer: LegacyMutableIndexer? = missingIndexer()
+              indexer?[makeIndex()] |= makeValue()
+              LegacyFields.MutableStaticName
+            }
+
+            export fun nonTrivial(value: int): int {
+              makeIndexer(1)?[makeIndex()] ^= value
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported indexer bitwise compound assignment build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalIndexerBitwiseCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyMutableIndexer, int>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int) : new System.Func<int, int>((__tsIndex", generatedSource);
+        AssertContains("] |= value)", generatedSource);
+        AssertContains("] &= mask)", generatedSource);
+        AssertContains("] ^= value)", generatedSource);
+        AssertContains("new System.Func<LegacyBoolIndexer, bool>(__tsReceiver", generatedSource);
+        AssertContains("new System.Func<LegacyColorIndexer, Legacy.Tools.LegacyColor>(__tsReceiver", generatedSource);
+        AssertContains("makeValue()", generatedSource);
+        AssertContains(")(makeIndex())", generatedSource);
+        AssertContains(")(makeIndexer(1))", generatedSource);
+        AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer syntax.");
+        AssertFalse(generatedSource.Contains("makeIndexer(1)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional bitwise indexer receiver or argument.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalIndexerBitwiseCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional imported indexer bitwise compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalIndexerBitwiseCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalIndexerBitwiseCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalIndexerBitwiseCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalIndexerBitwiseCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalIndexerBitwiseCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.updateOr(2) == 3 &&
+                            Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.updateAnd(3) == 3 &&
+                            Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.updateXor(3) == 6 &&
+                            Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.updateFlag(true) == false &&
+                            Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.updateColor(Legacy.Tools.LegacyColor.Blue) == (Legacy.Tools.LegacyColor.Red | Legacy.Tools.LegacyColor.Blue) &&
+                            Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.skipped() == "ready" &&
+                            Samples.NullConditionalIndexerBitwiseCompoundAssignment.Module.nonTrivial(3) == 2;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalIndexerBitwiseCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional indexer bitwise compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedIndexerBitwiseCompoundAssignmentTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalIndexerBitwiseCompoundAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalIndexerBitwiseCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalIndexerBitwiseCompoundAssignment
+
+            import { LegacyAmbiguousIndexer, LegacyByteIndexer, LegacyDualNamed, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
+
+            export fun unsupportedValue(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] |= true
+              0
+            }
+
+            export fun unsupportedTarget(): int {
+              let indexer: LegacyStringIndexer = LegacyStringIndexer()
+              indexer?[1] |= "x"
+              0
+            }
+
+            export fun missingSetter(): int {
+              let indexer: LegacyByteIndexer = LegacyByteIndexer()
+              indexer?[1] |= "x"
+              0
+            }
+
+            export fun mismatchedArgument(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[true] |= 1
+              0
+            }
+
+            export fun ambiguousArgument(): int {
+              let indexer: LegacyAmbiguousIndexer = LegacyAmbiguousIndexer()
+              indexer?[LegacyDualNamed("value")] |= "x"
+              0
+            }
+
+            export fun otherCompound(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] += 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer bitwise compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("supports only simple '=' or bounded logical unsigned shift '>>>='", StringComparison.Ordinal)),
-            "Null-conditional indexer bitwise assignment should remain out of scope.");
+                diagnostic.Message == "Boolean compound assignment '|=' operands must both be 'bool', but found 'int' and 'bool'."),
+            "Null-conditional imported int indexer target should reject bool operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Bitwise compound assignment '|=' operands must be integral numeric values or boolean values of a supported primitive type, but found 'string' and 'string'."),
+            "Null-conditional imported string indexer target should reject unsupported bitwise operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
+            "Getter-only null-conditional imported indexer targets should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2411" &&
+                diagnostic.Message.Contains("does not contain a public instance indexer compatible with argument type(s) 'bool'", StringComparison.Ordinal)),
+            "Mismatched null-conditional imported indexer bitwise arguments should reuse existing interop diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2402" &&
+                diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
+            "Ambiguous null-conditional imported indexer bitwise arguments should reuse existing interop ambiguity diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("supports only simple '=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>='", StringComparison.Ordinal)),
+            "Other null-conditional indexer compound assignment operators should remain rejected before emission.");
     });
 }
 
@@ -26276,6 +26532,39 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 private readonly int[] _values = new int[8];
 
                 public int this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyBoolIndexer
+            {
+                private readonly bool[] _values = new bool[8];
+
+                public bool this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyColorIndexer
+            {
+                private readonly LegacyColor[] _values = new LegacyColor[8];
+
+                public LegacyColor this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyStringIndexer
+            {
+                private readonly string[] _values = new string[8];
+
+                public string this[int index]
                 {
                     get { return _values[index]; }
                     set { _values[index] = value; }

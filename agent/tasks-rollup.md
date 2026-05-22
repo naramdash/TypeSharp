@@ -7283,7 +7283,8 @@ Primary evidence:
 Remaining:
 
 - Task 0426 has since completed the post-implementation roadmap refresh.
-- Task 0427 is active and should implement imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0427 has since completed imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0428 is active and should recheck the roadmap after imported C# null-conditional bitwise compound assignment indexer targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0426 Roadmap Refresh After Imported C# Null-Conditional Bitwise Compound Assignment Member Targets
@@ -7331,7 +7332,74 @@ Primary evidence:
 
 Remaining:
 
-- Task 0427 is active and should implement imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0427 has since completed imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0428 is active and should recheck the roadmap after imported C# null-conditional bitwise compound assignment indexer targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0427 Imported C# Null-Conditional Bitwise Compound Assignment Indexer Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Implemented bounded imported C# `receiver?[index] |= value`, `receiver?[index] &= value`, and `receiver?[index] ^= value` support for readable/writable metadata-backed instance indexer targets with supported arguments.
+- Reused existing imported indexer argument validation/ranking and the primitive integral, named imported/TypeSharp enum, and bool bitwise compound assignment target/value policy.
+- Lowered accepted targets to C# 7.3-compatible outer receiver and inner index `System.Func` guard/capture forms using ordinary C# compound assignment operators in the non-null branch.
+- Preserved single receiver/index evaluation and skipped index-argument plus right-side evaluation when the receiver is null.
+- Added generated `net48` C# consumer coverage for integral, bool, imported enum, skipped right-side/index evaluation, and non-trivial receiver/index single-evaluation behavior.
+- Added checker diagnostics for unsupported null-conditional bitwise indexer targets, including invalid bool/string operands, getter-only indexers, mismatched/ambiguous indexer arguments, and other compound operators.
+- Updated the shared catalog to 548 cases with shard expectations `137`, `137`, `137`, and `137`; updated the MSTest bridge catalog count, workflow shard minimums, test README, docs, Work Ledger, tasks, and traceability.
+- Created Task 0428 as the next roadmap-refresh packet after imported C# null-conditional bitwise compound assignment indexer targets.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "null-conditional imported indexer bitwise compound"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "null-conditional imported member bitwise compound"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "null-conditional imported indexer logical unsigned shift"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "shard"
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 137
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 137
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 137
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 137
+npm run build # in docs
+git diff --check
+```
+
+Result: compiler build, focused null-conditional bitwise compound indexer positive/negative tests, preserved member bitwise and indexer `>>>=` tests, shard-count stability tests, full 548-case package-free custom catalog, MSTest bridge build/smoke, all four MSTest package shard bridge runs with expected counts, docs build, and diff checks passed. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings. An initial MSTest smoke command using VSTest-style `--nologo` was rejected by Microsoft Testing Platform; rerunning with supported MTP options passed.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0428 is active and should recheck official signals after imported C# null-conditional bitwise compound assignment indexer targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary

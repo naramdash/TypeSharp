@@ -1498,6 +1498,25 @@ public static class TypeSharpTypeChecker
             TypeScope scope,
             SyntaxKind operatorKind)
         {
+            if (IsBitwiseAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var bitwiseTargetType))
+                {
+                    return CheckBitwiseCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        bitwiseTargetType,
+                        operatorKind);
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional bitwise compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
+                return SimpleType.Unknown;
+            }
+
             if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
             {
                 if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var logicalShiftTargetType))
@@ -1523,7 +1542,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?[]' supports only simple '=' or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?[]' supports only simple '=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 

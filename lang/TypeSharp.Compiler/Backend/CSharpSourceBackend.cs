@@ -2494,6 +2494,12 @@ public static class CSharpSourceBackend
                 return EmitNullConditionalMemberBitwiseCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
             }
 
+            if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return EmitNullConditionalIndexerBitwiseCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
             if (operatorToken.Kind == SyntaxKind.EqualsToken &&
                 expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
             {
@@ -2543,6 +2549,31 @@ public static class CSharpSourceBackend
             var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
             var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({receiverParameter}.{memberName} {operatorText} {EmitExpression(value)})";
             return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
+        }
+
+        private string EmitNullConditionalIndexerBitwiseCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
+        {
+            if (!TryGetNullConditionalImportedIndexerAccess(
+                    target,
+                    requireWritable: true,
+                    out var receiver,
+                    out var arguments,
+                    out var targetType,
+                    out var receiverType,
+                    out var indexParameterTypes))
+            {
+                return "default(object)";
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAssignment = BuildNullConditionalIndexerBranch(
+                receiverParameter,
+                arguments,
+                indexParameterTypes,
+                normalizedTargetType,
+                targetExpression => $"({targetExpression} {operatorText} {EmitExpression(value)})");
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {receiverParameter} == null ? default({normalizedTargetType}) : {guardedAssignment})({EmitExpression(receiver)})";
         }
 
         private string EmitNullConditionalMemberAccess(SyntaxNode node)
