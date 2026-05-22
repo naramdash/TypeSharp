@@ -2503,7 +2503,13 @@ public static class CSharpSourceBackend
             if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
                 expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
             {
-                return EmitNullConditionalIndexerBitwiseCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+                return EmitNullConditionalIndexerCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
+            if (IsAdditiveAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return EmitNullConditionalIndexerCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
             }
 
             if (operatorToken.Kind == SyntaxKind.EqualsToken &&
@@ -2557,7 +2563,7 @@ public static class CSharpSourceBackend
             return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
         }
 
-        private string EmitNullConditionalIndexerBitwiseCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
+        private string EmitNullConditionalIndexerCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
         {
             if (!TryGetNullConditionalImportedIndexerAccess(
                     target,

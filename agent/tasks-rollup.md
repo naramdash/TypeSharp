@@ -7536,7 +7536,8 @@ Primary evidence:
 Remaining:
 
 - Task 0430 has since completed the roadmap refresh after imported C# null-conditional additive compound assignment member targets.
-- Task 0431 is active and should implement imported C# null-conditional additive compound assignment indexer targets.
+- Task 0431 has since completed imported C# null-conditional additive compound assignment indexer targets.
+- Task 0432 is active and should refresh the roadmap after imported C# null-conditional additive compound assignment indexer targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0430 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Member Targets
@@ -7580,11 +7581,85 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [0431-imported-csharp-null-conditional-additive-compound-assignment-indexer-targets.md](0431-imported-csharp-null-conditional-additive-compound-assignment-indexer-targets.md)
+- [Task 0431 rollup](#task-0431-imported-csharp-null-conditional-additive-compound-assignment-indexer-targets)
 
 Remaining:
 
-- Task 0431 is active and should implement imported C# null-conditional additive compound assignment indexer targets.
+- Task 0431 has since completed imported C# null-conditional additive compound assignment indexer targets.
+- Task 0432 is active and should refresh the roadmap after imported C# null-conditional additive compound assignment indexer targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0431 Imported C# null-conditional additive compound assignment indexer targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Implemented `receiver?[index] += value` and `receiver?[index] -= value` for readable/writable metadata-backed imported C# instance indexer targets with supported arguments.
+- Reused the bounded additive primitive integral target/value policy from null-conditional member additive compound assignment: operands must be known non-null primitive integral numeric values, and the promoted result must be assignable back to the indexer value type.
+- Lowered accepted targets through C# 7.3-compatible outer receiver and inner index `System.Func` guard/capture forms with ordinary C# `+=` or `-=` in the non-null branch.
+- Preserved single receiver/index-argument evaluation and skipped index arguments plus the right side when the receiver is null.
+- Added generated `net48` C# consumer coverage plus negative checker coverage for bool/string/nullable operands, narrowing results, missing setters, mismatched or ambiguous indexer arguments, and unsupported compound target shapes.
+- Updated the shared catalog to 552 cases with package-free shard expectations `138`, `138`, `138`, and `138`; updated the MSTest bridge count, MTP package-shard minimum 556, workflow, test README, docs, Work Ledger, tasks, and traceability.
+- Confirmed the NuGet package boundary remains unchanged: TypeSharp uses NuGet at the `net10.0` test-host boundary through `MSTest.Sdk/4.2.3`, MTP, lock files, source mapping, audit controls, repo-local package cache, and package shards; generated `net48` artifacts remain package-free.
+
+Primary source reviewed:
+
+- Microsoft Learn [C# 14 null-conditional assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/null-conditional-assignment).
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer additive compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer bitwise compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member additive compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "release and regression workflow contracts are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 556 --no-progress
+dotnet build lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj --nologo --verbosity quiet
+npm run build # in docs
+git diff --check
+```
+
+Result: all listed commands passed. The full package-free custom catalog passed across 552 cases. The MTP module-level package shard run executed 556 tests successfully across the four shard assemblies. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0432 is active and should refresh the roadmap after imported C# null-conditional additive compound assignment indexer targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -7611,7 +7686,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0430 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0431 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

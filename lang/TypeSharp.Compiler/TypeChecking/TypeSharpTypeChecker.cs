@@ -1528,6 +1528,25 @@ public static class TypeSharpTypeChecker
             TypeScope scope,
             SyntaxKind operatorKind)
         {
+            if (IsAdditiveAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var additiveTargetType))
+                {
+                    return CheckAdditiveCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        additiveTargetType,
+                        operatorKind);
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional additive compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
+                return SimpleType.Unknown;
+            }
+
             if (IsBitwiseAssignmentOperatorKind(operatorKind))
             {
                 if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var bitwiseTargetType))
@@ -1572,7 +1591,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?[]' supports only simple '=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?[]' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 

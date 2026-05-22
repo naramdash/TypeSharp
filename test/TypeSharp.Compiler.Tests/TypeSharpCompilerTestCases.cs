@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(550, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(552, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(138, shardCounts[0]);
     AssertEqual(138, shardCounts[1]);
-    AssertEqual(137, shardCounts[2]);
-    AssertEqual(137, shardCounts[3]);
+    AssertEqual(138, shardCounts[2]);
+    AssertEqual(138, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -14188,7 +14188,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 554", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 556", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -20688,6 +20688,272 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberAdditiveCompou
     });
 }
 
+static void CliBuildCompilesNullConditionalImportedIndexerAdditiveCompoundAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalIndexerAdditiveCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalIndexerAdditiveCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalIndexerAdditiveCompoundAssignment
+
+            import { LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+
+            fun makeIndexer(value: int): LegacyMutableIndexer {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun missingIndexer(): LegacyMutableIndexer? =
+              null
+
+            fun makeIndex(): int {
+              LegacyFields.MutableStaticName = "index"
+              1
+            }
+
+            fun makeValue(): int {
+              LegacyFields.MutableStaticName = "value"
+              2
+            }
+
+            export fun addAt(value: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(1)
+              indexer?[1] += value
+            }
+
+            export fun subtractAt(value: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(7)
+              indexer?[1] -= value
+            }
+
+            export fun skipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let indexer: LegacyMutableIndexer? = missingIndexer()
+              indexer?[makeIndex()] += makeValue()
+              LegacyFields.MutableStaticName
+            }
+
+            export fun nonTrivial(value: int): int {
+              makeIndexer(5)?[makeIndex()] += value
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported indexer additive compound assignment build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalIndexerAdditiveCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyMutableIndexer, int>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int) : new System.Func<int, int>((__tsIndex", generatedSource);
+        AssertContains("] += value)", generatedSource);
+        AssertContains("] -= value)", generatedSource);
+        AssertContains("] += makeValue())", generatedSource);
+        AssertContains(")(makeIndex())", generatedSource);
+        AssertContains(")(makeIndexer(5))", generatedSource);
+        AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer syntax.");
+        AssertFalse(generatedSource.Contains("makeIndexer(5)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional additive indexer receiver or argument.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalIndexerAdditiveCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional imported indexer additive compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalIndexerAdditiveCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalIndexerAdditiveCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalIndexerAdditiveCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalIndexerAdditiveCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalIndexerAdditiveCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalIndexerAdditiveCompoundAssignment.Module.addAt(2) == 3 &&
+                            Samples.NullConditionalIndexerAdditiveCompoundAssignment.Module.subtractAt(4) == 3 &&
+                            Samples.NullConditionalIndexerAdditiveCompoundAssignment.Module.skipped() == "ready" &&
+                            Samples.NullConditionalIndexerAdditiveCompoundAssignment.Module.nonTrivial(3) == 8;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalIndexerAdditiveCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional indexer additive compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedIndexerAdditiveCompoundAssignmentTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalIndexerAdditiveCompoundAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalIndexerAdditiveCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalIndexerAdditiveCompoundAssignment
+
+            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyByteIndexer, LegacyDualNamed, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
+
+            export fun unsupportedValue(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] += true
+              0
+            }
+
+            export fun unsupportedBoolTarget(): int {
+              let indexer: LegacyBoolIndexer = LegacyBoolIndexer()
+              indexer?[1] += true
+              0
+            }
+
+            export fun unsupportedStringTarget(): int {
+              let indexer: LegacyStringIndexer = LegacyStringIndexer()
+              indexer?[1] += "x"
+              0
+            }
+
+            export fun nullableOperand(value: int?): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] += value
+              0
+            }
+
+            export fun narrowing(value: long): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] += value
+              0
+            }
+
+            export fun missingSetter(): int {
+              let indexer: LegacyByteIndexer = LegacyByteIndexer()
+              indexer?[1] += "x"
+              0
+            }
+
+            export fun mismatchedArgument(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[true] += 1
+              0
+            }
+
+            export fun ambiguousArgument(): int {
+              let indexer: LegacyAmbiguousIndexer = LegacyAmbiguousIndexer()
+              indexer?[LegacyDualNamed("value")] += "x"
+              0
+            }
+
+            export fun otherCompound(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] <<= 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer additive compound assignment targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'bool'."),
+            "Null-conditional imported int indexer target should reject bool operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+            "Null-conditional imported bool indexer target should reject additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+            "Null-conditional imported string indexer target should reject additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+            "Null-conditional imported indexer target should reject nullable additive operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign additive compound assignment result of type 'long' to 'int'."),
+            "Null-conditional imported indexer target should reject additive results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
+            "Getter-only null-conditional imported indexer targets should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2411" &&
+                diagnostic.Message.Contains("does not contain a public instance indexer compatible with argument type(s) 'bool'", StringComparison.Ordinal)),
+            "Mismatched null-conditional imported indexer additive arguments should reuse existing interop diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2402" &&
+                diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
+            "Ambiguous null-conditional imported indexer additive arguments should reuse existing interop ambiguity diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("supports only simple '=', bounded additive compound '+=', '-='", StringComparison.Ordinal)),
+            "Other null-conditional indexer compound assignment operators should remain rejected before emission.");
+    });
+}
+
 static void CliBuildCompilesNullConditionalImportedMemberLogicalUnsignedShiftAssignment()
 {
     WithWorkspace(root =>
@@ -21346,7 +21612,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerBitwiseCompou
 
             export fun otherCompound(): int {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
-              indexer?[1] += 1
+              indexer?[1] <<= 1
               0
             }
             """);
@@ -21382,7 +21648,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerBitwiseCompou
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("supports only simple '=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>='", StringComparison.Ordinal)),
+                diagnostic.Message.Contains("supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>='", StringComparison.Ordinal)),
             "Other null-conditional indexer compound assignment operators should remain rejected before emission.");
     });
 }
@@ -21925,7 +22191,7 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedIndexerTar
 
             export fun compound(): int {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
-              indexer?[0] += 1
+              indexer?[0] <<= 1
               0
             }
 
@@ -21948,7 +22214,7 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedIndexerTar
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("supports only simple '='", StringComparison.Ordinal)),
+                diagnostic.Message.Contains("supports only simple '=', bounded additive compound", StringComparison.Ordinal)),
             "Null-conditional indexer compound assignment should be rejected before emission.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
