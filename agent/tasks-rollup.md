@@ -8413,7 +8413,7 @@ Result: All listed commands passed. The focused null-conditional member multipli
 Remaining:
 
 - Task 0444 has since completed the roadmap refresh after imported C# null-conditional member multiplicative compound assignment targets.
-- Task 0445 has since completed imported C# null-conditional indexer multiplicative compound assignment targets; Task 0446 is active and should recheck official language/platform/package/tooling signals after that implementation.
+- Task 0446 has since completed the roadmap refresh after imported C# null-conditional indexer multiplicative compound assignment targets; Task 0447 is active and should implement local floating-point and decimal multiplicative compound assignment policy.
 - Floating-point/decimal policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
@@ -8466,7 +8466,7 @@ Primary evidence:
 
 Remaining:
 
-- Task 0445 has since completed imported C# null-conditional indexer multiplicative compound assignment targets; Task 0446 is active and should recheck official language/platform/package/tooling signals after that implementation.
+- Task 0446 has since completed the roadmap refresh after imported C# null-conditional indexer multiplicative compound assignment targets; Task 0447 is active and should implement local floating-point and decimal multiplicative compound assignment policy.
 - Floating-point/decimal policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
@@ -8503,7 +8503,7 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [Task 0446 packet](0446-roadmap-refresh-after-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-targets.md)
+- [Task 0446 rollup](#task-0446-roadmap-refresh-after-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-targets)
 
 Verification:
 
@@ -8529,8 +8529,61 @@ Result: All listed commands passed after the MSTest catalog smoke count was upda
 
 Remaining:
 
-- Task 0446 is active and should recheck official language/platform/package/tooling signals after imported C# null-conditional indexer multiplicative compound assignment targets.
+- Task 0446 has since completed the roadmap refresh after imported C# null-conditional indexer multiplicative compound assignment targets; Task 0447 is active and should implement local floating-point and decimal multiplicative compound assignment policy.
 - Floating-point/decimal policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0446 Roadmap Refresh After Imported C# Null-Conditional Indexer Multiplicative Compound Assignment Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0445.
+- Confirmed no generated-artifact baseline drift: generated assemblies stay package-free `net48`, generated C# stays C# 7.3-compatible, Core/Runtime stay package-free, and compiler/test hosts may continue using modern .NET.
+- Reaffirmed C# 14 as the stable .NET 10 C# signal and C# 15 as a .NET 11 preview signal. C# 14 null-conditional assignment and user-defined compound assignment remain directional context, while TypeSharp keeps user-defined operators and checked-overflow policy expansion out of this slice.
+- Reaffirmed TypeScript 6.0 as the current stable TypeScript signal and TypeScript 7.0 Beta/native-preview as tooling strategy input only, not a TypeSharp runtime, package, or syntax requirement.
+- Reaffirmed F# 10 as refinement/tooling input for diagnostics, task interop, attribute-target clarity, and parallel compiler discipline without adding an FSharp.Core dependency to generated artifacts.
+- Reaffirmed .NET Framework 4.8.1 as the latest Framework while keeping `net48` as TypeSharp's broad generated target, and noted .NET 10 remains the active LTS host signal at patch 10.0.8.
+- Reaffirmed the `net10.0` NuGet package bridge through pinned `MSTest.Sdk/4.2.3`, Microsoft Testing Platform, package lock files, source mapping, audit controls, repo-local package cache, four package-based shard projects, and MTP `--test-modules` module parallelism with a 570-test minimum. NuGet `xunit.v3` 3.2.2, NUnit 4.6.1, and NUnit3TestAdapter 6.2.0 remain valid ecosystem comparison points, but adding them now would duplicate the same extracted-catalog evidence instead of improving generated `net48` compatibility.
+- Kept Task 0401 blocked without explicit approval. The GitHub Actions failure remains tracked as a C# process-launch issue around starting `npm`, while the 2026-06-08 through 2026-06-15 Windows Server 2025 + Visual Studio 2026 hosted-runner migration remains a CI watch item.
+- Selected Task 0447 as the next bounded implementation slice: local floating-point and decimal multiplicative compound assignment policy for `let mut` `*=`, `/=`, and `%=` targets, preserving generated package-free `net48`/C# 7.3 output and keeping imported, null-conditional, checked-overflow, and user-defined operator expansion out of scope.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), [C# arithmetic operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators), [checked and unchecked statements](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/checked-and-unchecked), and the [C# 14 null-conditional assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/null-conditional-assignment).
+- Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework), [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy), [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks), [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy), and [F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript team [latest posts](https://devblogs.microsoft.com/typescript/), [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/), [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), and [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/).
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk), NuGet [`PackageReference` lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies), [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities), [package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping), and [trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers).
+- NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [Microsoft Testing Platform guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) and [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+- GitHub Actions [Windows Server 2025 + Visual Studio 2026 image migration issue](https://github.com/actions/runner-images/issues/14017), [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and [`actions/setup-node`](https://github.com/actions/setup-node).
+
+Verification:
+
+```powershell
+npm run build # in docs
+rg -n "Task 0446 is active|0446-roadmap-refresh-after-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-targets\.md|Task 0446 should|TBD pending final verification|0402-0445" agent docs/src/content/docs --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: docs build passed with the existing Vite chunk-size warning, the stale-reference scan found no stale Task 0446 active packet references outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0447 packet](0447-local-floating-decimal-multiplicative-compound-assignment-policy.md)
+
+Remaining:
+
+- Task 0447 is active and should implement local floating-point and decimal multiplicative compound assignment policy.
+- Imported/member/null-conditional floating-point and decimal multiplicative policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -8557,7 +8610,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0445 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0446 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
