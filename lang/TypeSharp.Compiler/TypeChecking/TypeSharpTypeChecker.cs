@@ -1596,6 +1596,25 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
+            if (IsShiftAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var shiftTargetType))
+                {
+                    return CheckShiftCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        shiftTargetType,
+                        operatorKind);
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional shift compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
+                return SimpleType.Unknown;
+            }
+
             if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
             {
                 if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var logicalShiftTargetType))
@@ -1621,7 +1640,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?[]' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?[]' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', bounded shift compound '<<=', '>>=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
