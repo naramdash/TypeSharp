@@ -9167,6 +9167,54 @@ Remaining:
 - Imported member/indexer and null-conditional checked-overflow policy plus user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0458 Roadmap Refresh After Local Multiplicative Compound Assignment Checked/Unchecked Overflow Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0457 landed local mutable `checked(...)`/`unchecked(...)` wrappers for bounded `*=`, `/=`, and `%=` assignment.
+- Preserved the generated artifact baseline: generated TypeSharp output remains package-free `net48`, generated C# remains C# 7.3-compatible, local checked/unchecked multiplicative assignment statements continue to lower to C# 7.3 `checked { ... }` and `unchecked { ... }` blocks, and value-position checked/unchecked expressions continue to lower as C# checked/unchecked expressions.
+- Preserved the test-host package baseline: the pinned `net10.0` `MSTest.Sdk/4.2.3` MTP bridge and package shards remain the selected NuGet path with a 572-test package-shard minimum; xUnit.net v3 and NUnit remain future bridge candidates because they would duplicate the same extracted catalog evidence today.
+- Recorded the current official version signals: C# 14 is stable on .NET 10 and explicitly includes user-defined compound assignment operators; C# 15 remains preview on .NET 11 preview with collection expression arguments and union types; .NET Framework projects still default to C# 7.3; TypeScript 6.0 remains stable while TypeScript 7.0 Beta remains native-preview/tooling input; F# 10 remains refinement/tooling input; .NET 10 is at runtime patch 10.0.8 with SDK 10.0.300; .NET 11 preview is 11.0.0-preview.4 with SDK 11.0.100-preview.4; .NET Framework 4.8.1 remains latest Framework; VS Code 1.122 is the current editor signal; and the GitHub Actions Windows Server 2025 + Visual Studio 2026 image migration remains a June 8-15, 2026 watch item.
+- Kept Task 0401 blocked absent explicit user approval and selected Task 0459 as the next bounded implementation slice: imported C# regular member multiplicative compound assignment checked/unchecked overflow policy before indexer, null-conditional, or user-defined operator expansion.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), [arithmetic operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators), and [checked and unchecked statements](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/checked-and-unchecked).
+- Microsoft Learn [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy) and [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript docs [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html) and TypeScript blog [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/).
+- .NET downloads [.NET 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), [.NET 11.0](https://dotnet.microsoft.com/en-us/download/dotnet/11.0), .NET Framework [support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework), Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and Microsoft Learn [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks).
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk), NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [April 2026 1.122 release notes](https://code.visualstudio.com/updates/v1_122), GitHub [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-node`](https://github.com/actions/setup-node), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and the [Windows Server 2025 + Visual Studio 2026 migration issue](https://github.com/actions/runner-images/issues/14017).
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0459 packet](0459-imported-csharp-member-multiplicative-compound-assignment-checked-overflow-policy.md)
+
+Verification:
+
+```powershell
+npm run build # in docs
+rg -n "0458-roadmap-refresh-after-local-multiplicative-compound-assignment-checked-overflow-policy\.md|Task 0458 is active|Task 0458 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0457|Completed range\s*\| 0001-0400, 0402-0457|Task 0457 is active" agent docs\src\content\docs test .github --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The docs build completed with the existing Vite chunk-size warning, the stale-reference scan found no stale Task 0458 active-packet references or stale completed-range pointers outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0459 is active and should implement imported C# regular member multiplicative compound assignment checked/unchecked overflow policy.
+- Imported indexer checked-overflow targets, null-conditional checked-overflow targets, and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -9191,7 +9239,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0456 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0458 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
