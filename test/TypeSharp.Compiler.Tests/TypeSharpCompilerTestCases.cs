@@ -23026,6 +23026,22 @@ static void CliBuildCompilesMultiplicativeCompoundAssignmentApi()
               result %= 7
               result
             }
+
+            export fun checkedAdjust(value: int, factor: short): int {
+              let mut result = value
+              checked(result *= factor)
+              checked(result /= 2)
+              checked(result %= 5)
+              result
+            }
+
+            export fun uncheckedAdjust(value: long, divisor: int): long {
+              let mut result = value
+              unchecked(result *= 3)
+              unchecked(result /= divisor)
+              unchecked(result %= 7)
+              result
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -23043,6 +23059,12 @@ static void CliBuildCompilesMultiplicativeCompoundAssignmentApi()
         AssertContains("result *= 3;", generatedSource);
         AssertContains("result /= divisor;", generatedSource);
         AssertContains("result %= 7;", generatedSource);
+        AssertContains("checked\n            {\n                result *= factor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                result /= 2;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                result %= 5;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                result *= 3;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                result /= divisor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                result %= 7;\n            }", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "MultiplicativeCompoundAssignmentApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with multiplicative compound assignment APIs.");
@@ -23081,7 +23103,9 @@ static void CliBuildCompilesMultiplicativeCompoundAssignmentApi()
                     public static bool Read()
                     {
                         return Samples.MultiplicativeCompoundAssignment.Module.adjust(13, (short)3) == 4 &&
-                            Samples.MultiplicativeCompoundAssignment.Module.adjustLong(22L, 5) == 6L;
+                            Samples.MultiplicativeCompoundAssignment.Module.adjustLong(22L, 5) == 6L &&
+                            Samples.MultiplicativeCompoundAssignment.Module.checkedAdjust(13, (short)3) == 4 &&
+                            Samples.MultiplicativeCompoundAssignment.Module.uncheckedAdjust(22L, 5) == 6L;
                     }
                 }
             }
@@ -23122,6 +23146,22 @@ static void CheckerAcceptsFloatingAndDecimalMultiplicativeCompoundAssignment()
           result *= factor
           result /= 2m
           result %= factor
+          result
+        }
+
+        fun checkedScaleFloat(value: float, factor: int): float {
+          let mut result = value
+          checked(result *= factor)
+          checked(result /= factor)
+          checked(result %= 2)
+          result
+        }
+
+        fun uncheckedScaleDecimal(value: decimal, factor: int): decimal {
+          let mut result = value
+          unchecked(result *= factor)
+          unchecked(result /= 2m)
+          unchecked(result %= factor)
           result
         }
         """,
@@ -23175,6 +23215,22 @@ static void CliBuildCompilesFloatingAndDecimalMultiplicativeCompoundAssignmentAp
               result %= factor
               result
             }
+
+            export fun checkedScaleFloat(value: float, factor: int): float {
+              let mut result = value
+              checked(result *= factor)
+              checked(result /= factor)
+              checked(result %= 2)
+              result
+            }
+
+            export fun uncheckedScaleDecimal(value: decimal, factor: int): decimal {
+              let mut result = value
+              unchecked(result *= factor)
+              unchecked(result /= 2m)
+              unchecked(result %= factor)
+              result
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -23190,6 +23246,12 @@ static void CliBuildCompilesFloatingAndDecimalMultiplicativeCompoundAssignmentAp
         AssertContains("result /= factor;", generatedSource);
         AssertContains("result %= 2;", generatedSource);
         AssertContains("result /= 2m;", generatedSource);
+        AssertContains("checked\n            {\n                result *= factor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                result /= factor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                result %= 2;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                result *= factor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                result /= 2m;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                result %= factor;\n            }", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "FloatingDecimalMultiplicativeCompoundAssignmentApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with floating and decimal multiplicative compound assignment APIs.");
@@ -23229,7 +23291,9 @@ static void CliBuildCompilesFloatingAndDecimalMultiplicativeCompoundAssignmentAp
                     {
                         return Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleFloat(13f, 3) == 1f &&
                             Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleDouble(13.0, 3f) == 1.0 &&
-                            Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleDecimal(13m, 3) == 1m;
+                            Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleDecimal(13m, 3) == 1m &&
+                            Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.checkedScaleFloat(13f, 3) == 1f &&
+                            Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.uncheckedScaleDecimal(13m, 3) == 1m;
                     }
                 }
             }
@@ -24596,7 +24660,7 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidMultiplicativeCompoundAssignment
 
-            import { LegacyByteIndexer } from "Legacy.Tools"
+            import { LegacyByteIndexer, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
 
             enum RateKind {
               Basic
@@ -24663,6 +24727,37 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               result
             }
 
+            export fun checkedImportedMember(value: int, factor: int): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = value
+              checked(fields.MutableCount *= factor)
+              fields.MutableCount
+            }
+
+            export fun uncheckedImportedIndexer(value: int, factor: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              unchecked(indexer[0] *= factor)
+              indexer[0]
+            }
+
+            export fun checkedNullConditionalMember(fields: LegacyFields?, factor: int): int {
+              checked(fields?.MutableCount *= factor)
+              0
+            }
+
+            export fun checkedMixedDecimalFloating(value: decimal, factor: double): decimal {
+              let mut result = value
+              checked(result *= factor)
+              result
+            }
+
+            export fun uncheckedNullableFloat(value: float, maybe: float?): float {
+              let mut result = value
+              unchecked(result /= maybe)
+              result
+            }
+
             export fun importedIndexerMissingSetter(): int {
               let indexer: LegacyByteIndexer = LegacyByteIndexer()
               indexer[0] /= 2
@@ -24672,13 +24767,17 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
 
         var result = TypeSharpChecker.Check(manifestPath);
         const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
+        const string checkedLocalOnlyMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets.";
+        const string mixedDecimalFloatingMessage = "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'.";
+        const string nullableFloatMessage = "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'.";
+        var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
 
         AssertTrue(result.HasErrors, "Unsupported multiplicative compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended."),
-            "Immutable local multiplicative assignment should preserve the local mutability diagnostic.");
+            $"Immutable local multiplicative assignment should preserve the local mutability diagnostic.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
@@ -24724,6 +24823,21 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Nullable floating-point multiplicative operands should be rejected.");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == checkedLocalOnlyMessage) >= 3,
+            "Checked and unchecked imported member/indexer/null-conditional multiplicative targets should remain out of scope.");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == mixedDecimalFloatingMessage) >= 2,
+            "Checked local mixed decimal/floating operands should preserve existing multiplicative diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == nullableFloatMessage) >= 2,
+            "Unchecked local nullable floating-point operands should preserve existing multiplicative diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&

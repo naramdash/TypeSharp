@@ -1111,6 +1111,11 @@ public static class TypeSharpTypeChecker
                 return CheckSatisfiesExpression(node, scope);
             }
 
+            if (node.Kind == SyntaxKind.CheckedExpression)
+            {
+                return CheckCheckedExpression(node, scope);
+            }
+
             if (IsBitwiseExpression(node))
             {
                 return CheckBitwiseExpression(node, scope);
@@ -1177,6 +1182,25 @@ public static class TypeSharpTypeChecker
             }
 
             return SimpleType.Unknown;
+        }
+
+        private SimpleType CheckCheckedExpression(SyntaxNode node, TypeScope scope)
+        {
+            var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (expression is null)
+            {
+                return SimpleType.Unknown;
+            }
+
+            if (TryGetCheckedMultiplicativeCompoundAssignmentTarget(expression, out var target) &&
+                IsCheckedMultiplicativeCompoundAssignmentUnsupportedTarget(target))
+            {
+                ReportMismatch(
+                    target,
+                    "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets.");
+            }
+
+            return CheckExpression(expression, scope);
         }
 
         private SimpleType CheckAssignmentExpression(SyntaxNode node, TypeScope scope)
@@ -5148,6 +5172,38 @@ public static class TypeSharpTypeChecker
             kind is SyntaxKind.StarEqualsToken
                 or SyntaxKind.SlashEqualsToken
                 or SyntaxKind.PercentEqualsToken;
+
+        private static bool TryGetCheckedMultiplicativeCompoundAssignmentTarget(
+            SyntaxNode node,
+            out SyntaxNode target)
+        {
+            target = default!;
+            if (node.Kind != SyntaxKind.AssignmentExpression)
+            {
+                return false;
+            }
+
+            var operatorKind = node.Children.FirstOrDefault(child => child.IsToken && IsAssignmentOperatorKind(child.Kind))?.Kind ?? SyntaxKind.UnknownToken;
+            if (!IsMultiplicativeAssignmentOperatorKind(operatorKind))
+            {
+                return false;
+            }
+
+            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2)
+            {
+                return false;
+            }
+
+            target = expressions[0];
+            return true;
+        }
+
+        private static bool IsCheckedMultiplicativeCompoundAssignmentUnsupportedTarget(SyntaxNode target) =>
+            target.Kind is SyntaxKind.MemberAccessExpression
+                or SyntaxKind.IndexerExpression
+                or SyntaxKind.NullConditionalMemberAccessExpression
+                or SyntaxKind.NullConditionalIndexerExpression;
 
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {

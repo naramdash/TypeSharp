@@ -48,5 +48,77 @@ namespace Samples.MultiplicativeCompoundAssignment
             result %= factor;
             return result;
         }
+
+        public static int checkedAdjust(int value, short factor)
+        {
+            var result = value;
+            checked
+            {
+                result *= factor;
+            }
+            checked
+            {
+                result /= 2;
+            }
+            checked
+            {
+                result %= 5;
+            }
+            return result;
+        }
+
+        public static long uncheckedAdjust(long value, int divisor)
+        {
+            var result = value;
+            unchecked
+            {
+                result *= 3;
+            }
+            unchecked
+            {
+                result /= divisor;
+            }
+            unchecked
+            {
+                result %= 7;
+            }
+            return result;
+        }
+
+        public static float checkedScaleFloat(float value, int factor)
+        {
+            var result = value;
+            checked
+            {
+                result *= factor;
+            }
+            checked
+            {
+                result /= factor;
+            }
+            checked
+            {
+                result %= 2;
+            }
+            return result;
+        }
+
+        public static decimal uncheckedScaleDecimal(decimal value, int factor)
+        {
+            var result = value;
+            unchecked
+            {
+                result *= factor;
+            }
+            unchecked
+            {
+                result /= 2m;
+            }
+            unchecked
+            {
+                result %= factor;
+            }
+            return result;
+        }
     }
 }

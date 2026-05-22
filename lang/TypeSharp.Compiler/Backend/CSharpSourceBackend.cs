@@ -1567,9 +1567,28 @@ public static class CSharpSourceBackend
                 }
                 else
                 {
+                    if (TryEmitCheckedAssignmentStatement(expression, indent))
+                    {
+                        continue;
+                    }
+
                     _builder.AppendLine($"{indent}{EmitExpression(expression)};");
                 }
             }
+        }
+
+        private bool TryEmitCheckedAssignmentStatement(SyntaxNode? expression, string indent)
+        {
+            if (!TryGetCheckedAssignmentStatement(expression, out var keyword, out var assignment))
+            {
+                return false;
+            }
+
+            _builder.AppendLine($"{indent}{keyword}");
+            _builder.AppendLine($"{indent}{{");
+            _builder.AppendLine($"{indent}    {EmitExpression(assignment)};");
+            _builder.AppendLine($"{indent}}}");
+            return true;
         }
 
         private void EmitExtensionFunction(SyntaxNode node, string receiverType)
@@ -1997,11 +2016,50 @@ public static class CSharpSourceBackend
                 }
                 else
                 {
+                    if (TryAppendInlineCheckedAssignmentStatement(builder, expression))
+                    {
+                        continue;
+                    }
+
                     builder.Append($"{EmitExpression(expression)}; ");
                 }
             }
 
             builder.Append(" }");
+        }
+
+        private bool TryAppendInlineCheckedAssignmentStatement(StringBuilder builder, SyntaxNode? expression)
+        {
+            if (!TryGetCheckedAssignmentStatement(expression, out var keyword, out var assignment))
+            {
+                return false;
+            }
+
+            builder.Append($"{keyword} {{ {EmitExpression(assignment)}; }} ");
+            return true;
+        }
+
+        private static bool TryGetCheckedAssignmentStatement(
+            SyntaxNode? expression,
+            out string keyword,
+            out SyntaxNode assignment)
+        {
+            keyword = "checked";
+            assignment = default!;
+            if (expression?.Kind != SyntaxKind.CheckedExpression)
+            {
+                return false;
+            }
+
+            keyword = expression.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.CheckedKeyword or SyntaxKind.UncheckedKeyword)?.Text ?? "checked";
+            var innerExpression = expression.Children.FirstOrDefault(child => !child.IsToken);
+            if (innerExpression?.Kind != SyntaxKind.AssignmentExpression)
+            {
+                return false;
+            }
+
+            assignment = innerExpression;
+            return true;
         }
 
         private static SyntaxNode? GetIfCondition(SyntaxNode node) =>

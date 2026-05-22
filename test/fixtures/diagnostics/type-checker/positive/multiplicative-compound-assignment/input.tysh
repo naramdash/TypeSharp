@@ -39,3 +39,35 @@ fun scaleDecimal(value: decimal, factor: int): decimal {
   result %= factor
   result
 }
+
+fun checkedAdjust(value: int, factor: short): int {
+  let mut result = value
+  checked(result *= factor)
+  checked(result /= 2)
+  checked(result %= 5)
+  result
+}
+
+fun uncheckedAdjust(value: long, divisor: int): long {
+  let mut result = value
+  unchecked(result *= 3)
+  unchecked(result /= divisor)
+  unchecked(result %= 7)
+  result
+}
+
+fun checkedScaleFloat(value: float, factor: int): float {
+  let mut result = value
+  checked(result *= factor)
+  checked(result /= factor)
+  checked(result %= 2)
+  result
+}
+
+fun uncheckedScaleDecimal(value: decimal, factor: int): decimal {
+  let mut result = value
+  unchecked(result *= factor)
+  unchecked(result /= 2m)
+  unchecked(result %= factor)
+  result
+}
