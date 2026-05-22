@@ -7087,11 +7087,83 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [0423-imported-csharp-null-conditional-logical-unsigned-shift-assignment-indexer-targets.md](0423-imported-csharp-null-conditional-logical-unsigned-shift-assignment-indexer-targets.md)
+- [tasks-rollup.md#task-0423-imported-csharp-null-conditional-logical-unsigned-shift-assignment-indexer-targets](tasks-rollup.md#task-0423-imported-csharp-null-conditional-logical-unsigned-shift-assignment-indexer-targets)
 
 Remaining:
 
 - Task 0423 is active and should implement imported C# null-conditional logical unsigned shift assignment indexer targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0423 Imported C# Null-Conditional Logical Unsigned Shift Assignment Indexer Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Implemented bounded imported C# `receiver?[index] >>>= count` support for readable/writable metadata-backed instance indexer targets with supported arguments.
+- Reused the existing logical unsigned shift assignment primitive target/count policy and existing imported indexer argument validation/ranking.
+- Added checker diagnostics for unsupported null-conditional logical shift indexer targets, including missing setter, invalid count, mismatched indexer arguments, ambiguous indexer arguments, other compound operators, and non-imported target shapes.
+- Lowered accepted targets to C# 7.3-compatible immediately invoked `System.Func<TReceiver,TValue>` outer null guards plus inner index-capture branches, using the existing unsigned-cast assignment shape in the non-null branch, evaluating the receiver once, evaluating index arguments and `count` only when the receiver is non-null, and emitting no C# `?[]`, `>>>`, or `>>>=`.
+- Added generated `net48` C# consumer coverage and negative checker coverage; preserved existing imported indexer `>>>=`, null-conditional simple assignment, null-conditional read, and member `>>>=` behavior.
+- Updated the shared catalog to 544 cases with shard expectations `136`, `136`, `136`, and `136`; updated the MSTest bridge catalog count, workflow shard minimums, docs, Work Ledger, tasks, and traceability.
+- Created Task 0424 as the next roadmap-refresh packet after imported C# null-conditional logical unsigned shift assignment indexer targets, with the `net10.0` test NuGet package path explicitly in scope for review.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported indexer logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported indexer logical unsigned shift assignment targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported member logical unsigned shift assignment targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles imported logical unsigned shift assignment indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported imported logical unsigned shift assignment indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported indexer reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported indexer reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 136 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 136 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 136 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 136 --no-progress
+npm run build # in docs
+git diff --check
+```
+
+Result: compiler build, focused null-conditional indexer logical unsigned shift assignment positive/negative tests, preserved imported indexer `>>>=`, null-conditional assignment/read, null-conditional member `>>>=`, shard-count stability tests, full 544-case package-free custom catalog, MSTest bridge build/smoke, all four MSTest package shard bridge runs with 136 tests each, docs build, and diff checks passed. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0424 is active and should perform the post-implementation roadmap refresh.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary

@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(542, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(544, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(136, shardCounts[0]);
     AssertEqual(136, shardCounts[1]);
-    AssertEqual(135, shardCounts[2]);
-    AssertEqual(135, shardCounts[3]);
+    AssertEqual(136, shardCounts[2]);
+    AssertEqual(136, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -20595,7 +20595,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsigne
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidNullConditionalLogicalUnsignedShiftAssignment
 
-            import { LegacyEvents, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyEvents, LegacyFields } from "Legacy.Tools"
 
             export fun invalidCount(count: uint): int {
               let fields: LegacyFields = LegacyFields()
@@ -20617,12 +20617,6 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsigne
 
             export fun staticTarget(): int {
               LegacyFields?.MutableStaticCount >>>= 1
-              0
-            }
-
-            export fun indexerTarget(): int {
-              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
-              indexer?[0] >>>= 1
               0
             }
 
@@ -20651,11 +20645,211 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsigne
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message.Contains("supports only simple '='", StringComparison.Ordinal)),
             "Other null-conditional compound assignment operators should remain rejected before emission.");
+    });
+}
+
+static void CliBuildCompilesNullConditionalImportedIndexerLogicalUnsignedShiftAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalIndexerLogicalUnsignedShiftAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalIndexerLogicalUnsignedShiftAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalIndexerLogicalUnsignedShiftAssignment
+
+            import { LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+
+            fun makeIndexer(value: int): LegacyMutableIndexer {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun missingIndexer(): LegacyMutableIndexer? =
+              null
+
+            fun makeIndex(): int {
+              LegacyFields.MutableStaticName = "index"
+              1
+            }
+
+            fun makeCount(): int {
+              LegacyFields.MutableStaticName = "count"
+              1
+            }
+
+            export fun simple(count: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(-8)
+              indexer?[1] >>>= count
+            }
+
+            export fun skipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let indexer: LegacyMutableIndexer? = missingIndexer()
+              indexer?[makeIndex()] >>>= makeCount()
+              LegacyFields.MutableStaticName
+            }
+
+            export fun nonTrivial(count: int): int {
+              makeIndexer(-8)?[makeIndex()] >>>= count
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported indexer logical unsigned shift assignment build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalIndexerLogicalUnsignedShiftAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyMutableIndexer, int>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int) : new System.Func<int, int>((__tsIndex", generatedSource);
+        AssertContains("] = unchecked((int)(unchecked((uint)(__tsReceiver", generatedSource);
+        AssertContains(") >> makeCount()))", generatedSource);
+        AssertContains(")(makeIndex())", generatedSource);
+        AssertContains(")(makeIndexer(-8))", generatedSource);
+        AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer syntax.");
+        AssertFalse(generatedSource.Contains(">>>", StringComparison.Ordinal), "Generated C# 7.3 source should not emit logical shift tokens.");
+        AssertFalse(generatedSource.Contains("makeIndexer(-8)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional indexer receiver or argument.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalIndexerLogicalUnsignedShiftAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional imported indexer logical shift APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalIndexerLogicalUnsignedShiftAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalIndexerLogicalUnsignedShiftAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalIndexerLogicalUnsignedShiftAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalIndexerLogicalUnsignedShiftAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalIndexerLogicalUnsignedShiftAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalIndexerLogicalUnsignedShiftAssignment.Module.simple(1) == 2147483644 &&
+                            Samples.NullConditionalIndexerLogicalUnsignedShiftAssignment.Module.skipped() == "ready" &&
+                            Samples.NullConditionalIndexerLogicalUnsignedShiftAssignment.Module.nonTrivial(1) == 2147483644;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalIndexerLogicalUnsignedShiftAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional indexer logical unsigned shift assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedIndexerLogicalUnsignedShiftAssignmentTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalIndexerLogicalUnsignedShiftAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalIndexerLogicalUnsignedShiftAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalIndexerLogicalUnsignedShiftAssignment
+
+            import { LegacyAmbiguousIndexer, LegacyByteIndexer, LegacyDualNamed, LegacyMutableIndexer } from "Legacy.Tools"
+
+            export fun invalidCount(count: uint): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[1] >>>= count
+              indexer[1]
+            }
+
+            export fun missingSetter(): int {
+              let indexer: LegacyByteIndexer = LegacyByteIndexer()
+              indexer?[1] >>>= 1
+              0
+            }
+
+            export fun mismatchedArgument(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[true] >>>= 1
+              0
+            }
+
+            export fun ambiguousArgument(): int {
+              let indexer: LegacyAmbiguousIndexer = LegacyAmbiguousIndexer()
+              indexer?[LegacyDualNamed("value")] >>>= 1
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer logical unsigned shift assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("Null-conditional assignment '?[]' supports only simple '='", StringComparison.Ordinal)),
-            "Null-conditional indexer logical shift assignment should remain out of scope.");
+                diagnostic.Message == "Shift assignment '>>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
+            "Null-conditional imported indexer target should reject unsupported shift counts.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
+            "Getter-only null-conditional imported indexer targets should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2411" &&
+                diagnostic.Message.Contains("does not contain a public instance indexer compatible with argument type(s) 'bool'", StringComparison.Ordinal)),
+            "Mismatched null-conditional imported indexer logical shift arguments should reuse existing interop diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2402" &&
+                diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
+            "Ambiguous null-conditional imported indexer logical shift arguments should reuse existing interop ambiguity diagnostics.");
     });
 }
 

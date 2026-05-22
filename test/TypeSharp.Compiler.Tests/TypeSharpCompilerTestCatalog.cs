@@ -500,6 +500,8 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional assignment imported member targets", CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTargets),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported member logical unsigned shift assignment", CliBuildCompilesNullConditionalImportedMemberLogicalUnsignedShiftAssignment),
         new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported member logical unsigned shift assignment targets", CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsignedShiftAssignmentTargets),
+        new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported indexer logical unsigned shift assignment", CliBuildCompilesNullConditionalImportedIndexerLogicalUnsignedShiftAssignment),
+        new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported indexer logical unsigned shift assignment targets", CheckerRejectsUnsupportedNullConditionalImportedIndexerLogicalUnsignedShiftAssignmentTargets),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported member reads", CliBuildCompilesNullConditionalImportedMemberReads),
         new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported member reads", CheckerRejectsUnsupportedNullConditionalImportedMemberReads),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional assignment imported indexer targets", CliBuildCompilesNullConditionalAssignmentImportedIndexerTargets),

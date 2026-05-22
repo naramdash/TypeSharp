@@ -2691,6 +2691,11 @@ public static class CSharpSourceBackend
                 return nullConditionalMemberAssignment;
             }
 
+            if (TryGetNullConditionalLogicalUnsignedShiftIndexerAssignment(target, right, out var nullConditionalIndexerAssignment))
+            {
+                return nullConditionalIndexerAssignment;
+            }
+
             if (TryGetLogicalUnsignedShiftMemberAssignment(target, right, out var loweredMemberAssignment))
             {
                 return loweredMemberAssignment;
@@ -2782,6 +2787,43 @@ public static class CSharpSourceBackend
                 targetType);
             var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({targetExpression} = {shifted})";
             lowered = $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
+            return true;
+        }
+
+        private bool TryGetNullConditionalLogicalUnsignedShiftIndexerAssignment(
+            SyntaxNode target,
+            SyntaxNode right,
+            out string lowered)
+        {
+            lowered = string.Empty;
+            if (!TryGetNullConditionalImportedIndexerAccess(
+                    target,
+                    requireWritable: true,
+                    out var receiver,
+                    out var arguments,
+                    out var targetType,
+                    out var receiverType,
+                    out var indexParameterTypes))
+            {
+                return false;
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAssignment = BuildNullConditionalIndexerBranch(
+                receiverParameter,
+                arguments,
+                indexParameterTypes,
+                normalizedTargetType,
+                targetExpression =>
+                {
+                    var shifted = BuildLogicalUnsignedShiftAssignmentValue(
+                        targetExpression,
+                        EmitExpression(right),
+                        targetType);
+                    return $"({targetExpression} = {shifted})";
+                });
+            lowered = $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {receiverParameter} == null ? default({normalizedTargetType}) : {guardedAssignment})({EmitExpression(receiver)})";
             return true;
         }
 
