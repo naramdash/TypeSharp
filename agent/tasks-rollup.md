@@ -9009,6 +9009,60 @@ Remaining:
 - Checked-overflow policy and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0455 Imported C# Null-Conditional Indexer Floating-Point And Decimal Multiplicative Compound Assignment Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Extended imported C# instance indexer null-conditional `receiver?[index] *= value`, `receiver?[index] /= value`, and `receiver?[index] %= value` targets from primitive integral-only operands to the bounded known non-null integral/floating-point/decimal assign-back policy.
+- Reused metadata-backed public getter/setter indexer selection, supported index-argument validation/ranking, and deterministic diagnostics while preserving skipped index-argument and right-side evaluation on null receivers.
+- Accepted same-family floating operands plus decimal/integral combinations, and rejected nullable operands, mixed decimal-floating operands, narrowing assign-back, missing setters, bool/string/enum targets, mismatched or ambiguous indexers, static-like/local/TypeSharp-owned/unresolved targets, and unsupported shapes before backend emission.
+- Preserved explicit C# 7.3 outer receiver plus inner index guard lowering with no emitted C# null-conditional assignment syntax, generated package-free `net48` consumer evidence, and the existing package-shard baseline.
+- Extended existing generated C# consumer and negative checker coverage without adding shared catalog rows, so the shared catalog remains 568 cases with shard expectations `142`, `142`, `142`, and `142`, and the package-shard MTP minimum remains 572 tests.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "null-conditional imported indexer multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 572 --no-progress
+npm run build # in docs
+rg -n "0455-imported-csharp-null-conditional-indexer-floating-decimal-multiplicative-compound-assignment-policy\.md|Task 0455 is active|Task 0455 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0454|Completed range\s*\| 0001-0400, 0402-0454|null-conditional indexer floating-point and decimal multiplicative expansion is active" agent docs\src\content\docs test .github --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The focused null-conditional imported indexer filter passed both tests, the broader multiplicative filter passed all 12 multiplicative tests, fixture coverage passed, and the full package-free custom catalog passed across 568 cases including the VS Code live smoke. The MSTest bridge and four shard projects built successfully, the MTP module-level package shard run executed 572 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scan found no stale Task 0455 active-packet references outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0456 is active and should recheck official language/platform/package/testing/editor/CI signals after imported C# null-conditional indexer floating-point and decimal multiplicative compound assignment policy.
+- Checked-overflow policy and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -9033,7 +9087,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0448 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0455 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

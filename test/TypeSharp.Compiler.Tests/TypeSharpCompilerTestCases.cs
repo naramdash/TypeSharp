@@ -24236,7 +24236,7 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.NullConditionalIndexerMultiplicativeCompoundAssignment
 
-            import { LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyDecimalIndexer, LegacyDoubleIndexer, LegacyFields, LegacyFloatIndexer, LegacyMutableIndexer } from "Legacy.Tools"
 
             fun makeIndexer(value: int): LegacyMutableIndexer {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
@@ -24282,6 +24282,33 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
             export fun nonTrivial(value: int): int {
               makeIndexer(value)?[makeIndex()] *= 3
             }
+
+            export fun scaleFloatAt(value: float, factor: int): float {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer[0] = value
+              indexer?[0] *= factor
+              indexer?[0] /= factor
+              indexer?[0] %= 2
+              indexer[0]
+            }
+
+            export fun scaleDoubleAt(value: double, factor: float): double {
+              let indexer: LegacyDoubleIndexer = LegacyDoubleIndexer()
+              indexer[0] = value
+              indexer?[0] *= factor
+              indexer?[0] /= 2
+              indexer?[0] %= factor
+              indexer[0]
+            }
+
+            export fun scaleDecimalAt(value: decimal, factor: int): decimal {
+              let indexer: LegacyDecimalIndexer = LegacyDecimalIndexer()
+              indexer[0] = value
+              indexer?[0] *= factor
+              indexer?[0] /= 2m
+              indexer?[0] %= factor
+              indexer[0]
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -24303,6 +24330,13 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
         AssertContains("] *= makeFactor())", generatedSource);
         AssertContains(")(makeIndex())", generatedSource);
         AssertContains(")(makeIndexer(value))", generatedSource);
+        AssertContains("new System.Func<LegacyFloatIndexer, float>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(float) : new System.Func<int, float>((__tsIndex", generatedSource);
+        AssertContains("new System.Func<LegacyDoubleIndexer, double>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(double) : new System.Func<int, double>((__tsIndex", generatedSource);
+        AssertContains("new System.Func<LegacyDecimalIndexer, decimal>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(decimal) : new System.Func<int, decimal>((__tsIndex", generatedSource);
+        AssertContains("] /= 2m)", generatedSource);
         AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer multiplicative assignment syntax.");
         AssertFalse(generatedSource.Contains("makeIndexer(value)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional multiplicative indexer receiver or argument.");
 
@@ -24349,7 +24383,10 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.divideAt(21, 3) == 7 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.moduloAt(22, 5) == 2 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.skipped() == "ready" &&
-                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33;
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33 &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleFloatAt(13f, 3) == 1f &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDoubleAt(13.0, 3f) == 1.0 &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDecimalAt(13m, 3) == 1.5m;
                     }
                 }
             }
@@ -24382,7 +24419,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidNullConditionalIndexerMultiplicativeCompoundAssignment
 
-            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyByteIndexer, LegacyColor, LegacyColorIndexer, LegacyDualNamed, LegacyFields, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
+            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyByteIndexer, LegacyColor, LegacyColorIndexer, LegacyDecimalIndexer, LegacyDualNamed, LegacyFields, LegacyFloatIndexer, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
 
             record Counter {
               Value: int
@@ -24415,6 +24452,24 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
             export fun narrowing(value: long): int {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
               indexer?[0] *= value
+              0
+            }
+
+            export fun mixedDecimalFloating(value: double): int {
+              let indexer: LegacyDecimalIndexer = LegacyDecimalIndexer()
+              indexer?[0] *= value
+              0
+            }
+
+            export fun narrowingFloat(value: double): int {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer?[0] *= value
+              0
+            }
+
+            export fun nullableFloat(value: float?): int {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer?[0] /= value
               0
             }
 
@@ -24466,29 +24521,44 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Null-conditional imported bool indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Null-conditional imported string indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Null-conditional imported enum indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Null-conditional imported indexer target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Null-conditional imported indexer target should reject multiplicative results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
+            "Null-conditional imported decimal indexer target should reject mixed decimal and floating-point operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
+            "Null-conditional imported float indexer target should reject floating-point results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
+            "Null-conditional imported float indexer target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&

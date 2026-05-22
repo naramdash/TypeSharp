@@ -1625,7 +1625,8 @@ public static class TypeSharpTypeChecker
                         value,
                         scope,
                         multiplicativeTargetType,
-                        operatorKind);
+                        operatorKind,
+                        allowFloatingDecimal: true);
                 }
 
                 CheckExpression(value, scope);
