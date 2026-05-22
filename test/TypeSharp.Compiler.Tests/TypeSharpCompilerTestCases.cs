@@ -23737,8 +23737,60 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
               indexer[0]
             }
 
+            export fun checkedMultiplyAt(value: int, factor: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              checked(indexer[0] *= factor)
+              indexer[0]
+            }
+
+            export fun checkedDivideAt(value: int, divisor: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              checked(indexer[0] /= divisor)
+              indexer[0]
+            }
+
+            export fun checkedModuloAt(value: int, remainder: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              checked(indexer[0] %= remainder)
+              indexer[0]
+            }
+
+            export fun uncheckedMultiplyAt(value: int, factor: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              unchecked(indexer[0] *= factor)
+              indexer[0]
+            }
+
+            export fun uncheckedDivideAt(value: int, divisor: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              unchecked(indexer[0] /= divisor)
+              indexer[0]
+            }
+
+            export fun uncheckedModuloAt(value: int, remainder: int): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] = value
+              unchecked(indexer[0] %= remainder)
+              indexer[0]
+            }
+
             export fun nonTrivial(value: int, factor: int): int {
               makeIndexer(value)[makeIndex()] *= factor
+            }
+
+            export fun checkedNonTrivial(value: int, factor: int): int {
+              checked(makeIndexer(value + 1)[makeIndex()] *= factor)
+              value
+            }
+
+            export fun uncheckedNonTrivial(value: int, divisor: int): int {
+              unchecked(makeIndexer(value + 2)[makeIndex()] /= divisor)
+              value
             }
 
             export fun scaleFloatAt(value: float, factor: int): float {
@@ -23767,6 +23819,24 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
               indexer[0] %= factor
               indexer[0]
             }
+
+            export fun checkedScaleFloatAt(value: float, factor: int): float {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer[0] = value
+              checked(indexer[0] *= factor)
+              checked(indexer[0] /= factor)
+              checked(indexer[0] %= 2)
+              indexer[0]
+            }
+
+            export fun uncheckedScaleDecimalAt(value: decimal, factor: int): decimal {
+              let indexer: LegacyDecimalIndexer = LegacyDecimalIndexer()
+              indexer[0] = value
+              unchecked(indexer[0] *= factor)
+              unchecked(indexer[0] /= 2m)
+              unchecked(indexer[0] %= factor)
+              indexer[0]
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -23783,12 +23853,22 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
         AssertContains("indexer[0] *= factor;", generatedSource);
         AssertContains("indexer[0] /= divisor;", generatedSource);
         AssertContains("indexer[0] %= remainder;", generatedSource);
+        AssertContains("checked\n            {\n                indexer[0] *= factor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                indexer[0] /= divisor;\n            }", generatedSource);
+        AssertContains("checked\n            {\n                indexer[0] %= remainder;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                indexer[0] *= factor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                indexer[0] /= divisor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                indexer[0] %= remainder;\n            }", generatedSource);
         AssertContains("makeIndexer(value)[makeIndex()] *= factor;", generatedSource);
+        AssertContains("checked\n            {\n                makeIndexer(value + 1)[makeIndex()] *= factor;\n            }", generatedSource);
+        AssertContains("unchecked\n            {\n                makeIndexer(value + 2)[makeIndex()] /= divisor;\n            }", generatedSource);
         AssertContains("indexer[0] *= factor;", generatedSource);
         AssertContains("indexer[0] /= factor;", generatedSource);
         AssertContains("indexer[0] %= 2;", generatedSource);
         AssertContains("indexer[0] /= 2m;", generatedSource);
         AssertEqual(1, CountOccurrences(generatedSource, "makeIndexer(value)[makeIndex()] *= factor;"));
+        AssertEqual(1, CountOccurrences(generatedSource, "makeIndexer(value + 1)[makeIndex()] *= factor;"));
+        AssertEqual(1, CountOccurrences(generatedSource, "makeIndexer(value + 2)[makeIndex()] /= divisor;"));
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMultiplicativeCompoundAssignmentIndexerApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported indexer multiplicative compound assignment APIs.");
@@ -23832,10 +23912,20 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
                         return Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.multiplyAt(5, 4) == 20 &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.divideAt(21, 3) == 7 &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.moduloAt(22, 5) == 2 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.checkedMultiplyAt(5, 4) == 20 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.checkedDivideAt(21, 3) == 7 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.checkedModuloAt(22, 5) == 2 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.uncheckedMultiplyAt(5, 4) == 20 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.uncheckedDivideAt(21, 3) == 7 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.uncheckedModuloAt(22, 5) == 2 &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.nonTrivial(11, 3) == 33 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.checkedNonTrivial(11, 3) == 11 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.uncheckedNonTrivial(11, 3) == 11 &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleFloatAt(13f, 3) == 1f &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleDoubleAt(13.0, 3f) == 1.0 &&
-                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleDecimalAt(13m, 3) == 1m;
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleDecimalAt(13m, 3) == 1m &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.checkedScaleFloatAt(13f, 3) == 1f &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.uncheckedScaleDecimalAt(13m, 3) == 1m;
                     }
                 }
             }
@@ -24819,6 +24909,11 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               0
             }
 
+            export fun uncheckedNullConditionalIndexer(indexer: LegacyMutableIndexer?, factor: int): int {
+              unchecked(indexer?[0] *= factor)
+              0
+            }
+
             export fun checkedMixedDecimalFloating(value: decimal, factor: double): decimal {
               let mut result = value
               checked(result *= factor)
@@ -24836,11 +24931,17 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               indexer[0] /= 2
               0
             }
+
+            export fun checkedImportedIndexerMissingSetter(): int {
+              let indexer: LegacyByteIndexer = LegacyByteIndexer()
+              checked(indexer[0] /= 2)
+              0
+            }
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
         const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
-        const string checkedRegularMemberOnlyMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets or readable and writable metadata-backed imported C# field/property member targets; imported indexer and null-conditional targets are not supported.";
+        const string checkedUnsupportedTargetMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets, readable and writable metadata-backed imported C# field/property member targets, or readable and writable metadata-backed imported C# instance indexer targets with supported index arguments; null-conditional targets are not supported.";
         const string mixedDecimalFloatingMessage = "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'.";
         const string nullableFloatMessage = "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'.";
         var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
@@ -24899,8 +25000,8 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == checkedRegularMemberOnlyMessage) >= 2,
-            "Checked and unchecked imported indexer/null-conditional multiplicative targets should remain out of scope.");
+                diagnostic.Message == checkedUnsupportedTargetMessage) >= 2,
+            "Checked and unchecked null-conditional multiplicative targets should remain out of scope.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
@@ -24912,10 +25013,10 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
                 diagnostic.Message == nullableFloatMessage) >= 2,
             "Unchecked local nullable floating-point operands should preserve existing multiplicative diagnostics.");
         AssertTrue(
-            result.Diagnostics.Any(diagnostic =>
+            result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == unsupportedImportedMessage),
-            "Imported C# indexer multiplicative targets without a public setter should remain unsupported.");
+                diagnostic.Message == unsupportedImportedMessage) >= 2,
+            "Imported C# indexer multiplicative targets without a public setter should remain unsupported inside and outside checked wrappers.");
     });
 }
 
