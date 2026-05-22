@@ -6753,7 +6753,64 @@ Primary evidence:
 
 Remaining:
 
-- Task 0417 should implement imported C# null-conditional member read expressions.
+- Task 0417 completed imported C# null-conditional member read expressions and selected Task 0418 roadmap refresh.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0417 Imported C# Null-Conditional Member Read Expressions
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Implemented `receiver?.Member` reads for readable metadata-backed imported C# instance fields/properties.
+- The type checker infers nullable-compatible result types and preserves TypeSharp-authored extension-property null-conditional diagnostics.
+- The backend lowers accepted reads to C# 7.3-compatible `System.Func` null guards, uses nullable C# result types such as `int?` for value-type reads, emits no `?.`, and evaluates non-trivial receivers once.
+- Unsupported static, event, method, indexer, TypeSharp-owned, invocation, and chained targets remain diagnostics before backend emission.
+- Added positive generated `net48` C# consumer coverage and negative checker coverage; updated the shared catalog to 538 cases with shard expectations `135`, `135`, `134`, and `134`; updated the MSTest bridge catalog count.
+- Selected Task 0418 as the next ready slice: roadmap refresh after imported C# null-conditional member reads.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported member reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported member reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported member targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+npm run build # in docs
+git diff --check
+```
+
+Result: compiler build, focused positive/negative tests, shard-count stability, imported null-conditional assignment preservation tests, type-checker fixture diagnostics, MSTest bridge build/smoke, full 538-case custom catalog, docs build, and diff checks passed. Docs build kept the existing Vite chunk-size warning.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0418 should recheck official language/platform/package/test/editor/CI signals after imported C# null-conditional member reads, confirm no generated-artifact or test-host package drift, keep Task 0401 blocked unless explicitly approved, and select the next bounded slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary

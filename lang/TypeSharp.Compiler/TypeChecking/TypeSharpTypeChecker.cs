@@ -1409,6 +1409,11 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckNullConditionalMemberAccess(SyntaxNode node, TypeScope scope)
         {
+            if (TryGetNullConditionalImportedMemberReadType(node, scope, out var targetType))
+            {
+                return targetType.AsNullable();
+            }
+
             if (TryGetNullConditionalExtensionPropertyTarget(
                     node,
                     scope,
@@ -1422,7 +1427,7 @@ public static class TypeSharpTypeChecker
             CheckNullConditionalReceiver(node, scope);
             ReportMismatch(
                 node,
-                "Null-conditional member access '?.' is currently supported only as a simple assignment target over metadata-backed imported C# instance field/property targets.");
+                "Null-conditional member access '?.' is supported only for readable metadata-backed imported C# instance field/property targets in this slice; indexer reads, invocation, chains, events, static, local, and TypeSharp-owned targets are not supported.");
             return SimpleType.Unknown;
         }
 
@@ -1803,6 +1808,21 @@ public static class TypeSharpTypeChecker
 
             var receiverType = CheckExpression(receiver, scope);
             return TryGetImportedNullConditionalInstanceMemberAccessType(receiverType, memberName, requireWritable: true, out targetType);
+        }
+
+        private bool TryGetNullConditionalImportedMemberReadType(
+            SyntaxNode target,
+            TypeScope scope,
+            out SimpleType targetType)
+        {
+            targetType = SimpleType.Unknown;
+            if (!TryGetMemberAccessParts(target, out var receiver, out var memberName))
+            {
+                return false;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            return TryGetImportedNullConditionalInstanceMemberAccessType(receiverType, memberName, requireWritable: false, out targetType);
         }
 
         private bool TryGetImportedStaticMemberAccessType(

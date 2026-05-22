@@ -2535,9 +2535,9 @@ public static class CSharpSourceBackend
             }
 
             var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
-            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
-            var guardedAccess = $"{receiverParameter} == null ? default({normalizedTargetType}) : {receiverParameter}.{memberName}";
-            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAccess})({EmitExpression(receiver)})";
+            var resultType = GetNullConditionalReadResultType(targetType);
+            var guardedAccess = $"{receiverParameter} == null ? default({resultType}) : {receiverParameter}.{memberName}";
+            return $"new System.Func<{receiverType}, {resultType}>({receiverParameter} => {guardedAccess})({EmitExpression(receiver)})";
         }
 
         private string EmitNullConditionalIndexerAssignment(SyntaxNode target, SyntaxNode value)
@@ -4751,6 +4751,18 @@ public static class CSharpSourceBackend
                 return importedMemberType;
             }
 
+            if (node.Kind == SyntaxKind.NullConditionalMemberAccessExpression &&
+                TryGetNullConditionalImportedMemberAccess(
+                    node,
+                    requireWritable: false,
+                    out _,
+                    out _,
+                    out var nullConditionalMemberType,
+                    out _))
+            {
+                return GetNullConditionalReadResultType(nullConditionalMemberType);
+            }
+
             if (node.Kind == SyntaxKind.MemberAccessExpression &&
                 TryGetExtensionPropertyAccess(node, out var extensionProperty, out _))
             {
@@ -5513,6 +5525,20 @@ public static class CSharpSourceBackend
 
         private static bool CanImplicitlyPromoteToUnsignedLong(string type) =>
             NormalizePrimitiveTypeName(type) is "byte" or "ushort" or "uint" or "ulong";
+
+        private string GetNullConditionalReadResultType(string targetType)
+        {
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            if (normalizedTargetType.EndsWith("?", StringComparison.Ordinal))
+            {
+                return normalizedTargetType;
+            }
+
+            return IsCSharpNonNullableValueType(normalizedTargetType) ||
+                FindMetadataTypes(normalizedTargetType).Any(type => type.IsValueType)
+                    ? $"{normalizedTargetType}?"
+                    : normalizedTargetType;
+        }
 
         private static string NormalizePrimitiveTypeName(string typeName) =>
             typeName switch

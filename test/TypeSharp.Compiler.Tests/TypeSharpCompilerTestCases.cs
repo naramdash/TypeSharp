@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(536, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(538, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -86,8 +86,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(134, shardCounts[0]);
-    AssertEqual(134, shardCounts[1]);
+    AssertEqual(135, shardCounts[0]);
+    AssertEqual(135, shardCounts[1]);
     AssertEqual(134, shardCounts[2]);
     AssertEqual(134, shardCounts[3]);
 
@@ -20435,6 +20435,198 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTarg
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message.Contains("writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Unsupported null-conditional member targets should be rejected before emission.");
+    });
+}
+
+static void CliBuildCompilesNullConditionalImportedMemberReads()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalMemberReadApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalMemberRead"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalMemberRead
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            fun makeFields(value: int): LegacyFields {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = value
+              fields.MutableCode = "changed"
+              fields
+            }
+
+            fun missingFields(): LegacyFields? =
+              null
+
+            export fun propertyValue(): int? {
+              let fields: LegacyFields = makeFields(41)
+              fields?.MutableCount
+            }
+
+            export fun skippedProperty(): int? {
+              let fields: LegacyFields? = missingFields()
+              fields?.MutableCount
+            }
+
+            export fun nonTrivialProperty(): int? {
+              makeFields(42)?.MutableCount
+            }
+
+            export fun referenceField(): string? {
+              let fields: LegacyFields = makeFields(1)
+              fields?.MutableCode
+            }
+
+            export fun readonlyField(): string? {
+              let fields: LegacyFields = makeFields(1)
+              fields?.InstanceCode
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported member read build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalMemberReadApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyFields, int?>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int?) : __tsReceiver", generatedSource);
+        AssertContains(".MutableCount", generatedSource);
+        AssertContains(")(makeFields(42))", generatedSource);
+        AssertContains("new System.Func<LegacyFields, string>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(string) : __tsReceiver", generatedSource);
+        AssertContains(".MutableCode", generatedSource);
+        AssertContains(".InstanceCode", generatedSource);
+        AssertFalse(generatedSource.Contains("?.", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional member read syntax.");
+        AssertFalse(generatedSource.Contains("makeFields(42).MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional member read receiver.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalMemberReadApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional member read APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalMemberReadConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalMemberReadConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalMemberReadApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalMemberReadApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalMemberReadConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalMemberRead.Module.propertyValue() == 41 &&
+                            Samples.NullConditionalMemberRead.Module.skippedProperty() == null &&
+                            Samples.NullConditionalMemberRead.Module.nonTrivialProperty() == 42 &&
+                            Samples.NullConditionalMemberRead.Module.referenceField() == "changed" &&
+                            Samples.NullConditionalMemberRead.Module.readonlyField() == "instance";
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalMemberReadConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional member read APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedMemberReads()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalMemberRead"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalMemberRead"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalMemberRead
+
+            import { LegacyEvents, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+
+            export fun staticTarget(): uint? {
+              LegacyFields?.MutableStaticCount
+            }
+
+            export fun eventTarget(): object {
+              let events: LegacyEvents = LegacyEvents()
+              events?.Transform
+            }
+
+            export fun methodTarget(): object {
+              let events: LegacyEvents = LegacyEvents()
+              events?.Raise
+            }
+
+            export fun indexerReadStillUnsupported(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[0]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# member read targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
+            "Unsupported null-conditional member read targets should be rejected before emission.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Null-conditional indexer access '?[]' is currently supported only as a simple assignment target", StringComparison.Ordinal)),
+            "Null-conditional indexer reads should remain rejected before emission.");
     });
 }
 
