@@ -37,7 +37,7 @@ public sealed class TypeSharpCompilerMSTestCatalog
     [TestMethod]
     public void CatalogIsExposedForPackageRunners()
     {
-        Assert.AreEqual(552, TypeSharpCompilerTestCases.All.Count);
+        Assert.AreEqual(554, TypeSharpCompilerTestCases.All.Count);
         Assert.AreEqual(
             TypeSharpCompilerTestCases.All.Count,
             TypeSharpCompilerTestCases.All.Select(test => test.Name).Distinct(StringComparer.Ordinal).Count());

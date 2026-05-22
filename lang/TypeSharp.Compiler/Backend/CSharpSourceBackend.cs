@@ -2500,6 +2500,12 @@ public static class CSharpSourceBackend
                 return EmitNullConditionalMemberCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
             }
 
+            if (IsShiftAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return EmitNullConditionalMemberCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
             if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
                 expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
             {
@@ -3120,6 +3126,10 @@ public static class CSharpSourceBackend
             kind is SyntaxKind.PipeEqualsToken
                 or SyntaxKind.AmpersandEqualsToken
                 or SyntaxKind.CaretEqualsToken;
+
+        private static bool IsShiftAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.LessLessEqualsToken
+                or SyntaxKind.GreaterGreaterEqualsToken;
 
         private static bool IsAdditiveAssignmentOperatorKind(SyntaxKind kind) =>
             kind is SyntaxKind.PlusEqualsToken

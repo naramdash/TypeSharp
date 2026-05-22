@@ -111,7 +111,7 @@ Smoke-tested interop currently covers:
 - constructors,
 - static and instance methods,
 - instance member calls on imported C#-typed parameters, local aliases, and assignment-updated locals,
-- properties and fields, including bounded null-conditional assignment/read, additive compound assignment, bitwise compound assignment, and logical unsigned shift assignment support for metadata-backed imported C# instance fields/properties,
+- properties and fields, including bounded null-conditional assignment/read, additive compound assignment, bitwise compound assignment, shift compound assignment, and logical unsigned shift assignment support for metadata-backed imported C# instance fields/properties,
 - indexers, including bounded null-conditional assignment/read, additive compound assignment, bitwise compound assignment, and logical unsigned shift assignment support for metadata-backed imported C# instance indexers,
 - delegates and delegate lambdas,
 - event add/remove calls,

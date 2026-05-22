@@ -1434,6 +1434,36 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
+            if (IsShiftAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var shiftTargetType))
+                {
+                    return CheckShiftCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        shiftTargetType,
+                        operatorKind);
+                }
+
+                if (TryGetNullConditionalExtensionPropertyTarget(
+                        target,
+                        scope,
+                        out var shiftExtensionProperty,
+                        out var shiftReceiverType))
+                {
+                    CheckExpression(value, scope);
+                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(shiftReceiverType, shiftExtensionProperty));
+                    return shiftExtensionProperty.Type;
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional shift compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
+                return SimpleType.Unknown;
+            }
+
             if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
             {
                 if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var logicalShiftTargetType))
@@ -1470,7 +1500,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?.' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?.' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', bounded shift compound '<<=', '>>=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
@@ -4936,6 +4966,10 @@ public static class TypeSharpTypeChecker
             kind is SyntaxKind.PipeEqualsToken
                 or SyntaxKind.AmpersandEqualsToken
                 or SyntaxKind.CaretEqualsToken;
+
+        private static bool IsShiftAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.LessLessEqualsToken
+                or SyntaxKind.GreaterGreaterEqualsToken;
 
         private static bool IsAdditiveAssignmentOperatorKind(SyntaxKind kind) =>
             kind is SyntaxKind.PlusEqualsToken

@@ -7538,7 +7538,8 @@ Remaining:
 - Task 0430 has since completed the roadmap refresh after imported C# null-conditional additive compound assignment member targets.
 - Task 0431 has since completed imported C# null-conditional additive compound assignment indexer targets.
 - Task 0432 has since completed the roadmap refresh after imported C# null-conditional additive compound assignment indexer targets.
-- Task 0433 is active and should implement imported C# null-conditional shift compound assignment member targets.
+- Task 0433 has since completed imported C# null-conditional shift compound assignment member targets.
+- Task 0434 is active and should refresh the roadmap after imported C# null-conditional shift compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0430 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Member Targets
@@ -7588,7 +7589,8 @@ Remaining:
 
 - Task 0431 has since completed imported C# null-conditional additive compound assignment indexer targets.
 - Task 0432 has since completed the roadmap refresh after imported C# null-conditional additive compound assignment indexer targets.
-- Task 0433 is active and should implement imported C# null-conditional shift compound assignment member targets.
+- Task 0433 has since completed imported C# null-conditional shift compound assignment member targets.
+- Task 0434 is active and should refresh the roadmap after imported C# null-conditional shift compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0431 Imported C# null-conditional additive compound assignment indexer targets
@@ -7662,7 +7664,8 @@ Primary evidence:
 Remaining:
 
 - Task 0432 has since completed the roadmap refresh after imported C# null-conditional additive compound assignment indexer targets.
-- Task 0433 is active and should implement imported C# null-conditional shift compound assignment member targets.
+- Task 0433 has since completed imported C# null-conditional shift compound assignment member targets.
+- Task 0434 is active and should refresh the roadmap after imported C# null-conditional shift compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0432 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Indexer Targets
@@ -7708,11 +7711,80 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [Task 0433 packet](0433-imported-csharp-null-conditional-shift-compound-assignment-member-targets.md)
+- [Task 0433 rollup](tasks-rollup.md#task-0433-imported-csharp-null-conditional-shift-compound-assignment-member-targets)
 
 Remaining:
 
-- Task 0433 is active and should implement imported C# null-conditional shift compound assignment member targets.
+- Task 0433 has since completed imported C# null-conditional shift compound assignment member targets.
+- Task 0434 is active and should refresh the roadmap after imported C# null-conditional shift compound assignment member targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0433 Imported C# Null-Conditional Shift Compound Assignment Member Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added checker support for `receiver?.Member <<= count` and `receiver?.Member >>= count` when `Member` resolves to a readable/writable metadata-backed imported C# public instance field/property.
+- Reused the existing primitive integral shift assignment policy: target values must be known non-null primitive integral values and counts must be `byte`, `sbyte`, `short`, `ushort`, or `int`.
+- Lowered accepted targets through the existing C# 7.3-compatible `System.Func<TReceiver,TMember>` null guard shape with ordinary `<<=`/`>>=` operators in the non-null branch, single receiver evaluation, skipped `count` evaluation on null receivers, and no emitted C# `?.`.
+- Added generated `net48` C# consumer coverage for property and field targets, non-trivial receivers, skipped count evaluation, and C# 7.3 consumer compilation.
+- Added deterministic negative checker coverage for invalid operands/counts, readonly fields, events, static targets, unresolved members, TypeSharp-owned/local receiver shapes, and out-of-scope null-conditional indexer `<<=`/`>>=` targets.
+- Updated the shared catalog to 554 cases with package-free shard expectations `139`, `139`, `138`, and `138`; updated the MSTest bridge count, MTP package-shard minimum 558, workflow, test README, docs, Work Ledger, tasks, and traceability.
+- Kept Task 0401 blocked without explicit approval.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member shift compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member additive compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member bitwise compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer logical unsigned shift assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer additive compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer bitwise compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "release and regression workflow contracts are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 558 --no-progress
+dotnet build lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj --nologo --verbosity quiet
+npm run build # in docs
+git diff --check
+```
+
+Result: All listed commands passed. The full package-free custom catalog passed across 554 cases, and the MTP module-level package shard run executed 558 tests successfully across the four shard assemblies. The docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0434 packet](0434-roadmap-refresh-after-imported-csharp-null-conditional-shift-compound-assignment-member-targets.md)
+
+Remaining:
+
+- Task 0434 is active and should refresh the roadmap after imported C# null-conditional shift compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -7739,7 +7811,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0432 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0433 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
