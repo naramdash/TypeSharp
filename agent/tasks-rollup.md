@@ -8413,7 +8413,7 @@ Result: All listed commands passed. The focused null-conditional member multipli
 Remaining:
 
 - Task 0444 has since completed the roadmap refresh after imported C# null-conditional member multiplicative compound assignment targets.
-- Task 0445 is active and should implement imported C# null-conditional indexer multiplicative compound assignment targets.
+- Task 0445 has since completed imported C# null-conditional indexer multiplicative compound assignment targets; Task 0446 is active and should recheck official language/platform/package/tooling signals after that implementation.
 - Floating-point/decimal policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
@@ -8462,11 +8462,74 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [Task 0445 packet](0445-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-targets.md)
+- [Task 0445 rollup](#task-0445-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-targets)
 
 Remaining:
 
-- Task 0445 is active and should implement imported C# null-conditional indexer multiplicative compound assignment targets.
+- Task 0445 has since completed imported C# null-conditional indexer multiplicative compound assignment targets; Task 0446 is active and should recheck official language/platform/package/tooling signals after that implementation.
+- Floating-point/decimal policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0445 Imported C# Null-Conditional Indexer Multiplicative Compound Assignment Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Implemented imported C# instance indexer `receiver?[index] *= value`, `receiver?[index] /= value`, and `receiver?[index] %= value` checking for readable/writable metadata-backed targets.
+- Reused the primitive integral multiplicative assign-back policy plus existing indexer argument validation and overload ranking.
+- Lowered accepted targets through explicit C# 7.3-compatible `System.Func` null/index guards with single receiver evaluation, skipped index arguments and right-side evaluation on null receivers, and no emitted C# `?[]`.
+- Added focused generated package-free `net48` C# consumer coverage plus deterministic negative checker coverage.
+- Updated the shared catalog to 566 cases with package-free shard expectations `142`, `142`, `141`, and `141`; updated the MSTest bridge count, MTP package-shard minimum 570, workflow, test README, docs, Work Ledger, tasks, and traceability.
+- Created Task 0446 as the next roadmap-refresh packet after imported C# null-conditional indexer multiplicative compound assignment targets.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0446 packet](0446-roadmap-refresh-after-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-targets.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported indexer multiplicative"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "release and regression workflow contracts are stable"
+dotnet build lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 570 --no-progress
+npm run build # in docs
+```
+
+Result: All listed commands passed after the MSTest catalog smoke count was updated from the stale 564 expectation to 566 and the MTP package-shard run was rerun successfully. The focused null-conditional indexer multiplicative filter and broader multiplicative filter passed, the full package-free custom catalog passed across 566 cases, and the MTP module-level package shard run executed 570 tests successfully across the four shard assemblies. The docs build kept the existing Vite chunk-size warning.
+
+Remaining:
+
+- Task 0446 is active and should recheck official language/platform/package/tooling signals after imported C# null-conditional indexer multiplicative compound assignment targets.
 - Floating-point/decimal policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
@@ -8494,7 +8557,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0444 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0445 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

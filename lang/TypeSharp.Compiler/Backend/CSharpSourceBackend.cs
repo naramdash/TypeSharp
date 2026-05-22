@@ -2524,6 +2524,12 @@ public static class CSharpSourceBackend
                 return EmitNullConditionalIndexerCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
             }
 
+            if (IsMultiplicativeAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return EmitNullConditionalIndexerCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
             if (IsAdditiveAssignmentOperatorKind(operatorToken.Kind) &&
                 expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
             {

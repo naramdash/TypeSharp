@@ -528,6 +528,8 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("checker rejects unsupported imported multiplicative compound assignment indexer targets", CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentIndexerTargets),
         new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported member multiplicative compound assignment", CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundAssignment),
         new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported member multiplicative compound assignment targets", CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicativeCompoundAssignmentTargets),
+        new TypeSharpCompilerTestCase("CLI build compiles null-conditional imported indexer multiplicative compound assignment", CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompoundAssignment),
+        new TypeSharpCompilerTestCase("checker rejects unsupported null-conditional imported indexer multiplicative compound assignment targets", CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativeCompoundAssignmentTargets),
         new TypeSharpCompilerTestCase("checker rejects unsupported multiplicative compound assignment targets", CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets),
         new TypeSharpCompilerTestCase("CLI build compiles boolean bitwise expression API", CliBuildCompilesBooleanBitwiseExpressionApi),
         new TypeSharpCompilerTestCase("CLI build compiles bitwise compound assignment API", CliBuildCompilesBitwiseCompoundAssignmentApi),
