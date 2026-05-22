@@ -6011,6 +6011,55 @@ Remaining:
 
 - Next ready task 0401 should address the user-requested GitHub Actions regression where the VS Code live smoke cannot start `npm`; the post-0400 roadmap refresh remains queued after that as Task 0402.
 
+## Task 0402 Roadmap Refresh After Null-conditional Assignment Imported Indexer Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official language, platform, package, test-platform, editor, and CI sources after Task 0400 completed imported C# instance indexer null-conditional assignment.
+- Confirmed no baseline change: generated artifacts remain package-free `net48`, generated C# remains C# 7.3-compatible, C# 14/.NET 10 is the stable signal, and C# 15/.NET 11 preview remains Preview Watch input only.
+- Reconfirmed the NuGet test-host answer: TypeSharp already uses the current broad `net10.0` package path through pinned `MSTest.Sdk/4.2.3` Microsoft Testing Platform bridge projects and package shards; adding xUnit.net v3 now would duplicate package-host evidence rather than improve generated-artifact compatibility.
+- Rechecked the GitHub Actions regression from run 26260793703: `Setup Node` succeeds, but the VS Code live smoke cannot start `npm` from C# with `UseShellExecute=false`. Because the `gh-fix-ci` workflow requires explicit user approval before implementation, Task 0401 remains Blocked pending approval for the likely Windows `cmd.exe /d /s /c npm ...` helper fix.
+- Selected Task 0403 as the next ready bounded slice: define and implement C# 14 extension member policy around TypeSharp extension properties/static members, C# 7.3-compatible lowering, diagnostics, and fixtures over the existing explicit-receiver extension method MVP.
+
+Official sources reviewed:
+
+- Microsoft Learn C# language versioning, C# 14, and C# 15 pages.
+- Microsoft Learn target-framework monikers, .NET Framework versions/dependencies, and .NET Framework support policy.
+- TypeScript 6.0 and TypeScript 7.0 Beta announcements.
+- Microsoft Learn .NET test platforms, `dotnet test` MTP mode, MSTest runner guidance, and MSTest SDK configuration pages.
+- NuGet `MSTest.Sdk/4.2.3`, NuGet `MSTest/4.2.3`, and xUnit.net v3 Microsoft Testing Platform guidance.
+- VS Code LSP and extension publishing docs.
+- GitHub Actions runner images, `actions/setup-dotnet`, `actions/setup-node`, and the 2026-05-14 image migration changelog.
+
+Verification:
+
+```powershell
+gh run view 26260793703 --json status,conclusion,url,jobs
+gh run view 26260793703 --log-failed
+cd docs
+npm run build
+git diff --check
+```
+
+Result: GitHub Actions failure context confirmed the `npm` process-launch failure rather than a missing setup-node step; docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0403 should settle the extension member policy/implementation slice next.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -6035,7 +6084,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 is compressed here.
+- Completed historical work through task 0400 and task 0402 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
@@ -6046,4 +6095,4 @@ Remaining:
 
 Blocked:
 
-- None.
+- Task 0401 GitHub Actions regression npm missing in VS Code live smoke is pending explicit user approval for the CI implementation fix.
