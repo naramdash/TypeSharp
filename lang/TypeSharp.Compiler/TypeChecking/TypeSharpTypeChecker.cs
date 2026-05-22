@@ -280,6 +280,8 @@ public static class TypeSharpTypeChecker
                     continue;
                 }
 
+                ReportExtensionPropertyHelperNameCollisions(extension, scope, receiverType);
+
                 foreach (var property in extension.Children.Where(child => child.Kind == SyntaxKind.ValueDeclaration))
                 {
                     if (!TryGetDeclarationName(property, out var propertyName) ||
@@ -304,6 +306,46 @@ public static class TypeSharpTypeChecker
                     {
                         ReportMismatch(property, $"Extension property '{propertyName}' is already declared for receiver type '{receiverType}'.");
                     }
+                }
+            }
+        }
+
+        private void ReportExtensionPropertyHelperNameCollisions(SyntaxNode extension, TypeScope scope, SimpleType receiverType)
+        {
+            var methodNames = extension.Children
+                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsExternalSignatureFunction(child))
+                .Select(child => TryGetDeclarationName(child, out var methodName) ? methodName : string.Empty)
+                .Where(name => name.Length > 0)
+                .ToHashSet(StringComparer.Ordinal);
+            var generatedHelpers = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (var property in extension.Children.Where(child => child.Kind == SyntaxKind.ValueDeclaration))
+            {
+                if (!TryGetDeclarationName(property, out var propertyName) ||
+                    !TryGetDirectTypeAnnotation(property, out var propertyTypeNode) ||
+                    !TryGetType(propertyTypeNode, scope, out var propertyType) ||
+                    !CanCollectExtensionProperty(extension, property, receiverType, propertyName, propertyType))
+                {
+                    continue;
+                }
+
+                var helperName = GetExtensionPropertyHelperName(propertyName);
+                if (methodNames.Contains(helperName))
+                {
+                    ReportMismatch(
+                        property,
+                        $"Extension property '{propertyName}' generates helper method '{helperName}', which conflicts with extension method '{helperName}' in the same extension declaration.");
+                }
+
+                if (generatedHelpers.TryGetValue(helperName, out var existingPropertyName))
+                {
+                    ReportMismatch(
+                        property,
+                        $"Extension property '{propertyName}' generates helper method '{helperName}', which conflicts with extension property '{existingPropertyName}' in the same extension declaration.");
+                }
+                else
+                {
+                    generatedHelpers.Add(helperName, propertyName);
                 }
             }
         }
@@ -362,6 +404,9 @@ public static class TypeSharpTypeChecker
 
         private static string FormatExtensionPropertyPrecedenceConflict(SimpleType receiverType, string propertyName) =>
             $"Extension property '{propertyName}' conflicts with existing member '{propertyName}' on receiver type '{receiverType}'. Ordinary and structural members take precedence over extension properties.";
+
+        private static string GetExtensionPropertyHelperName(string propertyName) =>
+            string.IsNullOrWhiteSpace(propertyName) ? "GetValue" : $"Get{propertyName}";
 
         private void CheckTopLevelDeclaration(SyntaxNode node, TypeScope scope)
         {

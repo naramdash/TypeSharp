@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(535, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(536, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -89,7 +89,7 @@ static void MSTestPackageShardBridgeProjectsAreStable()
     AssertEqual(134, shardCounts[0]);
     AssertEqual(134, shardCounts[1]);
     AssertEqual(134, shardCounts[2]);
-    AssertEqual(133, shardCounts[3]);
+    AssertEqual(134, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -12070,6 +12070,35 @@ static void BinderFixtureDiagnosticsMatch()
     }
 }
 
+static void CheckerReportsExtensionPropertyGeneratedHelperCollisionDiagnostics()
+{
+    var parseResult = TypeSharpParser.ParseText(
+        """
+        namespace Samples.Extensions.GeneratedHelperConflicts
+
+        public extension int value {
+          public let Size: int = value
+
+          public let Size: int = value
+        }
+        """,
+        "input.tysh");
+    AssertFalse(parseResult.HasErrors, $"Generated helper collision source should parse cleanly.\n{DiagnosticJsonFormatter.ToJson(parseResult.Diagnostics)}");
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+
+    var typeCheckResult = TypeSharpTypeChecker.Check(root, "input.tysh");
+
+    AssertEqual(2, typeCheckResult.Diagnostics.Count);
+    AssertEqual("TS2201", typeCheckResult.Diagnostics[0].Code);
+    AssertEqual(
+        "Extension property 'Size' generates helper method 'GetSize', which conflicts with extension property 'Size' in the same extension declaration.",
+        typeCheckResult.Diagnostics[0].Message);
+    AssertEqual("TS2201", typeCheckResult.Diagnostics[1].Code);
+    AssertEqual(
+        "Extension property 'Size' is already declared for receiver type 'int'.",
+        typeCheckResult.Diagnostics[1].Message);
+}
+
 static void TypeCheckerFixtureDiagnosticsMatch()
 {
     var fixtureRoots = new[]
@@ -13958,7 +13987,7 @@ static void DocsSiteContractIsStable()
     AssertContains("```tysh", csharpTypeModelPage);
 
     var csharpMembersPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "csharp-members-overloads.md"));
-    AssertContains("Official sources reviewed on 2026-05-21", csharpMembersPage);
+    AssertContains("Official sources reviewed on 2026-05-22", csharpMembersPage);
     AssertContains("Object-oriented techniques in C#", csharpMembersPage);
     AssertContains("Member Surface", csharpMembersPage);
     AssertContains("Methods And Overload Ranking", csharpMembersPage);

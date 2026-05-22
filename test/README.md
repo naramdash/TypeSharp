@@ -29,7 +29,7 @@ $jobs | Wait-Job | Receive-Job
 ```powershell
 dotnet restore test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --locked-mode
 dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
-dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 535
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 536
 ```
 
 The same MSTest bridge is also split into four package-based shard projects for `dotnet test`/MTP discovery coverage:
@@ -38,7 +38,7 @@ The same MSTest bridge is also split into four package-based shard projects for 
 $mstestShards = 0..3 | ForEach-Object { "test\TypeSharp.Compiler.Tests.MSTest.Shard$_\TypeSharp.Compiler.Tests.MSTest.Shard$_.csproj" }
 foreach ($project in $mstestShards) { dotnet restore $project --locked-mode --verbosity minimal }
 foreach ($project in $mstestShards) { dotnet build $project --no-restore --nologo --verbosity quiet }
-$expected = @(134, 134, 134, 133)
+$expected = @(134, 134, 134, 134)
 $jobs = for ($index = 0; $index -lt $mstestShards.Count; $index++) {
   Start-Job -ScriptBlock {
     param($p, $minimum)

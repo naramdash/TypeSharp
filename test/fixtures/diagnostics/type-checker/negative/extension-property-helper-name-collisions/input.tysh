@@ -1,0 +1,8 @@
+namespace Samples.Extensions.HelperConflicts
+
+public extension string text {
+  public fun GetWordCount(text: string): int =
+    text.Length
+
+  public let WordCount: int = text.Length
+}

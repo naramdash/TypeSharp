@@ -6268,6 +6268,59 @@ Remaining:
 - Task 0407 should implement extension property helper-name collision diagnostics.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0407 Extension Property Helper Name Collision Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added deterministic type-checker diagnostics for getter-only TypeSharp-authored extension property helper names such as `GetWordCount` when they collide with TypeSharp-authored extension methods in the same emitted extension container.
+- Added a defensive same-container generated-helper collision check for extension property helpers; the normal binder still reports duplicate property symbols first in ordinary source pipelines, and a direct checker regression locks the backend-prevention diagnostic.
+- Added focused negative fixture coverage for extension-method/helper collisions and a catalog regression for generated-helper collisions.
+- Updated the shared compiler/MSTest catalog count to 536 and package shard expectations to `134, 134, 134, 134`.
+- Updated type-system, lowering, C# member/overload, diagnostics, feature-status, work-ledger, task, traceability, test README, and regression workflow docs without changing the generated `net48`/C# 7.3 baseline.
+- Selected Task 0408 as the next ready bounded slice: roadmap refresh after extension-property helper-name collision diagnostics.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj "checker reports extension property generated helper collision diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler build passed; focused helper-collision, type-checker fixture, shard-count, and MSTest shard-bridge tests passed; full 536-case compiler catalog passed; MSTest bridge catalog exposure smoke passed; docs build passed with the existing Vite chunk-size warning; `git diff --check` reported only Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-helper-name-collisions`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0408 should perform the post-implementation roadmap refresh and select the next bounded slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

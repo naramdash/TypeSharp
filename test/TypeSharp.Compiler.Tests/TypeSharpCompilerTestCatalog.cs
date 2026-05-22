@@ -323,6 +323,7 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("parser rejects unbound generic outside nameof", ParserRejectsUnboundGenericOutsideNameof),
         new TypeSharpCompilerTestCase("parser fixture snapshots match", ParserFixtureSnapshotsMatch),
         new TypeSharpCompilerTestCase("binder fixture diagnostics match", BinderFixtureDiagnosticsMatch),
+        new TypeSharpCompilerTestCase("checker reports extension property generated helper collision diagnostics", CheckerReportsExtensionPropertyGeneratedHelperCollisionDiagnostics),
         new TypeSharpCompilerTestCase("type checker fixture diagnostics match", TypeCheckerFixtureDiagnosticsMatch),
         new TypeSharpCompilerTestCase("C# backend fixture snapshots match", CSharpBackendFixtureSnapshotsMatch),
         new TypeSharpCompilerTestCase("generated C# compiles in net48 project", GeneratedCSharpCompilesInNet48Project),
