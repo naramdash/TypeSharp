@@ -8961,6 +8961,54 @@ Remaining:
 - Paired null-conditional indexer floating-point/decimal multiplicative expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0454 Roadmap Refresh After Imported C# Null-Conditional Member Floating-Point And Decimal Multiplicative Compound Assignment Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0453 landed imported C# null-conditional member `receiver?.Member *= value`, `receiver?.Member /= value`, and `receiver?.Member %= value` over bounded integral/floating-point/decimal operands.
+- Preserved the generated artifact baseline: generated TypeSharp output remains package-free `net48`, generated C# remains C# 7.3-compatible, and accepted null-conditional assignment forms continue to lower through explicit guards rather than emitted C# null-conditional assignment syntax.
+- Preserved the test-host package baseline: the pinned `net10.0` `MSTest.Sdk/4.2.3` MTP bridge and package shards remain the selected NuGet path with a 572-test package-shard minimum; xUnit.net v3 and NUnit remain future bridge candidates because they would duplicate the same extracted catalog evidence today.
+- Corrected the feature-status signal for user-defined compound assignment operators to C# 15 preview/watch, while keeping TypeSharp user-defined multiplicative operators and checked-overflow policy out of scope.
+- Kept Task 0401 blocked absent explicit user approval and selected Task 0455 as the next bounded implementation slice: imported C# null-conditional indexer floating-point and decimal multiplicative compound assignment.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), [null-conditional operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/member-access-operators#null-conditional-operators--and-), [arithmetic operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators), and [checked and unchecked statements](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/checked-and-unchecked).
+- Microsoft Learn [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy) and [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript docs [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), TypeScript blog [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/), and TypeScript blog [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/).
+- .NET downloads [.NET 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), [.NET 11.0](https://dotnet.microsoft.com/en-us/download/dotnet/11.0), .NET Framework [support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework), Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and Microsoft Learn [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks).
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk), NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [April 2026 1.122 release notes](https://code.visualstudio.com/updates/v1_122), VS Code [language server extension guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide), VS Code [publishing extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension), GitHub [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-node`](https://github.com/actions/setup-node), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and the [Windows Server 2025 + Visual Studio 2026 migration issue](https://github.com/actions/runner-images/issues/14017).
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0455 packet](0455-imported-csharp-null-conditional-indexer-floating-decimal-multiplicative-compound-assignment-policy.md)
+
+Verification:
+
+```powershell
+npm run build # in docs
+rg -n "0454-roadmap-refresh-after-imported-csharp-null-conditional-member-floating-decimal-multiplicative-compound-assignment-policy\.md|Task 0454 is active|Task 0454 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0453|Completed range\s*\| 0001-0400, 0402-0453|null-conditional member floating-point and decimal multiplicative expansion is active" agent docs\src\content\docs --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The docs build completed with the existing Vite chunk-size warning, the stale-reference scan found no stale Task 0454 active-packet references outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0455 is active and should implement imported C# null-conditional indexer floating-point and decimal multiplicative compound assignment policy.
+- Checked-overflow policy and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
