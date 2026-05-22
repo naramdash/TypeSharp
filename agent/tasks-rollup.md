@@ -6371,6 +6371,53 @@ Remaining:
 - Task 0409 should implement nullable receiver diagnostics for getter-only TypeSharp-authored extension properties.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0409 Extension Property Nullable Receiver Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added deterministic `TS2201` diagnostics for getter-only TypeSharp-authored extension properties declared on nullable receivers such as `string?` or `int?`.
+- Preserved the current exact known non-null receiver policy: nullable receiver declarations now fail before backend emission, while accepted non-null extension properties still collect and lower through C# 7.3-compatible `GetName(this T receiver)` helper methods.
+- Added focused negative fixture coverage under `test/fixtures/diagnostics/type-checker/negative/extension-property-nullable-receiver`.
+- Kept existing extension-property helper-name collision diagnostics and generated `net48` extension-property lowering behavior passing.
+- Updated canonical docs and ledgers to describe the nullable receiver boundary.
+- Selected Task 0410 as the next ready bounded slice: roadmap refresh after extension-property nullable receiver diagnostics.
+
+Verification:
+
+```powershell
+dotnet build test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj "type checker fixture diagnostics match"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj "checker reports extension property generated helper collision diagnostics"
+dotnet run --project test/TypeSharp.Compiler.Tests/TypeSharp.Compiler.Tests.csproj "CLI build compiles extension property lowering"
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler build and focused tests passed; docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-nullable-receiver`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0410 should perform the post-implementation roadmap refresh and select the next bounded slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -6395,7 +6442,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0408 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0409 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

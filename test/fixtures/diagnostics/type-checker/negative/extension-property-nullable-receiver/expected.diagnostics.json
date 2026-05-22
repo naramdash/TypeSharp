@@ -1,0 +1,20 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property receiver type 'string?' is nullable; nullable extension-property receivers are not supported in this slice. Use non-null receiver type 'string' until nullable receiver lifting is implemented.",
+      "file": "input.tysh",
+      "start": { "line": 4, "column": 3 },
+      "end": { "line": 4, "column": 37 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property receiver type 'int?' is nullable; nullable extension-property receivers are not supported in this slice. Use non-null receiver type 'int' until nullable receiver lifting is implemented.",
+      "file": "input.tysh",
+      "start": { "line": 8, "column": 3 },
+      "end": { "line": 8, "column": 34 }
+    }
+  ]
+}

@@ -405,6 +405,12 @@ public static class TypeSharpTypeChecker
         private static string FormatExtensionPropertyPrecedenceConflict(SimpleType receiverType, string propertyName) =>
             $"Extension property '{propertyName}' conflicts with existing member '{propertyName}' on receiver type '{receiverType}'. Ordinary and structural members take precedence over extension properties.";
 
+        private static string FormatNullableExtensionPropertyReceiverMessage(SimpleType receiverType)
+        {
+            var nonNullReceiverType = receiverType with { IsNullable = false };
+            return $"Extension property receiver type '{receiverType}' is nullable; nullable extension-property receivers are not supported in this slice. Use non-null receiver type '{nonNullReceiverType}' until nullable receiver lifting is implemented.";
+        }
+
         private static string GetExtensionPropertyHelperName(string propertyName) =>
             string.IsNullOrWhiteSpace(propertyName) ? "GetValue" : $"Get{propertyName}";
 
@@ -838,6 +844,13 @@ public static class TypeSharpTypeChecker
                 if (receiverIdentifier is null)
                 {
                     ReportMismatch(property, "Extension property requires a receiver name in the extension declaration.");
+                }
+
+                if (receiverType.IsKnown && receiverType.IsNullable)
+                {
+                    ReportMismatch(
+                        property,
+                        FormatNullableExtensionPropertyReceiverMessage(receiverType));
                 }
 
                 if (IsMutableValueDeclaration(property))
