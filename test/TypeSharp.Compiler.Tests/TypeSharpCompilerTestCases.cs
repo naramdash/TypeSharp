@@ -2712,7 +2712,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(Array.Empty<string>(), display.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyFields = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFields"), "LegacyFields metadata should be present.");
-        AssertSequence(["MutableColor", "MutableCount", "MutableFlag", "MutableStaticCount", "MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["MutableColor", "MutableCount", "MutableDecimal", "MutableFlag", "MutableFloat", "MutableStaticCount", "MutableStaticDecimal", "MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticName = Require(legacyFields.Properties.SingleOrDefault(property => property.Name == "StaticName"), "StaticName property metadata should be present.");
         AssertTrue(staticName.IsStatic, "StaticName should be marked static.");
         AssertTrue(staticName.HasPublicGetter, "StaticName should expose a public getter.");
@@ -2721,7 +2721,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertTrue(mutableStaticName.IsStatic, "MutableStaticName should be marked static.");
         AssertTrue(mutableStaticName.HasPublicGetter, "MutableStaticName should expose a public getter.");
         AssertTrue(mutableStaticName.HasPublicSetter, "MutableStaticName should expose a public setter.");
-        AssertSequence(["InstanceCode", "MutableCode", "MutableLong", "MutableStaticByte", "MutableStaticCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["InstanceCode", "MutableCode", "MutableDouble", "MutableLong", "MutableStaticByte", "MutableStaticCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "StaticCode"), "StaticCode field metadata should be present.");
         AssertEqual("string", staticCode.Type);
         AssertTrue(staticCode.IsStatic, "StaticCode should be marked static.");
@@ -23263,12 +23263,38 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTarget
               fields.MutableLong
             }
 
+            export fun instanceFloat(value: float, factor: int): float {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableFloat = value
+              fields.MutableFloat *= factor
+              fields.MutableFloat /= factor
+              fields.MutableFloat %= 2
+              fields.MutableFloat
+            }
+
+            export fun instanceDouble(value: double, factor: float): double {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableDouble = value
+              fields.MutableDouble *= factor
+              fields.MutableDouble /= factor
+              fields.MutableDouble %= 2
+              fields.MutableDouble
+            }
+
             export fun staticUnsigned(value: uint, factor: uint, divisor: uint, remainder: uint): uint {
               LegacyFields.MutableStaticCount = value
               LegacyFields.MutableStaticCount *= factor
               LegacyFields.MutableStaticCount /= divisor
               LegacyFields.MutableStaticCount %= remainder
               LegacyFields.MutableStaticCount
+            }
+
+            export fun staticDecimal(value: decimal, factor: int): decimal {
+              LegacyFields.MutableStaticDecimal = value
+              LegacyFields.MutableStaticDecimal *= factor
+              LegacyFields.MutableStaticDecimal /= factor
+              LegacyFields.MutableStaticDecimal %= 2m
+              LegacyFields.MutableStaticDecimal
             }
 
             export fun nonTrivialReceiver(value: int): int {
@@ -23291,9 +23317,18 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTarget
         AssertContains("fields.MutableLong *= 3;", generatedSource);
         AssertContains("fields.MutableLong /= divisor;", generatedSource);
         AssertContains("fields.MutableLong %= 7;", generatedSource);
+        AssertContains("fields.MutableFloat *= factor;", generatedSource);
+        AssertContains("fields.MutableFloat /= factor;", generatedSource);
+        AssertContains("fields.MutableFloat %= 2;", generatedSource);
+        AssertContains("fields.MutableDouble *= factor;", generatedSource);
+        AssertContains("fields.MutableDouble /= factor;", generatedSource);
+        AssertContains("fields.MutableDouble %= 2;", generatedSource);
         AssertContains("LegacyFields.MutableStaticCount *= factor;", generatedSource);
         AssertContains("LegacyFields.MutableStaticCount /= divisor;", generatedSource);
         AssertContains("LegacyFields.MutableStaticCount %= remainder;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticDecimal *= factor;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticDecimal /= factor;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticDecimal %= 2m;", generatedSource);
         AssertEqual(1, CountOccurrences(generatedSource, "makeFields(value).MutableCount *= 3;"));
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMultiplicativeCompoundAssignmentApi.dll");
@@ -23337,7 +23372,10 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTarget
                     {
                         return Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceProperty(13, (short)3) == 4 &&
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceField(22L, 5) == 6L &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceFloat(13f, 3) == 1f &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceDouble(13.0, 3f) == 1.0 &&
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.staticUnsigned(20u, 3u, 5u, 7u) == 5u &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.staticDecimal(13m, 3) == 1m &&
                             Samples.ImportedMultiplicativeCompoundAssignment.Module.nonTrivialReceiver(11) == 33;
                     }
                 }
@@ -23403,6 +23441,24 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMem
               0
             }
 
+            export fun mixedDecimalFloating(value: double): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableDecimal *= value
+              0
+            }
+
+            export fun narrowingFloat(value: double): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableFloat *= value
+              0
+            }
+
+            export fun nullableFloat(value: float?): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableFloat /= value
+              0
+            }
+
             export fun readonlyField(): int {
               let fields: LegacyFields = LegacyFields()
               fields.InstanceCode *= "x"
@@ -23424,29 +23480,44 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMem
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Imported bool member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Imported string member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Imported enum member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Imported member target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Imported member target should reject multiplicative results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
+            "Imported decimal member target should reject mixed decimal and floating-point operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
+            "Imported float member target should reject floating-point results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
+            "Imported float member target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
@@ -29011,9 +29082,17 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
 
                 public long MutableLong;
 
+                public double MutableDouble;
+
                 public bool MutableFlag { get; set; }
 
                 public LegacyColor MutableColor { get; set; }
+
+                public float MutableFloat { get; set; }
+
+                public decimal MutableDecimal { get; set; }
+
+                public static decimal MutableStaticDecimal { get; set; }
             }
 
             public static class LegacyExtensions

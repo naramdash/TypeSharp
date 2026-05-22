@@ -1815,7 +1815,8 @@ public static class TypeSharpTypeChecker
                     value,
                     scope,
                     targetType,
-                    operatorKind);
+                    operatorKind,
+                    allowFloatingDecimal: true);
             }
 
             if (target.Kind == SyntaxKind.IndexerExpression)
