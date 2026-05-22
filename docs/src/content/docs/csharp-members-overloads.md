@@ -5,7 +5,7 @@ description: Detailed TypeSharp guidance for C#-style members, imports, construc
 
 This page gives TypeSharp the kind of detailed member-level reference that Microsoft Learn provides for C# classes, language reference topics, operators, statements, and exception handling.
 
-Official sources reviewed on 2026-05-21:
+Official sources reviewed on 2026-05-22:
 
 - [Object-oriented techniques in C#](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/)
 - [C# keywords](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/)
@@ -216,7 +216,7 @@ When consuming imported C# events, the receiver must expose a public event and t
 
 Imported C# extension methods are available when the extension type namespace is imported or opened. TypeSharp-authored explicit-receiver extension methods lower to C# extension methods.
 
-TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match. Duplicate exact receiver/name declarations and declarations that would be hidden by the currently implemented ordinary/structural member precedence report `TS2201` before backend emission.
+TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match. Duplicate exact receiver/name declarations and declarations that would be hidden by the currently implemented ordinary/structural member precedence report `TS2201` before backend emission. Helper-name collision diagnostics are queued next because property helpers such as `GetWordCount(this string text)` must not collide with TypeSharp-authored extension methods or other generated helpers in the same extension container.
 
 ```tysh
 namespace Company.Billing
