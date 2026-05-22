@@ -7163,7 +7163,56 @@ Primary evidence:
 
 Remaining:
 
-- Task 0424 is active and should perform the post-implementation roadmap refresh.
+- Task 0424 completed the post-implementation roadmap refresh.
+- Task 0425 is active and should implement imported C# null-conditional bitwise compound assignment member targets.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0424 Roadmap Refresh After Imported C# Null-Conditional Logical Unsigned Shift Assignment Indexer Targets
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0423.
+- Confirmed no generated-artifact baseline change: TypeSharp-generated assemblies remain package-free `net48`, generated C# remains C# 7.3-compatible, and newer C#/.NET signals stay design or host-tooling inputs unless a separate task changes policy.
+- Answered the `net10.0` NuGet test-package question explicitly: TypeSharp already uses NuGet packages at the test-host boundary through pinned `MSTest.Sdk/4.2.3`, Microsoft Testing Platform, checked-in lock files, source mapping, audit controls, repo-local package cache, and four package-based shard projects over `TypeSharpCompilerTestCases.All`.
+- Kept `MSTest.Sdk/4.2.3`/MTP as the broad current test-host package path. xUnit.net v3 and NUnit remain viable future bridge candidates, but adding either now would duplicate the same extracted-catalog evidence without improving generated `net48` compatibility or the measured release-confidence path.
+- Confirmed Task 0401 remains blocked: the GitHub Actions failure is still tracked as a C# process-launch issue around `npm`, not a setup-node/setup-dotnet availability failure or missing NuGet test package.
+- Selected Task 0425 as the next bounded implementation slice: imported C# null-conditional bitwise compound assignment member targets `receiver?.Member |= value`, `receiver?.Member &= value`, and `receiver?.Member ^= value` for readable/writable metadata-backed instance fields/properties, reusing the existing bitwise compound target/value policy, preserving single receiver evaluation, skipping right-hand-side evaluation on null receivers, and lowering through C# 7.3-compatible guards/operator forms.
+
+Official sources reviewed:
+
+- Microsoft Learn [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), and [C# 14 null-conditional assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/null-conditional-assignment).
+- Microsoft Learn [.NET 10 overview](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview), [Target frameworks in SDK-style projects](https://learn.microsoft.com/en-us/dotnet/standard/frameworks), [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and [F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript team [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) and [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/) posts.
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test), [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests), and [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk).
+- NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), xUnit.net [v3 package guidance](https://xunit.net/docs/nuget-packages-v3), xUnit.net [Microsoft Testing Platform guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), and NUnit [.NET Core guidance](https://docs.nunit.org/articles/nunit/getting-started/dotnet-core-and-dotnet-standard.html).
+- VS Code [Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) and [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+- GitHub [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), [`actions/setup-node`](https://github.com/actions/setup-node), and [GitHub Actions image-migration changelog](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/).
+
+Verification:
+
+```powershell
+npm run build # in docs
+git diff --check
+```
+
+Result: docs build and diff checks passed. Docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [0425-imported-csharp-null-conditional-bitwise-compound-assignment-member-targets.md](0425-imported-csharp-null-conditional-bitwise-compound-assignment-member-targets.md)
+
+Remaining:
+
+- Task 0425 is active and should implement imported C# null-conditional bitwise compound assignment member targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
