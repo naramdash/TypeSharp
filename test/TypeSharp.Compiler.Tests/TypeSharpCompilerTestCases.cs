@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(538, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(540, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(135, shardCounts[0]);
     AssertEqual(135, shardCounts[1]);
-    AssertEqual(134, shardCounts[2]);
-    AssertEqual(134, shardCounts[3]);
+    AssertEqual(135, shardCounts[2]);
+    AssertEqual(135, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -20592,7 +20592,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberReads()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidNullConditionalMemberRead
 
-            import { LegacyEvents, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyEvents, LegacyFields } from "Legacy.Tools"
 
             export fun staticTarget(): uint? {
               LegacyFields?.MutableStaticCount
@@ -20608,10 +20608,6 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberReads()
               events?.Raise
             }
 
-            export fun indexerReadStillUnsupported(): int {
-              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
-              indexer?[0]
-            }
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -20622,11 +20618,6 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberReads()
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message.Contains("readable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Unsupported null-conditional member read targets should be rejected before emission.");
-        AssertTrue(
-            result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("Null-conditional indexer access '?[]' is currently supported only as a simple assignment target", StringComparison.Ordinal)),
-            "Null-conditional indexer reads should remain rejected before emission.");
     });
 }
 
@@ -20795,11 +20786,6 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedIndexerTar
               indexer?[true] = 1
               0
             }
-
-            export fun readOnlyAccess(): int {
-              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
-              indexer?[0]
-            }
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -20817,14 +20803,196 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedIndexerTar
             "Unsupported null-conditional indexer targets should be rejected before emission.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("currently supported only as a simple assignment target", StringComparison.Ordinal)),
-            "Null-conditional indexer reads should be rejected before emission.");
+                diagnostic.Code == "TS2411" &&
+                diagnostic.Message.Contains("does not contain a public instance indexer compatible with argument type(s) 'bool'", StringComparison.Ordinal)),
+            "Mismatched null-conditional imported indexer arguments should reuse existing interop diagnostics.");
+    });
+}
+
+static void CliBuildCompilesNullConditionalImportedIndexerReads()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "NullConditionalIndexerReadApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.NullConditionalIndexerRead"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.NullConditionalIndexerRead
+
+            import { LegacyFormatter, LegacyMutableIndexer } from "Legacy.Tools"
+
+            fun makeIndexer(value: int): LegacyMutableIndexer {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[1] = value
+              indexer
+            }
+
+            fun missingIndexer(): LegacyMutableIndexer? =
+              null
+
+            fun makeIndex(): int =
+              1
+
+            export fun valueRead(): int? {
+              let indexer: LegacyMutableIndexer = makeIndexer(41)
+              indexer?[1]
+            }
+
+            export fun skippedValueRead(): int? {
+              let indexer: LegacyMutableIndexer? = missingIndexer()
+              indexer?[makeIndex()]
+            }
+
+            export fun nonTrivialValueRead(): int? {
+              makeIndexer(42)?[makeIndex()]
+            }
+
+            export fun referenceRead(): string? {
+              let formatter: LegacyFormatter = LegacyFormatter("legacy:")
+              formatter?[2]
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Null-conditional imported indexer read build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/NullConditionalIndexerReadApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("new System.Func<LegacyMutableIndexer, int?>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(int?) : new System.Func<int, int?>((__tsIndex", generatedSource);
+        AssertContains(")(makeIndex())", generatedSource);
+        AssertContains(")(makeIndexer(42))", generatedSource);
+        AssertContains("new System.Func<LegacyFormatter, string>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(string) : new System.Func<int, string>((__tsIndex", generatedSource);
+        AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer read syntax.");
+        AssertFalse(generatedSource.Contains("makeIndexer(42)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional indexer receiver or argument.");
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalIndexerReadApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional indexer read APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NullConditionalIndexerReadConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NullConditionalIndexerReadConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NullConditionalIndexerReadApi">
+                  <HintPath>../generated/bin/Debug/net48/NullConditionalIndexerReadApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NullConditionalIndexerReadConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.NullConditionalIndexerRead.Module.valueRead() == 41 &&
+                            Samples.NullConditionalIndexerRead.Module.skippedValueRead() == null &&
+                            Samples.NullConditionalIndexerRead.Module.nonTrivialValueRead() == 42 &&
+                            Samples.NullConditionalIndexerRead.Module.referenceRead() == "legacy:2";
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NullConditionalIndexerReadConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated null-conditional indexer read APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedNullConditionalImportedIndexerReads()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidNullConditionalIndexerRead"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidNullConditionalIndexerRead"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidNullConditionalIndexerRead
+
+            import { LegacyAmbiguousIndexer, LegacyDualNamed, LegacyMutableIndexer } from "Legacy.Tools"
+
+            export fun mismatchedArgument(): int? {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer?[true]
+            }
+
+            export fun ambiguousArgument(): string? {
+              let indexer: LegacyAmbiguousIndexer = LegacyAmbiguousIndexer()
+              indexer?[LegacyDualNamed("value")]
+            }
+
+            export fun localTarget(): object {
+              let value: int = 1
+              value?[0]
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+
+        AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer read targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2411" &&
                 diagnostic.Message.Contains("does not contain a public instance indexer compatible with argument type(s) 'bool'", StringComparison.Ordinal)),
-            "Mismatched null-conditional imported indexer arguments should reuse existing interop diagnostics.");
+            "Mismatched null-conditional imported indexer read arguments should reuse existing interop diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2402" &&
+                diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
+            "Ambiguous null-conditional imported indexer read arguments should reuse existing interop diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("readable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
+            "Unsupported null-conditional indexer read targets should be rejected before emission.");
     });
 }
 

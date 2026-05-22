@@ -1427,7 +1427,7 @@ public static class TypeSharpTypeChecker
             CheckNullConditionalReceiver(node, scope);
             ReportMismatch(
                 node,
-                "Null-conditional member access '?.' is supported only for readable metadata-backed imported C# instance field/property targets in this slice; indexer reads, invocation, chains, events, static, local, and TypeSharp-owned targets are not supported.");
+                "Null-conditional member access '?.' is supported only for readable metadata-backed imported C# instance field/property targets in this slice; invocation, chains, events, static, local, and TypeSharp-owned targets are not supported.");
             return SimpleType.Unknown;
         }
 
@@ -1462,10 +1462,15 @@ public static class TypeSharpTypeChecker
 
         private SimpleType CheckNullConditionalIndexerAccess(SyntaxNode node, TypeScope scope)
         {
+            if (TryGetNullConditionalImportedIndexerReadType(node, scope, out var targetType))
+            {
+                return targetType.AsNullable();
+            }
+
             CheckNullConditionalIndexerParts(node, scope);
             ReportMismatch(
                 node,
-                "Null-conditional indexer access '?[]' is currently supported only as a simple assignment target over metadata-backed imported C# instance indexer targets.");
+                "Null-conditional indexer access '?[]' is supported only for readable metadata-backed imported C# instance indexer targets with a matching public getter.");
             return SimpleType.Unknown;
         }
 
@@ -1981,6 +1986,31 @@ public static class TypeSharpTypeChecker
             TypeScope scope,
             out SimpleType targetType)
         {
+            return TryGetNullConditionalImportedIndexerTargetType(
+                target,
+                scope,
+                requireWritable: true,
+                out targetType);
+        }
+
+        private bool TryGetNullConditionalImportedIndexerReadType(
+            SyntaxNode target,
+            TypeScope scope,
+            out SimpleType targetType)
+        {
+            return TryGetNullConditionalImportedIndexerTargetType(
+                target,
+                scope,
+                requireWritable: false,
+                out targetType);
+        }
+
+        private bool TryGetNullConditionalImportedIndexerTargetType(
+            SyntaxNode target,
+            TypeScope scope,
+            bool requireWritable,
+            out SimpleType targetType)
+        {
             targetType = SimpleType.Unknown;
             if (!TryGetIndexerAccessParts(target, out var receiver, out var arguments) ||
                 arguments.Count == 0)
@@ -2015,7 +2045,7 @@ public static class TypeSharpTypeChecker
                     receiverTypes,
                     arguments,
                     argumentTypes,
-                    requireWritable: true,
+                    requireWritable,
                     out var property))
             {
                 return false;

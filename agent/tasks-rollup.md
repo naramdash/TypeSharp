@@ -6858,7 +6858,75 @@ Primary evidence:
 
 Remaining:
 
-- Task 0419 should implement imported C# null-conditional indexer read expressions.
+- Task 0419 has since implemented imported C# null-conditional indexer read expressions.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0419 Imported C# Null-Conditional Indexer Read Expressions
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Implemented bounded imported C# `receiver?[index]` read expressions for readable metadata-backed instance indexers.
+- Added checker support that reuses imported indexer argument validation/ranking, accepts nullable/reference-like metadata-backed receivers, returns nullable-compatible read types, and reports deterministic unsupported-target diagnostics before backend emission.
+- Updated C# 7.3 lowering so indexer reads use explicit outer receiver and inner index-argument `System.Func` guards, value-type indexer reads return nullable result types such as `int?`, receiver/index arguments are evaluated once and only in the non-null branch, and generated C# emits no `?[]`.
+- Preserved existing null-conditional assignment, imported member-read, and extension-property diagnostics.
+- Added positive generated `net48` C# consumer coverage and negative mismatched/ambiguous/unsupported checker coverage.
+- Updated the shared catalog to 540 cases with shard expectations `135`, `135`, `135`, and `135`; updated the MSTest bridge catalog count, workflow shard minimums, docs, Work Ledger, tasks, and traceability.
+- Created Task 0420 as the next roadmap-refresh packet after imported C# null-conditional indexer reads.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported indexer reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported indexer reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional assignment imported indexer targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles null-conditional imported member reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker rejects unsupported null-conditional imported member reads"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 135 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 135 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 135 --no-progress
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-build --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 135 --no-progress
+npm run build # in docs
+git diff --check
+```
+
+Result: compiler build, focused null-conditional indexer read positive/negative tests, preserved assignment/member-read tests, shard-count stability tests, full 540-case package-free custom catalog, MSTest bridge build/smoke, all four 135-case MSTest package shard bridge runs, docs build, and diff checks passed. Docs build kept the existing Vite chunk-size warning.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0420 should perform the post-implementation roadmap refresh and select the next bounded implementation slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary

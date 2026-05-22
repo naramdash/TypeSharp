@@ -2580,14 +2580,14 @@ public static class CSharpSourceBackend
             }
 
             var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
-            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var resultType = GetNullConditionalReadResultType(targetType);
             var guardedAccess = BuildNullConditionalIndexerBranch(
                 receiverParameter,
                 arguments,
                 indexParameterTypes,
-                normalizedTargetType,
+                resultType,
                 targetExpression => targetExpression);
-            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {receiverParameter} == null ? default({normalizedTargetType}) : {guardedAccess})({EmitExpression(receiver)})";
+            return $"new System.Func<{receiverType}, {resultType}>({receiverParameter} => {receiverParameter} == null ? default({resultType}) : {guardedAccess})({EmitExpression(receiver)})";
         }
 
         private string BuildNullConditionalIndexerBranch(
@@ -4876,14 +4876,20 @@ public static class CSharpSourceBackend
             type = string.Empty;
             if (node.Kind == SyntaxKind.NullConditionalIndexerExpression)
             {
-                return TryGetNullConditionalImportedIndexerAccess(
+                if (TryGetNullConditionalImportedIndexerAccess(
                     node,
                     requireWritable: false,
                     out _,
                     out _,
-                    out type,
+                    out var targetType,
                     out _,
-                    out _);
+                    out _))
+                {
+                    type = GetNullConditionalReadResultType(targetType);
+                    return true;
+                }
+
+                return false;
             }
 
             return TryGetImportedIndexerAccess(
