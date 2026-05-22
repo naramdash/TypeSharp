@@ -7543,7 +7543,8 @@ Remaining:
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0430 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Member Targets
@@ -7598,7 +7599,8 @@ Remaining:
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0431 Imported C# null-conditional additive compound assignment indexer targets
@@ -7677,7 +7679,8 @@ Remaining:
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0432 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Indexer Targets
@@ -7732,7 +7735,8 @@ Remaining:
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0433 Imported C# Null-Conditional Shift Compound Assignment Member Targets
@@ -7804,7 +7808,8 @@ Remaining:
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0434 Roadmap Refresh After Imported C# Null-Conditional Shift Compound Assignment Member Targets
@@ -7858,7 +7863,8 @@ Remaining:
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0435 Imported C# Null-Conditional Shift Compound Assignment Indexer Targets
@@ -7927,7 +7933,8 @@ Remaining:
 
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0436 Roadmap Refresh After Imported C# Null-Conditional Shift Compound Assignment Indexer Targets
@@ -7979,7 +7986,8 @@ Primary evidence:
 Remaining:
 
 - Task 0437 has since completed local multiplicative compound assignment expressions.
-- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0437 Local Multiplicative Compound Assignment Expressions
@@ -8052,8 +8060,61 @@ Result: All listed commands passed. The full package-free custom catalog passed 
 
 Remaining:
 
-- Task 0438 is active and should recheck official signals after local multiplicative compound assignment expressions.
+- Task 0438 has since completed the roadmap refresh after local multiplicative compound assignment expressions.
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
 - Imported C# member/indexer `*=`, `/=`, and `%=`, null-conditional multiplicative compound assignment, floating-point/decimal policy expansion, and user-defined operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0438 Roadmap Refresh After Local Multiplicative Compound Assignment Expressions
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0437.
+- Confirmed no generated-artifact baseline drift: generated assemblies stay package-free `net48`, generated C# stays C# 7.3-compatible, Core/Runtime stay package-free, and compiler/test hosts may continue using modern .NET.
+- Reaffirmed C# 14 as the stable .NET 10 C# signal and C# 15 as a .NET 11 preview signal. C# 14 continues to permit null-conditional compound assignment broadly and includes user-defined compound assignment operators, but TypeSharp keeps user-defined operators and broader null-conditional multiplicative assignment out of scope for this slice.
+- Reaffirmed TypeScript 6.0 as the current stable TypeScript signal and TypeScript 7.0 Beta/native-preview as tooling strategy input only, not a TypeSharp runtime, package, or syntax requirement.
+- Reaffirmed F# 10 as refinement/tooling input for diagnostics, task interop, and parallel compiler discipline without adding an FSharp.Core dependency to generated artifacts.
+- Reaffirmed .NET Framework 4.8.1 as the latest Framework while keeping `net48` as TypeSharp's broad generated target.
+- Reaffirmed the `net10.0` NuGet package bridge through pinned `MSTest.Sdk/4.2.3`, Microsoft Testing Platform, package lock files, source mapping, audit controls, repo-local package cache, four package-based shard projects, and MTP `--test-modules` module parallelism. NuGet `xunit.v3` 3.2.2, NUnit 4.6.1, and NUnit3TestAdapter 6.2.0 remain valid ecosystem comparison points, but adding them now would duplicate the same extracted-catalog evidence instead of improving generated `net48` compatibility.
+- Kept Task 0401 blocked without explicit approval. The GitHub Actions failure remains tracked as a C# process-launch issue around starting `npm`, while the 2026-06-08 through 2026-06-15 Windows Server 2025 + Visual Studio 2026 hosted-runner migration remains a CI watch item.
+- Selected Task 0439 as the next bounded implementation slice: imported C# member multiplicative compound assignment targets `receiver.Member *= value`, `receiver.Member /= value`, and `receiver.Member %= value` for readable/writable metadata-backed instance/static field/property targets, reusing the local primitive integral multiplicative assign-back policy, preserving single receiver evaluation for non-trivial receivers, generated `net48` consumer coverage, deterministic negative coverage, and unchanged package/test-host boundaries.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), and [C# 14 null-conditional assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/null-conditional-assignment).
+- Microsoft Learn [.NET 10 overview](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview), [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), [.NET Framework support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework), [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks), and [F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript team [latest posts](https://devblogs.microsoft.com/typescript/), [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/), [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), and [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/).
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), and [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk).
+- NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [Microsoft Testing Platform guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [1.121 release notes](https://code.visualstudio.com/updates/v1_121), [Language Server Extension Guide](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide), and [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+- GitHub Actions [Windows Server 2025 + Visual Studio 2026 image migration issue](https://github.com/actions/runner-images/issues/14017), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and [`actions/setup-node`](https://github.com/actions/setup-node).
+
+Verification:
+
+```powershell
+npm run build # in docs
+git diff --check
+```
+
+Result: docs build passed with the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0439 packet](0439-imported-csharp-member-multiplicative-compound-assignment-targets.md)
+
+Remaining:
+
+- Task 0439 is active and should implement imported C# member multiplicative compound assignment targets.
+- Imported C# indexer `*=`, `/=`, and `%=`, null-conditional multiplicative compound assignment, floating-point/decimal policy expansion, and user-defined operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -8080,7 +8141,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0437 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0438 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

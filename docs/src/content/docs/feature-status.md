@@ -26,7 +26,7 @@ TypeSharp evaluates every C#, F#, and TypeScript feature through four practical 
 
 ## TypeScript Structural And Module Review
 
-Official TypeScript sources refreshed on 2026-05-22:
+Official TypeScript sources refreshed on 2026-05-23:
 
 - [Type compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility)
 - [Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
@@ -68,7 +68,7 @@ Current boundary:
 
 ## F# Functional Consistency Review
 
-Official F# sources refreshed on 2026-05-22:
+Official F# sources refreshed on 2026-05-23:
 
 - [F# documentation](https://learn.microsoft.com/en-us/dotnet/fsharp/)
 - [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy)
@@ -101,7 +101,7 @@ Current boundary:
 
 ## C# Stable And Preview Parity Review
 
-Official C# sources refreshed on 2026-05-22:
+Official C# sources refreshed on 2026-05-23:
 
 - [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning)
 - [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14)
@@ -360,6 +360,8 @@ Task 0435 then completed imported C# null-conditional shift compound assignment 
 After imported C# null-conditional shift compound assignment indexer targets, official C#/F#/TypeScript/.NET Framework/.NET/NuGet/.NET testing/MSTest SDK/xUnit.net/NUnit/VS Code/GitHub Actions signals were rechecked again on 2026-05-22. No baseline changed: generated artifacts remain package-free `net48`, generated C# remains C# 7.3-compatible, C# 14 remains stable on .NET 10, C# 15 remains preview on .NET 11 preview, TypeScript 6.0 remains stable while TypeScript 7.0 Beta remains native-preview/tooling input, F# 10 remains refinement/tooling input, .NET Framework 4.8.1 remains latest Framework while `net48` stays TypeSharp's broad generated target, and the pinned `net10.0` `MSTest.Sdk/4.2.3` MTP bridge plus package shards remain the selected NuGet test-host path. NuGet still lists xUnit.net `xunit.v3` 3.2.2, NUnit 4.6.1, and NUnit3TestAdapter 6.2.0 as current comparison packages, but adding them would still duplicate the extracted-catalog evidence. VS Code 1.121 and the June 2026 GitHub Actions Windows Server 2025 + Visual Studio 2026 migration remain tooling/watch signals, not TypeSharp generated-artifact baseline changes. Task 0436 selected Task 0437 next: local mutable multiplicative compound assignment expressions `target *= value`, `target /= value`, and `target %= value` over known non-null primitive integral numeric values, because C# 14 permits compound assignment broadly while TypeSharp still needs the base lexer/parser/checker/backend foundation before imported C# or null-conditional multiplicative compound targets can be admitted.
 
 Task 0437 then completed local multiplicative compound assignment expressions. `target *= value`, `target /= value`, and `target %= value` now parse as assignment operators, type-check only for `let mut` local identifier targets with known non-null primitive integral numeric operands, require the promoted result to be assignable back to the mutable local target type, and lower directly to ordinary C# 7.3-compatible `*=`, `/=`, and `%=` operators. Immutable locals, non-binding targets, bool/string/nullable operands, non-assignable promoted results, structural targets, and imported C# member/indexer targets report deterministic diagnostics before backend emission. Imported C# member/indexer multiplicative targets, null-conditional multiplicative targets, floating-point/decimal policy expansion, and user-defined operators remain backlog. Parser/type-checker/backend fixtures plus generated `net48` C# consumer and negative checker coverage brought the shared catalog to 558 cases with shard expectations `140, 140, 139, 139`, and the package-shard MTP minimum is now 562 tests.
+
+After local multiplicative compound assignment expressions, official C#/F#/TypeScript/.NET Framework/.NET/NuGet/.NET testing/MSTest SDK/xUnit.net/NUnit/VS Code/GitHub Actions signals were rechecked again on 2026-05-23. No baseline changed: generated artifacts remain package-free `net48`, generated C# remains C# 7.3-compatible, C# 14 remains stable on .NET 10, C# 15 remains preview on .NET 11 preview, TypeScript 6.0 remains stable while TypeScript 7.0 Beta remains native-preview/tooling input, F# 10 remains refinement/tooling input, .NET Framework 4.8.1 remains latest Framework while `net48` stays TypeSharp's broad generated target, and the pinned `net10.0` `MSTest.Sdk/4.2.3` MTP bridge plus package shards remain the selected NuGet test-host path. NuGet still lists xUnit.net `xunit.v3` 3.2.2, NUnit 4.6.1, and NUnit3TestAdapter 6.2.0 as current comparison packages, but adding them would still duplicate the extracted-catalog evidence. VS Code 1.121 and the 2026-06-08 through 2026-06-15 GitHub Actions Windows Server 2025 + Visual Studio 2026 migration remain tooling/watch signals, not TypeSharp generated-artifact baseline changes. Task 0438 selected Task 0439 next: imported C# member multiplicative compound assignment targets `receiver.Member *= value`, `receiver.Member /= value`, and `receiver.Member %= value`, because the local primitive integral multiplicative policy has landed and field/property member targets need their own readable/writable metadata, receiver single-evaluation, and generated `net48` consumer evidence before indexer or null-conditional multiplicative targets can be admitted.
 
 ## MVP Language Features
 
