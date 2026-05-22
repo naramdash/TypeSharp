@@ -2340,7 +2340,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyBoolIndexer", "Legacy.Tools.LegacyColorIndexer", "Legacy.Tools.LegacyStringIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyFloatIndexer", "Legacy.Tools.LegacyDoubleIndexer", "Legacy.Tools.LegacyDecimalIndexer", "Legacy.Tools.LegacyBoolIndexer", "Legacy.Tools.LegacyColorIndexer", "Legacy.Tools.LegacyStringIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -2470,6 +2470,30 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertTrue(mutableItem.HasPublicGetter, "LegacyMutableIndexer.Item should expose a public getter.");
         AssertTrue(mutableItem.HasPublicSetter, "LegacyMutableIndexer.Item should expose a public setter.");
         AssertSequence(["int"], mutableItem.ParameterTypes.ToArray());
+
+        var legacyFloatIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFloatIndexer"), "LegacyFloatIndexer metadata should be present.");
+        var floatItem = Require(legacyFloatIndexer.Properties.SingleOrDefault(property => property.Name == "Item"), "LegacyFloatIndexer indexer metadata should be present.");
+        AssertTrue(floatItem.IsIndexer, "LegacyFloatIndexer.Item should be marked as an indexer.");
+        AssertEqual("float", floatItem.Type);
+        AssertTrue(floatItem.HasPublicGetter, "LegacyFloatIndexer.Item should expose a public getter.");
+        AssertTrue(floatItem.HasPublicSetter, "LegacyFloatIndexer.Item should expose a public setter.");
+        AssertSequence(["int"], floatItem.ParameterTypes.ToArray());
+
+        var legacyDoubleIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyDoubleIndexer"), "LegacyDoubleIndexer metadata should be present.");
+        var doubleItem = Require(legacyDoubleIndexer.Properties.SingleOrDefault(property => property.Name == "Item"), "LegacyDoubleIndexer indexer metadata should be present.");
+        AssertTrue(doubleItem.IsIndexer, "LegacyDoubleIndexer.Item should be marked as an indexer.");
+        AssertEqual("double", doubleItem.Type);
+        AssertTrue(doubleItem.HasPublicGetter, "LegacyDoubleIndexer.Item should expose a public getter.");
+        AssertTrue(doubleItem.HasPublicSetter, "LegacyDoubleIndexer.Item should expose a public setter.");
+        AssertSequence(["int"], doubleItem.ParameterTypes.ToArray());
+
+        var legacyDecimalIndexer = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyDecimalIndexer"), "LegacyDecimalIndexer metadata should be present.");
+        var decimalItem = Require(legacyDecimalIndexer.Properties.SingleOrDefault(property => property.Name == "Item"), "LegacyDecimalIndexer indexer metadata should be present.");
+        AssertTrue(decimalItem.IsIndexer, "LegacyDecimalIndexer.Item should be marked as an indexer.");
+        AssertEqual("System.Decimal", decimalItem.Type);
+        AssertTrue(decimalItem.HasPublicGetter, "LegacyDecimalIndexer.Item should expose a public getter.");
+        AssertTrue(decimalItem.HasPublicSetter, "LegacyDecimalIndexer.Item should expose a public setter.");
+        AssertSequence(["int"], decimalItem.ParameterTypes.ToArray());
 
         var legacyNumeric = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyNumeric"), "LegacyNumeric metadata should be present.");
         var formatSByte = Require(legacyNumeric.Methods.SingleOrDefault(method => method.Name == "FormatSByte"), "LegacyNumeric.FormatSByte metadata should be present.");
@@ -23545,7 +23569,7 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.ImportedMultiplicativeCompoundAssignmentIndexers
 
-            import { LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyDecimalIndexer, LegacyDoubleIndexer, LegacyFloatIndexer, LegacyMutableIndexer } from "Legacy.Tools"
 
             fun makeIndexer(value: int): LegacyMutableIndexer {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
@@ -23579,13 +23603,42 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
             export fun nonTrivial(value: int, factor: int): int {
               makeIndexer(value)[makeIndex()] *= factor
             }
+
+            export fun scaleFloatAt(value: float, factor: int): float {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer[0] = value
+              indexer[0] *= factor
+              indexer[0] /= factor
+              indexer[0] %= 2
+              indexer[0]
+            }
+
+            export fun scaleDoubleAt(value: double, factor: float): double {
+              let indexer: LegacyDoubleIndexer = LegacyDoubleIndexer()
+              indexer[0] = value
+              indexer[0] *= factor
+              indexer[0] /= 2
+              indexer[0] %= factor
+              indexer[0]
+            }
+
+            export fun scaleDecimalAt(value: decimal, factor: int): decimal {
+              let indexer: LegacyDecimalIndexer = LegacyDecimalIndexer()
+              indexer[0] = value
+              indexer[0] *= factor
+              indexer[0] /= 2m
+              indexer[0] %= factor
+              indexer[0]
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
 
         var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
 
-        AssertEqual(0, exitCode);
+        AssertTrue(
+            exitCode == 0,
+            $"Imported C# indexer multiplicative compound assignment API build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
         AssertContains("Generated assembly: bin/Debug/net48/ImportedMultiplicativeCompoundAssignmentIndexerApi.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
@@ -23594,6 +23647,10 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
         AssertContains("indexer[0] /= divisor;", generatedSource);
         AssertContains("indexer[0] %= remainder;", generatedSource);
         AssertContains("makeIndexer(value)[makeIndex()] *= factor;", generatedSource);
+        AssertContains("indexer[0] *= factor;", generatedSource);
+        AssertContains("indexer[0] /= factor;", generatedSource);
+        AssertContains("indexer[0] %= 2;", generatedSource);
+        AssertContains("indexer[0] /= 2m;", generatedSource);
         AssertEqual(1, CountOccurrences(generatedSource, "makeIndexer(value)[makeIndex()] *= factor;"));
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMultiplicativeCompoundAssignmentIndexerApi.dll");
@@ -23638,7 +23695,10 @@ static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTarge
                         return Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.multiplyAt(5, 4) == 20 &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.divideAt(21, 3) == 7 &&
                             Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.moduloAt(22, 5) == 2 &&
-                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.nonTrivial(11, 3) == 33;
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.nonTrivial(11, 3) == 33 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleFloatAt(13f, 3) == 1f &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleDoubleAt(13.0, 3f) == 1.0 &&
+                            Samples.ImportedMultiplicativeCompoundAssignmentIndexers.Module.scaleDecimalAt(13m, 3) == 1m;
                     }
                 }
             }
@@ -23671,7 +23731,7 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentInd
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidImportedMultiplicativeCompoundAssignmentIndexers
 
-            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyByteIndexer, LegacyColor, LegacyColorIndexer, LegacyDualNamed, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
+            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyByteIndexer, LegacyColor, LegacyColorIndexer, LegacyDecimalIndexer, LegacyDualNamed, LegacyFloatIndexer, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
 
             export fun missingSetter(): int {
               let indexer: LegacyByteIndexer = LegacyByteIndexer()
@@ -23709,6 +23769,25 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentInd
               0
             }
 
+            export fun mixedDecimalFloating(value: double): int {
+              let indexer: LegacyDecimalIndexer = LegacyDecimalIndexer()
+              indexer[0] = 1m
+              indexer[0] *= value
+              0
+            }
+
+            export fun narrowingFloat(value: double): int {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer[0] *= value
+              0
+            }
+
+            export fun nullableFloat(value: float?): int {
+              let indexer: LegacyFloatIndexer = LegacyFloatIndexer()
+              indexer[0] /= value
+              0
+            }
+
             export fun mismatchedArgument(): int {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
               indexer[true] *= 2
@@ -23730,33 +23809,48 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentInd
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == unsupportedImportedMessage),
-            "Getter-only imported indexer target should be rejected before emission.");
+            $"Getter-only imported indexer target should be rejected before emission.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()))}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Imported bool indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Imported string indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Imported enum indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Imported indexer target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Imported indexer target should reject multiplicative results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
+            "Imported decimal indexer target should reject mixed decimal and floating-point operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
+            "Imported float indexer target should reject floating-point results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
+            "Imported float indexer target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2411" &&
@@ -29013,6 +29107,39 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 private readonly int[] _values = new int[8];
 
                 public int this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyFloatIndexer
+            {
+                private readonly float[] _values = new float[8];
+
+                public float this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyDoubleIndexer
+            {
+                private readonly double[] _values = new double[8];
+
+                public double this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyDecimalIndexer
+            {
+                private readonly decimal[] _values = new decimal[8];
+
+                public decimal this[int index]
                 {
                     get { return _values[index]; }
                     set { _values[index] = value; }

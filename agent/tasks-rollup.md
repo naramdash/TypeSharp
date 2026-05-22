@@ -8804,6 +8804,61 @@ Remaining:
 - Null-conditional floating-point and decimal multiplicative expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0451 Imported C# Regular Indexer Floating-Point And Decimal Multiplicative Compound Assignment Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Extended imported C# instance indexer `receiver[index] *= value`, `receiver[index] /= value`, and `receiver[index] %= value` targets from primitive integral-only operands to the bounded known non-null integral/floating-point/decimal multiplicative assign-back policy already used by local mutable targets and regular imported C# field/property member targets.
+- Kept the target surface metadata-backed: overload resolution must select a public getter/setter indexer with supported arguments, and accepted generated C# remains ordinary C# 7.3-compatible compound assignment with receiver and index arguments emitted once.
+- Added metadata, generated package-free `net48` C# consumer, and deterministic negative checker coverage for `float`, `double`, and `decimal` imported indexers, including nullable operands, mixed decimal-floating operands, narrowing assign-back, missing setters, bool/string/enum targets, and mismatched or ambiguous indexer arguments.
+- Preserved the shared catalog at 568 cases, package-free shard expectations at `142`, `142`, `142`, and `142`, and the MTP package-shard minimum at 572 tests because the work extended existing indexer coverage rather than adding new shared cases.
+- Kept null-conditional floating-point/decimal multiplicative expansion, checked-overflow policy, user-defined operator resolution, package/framework baseline changes, and Task 0401 out of scope. Task 0452 is the next roadmap refresh after this implementation slice.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0452 packet](0452-roadmap-refresh-after-imported-csharp-indexer-floating-decimal-multiplicative-compound-assignment-policy.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "imported multiplicative compound assignment indexer"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 572 --no-progress
+npm run build # in docs
+rg -n "0451-imported-csharp-indexer-floating-decimal-multiplicative-compound-assignment-policy\.md|Task 0451 is active|Task 0451 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0450|Completed range\s*\| 0001-0400, 0402-0450|imported C# regular indexer floating-point and decimal multiplicative expansion is active" agent docs\src\content\docs test .github --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The focused imported indexer filter passed both imported indexer tests, the broader multiplicative filter passed all 12 multiplicative tests, fixture coverage passed, and the full package-free custom catalog passed across 568 cases including the VS Code live smoke. The MSTest bridge and four shard projects built successfully, the MTP module-level package shard run executed 572 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scan found no stale Task 0451 active-packet references outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0452 is active and should recheck official language/platform/package/tooling signals after imported C# regular indexer floating-point and decimal multiplicative compound assignment policy.
+- Null-conditional floating-point and decimal multiplicative expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
