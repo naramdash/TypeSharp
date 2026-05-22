@@ -1412,6 +1412,36 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
+            if (IsMultiplicativeAssignmentOperatorKind(operatorKind))
+            {
+                if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var multiplicativeTargetType))
+                {
+                    return CheckMultiplicativeCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        multiplicativeTargetType,
+                        operatorKind);
+                }
+
+                if (TryGetNullConditionalExtensionPropertyTarget(
+                        target,
+                        scope,
+                        out var multiplicativeExtensionProperty,
+                        out var multiplicativeReceiverType))
+                {
+                    CheckExpression(value, scope);
+                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(multiplicativeReceiverType, multiplicativeExtensionProperty));
+                    return multiplicativeExtensionProperty.Type;
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional multiplicative compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
+                return SimpleType.Unknown;
+            }
+
             if (IsBitwiseAssignmentOperatorKind(operatorKind))
             {
                 if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var bitwiseTargetType))
@@ -1508,7 +1538,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?.' supports only simple '=', bounded additive compound '+=', '-=', bounded bitwise compound '|=', '&=', '^=', bounded shift compound '<<=', '>>=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?.' supports only simple '=', bounded additive compound '+=', '-=', bounded multiplicative compound '*=', '/=', '%=', bounded bitwise compound '|=', '&=', '^=', bounded shift compound '<<=', '>>=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
@@ -1783,7 +1813,7 @@ public static class TypeSharpTypeChecker
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.");
+                    "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and null-conditional indexer, event, unresolved, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
@@ -1791,7 +1821,7 @@ public static class TypeSharpTypeChecker
             CheckExpression(value, scope);
             ReportMismatch(
                 assignment,
-                "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.");
+                "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and null-conditional indexer, event, unresolved, and TypeSharp-owned targets are not supported.");
             return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
 

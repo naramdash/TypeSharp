@@ -2494,6 +2494,12 @@ public static class CSharpSourceBackend
                 return EmitNullConditionalMemberCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
             }
 
+            if (IsMultiplicativeAssignmentOperatorKind(operatorToken.Kind) &&
+                expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return EmitNullConditionalMemberCompoundAssignment(expressions[0], expressions[1], operatorToken.Text);
+            }
+
             if (IsBitwiseAssignmentOperatorKind(operatorToken.Kind) &&
                 expressions[0].Kind == SyntaxKind.NullConditionalMemberAccessExpression)
             {
@@ -3140,6 +3146,11 @@ public static class CSharpSourceBackend
         private static bool IsAdditiveAssignmentOperatorKind(SyntaxKind kind) =>
             kind is SyntaxKind.PlusEqualsToken
                 or SyntaxKind.MinusEqualsToken;
+
+        private static bool IsMultiplicativeAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.StarEqualsToken
+                or SyntaxKind.SlashEqualsToken
+                or SyntaxKind.PercentEqualsToken;
 
         private string EmitMatch(SyntaxNode node, string resultType)
         {
