@@ -2686,6 +2686,11 @@ public static class CSharpSourceBackend
 
         private string EmitLogicalUnsignedShiftAssignment(SyntaxNode target, SyntaxNode right)
         {
+            if (TryGetNullConditionalLogicalUnsignedShiftMemberAssignment(target, right, out var nullConditionalMemberAssignment))
+            {
+                return nullConditionalMemberAssignment;
+            }
+
             if (TryGetLogicalUnsignedShiftMemberAssignment(target, right, out var loweredMemberAssignment))
             {
                 return loweredMemberAssignment;
@@ -2749,6 +2754,34 @@ public static class CSharpSourceBackend
                 rightExpression,
                 targetType);
             lowered = $"new System.Func<{receiverType}, {NormalizePrimitiveTypeName(targetType)}>({receiverParameter} => {targetExpressionWithTemporary} = {shiftedWithTemporary})({EmitExpression(receiver)})";
+            return true;
+        }
+
+        private bool TryGetNullConditionalLogicalUnsignedShiftMemberAssignment(
+            SyntaxNode target,
+            SyntaxNode right,
+            out string lowered)
+        {
+            lowered = string.Empty;
+            if (!TryGetNullConditionalImportedMemberAssignmentTarget(
+                    target,
+                    out var receiver,
+                    out var memberName,
+                    out var targetType,
+                    out var receiverType))
+            {
+                return false;
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var targetExpression = $"{receiverParameter}.{memberName}";
+            var shifted = BuildLogicalUnsignedShiftAssignmentValue(
+                targetExpression,
+                EmitExpression(right),
+                targetType);
+            var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({targetExpression} = {shifted})";
+            lowered = $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
             return true;
         }
 

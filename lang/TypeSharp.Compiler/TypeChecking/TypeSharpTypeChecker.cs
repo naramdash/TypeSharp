@@ -1374,13 +1374,43 @@ public static class TypeSharpTypeChecker
             TypeScope scope,
             SyntaxKind operatorKind)
         {
+            if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
+            {
+                if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var logicalShiftTargetType))
+                {
+                    return CheckShiftCompoundAssignmentValue(
+                        assignment,
+                        value,
+                        scope,
+                        logicalShiftTargetType,
+                        SyntaxKind.LogicalUnsignedShiftEqualsToken);
+                }
+
+                if (TryGetNullConditionalExtensionPropertyTarget(
+                        target,
+                        scope,
+                        out var logicalShiftExtensionProperty,
+                        out var logicalShiftReceiverType))
+                {
+                    CheckExpression(value, scope);
+                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(logicalShiftReceiverType, logicalShiftExtensionProperty));
+                    return logicalShiftExtensionProperty.Type;
+                }
+
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    "Null-conditional logical unsigned shift assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
+                return SimpleType.Unknown;
+            }
+
             if (operatorKind != SyntaxKind.EqualsToken)
             {
                 CheckNullConditionalReceiver(target, scope);
                 CheckExpression(value, scope);
                 ReportMismatch(
                     assignment,
-                    "Null-conditional assignment '?.' supports only simple '=' over metadata-backed imported C# instance field/property targets; compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
+                    "Null-conditional assignment '?.' supports only simple '=' or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
