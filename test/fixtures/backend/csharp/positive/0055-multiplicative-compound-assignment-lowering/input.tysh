@@ -1,0 +1,17 @@
+namespace Samples.MultiplicativeCompoundAssignment
+
+export fun adjust(value: int, factor: short): int {
+  let mut result = value
+  result *= factor
+  result /= 2
+  result %= 5
+  result
+}
+
+export fun adjustLong(value: long, divisor: int): long {
+  let mut result = value
+  result *= 3
+  result /= divisor
+  result %= 7
+  result
+}

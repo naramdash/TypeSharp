@@ -1,0 +1,60 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended.",
+      "file": "input.tysh",
+      "start": { "line": 7, "column": 3 },
+      "end": { "line": 7, "column": 8 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.",
+      "file": "input.tysh",
+      "start": { "line": 12, "column": 3 },
+      "end": { "line": 12, "column": 4 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'.",
+      "file": "input.tysh",
+      "start": { "line": 18, "column": 3 },
+      "end": { "line": 18, "column": 16 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'.",
+      "file": "input.tysh",
+      "start": { "line": 24, "column": 3 },
+      "end": { "line": 24, "column": 14 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'.",
+      "file": "input.tysh",
+      "start": { "line": 31, "column": 3 },
+      "end": { "line": 31, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Cannot assign multiplicative compound assignment result of type 'long' to 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 37, "column": 3 },
+      "end": { "line": 37, "column": 18 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'Box' and 'int'.",
+      "file": "input.tysh",
+      "start": { "line": 43, "column": 3 },
+      "end": { "line": 43, "column": 15 }
+    }
+  ]
+}

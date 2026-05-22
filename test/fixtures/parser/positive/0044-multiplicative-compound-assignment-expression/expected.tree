@@ -1,0 +1,53 @@
+SourceFile TextSpan=1:1-9:2
+  NamespaceDeclaration TextSpan=1:1-1:51
+    Token NamespaceKeyword "namespace" TextSpan=1:1-1:10
+    TypeName TextSpan=1:11-1:51
+      Token IdentifierToken "Samples" TextSpan=1:11-1:18
+      Token DotToken "." TextSpan=1:18-1:19
+      Token IdentifierToken "MultiplicativeCompoundAssignment" TextSpan=1:19-1:51
+  FunctionDeclaration TextSpan=3:1-9:2
+    Token FunKeyword "fun" TextSpan=3:1-3:4
+    Token IdentifierToken "adjust" TextSpan=3:5-3:11
+    ParameterList TextSpan=3:11-3:13
+      Token OpenParenToken "(" TextSpan=3:11-3:12
+      Token CloseParenToken ")" TextSpan=3:12-3:13
+    TypeAnnotation TextSpan=3:13-3:18
+      Token ColonToken ":" TextSpan=3:13-3:14
+      TypeName TextSpan=3:15-3:18
+        Token IdentifierToken "int" TextSpan=3:15-3:18
+    FunctionBody TextSpan=3:19-9:2
+      BlockExpression TextSpan=3:19-9:2
+        Token OpenBraceToken "{" TextSpan=3:19-3:20
+        ValueDeclaration TextSpan=4:3-4:21
+          Token LetKeyword "let" TextSpan=4:3-4:6
+          Token MutKeyword "mut" TextSpan=4:7-4:10
+          Token IdentifierToken "value" TextSpan=4:11-4:16
+          Initializer TextSpan=4:17-4:21
+            Token EqualsToken "=" TextSpan=4:17-4:18
+            LiteralExpression TextSpan=4:19-4:21
+              Token NumericLiteralToken "12" TextSpan=4:19-4:21
+        ExpressionStatement TextSpan=5:3-5:13
+          AssignmentExpression TextSpan=5:3-5:13
+            IdentifierExpression TextSpan=5:3-5:8
+              Token IdentifierToken "value" TextSpan=5:3-5:8
+            Token StarEqualsToken "*=" TextSpan=5:9-5:11
+            LiteralExpression TextSpan=5:12-5:13
+              Token NumericLiteralToken "3" TextSpan=5:12-5:13
+        ExpressionStatement TextSpan=6:3-6:13
+          AssignmentExpression TextSpan=6:3-6:13
+            IdentifierExpression TextSpan=6:3-6:8
+              Token IdentifierToken "value" TextSpan=6:3-6:8
+            Token SlashEqualsToken "/=" TextSpan=6:9-6:11
+            LiteralExpression TextSpan=6:12-6:13
+              Token NumericLiteralToken "2" TextSpan=6:12-6:13
+        ExpressionStatement TextSpan=7:3-7:13
+          AssignmentExpression TextSpan=7:3-7:13
+            IdentifierExpression TextSpan=7:3-7:8
+              Token IdentifierToken "value" TextSpan=7:3-7:8
+            Token PercentEqualsToken "%=" TextSpan=7:9-7:11
+            LiteralExpression TextSpan=7:12-7:13
+              Token NumericLiteralToken "5" TextSpan=7:12-7:13
+        ExpressionStatement TextSpan=8:3-8:8
+          IdentifierExpression TextSpan=8:3-8:8
+            Token IdentifierToken "value" TextSpan=8:3-8:8
+        Token CloseBraceToken "}" TextSpan=9:1-9:2

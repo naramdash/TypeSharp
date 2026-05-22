@@ -1224,6 +1224,8 @@ public static class TypeSharpTypeChecker
                 return operatorKind switch
                 {
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
+                    SyntaxKind.StarEqualsToken or SyntaxKind.SlashEqualsToken or SyntaxKind.PercentEqualsToken =>
+                        CheckMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken or SyntaxKind.LogicalUnsignedShiftEqualsToken =>
@@ -1257,6 +1259,13 @@ public static class TypeSharpTypeChecker
 
                 var targetType = CheckExpression(target, scope);
                 CheckExpression(value, scope);
+                if (IsMultiplicativeAssignmentOperatorKind(operatorKind))
+                {
+                    ReportMismatch(
+                        node,
+                        "Multiplicative compound assignment is supported only for mutable local bindings in this slice; imported C# member/indexer, null-conditional, event, static, and TypeSharp-owned targets are not supported.");
+                }
+
                 return targetType;
             }
 
@@ -1805,6 +1814,43 @@ public static class TypeSharpTypeChecker
             if (resultType.IsKnown && !CanAssign(scope, targetType, resultType))
             {
                 ReportMismatch(assignment, $"Cannot assign additive compound assignment result of type '{resultType}' to '{targetType}'.");
+            }
+
+            return targetType;
+        }
+
+        private SimpleType CheckMultiplicativeCompoundAssignmentValue(
+            SyntaxNode assignment,
+            SyntaxNode value,
+            TypeScope scope,
+            SimpleType targetType,
+            SyntaxKind operatorKind)
+        {
+            var valueType = CheckExpression(value, scope);
+            if (!targetType.IsKnown || !valueType.IsKnown)
+            {
+                return targetType.IsKnown ? targetType : SimpleType.Unknown;
+            }
+
+            var operatorText = operatorKind switch
+            {
+                SyntaxKind.StarEqualsToken => "*=",
+                SyntaxKind.SlashEqualsToken => "/=",
+                SyntaxKind.PercentEqualsToken => "%=",
+                _ => "?="
+            };
+
+            if (!TryGetBinaryIntegralMultiplicativeResultType(targetType, valueType, out var resultType))
+            {
+                ReportMismatch(
+                    assignment,
+                    $"Multiplicative compound assignment '{operatorText}' operands must be non-null primitive integral numeric values of a supported type, but found '{targetType}' and '{valueType}'.");
+                return targetType;
+            }
+
+            if (resultType.IsKnown && !CanAssign(scope, targetType, resultType))
+            {
+                ReportMismatch(assignment, $"Cannot assign multiplicative compound assignment result of type '{resultType}' to '{targetType}'.");
             }
 
             return targetType;
@@ -4974,6 +5020,9 @@ public static class TypeSharpTypeChecker
             kind is SyntaxKind.EqualsToken
                 or SyntaxKind.PlusEqualsToken
                 or SyntaxKind.MinusEqualsToken
+                or SyntaxKind.StarEqualsToken
+                or SyntaxKind.SlashEqualsToken
+                or SyntaxKind.PercentEqualsToken
                 or SyntaxKind.PipeEqualsToken
                 or SyntaxKind.AmpersandEqualsToken
                 or SyntaxKind.CaretEqualsToken
@@ -4993,6 +5042,11 @@ public static class TypeSharpTypeChecker
         private static bool IsAdditiveAssignmentOperatorKind(SyntaxKind kind) =>
             kind is SyntaxKind.PlusEqualsToken
                 or SyntaxKind.MinusEqualsToken;
+
+        private static bool IsMultiplicativeAssignmentOperatorKind(SyntaxKind kind) =>
+            kind is SyntaxKind.StarEqualsToken
+                or SyntaxKind.SlashEqualsToken
+                or SyntaxKind.PercentEqualsToken;
 
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {
@@ -5058,6 +5112,20 @@ public static class TypeSharpTypeChecker
         }
 
         private static bool TryGetBinaryIntegralAdditiveResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullableIntegralType(leftType) ||
+                !IsKnownNonNullableIntegralType(rightType) ||
+                !TryPromoteIntegralBinaryType(leftType.Name, rightType.Name, out var promotedType))
+            {
+                return false;
+            }
+
+            resultType = SimpleType.Named(promotedType);
+            return true;
+        }
+
+        private static bool TryGetBinaryIntegralMultiplicativeResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
         {
             resultType = SimpleType.Unknown;
             if (!IsKnownNonNullableIntegralType(leftType) ||

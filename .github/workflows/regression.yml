@@ -168,5 +168,5 @@ jobs:
             --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" `
             --root-directory . `
             --max-parallel-test-modules 4 `
-            --minimum-expected-tests 560 `
+            --minimum-expected-tests 562 `
             --no-progress

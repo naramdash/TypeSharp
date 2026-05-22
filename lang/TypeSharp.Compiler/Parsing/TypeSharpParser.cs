@@ -2007,6 +2007,9 @@ public sealed class TypeSharpParser
         kind is SyntaxKind.EqualsToken
             or SyntaxKind.PlusEqualsToken
             or SyntaxKind.MinusEqualsToken
+            or SyntaxKind.StarEqualsToken
+            or SyntaxKind.SlashEqualsToken
+            or SyntaxKind.PercentEqualsToken
             or SyntaxKind.PipeEqualsToken
             or SyntaxKind.AmpersandEqualsToken
             or SyntaxKind.CaretEqualsToken

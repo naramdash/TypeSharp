@@ -1,0 +1,45 @@
+namespace Samples.TypeChecker.MultiplicativeCompoundAssignmentInvalid
+
+record Box(Value: int)
+
+fun immutableLocal(): int {
+  let value = 1
+  value *= 2
+  value
+}
+
+fun invalidTarget(): int {
+  1 /= 2
+  0
+}
+
+fun boolTarget(): bool {
+  let mut flag = true
+  flag *= false
+  flag
+}
+
+fun stringTarget(): string {
+  let mut text = "ok"
+  text /= "x"
+  text
+}
+
+fun nullableOperand(): int {
+  let mut value: int = 1
+  let maybe: int? = null
+  value %= maybe
+  value
+}
+
+fun nonAssignableResult(value: int, extra: long): int {
+  let mut result = value
+  result *= extra
+  result
+}
+
+fun structuralTarget(box: Box): int {
+  let mut current = box
+  current *= 2
+  0
+}

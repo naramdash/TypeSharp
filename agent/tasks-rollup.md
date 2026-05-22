@@ -7542,7 +7542,8 @@ Remaining:
 - Task 0434 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment member targets.
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0430 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Member Targets
@@ -7596,7 +7597,8 @@ Remaining:
 - Task 0434 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment member targets.
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0431 Imported C# null-conditional additive compound assignment indexer targets
@@ -7674,7 +7676,8 @@ Remaining:
 - Task 0434 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment member targets.
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0432 Roadmap Refresh After Imported C# Null-Conditional Additive Compound Assignment Indexer Targets
@@ -7728,7 +7731,8 @@ Remaining:
 - Task 0434 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment member targets.
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0433 Imported C# Null-Conditional Shift Compound Assignment Member Targets
@@ -7799,7 +7803,8 @@ Remaining:
 - Task 0434 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment member targets.
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0434 Roadmap Refresh After Imported C# Null-Conditional Shift Compound Assignment Member Targets
@@ -7852,7 +7857,8 @@ Remaining:
 
 - Task 0435 has since completed imported C# null-conditional shift compound assignment indexer targets.
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0435 Imported C# Null-Conditional Shift Compound Assignment Indexer Targets
@@ -7920,7 +7926,8 @@ Result: All listed commands passed. The full package-free custom catalog passed 
 Remaining:
 
 - Task 0436 has since completed the roadmap refresh after imported C# null-conditional shift compound assignment indexer targets.
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0436 Roadmap Refresh After Imported C# Null-Conditional Shift Compound Assignment Indexer Targets
@@ -7967,11 +7974,86 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [Task 0437 packet](0437-local-multiplicative-compound-assignment-expressions.md)
+- [Task 0437 rollup](#task-0437-local-multiplicative-compound-assignment-expressions)
 
 Remaining:
 
-- Task 0437 is active and should implement local multiplicative compound assignment expressions.
+- Task 0437 has since completed local multiplicative compound assignment expressions.
+- Task 0438 is active and should refresh the roadmap after local multiplicative compound assignment expressions.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0437 Local Multiplicative Compound Assignment Expressions
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Added lexer/parser support for `*=`, `/=`, and `%=` as assignment operators.
+- Implemented local mutable identifier checking for multiplicative compound assignment over known non-null primitive integral numeric operands, requiring the promoted result type to be assignable back to the `let mut` target.
+- Preserved deterministic diagnostics for immutable locals, invalid non-binding targets, bool/string/nullable operands, non-assignable promoted results, structural local targets, and imported C# member/indexer targets before backend emission.
+- Kept imported C# member/indexer multiplicative assignment, null-conditional multiplicative assignment, floating-point/decimal policy expansion, and user-defined operators out of scope.
+- Lowered accepted local forms to ordinary C# 7.3-compatible `*=`, `/=`, and `%=` operators.
+- Added parser/type-checker/backend fixture coverage plus generated `net48` C# consumer evidence and negative checker coverage.
+- Updated the shared catalog to 558 cases with package-free shard expectations `140`, `140`, `139`, and `139`; updated the MSTest bridge count, MTP package-shard minimum 562, workflow, test README, docs, Work Ledger, tasks, and traceability.
+- Created Task 0438 as the next roadmap-refresh packet after local multiplicative compound assignment expressions.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpLexer.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/parser/positive/0044-multiplicative-compound-assignment-expression`
+- `test/fixtures/diagnostics/type-checker/positive/multiplicative-compound-assignment`
+- `test/fixtures/diagnostics/type-checker/negative/multiplicative-compound-assignment-invalid`
+- `test/fixtures/backend/csharp/positive/0055-multiplicative-compound-assignment-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Grammar And Language Reference](../docs/src/content/docs/reference.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "release and regression workflow contracts are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 562 --no-progress
+npm run build # in docs
+git diff --check
+```
+
+Result: All listed commands passed. The full package-free custom catalog passed across 558 cases, and the MTP module-level package shard run executed 562 tests successfully across the four shard assemblies. The docs build kept the existing Vite chunk-size warning, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0438 is active and should recheck official signals after local multiplicative compound assignment expressions.
+- Imported C# member/indexer `*=`, `/=`, and `%=`, null-conditional multiplicative compound assignment, floating-point/decimal policy expansion, and user-defined operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -7998,7 +8080,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0436 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0437 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
