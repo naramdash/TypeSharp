@@ -91,6 +91,7 @@ public static class TypeSharpTypeChecker
             }
 
             CollectTopLevelTypesAndFunctions(root, scope);
+            CollectExtensionProperties(root, scope);
             foreach (var child in root.Children)
             {
                 CheckTopLevelDeclaration(child, scope);
@@ -269,6 +270,30 @@ public static class TypeSharpTypeChecker
             }
         }
 
+        private void CollectExtensionProperties(SyntaxNode root, TypeScope scope)
+        {
+            foreach (var extension in root.Children.Where(child => child.Kind == SyntaxKind.ExtensionDeclaration))
+            {
+                var receiverTypeNode = extension.Children.FirstOrDefault(child => IsTypeSyntax(child.Kind));
+                if (receiverTypeNode is null || !TryGetType(receiverTypeNode, scope, out var receiverType))
+                {
+                    continue;
+                }
+
+                foreach (var property in extension.Children.Where(child => child.Kind == SyntaxKind.ValueDeclaration))
+                {
+                    if (!TryGetDeclarationName(property, out var propertyName) ||
+                        !TryGetDirectTypeAnnotation(property, out var propertyTypeNode) ||
+                        !TryGetType(propertyTypeNode, scope, out var propertyType))
+                    {
+                        continue;
+                    }
+
+                    scope.DeclareExtensionProperty(receiverType, propertyName, propertyType);
+                }
+            }
+        }
+
         private void CheckTopLevelDeclaration(SyntaxNode node, TypeScope scope)
         {
             switch (node.Kind)
@@ -317,6 +342,7 @@ public static class TypeSharpTypeChecker
         {
             var scope = new TypeScope(parentScope);
             CollectTopLevelTypesAndFunctions(node, scope);
+            CollectExtensionProperties(node, scope);
 
             foreach (var child in node.Children.Where(child => !child.IsToken))
             {
@@ -646,7 +672,14 @@ public static class TypeSharpTypeChecker
         private void CheckExtensionDeclaration(SyntaxNode node, TypeScope scope)
         {
             var receiverTypeNode = node.Children.FirstOrDefault(child => IsTypeSyntax(child.Kind));
-            _ = receiverTypeNode is not null && TryGetType(receiverTypeNode, scope, out var receiverType);
+            var receiverType = SimpleType.Unknown;
+            var hasReceiverType = receiverTypeNode is not null && TryGetType(receiverTypeNode, scope, out receiverType);
+            var receiverIdentifier = GetExtensionReceiverIdentifier(node);
+            var propertyScope = new TypeScope(scope);
+            if (hasReceiverType && receiverIdentifier is not null)
+            {
+                propertyScope.DeclareValue(receiverIdentifier.Text ?? string.Empty, receiverType);
+            }
 
             foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
             {
@@ -655,7 +688,7 @@ public static class TypeSharpTypeChecker
                     .SelectMany(child => child.Children)
                     .FirstOrDefault(child => child.Kind == SyntaxKind.Parameter);
 
-                if (receiverTypeNode is null || !TryGetType(receiverTypeNode, scope, out receiverType))
+                if (!hasReceiverType)
                 {
                     ReportMismatch(node, "Extension declaration requires a receiver type.");
                 }
@@ -679,6 +712,42 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckFunction(function, scope);
+            }
+
+            foreach (var property in node.Children.Where(child => child.Kind == SyntaxKind.ValueDeclaration))
+            {
+                if (!hasReceiverType)
+                {
+                    ReportMismatch(node, "Extension declaration requires a receiver type.");
+                }
+
+                if (receiverIdentifier is null)
+                {
+                    ReportMismatch(property, "Extension property requires a receiver name in the extension declaration.");
+                }
+
+                if (IsMutableValueDeclaration(property))
+                {
+                    ReportMismatch(property, "Extension property cannot be mutable.");
+                }
+
+                if (!TryGetDirectTypeAnnotation(property, out _))
+                {
+                    ReportMismatch(property, "Extension property requires an explicit type annotation.");
+                }
+
+                if (!HasInitializer(property))
+                {
+                    ReportMismatch(property, "Extension property requires an initializer expression.");
+                }
+
+                if (property.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock))
+                {
+                    ReportMismatch(property, "Extension property accessor blocks are not supported in this slice; use an initializer expression.");
+                }
+
+                CheckPublicValueBoundary(property, scope);
+                CheckValueDeclaration(property, propertyScope);
             }
         }
 
@@ -1369,20 +1438,30 @@ public static class TypeSharpTypeChecker
                 return importedMemberType;
             }
 
-            if (!receiverType.IsKnown || !scope.ResolveShape(receiverType.Name, out var shape))
-            {
-                return SimpleType.Unknown;
-            }
-
             var memberName = member.Text;
-            var shapeMember = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
-            if (shapeMember.Name is null)
+            if (receiverType.IsKnown && scope.ResolveShape(receiverType.Name, out var shape))
             {
+                var shapeMember = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, memberName, StringComparison.Ordinal));
+                if (shapeMember.Name is not null)
+                {
+                    return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
+                }
+
+                if (scope.ResolveExtensionProperty(receiverType, memberName, out var shapeExtensionProperty))
+                {
+                    return shapeExtensionProperty.Type;
+                }
+
                 ReportMismatch(node, $"Type '{receiverType}' does not contain member '{memberName}'.");
                 return SimpleType.Unknown;
             }
 
-            return shapeMember.IsOptional ? shapeMember.Type.AsNullable() : shapeMember.Type;
+            if (scope.ResolveExtensionProperty(receiverType, memberName, out var extensionProperty))
+            {
+                return extensionProperty.Type;
+            }
+
+            return SimpleType.Unknown;
         }
 
         private bool TryGetImportedMemberAssignmentTargetType(
@@ -7664,6 +7743,39 @@ public static class TypeSharpTypeChecker
             node.Kind == SyntaxKind.ValueDeclaration &&
             node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
 
+        private static bool HasInitializer(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.Initializer);
+
+        private static SyntaxNode? GetExtensionReceiverIdentifier(SyntaxNode node)
+        {
+            var seenReceiverType = false;
+            foreach (var child in node.Children)
+            {
+                if (!seenReceiverType && IsTypeSyntax(child.Kind))
+                {
+                    seenReceiverType = true;
+                    continue;
+                }
+
+                if (!seenReceiverType)
+                {
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
         private static IEnumerable<NamedImportSpecifier> GetNamedImportSpecifiers(SyntaxNode node)
         {
             var insideBraces = false;
@@ -7792,6 +7904,7 @@ public static class TypeSharpTypeChecker
         private readonly Dictionary<string, IReadOnlyList<string>> _enums = new(StringComparer.Ordinal);
         private readonly Dictionary<string, ShapeInfo> _structuralShapes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, ShapeInfo> _recordShapes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, List<ExtensionPropertyInfo>> _extensionProperties = new(StringComparer.Ordinal);
         private readonly HashSet<string> _types = new(StringComparer.Ordinal);
 
         public TypeScope(TypeScope? parent, FunctionCapabilities allowedCapabilities = default)
@@ -7847,6 +7960,22 @@ public static class TypeSharpTypeChecker
         public void DeclareStructuralShape(string name, IReadOnlyList<ShapeMemberInfo> members) => _structuralShapes[name] = new ShapeInfo(name, members);
 
         public void DeclareRecordShape(string name, IReadOnlyList<ShapeMemberInfo> members) => _recordShapes[name] = new ShapeInfo(name, members);
+
+        public void DeclareExtensionProperty(SimpleType receiverType, string name, SimpleType type)
+        {
+            if (!receiverType.IsKnown || receiverType.IsNull || name.Length == 0 || !type.IsKnown)
+            {
+                return;
+            }
+
+            if (!_extensionProperties.TryGetValue(receiverType.Name, out var properties))
+            {
+                properties = [];
+                _extensionProperties[receiverType.Name] = properties;
+            }
+
+            properties.Add(new ExtensionPropertyInfo(receiverType, name, type));
+        }
 
         public bool ResolveValue(string name, out SimpleType type)
         {
@@ -8037,6 +8166,29 @@ public static class TypeSharpTypeChecker
             return ResolveRecordShape(name, out shape);
         }
 
+        public bool ResolveExtensionProperty(SimpleType receiverType, string name, out ExtensionPropertyInfo property)
+        {
+            if (receiverType.IsKnown &&
+                !receiverType.IsNull &&
+                !receiverType.IsNullable &&
+                _extensionProperties.TryGetValue(receiverType.Name, out var properties))
+            {
+                property = properties.FirstOrDefault(candidate => string.Equals(candidate.Name, name, StringComparison.Ordinal));
+                if (property.Name is not null)
+                {
+                    return true;
+                }
+            }
+
+            if (_parent is not null)
+            {
+                return _parent.ResolveExtensionProperty(receiverType, name, out property);
+            }
+
+            property = default;
+            return false;
+        }
+
         public bool ResolveType(string name) => _types.Contains(name) || (_parent?.ResolveType(name) ?? false);
     }
 
@@ -8055,6 +8207,8 @@ public static class TypeSharpTypeChecker
     private readonly record struct ShapeInfo(string Name, IReadOnlyList<ShapeMemberInfo> Members);
 
     private readonly record struct ShapeMemberInfo(string Name, SimpleType Type, bool IsOptional);
+
+    private readonly record struct ExtensionPropertyInfo(SimpleType ReceiverType, string Name, SimpleType Type);
 
     private readonly record struct RecordExpressionFieldInfo(SyntaxNode Node, SimpleType Type, bool IsOptional);
 

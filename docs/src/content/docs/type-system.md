@@ -55,6 +55,19 @@ The `satisfies` expression checks the proof and then keeps the original expressi
 
 Structural shapes are compile-time tools. They must not leak directly through public .NET boundaries. Public APIs should expose records, classes, interfaces, wrappers, or nominal unions.
 
+## Extension Properties
+
+TypeSharp-authored extension properties are a bounded C# 14-inspired surface over the existing explicit-receiver `extension` declaration. The implemented shape is getter-only and requires a declaration receiver name, an explicit property type, and an initializer:
+
+```tysh
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}
+```
+
+Member access resolves an extension property only after ordinary imported/instance members and structural shape members are considered, and only for an exact known non-null receiver type. Setters, static extension properties, operators, imported C# extension property metadata, nullable receiver lifting, and richer conflict ranking remain backlog.
+
 Intersection aliases compose named structural shapes locally:
 
 ```tysh

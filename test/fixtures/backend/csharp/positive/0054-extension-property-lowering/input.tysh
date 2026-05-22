@@ -1,0 +1,9 @@
+namespace Samples.Extensions
+
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}
+
+public fun describe(value: string): int =
+  value.WordCount

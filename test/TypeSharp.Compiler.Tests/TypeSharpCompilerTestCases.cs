@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(534, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(535, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,7 +88,7 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(134, shardCounts[0]);
     AssertEqual(134, shardCounts[1]);
-    AssertEqual(133, shardCounts[2]);
+    AssertEqual(134, shardCounts[2]);
     AssertEqual(133, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
@@ -13965,7 +13965,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Named, Optional, And Params Arguments", csharpMembersPage);
     AssertContains("Ref, Out, And In", csharpMembersPage);
     AssertContains("Delegates And Lambdas", csharpMembersPage);
-    AssertContains("Extension Methods", csharpMembersPage);
+    AssertContains("Extension Members", csharpMembersPage);
     AssertContains("Exceptions And Domain Failures", csharpMembersPage);
     AssertContains("TS2406", csharpMembersPage);
     AssertContains("```tysh", csharpMembersPage);
@@ -23475,6 +23475,101 @@ static void CliBuildCompilesExtensionMethodLowering()
         AssertTrue(
             build.ExitCode == 0,
             $"C# net48 consumer project should compile against generated extension method API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CliBuildCompilesExtensionPropertyLowering()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ExtensionProperty"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.Extensions"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.Extensions
+
+            public extension string text {
+              public let WordCount: int =
+                text.Length
+            }
+
+            public fun describe(value: string): int =
+              value.WordCount
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ExtensionProperty.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public static class StringExtensions", generatedSource);
+        AssertContains("public static int GetWordCount(this string text)", generatedSource);
+        AssertContains("return StringExtensions.GetWordCount(value);", generatedSource);
+        AssertContains("return text.Length;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ExtensionProperty.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with extension property lowering.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ExtensionPropertyConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ExtensionPropertyConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ExtensionProperty">
+                  <HintPath>../generated/bin/Debug/net48/ExtensionProperty.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            using Samples.Extensions;
+
+            namespace ExtensionPropertyConsumer
+            {
+                public static class Consumer
+                {
+                    public static int Read()
+                    {
+                        return StringExtensions.GetWordCount("legacy");
+                    }
+
+                    public static int Describe(string value)
+                    {
+                        return Module.describe(value);
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ExtensionPropertyConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated extension property API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

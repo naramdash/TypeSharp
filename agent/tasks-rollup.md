@@ -6057,7 +6057,70 @@ Primary evidence:
 
 Remaining:
 
-- Task 0403 should settle the extension member policy/implementation slice next.
+- Task 0403 completed the extension member policy/implementation slice; Task 0404 should perform the post-implementation roadmap refresh next.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0403 C# 14 Extension Member Policy And Bounded Implementation Slice
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added declaration receiver names for explicit-receiver `extension` declarations and bound that receiver name for extension property initializers.
+- Added getter-only TypeSharp-authored extension property support in the parser, binder, checker, and C# backend for `extension ReceiverType receiverName { public let Name: Type = expr }`.
+- Enforced the bounded policy deterministically: extension properties require a receiver name, cannot be `let mut`, require an explicit type annotation, require an initializer expression, and reject accessor blocks in this slice.
+- Added exact known non-null receiver member access for TypeSharp-authored extension properties after ordinary imported/instance members and structural shape members.
+- Lowered accepted properties to C# 7.3-compatible helper methods such as `GetWordCount(this string text)` and lowered `value.WordCount` to `StringExtensions.GetWordCount(value)` instead of emitting C# 14 extension blocks.
+- Added parser, negative type-checker, backend, generated `net48` C# consumer, catalog-count, MSTest bridge, docs, and traceability evidence.
+- Updated the shared catalog to 535 cases with four-shard expected counts of `134`, `134`, `134`, and `133`.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "C# backend fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "CLI build compiles extension property lowering"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-build --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet build/test over test\TypeSharp.Compiler.Tests.MSTest.Shard0-3 with --no-build CatalogCase runs and minimum expected tests 134, 134, 134, 133
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler test host build passed; focused parser/type-checker/backend/generated-consumer/shard-count tests passed; full 535-case package-free catalog passed; MSTest package bridge build/smoke passed; all four MSTest package shard bridge `dotnet test` runs passed with 134, 134, 134, and 133 tests; docs build succeeded with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/Binding/TypeSharpBinder.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/fixtures/parser/positive/0044-extension-property-declaration`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-policy`
+- `test/fixtures/backend/csharp/positive/0054-extension-property-lowering`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0404 should perform the post-implementation roadmap refresh and select the next bounded slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -6084,7 +6147,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and task 0402 is compressed here.
+- Completed historical work through task 0400 and tasks 0402-0403 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

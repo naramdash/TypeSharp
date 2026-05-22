@@ -1,0 +1,52 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property requires a receiver name in the extension declaration.",
+      "file": "input.tysh",
+      "start": { "line": 4, "column": 3 },
+      "end": { "line": 4, "column": 32 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property cannot be mutable.",
+      "file": "input.tysh",
+      "start": { "line": 8, "column": 3 },
+      "end": { "line": 8, "column": 38 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property requires an explicit type annotation.",
+      "file": "input.tysh",
+      "start": { "line": 9, "column": 3 },
+      "end": { "line": 9, "column": 39 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property requires an initializer expression.",
+      "file": "input.tysh",
+      "start": { "line": 10, "column": 3 },
+      "end": { "line": 10, "column": 37 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property requires an initializer expression.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 3 },
+      "end": { "line": 11, "column": 39 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property accessor blocks are not supported in this slice; use an initializer expression.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 3 },
+      "end": { "line": 11, "column": 39 }
+    }
+  ]
+}

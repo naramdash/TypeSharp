@@ -1,0 +1,12 @@
+namespace Samples.Extensions.Negative
+
+public extension string {
+  public let WordCount: int = 0
+}
+
+public extension int value {
+  public let mut Mutable: int = value
+  public let MissingAnnotation = value
+  public let MissingInitializer: int
+  public let AccessorOnly: int { get }
+}

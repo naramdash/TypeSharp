@@ -759,15 +759,28 @@ public sealed class TypeSharpParser
         var children = prefixChildren ?? [];
         children.Add(TokenNode(Expect(SyntaxKind.ExtensionKeyword)));
         children.Add(ParseType());
+        if (Current.Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.OpenBraceToken)
+        {
+            children.Add(TokenNode(NextToken()));
+        }
+
         children.Add(TokenNode(Expect(SyntaxKind.OpenBraceToken)));
 
         while (Current.Kind != SyntaxKind.CloseBraceToken && Current.Kind != SyntaxKind.EndOfFileToken)
         {
             var memberPrefix = ParseDeclarationPrefix();
-            children.Add(
-                IsFunctionDeclarationStart(Current)
-                    ? ParseFunctionDeclaration(memberPrefix, allowParameterInitializers: false)
-                    : Node(SyntaxKind.SkippedToken, [..memberPrefix, ParseSkippedToken()]));
+            if (IsFunctionDeclarationStart(Current))
+            {
+                children.Add(ParseFunctionDeclaration(memberPrefix, allowParameterInitializers: false));
+            }
+            else if (Current.Kind == SyntaxKind.LetKeyword)
+            {
+                children.Add(ParseValueDeclaration(memberPrefix));
+            }
+            else
+            {
+                children.Add(Node(SyntaxKind.SkippedToken, [..memberPrefix, ParseSkippedToken()]));
+            }
         }
 
         children.Add(TokenNode(Expect(SyntaxKind.CloseBraceToken)));

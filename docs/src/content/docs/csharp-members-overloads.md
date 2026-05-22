@@ -1,6 +1,6 @@
 ---
 title: C# Members And Overloads
-description: Detailed TypeSharp guidance for C#-style members, imports, constructors, overloads, delegates, events, byref parameters, extension methods, and diagnostics.
+description: Detailed TypeSharp guidance for C#-style members, imports, constructors, overloads, delegates, events, byref parameters, extension members, and diagnostics.
 ---
 
 This page gives TypeSharp the kind of detailed member-level reference that Microsoft Learn provides for C# classes, language reference topics, operators, statements, and exception handling.
@@ -19,7 +19,7 @@ TypeSharp's rule is conservative: if a C# member interaction cannot be validated
 
 ## C# Release Parity Boundary
 
-TypeSharp tracks current C# releases as design input, but generated `net48` source stays C# 7.3-compatible. C# 14 unbound generic `nameof` is implemented through TypeSharp parsing, type-root binding, and string constant lowering; C# 14 extension members, null-conditional assignment, lambda parameter modifiers, partial events/constructors, and related ergonomics must likewise be expressed as TypeSharp semantics with C# 7.3 lowering rather than by emitting newer C# syntax. C# 15 collection expression arguments and union types are Preview Watch signals only.
+TypeSharp tracks current C# releases as design input, but generated `net48` source stays C# 7.3-compatible. C# 14 unbound generic `nameof` is implemented through TypeSharp parsing, type-root binding, and string constant lowering; C# 14-inspired extension properties and null-conditional assignment are implemented only where TypeSharp can lower them to C# 7.3-compatible helpers/guards. Lambda parameter modifiers, partial events/constructors, static extension members, and related ergonomics must likewise be expressed as TypeSharp semantics with C# 7.3 lowering rather than by emitting newer C# syntax. C# 15 collection expression arguments and union types are Preview Watch signals only.
 
 ## Member Surface
 
@@ -212,22 +212,27 @@ public class ObservableCounter {
 
 When consuming imported C# events, the receiver must expose a public event and the handler must match the event delegate.
 
-## Extension Methods
+## Extension Members
 
 Imported C# extension methods are available when the extension type namespace is imported or opened. TypeSharp-authored explicit-receiver extension methods lower to C# extension methods.
+
+TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match.
 
 ```tysh
 namespace Company.Billing
 
-public record Money(amount: decimal, currency: string)
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}
 
-public extension MoneyExtensions {
-  public fun (money: Money).isZero(): bool =
-    money.amount == 0m
+public extension string {
+  public fun HasPrefix(text: string, prefix: string): bool =
+    text.StartsWith(prefix)
 }
 ```
 
-Extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers.
+Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact receiver matching first, with setters, static extension properties, operators, imported extension property metadata, and richer conflicts left as backlog.
 
 ## Exceptions And Domain Failures
 

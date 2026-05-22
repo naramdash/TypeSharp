@@ -375,6 +375,18 @@ public static class TypeSharpBinder
             {
                 BindFunctionDeclaration(function, scope);
             }
+
+            var valueScope = scope;
+            if (GetExtensionReceiverIdentifier(node) is { } receiverIdentifier)
+            {
+                valueScope = new BindingScope(scope);
+                AddSymbol(valueScope, receiverIdentifier.Text ?? string.Empty, BoundSymbolKind.Parameter, receiverIdentifier.Span, declareValue: true, declareType: false);
+            }
+
+            foreach (var value in node.Children.Where(child => child.Kind == SyntaxKind.ValueDeclaration))
+            {
+                BindValueDeclaration(value, valueScope);
+            }
         }
 
         private void BindFunctionDeclaration(SyntaxNode node, BindingScope parentScope)
@@ -1018,6 +1030,36 @@ public static class TypeSharpBinder
                 or SyntaxKind.IndexedAccessType
                 or SyntaxKind.LiteralType
                 or SyntaxKind.RecordShapeType;
+
+        private static SyntaxNode? GetExtensionReceiverIdentifier(SyntaxNode node)
+        {
+            var seenReceiverType = false;
+            foreach (var child in node.Children)
+            {
+                if (!seenReceiverType && IsTypeSyntax(child.Kind))
+                {
+                    seenReceiverType = true;
+                    continue;
+                }
+
+                if (!seenReceiverType)
+                {
+                    continue;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child;
+                }
+
+                if (child.IsToken && child.Kind == SyntaxKind.OpenBraceToken)
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
 
         private static IEnumerable<SyntaxNode> GetExportedIdentifiers(SyntaxNode node)
         {

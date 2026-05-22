@@ -1,0 +1,6 @@
+namespace Samples.Extensions
+
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}

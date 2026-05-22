@@ -528,6 +528,7 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("CLI build compiles yield iterator lowering", CliBuildCompilesYieldIteratorLowering),
         new TypeSharpCompilerTestCase("CLI build compiles lock statement lowering", CliBuildCompilesLockStatementLowering),
         new TypeSharpCompilerTestCase("CLI build compiles extension method lowering", CliBuildCompilesExtensionMethodLowering),
+        new TypeSharpCompilerTestCase("CLI build compiles extension property lowering", CliBuildCompilesExtensionPropertyLowering),
         new TypeSharpCompilerTestCase("CLI build compiles nameof intrinsic", CliBuildCompilesNameofIntrinsic),
         new TypeSharpCompilerTestCase("CLI build compiles checked unchecked expressions", CliBuildCompilesCheckedUncheckedExpressions),
         new TypeSharpCompilerTestCase("CLI build compiles literal constants", CliBuildCompilesLiteralConstants),
