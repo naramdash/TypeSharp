@@ -5955,6 +5955,62 @@ Remaining:
 
 - Task 0400 should implement imported C# instance indexer null-conditional assignment `receiver?[index] = value`; compound assignment, null-conditional reads, events, static targets, TypeSharp-owned targets, and package/runtime baseline changes remain out of scope.
 
+## Task 0400 Null-conditional Assignment Imported Indexer Targets
+
+Status: Done
+Queue: Q2
+Completed: 2026-05-22
+
+Summary:
+
+- Added parser support for postfix null-conditional indexer syntax `receiver?[index]`, represented as `NullConditionalIndexerExpression`, plus parser fixture coverage for `receiver?[index] = value`.
+- Added checker support for simple `=` assignments to writable metadata-backed imported C# instance indexer targets whose selected public indexer has getter/setter metadata and supported argument types.
+- Rejected null-conditional indexer reads, compound assignment, missing-setter/mismatched indexers, static/type targets, TypeSharp-owned targets, and other unsupported forms before backend emission.
+- Lowered accepted assignments to C# 7.3-compatible nested `System.Func` guards: the receiver is evaluated once, index arguments and RHS are evaluated only after the receiver is non-null, and generated `net48` C# emits no `?[]`.
+- Added generated `net48` C# consumer evidence, updated the shared custom/MSTest catalog count to 534, and set package-based shard expectations to `134, 134, 133, 133`.
+- Updated Grammar, Type System, Lowering, Diagnostics, Feature Status, .NET Interop, Work Ledger, test README, regression workflow counts, and traceability.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "parser fixture snapshots match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional assignment imported indexer"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners" --no-progress
+dotnet restore/build/test over test\TypeSharp.Compiler.Tests.MSTest.Shard0-3 with --locked-mode restore, --no-restore build, --no-build CatalogCase runs, and minimum expected tests 134, 134, 133, 133
+npm run build
+git diff --check
+```
+
+Result: compiler test host build passed; focused parser/generated-consumer/negative-checker/shard-count tests passed; full 534-case package-free catalog passed; MSTest package bridge smoke passed; all four MSTest package shard bridge `dotnet test` runs passed with 134, 134, 133, and 133 tests; docs build succeeded with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/Parsing/SyntaxKind.cs`
+- `lang/TypeSharp.Compiler/Parsing/TypeSharpParser.cs`
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `lang/TypeSharp.Compiler/Interop/TypeSharpInteropValidator.cs`
+- `test/fixtures/parser/positive/0043-null-conditional-indexer-assignment-expression`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- [Grammar](../docs/src/content/docs/grammar.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Next ready task 0401 should address the user-requested GitHub Actions regression where the VS Code live smoke cannot start `npm`; the post-0400 roadmap refresh remains queued after that as Task 0402.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -5979,7 +6035,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0399 is compressed here.
+- Completed historical work through task 0400 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

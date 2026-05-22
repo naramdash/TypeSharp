@@ -120,7 +120,7 @@ public static class TypeSharpInteropValidator
             }
         }
 
-        if (node.Kind == SyntaxKind.IndexerExpression)
+        if (node.Kind is SyntaxKind.IndexerExpression or SyntaxKind.NullConditionalIndexerExpression)
         {
             ValidateInstanceIndexerAccess(node, assemblies, localInstances, file, diagnostics);
         }
@@ -1715,7 +1715,7 @@ public static class TypeSharpInteropValidator
         receiverName = string.Empty;
         arguments = [];
 
-        if (node.Kind != SyntaxKind.IndexerExpression)
+        if (node.Kind is not (SyntaxKind.IndexerExpression or SyntaxKind.NullConditionalIndexerExpression))
         {
             return false;
         }

@@ -192,6 +192,7 @@ public enum SyntaxKind
     MemberAccessExpression,
     NullConditionalMemberAccessExpression,
     IndexerExpression,
+    NullConditionalIndexerExpression,
     GenericNameExpression,
     UnboundGenericNameExpression,
     CallExpression,

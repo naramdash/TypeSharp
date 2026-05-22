@@ -1694,6 +1694,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.MemberAccessExpression => EmitMemberAccess(node),
                 SyntaxKind.NullConditionalMemberAccessExpression => EmitNullConditionalMemberAccess(node),
                 SyntaxKind.IndexerExpression => EmitIndexer(node),
+                SyntaxKind.NullConditionalIndexerExpression => EmitNullConditionalIndexerAccess(node),
                 SyntaxKind.GenericNameExpression => EmitGenericName(node),
                 SyntaxKind.CallExpression => EmitCall(node),
                 SyntaxKind.NamedArgument => EmitNamedArgument(node),
@@ -2406,6 +2407,12 @@ public static class CSharpSourceBackend
                 return EmitNullConditionalMemberAssignment(expressions[0], expressions[1]);
             }
 
+            if (operatorToken.Kind == SyntaxKind.EqualsToken &&
+                expressions[0].Kind == SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return EmitNullConditionalIndexerAssignment(expressions[0], expressions[1]);
+            }
+
             return $"{EmitExpression(expressions[0])} {operatorToken.Text} {EmitExpression(expressions[1])}";
         }
 
@@ -2444,6 +2451,84 @@ public static class CSharpSourceBackend
             var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
             var guardedAccess = $"{receiverParameter} == null ? default({normalizedTargetType}) : {receiverParameter}.{memberName}";
             return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAccess})({EmitExpression(receiver)})";
+        }
+
+        private string EmitNullConditionalIndexerAssignment(SyntaxNode target, SyntaxNode value)
+        {
+            if (!TryGetNullConditionalImportedIndexerAccess(
+                    target,
+                    requireWritable: true,
+                    out var receiver,
+                    out var arguments,
+                    out var targetType,
+                    out var receiverType,
+                    out var indexParameterTypes))
+            {
+                return "default(object)";
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAssignment = BuildNullConditionalIndexerBranch(
+                receiverParameter,
+                arguments,
+                indexParameterTypes,
+                normalizedTargetType,
+                targetExpression => $"({targetExpression} = {EmitExpression(value)})");
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {receiverParameter} == null ? default({normalizedTargetType}) : {guardedAssignment})({EmitExpression(receiver)})";
+        }
+
+        private string EmitNullConditionalIndexerAccess(SyntaxNode node)
+        {
+            if (!TryGetNullConditionalImportedIndexerAccess(
+                    node,
+                    requireWritable: false,
+                    out var receiver,
+                    out var arguments,
+                    out var targetType,
+                    out var receiverType,
+                    out var indexParameterTypes))
+            {
+                return "default(object)";
+            }
+
+            var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
+            var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            var guardedAccess = BuildNullConditionalIndexerBranch(
+                receiverParameter,
+                arguments,
+                indexParameterTypes,
+                normalizedTargetType,
+                targetExpression => targetExpression);
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {receiverParameter} == null ? default({normalizedTargetType}) : {guardedAccess})({EmitExpression(receiver)})";
+        }
+
+        private string BuildNullConditionalIndexerBranch(
+            string receiverParameter,
+            IReadOnlyList<SyntaxNode> arguments,
+            IReadOnlyList<string> indexParameterTypes,
+            string resultType,
+            Func<string, string> bodyFactory)
+        {
+            var indexParameters = arguments
+                .Select(_ => $"__tsIndex{_temporaryIndex++}")
+                .ToArray();
+            var targetExpression = $"{receiverParameter}[{string.Join(", ", indexParameters)}]";
+            var body = bodyFactory(targetExpression);
+            if (arguments.Count == 0)
+            {
+                return body;
+            }
+
+            var delegateTypes = indexParameterTypes
+                .Select(type => NormalizePrimitiveTypeName(type))
+                .Concat([NormalizePrimitiveTypeName(resultType)])
+                .ToArray();
+            var lambdaParameters = $"({string.Join(", ", indexParameters)})";
+            var invocationArguments = arguments
+                .Select(argument => EmitExpression(argument))
+                .ToArray();
+            return $"new System.Func<{string.Join(", ", delegateTypes)}>({lambdaParameters} => {body})({string.Join(", ", invocationArguments)})";
         }
 
         private string EmitBinary(SyntaxNode node)
@@ -4579,6 +4664,12 @@ public static class CSharpSourceBackend
                 return importedMemberType;
             }
 
+            if ((node.Kind == SyntaxKind.IndexerExpression || node.Kind == SyntaxKind.NullConditionalIndexerExpression) &&
+                TryGetImportedIndexerAccessType(node, out var importedIndexerType))
+            {
+                return importedIndexerType;
+            }
+
             if (node.Kind == SyntaxKind.CallExpression &&
                 TryGetTypeSharpOwnedCallReturnType(node, out var returnType))
             {
@@ -4615,6 +4706,31 @@ public static class CSharpSourceBackend
         {
             type = string.Empty;
             return TryGetImportedMemberAccess(
+                node,
+                requireWritable: false,
+                out _,
+                out _,
+                out type,
+                out _,
+                out _);
+        }
+
+        private bool TryGetImportedIndexerAccessType(SyntaxNode node, out string type)
+        {
+            type = string.Empty;
+            if (node.Kind == SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return TryGetNullConditionalImportedIndexerAccess(
+                    node,
+                    requireWritable: false,
+                    out _,
+                    out _,
+                    out type,
+                    out _,
+                    out _);
+            }
+
+            return TryGetImportedIndexerAccess(
                 node,
                 requireWritable: false,
                 out _,
@@ -4749,6 +4865,76 @@ public static class CSharpSourceBackend
             out string receiverType,
             out IReadOnlyList<string> indexParameterTypes)
         {
+            return TryGetImportedIndexerAccess(
+                node,
+                requireWritable: true,
+                out receiver,
+                out arguments,
+                out targetType,
+                out receiverType,
+                out indexParameterTypes);
+        }
+
+        private bool TryGetNullConditionalImportedIndexerAccess(
+            SyntaxNode node,
+            bool requireWritable,
+            out SyntaxNode receiver,
+            out IReadOnlyList<SyntaxNode> arguments,
+            out string targetType,
+            out string receiverType,
+            out IReadOnlyList<string> indexParameterTypes)
+        {
+            receiver = default!;
+            arguments = [];
+            targetType = string.Empty;
+            receiverType = string.Empty;
+            indexParameterTypes = [];
+            if (node.Kind != SyntaxKind.NullConditionalIndexerExpression ||
+                !TryGetIndexerAccessParts(node, out receiver, out arguments) ||
+                arguments.Count == 0)
+            {
+                return false;
+            }
+
+            receiverType = InferEmitterExpressionType(receiver);
+            if (string.IsNullOrWhiteSpace(receiverType) ||
+                string.Equals(receiverType, "object", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var receiverTypes = FindMetadataTypes(receiverType);
+            if (!receiverTypes.Any(type => !type.IsValueType))
+            {
+                return false;
+            }
+
+            var argumentTypes = arguments
+                .Select(GetIndexerArgumentType)
+                .ToArray();
+            if (!TryFindImportedIndexerAccessTarget(
+                    receiverTypes,
+                    argumentTypes,
+                    requireWritable,
+                    out var property))
+            {
+                return false;
+            }
+
+            targetType = NormalizePrimitiveTypeName(property.Type);
+            indexParameterTypes = property.ParameterTypes.Select(NormalizePrimitiveTypeName).ToArray();
+            return true;
+        }
+
+        private bool TryGetImportedIndexerAccess(
+            SyntaxNode node,
+            bool requireWritable,
+            out SyntaxNode receiver,
+            out IReadOnlyList<SyntaxNode> arguments,
+            out string targetType,
+            out string receiverType,
+            out IReadOnlyList<string> indexParameterTypes)
+        {
             targetType = string.Empty;
             receiverType = string.Empty;
             indexParameterTypes = [];
@@ -4768,9 +4954,10 @@ public static class CSharpSourceBackend
             var argumentTypes = arguments
                 .Select(GetIndexerArgumentType)
                 .ToArray();
-            if (!TryFindImportedIndexerAssignmentTarget(
+            if (!TryFindImportedIndexerAccessTarget(
                     FindMetadataTypes(receiverType),
                     argumentTypes,
+                    requireWritable,
                     out var property))
             {
                 return false;
@@ -4791,9 +4978,10 @@ public static class CSharpSourceBackend
             return new IndexerArgumentType(type, numericLiteralText);
         }
 
-        private bool TryFindImportedIndexerAssignmentTarget(
+        private bool TryFindImportedIndexerAccessTarget(
             IReadOnlyList<MetadataTypeSymbol> receiverTypes,
             IReadOnlyList<IndexerArgumentType> argumentTypes,
+            bool requireWritable,
             out MetadataPropertySymbol property)
         {
             property = default!;
@@ -4803,7 +4991,7 @@ public static class CSharpSourceBackend
                     !candidate.IsStatic &&
                     candidate.IsIndexer &&
                     candidate.HasPublicGetter &&
-                    candidate.HasPublicSetter &&
+                    (!requireWritable || candidate.HasPublicSetter) &&
                     candidate.ParameterCount == argumentTypes.Count)
                 .ToArray();
             if (candidates.Length == 0)
@@ -4938,7 +5126,8 @@ public static class CSharpSourceBackend
             out IReadOnlyList<SyntaxNode> arguments)
         {
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
-            if (node.Kind != SyntaxKind.IndexerExpression || expressions.Length < 2)
+            if (node.Kind is not (SyntaxKind.IndexerExpression or SyntaxKind.NullConditionalIndexerExpression) ||
+                expressions.Length < 2)
             {
                 receiver = default!;
                 arguments = [];

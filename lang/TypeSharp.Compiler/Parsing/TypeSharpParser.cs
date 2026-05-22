@@ -1495,6 +1495,16 @@ public sealed class TypeSharpParser
                 continue;
             }
 
+            if (Current.Kind == SyntaxKind.QuestionToken &&
+                Peek(1).Kind == SyntaxKind.OpenBracketToken &&
+                Current.LeadingTriviaSummary.Length == 0 &&
+                Peek(1).LeadingTriviaSummary.Length == 0 &&
+                !HasLeadingNewline(Peek(1)))
+            {
+                expression = Node(SyntaxKind.NullConditionalIndexerExpression, [expression, TokenNode(NextToken()), TokenNode(Expect(SyntaxKind.OpenBracketToken)), ParseExpression(), TokenNode(Expect(SyntaxKind.CloseBracketToken))]);
+                continue;
+            }
+
             if (Current.Kind == SyntaxKind.OpenBracketToken)
             {
                 expression = Node(SyntaxKind.IndexerExpression, [expression, TokenNode(NextToken()), ParseExpression(), TokenNode(Expect(SyntaxKind.CloseBracketToken))]);

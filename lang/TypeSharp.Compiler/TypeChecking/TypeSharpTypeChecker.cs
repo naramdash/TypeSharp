@@ -964,6 +964,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.NullConditionalMemberAccessExpression => CheckNullConditionalMemberAccess(node, scope),
                 SyntaxKind.AwaitExpression => InferAwait(node, scope),
                 SyntaxKind.IndexerExpression => InferIndexer(node, scope),
+                SyntaxKind.NullConditionalIndexerExpression => CheckNullConditionalIndexerAccess(node, scope),
                 SyntaxKind.LambdaExpression => SimpleType.Unknown,
                 SyntaxKind.CollectionExpression => InferCollection(node, scope),
                 SyntaxKind.SpreadElement => CheckSpreadElement(node, scope),
@@ -1002,6 +1003,11 @@ public static class TypeSharpTypeChecker
             if (target.Kind == SyntaxKind.NullConditionalMemberAccessExpression)
             {
                 return CheckNullConditionalMemberAssignment(node, target, value, scope, operatorKind);
+            }
+
+            if (target.Kind == SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return CheckNullConditionalIndexerAssignment(node, target, value, scope, operatorKind);
             }
 
             if (TryGetAssignmentTargetIdentifier(target, out var targetIdentifier))
@@ -1114,11 +1120,63 @@ public static class TypeSharpTypeChecker
             return SimpleType.Unknown;
         }
 
+        private SimpleType CheckNullConditionalIndexerAssignment(
+            SyntaxNode assignment,
+            SyntaxNode target,
+            SyntaxNode value,
+            TypeScope scope,
+            SyntaxKind operatorKind)
+        {
+            if (operatorKind != SyntaxKind.EqualsToken)
+            {
+                CheckNullConditionalIndexerParts(target, scope);
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    assignment,
+                    "Null-conditional assignment '?[]' supports only simple '=' over metadata-backed imported C# instance indexer targets; compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
+                return SimpleType.Unknown;
+            }
+
+            if (TryGetNullConditionalImportedIndexerAssignmentTargetType(target, scope, out var targetType))
+            {
+                return CheckSimpleAssignmentValue(assignment, value, scope, targetType);
+            }
+
+            CheckExpression(value, scope);
+            ReportMismatch(
+                target,
+                "Null-conditional assignment '?[]' is supported only for writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
+            return SimpleType.Unknown;
+        }
+
+        private SimpleType CheckNullConditionalIndexerAccess(SyntaxNode node, TypeScope scope)
+        {
+            CheckNullConditionalIndexerParts(node, scope);
+            ReportMismatch(
+                node,
+                "Null-conditional indexer access '?[]' is currently supported only as a simple assignment target over metadata-backed imported C# instance indexer targets.");
+            return SimpleType.Unknown;
+        }
+
         private void CheckNullConditionalReceiver(SyntaxNode target, TypeScope scope)
         {
             if (TryGetMemberAccessParts(target, out var receiver, out _))
             {
                 CheckExpression(receiver, scope);
+            }
+        }
+
+        private void CheckNullConditionalIndexerParts(SyntaxNode target, TypeScope scope)
+        {
+            if (!TryGetIndexerAccessParts(target, out var receiver, out var arguments))
+            {
+                return;
+            }
+
+            CheckExpression(receiver, scope);
+            foreach (var argument in arguments)
+            {
+                CheckExpression(argument, scope);
             }
         }
 
@@ -1513,6 +1571,55 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
+        private bool TryGetNullConditionalImportedIndexerAssignmentTargetType(
+            SyntaxNode target,
+            TypeScope scope,
+            out SimpleType targetType)
+        {
+            targetType = SimpleType.Unknown;
+            if (!TryGetIndexerAccessParts(target, out var receiver, out var arguments) ||
+                arguments.Count == 0)
+            {
+                return false;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            var argumentTypes = arguments
+                .Select(argument => GetIndexerArgumentType(argument, scope))
+                .ToArray();
+
+            if (IsUnknownType(receiverType))
+            {
+                ReportUnknownAccessRequiresNarrowing(target);
+                return false;
+            }
+
+            if (!receiverType.IsKnown || receiverType.IsNull)
+            {
+                return false;
+            }
+
+            var lookupType = receiverType with { IsNullable = false };
+            var receiverTypes = FindMetadataTypes(lookupType.Name);
+            if (!receiverTypes.Any(type => !type.IsValueType))
+            {
+                return false;
+            }
+
+            if (!TrySelectImportedIndexerProperty(
+                    receiverTypes,
+                    arguments,
+                    argumentTypes,
+                    requireWritable: true,
+                    out var property))
+            {
+                return false;
+            }
+
+            targetType = SimpleType.Named(NormalizePrimitiveTypeName(property.Type));
+            return true;
+        }
+
         private IndexerArgumentType GetIndexerArgumentType(SyntaxNode argument, TypeScope scope)
         {
             var expression = UnwrapParenthesizedExpression(argument);
@@ -1701,7 +1808,8 @@ public static class TypeSharpTypeChecker
             out IReadOnlyList<SyntaxNode> arguments)
         {
             var expressions = node.Children.Where(child => !child.IsToken).ToArray();
-            if (node.Kind != SyntaxKind.IndexerExpression || expressions.Length < 2)
+            if (node.Kind is not (SyntaxKind.IndexerExpression or SyntaxKind.NullConditionalIndexerExpression) ||
+                expressions.Length < 2)
             {
                 receiver = default!;
                 arguments = [];

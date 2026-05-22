@@ -1,0 +1,5 @@
+namespace Samples.NullConditionalIndexerAssignment
+
+fun update(): unit {
+  value?[index] = 1
+}
