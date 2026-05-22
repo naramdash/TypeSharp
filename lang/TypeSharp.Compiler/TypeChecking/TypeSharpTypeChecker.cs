@@ -1232,6 +1232,15 @@ public static class TypeSharpTypeChecker
                 };
             }
 
+            if (TryGetExtensionPropertyAssignmentTarget(target, scope, out var extensionProperty))
+            {
+                CheckExpression(value, scope);
+                ReportMismatch(
+                    target,
+                    $"Extension property '{extensionProperty.Name}' is getter-only and cannot be assigned; extension property setters are not supported in this slice.");
+                return extensionProperty.Type;
+            }
+
             if (IsImportedAssignmentTargetCandidate(target))
             {
                 if (operatorKind == SyntaxKind.LogicalUnsignedShiftEqualsToken)
@@ -1248,6 +1257,39 @@ public static class TypeSharpTypeChecker
             CheckExpression(target, scope);
             CheckExpression(value, scope);
             return SimpleType.Unknown;
+        }
+
+        private bool TryGetExtensionPropertyAssignmentTarget(
+            SyntaxNode target,
+            TypeScope scope,
+            out ExtensionPropertyInfo extensionProperty)
+        {
+            extensionProperty = default;
+            if (target.Kind != SyntaxKind.MemberAccessExpression ||
+                !TryGetMemberAccessParts(target, out var receiver, out var memberName))
+            {
+                return false;
+            }
+
+            if (TryGetImportedStaticMemberAccessType(receiver, memberName, scope, requireWritable: false, out _))
+            {
+                return false;
+            }
+
+            var receiverType = CheckExpression(receiver, scope);
+            if (IsUnknownType(receiverType) ||
+                TryGetImportedInstanceMemberAccessType(receiverType, memberName, requireWritable: false, out _))
+            {
+                return false;
+            }
+
+            if (receiverType.IsKnown && scope.ResolveShape(receiverType.Name, out var shape) &&
+                shape.Members.Any(member => string.Equals(member.Name, memberName, StringComparison.Ordinal)))
+            {
+                return false;
+            }
+
+            return scope.ResolveExtensionProperty(receiverType, memberName, out extensionProperty);
         }
 
         private SimpleType CheckSimpleAssignmentValue(SyntaxNode assignment, SyntaxNode value, TypeScope scope, SimpleType targetType)

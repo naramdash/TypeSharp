@@ -1,0 +1,31 @@
+namespace Samples.Extensions.Assignment
+
+public extension string text {
+  public let WordCount: int =
+    text.Length
+}
+
+public extension int value {
+  public let Flags: int =
+    value
+}
+
+fun simple(text: string): int {
+  text.WordCount = 1
+  text.WordCount
+}
+
+fun bitwise(value: int): int {
+  value.Flags |= 1
+  value.Flags
+}
+
+fun shift(value: int): int {
+  value.Flags <<= 1
+  value.Flags
+}
+
+fun logical(value: int): int {
+  value.Flags >>>= 1
+  value.Flags
+}

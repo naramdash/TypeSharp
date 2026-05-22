@@ -1,0 +1,36 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'WordCount' is getter-only and cannot be assigned; extension property setters are not supported in this slice.",
+      "file": "input.tysh",
+      "start": { "line": 14, "column": 3 },
+      "end": { "line": 14, "column": 17 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'Flags' is getter-only and cannot be assigned; extension property setters are not supported in this slice.",
+      "file": "input.tysh",
+      "start": { "line": 19, "column": 3 },
+      "end": { "line": 19, "column": 14 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'Flags' is getter-only and cannot be assigned; extension property setters are not supported in this slice.",
+      "file": "input.tysh",
+      "start": { "line": 24, "column": 3 },
+      "end": { "line": 24, "column": 14 }
+    },
+    {
+      "code": "TS2201",
+      "severity": "error",
+      "message": "Extension property 'Flags' is getter-only and cannot be assigned; extension property setters are not supported in this slice.",
+      "file": "input.tysh",
+      "start": { "line": 29, "column": 3 },
+      "end": { "line": 29, "column": 14 }
+    }
+  ]
+}

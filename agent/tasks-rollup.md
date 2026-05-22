@@ -6416,7 +6416,7 @@ Primary evidence:
 
 Remaining:
 
-- Task 0410 completed the post-implementation roadmap refresh; Task 0411 is the active bounded implementation slice.
+- Task 0411 completed the selected extension-property assignment diagnostic slice; Task 0412 is the active roadmap-refresh slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Task 0410 Roadmap Refresh After Extension Property Nullable Receiver Diagnostics
@@ -6464,7 +6464,54 @@ Primary evidence:
 
 Remaining:
 
-- Task 0411 should add deterministic diagnostics for assignment targets that resolve to getter-only TypeSharp-authored extension properties.
+- Task 0411 completed deterministic diagnostics for assignment targets that resolve to getter-only TypeSharp-authored extension properties; Task 0412 is the active roadmap-refresh slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0411 Extension Property Assignment Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Added deterministic `TS2201` diagnostics when ordinary, bitwise compound, shift compound, or logical unsigned shift assignment targets resolve to getter-only TypeSharp-authored extension properties.
+- Preserved accepted getter-only extension property reads and C# 7.3-compatible `GetName(this T receiver)` helper lowering.
+- Kept imported C# writable member/indexer assignment behavior and existing duplicate/conflict/helper-name/nullable-receiver diagnostics unchanged.
+- Added focused negative fixture coverage under `test/fixtures/diagnostics/type-checker/negative/extension-property-assignment`.
+- Updated canonical docs and ledgers to describe the getter-only assignment boundary.
+- Selected Task 0412 as the next ready bounded slice: roadmap refresh after extension-property assignment diagnostics.
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "type checker fixture diagnostics match"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "checker reports extension property generated helper collision diagnostics"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "CLI build compiles extension property lowering"
+cd docs
+npm run build
+git diff --check
+```
+
+Result: compiler build and focused tests passed; docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/fixtures/diagnostics/type-checker/negative/extension-property-assignment`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [C# Members And Overloads](../docs/src/content/docs/csharp-members-overloads.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0412 should perform the post-implementation roadmap refresh and select the next bounded slice.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
