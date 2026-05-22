@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(558, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(560, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(140, shardCounts[0]);
     AssertEqual(140, shardCounts[1]);
-    AssertEqual(139, shardCounts[2]);
-    AssertEqual(139, shardCounts[3]);
+    AssertEqual(140, shardCounts[2]);
+    AssertEqual(140, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -14188,7 +14188,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 562", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 564", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -23071,6 +23071,247 @@ static void CliBuildCompilesMultiplicativeCompoundAssignmentApi()
     });
 }
 
+static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedMultiplicativeCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedMultiplicativeCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedMultiplicativeCompoundAssignment
+
+            import { LegacyFields } from "Legacy.Tools"
+
+            fun makeFields(value: int): LegacyFields {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount = value
+              fields
+            }
+
+            export fun instanceProperty(value: int, factor: short): int {
+              let fields: LegacyFields = makeFields(value)
+              fields.MutableCount *= factor
+              fields.MutableCount /= 2
+              fields.MutableCount %= 5
+              fields.MutableCount
+            }
+
+            export fun instanceField(value: long, divisor: int): long {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableLong = value
+              fields.MutableLong *= 3
+              fields.MutableLong /= divisor
+              fields.MutableLong %= 7
+              fields.MutableLong
+            }
+
+            export fun staticUnsigned(value: uint, factor: uint, divisor: uint, remainder: uint): uint {
+              LegacyFields.MutableStaticCount = value
+              LegacyFields.MutableStaticCount *= factor
+              LegacyFields.MutableStaticCount /= divisor
+              LegacyFields.MutableStaticCount %= remainder
+              LegacyFields.MutableStaticCount
+            }
+
+            export fun nonTrivialReceiver(value: int): int {
+              makeFields(value).MutableCount *= 3
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedMultiplicativeCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("fields.MutableCount *= factor;", generatedSource);
+        AssertContains("fields.MutableCount /= 2;", generatedSource);
+        AssertContains("fields.MutableCount %= 5;", generatedSource);
+        AssertContains("fields.MutableLong *= 3;", generatedSource);
+        AssertContains("fields.MutableLong /= divisor;", generatedSource);
+        AssertContains("fields.MutableLong %= 7;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticCount *= factor;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticCount /= divisor;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticCount %= remainder;", generatedSource);
+        AssertEqual(1, CountOccurrences(generatedSource, "makeFields(value).MutableCount *= 3;"));
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedMultiplicativeCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported multiplicative compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ImportedMultiplicativeCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ImportedMultiplicativeCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ImportedMultiplicativeCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/ImportedMultiplicativeCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ImportedMultiplicativeCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceProperty(13, (short)3) == 4 &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.instanceField(22L, 5) == 6L &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.staticUnsigned(20u, 3u, 5u, 7u) == 5u &&
+                            Samples.ImportedMultiplicativeCompoundAssignment.Module.nonTrivialReceiver(11) == 33;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ImportedMultiplicativeCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated imported multiplicative compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMemberTargets()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidImportedMultiplicativeCompoundAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidImportedMultiplicativeCompoundAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidImportedMultiplicativeCompoundAssignment
+
+            import { LegacyColor, LegacyEvents, LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+
+            export fun boolOperand(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableFlag *= true
+              0
+            }
+
+            export fun stringOperand(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCode /= "x"
+              0
+            }
+
+            export fun enumOperand(color: LegacyColor): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableColor *= color
+              0
+            }
+
+            export fun nullableOperand(value: int?): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount %= value
+              0
+            }
+
+            export fun narrowing(value: long): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableCount *= value
+              0
+            }
+
+            export fun readonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.InstanceCode *= "x"
+              0
+            }
+
+            export fun eventTarget(): int {
+              let events: LegacyEvents = LegacyEvents()
+              events.Transform *= null
+              0
+            }
+
+            export fun indexerTarget(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              indexer[0] *= 2
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+        const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# instance/static field/property targets in this slice; imported C# indexer, null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.";
+
+        AssertTrue(result.HasErrors, "Unsupported imported C# multiplicative compound assignment member targets should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+            "Imported bool member target should reject multiplicative operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+            "Imported string member target should reject multiplicative operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
+            "Imported enum member target should reject multiplicative operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+            "Imported member target should reject nullable multiplicative operands.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
+            "Imported member target should reject multiplicative results that cannot be assigned back.");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == unsupportedImportedMessage) >= 3,
+            "Readonly field, event, and imported indexer multiplicative targets should remain rejected before emission.");
+    });
+}
+
 static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
 {
     WithWorkspace(root =>
@@ -23090,7 +23331,7 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidMultiplicativeCompoundAssignment
 
-            import { LegacyFields, LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyMutableIndexer } from "Legacy.Tools"
 
             export fun immutableLocal(): int {
               let value = 1
@@ -23128,12 +23369,6 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               result
             }
 
-            export fun importedMember(): int {
-              let fields: LegacyFields = LegacyFields()
-              fields.MutableCount *= 2
-              fields.MutableCount
-            }
-
             export fun importedIndexer(): int {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
               indexer[0] /= 2
@@ -23142,7 +23377,7 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
-        const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings in this slice; imported C# member/indexer, null-conditional, event, static, and TypeSharp-owned targets are not supported.";
+        const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# instance/static field/property targets in this slice; imported C# indexer, null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.";
 
         AssertTrue(result.HasErrors, "Unsupported multiplicative compound assignment targets should produce diagnostics.");
         AssertTrue(
@@ -23176,10 +23411,10 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Promoted multiplicative results that cannot be assigned back should be rejected.");
         AssertTrue(
-            result.Diagnostics.Count(diagnostic =>
+            result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == unsupportedImportedMessage) >= 2,
-            "Imported C# member and indexer multiplicative targets should remain out of scope for this local-only slice.");
+                diagnostic.Message == unsupportedImportedMessage),
+            "Imported C# indexer multiplicative targets should remain out of scope for this member-only slice.");
     });
 }
 

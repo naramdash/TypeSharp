@@ -1257,14 +1257,13 @@ public static class TypeSharpTypeChecker
                     return CheckImportedLogicalUnsignedShiftAssignment(node, target, value, scope);
                 }
 
-                var targetType = CheckExpression(target, scope);
-                CheckExpression(value, scope);
                 if (IsMultiplicativeAssignmentOperatorKind(operatorKind))
                 {
-                    ReportMismatch(
-                        node,
-                        "Multiplicative compound assignment is supported only for mutable local bindings in this slice; imported C# member/indexer, null-conditional, event, static, and TypeSharp-owned targets are not supported.");
+                    return CheckImportedMultiplicativeCompoundAssignment(node, target, value, scope, operatorKind);
                 }
+
+                var targetType = CheckExpression(target, scope);
+                CheckExpression(value, scope);
 
                 return targetType;
             }
@@ -1748,6 +1747,32 @@ public static class TypeSharpTypeChecker
             ReportMismatch(
                 assignment,
                 "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; event and unresolved imported member targets are not supported.");
+            return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
+        }
+
+        private SimpleType CheckImportedMultiplicativeCompoundAssignment(
+            SyntaxNode assignment,
+            SyntaxNode target,
+            SyntaxNode value,
+            TypeScope scope,
+            SyntaxKind operatorKind)
+        {
+            if (target.Kind == SyntaxKind.MemberAccessExpression &&
+                TryGetImportedMemberAssignmentTargetType(target, scope, out var targetType))
+            {
+                return CheckMultiplicativeCompoundAssignmentValue(
+                    assignment,
+                    value,
+                    scope,
+                    targetType,
+                    operatorKind);
+            }
+
+            var fallbackTargetType = CheckExpression(target, scope);
+            CheckExpression(value, scope);
+            ReportMismatch(
+                assignment,
+                "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# instance/static field/property targets in this slice; imported C# indexer, null-conditional, event, unresolved, and TypeSharp-owned targets are not supported.");
             return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
 
