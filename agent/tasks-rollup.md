@@ -6706,7 +6706,54 @@ Primary evidence:
 
 Remaining:
 
-- Task 0416 should recheck official language/platform/package/test/editor/CI signals and select the next bounded slice.
+- Task 0416 completed the post-implementation roadmap refresh and selected imported C# null-conditional member read expressions as Task 0417.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0416 Roadmap Refresh After Extension Property Null-Conditional Access Diagnostics
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-22
+
+Summary:
+
+- Rechecked official language, platform, package, test-platform, editor, and CI signals after extension-property null-conditional access diagnostics.
+- Confirmed no TypeSharp baseline drift: generated artifacts stay package-free `net48`, generated C# stays C# 7.3-compatible, C# 14 remains the stable .NET 10 C# signal, and C# 15 remains a .NET 11 preview signal.
+- Reaffirmed that TypeSharp already uses NuGet packages at the test-host boundary through the existing `net10.0` `MSTest.Sdk/4.2.3` Microsoft Testing Platform bridge and four package shard projects. Generated `net48` artifacts intentionally remain package-free.
+- Kept xUnit.net v3 as a future bridge candidate because adding it now would duplicate package-host evidence over the same extracted catalog instead of improving generated artifact compatibility or release-confidence speed.
+- Kept Task 0401 blocked pending explicit approval for the GitHub Actions `npm` process-launch fix.
+- Selected Task 0417 as the next bounded implementation slice: imported C# `receiver?.Member` read expressions for readable metadata-backed instance fields/properties, preserving TypeSharp-owned extension-property diagnostics and leaving indexer reads, invocation, chains, compound assignment, static/event/local/TypeSharp-owned targets, nullable receiver lifting, and broader assignment target analysis out of scope.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), and [C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15).
+- TypeScript team [TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) and [TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/) announcements.
+- Microsoft Learn [.NET 10](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview), [.NET 11 preview](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-11/overview), [F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10), [.NET Framework versions/dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks).
+- Microsoft Learn [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` MTP mode](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test), [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests), [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk), NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), and xUnit.net [v3 package](https://xunit.net/docs/nuget-packages-v3) and [MTP](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform) guidance.
+- VS Code [language server extension](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) and [extension publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) docs.
+- GitHub Actions [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), [`actions/setup-node`](https://github.com/actions/setup-node), and the [2026-05-14 image migration changelog](https://github.blog/changelog/2026-05-14-github-actions-upcoming-image-migrations/).
+
+Verification:
+
+```powershell
+cd docs
+npm run build
+git diff --check
+```
+
+Result: docs build passed with the existing Vite chunk-size warning; `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Remaining:
+
+- Task 0417 should implement imported C# null-conditional member read expressions.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
