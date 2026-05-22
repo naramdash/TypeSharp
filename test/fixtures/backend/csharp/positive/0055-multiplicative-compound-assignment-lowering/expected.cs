@@ -21,5 +21,32 @@ namespace Samples.MultiplicativeCompoundAssignment
             result %= 7;
             return result;
         }
+
+        public static float scaleFloat(float value, int factor)
+        {
+            var result = value;
+            result *= factor;
+            result /= factor;
+            result %= 2;
+            return result;
+        }
+
+        public static double scaleDouble(double value, float factor)
+        {
+            var result = value;
+            result *= factor;
+            result /= 2;
+            result %= factor;
+            return result;
+        }
+
+        public static decimal scaleDecimal(decimal value, int factor)
+        {
+            var result = value;
+            result *= factor;
+            result /= 2m;
+            result %= factor;
+            return result;
+        }
     }
 }

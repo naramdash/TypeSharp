@@ -8578,12 +8578,77 @@ Primary evidence:
 - [Work Ledger](../docs/src/content/docs/work-ledger.md)
 - [tasks.md](tasks.md)
 - [traceability.md](traceability.md)
-- [Task 0447 packet](0447-local-floating-decimal-multiplicative-compound-assignment-policy.md)
+- [Task 0447 rollup](#task-0447-local-floating-point-and-decimal-multiplicative-compound-assignment-policy)
 
 Remaining:
 
-- Task 0447 is active and should implement local floating-point and decimal multiplicative compound assignment policy.
-- Imported/member/null-conditional floating-point and decimal multiplicative policy expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
+- Task 0447 has since completed local floating-point and decimal multiplicative compound assignment policy; Task 0448 is active and should refresh the roadmap after that implementation slice.
+- Imported/member/null-conditional floating-point and decimal multiplicative expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
+## Task 0447 Local Floating-Point And Decimal Multiplicative Compound Assignment Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Extended local mutable `let mut` `*=`, `/=`, and `%=` targets from primitive integral-only operands to a bounded known non-null `float`, `double`, and `decimal` policy.
+- Accepted same-family floating operands, `double` promotion when a local target can receive the result, and `decimal` with integral or decimal operands; rejected bool, string, enum, record, nullable operands, mixed decimal/floating operands, `float *= double` narrowing, and unsupported targets before backend emission.
+- Preserved imported C# member/indexer/null-conditional multiplicative assignment under the existing primitive integral policy, leaving imported/member/null-conditional floating-point and decimal expansion, checked-overflow policy, and user-defined operators for later slices.
+- Added focused positive/negative checker coverage, backend fixture coverage, and generated package-free `net48` C# consumer evidence while preserving C# 7.3-compatible source output.
+- Updated the shared catalog to 568 cases with package-free shard expectations `142`, `142`, `142`, and `142`; updated the MSTest bridge count, MTP package-shard minimum 572, workflow, test README, docs, Work Ledger, tasks, and traceability.
+- Created Task 0448 as the next roadmap-refresh packet after local floating-point and decimal multiplicative compound assignment policy.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- `test/fixtures/diagnostics/type-checker/positive/multiplicative-compound-assignment`
+- `test/fixtures/diagnostics/type-checker/negative/multiplicative-compound-assignment-invalid`
+- `test/fixtures/backend/csharp/positive/0055-multiplicative-compound-assignment-lowering`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0448 packet](0448-roadmap-refresh-after-local-floating-decimal-multiplicative-compound-assignment-policy.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "floating and decimal multiplicative"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "fixture"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 572 --no-progress
+npm run build # in docs
+rg -n "0447-local-floating-decimal-multiplicative-compound-assignment-policy\.md|Task 0447 is active|Task 0447 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0446|Completed range\s*\| 0001-0400, 0402-0446|--minimum-expected-tests 570|minimum-expected-tests 570" agent docs\src\content\docs test .github --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The local floating/decimal filter passed both focused tests, the broader multiplicative filter passed all 12 multiplicative tests, fixture coverage passed, and the full package-free custom catalog passed across 568 cases including the VS Code live smoke. The four MSTest shard projects built successfully and the MTP module-level package shard run executed 572 tests successfully across the four shard assemblies. The docs build kept the existing Vite chunk-size warning, the stale-reference scan found no stale Task 0447 active packet references outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0448 is active and should refresh the roadmap after local floating-point and decimal multiplicative compound assignment policy.
+- Imported/member/null-conditional floating-point and decimal multiplicative expansion, checked-overflow policy, and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
 ## Verification Summary
@@ -8610,7 +8675,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0446 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0447 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

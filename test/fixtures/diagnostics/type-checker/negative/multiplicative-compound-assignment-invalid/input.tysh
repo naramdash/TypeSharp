@@ -43,3 +43,32 @@ fun structuralTarget(box: Box): int {
   current *= 2
   0
 }
+
+enum RateKind {
+  Basic
+  Advanced
+}
+
+fun enumTarget(kind: RateKind): RateKind {
+  let mut current = kind
+  current *= kind
+  current
+}
+
+fun mixedDecimalFloating(value: decimal, factor: double): decimal {
+  let mut result = value
+  result *= factor
+  result
+}
+
+fun narrowingFloat(value: float, factor: double): float {
+  let mut result = value
+  result *= factor
+  result
+}
+
+fun nullableFloat(value: float, maybe: float?): float {
+  let mut result = value
+  result /= maybe
+  result
+}

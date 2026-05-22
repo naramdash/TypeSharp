@@ -1225,7 +1225,7 @@ public static class TypeSharpTypeChecker
                 {
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
                     SyntaxKind.StarEqualsToken or SyntaxKind.SlashEqualsToken or SyntaxKind.PercentEqualsToken =>
-                        CheckMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
+                        CheckMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken or SyntaxKind.LogicalUnsignedShiftEqualsToken =>
@@ -1421,7 +1421,8 @@ public static class TypeSharpTypeChecker
                         value,
                         scope,
                         multiplicativeTargetType,
-                        operatorKind);
+                        operatorKind,
+                        allowFloatingDecimal: false);
                 }
 
                 if (TryGetNullConditionalExtensionPropertyTarget(
@@ -1917,7 +1918,8 @@ public static class TypeSharpTypeChecker
             SyntaxNode value,
             TypeScope scope,
             SimpleType targetType,
-            SyntaxKind operatorKind)
+            SyntaxKind operatorKind,
+            bool allowFloatingDecimal = false)
         {
             var valueType = CheckExpression(value, scope);
             if (!targetType.IsKnown || !valueType.IsKnown)
@@ -1933,11 +1935,14 @@ public static class TypeSharpTypeChecker
                 _ => "?="
             };
 
-            if (!TryGetBinaryIntegralMultiplicativeResultType(targetType, valueType, out var resultType))
+            if (!TryGetBinaryMultiplicativeCompoundResultType(targetType, valueType, allowFloatingDecimal, out var resultType))
             {
+                var numericPolicy = allowFloatingDecimal
+                    ? "non-null primitive numeric values of a supported integral, floating-point, or decimal type"
+                    : "non-null primitive integral numeric values of a supported type";
                 ReportMismatch(
                     assignment,
-                    $"Multiplicative compound assignment '{operatorText}' operands must be non-null primitive integral numeric values of a supported type, but found '{targetType}' and '{valueType}'.");
+                    $"Multiplicative compound assignment '{operatorText}' operands must be {numericPolicy}, but found '{targetType}' and '{valueType}'.");
                 return targetType;
             }
 
@@ -5232,6 +5237,62 @@ public static class TypeSharpTypeChecker
             return true;
         }
 
+        private static bool TryGetBinaryMultiplicativeCompoundResultType(
+            SimpleType leftType,
+            SimpleType rightType,
+            bool allowFloatingDecimal,
+            out SimpleType resultType)
+        {
+            if (TryGetBinaryIntegralMultiplicativeResultType(leftType, rightType, out resultType))
+            {
+                return true;
+            }
+
+            if (!allowFloatingDecimal)
+            {
+                return false;
+            }
+
+            return TryGetBinaryFloatingDecimalMultiplicativeResultType(leftType, rightType, out resultType);
+        }
+
+        private static bool TryGetBinaryFloatingDecimalMultiplicativeResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
+        {
+            resultType = SimpleType.Unknown;
+            if (!IsKnownNonNullablePrimitiveNumericType(leftType) ||
+                !IsKnownNonNullablePrimitiveNumericType(rightType))
+            {
+                return false;
+            }
+
+            var left = NormalizePrimitiveTypeName(leftType.Name);
+            var right = NormalizePrimitiveTypeName(rightType.Name);
+            if (left is "decimal" || right is "decimal")
+            {
+                if (left is "float" or "double" || right is "float" or "double")
+                {
+                    return false;
+                }
+
+                resultType = SimpleType.Named("decimal");
+                return true;
+            }
+
+            if (left is "double" || right is "double")
+            {
+                resultType = SimpleType.Named("double");
+                return true;
+            }
+
+            if (left is "float" || right is "float")
+            {
+                resultType = SimpleType.Named("float");
+                return true;
+            }
+
+            return false;
+        }
+
         private static bool TryGetBinaryIntegralShiftResultType(SimpleType leftType, SimpleType rightType, out SimpleType resultType)
         {
             resultType = SimpleType.Unknown;
@@ -5273,6 +5334,12 @@ public static class TypeSharpTypeChecker
             !type.IsNullable &&
             IsIntegralPrimitiveType(NormalizePrimitiveTypeName(type.Name));
 
+        private static bool IsKnownNonNullablePrimitiveNumericType(SimpleType type) =>
+            type.IsKnown &&
+            !type.IsNull &&
+            !type.IsNullable &&
+            IsPrimitiveNumericType(NormalizePrimitiveTypeName(type.Name));
+
         private static bool IsKnownNonNullableShiftCountType(SimpleType type) =>
             type.IsKnown &&
             !type.IsNull &&
@@ -5281,6 +5348,10 @@ public static class TypeSharpTypeChecker
 
         private static bool IsIntegralPrimitiveType(string typeName) =>
             NormalizePrimitiveTypeName(typeName) is "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long" or "ulong";
+
+        private static bool IsPrimitiveNumericType(string typeName) =>
+            IsIntegralPrimitiveType(typeName) ||
+            NormalizePrimitiveTypeName(typeName) is "float" or "double" or "decimal";
 
         private static bool TryPromoteIntegralBinaryType(string left, string right, out string resultType)
         {

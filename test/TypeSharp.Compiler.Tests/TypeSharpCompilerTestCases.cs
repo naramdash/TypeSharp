@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(566, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(568, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(142, shardCounts[0]);
     AssertEqual(142, shardCounts[1]);
-    AssertEqual(141, shardCounts[2]);
-    AssertEqual(141, shardCounts[3]);
+    AssertEqual(142, shardCounts[2]);
+    AssertEqual(142, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -14188,7 +14188,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 570", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 572", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -23071,6 +23071,154 @@ static void CliBuildCompilesMultiplicativeCompoundAssignmentApi()
     });
 }
 
+static void CheckerAcceptsFloatingAndDecimalMultiplicativeCompoundAssignment()
+{
+    var parseResult = TypeSharpParser.ParseText(
+        """
+        namespace Samples.FloatingDecimalMultiplicativeCompoundAssignment
+
+        fun scaleFloat(value: float, factor: int): float {
+          let mut result = value
+          result *= factor
+          result /= factor
+          result %= 2
+          result
+        }
+
+        fun scaleDouble(value: double, factor: float): double {
+          let mut result = value
+          result *= factor
+          result /= 2
+          result %= factor
+          result
+        }
+
+        fun scaleDecimal(value: decimal, factor: int): decimal {
+          let mut result = value
+          result *= factor
+          result /= 2m
+          result %= factor
+          result
+        }
+        """,
+        "input.tysh");
+
+    AssertFalse(parseResult.HasErrors, "Floating and decimal multiplicative compound assignment input should parse.");
+    var root = Require(parseResult.Root, "Parser should produce a syntax root.");
+    var bindingResult = TypeSharpBinder.Bind(root, "input.tysh");
+    AssertFalse(bindingResult.HasErrors, "Floating and decimal multiplicative compound assignment input should bind.");
+    var typeCheckResult = TypeSharpTypeChecker.Check(root, "input.tysh");
+    AssertFalse(
+        typeCheckResult.HasErrors,
+        $"Floating and decimal multiplicative compound assignment input should type-check.\n{string.Join(Environment.NewLine, typeCheckResult.Diagnostics.Select(diagnostic => diagnostic.ToCliText()))}");
+}
+
+static void CliBuildCompilesFloatingAndDecimalMultiplicativeCompoundAssignmentApi()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "FloatingDecimalMultiplicativeCompoundAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.FloatingDecimalMultiplicativeCompoundAssignment"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.FloatingDecimalMultiplicativeCompoundAssignment
+
+            export fun scaleFloat(value: float, factor: int): float {
+              let mut result = value
+              result *= factor
+              result /= factor
+              result %= 2
+              result
+            }
+
+            export fun scaleDouble(value: double, factor: float): double {
+              let mut result = value
+              result *= factor
+              result /= 2
+              result %= factor
+              result
+            }
+
+            export fun scaleDecimal(value: decimal, factor: int): decimal {
+              let mut result = value
+              result *= factor
+              result /= 2m
+              result %= factor
+              result
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/FloatingDecimalMultiplicativeCompoundAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("result *= factor;", generatedSource);
+        AssertContains("result /= factor;", generatedSource);
+        AssertContains("result %= 2;", generatedSource);
+        AssertContains("result /= 2m;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "FloatingDecimalMultiplicativeCompoundAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with floating and decimal multiplicative compound assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "FloatingDecimalMultiplicativeCompoundAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>FloatingDecimalMultiplicativeCompoundAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="FloatingDecimalMultiplicativeCompoundAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/FloatingDecimalMultiplicativeCompoundAssignmentApi.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace FloatingDecimalMultiplicativeCompoundAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleFloat(13f, 3) == 1f &&
+                            Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleDouble(13.0, 3f) == 1.0 &&
+                            Samples.FloatingDecimalMultiplicativeCompoundAssignment.Module.scaleDecimal(13m, 3) == 1m;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build FloatingDecimalMultiplicativeCompoundAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated floating and decimal multiplicative compound assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
 static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTargets()
 {
     WithWorkspace(root =>
@@ -24140,6 +24288,11 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
 
             import { LegacyByteIndexer } from "Legacy.Tools"
 
+            enum RateKind {
+              Basic
+              Advanced
+            }
+
             export fun immutableLocal(): int {
               let value = 1
               value *= 2
@@ -24176,6 +24329,30 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               result
             }
 
+            export fun enumTarget(kind: RateKind): RateKind {
+              let mut current = kind
+              current *= kind
+              current
+            }
+
+            export fun mixedDecimalFloating(value: decimal, factor: double): decimal {
+              let mut result = value
+              result *= factor
+              result
+            }
+
+            export fun narrowingFloat(value: float, factor: double): float {
+              let mut result = value
+              result *= factor
+              result
+            }
+
+            export fun nullableFloat(value: float, maybe: float?): float {
+              let mut result = value
+              result /= maybe
+              result
+            }
+
             export fun importedIndexerMissingSetter(): int {
               let indexer: LegacyByteIndexer = LegacyByteIndexer()
               indexer[0] /= 2
@@ -24200,23 +24377,43 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Bool multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "String multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
+                diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Nullable multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Promoted multiplicative results that cannot be assigned back should be rejected.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'RateKind' and 'RateKind'."),
+            "Enum multiplicative operands should be rejected.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
+            "Mixed decimal and floating-point multiplicative operands should be rejected.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
+            "Floating-point multiplicative results that cannot be assigned back should be rejected.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
+            "Nullable floating-point multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2201" &&
