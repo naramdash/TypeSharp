@@ -24184,6 +24184,35 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
             export fun nonTrivial(value: int): int {
               makeFields(value)?.MutableCount *= 3
             }
+
+            export fun checkedMember(value: int, factor: int): int {
+              let fields: LegacyFields = makeFields(value)
+              checked(fields?.MutableCount *= factor)
+              checked(fields?.MutableCount /= 2)
+              checked(fields?.MutableCount %= 5)
+              fields.MutableCount
+            }
+
+            export fun uncheckedMember(value: long, divisor: long): long {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableLong = value
+              unchecked(fields?.MutableLong *= 3)
+              unchecked(fields?.MutableLong /= divisor)
+              unchecked(fields?.MutableLong %= 7)
+              fields.MutableLong
+            }
+
+            export fun checkedSkipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let fields: LegacyFields? = missingFields()
+              checked(fields?.MutableCount *= makeFactor())
+              LegacyFields.MutableStaticName
+            }
+
+            export fun checkedNonTrivial(value: int): int {
+              checked(makeFields(value)?.MutableCount *= 3)
+              0
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -24217,7 +24246,21 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
         AssertContains(".MutableDecimal *= factor)", generatedSource);
         AssertContains(".MutableDecimal /= factor)", generatedSource);
         AssertContains(".MutableDecimal %= 2m)", generatedSource);
+        AssertContains("checked { return (__tsReceiver", generatedSource);
+        AssertContains(".MutableCount *= factor); }", generatedSource);
+        AssertContains(".MutableCount /= 2); }", generatedSource);
+        AssertContains(".MutableCount %= 5); }", generatedSource);
+        AssertContains("unchecked { return (__tsReceiver", generatedSource);
+        AssertContains(".MutableLong *= 3); }", generatedSource);
+        AssertContains(".MutableLong /= divisor); }", generatedSource);
+        AssertContains(".MutableLong %= 7); }", generatedSource);
+        AssertContains(".MutableCount *= makeFactor()); }", generatedSource);
         AssertContains(")(makeFields(value))", generatedSource);
+        var nullGuardIndex = generatedSource.IndexOf("if (__tsReceiver", StringComparison.Ordinal);
+        var checkedBlockIndex = generatedSource.IndexOf("checked { return (__tsReceiver", StringComparison.Ordinal);
+        AssertTrue(
+            nullGuardIndex >= 0 && checkedBlockIndex > nullGuardIndex,
+            "Generated checked null-conditional member multiplicative assignment should place the checked block inside the null guard lambda body.");
         AssertFalse(generatedSource.Contains("?.", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional multiplicative assignment syntax.");
         AssertFalse(generatedSource.Contains("makeFields(value).MutableCount", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional multiplicative receiver.");
 
@@ -24268,7 +24311,11 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyDouble(13.0, 3f) == 1.0 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyDecimal(13m, 3) == 1m &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.skipped() == "ready" &&
-                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33;
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33 &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.checkedMember(13, 3) == 4 &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.uncheckedMember(16L, 4L) == 5L &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.checkedSkipped() == "ready" &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.checkedNonTrivial(11) == 0;
                     }
                 }
             }
@@ -24361,6 +24408,12 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
               0
             }
 
+            export fun checkedReadonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              checked(fields?.InstanceCode *= "x")
+              0
+            }
+
             export fun eventTarget(): int {
               let events: LegacyEvents = LegacyEvents()
               events?.Transform *= null
@@ -24439,8 +24492,8 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)) >= 6,
-            "Readonly, event, static, unresolved, TypeSharp-owned, and local null-conditional multiplicative member targets should be rejected before emission.");
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)) >= 7,
+            "Readonly, checked readonly, event, static, unresolved, TypeSharp-owned, and local null-conditional multiplicative member targets should be rejected before emission.");
     });
 }
 
@@ -24904,11 +24957,6 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               indexer[0]
             }
 
-            export fun checkedNullConditionalMember(fields: LegacyFields?, factor: int): int {
-              checked(fields?.MutableCount *= factor)
-              0
-            }
-
             export fun uncheckedNullConditionalIndexer(indexer: LegacyMutableIndexer?, factor: int): int {
               unchecked(indexer?[0] *= factor)
               0
@@ -24941,7 +24989,7 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
 
         var result = TypeSharpChecker.Check(manifestPath);
         const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
-        const string checkedUnsupportedTargetMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets, readable and writable metadata-backed imported C# field/property member targets, or readable and writable metadata-backed imported C# instance indexer targets with supported index arguments; null-conditional targets are not supported.";
+        const string checkedUnsupportedTargetMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets, readable and writable metadata-backed imported C# field/property member targets, readable and writable metadata-backed imported C# instance indexer targets with supported index arguments, or readable and writable metadata-backed imported C# null-conditional instance field/property member targets; null-conditional indexer targets are not supported.";
         const string mixedDecimalFloatingMessage = "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'.";
         const string nullableFloatMessage = "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'.";
         var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
@@ -25000,8 +25048,8 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == checkedUnsupportedTargetMessage) >= 2,
-            "Checked and unchecked null-conditional multiplicative targets should remain out of scope.");
+                diagnostic.Message == checkedUnsupportedTargetMessage) >= 1,
+            "Checked and unchecked null-conditional indexer multiplicative targets should remain out of scope.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&

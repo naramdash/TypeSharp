@@ -1584,6 +1584,12 @@ public static class CSharpSourceBackend
                 return false;
             }
 
+            if (TryEmitCheckedNullConditionalMemberCompoundAssignmentExpression(assignment, keyword, out var checkedNullConditionalAssignment))
+            {
+                _builder.AppendLine($"{indent}{checkedNullConditionalAssignment};");
+                return true;
+            }
+
             _builder.AppendLine($"{indent}{keyword}");
             _builder.AppendLine($"{indent}{{");
             _builder.AppendLine($"{indent}    {EmitExpression(assignment)};");
@@ -1910,6 +1916,11 @@ public static class CSharpSourceBackend
         {
             var keyword = node.Children.FirstOrDefault(child => child.IsToken && child.Kind is SyntaxKind.CheckedKeyword or SyntaxKind.UncheckedKeyword)?.Text ?? "checked";
             var expression = node.Children.FirstOrDefault(child => !child.IsToken);
+            if (TryEmitCheckedNullConditionalMemberCompoundAssignmentExpression(expression, keyword, out var checkedNullConditionalAssignment))
+            {
+                return checkedNullConditionalAssignment;
+            }
+
             return $"{keyword}({EmitExpression(expression)})";
         }
 
@@ -2033,6 +2044,12 @@ public static class CSharpSourceBackend
             if (!TryGetCheckedAssignmentStatement(expression, out var keyword, out var assignment))
             {
                 return false;
+            }
+
+            if (TryEmitCheckedNullConditionalMemberCompoundAssignmentExpression(assignment, keyword, out var checkedNullConditionalAssignment))
+            {
+                builder.Append($"{checkedNullConditionalAssignment}; ");
+                return true;
             }
 
             builder.Append($"{keyword} {{ {EmitExpression(assignment)}; }} ");
@@ -2627,7 +2644,11 @@ public static class CSharpSourceBackend
             return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
         }
 
-        private string EmitNullConditionalMemberCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
+        private string EmitNullConditionalMemberCompoundAssignment(
+            SyntaxNode target,
+            SyntaxNode value,
+            string operatorText,
+            string? overflowKeyword = null)
         {
             if (!TryGetNullConditionalImportedMemberAssignmentTarget(
                     target,
@@ -2641,8 +2662,45 @@ public static class CSharpSourceBackend
 
             var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
             var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
-            var guardedAssignment = $"{receiverParameter} == null ? default({normalizedTargetType}) : ({receiverParameter}.{memberName} {operatorText} {EmitExpression(value)})";
-            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {guardedAssignment})({EmitExpression(receiver)})";
+            var guardedAssignment = $"({receiverParameter}.{memberName} {operatorText} {EmitExpression(value)})";
+            if (!string.IsNullOrWhiteSpace(overflowKeyword))
+            {
+                return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {{ if ({receiverParameter} == null) {{ return default({normalizedTargetType}); }} {overflowKeyword} {{ return {guardedAssignment}; }} }})({EmitExpression(receiver)})";
+            }
+
+            return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {receiverParameter} == null ? default({normalizedTargetType}) : {guardedAssignment})({EmitExpression(receiver)})";
+        }
+
+        private bool TryEmitCheckedNullConditionalMemberCompoundAssignmentExpression(
+            SyntaxNode? assignment,
+            string keyword,
+            out string expression)
+        {
+            expression = string.Empty;
+            if (assignment?.Kind != SyntaxKind.AssignmentExpression)
+            {
+                return false;
+            }
+
+            var operatorToken = assignment.Children.FirstOrDefault(child => child.IsToken && IsMultiplicativeAssignmentOperatorKind(child.Kind));
+            if (operatorToken?.Text is null)
+            {
+                return false;
+            }
+
+            var expressions = assignment.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2 ||
+                expressions[0].Kind != SyntaxKind.NullConditionalMemberAccessExpression)
+            {
+                return false;
+            }
+
+            expression = EmitNullConditionalMemberCompoundAssignment(
+                expressions[0],
+                expressions[1],
+                operatorToken.Text,
+                keyword);
+            return true;
         }
 
         private string EmitNullConditionalIndexerCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)

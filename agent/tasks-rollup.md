@@ -9431,6 +9431,64 @@ Remaining:
 - Null-conditional indexer checked-overflow targets and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0463 Imported C# Null-Conditional Member Multiplicative Compound Assignment Checked/Unchecked Overflow Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Implemented imported C# null-conditional member `checked(...)` and `unchecked(...)` multiplicative compound assignment wrappers for readable/writable metadata-backed instance field/property targets.
+- Allowed `checked(receiver?.Member *= value)`, `checked(receiver?.Member /= value)`, `checked(receiver?.Member %= value)`, `unchecked(receiver?.Member *= value)`, `unchecked(receiver?.Member /= value)`, and `unchecked(receiver?.Member %= value)` when the receiver and target already satisfy the bounded null-conditional imported member assignment policy.
+- Reused the bounded known non-null integral/floating-point/decimal multiplicative assign-back policy already used by local, imported regular member/indexer, and null-conditional multiplicative targets.
+- Lowered generated C# to a C# 7.3-compatible block lambda whose null branch returns before right-side evaluation and whose non-null branch contains the checked/unchecked assignment body, avoiding reliance on an outer checked block that would not flow into nested lambda bodies.
+- Preserved deterministic diagnostics for unsupported operands, nullable operands, mixed decimal-floating operands, narrowing assign-back, readonly/event/static/unresolved/TypeSharp-owned/local targets, null-conditional indexer checked-overflow targets, and unsupported checked-overflow shapes.
+- Extended existing generated package-free `net48` C# consumer and negative checker coverage without adding shared catalog rows, so the shared catalog remains 568 cases with four 142-case package-free shards and the 572-test MTP package-shard minimum.
+- Updated Type System, Lowering, Diagnostics, .NET Interop, Feature Status, Work Ledger, tasks, and traceability docs. Task 0464 is the next roadmap refresh after this null-conditional member checked/unchecked slice.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `lang/TypeSharp.Compiler/Backend/CSharpSourceBackend.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0464 packet](0464-roadmap-refresh-after-imported-csharp-null-conditional-member-multiplicative-compound-assignment-checkedunchecked-overflow-policy.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "unsupported multiplicative compound assignment targets"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 572 --no-progress
+npm run build # in docs
+rg -n "0463-imported-csharp-null-conditional-member-multiplicative-compound-assignment-checkedunchecked-overflow-policy\.md|Task 0463 is active|Task 0463 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0462|Completed range\s*\| 0001-0400, 0402-0462|null-conditional targets are not supported|without checked/unchecked wrappers yet" agent docs\src\content\docs test .github -g "!tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The focused null-conditional imported member filter passed both tests, the unsupported-target filter passed, the broader multiplicative filter passed all 12 multiplicative tests, and the full package-free custom catalog passed across 568 cases including the VS Code live smoke. The MSTest bridge plus four shard projects built successfully, the MTP module-level package-shard run executed 572 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scan found no stale Task 0463 active-packet references outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0464 is active for the roadmap refresh after imported C# null-conditional member checked/unchecked multiplicative assignment.
+- Null-conditional indexer checked-overflow targets and user-defined multiplicative operators remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -9455,7 +9513,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0462 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0463 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
