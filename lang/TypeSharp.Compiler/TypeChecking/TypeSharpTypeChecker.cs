@@ -1840,7 +1840,7 @@ public static class TypeSharpTypeChecker
             {
                 if (TryGetImportedIndexerAssignmentTargetType(target, scope, out var indexerTargetType))
                 {
-                    return CheckMultiplicativeCompoundAssignmentValue(
+                    return CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
                         assignment,
                         value,
                         scope,

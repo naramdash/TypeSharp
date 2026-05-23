@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(572, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(574, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -86,8 +86,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(143, shardCounts[0]);
-    AssertEqual(143, shardCounts[1]);
+    AssertEqual(144, shardCounts[0]);
+    AssertEqual(144, shardCounts[1]);
     AssertEqual(143, shardCounts[2]);
     AssertEqual(143, shardCounts[3]);
 
@@ -2340,7 +2340,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertFalse(metadata.HasErrors, "Valid local DLL metadata should be indexed without diagnostics.");
         var assembly = metadata.Assemblies.Single();
         AssertSequence(
-            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyQuantity", "Legacy.Tools.LegacyScalar", "Legacy.Tools.LegacyProduct", "Legacy.Tools.LegacyBrokenQuantity", "Legacy.Tools.LegacyOperatorLeft", "Legacy.Tools.LegacyOperatorRight", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyFloatIndexer", "Legacy.Tools.LegacyDoubleIndexer", "Legacy.Tools.LegacyDecimalIndexer", "Legacy.Tools.LegacyBoolIndexer", "Legacy.Tools.LegacyColorIndexer", "Legacy.Tools.LegacyStringIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
+            ["Legacy.Tools.LegacyApi", "Legacy.Tools.LegacyColor", "Legacy.Tools.LegacyParams", "Legacy.Tools.LegacyByRef", "Legacy.Tools.LegacyOverloads", "Legacy.Tools.LegacyNullOverloads", "Legacy.Tools.LegacyNumeric", "Legacy.Tools.LegacyQuantity", "Legacy.Tools.LegacyScalar", "Legacy.Tools.LegacyProduct", "Legacy.Tools.LegacyBrokenQuantity", "Legacy.Tools.LegacyOperatorLeft", "Legacy.Tools.LegacyOperatorRight", "Legacy.Tools.LegacyParamsOverloads", "Legacy.Tools.LegacyParamsAmbiguousOverloads", "Legacy.Tools.LegacyCollectionOverloads", "Legacy.Tools.LegacyOptional", "Legacy.Tools.LegacyOptionalOverloads", "Legacy.Tools.LegacyNamedOverloads", "Legacy.Tools.LegacyDelegates", "Legacy.Tools.LegacyDelegateOverloads", "Legacy.Tools.LegacyEvents", "Legacy.Tools.LegacyMarkerAttribute", "Legacy.Tools.LegacyBox`1", "Legacy.Tools.LegacyDefaultConstructible", "Legacy.Tools.LegacyFormatter", "Legacy.Tools.LegacyFlexibleConstructor", "Legacy.Tools.LegacyParamsConstructor", "Legacy.Tools.LegacyAmbiguousConstructor", "Legacy.Tools.LegacyByteIndexer", "Legacy.Tools.LegacyOverloadedIndexer", "Legacy.Tools.LegacyAmbiguousIndexer", "Legacy.Tools.LegacyRelationshipIndexer", "Legacy.Tools.LegacyNullIndexer", "Legacy.Tools.LegacyMutableIndexer", "Legacy.Tools.LegacyQuantityIndexer", "Legacy.Tools.LegacyScalarIndexer", "Legacy.Tools.LegacyBrokenQuantityIndexer", "Legacy.Tools.LegacyOperatorLeftIndexer", "Legacy.Tools.LegacyQuantityReadOnlyIndexer", "Legacy.Tools.LegacyAmbiguousQuantityIndexer", "Legacy.Tools.LegacyFloatIndexer", "Legacy.Tools.LegacyDoubleIndexer", "Legacy.Tools.LegacyDecimalIndexer", "Legacy.Tools.LegacyBoolIndexer", "Legacy.Tools.LegacyColorIndexer", "Legacy.Tools.LegacyStringIndexer", "Legacy.Tools.LegacyFields", "Legacy.Tools.LegacyExtensions", "Legacy.Tools.LegacyGenericMethods", "Legacy.Tools.LegacyGenericByRefMethods", "Legacy.Tools.ILegacyNamed", "Legacy.Tools.ILegacyTagged", "Legacy.Tools.LegacyNamed", "Legacy.Tools.LegacyNamedOwner", "Legacy.Tools.LegacyDualNamed", "Legacy.Tools.LegacyBaseNamed", "Legacy.Tools.LegacyIntermediateNamed", "Legacy.Tools.LegacyDerivedNamed"],
             assembly.Types.Select(type => type.FullName).ToArray());
 
         var legacyApi = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyApi"), "LegacyApi metadata should be present.");
@@ -14222,7 +14222,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 576", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 578", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -23791,6 +23791,238 @@ static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorMemberA
     });
 }
 
+static void CliBuildCompilesImportedStaticMultiplicativeOperatorIndexerAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedStaticMultiplicativeOperatorIndexerAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedStaticMultiplicativeOperatorIndexerAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedStaticMultiplicativeOperatorIndexerAssignment
+
+            import { LegacyQuantity, LegacyQuantityIndexer } from "Legacy.Tools"
+
+            fun makeIndexer(value: int): LegacyQuantityIndexer {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[1] = LegacyQuantity(value)
+              indexer
+            }
+
+            fun makeIndex(): int = 1
+
+            export fun multiplyAt(value: int, factor: int): LegacyQuantity {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[0] = LegacyQuantity(value)
+              indexer[0] *= factor
+              indexer[0]
+            }
+
+            export fun divideAt(value: int, divisor: int): LegacyQuantity {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[0] = LegacyQuantity(value)
+              indexer[0] /= divisor
+              indexer[0]
+            }
+
+            export fun moduloAt(value: int, remainder: int): LegacyQuantity {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[0] = LegacyQuantity(value)
+              indexer[0] %= remainder
+              indexer[0]
+            }
+
+            export fun nonTrivial(value: int, factor: int): LegacyQuantity {
+              makeIndexer(value)[makeIndex()] *= factor
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertTrue(
+            exitCode == 0,
+            $"Imported static user-defined multiplicative operator indexer assignment API build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedStaticMultiplicativeOperatorIndexerAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("indexer[0] *= factor;", generatedSource);
+        AssertContains("indexer[0] /= divisor;", generatedSource);
+        AssertContains("indexer[0] %= remainder;", generatedSource);
+        AssertContains("makeIndexer(value)[makeIndex()] *= factor;", generatedSource);
+        AssertEqual(1, CountOccurrences(generatedSource, "makeIndexer(value)[makeIndex()] *= factor;"));
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedStaticMultiplicativeOperatorIndexerAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported static user-defined multiplicative operator indexer assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ImportedStaticMultiplicativeOperatorIndexerAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ImportedStaticMultiplicativeOperatorIndexerAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ImportedStaticMultiplicativeOperatorIndexerAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/ImportedStaticMultiplicativeOperatorIndexerAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ImportedStaticMultiplicativeOperatorIndexerAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ImportedStaticMultiplicativeOperatorIndexerAssignment.Module.multiplyAt(11, 3).Value == 33 &&
+                            Samples.ImportedStaticMultiplicativeOperatorIndexerAssignment.Module.divideAt(21, 3).Value == 7 &&
+                            Samples.ImportedStaticMultiplicativeOperatorIndexerAssignment.Module.moduloAt(22, 5).Value == 2 &&
+                            Samples.ImportedStaticMultiplicativeOperatorIndexerAssignment.Module.nonTrivial(13, 3).Value == 39;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ImportedStaticMultiplicativeOperatorIndexerAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated imported static user-defined multiplicative operator indexer assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorIndexerAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidImportedStaticMultiplicativeOperatorIndexerAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidImportedStaticMultiplicativeOperatorIndexerAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidImportedStaticMultiplicativeOperatorIndexerAssignment
+
+            import { LegacyAmbiguousQuantityIndexer, LegacyBrokenQuantityIndexer, LegacyDualNamed, LegacyOperatorLeftIndexer, LegacyOperatorRight, LegacyQuantityIndexer, LegacyQuantityReadOnlyIndexer, LegacyScalarIndexer } from "Legacy.Tools"
+
+            export fun missingOperator(): int {
+              let indexer: LegacyScalarIndexer = LegacyScalarIndexer()
+              indexer[0] *= 2
+              0
+            }
+
+            export fun nonAssignable(): int {
+              let indexer: LegacyBrokenQuantityIndexer = LegacyBrokenQuantityIndexer()
+              indexer[0] *= 2
+              0
+            }
+
+            export fun ambiguousOperator(): int {
+              let indexer: LegacyOperatorLeftIndexer = LegacyOperatorLeftIndexer()
+              let right: LegacyOperatorRight = LegacyOperatorRight(2)
+              indexer[0] *= right
+              0
+            }
+
+            export fun nullableFactor(factor: int?): int {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[0] *= factor
+              0
+            }
+
+            export fun missingSetter(): int {
+              let indexer: LegacyQuantityReadOnlyIndexer = LegacyQuantityReadOnlyIndexer()
+              indexer[0] *= 2
+              0
+            }
+
+            export fun mismatchedArgument(): int {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[true] *= 2
+              0
+            }
+
+            export fun ambiguousIndexer(): int {
+              let indexer: LegacyAmbiguousQuantityIndexer = LegacyAmbiguousQuantityIndexer()
+              indexer[LegacyDualNamed("value")] *= 2
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+        const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
+        var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
+
+        AssertTrue(result.HasErrors, "Unsupported imported static user-defined multiplicative operator indexer assignments should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
+            $"Imported indexer target without a matching static binary operator should be rejected.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
+            $"Imported indexer target whose operator result cannot assign back should be rejected.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
+            $"Ambiguous imported static binary operators should be rejected for indexer targets.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
+            $"Nullable operands should not bind imported static user-defined operators for indexer targets.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == unsupportedImportedMessage) >= 3,
+            $"Missing-setter, mismatched-argument, and ambiguous imported indexer targets should remain unsupported before emission.\n{diagnosticText}");
+    });
+}
+
 static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTargets()
 {
     WithWorkspace(root =>
@@ -30246,6 +30478,73 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 {
                     get { return _values[index]; }
                     set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyQuantityIndexer
+            {
+                private readonly LegacyQuantity[] _values = new LegacyQuantity[8];
+
+                public LegacyQuantity this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyScalarIndexer
+            {
+                private readonly LegacyScalar[] _values = new LegacyScalar[8];
+
+                public LegacyScalar this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyBrokenQuantityIndexer
+            {
+                private readonly LegacyBrokenQuantity[] _values = new LegacyBrokenQuantity[8];
+
+                public LegacyBrokenQuantity this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyOperatorLeftIndexer
+            {
+                private readonly LegacyOperatorLeft[] _values = new LegacyOperatorLeft[8];
+
+                public LegacyOperatorLeft this[int index]
+                {
+                    get { return _values[index]; }
+                    set { _values[index] = value; }
+                }
+            }
+
+            public sealed class LegacyQuantityReadOnlyIndexer
+            {
+                public LegacyQuantity this[int index]
+                {
+                    get { return new LegacyQuantity(index); }
+                }
+            }
+
+            public sealed class LegacyAmbiguousQuantityIndexer
+            {
+                public LegacyQuantity this[ILegacyNamed named]
+                {
+                    get { return new LegacyQuantity(1); }
+                    set { }
+                }
+
+                public LegacyQuantity this[ILegacyTagged tagged]
+                {
+                    get { return new LegacyQuantity(2); }
+                    set { }
                 }
             }
 

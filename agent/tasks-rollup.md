@@ -9912,6 +9912,69 @@ Remaining:
 - Imported C# null-conditional user-defined operator targets, true C# 14 instance compound-assignment operators, TypeSharp-authored operators, checked user-defined operators, and broader overload ranking remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0471 Imported C# Regular Indexer User-Defined Multiplicative Operator Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Extended the imported C# static binary multiplicative operator precursor from mutable local and regular field/property member targets to regular readable/writable imported C# indexer `*=`, `/=`, and `%=` targets with supported arguments.
+- Reused the exactly-one imported public static `operator *`, `operator /`, or `operator %` policy and required the operator result to assign back to the indexer value type.
+- Preserved existing primitive integral/floating-point/decimal indexer behavior and ordinary generated package-free `net48` C# 7.3 indexer compound-assignment lowering; null-conditional user-defined targets, true C# 14 instance compound-assignment operators, TypeSharp-authored operators, checked-specific user-defined semantics, and broader ranking remain backlog.
+- Added legacy fixture indexer types plus focused generated C# consumer and negative checker cases for accepted, missing-operator, non-assignable, ambiguous, nullable, missing-setter, mismatched-argument, and ambiguous-indexer shapes.
+- Raised the shared catalog to 574 cases, package-free shard expectations to `144`, `144`, `143`, and `143`, and the MTP package-shard minimum to 578 tests.
+- Updated Feature Status, Type System, Lowering, Diagnostics, .NET Interop, Project Policy, Work Ledger, tasks, traceability, workflow, and test README docs. Task 0472 is the next roadmap refresh after this regular indexer operator precursor.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- [test README](../test/README.md)
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0472 packet](0472-roadmap-refresh-after-imported-csharp-regular-indexer-user-defined-multiplicative-operator-policy.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "imported static user-defined multiplicative operator indexer assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "multiplicative"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 578 --no-progress
+npm run build # in docs
+rg -n "0471-imported-csharp-regular-indexer-user-defined-multiplicative-operator-policy\.md|Task 0471 is active|Task 0471 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0470|Completed range\s*\| 0001-0400, 0402-0470" agent docs\src\content\docs\work-ledger.md docs\src\content\docs\project-policy.md test .github --glob "!agent/tasks-rollup.md"
+rg -n "AssertEqual\(572|Assert\.AreEqual\(572|--minimum-expected-tests 576|minimum-expected-tests 576" test .github docs\src\content\docs\project-policy.md test\README.md
+git diff --check
+```
+
+Result: All listed commands passed. The compiler test project built cleanly, the focused indexer-operator filter passed the new positive and negative cases, the broader multiplicative filter passed all 18 multiplicative tests, shard-selection and MSTest bridge stability checks passed, and the full package-free custom catalog passed across 574 cases including the VS Code live smoke. The MSTest bridge plus four shard projects built successfully, the MTP module-level package-shard run executed 578 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scans found no stale Task 0471 active-packet references, stale completed-range pointers, or stale current test-count/package-minimum constants outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0472 is active for the roadmap refresh after imported C# regular indexer user-defined multiplicative operator policy.
+- Imported C# null-conditional user-defined operator targets, true C# 14 instance compound-assignment operators, TypeSharp-authored operators, checked user-defined operators, and broader overload ranking remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
