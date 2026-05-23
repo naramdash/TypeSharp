@@ -24589,6 +24589,39 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
               indexer?[0] %= factor
               indexer[0]
             }
+
+            export fun checkedAt(value: int, factor: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(value)
+              checked(indexer?[1] *= factor)
+              checked(indexer?[1] /= 2)
+              checked(indexer?[1] %= 5)
+              indexer[1]
+            }
+
+            export fun uncheckedAt(value: int, factor: int): int {
+              let indexer: LegacyMutableIndexer = makeIndexer(value)
+              unchecked(indexer?[1] *= factor)
+              unchecked(indexer?[1] /= 2)
+              unchecked(indexer?[1] %= 5)
+              indexer[1]
+            }
+
+            export fun checkedSkipped(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let indexer: LegacyMutableIndexer? = missingIndexer()
+              checked(indexer?[makeIndex()] *= makeFactor())
+              LegacyFields.MutableStaticName
+            }
+
+            export fun checkedNonTrivial(value: int): int {
+              checked(makeIndexer(value)?[makeIndex()] *= 3)
+              0
+            }
+
+            export fun uncheckedNonTrivial(value: int): int {
+              unchecked(makeIndexer(value)?[makeIndex()] *= 3)
+              0
+            }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -24617,6 +24650,19 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
         AssertContains("new System.Func<LegacyDecimalIndexer, decimal>(__tsReceiver", generatedSource);
         AssertContains(" == null ? default(decimal) : new System.Func<int, decimal>((__tsIndex", generatedSource);
         AssertContains("] /= 2m)", generatedSource);
+        AssertContains("if (__tsReceiver", generatedSource);
+        AssertContains("=> { checked { return (__tsReceiver", generatedSource);
+        AssertContains("] *= factor); }", generatedSource);
+        AssertContains("] /= 2); }", generatedSource);
+        AssertContains("] %= 5); }", generatedSource);
+        AssertContains("=> { unchecked { return (__tsReceiver", generatedSource);
+        AssertContains("] *= makeFactor()); }", generatedSource);
+        AssertContains(")(makeIndex())", generatedSource);
+        var nullGuardIndex = generatedSource.IndexOf("if (__tsReceiver", StringComparison.Ordinal);
+        var checkedBlockIndex = generatedSource.IndexOf("=> { checked { return (__tsReceiver", StringComparison.Ordinal);
+        AssertTrue(
+            nullGuardIndex >= 0 && checkedBlockIndex > nullGuardIndex,
+            "Generated checked null-conditional indexer multiplicative assignment should place the checked block inside the null/index guard lowering.");
         AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer multiplicative assignment syntax.");
         AssertFalse(generatedSource.Contains("makeIndexer(value)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional multiplicative indexer receiver or argument.");
 
@@ -24666,7 +24712,12 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleFloatAt(13f, 3) == 1f &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDoubleAt(13.0, 3f) == 1.0 &&
-                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDecimalAt(13m, 3) == 1.5m;
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDecimalAt(13m, 3) == 1.5m &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.checkedAt(13, 3) == 4 &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.uncheckedAt(16, 4) == 2 &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.checkedSkipped() == "ready" &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.checkedNonTrivial(11) == 0 &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.uncheckedNonTrivial(11) == 0;
                     }
                 }
             }
@@ -24793,6 +24844,36 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
               LegacyMutableIndexer?[1] %= 2
               0
             }
+
+            export fun checkedBoolOperand(): int {
+              let indexer: LegacyBoolIndexer = LegacyBoolIndexer()
+              checked(indexer?[0] *= true)
+              0
+            }
+
+            export fun uncheckedMissingSetter(): int {
+              let indexer: LegacyByteIndexer = LegacyByteIndexer()
+              unchecked(indexer?[1] *= 2)
+              0
+            }
+
+            export fun checkedMismatchedArgument(): int {
+              let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
+              checked(indexer?[true] *= 2)
+              0
+            }
+
+            export fun uncheckedAmbiguousArgument(): int {
+              let indexer: LegacyAmbiguousIndexer = LegacyAmbiguousIndexer()
+              unchecked(indexer?[LegacyDualNamed("value")] *= 2)
+              0
+            }
+
+            export fun checkedTypeSharpOwned(): int {
+              let counter: Counter? = null
+              checked(counter?[1] *= 2)
+              0
+            }
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -24842,8 +24923,8 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)) >= 3,
-            "Getter-only, unresolved, local, static-like, and TypeSharp-owned null-conditional indexer multiplicative targets should be rejected before emission.");
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)) >= 5,
+            "Getter-only, checked getter-only, unresolved, local, static-like, and TypeSharp-owned null-conditional indexer multiplicative targets should be rejected before emission.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == "TS2411" &&
@@ -24957,8 +25038,8 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
               indexer[0]
             }
 
-            export fun uncheckedNullConditionalIndexer(indexer: LegacyMutableIndexer?, factor: int): int {
-              unchecked(indexer?[0] *= factor)
+            export fun uncheckedNullConditionalIndexerMissingSetter(indexer: LegacyByteIndexer): int {
+              unchecked(indexer?[0] *= 2)
               0
             }
 
@@ -24989,7 +25070,7 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
 
         var result = TypeSharpChecker.Check(manifestPath);
         const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
-        const string checkedUnsupportedTargetMessage = "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets, readable and writable metadata-backed imported C# field/property member targets, readable and writable metadata-backed imported C# instance indexer targets with supported index arguments, or readable and writable metadata-backed imported C# null-conditional instance field/property member targets; null-conditional indexer targets are not supported.";
+        const string unsupportedNullConditionalIndexerMessage = "Null-conditional multiplicative compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.";
         const string mixedDecimalFloatingMessage = "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'.";
         const string nullableFloatMessage = "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'.";
         var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
@@ -25048,11 +25129,6 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message == checkedUnsupportedTargetMessage) >= 1,
-            "Checked and unchecked null-conditional indexer multiplicative targets should remain out of scope.");
-        AssertTrue(
-            result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
                 diagnostic.Message == mixedDecimalFloatingMessage) >= 2,
             "Checked local mixed decimal/floating operands should preserve existing multiplicative diagnostics.");
         AssertTrue(
@@ -25065,6 +25141,11 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
                 diagnostic.Code == "TS2201" &&
                 diagnostic.Message == unsupportedImportedMessage) >= 2,
             "Imported C# indexer multiplicative targets without a public setter should remain unsupported inside and outside checked wrappers.");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == unsupportedNullConditionalIndexerMessage) >= 1,
+            "Null-conditional imported C# indexer multiplicative targets without a public setter should remain unsupported inside unchecked wrappers.");
     });
 }
 

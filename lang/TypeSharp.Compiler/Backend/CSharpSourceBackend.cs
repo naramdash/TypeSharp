@@ -1590,6 +1590,12 @@ public static class CSharpSourceBackend
                 return true;
             }
 
+            if (TryEmitCheckedNullConditionalIndexerCompoundAssignmentExpression(assignment, keyword, out var checkedNullConditionalIndexerAssignment))
+            {
+                _builder.AppendLine($"{indent}{checkedNullConditionalIndexerAssignment};");
+                return true;
+            }
+
             _builder.AppendLine($"{indent}{keyword}");
             _builder.AppendLine($"{indent}{{");
             _builder.AppendLine($"{indent}    {EmitExpression(assignment)};");
@@ -1921,6 +1927,11 @@ public static class CSharpSourceBackend
                 return checkedNullConditionalAssignment;
             }
 
+            if (TryEmitCheckedNullConditionalIndexerCompoundAssignmentExpression(expression, keyword, out var checkedNullConditionalIndexerAssignment))
+            {
+                return checkedNullConditionalIndexerAssignment;
+            }
+
             return $"{keyword}({EmitExpression(expression)})";
         }
 
@@ -2049,6 +2060,12 @@ public static class CSharpSourceBackend
             if (TryEmitCheckedNullConditionalMemberCompoundAssignmentExpression(assignment, keyword, out var checkedNullConditionalAssignment))
             {
                 builder.Append($"{checkedNullConditionalAssignment}; ");
+                return true;
+            }
+
+            if (TryEmitCheckedNullConditionalIndexerCompoundAssignmentExpression(assignment, keyword, out var checkedNullConditionalIndexerAssignment))
+            {
+                builder.Append($"{checkedNullConditionalIndexerAssignment}; ");
                 return true;
             }
 
@@ -2703,7 +2720,43 @@ public static class CSharpSourceBackend
             return true;
         }
 
-        private string EmitNullConditionalIndexerCompoundAssignment(SyntaxNode target, SyntaxNode value, string operatorText)
+        private bool TryEmitCheckedNullConditionalIndexerCompoundAssignmentExpression(
+            SyntaxNode? assignment,
+            string keyword,
+            out string expression)
+        {
+            expression = string.Empty;
+            if (assignment?.Kind != SyntaxKind.AssignmentExpression)
+            {
+                return false;
+            }
+
+            var operatorToken = assignment.Children.FirstOrDefault(child => child.IsToken && IsMultiplicativeAssignmentOperatorKind(child.Kind));
+            if (operatorToken?.Text is null)
+            {
+                return false;
+            }
+
+            var expressions = assignment.Children.Where(child => !child.IsToken).ToArray();
+            if (expressions.Length < 2 ||
+                expressions[0].Kind != SyntaxKind.NullConditionalIndexerExpression)
+            {
+                return false;
+            }
+
+            expression = EmitNullConditionalIndexerCompoundAssignment(
+                expressions[0],
+                expressions[1],
+                operatorToken.Text,
+                keyword);
+            return true;
+        }
+
+        private string EmitNullConditionalIndexerCompoundAssignment(
+            SyntaxNode target,
+            SyntaxNode value,
+            string operatorText,
+            string? overflowKeyword = null)
         {
             if (!TryGetNullConditionalImportedIndexerAccess(
                     target,
@@ -2719,6 +2772,19 @@ public static class CSharpSourceBackend
 
             var receiverParameter = $"__tsReceiver{_temporaryIndex++}";
             var normalizedTargetType = NormalizePrimitiveTypeName(targetType);
+            if (!string.IsNullOrWhiteSpace(overflowKeyword))
+            {
+                var guardedCheckedAssignment = BuildCheckedNullConditionalIndexerBranch(
+                    receiverParameter,
+                    arguments,
+                    indexParameterTypes,
+                    normalizedTargetType,
+                    operatorText,
+                    value,
+                    overflowKeyword);
+                return $"new System.Func<{receiverType}, {normalizedTargetType}>({receiverParameter} => {{ if ({receiverParameter} == null) {{ return default({normalizedTargetType}); }} return {guardedCheckedAssignment}; }})({EmitExpression(receiver)})";
+            }
+
             var guardedAssignment = BuildNullConditionalIndexerBranch(
                 receiverParameter,
                 arguments,
@@ -2812,6 +2878,37 @@ public static class CSharpSourceBackend
             if (arguments.Count == 0)
             {
                 return body;
+            }
+
+            var delegateTypes = indexParameterTypes
+                .Select(type => NormalizePrimitiveTypeName(type))
+                .Concat([NormalizePrimitiveTypeName(resultType)])
+                .ToArray();
+            var lambdaParameters = $"({string.Join(", ", indexParameters)})";
+            var invocationArguments = arguments
+                .Select(argument => EmitExpression(argument))
+                .ToArray();
+            return $"new System.Func<{string.Join(", ", delegateTypes)}>({lambdaParameters} => {body})({string.Join(", ", invocationArguments)})";
+        }
+
+        private string BuildCheckedNullConditionalIndexerBranch(
+            string receiverParameter,
+            IReadOnlyList<SyntaxNode> arguments,
+            IReadOnlyList<string> indexParameterTypes,
+            string resultType,
+            string operatorText,
+            SyntaxNode value,
+            string overflowKeyword)
+        {
+            var indexParameters = arguments
+                .Select(_ => $"__tsIndex{_temporaryIndex++}")
+                .ToArray();
+            var targetExpression = $"{receiverParameter}[{string.Join(", ", indexParameters)}]";
+            var assignment = $"({targetExpression} {operatorText} {EmitExpression(value)})";
+            var body = $"{{ {overflowKeyword} {{ return {assignment}; }} }}";
+            if (arguments.Count == 0)
+            {
+                return $"new System.Func<{NormalizePrimitiveTypeName(resultType)}>(() => {body})()";
             }
 
             var delegateTypes = indexParameterTypes

@@ -1192,14 +1192,6 @@ public static class TypeSharpTypeChecker
                 return SimpleType.Unknown;
             }
 
-            if (TryGetCheckedMultiplicativeCompoundAssignmentTarget(expression, out var target) &&
-                IsCheckedMultiplicativeCompoundAssignmentUnsupportedTarget(target))
-            {
-                ReportMismatch(
-                    target,
-                    "Checked/unchecked multiplicative compound assignment is currently supported only for mutable local binding targets, readable and writable metadata-backed imported C# field/property member targets, readable and writable metadata-backed imported C# instance indexer targets with supported index arguments, or readable and writable metadata-backed imported C# null-conditional instance field/property member targets; null-conditional indexer targets are not supported.");
-            }
-
             return CheckExpression(expression, scope);
         }
 
@@ -5172,35 +5164,6 @@ public static class TypeSharpTypeChecker
             kind is SyntaxKind.StarEqualsToken
                 or SyntaxKind.SlashEqualsToken
                 or SyntaxKind.PercentEqualsToken;
-
-        private static bool TryGetCheckedMultiplicativeCompoundAssignmentTarget(
-            SyntaxNode node,
-            out SyntaxNode target)
-        {
-            target = default!;
-            if (node.Kind != SyntaxKind.AssignmentExpression)
-            {
-                return false;
-            }
-
-            var operatorKind = node.Children.FirstOrDefault(child => child.IsToken && IsAssignmentOperatorKind(child.Kind))?.Kind ?? SyntaxKind.UnknownToken;
-            if (!IsMultiplicativeAssignmentOperatorKind(operatorKind))
-            {
-                return false;
-            }
-
-            var expressions = node.Children.Where(child => !child.IsToken).ToArray();
-            if (expressions.Length < 2)
-            {
-                return false;
-            }
-
-            target = expressions[0];
-            return true;
-        }
-
-        private static bool IsCheckedMultiplicativeCompoundAssignmentUnsupportedTarget(SyntaxNode target) =>
-            target.Kind == SyntaxKind.NullConditionalIndexerExpression;
 
         private static bool TryGetAssignmentTargetIdentifier(SyntaxNode node, out SyntaxNode identifier)
         {
