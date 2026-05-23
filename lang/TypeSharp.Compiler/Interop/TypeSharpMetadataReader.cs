@@ -103,6 +103,7 @@ public static class TypeSharpMetadataReader
                 {
                     BaseTypeName = baseTypeName,
                     Constructors = ReadPublicConstructors(reader, type, assemblyHasNullableMetadata),
+                    Operators = ReadPublicOperators(reader, type, assemblyHasNullableMetadata),
                     HasPublicParameterlessConstructor = HasPublicParameterlessConstructor(reader, type),
                     InterfaceNames = ReadInterfaceNames(reader, type),
                     IsInterface = type.Attributes.HasFlag(System.Reflection.TypeAttributes.Interface),
@@ -211,6 +212,40 @@ public static class TypeSharpMetadataReader
         }
 
         return methods;
+    }
+
+    private static IReadOnlyList<MetadataMethodSymbol> ReadPublicOperators(
+        MetadataReader reader,
+        TypeDefinition type,
+        bool assemblyHasNullableMetadata)
+    {
+        var operators = new List<MetadataMethodSymbol>();
+        foreach (var handle in type.GetMethods())
+        {
+            var method = reader.GetMethodDefinition(handle);
+            if (!method.Attributes.HasFlag(System.Reflection.MethodAttributes.Public) ||
+                !method.Attributes.HasFlag(System.Reflection.MethodAttributes.Static) ||
+                !method.Attributes.HasFlag(System.Reflection.MethodAttributes.SpecialName))
+            {
+                continue;
+            }
+
+            var methodName = reader.GetString(method.Name);
+            if (!IsSupportedMultiplicativeOperatorMethodName(methodName))
+            {
+                continue;
+            }
+
+            var symbol = ReadMethod(reader, type, method, assemblyHasNullableMetadata);
+            if (symbol.Parameters.Count == 2 &&
+                symbol.GenericParameterCount == 0 &&
+                !string.Equals(symbol.ReturnType, "void", StringComparison.Ordinal))
+            {
+                operators.Add(symbol);
+            }
+        }
+
+        return operators;
     }
 
     private static MetadataMethodSymbol ReadMethod(
@@ -431,6 +466,9 @@ public static class TypeSharpMetadataReader
 
     private static bool IsPublicTopLevelType(System.Reflection.TypeAttributes attributes) =>
         attributes.HasFlag(System.Reflection.TypeAttributes.Public);
+
+    private static bool IsSupportedMultiplicativeOperatorMethodName(string methodName) =>
+        methodName is "op_Multiply" or "op_Division" or "op_Modulus";
 
     private static bool HasCustomAttribute(
         MetadataReader reader,

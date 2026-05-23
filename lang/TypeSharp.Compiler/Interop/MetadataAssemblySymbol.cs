@@ -40,6 +40,8 @@ public sealed record MetadataTypeSymbol(
 
     public IReadOnlyList<MetadataMethodSymbol> Constructors { get; init; } = [];
 
+    public IReadOnlyList<MetadataMethodSymbol> Operators { get; init; } = [];
+
     public string? BaseTypeName { get; init; }
 
     public IReadOnlyList<string> InterfaceNames { get; init; } = [];

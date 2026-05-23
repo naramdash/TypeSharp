@@ -1241,7 +1241,7 @@ public static class TypeSharpTypeChecker
                 {
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
                     SyntaxKind.StarEqualsToken or SyntaxKind.SlashEqualsToken or SyntaxKind.PercentEqualsToken =>
-                        CheckMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true),
+                        CheckLocalMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken or SyntaxKind.LogicalUnsignedShiftEqualsToken =>
@@ -1932,6 +1932,66 @@ public static class TypeSharpTypeChecker
             return targetType;
         }
 
+        private SimpleType CheckLocalMultiplicativeCompoundAssignmentValue(
+            SyntaxNode assignment,
+            SyntaxNode value,
+            TypeScope scope,
+            SimpleType targetType,
+            SyntaxKind operatorKind,
+            bool allowFloatingDecimal = false)
+        {
+            var valueType = CheckExpression(value, scope);
+            if (!targetType.IsKnown || !valueType.IsKnown)
+            {
+                return targetType.IsKnown ? targetType : SimpleType.Unknown;
+            }
+
+            var operatorText = GetMultiplicativeAssignmentOperatorText(operatorKind);
+            if (TryGetBinaryMultiplicativeCompoundResultType(targetType, valueType, allowFloatingDecimal, out var primitiveResultType))
+            {
+                if (primitiveResultType.IsKnown && !CanAssign(scope, targetType, primitiveResultType))
+                {
+                    ReportMismatch(assignment, $"Cannot assign multiplicative compound assignment result of type '{primitiveResultType}' to '{targetType}'.");
+                }
+
+                return targetType;
+            }
+
+            if (TryGetImportedStaticMultiplicativeOperatorResultType(
+                    targetType,
+                    valueType,
+                    operatorKind,
+                    out var operatorResultType,
+                    out var isAmbiguous))
+            {
+                if (operatorResultType.IsKnown && !CanAssign(scope, targetType, operatorResultType))
+                {
+                    ReportMismatch(assignment, $"Cannot assign user-defined multiplicative compound assignment result of type '{operatorResultType}' to '{targetType}'.");
+                }
+
+                return targetType;
+            }
+
+            if (isAmbiguous)
+            {
+                ReportMismatch(
+                    assignment,
+                    $"User-defined multiplicative compound assignment '{operatorText}' is ambiguous for operand types '{targetType}' and '{valueType}'.");
+                return targetType;
+            }
+
+            var numericPolicy = allowFloatingDecimal
+                ? "non-null primitive numeric values of a supported integral, floating-point, or decimal type"
+                : "non-null primitive integral numeric values of a supported type";
+            var importedOperatorPolicy = HasImportedOperatorOperand(targetType, valueType)
+                ? " or match one imported C# public static binary operator"
+                : string.Empty;
+            ReportMismatch(
+                assignment,
+                $"Multiplicative compound assignment '{operatorText}' operands must be {numericPolicy}{importedOperatorPolicy}, but found '{targetType}' and '{valueType}'.");
+            return targetType;
+        }
+
         private SimpleType CheckMultiplicativeCompoundAssignmentValue(
             SyntaxNode assignment,
             SyntaxNode value,
@@ -1946,13 +2006,7 @@ public static class TypeSharpTypeChecker
                 return targetType.IsKnown ? targetType : SimpleType.Unknown;
             }
 
-            var operatorText = operatorKind switch
-            {
-                SyntaxKind.StarEqualsToken => "*=",
-                SyntaxKind.SlashEqualsToken => "/=",
-                SyntaxKind.PercentEqualsToken => "%=",
-                _ => "?="
-            };
+            var operatorText = GetMultiplicativeAssignmentOperatorText(operatorKind);
 
             if (!TryGetBinaryMultiplicativeCompoundResultType(targetType, valueType, allowFloatingDecimal, out var resultType))
             {
@@ -1972,6 +2026,110 @@ public static class TypeSharpTypeChecker
 
             return targetType;
         }
+
+        private bool TryGetImportedStaticMultiplicativeOperatorResultType(
+            SimpleType targetType,
+            SimpleType valueType,
+            SyntaxKind operatorKind,
+            out SimpleType resultType,
+            out bool isAmbiguous)
+        {
+            resultType = SimpleType.Unknown;
+            isAmbiguous = false;
+            if (!targetType.IsKnown ||
+                !valueType.IsKnown ||
+                targetType.IsNull ||
+                valueType.IsNull ||
+                targetType.IsNullable ||
+                valueType.IsNullable)
+            {
+                return false;
+            }
+
+            var methodName = GetMultiplicativeOperatorMethodName(operatorKind);
+            if (methodName.Length == 0)
+            {
+                return false;
+            }
+
+            var candidates = FindImportedStaticMultiplicativeOperatorCandidates(targetType, valueType, methodName);
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+
+            if (candidates.Count > 1)
+            {
+                isAmbiguous = true;
+                return false;
+            }
+
+            resultType = SimpleType.Named(NormalizePrimitiveTypeName(candidates[0].ReturnType));
+            return true;
+        }
+
+        private IReadOnlyList<MetadataMethodSymbol> FindImportedStaticMultiplicativeOperatorCandidates(
+            SimpleType targetType,
+            SimpleType valueType,
+            string methodName)
+        {
+            var candidates = new List<MetadataMethodSymbol>();
+            var seenCandidates = new HashSet<string>(StringComparer.Ordinal);
+            var metadataTypes = FindMetadataTypes(targetType.Name)
+                .Concat(FindMetadataTypes(valueType.Name))
+                .OrderBy(type => type.FullName, StringComparer.Ordinal);
+
+            foreach (var metadataType in metadataTypes)
+            {
+                foreach (var method in metadataType.Operators
+                    .Where(candidate =>
+                        string.Equals(candidate.Name, methodName, StringComparison.Ordinal) &&
+                        candidate.IsStatic &&
+                        candidate.GenericParameterCount == 0 &&
+                        candidate.Parameters.Count == 2 &&
+                        !string.Equals(candidate.ReturnType, "void", StringComparison.Ordinal) &&
+                        MetadataOperandTypeMatches(candidate.Parameters[0].Type, targetType) &&
+                        MetadataOperandTypeMatches(candidate.Parameters[1].Type, valueType))
+                    .OrderBy(candidate => candidate.ReturnType, StringComparer.Ordinal)
+                    .ThenBy(candidate => candidate.Parameters[0].Type, StringComparer.Ordinal)
+                    .ThenBy(candidate => candidate.Parameters[1].Type, StringComparer.Ordinal))
+                {
+                    var key = $"{metadataType.FullName}:{method.Name}:{method.ReturnType}:{method.Parameters[0].Type}:{method.Parameters[1].Type}";
+                    if (seenCandidates.Add(key))
+                    {
+                        candidates.Add(method);
+                    }
+                }
+            }
+
+            return candidates;
+        }
+
+        private bool HasImportedOperatorOperand(SimpleType targetType, SimpleType valueType) =>
+            FindMetadataTypes(targetType.Name).Count > 0 ||
+            FindMetadataTypes(valueType.Name).Count > 0;
+
+        private static bool MetadataOperandTypeMatches(string parameterType, SimpleType operandType) =>
+            MetadataTypeNameMatches(parameterType, operandType.Name) ||
+            string.Equals(NormalizePrimitiveTypeName(parameterType), NormalizePrimitiveTypeName(operandType.Name), StringComparison.Ordinal);
+
+        private static string GetMultiplicativeAssignmentOperatorText(SyntaxKind operatorKind) =>
+            operatorKind switch
+            {
+                SyntaxKind.StarEqualsToken => "*=",
+                SyntaxKind.SlashEqualsToken => "/=",
+                SyntaxKind.PercentEqualsToken => "%=",
+                _ => "?="
+            };
+
+        private static string GetMultiplicativeOperatorMethodName(SyntaxKind operatorKind) =>
+            operatorKind switch
+            {
+                SyntaxKind.StarEqualsToken => "op_Multiply",
+                SyntaxKind.SlashEqualsToken => "op_Division",
+                SyntaxKind.PercentEqualsToken => "op_Modulus",
+                _ => string.Empty
+            };
 
         private SimpleType CheckBitwiseCompoundAssignmentValue(
             SyntaxNode assignment,

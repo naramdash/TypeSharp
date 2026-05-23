@@ -29,7 +29,7 @@ $jobs | Wait-Job | Receive-Job
 ```powershell
 dotnet restore test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --locked-mode
 dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogIsExposedForPackageRunners"
-dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 568
+dotnet test --project test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --filter "FullyQualifiedName~CatalogCase" --minimum-expected-tests 570
 ```
 
 The same MSTest bridge is also split into four package-based shard projects for `dotnet test`/MTP discovery coverage:
@@ -42,11 +42,11 @@ dotnet test `
   --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" `
   --root-directory . `
   --max-parallel-test-modules 4 `
-  --minimum-expected-tests 572 `
+  --minimum-expected-tests 574 `
   --no-progress
 ```
 
-The `572` package-shard expectation is the 568 shared catalog cases plus one `CatalogIsExposedForPackageRunners` smoke per shard.
+The `574` package-shard expectation is the 570 shared catalog cases plus one `CatalogIsExposedForPackageRunners` smoke per shard.
 
 The root `global.json` opts `dotnet test` into Microsoft Testing Platform mode for .NET 10 SDKs, so use MTP-supported options such as `--test-modules` and `--max-parallel-test-modules`. The root `NuGet.config` clears inherited package sources, maps the current MSTest bridge package graph to `nuget.org`, uses `nuget.org` for audit data, and stores restored packages under ignored `.nuget/packages`. The MSTest bridge exists for package-based discovery and ecosystem integration; the package-free main runner and four shard projects remain the faster release-confidence path.
 
