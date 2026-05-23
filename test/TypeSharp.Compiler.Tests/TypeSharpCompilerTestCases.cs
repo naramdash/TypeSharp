@@ -24826,11 +24826,12 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.NullConditionalMultiplicativeCompoundAssignment
 
-            import { LegacyFields } from "Legacy.Tools"
+            import { LegacyFields, LegacyQuantity } from "Legacy.Tools"
 
             fun makeFields(value: int): LegacyFields {
               let fields: LegacyFields = LegacyFields()
               fields.MutableCount = value
+              fields.MutableQuantity = LegacyQuantity(value)
               fields
             }
 
@@ -24855,6 +24856,23 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
             export fun moduloCount(value: int, remainder: int): int {
               let fields: LegacyFields = makeFields(value)
               fields?.MutableCount %= remainder
+            }
+
+            export fun multiplyQuantityProperty(value: int, factor: int): LegacyQuantity {
+              let fields: LegacyFields = makeFields(value)
+              fields?.MutableQuantity *= factor
+              fields?.MutableQuantity /= 2
+              fields?.MutableQuantity %= 5
+              fields.MutableQuantity
+            }
+
+            export fun multiplyQuantityField(value: int, factor: int): LegacyQuantity {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableQuantityField = LegacyQuantity(value)
+              fields?.MutableQuantityField *= factor
+              fields?.MutableQuantityField /= 2
+              fields?.MutableQuantityField %= 7
+              fields.MutableQuantityField
             }
 
             export fun multiplyLong(value: long): long {
@@ -24897,8 +24915,19 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
               LegacyFields.MutableStaticName
             }
 
+            export fun skippedQuantity(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let fields: LegacyFields? = missingFields()
+              fields?.MutableQuantity *= makeFactor()
+              LegacyFields.MutableStaticName
+            }
+
             export fun nonTrivial(value: int): int {
               makeFields(value)?.MutableCount *= 3
+            }
+
+            export fun nonTrivialQuantity(value: int): LegacyQuantity {
+              makeFields(value)?.MutableQuantity *= 3
             }
 
             export fun checkedMember(value: int, factor: int): int {
@@ -24947,6 +24976,15 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
         AssertContains(".MutableCount *= factor)", generatedSource);
         AssertContains(".MutableCount /= divisor)", generatedSource);
         AssertContains(".MutableCount %= remainder)", generatedSource);
+        AssertContains("new System.Func<LegacyFields, Legacy.Tools.LegacyQuantity>(__tsReceiver", generatedSource);
+        AssertContains(".MutableQuantity *= factor)", generatedSource);
+        AssertContains(".MutableQuantity /= 2)", generatedSource);
+        AssertContains(".MutableQuantity %= 5)", generatedSource);
+        AssertContains(".MutableQuantityField *= factor)", generatedSource);
+        AssertContains(".MutableQuantityField /= 2)", generatedSource);
+        AssertContains(".MutableQuantityField %= 7)", generatedSource);
+        AssertContains(".MutableQuantity *= makeFactor())", generatedSource);
+        AssertContains(".MutableQuantity *= 3)", generatedSource);
         AssertContains(".MutableCount *= makeFactor())", generatedSource);
         AssertContains("new System.Func<LegacyFields, long>(__tsReceiver", generatedSource);
         AssertContains(".MutableLong *= 3)", generatedSource);
@@ -25022,12 +25060,16 @@ static void CliBuildCompilesNullConditionalImportedMemberMultiplicativeCompoundA
                         return Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyCount(5, (short)3) == 15 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.divideCount(21, 3) == 7 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.moduloCount(22, 5) == 2 &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyQuantityProperty(13, 3).Value == 4 &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyQuantityField(22, 5).Value == 6 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyLong(4L) == 12L &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyFloat(13f, 3) == 1f &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyDouble(13.0, 3f) == 1.0 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.multiplyDecimal(13m, 3) == 1m &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.skipped() == "ready" &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.skippedQuantity() == "ready" &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.nonTrivial(11) == 33 &&
+                            Samples.NullConditionalMultiplicativeCompoundAssignment.Module.nonTrivialQuantity(11).Value == 33 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.checkedMember(13, 3) == 4 &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.uncheckedMember(16L, 4L) == 5L &&
                             Samples.NullConditionalMultiplicativeCompoundAssignment.Module.checkedSkipped() == "ready" &&
@@ -25064,7 +25106,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidNullConditionalMultiplicativeCompoundAssignment
 
-            import { LegacyColor, LegacyEvents, LegacyFields } from "Legacy.Tools"
+            import { LegacyColor, LegacyEvents, LegacyFields, LegacyOperatorRight } from "Legacy.Tools"
 
             record Counter {
               Value: int
@@ -25118,6 +25160,43 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
               0
             }
 
+            export fun missingOperator(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableScalar *= 2
+              0
+            }
+
+            export fun nonAssignable(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableBrokenQuantity *= 2
+              0
+            }
+
+            export fun ambiguousOperator(): int {
+              let fields: LegacyFields = LegacyFields()
+              let right: LegacyOperatorRight = LegacyOperatorRight(2)
+              fields?.MutableOperatorLeft *= right
+              0
+            }
+
+            export fun nullableQuantityFactor(factor: int?): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.MutableQuantity *= factor
+              0
+            }
+
+            export fun getterOnlyQuantity(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.ReadonlyQuantity *= 2
+              0
+            }
+
+            export fun readonlyQuantityField(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields?.ReadonlyQuantityField *= 2
+              0
+            }
+
             export fun readonlyField(): int {
               let fields: LegacyFields = LegacyFields()
               fields?.InstanceCode *= "x"
@@ -25162,6 +25241,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
+        var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
 
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# multiplicative compound assignment targets should produce diagnostics.");
         AssertTrue(
@@ -25206,10 +25286,36 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Null-conditional imported float member target should reject nullable floating-point operands.");
         AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
+            $"Null-conditional imported member target without a matching static binary operator should be rejected.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
+            $"Null-conditional imported member target whose operator result cannot assign back should be rejected.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
+            $"Ambiguous imported static binary operators should be rejected for null-conditional member targets.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
+            $"Nullable operands should not bind imported static user-defined operators for null-conditional member targets.\n{diagnosticText}");
+        AssertTrue(
             result.Diagnostics.Count(diagnostic =>
                 diagnostic.Code == "TS2201" &&
-                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)) >= 7,
-            "Readonly, checked readonly, event, static, unresolved, TypeSharp-owned, and local null-conditional multiplicative member targets should be rejected before emission.");
+                diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)) >= 9,
+            "Getter-only, readonly, checked readonly, event, static, unresolved, TypeSharp-owned, and local null-conditional multiplicative member targets should be rejected before emission.");
     });
 }
 

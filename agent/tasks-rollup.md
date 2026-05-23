@@ -10086,6 +10086,63 @@ Remaining:
 - Task 0473 is active for imported C# null-conditional field/property member user-defined multiplicative operator assignment.
 - Imported C# null-conditional indexer user-defined operator targets, checked user-defined operators, TypeSharp-authored operators, true C# 14 instance compound-assignment operators, and broader overload ranking remain future slices.
 
+## Task 0473 Imported C# Null-Conditional Member User-Defined Multiplicative Operator Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Extended imported C# public static binary `operator *`, `operator /`, and `operator %` compound-assignment validation from mutable local, regular member, and regular indexer targets to null-conditional readable/writable imported C# field/property member targets.
+- Accepted `receiver?.Member *= value`, `receiver?.Member /= value`, and `receiver?.Member %= value` when exactly one imported public static binary operator matches the member value and right operand and the operator result assigns back to the member value type.
+- Preserved existing primitive integral/floating-point/decimal null-conditional member multiplicative behavior, skipped right-side evaluation on null receivers, single receiver evaluation, generated package-free `net48`, and C# 7.3 guard-lambda lowering.
+- Added focused generated C# consumer coverage and negative checker coverage for missing, ambiguous, nullable, non-assignable, getter-only, readonly, event/static, TypeSharp-owned, local, and unsupported target shapes by extending the existing null-conditional member multiplicative test pair.
+- Kept the shared catalog at 574 cases and the MTP package-shard minimum at 578 tests because the coverage strengthened existing cases instead of adding new catalog entries.
+- Updated Feature Status, Type System, Lowering, Diagnostics, .NET Interop, Project Policy, Work Ledger, tasks, and traceability. Selected Task 0474 as the next roadmap refresh.
+
+Primary evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0474 packet](0474-roadmap-refresh-after-imported-csharp-null-conditional-member-user-defined-multiplicative-operator-policy.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "null-conditional imported member multiplicative compound assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "multiplicative"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 578 --no-progress
+npm run build # in docs
+rg -n "0473-imported-csharp-null-conditional-member-user-defined-multiplicative-operator-policy\.md|Task 0473 is active|Task 0473 should|TBD pending final verification|Completed work covered \| 0001-0472|Completed range\s*\| 0001-0472|imported null-conditional user-defined operator targets|without the user-defined operator extension" agent docs\src\content\docs test .github --glob "!agent/tasks-rollup.md"
+rg -n "AssertEqual\(572|Assert\.AreEqual\(572|--minimum-expected-tests 576|minimum-expected-tests 576|AssertEqual\(576|Assert\.AreEqual\(576|--minimum-expected-tests 580|minimum-expected-tests 580" test .github agent docs\src\content\docs\project-policy.md docs\src\content\docs\work-ledger.md test\README.md --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: Passed. The focused null-conditional member multiplicative filter, full multiplicative filter, full 574-case package-free catalog, 578-test MTP package shard run, docs build, stale scans, and `git diff --check` all completed successfully; the stale scans had no remaining matches after the feature-status wording refresh, and `git diff --check` reported only existing LF-to-CRLF working-copy warnings.
+
+Remaining:
+
+- Task 0474 is active for the roadmap refresh after imported C# null-conditional member user-defined multiplicative operator assignment.
+- Imported C# null-conditional indexer user-defined operator targets, checked user-defined operators, TypeSharp-authored operators, true C# 14 instance compound-assignment operators, and broader overload ranking remain future slices.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -10110,7 +10167,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0472 is compressed here.
+- Completed historical work through task 0473 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 

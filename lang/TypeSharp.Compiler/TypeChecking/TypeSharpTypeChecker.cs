@@ -1432,7 +1432,7 @@ public static class TypeSharpTypeChecker
             {
                 if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var multiplicativeTargetType))
                 {
-                    return CheckMultiplicativeCompoundAssignmentValue(
+                    return CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
                         assignment,
                         value,
                         scope,
