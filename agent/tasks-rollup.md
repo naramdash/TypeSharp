@@ -9489,6 +9489,65 @@ Remaining:
 - Null-conditional indexer checked-overflow targets and user-defined multiplicative operators remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0464 Roadmap Refresh After Imported C# Null-Conditional Member Multiplicative Compound Assignment Checked/Unchecked Overflow Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0463 landed imported C# null-conditional member `checked(...)`/`unchecked(...)` wrappers for bounded `*=`, `/=`, and `%=` assignment.
+- Preserved the generated artifact baseline: generated TypeSharp output remains package-free `net48`, generated C# remains C# 7.3-compatible, and accepted null-conditional member checked/unchecked multiplicative assignment statements continue to lower with checked/unchecked assignment bodies inside generated C# 7.3 guard bodies.
+- Preserved the test-host package baseline: the pinned `net10.0` `MSTest.Sdk/4.2.3` MTP bridge and package shards remain the selected NuGet path with a 572-test package-shard minimum.
+- Recorded the current official version signals: C# 14 is stable on .NET 10, C# 15 remains preview on .NET 11 preview, .NET Framework projects still default to C# 7.3, TypeScript 6.0 remains stable while TypeScript 7.0 Beta remains native-preview/tooling input, F# 10 remains refinement/tooling input, .NET 10 remains at runtime patch 10.0.8 with SDK 10.0.300, .NET 11 preview remains 11.0.0-preview.4 with SDK 11.0.100-preview.4, .NET Framework 4.8.1 remains latest Framework, the VS Code stable release API reports 1.121.0 while the VS Code 1.122 release-notes page exists as a watch signal, and the GitHub Actions Windows Server 2025 + Visual Studio 2026 image migration remains a 2026-06-08 through 2026-06-15 watch item.
+- Recorded current NuGet comparisons as `MSTest.Sdk/4.2.3`, stable `xunit.v3` 3.2.2 with prerelease 4.0.0-pre.108 in the flat-container feed, NUnit 4.6.1, and NUnit3TestAdapter 6.2.0.
+- Kept Task 0401 blocked absent explicit user approval and selected Task 0465 as the next bounded implementation slice: imported C# null-conditional indexer checked/unchecked multiplicative assignment before user-defined operator expansion.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), [arithmetic operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators), and [checked and unchecked statements](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/checked-and-unchecked).
+- Microsoft Learn [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy) and [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript docs [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), TypeScript blog [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/), and TypeScript blog [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/).
+- .NET release metadata [releases-index.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/releases-index.json), .NET downloads [.NET 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), [.NET 11.0](https://dotnet.microsoft.com/en-us/download/dotnet/11.0), .NET Framework [support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework), Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and Microsoft Learn [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks).
+- Microsoft Learn [`PackageReference` lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies), [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities), [package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping), [trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers), [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests), and [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk).
+- NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [stable release API](https://update.code.visualstudio.com/api/releases/stable), VS Code [1.121 release notes](https://code.visualstudio.com/updates/v1_121), VS Code [1.122 release notes](https://code.visualstudio.com/updates/v1_122), GitHub [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-node`](https://github.com/actions/setup-node), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and the [Windows Server 2025 + Visual Studio 2026 migration issue](https://github.com/actions/runner-images/issues/14017).
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0465 packet](0465-imported-csharp-null-conditional-indexer-multiplicative-compound-assignment-checkedunchecked-overflow-policy.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 572 --no-progress
+npm run build # in docs
+rg -n "0464-roadmap-refresh-after-imported-csharp-null-conditional-member-multiplicative-compound-assignment-checkedunchecked-overflow-policy\.md|Task 0464 is active|Task 0464 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0463|Completed range\s*\| 0001-0400, 0402-0463" agent docs\src\content\docs test .github -g "!tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The compiler test project built cleanly, shard-selection stability preserved the shared package-free catalog, and the full package-free custom catalog passed. The MSTest bridge and four shard projects built successfully, the MTP module-level shard run executed 572 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scan found no stale Task 0464 active-packet references or stale completed-range pointers outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0465 is active and should implement imported C# null-conditional indexer multiplicative compound assignment checked/unchecked overflow policy.
+- User-defined multiplicative operators remain a future slice.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -9513,7 +9572,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0463 are compressed here.
+- Completed historical work through task 0400 and tasks 0402-0464 are compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
