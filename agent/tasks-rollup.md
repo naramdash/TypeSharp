@@ -6059,7 +6059,7 @@ Primary evidence:
 Remaining:
 
 - Task 0403 completed the extension member policy/implementation slice; Task 0404 should perform the post-implementation roadmap refresh next.
-- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+- Task 0401 was still blocked at Task 0471 completion; it is resolved in the Task 0401 rollup entry below.
 
 ## Task 0403 C# 14 Extension Member Policy And Bounded Implementation Slice
 
@@ -9973,7 +9973,56 @@ Remaining:
 
 - Task 0472 is active for the roadmap refresh after imported C# regular indexer user-defined multiplicative operator policy.
 - Imported C# null-conditional user-defined operator targets, true C# 14 instance compound-assignment operators, TypeSharp-authored operators, checked user-defined operators, and broader overload ranking remain future slices.
-- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+- Task 0401 was still blocked at Task 0471 completion; it is resolved in the Task 0401 rollup entry below.
+
+## Task 0401 GitHub Actions Regression Npm Missing In VS Code Live Smoke
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked the latest failing GitHub Actions regression run after explicit user approval. Run `26322127493` still failed in `Run shard runners in parallel` after `Setup Node` succeeded and reported `npm 11.12.1`, confirming the failure was C# process-launch resolution rather than Node setup.
+- Fixed the VS Code extension live smoke by replacing direct `RunProcess("npm", ...)` calls with `RunNpm(...)`.
+- Added a Windows-specific `cmd.exe /d /s /c "npm ..."` wrapper for `npm` commands launched from the C# test runner with `UseShellExecute=false`; non-Windows runners still launch `npm` directly.
+- Kept generated TypeSharp artifacts unchanged. The fix is limited to the test runner/CI process-launch path for the repository-local VS Code smoke.
+- Marked the User Task Inbox item complete, moved Task 0401 from blocked to done, and updated Project Policy, Work Ledger, tasks, traceability, and this rollup. Task 0472 remains the active roadmap refresh.
+
+Primary evidence:
+
+- Latest failing GitHub Actions run: `https://github.com/naramdash/TypeSharp/actions/runs/26322127493`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Verification:
+
+```powershell
+gh auth status
+gh run list --workflow regression.yml --limit 8 --json databaseId,displayTitle,status,conclusion,event,headBranch,headSha,createdAt,url
+gh run view 26322127493 --json name,workflowName,conclusion,status,url,event,headBranch,headSha,createdAt,updatedAt,jobs
+gh run view 26322127493 --log | Select-String -Pattern "FAIL VS Code extension live smoke|npm|The system cannot find the file specified|Shard|failed with exit code|Run shard runners in parallel" -Context 3,8
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "VS Code extension live smoke runs against bundled language server"
+dotnet build test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard1\TypeSharp.Compiler.Tests.Shard1.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard2\TypeSharp.Compiler.Tests.Shard2.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.Shard3\TypeSharp.Compiler.Tests.Shard3.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests.Shard0\TypeSharp.Compiler.Tests.Shard0.csproj --no-build --filter "VS Code extension live smoke runs against bundled language server"
+npm run build # in docs
+rg -n '\- \[ \] 현재 GitHub Actions|0401 GitHub Actions regression npm missing in VS Code live smoke\s+\| TBD|awaits explicit approval for a C# process-launch fix|Task 0401 remains blocked|Task 0401''s blocked status|Task 0401''s pending npm process-launch CI fix' agent\0472-roadmap-refresh-after-imported-csharp-regular-indexer-user-defined-multiplicative-operator-policy.md agent\tasks.md agent\traceability.md docs\src\content\docs\project-policy.md docs\src\content\docs\work-ledger.md
+git diff --check
+```
+
+Result: The latest failing GitHub Actions run still matched the setup-node-success/process-launch failure. The compiler test project built cleanly, the focused VS Code live smoke filter passed, all four package-free shard projects built, and Shard0 passed the same focused live-smoke filter that owns this case. The docs build completed with the existing Vite chunk-size warning. The stale-reference scan found no current unchecked inbox item, blocked Task 0401 queue row, pending-approval wording, or stale blocked-status text in the active status docs, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0472 remains active for the roadmap refresh after imported C# regular indexer user-defined multiplicative operator policy and the completed Task 0401 CI fix.
+- The next GitHub Actions regression run should be monitored to confirm the hosted runner passes the previously failing shard step.
 
 ## Verification Summary
 
@@ -9999,7 +10048,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0400 and tasks 0402-0470 are compressed here.
+- Completed historical work through task 0471 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
@@ -10010,4 +10059,4 @@ Remaining:
 
 Blocked:
 
-- Task 0401 GitHub Actions regression npm missing in VS Code live smoke is pending explicit user approval for the CI implementation fix.
+- No User Task Inbox item is currently blocked.

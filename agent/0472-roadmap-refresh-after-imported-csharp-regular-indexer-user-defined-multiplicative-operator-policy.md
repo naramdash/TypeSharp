@@ -7,7 +7,7 @@ Source: Task 0471 imported C# regular indexer user-defined multiplicative operat
 
 ## Objective
 
-Recheck official language, platform, package, testing, editor, and CI signals after imported C# regular indexer user-defined multiplicative operator assignment landed, preserve TypeSharp's generated package-free `net48` and C# 7.3 baseline, keep the shared catalog/package-shard baselines at 574/578 unless evidence requires otherwise, keep Task 0401 blocked absent explicit user approval, and select the next bounded implementation slice.
+Recheck official language, platform, package, testing, editor, and CI signals after imported C# regular indexer user-defined multiplicative operator assignment landed and after Task 0401 fixed the GitHub Actions `npm` process-launch failure, preserve TypeSharp's generated package-free `net48` and C# 7.3 baseline, keep the shared catalog/package-shard baselines at 574/578 unless evidence requires otherwise, and select the next bounded implementation slice.
 
 ## Context
 
@@ -15,7 +15,7 @@ Recheck official language, platform, package, testing, editor, and CI signals af
 - Task 0469 extended that precursor to regular readable/writable imported C# field/property member targets.
 - Task 0471 extended the precursor to regular readable/writable imported C# indexer targets with supported arguments while preserving primitive indexer behavior and ordinary C# 7.3 compound-assignment lowering.
 - The shared catalog is now 574 cases, package-free shard expectations are `144`, `144`, `143`, and `143`, and the MTP package-shard minimum is 578 tests.
-- Task 0401 remains blocked because the CI implementation fix still requires explicit approval.
+- Task 0401 is now complete: the VS Code live smoke uses a Windows `cmd.exe /d /s /c "npm ..."` wrapper when launched from the C# test runner, avoiding the GitHub Actions `npm.cmd` resolution failure while preserving non-Windows `npm` launches.
 
 ## Scope
 
@@ -23,11 +23,11 @@ Recheck official language, platform, package, testing, editor, and CI signals af
 - Record any relevant changes in Feature Status, Project Policy, Work Ledger, tasks, traceability, and rollup docs.
 - Preserve generated package-free `net48`, C# 7.3-compatible generated source, deterministic diagnostics, and the current test-host package policy unless official evidence changes the decision.
 - Select one concrete next implementation slice with a bounded packet.
-- Keep Task 0401 blocked unless the user explicitly approves the GitHub Actions CI fix.
+- Preserve the Task 0401 CI process-launch fix while evaluating current GitHub Actions signals.
 
 ## Out Of Scope
 
-- Implementing Task 0401 without explicit user approval.
+- Reworking Task 0401 beyond the approved `npm` process-launch fix.
 - Implementing the next language/compiler slice during this roadmap refresh.
 - Adding generated package dependencies or raising generated output beyond C# 7.3.
 - Switching from the current MSTest.Sdk/MTP package bridge without evidence that it provides distinct value over the package-free runners.
@@ -36,7 +36,7 @@ Recheck official language, platform, package, testing, editor, and CI signals af
 
 - [ ] Official signals are rechecked and summarized with dates and source links in the relevant docs/rollup.
 - [ ] Generated package-free `net48`, C# 7.3 compatibility, deterministic diagnostics, and 574/578 test baselines are preserved or any change is explicitly justified.
-- [ ] Task 0401 remains blocked absent explicit user approval.
+- [ ] Task 0401 remains recorded as complete and the approved CI process-launch fix is preserved.
 - [ ] A new bounded implementation packet is selected and linked from `agent/tasks.md`.
 - [ ] Relevant docs build, stale-reference scans, and whitespace checks pass.
 
@@ -52,4 +52,4 @@ Recheck official language, platform, package, testing, editor, and CI signals af
 
 - Do not use Python.
 - Reuse official primary sources only for ecosystem signal checks.
-- Treat Task 0401 as blocked until the user explicitly approves implementation.
+- Task 0401 has explicit user approval and is complete; do not reintroduce the blocked status during this refresh.

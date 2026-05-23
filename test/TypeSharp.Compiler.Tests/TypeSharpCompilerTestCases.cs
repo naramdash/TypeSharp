@@ -13363,12 +13363,12 @@ static void VsCodeExtensionActivationSmokeRunsInMockedExtensionHost()
 static void VsCodeExtensionLiveSmokeRunsAgainstBundledLanguageServer()
 {
     var extensionRoot = Path.Combine(Directory.GetCurrentDirectory(), "vscode", "typesharp");
-    var prepare = RunProcess("npm", "run prepare:server", extensionRoot);
+    var prepare = RunNpm("run prepare:server", extensionRoot);
     AssertTrue(
         prepare.ExitCode == 0,
         $"VS Code extension server publish should succeed before live smoke.\nSTDOUT:\n{prepare.StandardOutput}\nSTDERR:\n{prepare.StandardError}");
 
-    var result = RunProcess("npm", "run test:live", extensionRoot);
+    var result = RunNpm("run test:live", extensionRoot);
     AssertTrue(
         result.ExitCode == 0,
         $"VS Code extension live smoke should use the bundled language server for diagnostics, hover, definition, completion, and shutdown.\nSTDOUT:\n{result.StandardOutput}\nSTDERR:\n{result.StandardError}");
@@ -31046,6 +31046,16 @@ static ProcessResult RunProcess(string fileName, string arguments, string workin
     }
 
     return new ProcessResult(process.ExitCode, standardOutput, standardError);
+}
+
+static ProcessResult RunNpm(string arguments, string workingDirectory)
+{
+    if (OperatingSystem.IsWindows())
+    {
+        return RunProcess("cmd.exe", $"/d /s /c \"npm {arguments}\"", workingDirectory);
+    }
+
+    return RunProcess("npm", arguments, workingDirectory);
 }
 
 internal abstract class RuntimeUnionSmoke
