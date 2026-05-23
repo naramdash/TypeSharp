@@ -235,4 +235,4 @@ Use `typesharp explain TS2202` for command-line explanations.
 
 ## Current Stability Model
 
-Implemented features are backed by fixtures, smoke tests, or runnable examples. Planned features are documented in design files and task packets, but should not be treated as stable user-facing behavior until tests and docs are added.
+Implemented features are backed by fixtures, smoke tests, or runnable examples. Planned features are documented separately, but should not be treated as stable user-facing behavior until tests and docs are added.

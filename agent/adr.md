@@ -1,8 +1,8 @@
 # Architecture Decision Records
 
-문서 기준일: 2026-05-19
+문서 기준일: 2026-05-23
 
-이 파일은 TypeSharp의 장기 설계 결정을 기록하는 ADR 작성 규칙이다. ADR은 task packet과 다르다. task packet은 "무엇을 했는가"를 기록하고, ADR은 "왜 이 방향을 선택했는가"를 기록한다.
+이 파일은 TypeSharp의 장기 설계 결정을 기록하는 ADR 작성 규칙이다. ADR은 "왜 이 방향을 선택했는가"를 남긴다.
 
 ## 언제 ADR을 쓰는가
 
@@ -16,7 +16,7 @@ ADR이 필요 없는 경우:
 - 단순 버그 수정
 - fixture 추가
 - 이미 결정된 정책의 반복 적용
-- task packet 안에 충분히 설명되는 작은 구현 선택
+- 관련 문서 안에 충분히 설명되는 작은 구현 선택
 
 ## 파일 이름
 
@@ -50,7 +50,7 @@ Superseded By: ADR NNNN | None
 
 ## Context
 
-<결정이 필요한 배경, goal/checklist/requirement 연결, 현재 제약을 쓴다.>
+<결정이 필요한 배경, goal/requirement 연결, 현재 제약을 쓴다.>
 
 ## Decision Drivers
 
@@ -91,11 +91,10 @@ Neutral:
 
 ## Follow-Up
 
-- <다음 task packet, checklist item, or traceability update>
+- <다음 수동 follow-up 또는 관련 문서 갱신>
 ```
 
 ## 연결 규칙
 
-- ADR이 accepted 되면 관련 [traceability.md](traceability.md) row 또는 관련 사양 문서에서 링크한다.
-- 구현이 필요한 ADR은 `agent/tasks.md`의 active task 또는 `agent/NNNN-short-name.md` active packet으로 연결한다.
+- ADR이 accepted 되면 관련 사양 문서에서 링크한다.
 - ADR이 superseded 되면 기존 ADR의 `Superseded By`를 갱신하고 새 ADR의 `Supersedes`를 채운다.

@@ -3,7 +3,7 @@ title: Grammar
 description: Stable TypeSharp syntax documents and language coverage tracking.
 ---
 
-This page is the docs canonical grammar ledger established by task `0251-docs-canonical-language-ledger`. The former repository files under `docs/grammar/` have been removed; grammar updates belong here and in the related canonical reference pages.
+This page is the docs canonical grammar ledger. The former repository files under `docs/grammar/` have been removed; grammar updates belong here and in the related canonical reference pages.
 
 ## Grammar Goals
 

@@ -49,7 +49,7 @@ Goal: understand where TypeSharp is intentionally similar to TypeScript and wher
 3. Read [Modules And Imports](../modules/) for TypeScript-style source files and relative module paths.
 4. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, and `TS2204`.
 5. Read [Grammar And Language Reference](../reference/) when you need formal syntax boundaries.
-6. Use [Cookbook](../cookbook/) for common interop tasks.
+6. Use [Cookbook](../cookbook/) for common interop workflows.
 
 Translate expectations carefully:
 
@@ -81,7 +81,7 @@ Goal: evaluate TypeSharp as a language, compiler, tooling, or hosting technology
 2. Read [Advanced Topics](../advanced/) for compiler pipeline, lowering, metadata, diagnostics, LSP, and regression strategy.
 3. Read [Grammar And Language Reference](../reference/) and [Grammar](../grammar/) for syntax coverage.
 4. Read [API And CLI Reference](../api/) and [CLI](../cli/) for tooling contracts.
-5. Follow docs canonical pages and linked task packets when you need implementation detail.
+5. Follow docs canonical pages and test evidence when you need implementation detail.
 
 Good first questions:
 
@@ -90,7 +90,7 @@ Good first questions:
 - Does it have diagnostics that tell users what to fix?
 - Does it have positive and negative smoke coverage?
 
-## Task Lookup
+## Lookup
 
 | Need | Start with |
 | --- | --- |

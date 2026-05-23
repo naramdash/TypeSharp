@@ -82,8 +82,8 @@ The repository smoke test `docs site contract is stable` checks the expected doc
 
 ## I Need The Canonical Design Decision
 
-Human-facing standard docs live in docs. Agent-facing traceability and task records live in the repository:
+Human-facing standard docs live in docs. Start with:
 
 - [Core Goal](../goal/)
-- [`agent/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/traceability.md)
-- [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md)
+- [Project Requirements](../requirements/)
+- [Feature Status](../feature-status/)

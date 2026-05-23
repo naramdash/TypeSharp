@@ -3,18 +3,18 @@ title: Document Ownership
 description: Target ownership model for TypeSharp documentation after the docs canonical ledger migration.
 ---
 
-The target model is simple: `docs/` is the canonical standard language and project ledger surface. `agent/` is only the temporary operating area for agentic goal work, handoff packets, checklist state, traceability, and execution control.
+The target model is simple: `docs/` is the canonical standard language and project ledger surface. `agent/` keeps short repository-local notes outside the public docs site.
 
-Task `0251-docs-canonical-language-ledger` moved the durable language and project records into the docs site. Task `0255-docs-canonical-cleanup` removed the remaining standard-document bridge stubs from the former operational docs surface. Task `0257-docs-agent-directory-rename` made that boundary literal by renaming the public site source to `docs/` and the temporary agent work surface to `agent/`.
+The public site source is `docs/`. Repository-local notes stay under `agent/`.
 
 ## Ownership Rule
 
 | Surface | Target Role |
 | --- | --- |
 | `docs/src/content/docs/` | Canonical human-readable language reference, feature status, lowering guide, interop contract, CLI/LSP guide, examples guide, migration guide, and project ledger pages. |
-| `agent/` | Temporary agentic workspace for active goal runs, active task packets, `tasks-rollup.md`, checklist/traceability files, handoff state, and execution-control documents. |
-| `.codex/skills/` | Project-local Codex skill packages selected for TypeSharp goal work. |
-| `agent.md` | Minimal bootstrap file for Codex goal runs. It points to docs canonical pages and the remaining `agent/` temporary work surface. |
+| `agent/` | Short repository-local notes, ADR guidance, and the language 1.0 gap tracker. |
+| `.codex/skills/` | Project-local Codex skill packages selected for TypeSharp work. |
+| `agent.md` | Minimal local agent notes pointing to canonical docs and the language 1.0 tracker. |
 
 ## Canonical Standard Pages
 
@@ -36,24 +36,17 @@ Former operational bridge files below are no longer present. The target owner is
 
 Raw benchmark artifacts live under `docs/research/`. Source and runnable samples live under root `examples/`.
 
-## Temporary Agentic Work Surface
+## Repository-Local Notes
 
 | File | Target Role |
 | --- | --- |
-| `agent/README.md` | Short index for the remaining agentic work surface. |
-| `agent/agentic-execution.md` | Execution contract for goal/Ralph/long-running agent runs. |
-| `agent/progress.md` | Task packet, rollup, commit, and handoff mechanics. |
-| `agent/checklist.md` | Remaining implementation and verification work source. |
-| `agent/traceability.md` | Evidence bridge connecting goal, requirements, features, checklist, and completed behavior. |
-| `agent/tasks.md` | Active task packet index while agentic goal work is running. |
-| `agent/NNNN-*.md` | Temporary active task packets while long-running work is in progress. |
-| `agent/tasks-rollup.md` | Temporary compressed work history kept under `agent/` until folded further into docs Work Ledger. |
+| `agent/README.md` | Short index for repository-local notes. |
 | `agent/adr.md` | ADR authoring template for large decisions. |
+| `agent/lang-1.0-tasks.md` | Language 1.0 gap tracker. |
 
 ## Maintenance Rule
 
 1. Put new standard language/project reference material in docs canonical pages.
 2. Do not add new `docs/` bridge stubs for standard docs.
-3. Keep active task, handoff, checklist, traceability, and execution-control documents in `agent/`.
-4. Update `agent.md`, `agent/agentic-execution.md`, Work Ledger, Project Ledger, and Agentic Workflow when agent work selection or ownership rules change.
-5. Run docs build and stale-path scans before marking docs ownership work done.
+3. Keep `agent/` concise and limited to repository-local notes.
+4. Run docs build and stale-path scans after docs ownership changes.

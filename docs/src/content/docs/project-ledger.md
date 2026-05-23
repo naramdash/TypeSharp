@@ -3,7 +3,7 @@ title: Project Ledger
 description: Canonical TypeSharp source-of-truth documents grouped for web navigation.
 ---
 
-`docs/` is the canonical standard language and project ledger surface. `agent/` remains a temporary operating area for agentic goal work and handoff state only.
+`docs/` is the canonical standard language and project ledger surface. `agent/` keeps short repository-local notes outside the public docs site.
 
 Use this page for integrated web navigation. The detailed ownership matrix lives in [Document Ownership](../document-ownership/).
 
@@ -12,9 +12,9 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 | Surface | Role | Update Rule |
 | --- | --- | --- |
 | `docs/` | Canonical standard language, project ledger, reference, guide, and user-facing documentation. | Update first for standard language and project reference decisions. |
-| `agent/` | Temporary agentic goal work, active task packets, `tasks-rollup.md`, checklist, traceability, handoff state, and execution-control files. | Keep operational and short; do not add long-lived language reference here. |
-| `.codex/skills/` | Project-local Codex skill packages selected for TypeSharp goal work. | Add, update, or remove skill folders only when a concrete project task needs them. |
-| `agent.md` | Codex CLI goal bootstrap and long-running agent instructions. | Keep concise and operational. |
+| `agent/` | Short repository-local notes, ADR guidance, and the language 1.0 gap tracker. | Keep concise; do not add long-lived language reference here. |
+| `.codex/skills/` | Project-local Codex skill packages selected for TypeSharp work. | Add, update, or remove skill folders only when the project needs them. |
+| `agent.md` | Minimal local agent notes. | Keep concise. |
 
 ## Repository Layout
 
@@ -24,7 +24,7 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 | `lang/` | Compiler, language server, package-free `net48` Core library, and package-free `net48` Runtime library. |
 | `test/` | Regression runner, compiler/CLI/runtime/docs/VS Code smokes, and parser/type-checker/backend fixtures. |
 | `docs/` | Canonical public documentation site and web-facing project ledger. |
-| `agent/` | Temporary operational records for agentic task selection, rollup, traceability, and handoff. |
+| `agent/` | Short repository-local notes and language 1.0 gap tracker. |
 | `examples/` | Single-file and runnable TypeSharp adoption artifacts used by docs and smoke tests. |
 | `vscode/` | VS Code extension workspace, syntax assets, formatter client, LSP client, and package smoke tests. |
 
@@ -34,10 +34,8 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [Project Requirements](../requirements/): required platform, language, compiler, interop, tooling, runtime, quality, security, and release constraints.
 - [Feature Status](../feature-status/): MVP, stable backlog, preview watch, experimental, and rejected feature classification.
 - [Project Policy](../project-policy/): architecture, dependency, target framework, regression, feature review, parser fixture, release, and official-reference tracking policy.
-- [Document Ownership](../document-ownership/): target owner for each former operational docs source and the remaining temporary agentic files.
+- [Document Ownership](../document-ownership/): target owner for each canonical docs source.
 - [Writing Guide](../writing-guide/): docs authoring style, `tysh` example project rules, emoji policy, and review checklist.
-- [Work Ledger](../work-ledger/): active task state and compressed completed-work rollup.
-- [Agentic Workflow](../agentic-workflow/): how Codex CLI goal and long-running agents use the canonical records.
 
 ## Language And Compiler Contracts
 
@@ -58,24 +56,11 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [Migration](../migration/): incremental .NET Framework/C# adoption guide.
 - [Examples](../examples/), [Tutorials](../tutorials/), [Cookbook](../cookbook/), and [Writing Guide](../writing-guide/): runnable examples, learning paths, recipes, and authoring rules for future docs changes.
 
-## Agentic Work Records
-
-These are the only `agent/` records that should remain:
-
-- [`agent/README.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/README.md): short index for the agentic work surface.
-- [`agent/agentic-execution.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/agentic-execution.md): long-running agent execution contract.
-- [`agent/progress.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/progress.md): task packet, rollup, commit, and handoff policy.
-- [`agent/checklist.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/checklist.md): executable project checklist and remaining work source.
-- [`agent/tasks.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks.md): current active task index and completed range pointer.
-- [`agent/tasks-rollup.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/tasks-rollup.md): compressed completed task history.
-- [`agent/traceability.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/traceability.md): goal, requirements, features, checklist, and evidence connections.
-- [`agent/adr.md`](https://github.com/naramdash/TypeSharp/blob/main/agent/adr.md): architecture decision record format.
-
 ## Change Discipline
 
 When a decision changes:
 
 1. For standard language or project ledger decisions, update the docs canonical page listed in [Document Ownership](../document-ownership/).
 2. Do not recreate standard-document bridge stubs under `docs/` or store durable standard docs under `agent/`.
-3. Update implementation, tests, examples, and task packets if the rule is already implemented or being implemented.
+3. Update implementation, tests, and examples if the rule is already implemented or being implemented.
 4. Run the docs build when the change affects web pages or navigation.

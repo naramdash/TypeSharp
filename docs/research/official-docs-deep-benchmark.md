@@ -2,15 +2,13 @@
 
 Benchmark date: 2026-05-19
 
-Task rollup: [Documentation Process Release And Adoption](../../agent/tasks-rollup.md#documentation-process-release-and-adoption)
-
 This benchmark records the official documentation information architecture that TypeSharp should match as it becomes a real language, compiler, CLI, and VS Code tooling project. It updates the first benchmark in [official-docs-benchmark.md](official-docs-benchmark.md) with a broader inventory snapshot and a stronger docs gap plan.
 
 The benchmark summarizes structure and page archetypes. It does not copy official documentation prose.
 
 ## Inventory Method
 
-The inventory was generated with a temporary Node.js script under `test/tmp/` and recorded in [official-docs-deep-benchmark-inventory.json](official-docs-deep-benchmark-inventory.json). The script was not committed because it was only a one-off crawler for this task.
+The inventory was generated with a temporary Node.js script under `test/tmp/` and recorded in [official-docs-deep-benchmark-inventory.json](official-docs-deep-benchmark-inventory.json). The script was not committed because it was only a one-off crawler for this benchmark.
 
 | Source | Official index used | Inventory scope | Entries | Unique hrefs | Sections |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -79,11 +77,11 @@ TypeSharp action: make the TypeSharp type system and module system independently
 | TypeScript user | Modules, structural types, narrowing, config, and compile-time vs runtime boundaries are explicit. | `Modules And Imports` and `Type System` must explain module graph, relative source paths, structural shapes, type-level unions, `unknown`, and public CLR boundary diagnostics. |
 | F# user | Functional concepts and formal language reference both exist. | `Fundamentals`, `Type System`, `Grammar`, and `Language Reference` must expose immutability, functions, pipeline, option/result, unions, match, and async. |
 | C# user | Public API shape, metadata, generics, delegates, attributes, overloads, async, and compiler options are indexed. | `.NET Interop`, `API`, `Project Configuration`, and `Advanced Topics` must connect TypeSharp syntax to generated C# and C# consumption rules. |
-| Advanced implementer | Language specification, compiler behavior, versioning, and design notes are reachable after user docs. | `Advanced Topics`, docs canonical pages, temporary task packets, traceability, and tests must remain linked from the docs site. |
+| Advanced implementer | Language specification, compiler behavior, versioning, and design notes are reachable after user docs. | `Advanced Topics`, docs canonical pages, and tests must remain linked from the docs site. |
 
 ## TypeSharp Gap Matrix
 
-| Gap found in current docs | Benchmark source | Improvement in this task |
+| Gap found in current docs | Benchmark source | Improvement in this update |
 | --- | --- | --- |
 | Project manifest and generated output details were split across guides, API, CLI, and interop pages. | Nuxt configuration and directory docs, TypeScript project configuration, C# compiler options | Add `project-configuration.md` and sidebar entry. |
 | Source module graph, relative module paths, imports, exports, and generated containers were buried in a reference paragraph. | TypeScript modules reference, F# namespaces/modules/open, Vue guide/reference split | Add `modules.md` and link it from fundamentals/reference. |

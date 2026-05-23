@@ -3,7 +3,7 @@ title: Grammar And Language Reference
 description: Scannable links to the current TypeSharp grammar and language reference material.
 ---
 
-This page is the docs canonical language-reference index established by task `0251-docs-canonical-language-ledger`. It links the human-facing reference pages and the implemented feature evidence.
+This page is the docs canonical language-reference index. It links the human-facing reference pages and the implemented feature evidence.
 
 ## Lexical Basics
 
@@ -128,7 +128,7 @@ Interop and tooling feature specs:
 | Project manifest and source discovery | [CLI](../cli/), [Project Configuration](../project-configuration/), [Project Policy](../project-policy/) | Manifest loader, locator, and source discovery smokes. |
 | CLI, diagnostics, generated C# emission, VS Code/LSP | [CLI](../cli/), [Diagnostics](../diagnostics/), [Lowering](../lowering/), [VS Code And LSP](../vscode-lsp/) | CLI, backend, generated build, LSP, and extension smokes. |
 
-When adding or promoting a feature, update the relevant canonical spec, [Feature Status](../feature-status/) if status changes, [Project Policy](../project-policy/) review/coverage evidence, and the active task packet.
+When adding or promoting a feature, update the relevant canonical spec, [Feature Status](../feature-status/) if status changes, [Project Policy](../project-policy/) review/coverage evidence, and the relevant tests.
 
 ## Diagnostic Code Index
 

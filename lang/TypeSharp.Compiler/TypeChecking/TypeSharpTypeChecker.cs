@@ -1241,7 +1241,7 @@ public static class TypeSharpTypeChecker
                 {
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
                     SyntaxKind.StarEqualsToken or SyntaxKind.SlashEqualsToken or SyntaxKind.PercentEqualsToken =>
-                        CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true),
+                        CheckMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true, allowImportedStaticOperators: true),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken or SyntaxKind.LogicalUnsignedShiftEqualsToken =>
@@ -1432,13 +1432,14 @@ public static class TypeSharpTypeChecker
             {
                 if (TryGetNullConditionalImportedMemberAssignmentTargetType(target, scope, out var multiplicativeTargetType))
                 {
-                    return CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
+                    return CheckMultiplicativeCompoundAssignmentValue(
                         assignment,
                         value,
                         scope,
                         multiplicativeTargetType,
                         operatorKind,
-                        allowFloatingDecimal: true);
+                        allowFloatingDecimal: true,
+                        allowImportedStaticOperators: true);
                 }
 
                 if (TryGetNullConditionalExtensionPropertyTarget(
@@ -1642,7 +1643,8 @@ public static class TypeSharpTypeChecker
                         scope,
                         multiplicativeTargetType,
                         operatorKind,
-                        allowFloatingDecimal: true);
+                        allowFloatingDecimal: true,
+                        allowImportedStaticOperators: true);
                 }
 
                 CheckExpression(value, scope);
@@ -1827,26 +1829,28 @@ public static class TypeSharpTypeChecker
             if (target.Kind == SyntaxKind.MemberAccessExpression &&
                 TryGetImportedMemberAssignmentTargetType(target, scope, out var targetType))
             {
-                return CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
+                return CheckMultiplicativeCompoundAssignmentValue(
                     assignment,
                     value,
                     scope,
                     targetType,
                     operatorKind,
-                    allowFloatingDecimal: true);
+                    allowFloatingDecimal: true,
+                    allowImportedStaticOperators: true);
             }
 
             if (target.Kind == SyntaxKind.IndexerExpression)
             {
                 if (TryGetImportedIndexerAssignmentTargetType(target, scope, out var indexerTargetType))
                 {
-                    return CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
+                    return CheckMultiplicativeCompoundAssignmentValue(
                         assignment,
                         value,
                         scope,
                         indexerTargetType,
                         operatorKind,
-                        allowFloatingDecimal: true);
+                        allowFloatingDecimal: true,
+                        allowImportedStaticOperators: true);
                 }
 
                 CheckExpression(value, scope);
@@ -1932,13 +1936,14 @@ public static class TypeSharpTypeChecker
             return targetType;
         }
 
-        private SimpleType CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
+        private SimpleType CheckMultiplicativeCompoundAssignmentValue(
             SyntaxNode assignment,
             SyntaxNode value,
             TypeScope scope,
             SimpleType targetType,
             SyntaxKind operatorKind,
-            bool allowFloatingDecimal = false)
+            bool allowFloatingDecimal = false,
+            bool allowImportedStaticOperators = false)
         {
             var valueType = CheckExpression(value, scope);
             if (!targetType.IsKnown || !valueType.IsKnown)
@@ -1957,12 +1962,14 @@ public static class TypeSharpTypeChecker
                 return targetType;
             }
 
-            if (TryGetImportedStaticMultiplicativeOperatorResultType(
+            var isAmbiguous = false;
+            if (allowImportedStaticOperators &&
+                TryGetImportedStaticMultiplicativeOperatorResultType(
                     targetType,
                     valueType,
                     operatorKind,
                     out var operatorResultType,
-                    out var isAmbiguous))
+                    out isAmbiguous))
             {
                 if (operatorResultType.IsKnown && !CanAssign(scope, targetType, operatorResultType))
                 {
@@ -1972,7 +1979,7 @@ public static class TypeSharpTypeChecker
                 return targetType;
             }
 
-            if (isAmbiguous)
+            if (allowImportedStaticOperators && isAmbiguous)
             {
                 ReportMismatch(
                     assignment,
@@ -1983,47 +1990,12 @@ public static class TypeSharpTypeChecker
             var numericPolicy = allowFloatingDecimal
                 ? "non-null primitive numeric values of a supported integral, floating-point, or decimal type"
                 : "non-null primitive integral numeric values of a supported type";
-            var importedOperatorPolicy = HasImportedOperatorOperand(targetType, valueType)
+            var importedOperatorPolicy = allowImportedStaticOperators && HasImportedOperatorOperand(targetType, valueType)
                 ? " or match one imported C# public static binary operator"
                 : string.Empty;
             ReportMismatch(
                 assignment,
                 $"Multiplicative compound assignment '{operatorText}' operands must be {numericPolicy}{importedOperatorPolicy}, but found '{targetType}' and '{valueType}'.");
-            return targetType;
-        }
-
-        private SimpleType CheckMultiplicativeCompoundAssignmentValue(
-            SyntaxNode assignment,
-            SyntaxNode value,
-            TypeScope scope,
-            SimpleType targetType,
-            SyntaxKind operatorKind,
-            bool allowFloatingDecimal = false)
-        {
-            var valueType = CheckExpression(value, scope);
-            if (!targetType.IsKnown || !valueType.IsKnown)
-            {
-                return targetType.IsKnown ? targetType : SimpleType.Unknown;
-            }
-
-            var operatorText = GetMultiplicativeAssignmentOperatorText(operatorKind);
-
-            if (!TryGetBinaryMultiplicativeCompoundResultType(targetType, valueType, allowFloatingDecimal, out var resultType))
-            {
-                var numericPolicy = allowFloatingDecimal
-                    ? "non-null primitive numeric values of a supported integral, floating-point, or decimal type"
-                    : "non-null primitive integral numeric values of a supported type";
-                ReportMismatch(
-                    assignment,
-                    $"Multiplicative compound assignment '{operatorText}' operands must be {numericPolicy}, but found '{targetType}' and '{valueType}'.");
-                return targetType;
-            }
-
-            if (resultType.IsKnown && !CanAssign(scope, targetType, resultType))
-            {
-                ReportMismatch(assignment, $"Cannot assign multiplicative compound assignment result of type '{resultType}' to '{targetType}'.");
-            }
-
             return targetType;
         }
 

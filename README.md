@@ -80,9 +80,8 @@ Design and implementation docs:
 - C# interop: [docs/src/content/docs/dotnet-interop.md](docs/src/content/docs/dotnet-interop.md)
 - Lowering reference: [docs/src/content/docs/lowering.md](docs/src/content/docs/lowering.md)
 - Feature status: [docs/src/content/docs/feature-status.md](docs/src/content/docs/feature-status.md)
-- Traceability: [agent/traceability.md](agent/traceability.md)
 
-The [docs](docs) folder is the canonical Astro Starlight documentation source. Agentic goal work, task packets, handoff, traceability, and execution control live under [agent](agent).
+The [docs](docs) folder is the canonical Astro Starlight documentation source. Short repository-local notes live under [agent](agent).
 
 ## Repository Map
 
@@ -92,7 +91,7 @@ The [docs](docs) folder is the canonical Astro Starlight documentation source. A
 | [lang](lang) | compiler, language server, runtime, and core library projects |
 | [test](test) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |
 | [docs](docs) | canonical Astro Starlight GitHub Pages documentation site |
-| [agent](agent) | temporary agentic work surface, task packets, traceability, and execution control |
+| [agent](agent) | short repository-local notes, ADR guidance, and the language 1.0 gap tracker |
 | [examples](examples) | single-file examples and runnable adoption projects |
 | [vscode](vscode) | VS Code extension workspace, syntax, formatter, and LSP client |
 
@@ -116,6 +115,6 @@ git ls-files "*.dll" "*.exe" "vscode/typesharp/server/*"
 
 ## Project Governance
 
-The project is being developed against the goal and success criteria in [docs Core Goal](docs/src/content/docs/goal.md). Work is tracked through [agent/tasks.md](agent/tasks.md), and completed behavior is connected back to requirements through [agent/traceability.md](agent/traceability.md).
+The project is being developed against the goal and success criteria in [docs Core Goal](docs/src/content/docs/goal.md).
 
-If you are here to use or evaluate TypeSharp, start with the quickstart above and the GitHub Pages docs. If you are here to continue implementation work, read [agent.md](agent.md), [agent/agentic-execution.md](agent/agentic-execution.md), and the latest entries in [agent/tasks.md](agent/tasks.md).
+If you are here to use or evaluate TypeSharp, start with the quickstart above and the GitHub Pages docs. If you are here to continue implementation work, read [agent.md](agent.md) and [agent/lang-1.0-tasks.md](agent/lang-1.0-tasks.md).

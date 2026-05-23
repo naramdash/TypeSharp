@@ -2,8 +2,6 @@
 
 Benchmark date: 2026-05-19
 
-Task rollup: [Documentation Process Release And Adoption](../../agent/tasks-rollup.md#documentation-process-release-and-adoption)
-
 This benchmark records the documentation information architecture patterns TypeSharp should match for real users. It uses official documentation indexes and navigation surfaces only; it summarizes structure and page archetypes without copying source prose.
 
 ## Sources And Inventory Method
@@ -39,7 +37,7 @@ Nuxt is strong at operational documentation:
 - Getting Started covers installation, configuration, views, assets, routing, SEO, transitions, data fetching, state, errors, server, layers, prerendering, deployment, testing, and upgrades.
 - Guide content explains auto-imports, rendering modes, server engine, runtime config, custom routing, lifecycle hooks, modules, and directory structure.
 - API content is grouped by components, composables, utilities, commands, configuration, and advanced framework APIs.
-- Recipes are short and task-oriented, especially for fetch customization and authentication/session concerns.
+- Recipes are short and workflow-oriented, especially for fetch customization and authentication/session concerns.
 
 TypeSharp takeaway: document project structure, command behavior, configuration files, generated output, and host deployment as first-class topics.
 
@@ -88,7 +86,7 @@ TypeSharp takeaway: TypeSharp docs need both a functional-language tour and a fo
 | Sequential tutorial | Strong | Strong | Moderate | Strong | Strong | Keep runnable tutorials tied to smoke-tested examples. |
 | Fundamentals / handbook | Strong | Strong | Strong | Strong | Strong | Expand TypeSharp fundamentals and add a one-page language tour. |
 | Practical guides | Strong | Strong | Moderate | Strong | Strong | Keep project, CLI, and interop guides separate from reference. |
-| Cookbook / recipes | Moderate | Strong | Low | Moderate | Low | Keep focused recipes for common .NET Framework tasks. |
+| Cookbook / recipes | Moderate | Strong | Low | Moderate | Low | Keep focused recipes for common .NET Framework workflows. |
 | Language reference | Strong | Moderate | Strong | Strong | Strong | Keep grammar/reference pages authoritative and non-linear. |
 | API reference | Strong | Strong | Strong | Strong | Strong | Separate CLI/API/config/runtime reference from prose guides. |
 | Configuration and commands | Moderate | Strong | Strong | Strong | Moderate | Document `TypeSharp.toml`, CLI commands, generated output, and LSP commands. |
@@ -102,12 +100,12 @@ TypeSharp takeaway: TypeSharp docs need both a functional-language tour and a fo
 | User level | Official-docs pattern | TypeSharp documentation requirement |
 | --- | --- | --- |
 | Beginner | Start with a path by background, then use a small runnable tutorial. Avoid forcing reference material first. | `Start Here`, `Learning Paths`, `Language Tour`, and `Tutorials` must explain what to do before listing internal architecture. |
-| Intermediate | Provide task guides, recipes, examples, config, commands, and troubleshooting. | `Guides`, `.NET Interop`, `Cookbook`, `Examples`, `CLI`, `Diagnostics`, and `Troubleshooting` must answer day-to-day project questions. |
+| Intermediate | Provide workflow guides, recipes, examples, config, commands, and troubleshooting. | `Guides`, `.NET Interop`, `Cookbook`, `Examples`, `CLI`, `Diagnostics`, and `Troubleshooting` must answer day-to-day project questions. |
 | Advanced | Provide formal reference, API details, compiler behavior, versioning, and platform contracts. | `Grammar`, `Language Reference`, `API`, `Advanced Topics`, `Goal`, and repository design docs must make stability boundaries explicit. |
 
 ## TypeSharp Gap Matrix
 
-| Gap before Task 0150 | Benchmark source | docs improvement |
+| Gap before update | Benchmark source | docs improvement |
 | --- | --- | --- |
 | Background-based entry existed but did not give a full curriculum by skill level. | TypeScript Get Started, C# Choose your path, F# Learn to program | Added `learning-paths.md` and linked it from `index.md` and `start-here.md`. |
 | Fundamentals page was compact and assumed too much prior language knowledge. | TypeScript Handbook, Vue Guide, F# fundamentals | Added `language-tour.md` as a one-page guided explanation before deep reference. |
@@ -118,7 +116,7 @@ TypeSharp takeaway: TypeSharp docs need both a functional-language tour and a fo
 
 ## Prioritized docs Improvements
 
-Completed in Task 0150:
+Completed in the initial update:
 
 1. Add background and skill-level learning paths.
 2. Add a human-readable language tour that sits before the formal grammar/reference pages.

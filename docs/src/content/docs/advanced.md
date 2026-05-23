@@ -155,4 +155,4 @@ Do not infer support from a design note alone. A feature becomes user-facing onl
 | Preview watch | Tracked because related languages or .NET are moving. |
 | Rejected | Intentionally not part of the current language direction. |
 
-Use [Feature Status](../feature-status/), [Project Policy](../project-policy/), task packets, and traceability bridge docs when deciding whether a feature is safe to rely on.
+Use [Feature Status](../feature-status/), [Project Policy](../project-policy/), linked docs, and test evidence when deciding whether a feature is safe to rely on.

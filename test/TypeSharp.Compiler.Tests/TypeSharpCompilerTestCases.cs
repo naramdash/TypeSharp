@@ -25338,7 +25338,7 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.NullConditionalIndexerMultiplicativeCompoundAssignment
 
-            import { LegacyDecimalIndexer, LegacyDoubleIndexer, LegacyFields, LegacyFloatIndexer, LegacyMutableIndexer } from "Legacy.Tools"
+            import { LegacyDecimalIndexer, LegacyDoubleIndexer, LegacyFields, LegacyFloatIndexer, LegacyMutableIndexer, LegacyQuantity, LegacyQuantityIndexer } from "Legacy.Tools"
 
             fun makeIndexer(value: int): LegacyMutableIndexer {
               let indexer: LegacyMutableIndexer = LegacyMutableIndexer()
@@ -25346,7 +25346,16 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
               indexer
             }
 
+            fun makeQuantityIndexer(value: int): LegacyQuantityIndexer {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer[1] = LegacyQuantity(value)
+              indexer
+            }
+
             fun missingIndexer(): LegacyMutableIndexer? =
+              null
+
+            fun missingQuantityIndexer(): LegacyQuantityIndexer? =
               null
 
             fun makeIndex(): int {
@@ -25412,6 +25421,25 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
               indexer[0]
             }
 
+            export fun multiplyQuantityAt(value: int, factor: int): LegacyQuantity {
+              let indexer: LegacyQuantityIndexer = makeQuantityIndexer(value)
+              indexer?[1] *= factor
+              indexer?[1] /= 2
+              indexer?[1] %= 5
+              indexer[1]
+            }
+
+            export fun skippedQuantity(): string {
+              LegacyFields.MutableStaticName = "ready"
+              let indexer: LegacyQuantityIndexer? = missingQuantityIndexer()
+              indexer?[makeIndex()] *= makeFactor()
+              LegacyFields.MutableStaticName
+            }
+
+            export fun nonTrivialQuantity(value: int): LegacyQuantity {
+              makeQuantityIndexer(value)?[makeIndex()] *= 3
+            }
+
             export fun checkedAt(value: int, factor: int): int {
               let indexer: LegacyMutableIndexer = makeIndexer(value)
               checked(indexer?[1] *= factor)
@@ -25472,6 +25500,10 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
         AssertContains("new System.Func<LegacyDecimalIndexer, decimal>(__tsReceiver", generatedSource);
         AssertContains(" == null ? default(decimal) : new System.Func<int, decimal>((__tsIndex", generatedSource);
         AssertContains("] /= 2m)", generatedSource);
+        AssertContains("new System.Func<LegacyQuantityIndexer, Legacy.Tools.LegacyQuantity>(__tsReceiver", generatedSource);
+        AssertContains(" == null ? default(Legacy.Tools.LegacyQuantity) : new System.Func<int, Legacy.Tools.LegacyQuantity>((__tsIndex", generatedSource);
+        AssertContains("] /= 2)", generatedSource);
+        AssertContains("] %= 5)", generatedSource);
         AssertContains("if (__tsReceiver", generatedSource);
         AssertContains("=> { checked { return (__tsReceiver", generatedSource);
         AssertContains("] *= factor); }", generatedSource);
@@ -25487,6 +25519,7 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
             "Generated checked null-conditional indexer multiplicative assignment should place the checked block inside the null/index guard lowering.");
         AssertFalse(generatedSource.Contains("?[", StringComparison.Ordinal), "Generated C# 7.3 source should not emit null-conditional indexer multiplicative assignment syntax.");
         AssertFalse(generatedSource.Contains("makeIndexer(value)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional multiplicative indexer receiver or argument.");
+        AssertFalse(generatedSource.Contains("makeQuantityIndexer(value)[makeIndex()]", StringComparison.Ordinal), "Generated C# should not duplicate a non-trivial null-conditional user-defined multiplicative indexer receiver or argument.");
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NullConditionalIndexerMultiplicativeCompoundAssignmentApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with null-conditional imported indexer multiplicative compound assignment APIs.");
@@ -25535,6 +25568,9 @@ static void CliBuildCompilesNullConditionalImportedIndexerMultiplicativeCompound
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleFloatAt(13f, 3) == 1f &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDoubleAt(13.0, 3f) == 1.0 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.scaleDecimalAt(13m, 3) == 1.5m &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.multiplyQuantityAt(13, 3).Value == 4 &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.skippedQuantity() == "ready" &&
+                            Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.nonTrivialQuantity(11).Value == 33 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.checkedAt(13, 3) == 4 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.uncheckedAt(16, 4) == 2 &&
                             Samples.NullConditionalIndexerMultiplicativeCompoundAssignment.Module.checkedSkipped() == "ready" &&
@@ -25572,7 +25608,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.InvalidNullConditionalIndexerMultiplicativeCompoundAssignment
 
-            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyByteIndexer, LegacyColor, LegacyColorIndexer, LegacyDecimalIndexer, LegacyDualNamed, LegacyFields, LegacyFloatIndexer, LegacyMutableIndexer, LegacyStringIndexer } from "Legacy.Tools"
+            import { LegacyAmbiguousIndexer, LegacyBoolIndexer, LegacyBrokenQuantityIndexer, LegacyByteIndexer, LegacyColor, LegacyColorIndexer, LegacyDecimalIndexer, LegacyDualNamed, LegacyFields, LegacyFloatIndexer, LegacyMutableIndexer, LegacyOperatorLeftIndexer, LegacyOperatorRight, LegacyQuantityIndexer, LegacyScalarIndexer, LegacyStringIndexer } from "Legacy.Tools"
 
             record Counter {
               Value: int
@@ -25696,6 +25732,31 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
               checked(counter?[1] *= 2)
               0
             }
+
+            export fun missingOperatorNullConditional(): int {
+              let indexer: LegacyScalarIndexer = LegacyScalarIndexer()
+              indexer?[0] *= 2
+              0
+            }
+
+            export fun nonAssignableNullConditional(): int {
+              let indexer: LegacyBrokenQuantityIndexer = LegacyBrokenQuantityIndexer()
+              indexer?[0] *= 2
+              0
+            }
+
+            export fun ambiguousOperatorNullConditional(): int {
+              let indexer: LegacyOperatorLeftIndexer = LegacyOperatorLeftIndexer()
+              let right: LegacyOperatorRight = LegacyOperatorRight(2)
+              indexer?[0] *= right
+              0
+            }
+
+            export fun nullableQuantityFactorNullConditional(factor: int?): int {
+              let indexer: LegacyQuantityIndexer = LegacyQuantityIndexer()
+              indexer?[0] *= factor
+              0
+            }
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
@@ -25757,6 +25818,32 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
                 diagnostic.Code == "TS2402" &&
                 diagnostic.Message.Contains("matches 2 indexer candidates", StringComparison.Ordinal)),
             "Ambiguous null-conditional imported indexer multiplicative arguments should reuse existing interop ambiguity diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
+            $"Null-conditional imported indexer target without a matching static binary operator should be rejected.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
+            $"Null-conditional imported indexer target whose user-defined operator result cannot assign back should be rejected.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
+            $"Ambiguous imported static binary operators should be rejected for null-conditional indexer targets.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
+            $"Nullable factor operands should not bind imported static user-defined operators for null-conditional indexer targets.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
     });
 }
 

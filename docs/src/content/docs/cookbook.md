@@ -1,6 +1,6 @@
 ---
 title: Cookbook
-description: Short TypeSharp recipes for common project tasks.
+description: Short TypeSharp recipes for common project workflows.
 ---
 
 ## Call A Local C# DLL

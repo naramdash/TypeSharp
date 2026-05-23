@@ -87,4 +87,4 @@ Longer docs authoring rules live in [Writing Guide](../writing-guide/). These lo
 
 ## Repository Artifact Location
 
-As of task `0251`, raw example source and runnable projects live outside `docs/` under `examples/`. docs owns the narrative catalog, while the root `examples/` tree remains the smoke-tested source/project artifact area.
+Raw example source and runnable projects live outside `docs/` under `examples/`. docs owns the narrative catalog, while the root `examples/` tree remains the smoke-tested source/project artifact area.

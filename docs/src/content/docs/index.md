@@ -7,7 +7,7 @@ TypeSharp targets generated `.NET Framework 4.8` artifacts while bringing modern
 
 TypeSharp is currently a preview project. The compiler, CLI, generated C# backend, runtime libraries, VS Code extension, and smoke-tested examples are in the repository, but the language is still being built and stabilized.
 
-This site is the canonical publishing surface for standard language and project ledger documentation since task `0251-docs-canonical-language-ledger`. Since task `0257-docs-agent-directory-rename`, `docs/` is the site source and `agent/` is the temporary operating area for agentic goal work, active task packets, `tasks-rollup.md`, traceability, and handoff state.
+This site is the canonical publishing surface for TypeSharp language, tooling, and project documentation.
 
 ## Start Here
 
@@ -15,7 +15,7 @@ This site is the canonical publishing surface for standard language and project 
 - [Learning Paths](learning-paths/) gives beginner, C# maintainer, TypeScript, F#, and advanced routes.
 - [Language Tour](language-tour/) explains the language before the formal reference.
 - [Tutorials](tutorials/) lists runnable, sequential learning paths.
-- [Guides](guides/) explains everyday project, CLI, interop, and modeling tasks.
+- [Guides](guides/) explains everyday project, CLI, interop, and modeling workflows.
 - [Project Configuration](project-configuration/) explains `TypeSharp.toml`, source roots, generated output, references, and build shape.
 - [Modules And Imports](modules/) explains source module paths, imports, exports, namespaces, and generated containers.
 - [Type System](type-system/) explains inference, null safety, `unknown`, `dynamic`, structural shapes, intersection aliases, unions, generics, and public ABI boundaries.
@@ -28,11 +28,9 @@ This site is the canonical publishing surface for standard language and project 
 - [API And CLI Reference](api/) collects CLI, manifest, runtime/core, generated assembly, and VS Code reference material.
 - [Advanced Topics](advanced/) connects lowering, public ABI, metadata, diagnostics, LSP, and regression strategy.
 - [Troubleshooting](troubleshooting/) maps common failures to diagnostics and checks.
-- [Project Ledger](project-ledger/) groups the canonical project records and remaining agent work records.
+- [Project Ledger](project-ledger/) groups the canonical project records.
 - [Project Requirements](requirements/) lists required platform, language, compiler, interop, tooling, quality, and security constraints.
-- [Document Ownership](document-ownership/) tracks former operational docs files, docs canonical owners, and remaining agentic work records.
-- [Work Ledger](work-ledger/) shows the current long-running task state and compressed completed-work rollup.
-- [Agentic Workflow](agentic-workflow/) explains how Codex CLI goal and long-running agents should use the canonical records without treating the website as the task queue.
+- [Document Ownership](document-ownership/) tracks docs canonical owners.
 
 ## Fastest Safe Check
 

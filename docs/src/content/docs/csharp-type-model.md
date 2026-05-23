@@ -162,7 +162,7 @@ export fun countNames(names: List<string>): int =
   names.Count
 ```
 
-Tuple and anonymous object public boundaries remain unsuitable unless a TypeSharp task explicitly defines their CLR metadata policy. Prefer named records for public data.
+Tuple and anonymous object public boundaries remain unsuitable unless a TypeSharp design update explicitly defines their CLR metadata policy. Prefer named records for public data.
 
 ## Function Types And Delegates
 
@@ -192,7 +192,7 @@ export async fun refreshAsync(id: InvoiceId): Task<InvoiceId> {
 }
 ```
 
-Generated code must remain compatible with .NET Framework 4.8. Do not document APIs that require newer runtime-only task features unless they are explicitly preview-gated and backed by compatibility evidence.
+Generated code must remain compatible with .NET Framework 4.8. Do not document APIs that require newer runtime-only async features unless they are explicitly preview-gated and backed by compatibility evidence.
 
 ## Public Type Decision Matrix
 

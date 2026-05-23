@@ -60,7 +60,7 @@ Start with:
 
 ## Current Maturity
 
-Implemented features are backed by smoke tests or fixtures. Planned and backlog items are documented separately and should not be treated as production guarantees. Use [Feature Status](../feature-status/) for the canonical status map. [Document Ownership](../document-ownership/) tracks canonical docs ownership and the remaining temporary agent work records.
+Implemented features are backed by smoke tests or fixtures. Planned and backlog items are documented separately and should not be treated as production guarantees. Use [Feature Status](../feature-status/) for the canonical status map. [Document Ownership](../document-ownership/) tracks canonical docs ownership.
 
 ## Fast First Command
 
