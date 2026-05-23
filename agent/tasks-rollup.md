@@ -10024,6 +10024,68 @@ Remaining:
 - Task 0472 remains active for the roadmap refresh after imported C# regular indexer user-defined multiplicative operator policy and the completed Task 0401 CI fix.
 - The next GitHub Actions regression run should be monitored to confirm the hosted runner passes the previously failing shard step.
 
+## Task 0472 Roadmap Refresh After Imported C# Regular Indexer User-Defined Multiplicative Operator Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Rechecked official C#, F#, TypeScript, .NET Framework, .NET, NuGet, .NET testing, MSTest SDK, xUnit.net, NUnit, VS Code, and GitHub Actions signals after Task 0471 and the completed Task 0401 CI process-launch fix.
+- Preserved generated package-free `net48`, generated C# 7.3 compatibility, deterministic diagnostics, the 574 shared-case catalog, package-free shard expectations `144`, `144`, `143`, and `143`, and the 578-test MTP package-shard minimum.
+- Confirmed current ecosystem signals remain unchanged: C# 14 is stable on .NET 10 and includes null-conditional assignment plus user-defined compound assignment operators; C# 15 remains preview on .NET 11 preview; TypeScript 6.0 remains stable while TypeScript 7.0 Beta remains preview/tooling input; F# 10 remains refinement/tooling input; .NET Framework 4.8.1 remains the latest Framework while TypeSharp keeps broad generated `net48`; .NET 10 remains active LTS at 10.0.8/SDK 10.0.300; .NET 11 remains preview at 11.0.0-preview.4/SDK 11.0.100-preview.4; VS Code stable API reports 1.121.0.
+- Rechecked NuGet package signals as `MSTest.Sdk/4.2.3`, stable `xunit.v3` 3.2.2 with prerelease 4.0.0-pre.108 in the flat-container feed, NUnit 4.6.1, and NUnit3TestAdapter 6.2.0, and kept the existing MSTest.Sdk/MTP test-host package path.
+- Confirmed GitHub Actions regression run `26324313960` succeeded after the Task 0401 fix and passed the previously failing `Run shard runners in parallel` step, so Task 0401 remains complete.
+- Selected Task 0473 as the next bounded implementation slice: imported C# null-conditional field/property member user-defined multiplicative operator assignment before null-conditional indexer, checked user-defined, TypeSharp-authored, true C# 14 instance compound-assignment, or broader overload-ranking expansion.
+
+Official sources reviewed:
+
+- Microsoft Learn [C# language versioning](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning), [What's new in C# 14](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14), [What's new in C# 15](https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-15), and the C# 14 [user-defined compound assignment speclet](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-14.0/user-defined-compound-assignment).
+- Microsoft Learn [F# strategy](https://learn.microsoft.com/en-us/dotnet/fsharp/strategy) and [What's new in F# 10](https://learn.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-10).
+- TypeScript docs [TypeScript 6.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), TypeScript blog [Announcing TypeScript 6.0](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/), and TypeScript blog [Announcing TypeScript 7.0 Beta](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/).
+- .NET release metadata [releases-index.json](https://builds.dotnet.microsoft.com/dotnet/release-metadata/releases-index.json), .NET downloads [.NET 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), [.NET 11.0](https://dotnet.microsoft.com/en-us/download/dotnet/11.0), .NET Framework [support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-framework), Microsoft Learn [.NET Framework versions and dependencies](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies), and Microsoft Learn [target framework monikers](https://learn.microsoft.com/en-us/dotnet/standard/frameworks).
+- Microsoft Learn [`PackageReference` lock files](https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies), [`dotnet restore` auditing](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-restore#audit-for-security-vulnerabilities), [package source mapping](https://learn.microsoft.com/en-us/nuget/consume-packages/package-source-mapping), [trusted signers](https://learn.microsoft.com/en-us/nuget/reference/cli-reference/cli-ref-trusted-signers), [.NET test platforms overview](https://learn.microsoft.com/en-us/dotnet/core/testing/test-platforms-overview), [`dotnet test` with MTP](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test), [MSTest runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-running-tests), and [MSTest SDK configuration](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-sdk).
+- NuGet [`MSTest.Sdk`](https://www.nuget.org/packages/MSTest.Sdk), NuGet [`xunit.v3`](https://www.nuget.org/packages/xunit.v3), xUnit.net [MTP guidance](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform), NUnit [MTP guidance](https://docs.nunit.org/articles/vs-test-adapter/NUnit-And-Microsoft-Test-Platform.html), NuGet [`NUnit`](https://www.nuget.org/packages/NUnit), and NuGet [`NUnit3TestAdapter`](https://www.nuget.org/packages/NUnit3TestAdapter).
+- VS Code [stable release API](https://update.code.visualstudio.com/api/releases/stable), VS Code [1.121 release notes](https://code.visualstudio.com/updates/v1_121), VS Code [1.122 release notes](https://code.visualstudio.com/updates/v1_122), GitHub [`actions/runner-images`](https://github.com/actions/runner-images), [`actions/setup-node`](https://github.com/actions/setup-node), [`actions/setup-dotnet`](https://github.com/actions/setup-dotnet), and the [Windows Server 2025 + Visual Studio 2026 migration issue](https://github.com/actions/runner-images/issues/14017).
+
+Primary evidence:
+
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+- [Task 0473 packet](0473-imported-csharp-null-conditional-member-user-defined-multiplicative-operator-policy.md)
+
+Verification:
+
+```powershell
+gh auth status
+gh run list --workflow regression.yml --limit 8 --json databaseId,displayTitle,status,conclusion,event,headBranch,headSha,createdAt,url
+gh run view 26324313960 --json name,workflowName,conclusion,status,url,event,headBranch,headSha,createdAt,updatedAt,jobs
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "MSTest package shard bridge projects are stable"
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 578 --no-progress
+npm run build # in docs
+rg -n "0472-roadmap-refresh-after-imported-csharp-regular-indexer-user-defined-multiplicative-operator-policy\.md|Task 0472 is active|Task 0472 should|TBD pending final verification|Completed work covered \| 0001-0471|Completed range\s*\| 0001-0471" agent docs\src\content\docs\work-ledger.md docs\src\content\docs\project-policy.md test .github --glob "!agent/tasks-rollup.md"
+rg -n "AssertEqual\(572|Assert\.AreEqual\(572|--minimum-expected-tests 576|minimum-expected-tests 576|Task 0401 remains blocked|awaits explicit approval for a C# process-launch fix" test .github agent docs\src\content\docs\project-policy.md docs\src\content\docs\work-ledger.md test\README.md --glob "!agent/tasks-rollup.md"
+git diff --check
+```
+
+Result: All listed commands passed. The latest post-fix GitHub Actions regression run succeeded and its shard runner step passed, the compiler test project built cleanly, the focused shard-selection and MSTest bridge stability checks passed, the MSTest bridge plus four shard projects built successfully, the MTP module-level package-shard run executed 578 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scans found no stale Task 0472 active-packet references, stale completed-range pointers, stale 576-test constants, or stale Task 0401 blocked-status wording outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0473 is active for imported C# null-conditional field/property member user-defined multiplicative operator assignment.
+- Imported C# null-conditional indexer user-defined operator targets, checked user-defined operators, TypeSharp-authored operators, true C# 14 instance compound-assignment operators, and broader overload ranking remain future slices.
+
 ## Verification Summary
 
 Representative commands used across the completed range:
@@ -10048,7 +10110,7 @@ Representative focused smoke areas:
 
 Done:
 
-- Completed historical work through task 0471 is compressed here.
+- Completed historical work through task 0472 is compressed here.
 - `agent/tasks.md` is the active task pointer.
 - `agent/tasks-rollup.md` is the only completed task rollup file.
 
