@@ -12,6 +12,7 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 ## Start Here
 
 - [Start Here](start-here/) helps new users choose the right path.
+- [Install](install/) shows the release zip, checksum, wrapper command, and first project flow.
 - [Learning Paths](learning-paths/) gives beginner, C# maintainer, TypeScript, F#, and advanced routes.
 - [Language Tour](language-tour/) explains the language before the formal reference.
 - [Tutorials](tutorials/) lists runnable, sequential learning paths.
@@ -32,21 +33,32 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 - [Project Requirements](requirements/) lists required platform, language, compiler, interop, tooling, quality, and security constraints.
 - [Document Ownership](document-ownership/) tracks docs canonical owners.
 
-## Fastest Safe Check
+## Install
+
+Preview releases use GitHub Release assets:
+
+- `typesharp-cli-dotnet-<tag>.zip` for the framework-dependent CLI host and `typesharp.cmd` wrapper,
+- `typesharp-runtime-net48-<tag>.zip` for `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll`,
+- `SHA256SUMS.txt` for release asset verification.
+
+Start with [Install](install/) for the download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the source-built fallback below.
+
+## Fastest Safe Check From Source
 
 From the repository root:
 
 ```powershell
 dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
+$tysh = "dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll"
+& $tysh version
 ```
 
 Then create a starter project:
 
 ```powershell
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll check .\scratch\HelloTypeSharp\TypeSharp.toml
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll build .\scratch\HelloTypeSharp\TypeSharp.toml
+& $tysh new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
+& $tysh check .\scratch\HelloTypeSharp\TypeSharp.toml
+& $tysh build .\scratch\HelloTypeSharp\TypeSharp.toml
 ```
 
 `typesharp run` is supported for executable projects. If local antivirus blocks the generated `.exe`, `check` and `build` still prove the compiler path.

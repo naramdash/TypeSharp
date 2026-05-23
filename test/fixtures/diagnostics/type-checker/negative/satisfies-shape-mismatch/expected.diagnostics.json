@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2220",
       "severity": "error",
       "message": "Type 'HasAge' is missing required member 'Name' for structural type 'Named'.",
       "file": "input.tysh",

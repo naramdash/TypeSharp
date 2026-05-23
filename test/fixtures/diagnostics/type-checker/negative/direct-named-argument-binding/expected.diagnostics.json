@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'decorate' has no parameter named 'text'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 11, "column": 41 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'decorate' requires argument for parameter 'value'.",
       "file": "input.tysh",
@@ -17,7 +17,7 @@
       "end": { "line": 11, "column": 42 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'decorate' parameter 'value' is supplied more than once.",
       "file": "input.tysh",
@@ -25,7 +25,7 @@
       "end": { "line": 12, "column": 53 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'decorate' positional arguments cannot follow named arguments.",
       "file": "input.tysh",
@@ -33,7 +33,7 @@
       "end": { "line": 13, "column": 57 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'add' requires argument for parameter 'left'.",
       "file": "input.tysh",
@@ -41,7 +41,7 @@
       "end": { "line": 14, "column": 36 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'add' argument 1 expects 'int', but found 'string'.",
       "file": "input.tysh",
@@ -49,7 +49,7 @@
       "end": { "line": 15, "column": 41 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Pipeline target 'decorate' already receives parameter 'value' from the pipeline input.",
       "file": "input.tysh",
@@ -57,7 +57,7 @@
       "end": { "line": 16, "column": 64 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Pipeline target 'tri' requires argument for parameter 'second' after pipeline lowering.",
       "file": "input.tysh",
@@ -65,7 +65,7 @@
       "end": { "line": 17, "column": 49 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Named arguments cannot be used with TypeSharp params parameter function 'collect' in this slice.",
       "file": "input.tysh",

@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'identity' argument 1 expects 'string', but found 'int'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 19, "column": 43 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'identity' expects 1 generic type argument, but call supplies 2 generic type arguments.",
       "file": "input.tysh",
@@ -17,7 +17,7 @@
       "end": { "line": 20, "column": 54 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'swap' expects 2 generic type arguments, but call supplies 1 generic type argument.",
       "file": "input.tysh",
@@ -25,7 +25,7 @@
       "end": { "line": 21, "column": 47 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'choose' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
       "file": "input.tysh",
@@ -33,7 +33,7 @@
       "end": { "line": 22, "column": 38 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2229",
       "severity": "error",
       "message": "Cannot assign expression of type 'int' to 'string'.",
       "file": "input.tysh",
@@ -41,7 +41,7 @@
       "end": { "line": 23, "column": 41 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2229",
       "severity": "error",
       "message": "Cannot assign expression of type 'bool' to 'int'.",
       "file": "input.tysh",
@@ -49,7 +49,7 @@
       "end": { "line": 24, "column": 64 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'chooseArray' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
       "file": "input.tysh",
@@ -57,7 +57,7 @@
       "end": { "line": 27, "column": 61 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'keepArray' argument 1 expects 'string[]', but found 'int[]'.",
       "file": "input.tysh",
@@ -65,7 +65,7 @@
       "end": { "line": 28, "column": 56 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2229",
       "severity": "error",
       "message": "Cannot assign expression of type 'int[]' to 'string[]'.",
       "file": "input.tysh",
@@ -73,7 +73,7 @@
       "end": { "line": 29, "column": 56 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'chooseList' cannot infer generic type parameter 'T' consistently: argument 1 inferred 'int', but argument 2 inferred 'string'.",
       "file": "input.tysh",
@@ -81,7 +81,7 @@
       "end": { "line": 32, "column": 57 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Function 'keepList' argument 1 expects 'List<int>', but found 'List<string>'.",
       "file": "input.tysh",
@@ -89,7 +89,7 @@
       "end": { "line": 33, "column": 51 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2229",
       "severity": "error",
       "message": "Cannot assign expression of type 'List<int>' to 'List<string>'.",
       "file": "input.tysh",

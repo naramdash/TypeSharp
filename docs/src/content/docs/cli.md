@@ -41,7 +41,7 @@ typesharp test [project]
 
 ### `typesharp version`
 
-Prints CLI, compiler, language, runtime ABI, and default target information. It must run without loading a project and supports JSON output for scripts and CI.
+Prints CLI, compiler, language, release channel, runtime ABI, default target, CLI host target, runtime target, release artifact kind, build metadata, and source revision information. It must run without loading a project and supports JSON output for scripts and CI.
 
 Recommended text shape:
 
@@ -49,8 +49,15 @@ Recommended text shape:
 TypeSharp CLI 0.1.0-preview
 Compiler 0.1.0-preview
 Language preview
+Release channel Preview
 Runtime ABI 0
+Runtime ABI status preview
 Target default net48
+CLI target net10.0
+Runtime target net48
+Artifact kind framework-dependent-dotnet
+Build metadata local
+Source revision unknown
 ```
 
 ### `typesharp new`
@@ -64,6 +71,7 @@ Generated starter files:
 - `TypeSharp.toml`
 - `src/Main.tysh` or `src/Library.tysh`
 - `.gitignore`
+- `README.md`
 
 ### `typesharp check`
 
@@ -97,7 +105,7 @@ Project build/run commands also accept `--target net48`. The override is validat
 
 When a manifest contains `[projectReferences]`, `build` builds direct referenced projects before the dependent project and writes explicit local references to the referenced generated assemblies into the dependent generated C# project.
 
-`typesharp build` does not restore NuGet packages today. Manifests with `references.packages` report `TS2405`; a future restore path must be explicit about lock files, package source mapping, auditing, license inventory, checksums/signatures, and whether any MSBuild package targets are allowed to execute.
+The 1.0 dependency scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. `typesharp build` does not restore NuGet packages. Manifests with `references.packages` report `TS2405`; a future restore path must be explicit about lock files, package source mapping, auditing, license inventory, checksums/signatures, and whether any MSBuild package targets are allowed to execute.
 
 `typesharp build --verbosity quiet|minimal|normal|diagnostic` controls success logging: quiet suppresses artifact logs, minimal reports only the final assembly, normal reports generated source/project/assembly paths, and diagnostic adds option summary lines.
 

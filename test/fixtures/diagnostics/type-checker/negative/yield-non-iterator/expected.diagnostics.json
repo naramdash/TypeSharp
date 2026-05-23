@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2224",
+      "severity": "error",
+      "message": "Yield expression requires a function returning 'IEnumerable<T>' or 'IEnumerator<T>'.",
+      "file": "input.tysh",
+      "start": { "line": 4, "column": 3 },
+      "end": { "line": 4, "column": 11 }
+    }
+  ]
+}

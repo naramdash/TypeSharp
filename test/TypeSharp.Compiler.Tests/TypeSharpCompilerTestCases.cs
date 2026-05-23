@@ -31,11 +31,53 @@ static void VersionDefaultsMatchCliContract()
     AssertEqual("preview", TypeSharpCompilerInfo.LanguageVersion);
     AssertEqual(0, TypeSharpCompilerInfo.RuntimeAbiVersion);
     AssertEqual("net48", TypeSharpCompilerInfo.DefaultTargetFramework);
+    AssertEqual("net10.0", TypeSharpCompilerInfo.CliTargetFramework);
+    AssertEqual("net48", TypeSharpCompilerInfo.RuntimeTargetFramework);
+    AssertEqual("framework-dependent-dotnet", TypeSharpCompilerInfo.ArtifactKind);
+    AssertEqual("Preview", TypeSharpCompilerInfo.ReleaseChannel);
+    AssertEqual("preview", TypeSharpCompilerInfo.RuntimeAbiStatus);
+    AssertEqual("local", TypeSharpCompilerInfo.BuildMetadata);
+    AssertEqual("unknown", TypeSharpCompilerInfo.SourceRevision);
+
+    using var textOutput = new StringWriter();
+    using var textError = new StringWriter();
+    AssertEqual(0, TypeSharpCli.Run(["version"], textOutput, textError));
+    AssertEqual(string.Empty, textError.ToString());
+    AssertContains("TypeSharp CLI 0.1.0-preview", textOutput.ToString());
+    AssertContains("Compiler 0.1.0-preview", textOutput.ToString());
+    AssertContains("Language preview", textOutput.ToString());
+    AssertContains("Release channel Preview", textOutput.ToString());
+    AssertContains("Runtime ABI 0", textOutput.ToString());
+    AssertContains("Runtime ABI status preview", textOutput.ToString());
+    AssertContains("Target default net48", textOutput.ToString());
+    AssertContains("CLI target net10.0", textOutput.ToString());
+    AssertContains("Runtime target net48", textOutput.ToString());
+    AssertContains("Artifact kind framework-dependent-dotnet", textOutput.ToString());
+    AssertContains("Build metadata local", textOutput.ToString());
+    AssertContains("Source revision unknown", textOutput.ToString());
+
+    using var jsonOutput = new StringWriter();
+    using var jsonError = new StringWriter();
+    AssertEqual(0, TypeSharpCli.Run(["version", "--json"], jsonOutput, jsonError));
+    AssertEqual(string.Empty, jsonError.ToString());
+    using var json = JsonDocument.Parse(jsonOutput.ToString());
+    AssertEqual("0.1.0-preview", json.RootElement.GetProperty("cli").GetString());
+    AssertEqual("0.1.0-preview", json.RootElement.GetProperty("compiler").GetString());
+    AssertEqual("preview", json.RootElement.GetProperty("language").GetString());
+    AssertEqual("Preview", json.RootElement.GetProperty("releaseChannel").GetString());
+    AssertEqual(0, json.RootElement.GetProperty("runtimeAbi").GetInt32());
+    AssertEqual("preview", json.RootElement.GetProperty("runtimeAbiStatus").GetString());
+    AssertEqual("net48", json.RootElement.GetProperty("targetDefault").GetString());
+    AssertEqual("net10.0", json.RootElement.GetProperty("cliTargetFramework").GetString());
+    AssertEqual("net48", json.RootElement.GetProperty("runtimeTargetFramework").GetString());
+    AssertEqual("framework-dependent-dotnet", json.RootElement.GetProperty("artifactKind").GetString());
+    AssertEqual("local", json.RootElement.GetProperty("buildMetadata").GetString());
+    AssertEqual("unknown", json.RootElement.GetProperty("sourceRevision").GetString());
 }
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(574, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(586, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -86,10 +128,10 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(144, shardCounts[0]);
-    AssertEqual(144, shardCounts[1]);
-    AssertEqual(143, shardCounts[2]);
-    AssertEqual(143, shardCounts[3]);
+    AssertEqual(146, shardCounts[0]);
+    AssertEqual(146, shardCounts[1]);
+    AssertEqual(145, shardCounts[2]);
+    AssertEqual(145, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -147,6 +189,27 @@ static void DiagnosticDescriptorRegistryIsStable()
             "TS2207",
             "TS2208",
             "TS2209",
+            "TS2210",
+            "TS2211",
+            "TS2212",
+            "TS2213",
+            "TS2214",
+            "TS2215",
+            "TS2216",
+            "TS2217",
+            "TS2218",
+            "TS2219",
+            "TS2220",
+            "TS2221",
+            "TS2222",
+            "TS2223",
+            "TS2224",
+            "TS2225",
+            "TS2226",
+            "TS2227",
+            "TS2228",
+            "TS2229",
+            "TS2230",
             "TS2401",
             "TS2402",
             "TS2403",
@@ -212,12 +275,718 @@ static void CliNewCreatesConsoleProject()
         AssertTrue(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "Console template should create a manifest.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Main.tysh")), "Console template should create src/Main.tysh.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, ".gitignore")), "Console template should create .gitignore.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "Console template should create README.md.");
         AssertContains("outputType = \"exe\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
         AssertContains("main = \"HelloApp.main\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
         AssertContains("export fun main(): string", File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh")));
+        var readme = File.ReadAllText(Path.Combine(projectRoot, "README.md"));
+        AssertContains("# HelloApp", readme);
+        AssertContains("typesharp check TypeSharp.toml", readme);
+        AssertContains("typesharp build TypeSharp.toml", readme);
+        AssertContains("typesharp run TypeSharp.toml", readme);
 
         var checkExitCode = TypeSharpCli.Run(["check", Path.Combine(projectRoot, "TypeSharp.toml")], new StringWriter(), new StringWriter());
         AssertEqual(0, checkExitCode);
+    });
+}
+
+static void CliCleanConsoleProjectNewCheckBuildRunFlowIsStable()
+{
+    WithWorkspace(root =>
+    {
+        var projectRoot = Path.Combine(root, "HelloTypeSharp");
+        var manifestPath = Path.Combine(projectRoot, "TypeSharp.toml");
+
+        using var versionOutput = new StringWriter();
+        using var versionError = new StringWriter();
+        var versionExitCode = TypeSharpCli.Run(["version"], versionOutput, versionError);
+
+        AssertEqual(0, versionExitCode);
+        AssertContains("TypeSharp CLI", versionOutput.ToString());
+        AssertEqual(string.Empty, versionError.ToString());
+
+        using var newOutput = new StringWriter();
+        using var newError = new StringWriter();
+        var newExitCode = TypeSharpCli.Run(["new", "console", "HelloTypeSharp", "--target", "net48", "--output", projectRoot], newOutput, newError);
+
+        AssertEqual(0, newExitCode);
+        AssertContains("Created TypeSharp console project", newOutput.ToString());
+        AssertEqual(string.Empty, newError.ToString());
+        AssertTrue(File.Exists(manifestPath), "New should create TypeSharp.toml in the clean project directory.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Main.tysh")), "New should create src/Main.tysh in the clean project directory.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "New should create README.md in the clean project directory.");
+
+        RunCliCommand(["check", manifestPath], expectedExitCode: 0);
+        RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "Program.g.cs")), "Build should emit a generated entry point for the new console project.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "HelloTypeSharp.exe")), "Build should produce the generated net48 executable.");
+
+        using var runOutput = new StringWriter();
+        using var runError = new StringWriter();
+        var runExitCode = TypeSharpCli.Run(["run", manifestPath], runOutput, runError);
+
+        if (runExitCode == 0)
+        {
+            AssertEqual($"Hello, TypeSharp{Environment.NewLine}", runOutput.ToString());
+            AssertEqual(string.Empty, runError.ToString());
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(runExitCode, runOutput.ToString(), runError.ToString(), "HelloTypeSharp");
+    });
+}
+
+static void CliCleanLibraryProjectBuildsSupportedDependencyReferences()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+
+        var sharedRoot = Path.Combine(root, "Shared");
+        var appRoot = Path.Combine(root, "App");
+
+        using (var sharedNewOutput = new StringWriter())
+        using (var sharedNewError = new StringWriter())
+        {
+            var sharedNewExitCode = TypeSharpCli.Run(["new", "library", "Shared", "--target", "net48", "--output", sharedRoot], sharedNewOutput, sharedNewError);
+            AssertEqual(0, sharedNewExitCode);
+            AssertContains("Created TypeSharp library project", sharedNewOutput.ToString());
+            AssertEqual(string.Empty, sharedNewError.ToString());
+        }
+
+        using (var appNewOutput = new StringWriter())
+        using (var appNewError = new StringWriter())
+        {
+            var appNewExitCode = TypeSharpCli.Run(["new", "library", "App", "--target", "net48", "--output", appRoot], appNewOutput, appNewError);
+            AssertEqual(0, appNewExitCode);
+            AssertContains("Created TypeSharp library project", appNewOutput.ToString());
+            AssertEqual(string.Empty, appNewError.ToString());
+        }
+
+        WriteFile(appRoot, "TypeSharp.toml", """
+            [project]
+            name = "App"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "App"
+            sourceRoots = ["src"]
+            generatedOutputRoot = "generated"
+
+            [language]
+            version = "preview"
+            strict = true
+            nullable = "strict"
+            previewFeatures = []
+
+            [references]
+            assemblies = [
+              "mscorlib",
+              "System",
+              "System.Core"
+            ]
+            paths = [
+              "../lib/Legacy.Tools.dll"
+            ]
+            packages = []
+
+            [projectReferences]
+            paths = [
+              "../Shared/TypeSharp.toml"
+            ]
+
+            [tooling]
+            diagnosticFormat = "text"
+            treatWarningsAsErrors = false
+            """);
+        WriteFile(appRoot, "src/Library.tysh", """
+            namespace App
+
+            import { greeting } from "Shared/Library"
+            import { LegacyApi } from "Legacy.Tools"
+            import { Regex } from "System.Text.RegularExpressions"
+
+            export fun fromShared(): string = greeting("project-reference")
+            export fun fromLocalDll(): string = LegacyApi.Echo("local-dll")
+            export fun fromFramework(): bool = Regex.IsMatch("hello", "^[a-z]+$")
+            """);
+
+        var appManifest = Path.Combine(appRoot, "TypeSharp.toml");
+        RunCliCommand(["check", appManifest], expectedExitCode: 0);
+        RunCliCommand(["build", appManifest], expectedExitCode: 0);
+
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "generated", "bin", "Debug", "net48", "Shared.dll")), "Build should compile the direct TypeSharp project reference first.");
+        AssertTrue(File.Exists(Path.Combine(appRoot, "generated", "bin", "Debug", "net48", "App.dll")), "Build should compile the dependent clean library project.");
+
+        var generatedProject = File.ReadAllText(Path.Combine(appRoot, "generated", "App.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("    <Reference Include=\"System\" />", generatedProject);
+        AssertContains("    <Reference Include=\"System.Core\" />", generatedProject);
+        AssertContains("    <Reference Include=\"Legacy.Tools\">", generatedProject);
+        AssertContains("      <HintPath>../../lib/Legacy.Tools.dll</HintPath>", generatedProject);
+        AssertContains("    <Reference Include=\"Shared\">", generatedProject);
+        AssertContains("../../Shared/generated/bin/Debug/net48/Shared.dll", generatedProject);
+
+        var generatedSource = File.ReadAllText(Path.Combine(appRoot, "generated", "src", "Library.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("using Legacy.Tools;", generatedSource);
+        AssertContains("using System.Text.RegularExpressions;", generatedSource);
+        AssertContains("using static Shared.Module;", generatedSource);
+        AssertContains("return greeting(\"project-reference\");", generatedSource);
+        AssertContains("return LegacyApi.Echo(\"local-dll\");", generatedSource);
+        AssertContains("return Regex.IsMatch(\"hello\", \"^[a-z]+$\");", generatedSource);
+    });
+}
+
+static void CliCleanLibraryProjectReportsInvalidLocalDllDependencyDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var projectRoot = Path.Combine(root, "InvalidLocalDll");
+        using (var newOutput = new StringWriter())
+        using (var newError = new StringWriter())
+        {
+            var newExitCode = TypeSharpCli.Run(["new", "library", "InvalidLocalDll", "--target", "net48", "--output", projectRoot], newOutput, newError);
+            AssertEqual(0, newExitCode);
+            AssertContains("Created TypeSharp library project", newOutput.ToString());
+            AssertEqual(string.Empty, newError.ToString());
+        }
+
+        WriteFile(projectRoot, "lib/NotAnAssembly.dll", "this is not a portable executable");
+        WriteFile(projectRoot, "TypeSharp.toml", """
+            [project]
+            name = "InvalidLocalDll"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "InvalidLocalDll"
+            sourceRoots = ["src"]
+            generatedOutputRoot = "generated"
+
+            [language]
+            version = "preview"
+            strict = true
+            nullable = "strict"
+            previewFeatures = []
+
+            [references]
+            assemblies = [
+              "System",
+              "System.Core"
+            ]
+            paths = [
+              "lib/NotAnAssembly.dll"
+            ]
+            packages = []
+
+            [tooling]
+            diagnosticFormat = "text"
+            treatWarningsAsErrors = false
+            """);
+        WriteFile(projectRoot, "src/Library.tysh", """
+            namespace InvalidLocalDll
+
+            export fun greeting(): string = "ok"
+            """);
+
+        var manifestPath = Path.Combine(projectRoot, "TypeSharp.toml");
+        using (var checkOutput = new StringWriter())
+        using (var checkError = new StringWriter())
+        {
+            var checkExitCode = TypeSharpCli.Run(["check", manifestPath, "--diagnostic-format", "json"], checkOutput, checkError);
+            AssertEqual(1, checkExitCode);
+            AssertEqual(string.Empty, checkOutput.ToString());
+            AssertContains("\"code\": \"TS2401\"", checkError.ToString());
+            AssertContains("Referenced assembly path 'lib/NotAnAssembly.dll' does not contain readable metadata.", checkError.ToString());
+        }
+
+        using var buildOutput = new StringWriter();
+        using var buildError = new StringWriter();
+        var buildExitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], buildOutput, buildError);
+
+        AssertEqual(1, buildExitCode);
+        AssertEqual(string.Empty, buildOutput.ToString());
+        AssertContains("\"code\": \"TS2401\"", buildError.ToString());
+        AssertContains("Referenced assembly path 'lib/NotAnAssembly.dll' does not contain readable metadata.", buildError.ToString());
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "src", "Library.g.cs")), "Build should not emit generated C# when local DLL metadata is invalid.");
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "InvalidLocalDll.Generated.csproj")), "Build should not emit a generated project when local DLL metadata is invalid.");
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "InvalidLocalDll.dll")), "Build should not emit an assembly when local DLL metadata is invalid.");
+    });
+}
+
+static void ReleaseStagedCliArtifactRunsCleanConsoleWorkflow()
+{
+    WithWorkspace(root =>
+    {
+        var cliCommand = PublishStagedCliArtifact(root);
+
+        var workspaceRoot = Path.Combine(root, "clean-user-workspace");
+        Directory.CreateDirectory(workspaceRoot);
+
+        var version = RunPublishedCli(cliCommand, "version", workspaceRoot);
+        AssertEqual(0, version.ExitCode);
+        AssertContains("TypeSharp CLI", version.StandardOutput);
+        AssertContains("Artifact kind framework-dependent-dotnet", version.StandardOutput);
+        AssertContains("Build metadata staged-test", version.StandardOutput);
+        AssertContains("Source revision staged-test", version.StandardOutput);
+        AssertEqual(string.Empty, version.StandardError);
+
+        var create = RunPublishedCli(cliCommand, "new console StagedHello --target net48 --output StagedHello", workspaceRoot);
+        AssertTrue(
+            create.ExitCode == 0,
+            $"Staged CLI should create a clean console project.\nSTDOUT:\n{create.StandardOutput}\nSTDERR:\n{create.StandardError}");
+        AssertContains("Created TypeSharp console project", create.StandardOutput);
+        AssertEqual(string.Empty, create.StandardError);
+
+        var projectRoot = Path.Combine(workspaceRoot, "StagedHello");
+        var manifestPath = Path.Combine(projectRoot, "TypeSharp.toml");
+        AssertTrue(File.Exists(manifestPath), "Staged CLI new should write TypeSharp.toml.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "Staged CLI new should write README.md.");
+
+        var check = RunPublishedCli(cliCommand, "check StagedHello\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            check.ExitCode == 0,
+            $"Staged CLI check should pass for the generated console project.\nSTDOUT:\n{check.StandardOutput}\nSTDERR:\n{check.StandardError}");
+        AssertEqual(string.Empty, check.StandardError);
+
+        var build = RunPublishedCli(cliCommand, "build StagedHello\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            build.ExitCode == 0,
+            $"Staged CLI build should pass for the generated console project.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+        AssertContains("Generated assembly: bin/Debug/net48/StagedHello.exe", build.StandardOutput);
+        AssertEqual(string.Empty, build.StandardError);
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "StagedHello.exe")), "Staged CLI build should produce the generated net48 executable.");
+
+        var run = RunPublishedCli(cliCommand, "run StagedHello\\TypeSharp.toml", workspaceRoot);
+        if (run.ExitCode == 0)
+        {
+            AssertEqual($"Hello, TypeSharp{Environment.NewLine}", run.StandardOutput);
+            AssertEqual(string.Empty, run.StandardError);
+            return;
+        }
+
+        AssertGeneratedExecutableLaunchBlocked(run.ExitCode, run.StandardOutput, run.StandardError, "StagedHello");
+    });
+}
+
+static void ReleaseStagedCliArtifactBuildsLibraryDependenciesAndCSharpConsumer()
+{
+    WithWorkspace(root =>
+    {
+        var cliCommand = PublishStagedCliArtifact(root);
+        var workspaceRoot = Path.Combine(root, "clean-library-workspace");
+        Directory.CreateDirectory(workspaceRoot);
+        BuildLegacyReferenceDll(workspaceRoot, "Legacy.Tools");
+
+        var sharedNew = RunPublishedCli(cliCommand, "new library Shared --target net48 --output Shared", workspaceRoot);
+        AssertTrue(
+            sharedNew.ExitCode == 0,
+            $"Staged CLI should create a clean shared library project.\nSTDOUT:\n{sharedNew.StandardOutput}\nSTDERR:\n{sharedNew.StandardError}");
+        AssertEqual(string.Empty, sharedNew.StandardError);
+
+        var appNew = RunPublishedCli(cliCommand, "new library App --target net48 --output App", workspaceRoot);
+        AssertTrue(
+            appNew.ExitCode == 0,
+            $"Staged CLI should create a clean app library project.\nSTDOUT:\n{appNew.StandardOutput}\nSTDERR:\n{appNew.StandardError}");
+        AssertEqual(string.Empty, appNew.StandardError);
+
+        var appRoot = Path.Combine(workspaceRoot, "App");
+        var sharedRoot = Path.Combine(workspaceRoot, "Shared");
+        WriteFile(appRoot, "TypeSharp.toml", """
+            [project]
+            name = "App"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "App"
+            sourceRoots = ["src"]
+            generatedOutputRoot = "generated"
+
+            [language]
+            version = "preview"
+            strict = true
+            nullable = "strict"
+            previewFeatures = []
+
+            [references]
+            assemblies = [
+              "System",
+              "System.Core"
+            ]
+            paths = [
+              "../lib/Legacy.Tools.dll"
+            ]
+            packages = []
+
+            [projectReferences]
+            paths = [
+              "../Shared/TypeSharp.toml"
+            ]
+
+            [tooling]
+            diagnosticFormat = "text"
+            treatWarningsAsErrors = false
+            """);
+        WriteFile(appRoot, "src/Library.tysh", """
+            namespace App
+
+            import { greeting } from "Shared/Library"
+            import { LegacyApi } from "Legacy.Tools"
+            import { Regex } from "System.Text.RegularExpressions"
+
+            export fun fromShared(): string = greeting("project-reference")
+            export fun fromLocalDll(): string = LegacyApi.Echo("local-dll")
+            export fun fromFramework(): bool = Regex.IsMatch("hello", "^[a-z]+$")
+            """);
+
+        var check = RunPublishedCli(cliCommand, "check App\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            check.ExitCode == 0,
+            $"Staged CLI check should pass for clean library dependencies.\nSTDOUT:\n{check.StandardOutput}\nSTDERR:\n{check.StandardError}");
+        AssertEqual(string.Empty, check.StandardError);
+
+        var build = RunPublishedCli(cliCommand, "build App\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            build.ExitCode == 0,
+            $"Staged CLI build should pass for clean library dependencies.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+        AssertContains("Generated assembly: bin/Debug/net48/App.dll", build.StandardOutput);
+        AssertEqual(string.Empty, build.StandardError);
+
+        var appAssembly = Path.Combine(appRoot, "generated", "bin", "Debug", "net48", "App.dll");
+        var sharedAssembly = Path.Combine(sharedRoot, "generated", "bin", "Debug", "net48", "Shared.dll");
+        var legacyAssembly = Path.Combine(workspaceRoot, "lib", "Legacy.Tools.dll");
+        AssertTrue(File.Exists(appAssembly), "Staged CLI build should produce the dependent App.dll.");
+        AssertTrue(File.Exists(sharedAssembly), "Staged CLI build should produce the referenced Shared.dll.");
+        AssertTrue(File.Exists(legacyAssembly), "Local DLL dependency should exist in the clean workspace.");
+
+        var consumerRoot = Path.Combine(workspaceRoot, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "StagedConsumer.csproj", $$"""
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>StagedConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="App">
+                  <HintPath>{{ToProjectHintPath(consumerRoot, appAssembly)}}</HintPath>
+                </Reference>
+                <Reference Include="Shared">
+                  <HintPath>{{ToProjectHintPath(consumerRoot, sharedAssembly)}}</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>{{ToProjectHintPath(consumerRoot, legacyAssembly)}}</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace StagedConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return App.Module.fromShared()
+                            + ":"
+                            + App.Module.fromLocalDll()
+                            + ":"
+                            + App.Module.fromFramework().ToString();
+                    }
+                }
+            }
+            """);
+
+        var consumerBuild = RunProcess("dotnet", "build StagedConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+        AssertTrue(
+            consumerBuild.ExitCode == 0,
+            $"C# net48 consumer should compile against staged CLI generated library output and dependencies.\nSTDOUT:\n{consumerBuild.StandardOutput}\nSTDERR:\n{consumerBuild.StandardError}");
+    });
+}
+
+static void ReleaseStagedRuntimeArtifactSupportsGeneratedLibraryAndCSharpConsumer()
+{
+    WithWorkspace(root =>
+    {
+        var cliCommand = PublishStagedCliArtifact(root);
+        var runtimeLibRoot = PublishStagedRuntimeArtifact(root);
+        var workspaceRoot = Path.Combine(root, "clean-runtime-workspace");
+        Directory.CreateDirectory(workspaceRoot);
+
+        var installedRuntimeLibRoot = Path.Combine(workspaceRoot, "typesharp-runtime", "lib", "net48");
+        Directory.CreateDirectory(installedRuntimeLibRoot);
+        var installedCoreAssembly = Path.Combine(installedRuntimeLibRoot, "TypeSharp.Core.dll");
+        var installedRuntimeAssembly = Path.Combine(installedRuntimeLibRoot, "TypeSharp.Runtime.dll");
+        File.Copy(Path.Combine(runtimeLibRoot, "TypeSharp.Core.dll"), installedCoreAssembly);
+        File.Copy(Path.Combine(runtimeLibRoot, "TypeSharp.Runtime.dll"), installedRuntimeAssembly);
+
+        var create = RunPublishedCli(cliCommand, "new library RuntimeApp --target net48 --output RuntimeApp", workspaceRoot);
+        AssertTrue(
+            create.ExitCode == 0,
+            $"Staged CLI should create a clean runtime-backed library project.\nSTDOUT:\n{create.StandardOutput}\nSTDERR:\n{create.StandardError}");
+        AssertEqual(string.Empty, create.StandardError);
+
+        var projectRoot = Path.Combine(workspaceRoot, "RuntimeApp");
+        WriteFile(projectRoot, "TypeSharp.toml", """
+            [project]
+            name = "RuntimeApp"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "RuntimeApp"
+            sourceRoots = ["src"]
+            generatedOutputRoot = "generated"
+
+            [language]
+            version = "preview"
+            strict = true
+            nullable = "strict"
+            previewFeatures = []
+
+            [references]
+            assemblies = [
+              "System",
+              "System.Core"
+            ]
+            paths = [
+              "../typesharp-runtime/lib/net48/TypeSharp.Core.dll",
+              "../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll"
+            ]
+            packages = []
+
+            [tooling]
+            diagnosticFormat = "text"
+            treatWarningsAsErrors = false
+            """);
+        WriteFile(projectRoot, "src/Library.tysh", """
+            namespace RuntimeApp
+
+            import { Option, Result } from "TypeSharp.Core"
+
+            public union InvoiceStatus {
+              Draft
+              Posted(id: string)
+            }
+
+            export fun keepOption(value: Option<string>): Option<string> = value
+
+            export fun keepResult(value: Result<InvoiceStatus, string>): Result<InvoiceStatus, string> = value
+
+            export fun posted(id: string): InvoiceStatus = Posted(id)
+
+            export fun describe(status: InvoiceStatus): string =
+              match status {
+                Draft => "Draft"
+                Posted(id) => $"Posted:{id}"
+              }
+
+            """);
+
+        var check = RunPublishedCli(cliCommand, "check RuntimeApp\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            check.ExitCode == 0,
+            $"Staged CLI check should pass with installed runtime artifact references.\nSTDOUT:\n{check.StandardOutput}\nSTDERR:\n{check.StandardError}");
+        AssertEqual(string.Empty, check.StandardError);
+
+        var build = RunPublishedCli(cliCommand, "build RuntimeApp\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            build.ExitCode == 0,
+            $"Staged CLI build should pass with installed runtime artifact references.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+        AssertContains("Generated assembly: bin/Debug/net48/RuntimeApp.dll", build.StandardOutput);
+        AssertEqual(string.Empty, build.StandardError);
+
+        var generatedAssembly = Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "RuntimeApp.dll");
+        AssertTrue(File.Exists(generatedAssembly), "Staged CLI build should produce the generated runtime-backed library.");
+
+        var generatedProject = File.ReadAllText(Path.Combine(projectRoot, "generated", "RuntimeApp.Generated.csproj")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("<Reference Include=\"TypeSharp.Core\">", generatedProject);
+        AssertContains("<HintPath>../../typesharp-runtime/lib/net48/TypeSharp.Core.dll</HintPath>", generatedProject);
+        AssertContains("<Reference Include=\"TypeSharp.Runtime\">", generatedProject);
+        AssertContains("<HintPath>../../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll</HintPath>", generatedProject);
+
+        var consumerRoot = Path.Combine(workspaceRoot, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "RuntimeConsumer.csproj", $$"""
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>RuntimeConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="RuntimeApp">
+                  <HintPath>{{ToProjectHintPath(consumerRoot, generatedAssembly)}}</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Core">
+                  <HintPath>{{ToProjectHintPath(consumerRoot, installedCoreAssembly)}}</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Runtime">
+                  <HintPath>{{ToProjectHintPath(consumerRoot, installedRuntimeAssembly)}}</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            using TypeSharp.Runtime;
+
+            namespace RuntimeConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var option = TypeSharp.Core.Option<string>.Some("visible");
+                        var result = TypeSharp.Core.Result<RuntimeApp.InvoiceStatus, string>.Ok(RuntimeApp.Module.posted("INV-1"));
+                        var kept = RuntimeApp.Module.keepResult(result);
+                        return RuntimeApp.Module.keepOption(option).Value
+                            + ":"
+                            + TypeSharpUnion.GetCaseName(kept.Value)
+                            + ":"
+                            + RuntimeApp.Module.describe(kept.Value)
+                            + ":"
+                            + TypeSharpAsync.FromResult(RuntimeApp.Module.describe(RuntimeApp.InvoiceStatus.Draft)).GetAwaiter().GetResult()
+                            + ":"
+                            + TypeSharp.Runtime.TypeSharpRuntimeInfo.RuntimeAbiVersion.ToString();
+                    }
+                }
+            }
+            """);
+
+        var consumerBuild = RunProcess("dotnet", "build RuntimeConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+        AssertTrue(
+            consumerBuild.ExitCode == 0,
+            $"C# net48 consumer should compile against generated output plus installed runtime artifact layout.\nSTDOUT:\n{consumerBuild.StandardOutput}\nSTDERR:\n{consumerBuild.StandardError}");
+    });
+}
+
+static void ReleaseStagedCliArtifactReportsDependencyDiagnostics()
+{
+    WithWorkspace(root =>
+    {
+        var cliCommand = PublishStagedCliArtifact(root);
+        var workspaceRoot = Path.Combine(root, "clean-negative-dependency-workspace");
+        Directory.CreateDirectory(workspaceRoot);
+
+        var create = RunPublishedCli(cliCommand, "new library BadDeps --target net48 --output BadDeps", workspaceRoot);
+        AssertTrue(
+            create.ExitCode == 0,
+            $"Staged CLI should create a clean library project before dependency diagnostics.\nSTDOUT:\n{create.StandardOutput}\nSTDERR:\n{create.StandardError}");
+        AssertEqual(string.Empty, create.StandardError);
+
+        var projectRoot = Path.Combine(workspaceRoot, "BadDeps");
+        WriteFile(projectRoot, "TypeSharp.toml", """
+            [project]
+            name = "BadDeps"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "BadDeps"
+            sourceRoots = ["src"]
+            generatedOutputRoot = "generated"
+
+            [language]
+            version = "preview"
+            strict = true
+            nullable = "strict"
+            previewFeatures = []
+
+            [references]
+            assemblies = [
+              "System",
+              "System.Core"
+            ]
+            paths = [
+              "../lib/Missing.Tools.dll"
+            ]
+            packages = [
+              "Newtonsoft.Json"
+            ]
+
+            [tooling]
+            diagnosticFormat = "text"
+            treatWarningsAsErrors = false
+            """);
+        WriteFile(projectRoot, "src/Library.tysh", """
+            namespace BadDeps
+
+            export fun greeting(): string = "bad deps"
+            """);
+
+        var check = RunPublishedCli(cliCommand, "check BadDeps\\TypeSharp.toml", workspaceRoot);
+        AssertEqual(1, check.ExitCode);
+        AssertEqual(string.Empty, check.StandardOutput);
+        AssertContains("error TS2401", check.StandardError);
+        AssertContains("Referenced assembly path '../lib/Missing.Tools.dll' does not exist.", check.StandardError);
+        AssertContains("error TS2405", check.StandardError);
+        AssertContains("NuGet package reference 'Newtonsoft.Json' is not supported by the current compiler.", check.StandardError);
+
+        var build = RunPublishedCli(cliCommand, "build BadDeps\\TypeSharp.toml", workspaceRoot);
+        AssertEqual(1, build.ExitCode);
+        AssertEqual(string.Empty, build.StandardOutput);
+        AssertContains("error TS2401", build.StandardError);
+        AssertContains("error TS2405", build.StandardError);
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "src", "Library.g.cs")), "Staged CLI build should not emit generated C# after dependency diagnostics.");
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "BadDeps.Generated.csproj")), "Staged CLI build should not emit a generated project after dependency diagnostics.");
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "BadDeps.dll")), "Staged CLI build should not emit an assembly after dependency diagnostics.");
+    });
+}
+
+static void ReleaseStagedCliArtifactReportsGeneratedCSharpBuildFailure()
+{
+    WithWorkspace(root =>
+    {
+        var cliCommand = PublishStagedCliArtifact(root);
+        var workspaceRoot = Path.Combine(root, "clean-generated-build-failure-workspace");
+        Directory.CreateDirectory(workspaceRoot);
+
+        var create = RunPublishedCli(cliCommand, "new library GeneratedBuildFail --target net48 --output GeneratedBuildFail", workspaceRoot);
+        AssertTrue(
+            create.ExitCode == 0,
+            $"Staged CLI should create a clean library project before generated C# build-failure diagnostics.\nSTDOUT:\n{create.StandardOutput}\nSTDERR:\n{create.StandardError}");
+        AssertEqual(string.Empty, create.StandardError);
+
+        var projectRoot = Path.Combine(workspaceRoot, "GeneratedBuildFail");
+        WriteFile(projectRoot, "Directory.Build.props", """
+            <Project>
+              <Target Name="TypeSharpForcedGeneratedBuildFailure" BeforeTargets="CoreCompile">
+                <Error Text="Forced generated C# build failure for TypeSharp staged smoke." />
+              </Target>
+            </Project>
+            """);
+        WriteFile(projectRoot, "src/Library.tysh", """
+            namespace GeneratedBuildFail
+
+            export fun greeting(): string = "build fail"
+            """);
+
+        var check = RunPublishedCli(cliCommand, "check GeneratedBuildFail\\TypeSharp.toml", workspaceRoot);
+        AssertEqual(0, check.ExitCode);
+        AssertEqual(string.Empty, check.StandardOutput);
+        AssertEqual(string.Empty, check.StandardError);
+
+        var build = RunPublishedCli(cliCommand, "build GeneratedBuildFail\\TypeSharp.toml", workspaceRoot);
+        AssertEqual(1, build.ExitCode);
+        AssertEqual(string.Empty, build.StandardOutput);
+        AssertContains("error TS3501", build.StandardError);
+        AssertContains("Generated C# project build failed for 'GeneratedBuildFail.Generated.csproj'", build.StandardError);
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "src", "Library.g.cs")), "Staged CLI build should emit generated C# before the generated project build fails.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "GeneratedBuildFail.Generated.csproj")), "Staged CLI build should emit the generated C# project before its build fails.");
+        AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "GeneratedBuildFail.dll")), "Staged CLI build should not report or leave a generated assembly after the generated project build fails.");
     });
 }
 
@@ -237,9 +1006,15 @@ static void CliNewCreatesLibraryProject()
         AssertEqual(string.Empty, error.ToString());
         AssertTrue(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "Library template should create a manifest.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Library.tysh")), "Library template should create src/Library.tysh.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "Library template should create README.md.");
         AssertContains("outputType = \"library\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
         AssertContains("rootNamespace = \"Billing.Core\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
         AssertContains("export fun greeting", File.ReadAllText(Path.Combine(projectRoot, "src", "Library.tysh")));
+        var readme = File.ReadAllText(Path.Combine(projectRoot, "README.md"));
+        AssertContains("# Billing.Core", readme);
+        AssertContains("typesharp check TypeSharp.toml", readme);
+        AssertContains("typesharp build TypeSharp.toml", readme);
+        AssertFalse(readme.Contains("typesharp run TypeSharp.toml", StringComparison.Ordinal), "Library template README should not suggest running a library project.");
 
         var buildExitCode = TypeSharpCli.Run(["build", Path.Combine(projectRoot, "TypeSharp.toml")], new StringWriter(), new StringWriter());
         AssertEqual(0, buildExitCode);
@@ -2002,6 +2777,9 @@ static void RuntimeAbiConstantsAreAligned()
 {
     AssertEqual(TypeSharpCompilerInfo.RuntimeAbiVersion, TypeSharpRuntimeInfo.RuntimeAbiVersion);
     AssertEqual(0, TypeSharpRuntimeInfo.RuntimeAbiVersion);
+    AssertEqual(TypeSharpCompilerInfo.RuntimeTargetFramework, TypeSharpRuntimeInfo.TargetFramework);
+    AssertEqual("net48", TypeSharpRuntimeInfo.TargetFramework);
+    AssertEqual("preview", TypeSharpCompilerInfo.RuntimeAbiStatus);
 }
 
 static void Net48RuntimeArtifactsAvoidExternalPackageDependencies()
@@ -3961,6 +4739,72 @@ static void CheckerReportsImportedCSharpEnumMatchExhaustiveness()
         AssertEqual("src/Main.tysh", diagnostic.File);
         AssertEqual("Non-exhaustive match for enum 'LegacyColor'. Missing members: Blue.", diagnostic.Message);
     });
+}
+
+static void CheckerReportsUnsupportedMatchPatternDiagnostics()
+{
+    var parseResult = TypeSharpParser.ParseText(
+        """
+        namespace Samples.UnsupportedMatchPatterns
+
+        union PaymentStatus {
+          Pending
+          Paid(at: string)
+        }
+
+        enum Color {
+          Red,
+          Green
+        }
+
+        type PrimitiveId = string | int
+
+        fun badUnion(status: PaymentStatus): string =
+          match status {
+            Paid({ at }) => at
+            Pending => "waiting"
+          }
+
+        fun badTypeLevelUnion(id: PrimitiveId): string =
+          match id {
+            { name } => name
+            _ => "fallback"
+          }
+
+        fun badEnum(color: Color): string =
+          match color {
+            1 => "one"
+            _ => "fallback"
+          }
+
+        fun badPrimitive(value: int): string =
+          match value {
+            1 => "one"
+            _ => "fallback"
+          }
+
+        fun badBool(flag: bool): string =
+          match flag {
+            "yes" => "yes"
+            _ => "no"
+          }
+        """,
+        "input.tysh");
+    AssertFalse(parseResult.HasErrors, $"Unsupported match pattern source should parse cleanly.\n{DiagnosticJsonFormatter.ToJson(parseResult.Diagnostics)}");
+    var root = Require(parseResult.Root, "Parser should produce a root syntax node.");
+
+    var bindingResult = TypeSharpBinder.Bind(root, "input.tysh");
+    AssertFalse(bindingResult.HasErrors, $"Unsupported match pattern source should bind cleanly.\n{DiagnosticJsonFormatter.ToJson(bindingResult.Diagnostics)}");
+
+    var result = TypeSharpTypeChecker.Check(root, "input.tysh");
+    var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
+
+    AssertTrue(result.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2211"), $"Unsupported match patterns should produce TS2211 diagnostics.\n{diagnosticText}");
+    AssertContains("Union case 'Paid' payload patterns support only a single identifier capture in 1.0.", diagnosticText);
+    AssertContains("Record and structural match patterns are parsed for future syntax but are not part of the 1.0 pattern matching boundary.", diagnosticText);
+    AssertContains("Enum match patterns for 'Color' support only member names or '_'. Numeric, flag-style, and extractor patterns are not part of 1.0.", diagnosticText);
+    AssertContains("Literal match patterns for input type 'int' are supported only for bool inputs and literal-only type-level unions in 1.0.", diagnosticText);
+    AssertContains("Match pattern of type 'string' is not compatible with input type 'bool'.", diagnosticText);
 }
 
 static void CheckerReportsMissingFrameworkCSharpMethodDiagnostics()
@@ -7758,6 +8602,12 @@ static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
             namespace Samples.MissingSourceImportJson
 
             import { Helper } from "./Missing"
+            import "./SideEffects"
+            """);
+        WriteFile(root, "src/SideEffects.tysh", """
+            namespace Samples.MissingSourceImportJson
+
+            export fun touched(): string = "side"
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -7768,6 +8618,8 @@ static void CliCheckEmitsJsonUnresolvedSourceModuleDiagnostics()
         AssertEqual(string.Empty, output.ToString());
         AssertContains("\"code\": \"TS0112\"", error.ToString());
         AssertContains("Source module specifier './Missing' could not be resolved from module 'Main'.", error.ToString());
+        AssertContains("\"code\": \"TS0113\"", error.ToString());
+        AssertContains("Side-effect-only import './SideEffects' is parsed but not supported by the TypeSharp source module graph.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
 }
@@ -10998,7 +11850,7 @@ static void CliBuildStopsBeforeEmissionOnTypeCheckerDiagnostics()
 
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("\"code\": \"TS2228\"", error.ToString());
         AssertContains("Cannot return expression of type 'int' from function returning 'string'.", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when type checker diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "BuildTypeDiagnostics.Generated.csproj")), "Build should not emit generated project when type checker diagnostics contain errors.");
@@ -11037,7 +11889,7 @@ static void CliBuildStopsBeforeEmissionOnUnsatisfiedImportedCSharpInterfaceImple
 
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("\"code\": \"TS2228\"", error.ToString());
         AssertContains("Cannot return expression of type 'LegacyFormatter' from function returning 'ILegacyNamed'.", error.ToString());
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when imported C# interface implementation diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsatisfiedImportedInterfaceImplementation.Generated.csproj")), "Build should not emit generated project when imported C# interface implementation diagnostics contain errors.");
@@ -12123,11 +12975,11 @@ static void CheckerReportsExtensionPropertyGeneratedHelperCollisionDiagnostics()
     var typeCheckResult = TypeSharpTypeChecker.Check(root, "input.tysh");
 
     AssertEqual(2, typeCheckResult.Diagnostics.Count);
-    AssertEqual("TS2201", typeCheckResult.Diagnostics[0].Code);
+    AssertEqual("TS2213", typeCheckResult.Diagnostics[0].Code);
     AssertEqual(
         "Extension property 'Size' generates helper method 'GetSize', which conflicts with extension property 'Size' in the same extension declaration.",
         typeCheckResult.Diagnostics[0].Message);
-    AssertEqual("TS2201", typeCheckResult.Diagnostics[1].Code);
+    AssertEqual("TS2213", typeCheckResult.Diagnostics[1].Code);
     AssertEqual(
         "Extension property 'Size' is already declared for receiver type 'int'.",
         typeCheckResult.Diagnostics[1].Message);
@@ -12520,7 +13372,7 @@ static void InferenceEngineInfersLocalExpressionGraph()
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
-        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2201").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2228").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
 
         AssertEqual(3, diagnostics.Length);
         AssertEqual("Cannot return expression of type 'int' from function returning 'string'.", diagnostics[0].Message);
@@ -12550,14 +13402,62 @@ static void CheckerReportsTypeMismatchDiagnostics()
         var result = TypeSharpChecker.Check(manifestPath);
 
         AssertTrue(result.HasErrors, "Checker should report type checker diagnostics.");
-        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2201").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
-        AssertEqual(2, diagnostics.Length);
-        AssertEqual("Cannot return expression of type 'int' from function returning 'string'.", diagnostics[0].Message);
-        AssertEqual("Cannot assign expression of type 'string' to 'int'.", diagnostics[1].Message);
+        var returnDiagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2228").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        AssertEqual(1, returnDiagnostics.Length);
+        AssertEqual("Cannot return expression of type 'int' from function returning 'string'.", returnDiagnostics[0].Message);
+
+        var initializerDiagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2229").OrderBy(diagnostic => diagnostic.Span.Start.Line).ToArray();
+        AssertEqual(1, initializerDiagnostics.Length);
+        AssertEqual("Cannot assign expression of type 'string' to 'int'.", initializerDiagnostics[0].Message);
 
         var nullabilityDiagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "TS2202");
         AssertEqual("Cannot return null from function returning non-null type 'string'.", nullabilityDiagnostic.Message);
     });
+}
+
+static void CheckerReportsTypeOperatorLimitDiagnostics()
+{
+    var unionMembers = string.Join(" | ", Enumerable.Range(0, 65).Select(index => $"\"K{index}\""));
+    var shapeMembers = string.Join(", ", Enumerable.Range(0, 65).Select(index => $"K{index}: string"));
+    var aliasChain = string.Join(
+        Environment.NewLine,
+        Enumerable.Range(0, 17).Select(index => $"type Chain{index} = Chain{index + 1}"));
+
+    var result = TypeSharpParser.ParseText(
+        $$"""
+        namespace Samples.TypeOperatorLimits
+
+        type TooWide = {{unionMembers}}
+
+        type LargeShape = { {{shapeMembers}} }
+        type TooManyKeys = keyof LargeShape
+        type TooManyIndexedKeys = LargeShape[keyof LargeShape]
+
+        type CycleA = CycleB
+        type CycleB = CycleA
+
+        {{aliasChain}}
+        type Chain17 = string
+        """,
+        "input.tysh");
+
+    AssertFalse(result.HasErrors, $"Type operator limit source should parse cleanly.\n{DiagnosticJsonFormatter.ToJson(result.Diagnostics)}");
+    var root = Require(result.Root, "Parser should produce a root syntax node.");
+
+    var bindingResult = TypeSharpBinder.Bind(root, "input.tysh");
+    AssertFalse(bindingResult.HasErrors, $"Type operator limit source should bind cleanly.\n{DiagnosticJsonFormatter.ToJson(bindingResult.Diagnostics)}");
+
+    var typeCheck = TypeSharpTypeChecker.Check(root, "input.tysh");
+    var diagnosticText = string.Join(Environment.NewLine, typeCheck.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
+
+    AssertTrue(typeCheck.HasErrors, "Type operator limit source should produce deterministic diagnostics.");
+    AssertEqual(7, typeCheck.Diagnostics.Count(diagnostic => diagnostic.Code == "TS2212"));
+    AssertFalse(typeCheck.Diagnostics.Any(diagnostic => diagnostic.Code == "TS2201"), "Type-operator budget failures should use TS2212 instead of broad TS2201.");
+    AssertContains("Type-level union alias 'TooWide' exceeds the 1.0 normalized union width limit of 64 members", diagnosticText);
+    AssertContains("keyof alias 'TooManyKeys' exceeds the 1.0 key count limit of 64 members", diagnosticText);
+    AssertContains("Indexed access alias 'TooManyIndexedKeys' exceeds the 1.0 key count limit of 64 members", diagnosticText);
+    AssertContains("Type alias cycle detected at 'CycleA'. Recursive type aliases are not part of the 1.0 type-operator boundary.", diagnosticText);
+    AssertContains("Type alias 'Chain0' exceeds the 1.0 alias instantiation depth limit of 16", diagnosticText);
 }
 
 static void CheckerReportsParserDiagnostics()
@@ -12634,7 +13534,7 @@ static void CliCheckEmitsJsonTypeCheckerDiagnostics()
 
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("\"code\": \"TS2228\"", error.ToString());
         AssertContains("Cannot return expression of type 'int' from function returning 'string'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
@@ -12684,7 +13584,7 @@ static void CliCheckEmitsJsonStructuralDiagnostics()
 
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS2201\"", error.ToString());
+        AssertContains("\"code\": \"TS2220\"", error.ToString());
         AssertContains("Type 'HasAge' is missing required member 'Name' for structural type 'Named'.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
@@ -12698,9 +13598,29 @@ static void CliCheckEmitsJsonPublicBoundaryDiagnostics()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.PublicBoundaryJson
 
+            record Customer(Name: string, Age: int)
+
             type LocalAmount = decimal | string
+            type Named = { Name: string }
+            type Aged = { Age: int }
+            type Both = Named & Aged
+            type CustomerKey = keyof Customer
+            type CustomerName = Customer["Name"]
+            type HiddenShape = { Hidden: string }
 
             export fun leak(input: LocalAmount): string = "bad"
+            export fun leakShape(input: Named): string = "bad"
+            export fun leakInlineShape(input: { Name: string }): string = "bad"
+            export fun leakIntersection(input: Both): string = "bad"
+            export fun leakKeyof(input: CustomerKey): string = "bad"
+            export fun leakIndexed(input: CustomerName): string = input
+            export fun leakUnknown(input: unknown): string = "bad"
+            export let LeakValue: LocalAmount = "bad"
+
+            fun leakExportList(input: Named): string = "bad"
+            export { leakExportList }
+
+            export type { HiddenShape }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -12709,7 +13629,7 @@ static void CliCheckEmitsJsonPublicBoundaryDiagnostics()
 
         AssertEqual(1, exitCode);
         AssertEqual(string.Empty, output.ToString());
-        AssertContains("\"code\": \"TS2204\"", error.ToString());
+        AssertEqual(10, CountOccurrences(error.ToString(), "\"code\": \"TS2204\""));
         AssertContains("Compile-time-only type cannot appear in public API. Use a nominal union, interface, or wrapper.", error.ToString());
         AssertContains("\"file\": \"src/Main.tysh\"", error.ToString());
     });
@@ -13114,7 +14034,7 @@ static void LanguageServerPublishesDiagnosticsOnDidOpen()
         AssertContains("\"uri\":\"" + uri + "\"", response);
         AssertContains("\"severity\":1", response);
         AssertContains("\"source\":\"typesharp\"", response);
-        AssertContains("\"code\":\"TS2201\"", response);
+        AssertContains("\"code\":\"TS2228\"", response);
         AssertContains("Cannot return expression of type", response);
     });
 }
@@ -13159,7 +14079,7 @@ static void LanguageServerClearsDiagnosticsOnDidClose()
 
         var response = Encoding.UTF8.GetString(output.ToArray());
         AssertContains("\"openClose\":true", response);
-        AssertContains("\"code\":\"TS2201\"", response);
+        AssertContains("\"code\":\"TS2228\"", response);
         AssertContains("\"diagnostics\":[]", response);
         AssertContains("\"id\":2,\"result\":null", response);
     });
@@ -13803,6 +14723,7 @@ static void DocsSiteContractIsStable()
     AssertContains("label: 'Reference'", astroConfig);
     AssertContains("label: 'Tools And Project'", astroConfig);
     AssertContains("slug: 'start-here'", astroConfig);
+    AssertContains("slug: 'install'", astroConfig);
     AssertContains("slug: 'learning-paths'", astroConfig);
     AssertContains("slug: 'language-tour'", astroConfig);
     AssertContains("slug: 'tutorials'", astroConfig);
@@ -13837,6 +14758,7 @@ static void DocsSiteContractIsStable()
     {
         "index",
         "start-here",
+        "install",
         "learning-paths",
         "language-tour",
         "tutorials",
@@ -13863,9 +14785,7 @@ static void DocsSiteContractIsStable()
         "goal",
         "document-ownership",
         "project-ledger",
-        "writing-guide",
-        "work-ledger",
-        "agentic-workflow"
+        "writing-guide"
     })
     {
         AssertTrue(
@@ -13878,16 +14798,48 @@ static void DocsSiteContractIsStable()
         .EnumerateFiles(docsContentRoot, "*.md", SearchOption.TopDirectoryOnly)
         .OrderBy(path => path, StringComparer.Ordinal)
         .ToArray();
+    var docsMarkdownText = string.Join("\n", docsMarkdownPages.Select(File.ReadAllText));
     var tyshFenceCount = docsMarkdownPages.Sum(path => CountOccurrences(File.ReadAllText(path), "```tysh"));
     AssertTrue(tyshFenceCount >= 60, $"Docs TypeSharp examples should use tysh fences. Found {tyshFenceCount}.");
     AssertDocsTextFencesDoNotContainTypeSharpSource(docsContentRoot, docsMarkdownPages);
+    AssertFalse(
+        docsMarkdownText.Contains("import { Result, Ok", StringComparison.Ordinal),
+        "Docs should not show direct TypeSharp imports for Result Ok/Error until the Core ABI exposes those source symbols.");
+    AssertFalse(
+        docsMarkdownText.Contains("import { Option, Some", StringComparison.Ordinal),
+        "Docs should not show direct TypeSharp imports for Option Some/None until the Core ABI exposes those source symbols.");
 
     var startHerePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "start-here.md"));
+    AssertContains("Install First", startHerePage);
     AssertContains("I Maintain .NET Framework Applications", startHerePage);
     AssertContains("I Know C#", startHerePage);
     AssertContains("I Know F#", startHerePage);
     AssertContains("I Know TypeScript", startHerePage);
     AssertContains("I Am Evaluating The Compiler Or Tooling", startHerePage);
+
+    var installPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "install.md"));
+    AssertContains("typesharp-cli-dotnet-$version.zip", installPage);
+    AssertContains("SHA256SUMS.txt", installPage);
+    AssertContains("$releasePage = \"https://github.com/$repo/releases/tag/$version\"", installPage);
+    AssertContains("Open `$releasePage` to read the release notes", installPage);
+    AssertContains("Select-String -SimpleMatch $assetName", installPage);
+    AssertContains("typesharp.cmd", installPage);
+    AssertContains("typesharp version --json", installPage);
+    AssertContains("Artifact kind framework-dependent-dotnet", installPage);
+    AssertContains("Build metadata v0.1.0-preview.1", installPage);
+    AssertContains("Source revision <release-commit>", installPage);
+    AssertContains("references.packages", installPage);
+    AssertContains("The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs", installPage);
+    AssertContains("reports `TS2405` instead of restoring NuGet packages", installPage);
+    AssertContains("typesharp-runtime-net48-$version.zip", installPage);
+    AssertContains("Assert-ReleaseAssetHash \"typesharp-runtime-net48-$version.zip\"", installPage);
+    AssertContains("The 1.0 runtime resolution policy is explicit installed runtime archive references", installPage);
+    AssertContains("The CLI does not implicitly discover repository build folders, auto-copy runtime assemblies, or add hidden template references for 1.0", installPage);
+
+    var apiCorePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
+    AssertContains("Direct TypeSharp source imports for ergonomic case constructors", apiCorePage);
+    AssertContains("TypeSharp.Core.Result<int, string>.Ok(42)", apiCorePage);
+    AssertContains("The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs", apiCorePage);
 
     var learningPathsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "learning-paths.md"));
     AssertContains("Programming Beginner", learningPathsPage);
@@ -13928,6 +14880,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated Output", projectConfigurationPage);
     AssertContains("References", projectConfigurationPage);
     AssertContains("Configuration And Target Overrides", projectConfigurationPage);
+    AssertContains("The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs", projectConfigurationPage);
 
     var runtimeArtifactsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "runtime-artifacts.md"));
     AssertContains("Artifact Boundary", runtimeArtifactsPage);
@@ -13939,6 +14892,15 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp.Runtime.dll", runtimeArtifactsPage);
     AssertContains("bin/<Configuration>/net48", runtimeArtifactsPage);
     AssertContains("Current preview builds require these assemblies to be available as local `net48` DLL references", runtimeArtifactsPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", runtimeArtifactsPage);
+    AssertContains("The 1.0 runtime resolution policy is explicit installed runtime archive references", runtimeArtifactsPage);
+    AssertContains("CLI auto-copy and implicit template references remain post-1.0 ergonomics", runtimeArtifactsPage);
+    AssertContains("Release Runtime Layout Smoke", runtimeArtifactsPage);
+    AssertContains("union and async helper APIs", runtimeArtifactsPage);
+    AssertContains("`references.assemblies` becomes framework `<Reference Include=\"...\"/>` items", runtimeArtifactsPage);
+    AssertContains("`references.paths` becomes local `<Reference>` items with generated-project-relative `<HintPath>` values", runtimeArtifactsPage);
+    AssertContains("`projectReferences.paths` names direct TypeSharp manifests", runtimeArtifactsPage);
+    AssertContains("The generated project writes an offline `NuGet.config` with package sources cleared", runtimeArtifactsPage);
 
     var writingGuidePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "writing-guide.md"));
     AssertContains("Vue Docs Writing Guide", writingGuidePage);
@@ -13964,6 +14926,21 @@ static void DocsSiteContractIsStable()
     AssertContains("Executables And Antivirus", dotnetInteropPage);
     AssertContains("C# And CLR Type Model", dotnetInteropPage);
     AssertContains("C# Members And Overloads", dotnetInteropPage);
+    AssertContains("`keyof`, indexed access, and unresolved computed type aliases", dotnetInteropPage);
+    AssertContains("`unknown`", dotnetInteropPage);
+    AssertContains("ABI `0` is the pre-1.0 preview ABI and is the clear versioning rule for the current release line", dotnetInteropPage);
+    AssertContains("TypeSharp.Core.Option<T>", dotnetInteropPage);
+    AssertContains("TypeSharp.Core.Result<T,E>", dotnetInteropPage);
+    AssertContains("TypeSharp.Core.Unit", dotnetInteropPage);
+    AssertContains("TypeSharp.Runtime.TypeSharpRuntimeInfo", dotnetInteropPage);
+    AssertContains("TypeSharp.Runtime.ITypeSharpUnionCase", dotnetInteropPage);
+    AssertContains("TypeSharp.Runtime.TypeSharpPattern", dotnetInteropPage);
+    AssertContains("TypeSharp.Runtime.TypeSharpEquality", dotnetInteropPage);
+    AssertContains("TypeSharp.Runtime.TypeSharpAsync", dotnetInteropPage);
+    AssertContains("verify compiler/runtime target framework alignment", dotnetInteropPage);
+    AssertContains("The release-staged runtime artifact smoke builds generated `net48` output and a separate C# `net48` consumer", dotnetInteropPage);
+    AssertContains("ordinary public static binary `op_Multiply`, `op_Division`, and `op_Modulus` metadata", dotnetInteropPage);
+    AssertContains("It does not consume checked user-defined operator metadata such as `op_CheckedMultiply`, `op_CheckedDivision`, or `op_CheckedModulus` in 1.0", dotnetInteropPage);
 
     var cookbookPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "cookbook.md"));
     AssertContains("Call A Local C# DLL", cookbookPage);
@@ -13987,6 +14964,11 @@ static void DocsSiteContractIsStable()
     AssertContains("publicHelper", modulesPage);
     AssertContains("conservative delegate inference", modulesPage);
     AssertContains("export let NameFactory = text => \"Ada\"", modulesPage);
+    AssertContains("1.0 Module Graph Boundary", modulesPage);
+    AssertContains("side-effect-only imports report `TS0113`", modulesPage);
+    AssertContains("non-relative specifiers without a direct project-reference match are C# namespace/type imports", modulesPage);
+    AssertContains("non-relative forwarding, cross-project forwarding, and non-lowerable forwarding forms report `TS2003`", modulesPage);
+    AssertContains("hidden transitive project-reference visibility is not part of the 1.0 source graph", modulesPage);
     AssertContains("Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`", modulesPage);
 
     var examplesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "examples.md"));
@@ -14002,9 +14984,58 @@ static void DocsSiteContractIsStable()
     AssertContains("Local Inference", typeSystemPage);
     AssertContains("Null Safety", typeSystemPage);
     AssertContains("`unknown`", typeSystemPage);
+    AssertContains("1.0 Nullability And Unknown Boundary", typeSystemPage);
+    AssertContains("The 1.0 nullability and `unknown` policy is conservative", typeSystemPage);
+    AssertContains("assigning or returning `null` or a nullable expression into a non-null target reports `TS2202`", typeSystemPage);
+    AssertContains("In `language.nullable = \"strict\"`, imported C# reference-return metadata without nullable annotations reports warning `TS2404`", typeSystemPage);
+    AssertContains("Member or indexer access on `unknown` reports `TS2209`", typeSystemPage);
+    AssertContains("unknown imported C# nullability is a strict-mode warning (`TS2404`)", typeSystemPage);
     AssertContains("Nominal Public API", typeSystemPage);
     AssertContains("Type-Level And Nominal Unions", typeSystemPage);
     AssertContains("C# And CLR Type Model", typeSystemPage);
+    AssertContains("`unknown`, or an unresolved computed form, public use reports the public-boundary diagnostic", typeSystemPage);
+    AssertContains("structural shape, or `unknown` type appears in a public boundary", typeSystemPage);
+    AssertContains("1.0 Class Interface And Member Boundary", typeSystemPage);
+    AssertContains("The 1.0 TypeSharp-authored class and interface surface is intentionally small", typeSystemPage);
+    AssertContains("Accepted class declarations lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, `partial`, an implicit public parameterless constructor, and public instance `fun` methods", typeSystemPage);
+    AssertContains("TypeSharp-authored class constructors, class fields, class properties, TypeSharp-authored class/interface events, explicit inheritance or interface implementation clauses, static/abstract/virtual/override members, interface default implementations, property setters, indexers, operators, attributes on individual class/interface members beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0", typeSystemPage);
+    AssertContains("1.0 Pattern Matching Boundary", typeSystemPage);
+    AssertContains("Supported arm patterns are union case names with an optional single identifier payload capture", typeSystemPage);
+    AssertContains("non-boolean guard predicates report `TS2218`", typeSystemPage);
+    AssertContains("Record and structural match patterns, nested payload destructuring, extractor-style patterns", typeSystemPage);
+    AssertContains("numeric enum patterns, flag-style enum reasoning, flag algebra in patterns", typeSystemPage);
+    AssertContains("The 1.0 implemented gate covers the currently executable subset", typeSystemPage);
+    AssertContains("report `TS2220` when a local structural proof is impossible", typeSystemPage);
+    AssertContains("type alias chains deeper than 16 and recursive type alias cycles report `TS2212`", typeSystemPage);
+    AssertContains("`keyof` and indexed access aliases with more than 64 keys report `TS2212`", typeSystemPage);
+    AssertContains("The imported static-operator slice accepts only ordinary C# public static binary `op_Multiply`, `op_Division`, and `op_Modulus` metadata", typeSystemPage);
+    AssertContains("checked user-defined operator metadata such as `op_CheckedMultiply`, `op_CheckedDivision`, and `op_CheckedModulus` is not part of 1.0", typeSystemPage);
+    AssertContains("Missing, ambiguous, nullable, checked-only, instance-compound-only, and non-assignable user-defined operator shapes report `TS2217`", typeSystemPage);
+    AssertContains("unsupported null-conditional assignment target shapes report `TS2216` before backend emission", typeSystemPage);
+    AssertContains("unsupported target shapes report `TS2216`", typeSystemPage);
+    AssertContains("TypeSharp-authored operator declarations are not 1.0 syntax, public ABI, or overload candidates", typeSystemPage);
+    AssertContains("Future TypeSharp-authored operator support requires a separate syntax, overload ranking, checked/unchecked policy, public CLR metadata policy, and C# 7.3-compatible lowering or direct IL backend decision", typeSystemPage);
+    AssertContains("1.0 Functional Scope Boundary", typeSystemPage);
+    AssertContains("The 1.0 functional scope is intentionally bounded rather than F#-complete", typeSystemPage);
+    AssertContains("direct first-argument pipeline calls, unary named-function composition, lambdas in supported delegate contexts", typeSystemPage);
+    AssertContains("does not include F#-complete higher-order inference, automatic currying, general partial application", typeSystemPage);
+    AssertContains("reports `TS2215` for unknown names, duplicates, positional arguments after named arguments", typeSystemPage);
+    AssertContains("public/exported direct composition values without an explicit function type annotation report `TS2215`", typeSystemPage);
+    AssertContains("1.0 Extension Member Policy", typeSystemPage);
+    AssertContains("The 1.0 TypeSharp-authored extension member surface is limited to explicit-receiver extension methods and getter-only extension properties", typeSystemPage);
+    AssertContains("extension-method receiver-shape failures report `TS2221`", typeSystemPage);
+    AssertContains("duplicate/conflict/helper-collision/assignment/null-conditional/nullable-receiver cases report deterministic `TS2213` diagnostics", typeSystemPage);
+    AssertContains("Setters, static extension members, extension operators, imported C# extension property metadata, nullable receiver lifting, richer conversion/ranking, and C# 14 `extension(...)` block emission are post-1.0", typeSystemPage);
+    AssertContains("1.0 Enum And Bitwise Algebra Boundary", typeSystemPage);
+    AssertContains("The 1.0 enum and bitwise algebra boundary is intentionally finite", typeSystemPage);
+    AssertContains("Accepted enum forms are TypeSharp-owned CLR enum declarations with optional integral underlying types, explicit integer values, aliases to previously declared same-enum members", typeSystemPage);
+    AssertContains("Enum-valued shifts and shift assignments, flag algebra beyond same-enum value `|`/`&`/`^`/`~`, flag-aware match or pattern reasoning, imported numeric enum flag reasoning, arbitrary/general computed enum values outside the initializer-local composite-or subset, numeric pattern algebra, numeric enum patterns, and broad attribute target validation are post-1.0", typeSystemPage);
+    AssertContains("Unsupported enum and bitwise algebra shapes report deterministic `TS2214` diagnostics before backend emission", typeSystemPage);
+    AssertContains("1.0 Collection And Object Construction Boundary", typeSystemPage);
+    AssertContains("The 1.0 construction boundary is limited to lowering-backed shapes with explicit CLR results", typeSystemPage);
+    AssertContains("Collection expressions are accepted when the target is a known array or `System.Collections.Generic.List<T>`", typeSystemPage);
+    AssertContains("Collection element mismatches, non-array/List collection spreads, record field mismatches, missing or unknown record fields, and non-record record spreads report `TS2219`", typeSystemPage);
+    AssertContains("Dictionary literals, set literals, collection-expression constructor or factory arguments beyond the documented array/List and imported overload slices, object initializer syntax, arbitrary class object construction, inferred anonymous object construction, contextual collection inference without a known array/List target, general collection-builder protocols, and record/class/object initializer mutation are post-1.0", typeSystemPage);
 
     var csharpTypeModelPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "csharp-type-model.md"));
     AssertContains("Official sources reviewed on 2026-05-21", csharpTypeModelPage);
@@ -14016,8 +15047,24 @@ static void DocsSiteContractIsStable()
     AssertContains("Generics And Constraints", csharpTypeModelPage);
     AssertContains("Function Types And Delegates", csharpTypeModelPage);
     AssertContains("Public Type Decision Matrix", csharpTypeModelPage);
+    AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
+    AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("Class API, generic type, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Interface API, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("| `delegate` | Deferred from 1.0", csharpTypeModelPage);
+    AssertContains("| `event` | Deferred from 1.0", csharpTypeModelPage);
+    AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
+    AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
     AssertContains("System.Nullable<T>", csharpTypeModelPage);
+    AssertContains("The 1.0 warning-versus-error policy is fixed", csharpTypeModelPage);
+    AssertContains("strict-mode imported C# reference returns with missing nullable metadata produce warning `TS2404`", csharpTypeModelPage);
+    AssertContains("member or indexer access on an unproved `unknown` value produces error `TS2209`", csharpTypeModelPage);
     AssertContains("```tysh", csharpTypeModelPage);
 
     var csharpMembersPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "csharp-members-overloads.md"));
@@ -14025,17 +15072,142 @@ static void DocsSiteContractIsStable()
     AssertContains("Object-oriented techniques in C#", csharpMembersPage);
     AssertContains("Member Surface", csharpMembersPage);
     AssertContains("Methods And Overload Ranking", csharpMembersPage);
+    AssertContains("The 1.0 overload and conversion contract freezes the implemented ranking set instead of promising full C# compiler parity", csharpMembersPage);
+    AssertContains("| Arity, named arguments, optional parameters, `params`, and byref modifiers |", csharpMembersPage);
+    AssertContains("| `null` literals |", csharpMembersPage);
+    AssertContains("| Numeric literals and direct unary numeric literals |", csharpMembersPage);
+    AssertContains("| Imported metadata relationship distance |", csharpMembersPage);
+    AssertContains("| Delegates and lambdas |", csharpMembersPage);
+    AssertContains("| Generic methods and constructors |", csharpMembersPage);
+    AssertContains("| Extension receivers |", csharpMembersPage);
+    AssertContains("Equally stable candidates report `TS2402`; no applicable method or constructor reports `TS2406`; unsatisfied generic constraints report `TS2417`", csharpMembersPage);
+    AssertContains("Post-1.0 conversion and ranking work includes full C# overload conversion parity, user-defined conversion operators", csharpMembersPage);
     AssertContains("Named, Optional, And Params Arguments", csharpMembersPage);
     AssertContains("Ref, Out, And In", csharpMembersPage);
     AssertContains("Delegates And Lambdas", csharpMembersPage);
     AssertContains("Extension Members", csharpMembersPage);
+    AssertContains("TypeSharp-authored `public delegate` and `public event` declarations are parser-visible but deferred from the 1.0 public ABI", csharpMembersPage);
+    AssertContains("TypeSharp-authored operator declarations are post-1.0", csharpMembersPage);
+    AssertContains("records, classes, interfaces, unions, and extension declarations cannot introduce overload or conversion operators", csharpMembersPage);
+    AssertContains("The 1.0 TypeSharp-authored extension member policy is intentionally narrow", csharpMembersPage);
+    AssertContains("Extension method receiver-shape diagnostics report `TS2221`", csharpMembersPage);
+    AssertContains("nullable receiver lifting, setters, static extension properties, extension operators, imported extension property metadata, richer ranking, and C# 14 `extension(...)` block emission remain post-1.0", csharpMembersPage);
     AssertContains("Exceptions And Domain Failures", csharpMembersPage);
     AssertContains("TS2406", csharpMembersPage);
     AssertContains("```tysh", csharpMembersPage);
 
+    var featureStatusPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "feature-status.md"));
+    AssertContains("TypeSharp-authored operator declarations are explicitly post-1.0", featureStatusPage);
+    AssertContains("True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog", featureStatusPage);
+    AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor, and public instance `fun` methods", featureStatusPage);
+    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, `partial`, and method signatures", featureStatusPage);
+    AssertContains("The 1.0 overload and conversion contract is metadata-backed and intentionally narrower than full C#", featureStatusPage);
+    AssertContains("Full C# overload conversion parity, user-defined conversion operators, TypeSharp-authored operator overload ranking", featureStatusPage);
+    AssertContains("The 1.0 warning/error boundary is explicit", featureStatusPage);
+    AssertContains("strict-mode imported C# reference returns without nullable metadata report warning `TS2404`", featureStatusPage);
+    AssertContains("Missing required members, incompatible member types, missing structural member access, and impossible type-level-union discriminant literal checks report `TS2220`", featureStatusPage);
+    AssertContains("Inconsistent element types, target element mismatches, and non-array/List spread elements report `TS2219`", featureStatusPage);
+    AssertContains("Missing required fields, fields outside the expected record, field type mismatches, and spreads over non-record values report `TS2219`", featureStatusPage);
+    AssertContains("Dictionary/set literals, contextual collection inference without a known array/List target, collection-builder protocols, and constructor/factory collection arguments beyond the documented imported overload slice remain backlog", featureStatusPage);
+    AssertContains("Object initializer syntax, arbitrary class object construction, inferred anonymous object construction, and record/class/object initializer mutation remain backlog", featureStatusPage);
+    AssertContains("`when` guards must be known non-null bool predicates and report `TS2218` otherwise", featureStatusPage);
+    AssertContains("null-conditional `?.` read/simple assignment target diagnostics report `TS2213` before backend emission", featureStatusPage);
+    AssertContains("extension-method receiver-shape diagnostics report `TS2221`", featureStatusPage);
+    AssertContains("unsupported null-conditional assignment target shapes report `TS2216` before backend emission", featureStatusPage);
+    AssertContains("Missing, ambiguous, nullable, checked-only, instance-compound-only, and non-assignable imported operator shapes report `TS2217`", featureStatusPage);
+    AssertContains("primitive arithmetic compound operand and assign-back failures report `TS2222`", featureStatusPage);
+    AssertContains("Unsupported null-conditional read shapes report `TS2223`", featureStatusPage);
+    AssertContains("Invalid iterator return or yielded element shapes report `TS2224`", featureStatusPage);
+    AssertContains("invalid known lock gates report `TS2225`", featureStatusPage);
+    AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
+    AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
+    AssertContains("Function return expression mismatches report `TS2228`", featureStatusPage);
+    AssertContains("explicit value initializer mismatches report `TS2229`", featureStatusPage);
+    AssertContains("simple assignment value mismatches report `TS2230`", featureStatusPage);
+    AssertContains("invalid names/order/duplicates/missing required/type mismatches report `TS2215`", featureStatusPage);
+    AssertContains("Public/exported unannotated direct composition values report `TS2215`", featureStatusPage);
+
+    var diagnosticsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "diagnostics.md"));
+    AssertContains("| `TS2212` | Type Checking | Error | Type operator limit exceeded |", diagnosticsPage);
+    AssertContains("`TS2212` reports 1.0 type-operator budget failures", diagnosticsPage);
+    AssertContains("alias cycles, alias depth, local union width, `keyof`/indexed key count, and structural intersection member count", diagnosticsPage);
+    AssertContains("| `TS2210` | Type Checking | Error | Unsupported TypeSharp class or interface member |", diagnosticsPage);
+    AssertContains("`TS2210` reports TypeSharp-authored class/interface member forms outside the 1.0 subset", diagnosticsPage);
+    AssertContains("unsupported TypeSharp-authored class/interface member forms like `TS2210`", diagnosticsPage);
+    AssertContains("| `TS2211` | Type Checking | Error | Unsupported match pattern |", diagnosticsPage);
+    AssertContains("`TS2211` reports executable match patterns outside the 1.0 pattern boundary", diagnosticsPage);
+    AssertContains("unsupported pattern syntax from ordinary expression type mismatches", diagnosticsPage);
+    AssertContains("| `TS2213` | Type Checking | Error | Unsupported extension property |", diagnosticsPage);
+    AssertContains("`TS2213` reports TypeSharp-authored extension-property forms outside the 1.0 getter-only exact-receiver subset", diagnosticsPage);
+    AssertContains("extension-property policy failures like `TS2213`", diagnosticsPage);
+    AssertContains("| `TS2214` | Type Checking | Error | Unsupported enum or bitwise operation |", diagnosticsPage);
+    AssertContains("`TS2214` reports enum and bitwise algebra forms outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("enum/bitwise policy failures like `TS2214`", diagnosticsPage);
+    AssertContains("| `TS2215` | Type Checking | Error | Unsupported TypeSharp function application |", diagnosticsPage);
+    AssertContains("`TS2215` reports TypeSharp-owned function application forms outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("TypeSharp function application policy failures like `TS2215`", diagnosticsPage);
+    AssertContains("| `TS2216` | Type Checking | Error | Unsupported assignment target |", diagnosticsPage);
+    AssertContains("`TS2216` reports assignment target forms outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("assignment target policy failures like `TS2216`", diagnosticsPage);
+    AssertContains("| `TS2217` | Type Checking | Error | Unsupported imported C# operator |", diagnosticsPage);
+    AssertContains("`TS2217` reports imported C# operator forms outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("imported C# operator policy failures like `TS2217`", diagnosticsPage);
+    AssertContains("| `TS2218` | Type Checking | Error | Invalid match guard |", diagnosticsPage);
+    AssertContains("`TS2218` reports match guard expressions that are known not to be non-null `bool`", diagnosticsPage);
+    AssertContains("match guard predicate failures like `TS2218`", diagnosticsPage);
+    AssertContains("| `TS2219` | Type Checking | Error | Unsupported construction expression |", diagnosticsPage);
+    AssertContains("`TS2219` reports collection and record construction expressions outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("construction-shape failures like `TS2219`", diagnosticsPage);
+    AssertContains("| `TS2220` | Type Checking | Error | Structural proof failed |", diagnosticsPage);
+    AssertContains("`TS2220` reports local structural proof failures", diagnosticsPage);
+    AssertContains("structural proof failures like `TS2220`", diagnosticsPage);
+    AssertContains("| `TS2221` | Type Checking | Error | Unsupported extension method |", diagnosticsPage);
+    AssertContains("`TS2221` reports TypeSharp-authored extension-method receiver-shape failures", diagnosticsPage);
+    AssertContains("extension-method policy failures like `TS2221`", diagnosticsPage);
+    AssertContains("| `TS2222` | Type Checking | Error | Invalid arithmetic compound assignment |", diagnosticsPage);
+    AssertContains("`TS2222` reports primitive arithmetic compound-assignment failures", diagnosticsPage);
+    AssertContains("arithmetic compound-assignment failures like `TS2222`", diagnosticsPage);
+    AssertContains("| `TS2223` | Type Checking | Error | Unsupported null-conditional access |", diagnosticsPage);
+    AssertContains("`TS2223` reports null-conditional read shapes outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("null-conditional read policy failures like `TS2223`", diagnosticsPage);
+    AssertContains("| `TS2224` | Type Checking | Error | Invalid yield expression |", diagnosticsPage);
+    AssertContains("`TS2224` reports iterator yield expressions outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("iterator yield contract failures like `TS2224`", diagnosticsPage);
+    AssertContains("| `TS2225` | Type Checking | Error | Invalid lock expression |", diagnosticsPage);
+    AssertContains("`TS2225` reports lock gate expressions outside the 1.0 lowerable boundary", diagnosticsPage);
+    AssertContains("lock gate policy failures like `TS2225`", diagnosticsPage);
+    AssertContains("| `TS2226` | Type Checking | Error | Invalid match case |", diagnosticsPage);
+    AssertContains("`TS2226` reports nominal-union match case-name patterns that do not name a declared case", diagnosticsPage);
+    AssertContains("invalid match case failures like `TS2226`", diagnosticsPage);
+    AssertContains("| `TS2227` | Type Checking | Error | Invalid satisfies expression |", diagnosticsPage);
+    AssertContains("`TS2227` reports `satisfies` expressions whose value type is not assignable to the target type after nullability and structural proof checks", diagnosticsPage);
+    AssertContains("satisfies proof failures like `TS2227`", diagnosticsPage);
+    AssertContains("| `TS2228` | Type Checking | Error | Invalid return expression |", diagnosticsPage);
+    AssertContains("`TS2228` reports function body expressions whose value type is not assignable to the declared return type after nullability and structural proof checks", diagnosticsPage);
+    AssertContains("return expression failures like `TS2228`", diagnosticsPage);
+    AssertContains("| `TS2229` | Type Checking | Error | Invalid value initializer |", diagnosticsPage);
+    AssertContains("`TS2229` reports value declaration initializers whose value type is not assignable to the explicit annotation after nullability and structural proof checks", diagnosticsPage);
+    AssertContains("value initializer failures like `TS2229`", diagnosticsPage);
+    AssertContains("| `TS2230` | Type Checking | Error | Invalid assignment value |", diagnosticsPage);
+    AssertContains("`TS2230` reports simple assignment values whose value type is not assignable to the mutable target after nullability and structural proof checks", diagnosticsPage);
+    AssertContains("assignment value failures like `TS2230`", diagnosticsPage);
+
     var referencePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "reference.md"));
     AssertContains("Declarations", referencePage);
     AssertContains("Expressions", referencePage);
+    AssertContains("The 1.0 functional surface is deliberately bounded", referencePage);
+    AssertContains("General currying, partial application, computation-expression workflows, active patterns, imported pipeline/composition inference, and F#-complete higher-order inference are post-1.0", referencePage);
+    AssertContains("The 1.0 enum and bitwise algebra surface is also bounded", referencePage);
+    AssertContains("TypeSharp-owned enums support optional integral underlying types, explicit integer values, aliases, initializer-local composite-or values, same-enum value `|`/`&`/`^`/`~`, and match exhaustiveness", referencePage);
+    AssertContains("Enum-valued shifts, flag algebra beyond same-enum value operators, flag-aware match reasoning, imported numeric enum flag reasoning, arbitrary computed enum values, numeric pattern algebra, numeric enum patterns, and broad attribute target validation are post-1.0", referencePage);
+    AssertContains("The 1.0 class/interface member surface is deliberately bounded", referencePage);
+    AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor, and public instance `fun` methods", referencePage);
+    AssertContains("Constructors, fields, properties, events, inheritance/implementation clauses, static/abstract/virtual/override members, interface default implementations, setters, indexers, operators, nested types, partial methods, and broader member-body analysis are post-1.0", referencePage);
+    AssertContains("The 1.0 collection and object construction surface is bounded", referencePage);
+    AssertContains("collection expressions require a known array or `System.Collections.Generic.List<T>` target", referencePage);
+    AssertContains("Dictionary/set literals, object initializer syntax, arbitrary class object construction, contextual collection inference without a known array/List target, collection-builder protocols, and initializer mutation are post-1.0", referencePage);
+    AssertContains("The 1.0 extension member surface is also bounded", referencePage);
+    AssertContains("Setters, static extension members, extension operators, nullable receiver lifting, imported extension property metadata, richer ranking, and C# 14 extension-block emission are post-1.0", referencePage);
     AssertContains("Types", referencePage);
     AssertContains("Public ABI Rules", referencePage);
     AssertContains("Modules And Imports", referencePage);
@@ -14158,6 +15330,9 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("VS Code extension package shape is stable", workflow);
     AssertContains("dotnet publish cli\\TypeSharp.Cli\\TypeSharp.Cli.csproj", workflow);
     AssertContains("-p:UseAppHost=false", workflow);
+    AssertContains("-p:TypeSharpBuildMetadata=$env:RELEASE_TAG", workflow);
+    AssertContains("-p:TypeSharpSourceRevision=$sourceRevision", workflow);
+    AssertContains("git rev-parse --short=12 HEAD", workflow);
     AssertContains("lang\\TypeSharp.Core\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Core.dll", workflow);
     AssertContains("lang\\TypeSharp.Runtime\\bin\\$env:CONFIGURATION\\net48\\TypeSharp.Runtime.dll", workflow);
     AssertContains("npm run prepare:server", workflow);
@@ -14166,23 +15341,49 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Get-FileHash -Algorithm SHA256", workflow);
     AssertContains("SHA256SUMS.txt", workflow);
     AssertContains("typesharp-cli-dotnet-$tag.zip", workflow);
+    AssertContains("typesharp.cmd", workflow);
+    AssertContains("dotnet \"%TYPESHARP_HOME%typesharp.dll\" %*", workflow);
     AssertContains("typesharp-runtime-net48-$tag.zip", workflow);
     AssertContains("typesharp-vscode-$tag.vsix", workflow);
+    AssertContains("Build metadata: $tag", workflow);
+    AssertContains("Source revision: $sourceRevision", workflow);
+    AssertContains("Install a previous GitHub Release asset with a matching runtime ABI", workflow);
     AssertContains("uses: actions/upload-artifact@v5", workflow);
     AssertContains("if-no-files-found: error", workflow);
     AssertContains("GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}", workflow);
     AssertContains("'release',", workflow);
     AssertContains("'create',", workflow);
     AssertContains("gh release upload", workflow);
+    AssertContains("Smoke published GitHub Release assets", workflow);
+    AssertContains("typesharp-hosted-release-smoke", workflow);
+    AssertContains("Invoke-WebRequest \"$releaseBase/$cliAsset\" -OutFile $cliZip", workflow);
+    AssertContains("Verify-ReleaseAssetHash $cliAsset $cliZip $checksumPath", workflow);
+    AssertContains("Verify-ReleaseAssetHash $runtimeAsset $runtimeZip $checksumPath", workflow);
+    AssertContains("gh release view $env:RELEASE_TAG --json body,tagName,isPrerelease", workflow);
+    AssertContains("typesharp.cmd') version --json", workflow);
+    AssertContains("new console HostedReleaseSmoke --target net48 --output HostedReleaseSmoke", workflow);
+    AssertContains("check HostedReleaseSmoke\\TypeSharp.toml", workflow);
+    AssertContains("build HostedReleaseSmoke\\TypeSharp.toml", workflow);
+    AssertContains("HostedReleaseSmoke\\generated\\bin\\Debug\\net48\\HostedReleaseSmoke.exe", workflow);
     AssertFalse(workflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Release workflow should not introduce Python.");
 
     var projectPolicyPage = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "src", "content", "docs", "project-policy.md"));
     AssertContains("Release automation", projectPolicyPage);
     AssertContains(".github/workflows/release-artifacts.yml", projectPolicyPage);
     AssertContains("typesharp-cli-dotnet-<tag>.zip", projectPolicyPage);
+    AssertContains("typesharp.cmd", projectPolicyPage);
     AssertContains("typesharp-runtime-net48-<tag>.zip", projectPolicyPage);
     AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
     AssertContains("SHA256SUMS.txt", projectPolicyPage);
+    AssertContains("TypeSharpBuildMetadata=<tag>", projectPolicyPage);
+    AssertContains("TypeSharpSourceRevision=<short commit>", projectPolicyPage);
+    AssertContains("Current release compatibility matrix", projectPolicyPage);
+    AssertContains("After publication, the workflow downloads the just-published GitHub Release CLI and runtime assets", projectPolicyPage);
+    AssertContains("checks `typesharp version --json` against the release page metadata", projectPolicyPage);
+    AssertContains("Rollback uses a previous GitHub Release asset", projectPolicyPage);
+    AssertContains("1.0 Dependency Acquisition Scope", projectPolicyPage);
+    AssertContains("NuGet package restore is post-1.0", projectPolicyPage);
+    AssertContains("neither command may silently restore packages", projectPolicyPage);
     AssertContains("contents: write", projectPolicyPage);
 
     var regressionWorkflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "regression.yml");
@@ -14222,7 +15423,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 578", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 590", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -19369,6 +20570,55 @@ static void CliBuildCompilesInterfaceDeclarationApi()
     });
 }
 
+static void CliBuildStopsBeforeEmissionOnUnsupportedTypeSharpClassAndInterfaceMembers()
+{
+    WithWorkspace(root =>
+    {
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "UnsupportedClassMembers"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.UnsupportedClassMembers"
+            generatedOutputRoot = "generated"
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.UnsupportedClassMembers
+
+            public class WithConstructor(name: string) {
+              public fun Echo(value: string): string = value
+            }
+
+            public class WithProperty {
+              public let Name: string = "value"
+            }
+
+            public class WithEvent {
+              public event Changed: System.Action
+            }
+
+            public interface IBad {
+              let Name: string
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(1, exitCode);
+        var diagnosticText = output.ToString() + error.ToString();
+        AssertContains("TS2210", diagnosticText);
+        AssertContains("TypeSharp-authored class constructors are not part of the 1.0 class member subset", diagnosticText);
+        AssertContains("Class field and property declarations are not part of the 1.0 class/interface member subset", diagnosticText);
+        AssertContains("TypeSharp-authored event members are not part of the 1.0 public ABI", diagnosticText);
+        AssertContains("Interface member syntax is not supported in the 1.0 class/interface member subset", diagnosticText);
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsupported class/interface member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsupportedClassMembers.Generated.csproj")), "Build should not emit generated project when unsupported class/interface member diagnostics contain errors.");
+        AssertFalse(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "UnsupportedClassMembers.dll")), "Build should not emit generated assembly when unsupported class/interface member diagnostics contain errors.");
+    });
+}
+
 static void CliBuildCompilesEnumDeclarationApi()
 {
     WithWorkspace(root =>
@@ -20094,17 +21344,17 @@ static void CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentTarge
         AssertTrue(result.HasErrors, "Unsupported imported C# logical unsigned shift assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '>>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
             "Imported member target should still reject unsupported shift counts.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("indexer targets require a matching public getter and setter", StringComparison.Ordinal)),
             "Imported indexer target without a matching getter/setter should remain rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("event and unresolved imported member targets are not supported", StringComparison.Ordinal)),
             "Imported event target should remain rejected.");
     });
@@ -20265,7 +21515,7 @@ static void CheckerRejectsUnsupportedImportedLogicalUnsignedShiftAssignmentIndex
         AssertTrue(result.HasErrors, "Unsupported imported C# indexer logical unsigned shift assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("indexer targets require a matching public getter and setter", StringComparison.Ordinal)),
             "Getter-only imported indexer target should be rejected before emission.");
         AssertTrue(
@@ -20457,7 +21707,7 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedMemberTarg
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Unsupported null-conditional member targets should be rejected before emission.");
     });
@@ -20679,33 +21929,33 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberAdditiveCompou
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# additive compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
             "Null-conditional imported bool member target should reject additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
             "Null-conditional imported string member target should reject additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message.Contains("Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Null-conditional imported enum member target should reject additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
             "Null-conditional imported member target should reject nullable additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign additive compound assignment result of type 'long' to 'int'."),
             "Null-conditional imported member target should reject additive results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Readonly, event, and static null-conditional additive targets should be rejected before emission.");
     });
@@ -20925,32 +22175,32 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerAdditiveCompo
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer additive compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'bool'."),
             "Null-conditional imported int indexer target should reject bool operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'bool' and 'bool'."),
             "Null-conditional imported bool indexer target should reject additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'string' and 'string'."),
             "Null-conditional imported string indexer target should reject additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Additive compound assignment '+=' operands must be non-null primitive integral numeric values of a supported type, but found 'int' and 'int?'."),
             "Null-conditional imported indexer target should reject nullable additive operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign additive compound assignment result of type 'long' to 'int'."),
             "Null-conditional imported indexer target should reject additive results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
             "Getter-only null-conditional imported indexer targets should be rejected before emission.");
         AssertTrue(
@@ -21155,12 +22405,12 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberLogicalUnsigne
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# logical unsigned shift assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '>>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
             "Null-conditional imported member target should reject unsupported shift counts.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Readonly, event, and static null-conditional logical shift targets should be rejected before emission.");
     });
@@ -21387,17 +22637,17 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberShiftCompoundA
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# shift compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '<<=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'bool' and 'int'."),
             "Null-conditional imported bool member target should reject shift operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
             "Null-conditional imported member target should reject unsupported shift counts.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)) >= 5,
             "Readonly, event, static, unresolved, TypeSharp-owned, and local null-conditional shift targets should be rejected before emission.");
     });
@@ -21610,17 +22860,17 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberBitwiseCompoun
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# bitwise compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Boolean compound assignment '|=' operands must both be 'bool', but found 'bool' and 'int'."),
             "Null-conditional imported bool member target should reject non-bool operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Bitwise compound assignment '|=' operands must be integral numeric values or boolean values of a supported primitive type, but found 'string' and 'string'."),
             "Null-conditional imported string member target should reject unsupported bitwise operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Readonly, event, and static null-conditional bitwise targets should be rejected before emission.");
     });
@@ -21855,17 +23105,17 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerBitwiseCompou
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer bitwise compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Boolean compound assignment '|=' operands must both be 'bool', but found 'int' and 'bool'."),
             "Null-conditional imported int indexer target should reject bool operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Bitwise compound assignment '|=' operands must be integral numeric values or boolean values of a supported primitive type, but found 'string' and 'string'."),
             "Null-conditional imported string indexer target should reject unsupported bitwise operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
             "Getter-only null-conditional imported indexer targets should be rejected before emission.");
         AssertTrue(
@@ -22065,12 +23315,12 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerLogicalUnsign
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer logical unsigned shift assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '>>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
             "Null-conditional imported indexer target should reject unsupported shift counts.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
             "Getter-only null-conditional imported indexer targets should be rejected before emission.");
         AssertTrue(
@@ -22316,22 +23566,22 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerShiftCompound
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer shift compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '<<=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'bool' and 'int'."),
             "Null-conditional imported bool indexer target should reject shift operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '<<=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'string' and 'int'."),
             "Null-conditional imported string indexer target should reject shift operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2214" &&
                 diagnostic.Message == "Shift assignment '>>=' operands must be non-null primitive integral values with an int-compatible shift count, but found 'int' and 'uint'."),
             "Null-conditional imported indexer target should reject unsupported shift counts.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)) >= 3,
             "Getter-only, unresolved, local, static-like, and TypeSharp-owned null-conditional indexer shift targets should be rejected before emission.");
         AssertTrue(
@@ -22524,7 +23774,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberReads()
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# member read targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2223" &&
                 diagnostic.Message.Contains("readable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)),
             "Unsupported null-conditional member read targets should be rejected before emission.");
     });
@@ -22696,7 +23946,7 @@ static void CheckerRejectsUnsupportedNullConditionalAssignmentImportedIndexerTar
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
             "Unsupported null-conditional indexer targets should be rejected before emission.");
         AssertTrue(
@@ -22888,7 +24138,7 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerReads()
             "Ambiguous null-conditional imported indexer read arguments should reuse existing interop diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2223" &&
                 diagnostic.Message.Contains("readable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)),
             "Unsupported null-conditional indexer read targets should be rejected before emission.");
     });
@@ -23494,22 +24744,22 @@ static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorLocalAs
         AssertTrue(result.HasErrors, "Unsupported imported static user-defined multiplicative operator local assignments should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator, but found 'LegacyScalar' and 'int'."),
             $"Missing imported static binary operator should produce a deterministic diagnostic.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct' to 'LegacyBrokenQuantity'.", StringComparison.Ordinal)),
             $"User-defined operator results that cannot be assigned back should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message == "User-defined multiplicative compound assignment '*=' is ambiguous for operand types 'LegacyOperatorLeft' and 'LegacyOperatorRight'."),
             $"Ambiguous imported static binary operators should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator, but found 'LegacyQuantity' and 'int?'."),
             $"Nullable operands should not bind imported static user-defined operators.\n{diagnosticText}");
     });
@@ -23554,9 +24804,103 @@ static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorLocalAs
     AssertTrue(instanceOnlyResult.HasErrors, "Imported instance compound-assignment metadata should be ignored by this C# 7.3-compatible precursor slice.");
     AssertTrue(
         instanceOnlyResult.Diagnostics.Any(diagnostic =>
-            diagnostic.Code == "TS2201" &&
+            diagnostic.Code == "TS2217" &&
             diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator, but found 'LegacyInstanceCompoundOnly' and 'LegacyInstanceCompoundOnly'."),
         "Instance compound-assignment operator metadata should not satisfy the static binary operator policy.");
+}
+
+static void CheckerRejectsCheckedOnlyImportedStaticMultiplicativeOperatorLocalAssignment()
+{
+    var parseResult = TypeSharpParser.ParseText("""
+        namespace Samples.CheckedOnlyImportedStaticMultiplicativeOperatorAssignment
+
+        import { LegacyCheckedOnlyQuantity } from "Legacy.Tools"
+
+        export fun checkedOnly(value: LegacyCheckedOnlyQuantity, factor: int): LegacyCheckedOnlyQuantity {
+          let mut current: LegacyCheckedOnlyQuantity = value
+          checked(current *= factor)
+          current
+        }
+
+        export fun checkedOnlyDivision(value: LegacyCheckedOnlyQuantity, factor: int): LegacyCheckedOnlyQuantity {
+          let mut current: LegacyCheckedOnlyQuantity = value
+          checked(current /= factor)
+          current
+        }
+
+        export fun checkedOnlyModulo(value: LegacyCheckedOnlyQuantity, factor: int): LegacyCheckedOnlyQuantity {
+          let mut current: LegacyCheckedOnlyQuantity = value
+          checked(current %= factor)
+          current
+        }
+        """);
+    AssertFalse(parseResult.HasErrors, $"Checked-only operator source should parse cleanly.\n{DiagnosticJsonFormatter.ToJson(parseResult.Diagnostics)}");
+    var syntaxRoot = Require(parseResult.Root, "Parser should produce a root syntax node.");
+
+    var metadata = new MetadataAssemblySymbol(
+        "Legacy.Tools",
+        ResolvedReferenceKind.LocalAssembly,
+        "Legacy.Tools",
+        null,
+        null)
+    {
+        Types =
+        [
+            new MetadataTypeSymbol("Legacy.Tools", "LegacyCheckedOnlyQuantity", [], [], [], [])
+            {
+                Operators =
+                [
+                    new MetadataMethodSymbol(
+                        "op_CheckedMultiply",
+                        "Legacy.Tools.LegacyCheckedOnlyQuantity",
+                        MetadataNullabilityKind.NotApplicable,
+                        [
+                            new MetadataParameterSymbol("left", "Legacy.Tools.LegacyCheckedOnlyQuantity", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                            new MetadataParameterSymbol("right", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                        ],
+                        IsStatic: true),
+                    new MetadataMethodSymbol(
+                        "op_CheckedDivision",
+                        "Legacy.Tools.LegacyCheckedOnlyQuantity",
+                        MetadataNullabilityKind.NotApplicable,
+                        [
+                            new MetadataParameterSymbol("left", "Legacy.Tools.LegacyCheckedOnlyQuantity", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                            new MetadataParameterSymbol("right", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                        ],
+                        IsStatic: true),
+                    new MetadataMethodSymbol(
+                        "op_CheckedModulus",
+                        "Legacy.Tools.LegacyCheckedOnlyQuantity",
+                        MetadataNullabilityKind.NotApplicable,
+                        [
+                            new MetadataParameterSymbol("left", "Legacy.Tools.LegacyCheckedOnlyQuantity", MetadataByRefKind.None, IsParams: false, IsOptional: false),
+                            new MetadataParameterSymbol("right", "int", MetadataByRefKind.None, IsParams: false, IsOptional: false)
+                        ],
+                        IsStatic: true)
+                ]
+            }
+        ]
+    };
+
+    var result = TypeSharpTypeChecker.Check(syntaxRoot, "src/Main.tysh", [metadata]);
+    var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
+
+    AssertTrue(result.HasErrors, "Checked-only imported operator metadata should not satisfy the C# 7.3-compatible ordinary static binary operator policy.");
+    AssertTrue(
+        result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == "TS2217" &&
+            diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator, but found 'LegacyCheckedOnlyQuantity' and 'int'."),
+        $"Checked-only imported operator metadata should be rejected before emission.\n{diagnosticText}");
+    AssertTrue(
+        result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == "TS2217" &&
+            diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator, but found 'LegacyCheckedOnlyQuantity' and 'int'."),
+        $"Checked-only imported division operator metadata should be rejected before emission.\n{diagnosticText}");
+    AssertTrue(
+        result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == "TS2217" &&
+            diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator, but found 'LegacyCheckedOnlyQuantity' and 'int'."),
+        $"Checked-only imported modulo operator metadata should be rejected before emission.\n{diagnosticText}");
 }
 
 static void CliBuildCompilesImportedStaticMultiplicativeOperatorMemberAssignment()
@@ -23759,33 +25103,33 @@ static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorMemberA
         AssertTrue(result.HasErrors, "Unsupported imported static user-defined multiplicative operator member assignments should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
             $"Imported member target without a matching static binary operator should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
             $"Imported member target whose operator result cannot assign back should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
             $"Ambiguous imported static binary operators should be rejected for member targets.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
             $"Nullable operands should not bind imported static user-defined operators for member targets.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == unsupportedImportedMessage) >= 2,
             $"Getter-only properties and readonly fields should remain unsupported member targets.\n{diagnosticText}");
     });
@@ -23991,33 +25335,33 @@ static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorIndexer
         AssertTrue(result.HasErrors, "Unsupported imported static user-defined multiplicative operator indexer assignments should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
             $"Imported indexer target without a matching static binary operator should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
             $"Imported indexer target whose operator result cannot assign back should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
             $"Ambiguous imported static binary operators should be rejected for indexer targets.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
             $"Nullable operands should not bind imported static user-defined operators for indexer targets.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == unsupportedImportedMessage) >= 3,
             $"Missing-setter, mismatched-argument, and ambiguous imported indexer targets should remain unsupported before emission.\n{diagnosticText}");
     });
@@ -24356,48 +25700,48 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMem
         AssertTrue(result.HasErrors, "Unsupported imported C# multiplicative compound assignment member targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Imported bool member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Imported string member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Imported enum member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Imported member target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Imported member target should reject multiplicative results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
             "Imported decimal member target should reject mixed decimal and floating-point operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
             "Imported float member target should reject floating-point results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Imported float member target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == unsupportedImportedMessage) >= 2,
             "Readonly field and event multiplicative targets should remain rejected before emission.");
     });
@@ -24750,48 +26094,48 @@ static void CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentInd
         AssertTrue(result.HasErrors, "Unsupported imported C# multiplicative compound assignment indexer targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == unsupportedImportedMessage),
             $"Getter-only imported indexer target should be rejected before emission.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()))}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Imported bool indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Imported string indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Imported enum indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Imported indexer target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Imported indexer target should reject multiplicative results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
             "Imported decimal indexer target should reject mixed decimal and floating-point operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
             "Imported float indexer target should reject floating-point results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Imported float indexer target should reject nullable floating-point operands.");
         AssertTrue(
@@ -25246,74 +26590,74 @@ static void CheckerRejectsUnsupportedNullConditionalImportedMemberMultiplicative
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# multiplicative compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Null-conditional imported bool member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Null-conditional imported string member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Null-conditional imported enum member target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Null-conditional imported member target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Null-conditional imported member target should reject multiplicative results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
             "Null-conditional imported decimal member target should reject mixed decimal and floating-point operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
             "Null-conditional imported float member target should reject floating-point results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Null-conditional imported float member target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
             $"Null-conditional imported member target without a matching static binary operator should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
             $"Null-conditional imported member target whose operator result cannot assign back should be rejected.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
             $"Ambiguous imported static binary operators should be rejected for null-conditional member targets.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
             $"Nullable operands should not bind imported static user-defined operators for null-conditional member targets.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance field/property targets", StringComparison.Ordinal)) >= 9,
             "Getter-only, readonly, checked readonly, event, static, unresolved, TypeSharp-owned, and local null-conditional multiplicative member targets should be rejected before emission.");
     });
@@ -25764,48 +27108,48 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
         AssertTrue(result.HasErrors, "Unsupported null-conditional imported C# indexer multiplicative compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Null-conditional imported bool indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "Null-conditional imported string indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyColor", StringComparison.Ordinal)),
             "Null-conditional imported enum indexer target should reject multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Null-conditional imported indexer target should reject nullable multiplicative operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Null-conditional imported indexer target should reject multiplicative results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
             "Null-conditional imported decimal indexer target should reject mixed decimal and floating-point operands.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
             "Null-conditional imported float indexer target should reject floating-point results that cannot be assigned back.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Null-conditional imported float indexer target should reject nullable floating-point operands.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message.Contains("readable and writable metadata-backed imported C# instance indexer targets", StringComparison.Ordinal)) >= 5,
             "Getter-only, checked getter-only, unresolved, local, static-like, and TypeSharp-owned null-conditional indexer multiplicative targets should be rejected before emission.");
         AssertTrue(
@@ -25820,26 +27164,26 @@ static void CheckerRejectsUnsupportedNullConditionalImportedIndexerMultiplicativ
             "Ambiguous null-conditional imported indexer multiplicative arguments should reuse existing interop ambiguity diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
             $"Null-conditional imported indexer target without a matching static binary operator should be rejected.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
             $"Null-conditional imported indexer target whose user-defined operator result cannot assign back should be rejected.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
             $"Ambiguous imported static binary operators should be rejected for null-conditional indexer targets.\n{string.Join(Environment.NewLine, result.Diagnostics.Select(d => d.ToCliText()))}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2217" &&
                 diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
                 diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
@@ -25987,72 +27331,72 @@ static void CheckerRejectsUnsupportedMultiplicativeCompoundAssignmentTargets()
         AssertTrue(result.HasErrors, "Unsupported multiplicative compound assignment targets should produce diagnostics.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended."),
             $"Immutable local multiplicative assignment should preserve the local mutability diagnostic.\n{diagnosticText}");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target."),
             "Non-binding multiplicative assignment targets should be rejected before emission.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'."),
             "Bool multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'."),
             "String multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'."),
             "Nullable multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'long' to 'int'."),
             "Promoted multiplicative results that cannot be assigned back should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'RateKind' and 'RateKind'."),
             "Enum multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'."),
             "Mixed decimal and floating-point multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Cannot assign multiplicative compound assignment result of type 'double' to 'float'."),
             "Floating-point multiplicative results that cannot be assigned back should be rejected.");
         AssertTrue(
             result.Diagnostics.Any(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'."),
             "Nullable floating-point multiplicative operands should be rejected.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == mixedDecimalFloatingMessage) >= 2,
             "Checked local mixed decimal/floating operands should preserve existing multiplicative diagnostics.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2222" &&
                 diagnostic.Message == nullableFloatMessage) >= 2,
             "Unchecked local nullable floating-point operands should preserve existing multiplicative diagnostics.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == unsupportedImportedMessage) >= 2,
             "Imported C# indexer multiplicative targets without a public setter should remain unsupported inside and outside checked wrappers.");
         AssertTrue(
             result.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == "TS2201" &&
+                diagnostic.Code == "TS2216" &&
                 diagnostic.Message == unsupportedNullConditionalIndexerMessage) >= 1,
             "Null-conditional imported C# indexer multiplicative targets without a public setter should remain unsupported inside unchecked wrappers.");
     });
@@ -29326,7 +30670,7 @@ static void CompilerCheckKeepsParallelDiagnosticsInSourceOrder()
             """);
 
         var result = TypeSharpChecker.Check(manifestPath);
-        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2201").ToArray();
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "TS2228").ToArray();
 
         AssertEqual(2, diagnostics.Length);
         AssertEqual("src/Alpha.tysh", diagnostics[0].File);
@@ -31111,6 +32455,55 @@ static string BuildRepositoryAssembly(string projectRelativePath, string assembl
     return assemblyPath;
 }
 
+static string PublishStagedCliArtifact(string root)
+{
+    var repositoryRoot = Directory.GetCurrentDirectory();
+    var publishRoot = Path.Combine(root, "artifact", "typesharp-cli-dotnet");
+    var publish = RunProcess(
+        "dotnet",
+        $"publish {QuoteProcessArgument(Path.Combine(repositoryRoot, "cli", "TypeSharp.Cli", "TypeSharp.Cli.csproj"))} -c Debug --no-restore -p:UseAppHost=false -p:TypeSharpBuildMetadata=staged-test -p:TypeSharpSourceRevision=staged-test -o {QuoteProcessArgument(publishRoot)}",
+        repositoryRoot);
+
+    AssertTrue(
+        publish.ExitCode == 0,
+        $"Release-staged CLI publish should succeed.\nSTDOUT:\n{publish.StandardOutput}\nSTDERR:\n{publish.StandardError}");
+
+    var cliDll = Path.Combine(publishRoot, "typesharp.dll");
+    AssertTrue(File.Exists(cliDll), "Staged CLI artifact should contain typesharp.dll.");
+    AssertTrue(File.Exists(Path.Combine(publishRoot, "TypeSharp.Compiler.dll")), "Staged CLI artifact should contain compiler dependency.");
+    AssertTrue(File.Exists(Path.Combine(publishRoot, "TypeSharp.LanguageServer.dll")), "Staged CLI artifact should contain language server dependency.");
+    var cliCommand = Path.Combine(publishRoot, "typesharp.cmd");
+    File.WriteAllText(
+        cliCommand,
+        """
+        @echo off
+        setlocal
+        set "TYPESHARP_HOME=%~dp0"
+        dotnet "%TYPESHARP_HOME%typesharp.dll" %*
+        """);
+    AssertTrue(File.Exists(cliCommand), "Staged CLI artifact should contain the Windows typesharp command wrapper.");
+    return cliCommand;
+}
+
+static string PublishStagedRuntimeArtifact(string root)
+{
+    var coreAssemblyPath = BuildRepositoryAssembly(
+        "lang/TypeSharp.Core/TypeSharp.Core.csproj",
+        "lang/TypeSharp.Core/bin/Debug/net48/TypeSharp.Core.dll");
+    var runtimeAssemblyPath = BuildRepositoryAssembly(
+        "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
+        "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
+
+    var runtimeLibRoot = Path.Combine(root, "artifact", "typesharp-runtime-net48", "lib", "net48");
+    Directory.CreateDirectory(runtimeLibRoot);
+    File.Copy(coreAssemblyPath, Path.Combine(runtimeLibRoot, "TypeSharp.Core.dll"), overwrite: true);
+    File.Copy(runtimeAssemblyPath, Path.Combine(runtimeLibRoot, "TypeSharp.Runtime.dll"), overwrite: true);
+
+    AssertTrue(File.Exists(Path.Combine(runtimeLibRoot, "TypeSharp.Core.dll")), "Staged runtime artifact should contain TypeSharp.Core.dll.");
+    AssertTrue(File.Exists(Path.Combine(runtimeLibRoot, "TypeSharp.Runtime.dll")), "Staged runtime artifact should contain TypeSharp.Runtime.dll.");
+    return runtimeLibRoot;
+}
+
 static void BuildApplicationModelHostProject(
     string root,
     string projectName,
@@ -31240,6 +32633,19 @@ static ProcessResult RunProcess(string fileName, string arguments, string workin
 
     return new ProcessResult(process.ExitCode, standardOutput, standardError);
 }
+
+static ProcessResult RunPublishedCli(string cliCommand, string arguments, string workingDirectory)
+{
+    if (cliCommand.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase))
+    {
+        return RunProcess("cmd.exe", $"/d /s /c \"{QuoteProcessArgument(cliCommand)} {arguments}\"", workingDirectory);
+    }
+
+    return RunProcess("dotnet", $"{QuoteProcessArgument(cliCommand)} {arguments}", workingDirectory);
+}
+
+static string QuoteProcessArgument(string value) =>
+    "\"" + value.Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
 
 static ProcessResult RunNpm(string arguments, string workingDirectory)
 {

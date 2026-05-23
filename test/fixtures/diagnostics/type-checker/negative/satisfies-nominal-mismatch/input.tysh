@@ -1,0 +1,6 @@
+namespace Samples.Satisfies.NominalMismatch
+
+record Person(Name: string)
+
+fun invalid(): int =
+  42 satisfies Person

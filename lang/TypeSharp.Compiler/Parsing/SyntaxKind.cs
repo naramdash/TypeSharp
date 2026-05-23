@@ -116,6 +116,7 @@ public enum SyntaxKind
     ImportNamespaceDeclaration,
     ImportNamedDeclaration,
     ImportTypeDeclaration,
+    ImportSideEffectDeclaration,
     ExportNamedDeclaration,
     ExportTypeDeclaration,
     ExportStarDeclaration,

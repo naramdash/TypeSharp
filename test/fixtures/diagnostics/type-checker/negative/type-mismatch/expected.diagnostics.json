@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2228",
       "severity": "error",
       "message": "Cannot return expression of type 'int' from function returning 'string'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 3, "column": 34 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2229",
       "severity": "error",
       "message": "Cannot assign expression of type 'string' to 'int'.",
       "file": "input.tysh",

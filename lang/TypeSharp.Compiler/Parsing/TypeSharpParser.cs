@@ -154,6 +154,12 @@ public sealed class TypeSharpParser
             return Node(SyntaxKind.ImportNamedDeclaration, children);
         }
 
+        if (Current.Kind == SyntaxKind.StringLiteralToken)
+        {
+            children.Add(TokenNode(NextToken()));
+            return Node(SyntaxKind.ImportSideEffectDeclaration, children);
+        }
+
         children.Add(ParseSkippedToken());
         return Node(SyntaxKind.ImportNamedDeclaration, children);
     }

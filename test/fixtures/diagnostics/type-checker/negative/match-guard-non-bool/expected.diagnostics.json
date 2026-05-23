@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2218",
       "severity": "error",
       "message": "Match guard expression must be 'bool', but found 'string'.",
       "file": "input.tysh",

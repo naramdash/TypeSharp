@@ -5,6 +5,8 @@ description: Sequential TypeSharp learning paths tied to runnable examples and s
 
 These tutorials point at runnable examples that are checked by the repository smoke suite. Copy the commands from each example README when you want the exact verified flow.
 
+Start by installing the CLI with the release zip and checksum flow on [Install](../install/). When a tag does not have a published release asset yet, use the source-built fallback on [Start Here](../start-here/) and replace `typesharp` with the built CLI DLL command.
+
 ## 1. Hello Project
 
 Goal: create and build a `net48` console program with nominal invoice records, a small calculation, and framework rendering.
@@ -14,6 +16,8 @@ Use: [`examples/runnable/console-hello`](https://github.com/naramdash/TypeSharp/
 Core commands:
 
 ```powershell
+typesharp new console HelloTypeSharp --target net48 --output .\HelloTypeSharp
+cd .\HelloTypeSharp
 typesharp check
 typesharp build
 typesharp run

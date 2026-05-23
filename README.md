@@ -23,7 +23,13 @@ Many Windows desktop, server, plugin, ASP.NET, WCF, and internal business system
 
 The compiler and tools can run on a modern .NET SDK. The generated user-facing artifacts and TypeSharp runtime libraries target `net48`.
 
-## Try It
+## Install
+
+Preview release artifacts are published from tagged release builds to GitHub Releases. The CLI asset is `typesharp-cli-dotnet-<tag>.zip`, includes a Windows `typesharp.cmd` wrapper, and is verified with `SHA256SUMS.txt`. The runtime asset is `typesharp-runtime-net48-<tag>.zip` and contains `TypeSharp.Core.dll` plus `TypeSharp.Runtime.dll`.
+
+Use the docs [Install](https://typesharp.github.io/TypeSharp/install/) page for the release download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the source-built fallback below.
+
+## Try It From Source
 
 Prerequisites:
 
@@ -39,11 +45,13 @@ cd TypeSharp
 
 dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
 
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll check .\scratch\HelloTypeSharp\TypeSharp.toml
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll build .\scratch\HelloTypeSharp\TypeSharp.toml
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll run .\scratch\HelloTypeSharp\TypeSharp.toml
+$tysh = "dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll"
+
+& $tysh version
+& $tysh new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
+& $tysh check .\scratch\HelloTypeSharp\TypeSharp.toml
+& $tysh build .\scratch\HelloTypeSharp\TypeSharp.toml
+& $tysh run .\scratch\HelloTypeSharp\TypeSharp.toml
 ```
 
 If a local antivirus blocks a generated short-lived `.exe`, `check` and `build` still validate the compiler path. Only add local exclusions for folders you trust.

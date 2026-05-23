@@ -55,6 +55,8 @@ import * as Text from "System.Text"
 
 Named aliases lower to generated C# alias `using` directives. Namespace aliases lower to namespace alias `using` directives. Alias conflicts in the same file scope report `TS2002`.
 
+Non-relative source-style specifiers such as `Shared/Api` are source imports only when they resolve to a direct TypeSharp project reference. Otherwise, non-relative specifiers are C# namespace/type imports, not JavaScript package, npm workspace, Node, or bundler lookups.
+
 ## Relative Source Imports
 
 Relative specifiers are resolved against the source module graph.
@@ -64,6 +66,8 @@ import { helper } from "./Feature/Helper"
 ```
 
 Missing relative modules report `TS0112`. Resolved relative imports are tracked by the source module graph. Future unsupported source import forms report `TS0113` rather than producing partial generated C#.
+
+Side-effect-only imports such as `import "./Setup"` are parsed but not supported in the 1.0 module graph. They report `TS0113` because TypeSharp generated `net48` artifacts do not have JavaScript-style module evaluation side effects.
 
 Unaliased named source imports lower through a generated C# `using static` directive for the target source module container:
 
@@ -266,11 +270,22 @@ export * from "./Feature/Helper"
 
 Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`.
 
+## 1.0 Module Graph Boundary
+
+The 1.0 module graph boundary is:
+
+- source imports resolve only through relative specifiers, current-project manifest aliases, or direct TypeSharp project references;
+- non-relative specifiers without a direct project-reference match are C# namespace/type imports, not package or JavaScript resolver inputs;
+- side-effect-only imports report `TS0113`;
+- source imports and namespace source member access can use only exported target names; missing target exports report `TS0114`;
+- relative/current-project alias re-exports can forward the lowerable function, top-level value, lambda-valued top-level value, module alias, type, and star export surface described above;
+- non-relative forwarding, cross-project forwarding, and non-lowerable forwarding forms report `TS2003`;
+- direct project references expose source-level exports only to direct dependents; hidden transitive project-reference visibility is not part of the 1.0 source graph.
+
 ## Roadmap Boundary
 
 Near-term module work should focus on:
 
-- stricter diagnostics for unsupported non-relative source imports, non-lowerable re-exports, and side-effect-only imports;
 - richer project-reference metadata and re-export forms between TypeSharp projects, modeled through generated assemblies and source-module metadata rather than JavaScript package resolution;
 - editor navigation metadata for generated source and public exports, analogous to TypeScript declaration maps but grounded in TypeSharp source spans and C# artifacts.
 

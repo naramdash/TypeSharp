@@ -236,6 +236,195 @@ public static class DiagnosticDescriptors
         "The unknown type is a safe gradual-typing boundary. Code must prove a shape or narrower type before accessing members or indexers.",
         "Use a match/type pattern, assign to a structural shape after validation, or change the value to a statically known type.");
 
+    public static readonly DiagnosticDescriptor UnsupportedTypeSharpMember = new(
+        "TS2210",
+        "Unsupported TypeSharp class or interface member",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported TypeSharp class or interface member.",
+        "The 1.0 TypeSharp-authored class/interface member subset is intentionally limited to lowerable public instance methods and interface method signatures.",
+        "Use a supported method shape, move data to a record, use imported C# constructors/events, or wait for the specific class/interface member form to be promoted.");
+
+    public static readonly DiagnosticDescriptor UnsupportedMatchPattern = new(
+        "TS2211",
+        "Unsupported match pattern",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported match pattern.",
+        "The 1.0 executable match boundary supports nominal union cases, enum member names, bool literals, literal-union members, typed type-level-union members, and discard patterns.",
+        "Use a supported pattern shape, add a guard, or normalize the value before matching until richer pattern algebra is promoted.");
+
+    public static readonly DiagnosticDescriptor TypeOperatorLimitExceeded = new(
+        "TS2212",
+        "Type operator limit exceeded",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Type operator limit exceeded.",
+        "The 1.0 type-operator boundary caps local alias depth, alias cycles, union width, selected key count, and structural intersection member count so compile-time-only type computation remains deterministic.",
+        "Flatten the local alias chain, split the local type, reduce the selected keys, or promote the shape to a nominal record, class, interface, or union.");
+
+    public static readonly DiagnosticDescriptor UnsupportedExtensionProperty = new(
+        "TS2213",
+        "Unsupported extension property",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported extension property.",
+        "The 1.0 extension-property surface is intentionally limited to getter-only properties on exact known non-null receivers that lower to C# 7.3-compatible helper methods.",
+        "Use a supported getter-only extension property, narrow nullable receivers before access, avoid assignment/null-conditional access, or use an ordinary method until the specific extension-property form is promoted.");
+
+    public static readonly DiagnosticDescriptor UnsupportedEnumOrBitwiseOperation = new(
+        "TS2214",
+        "Unsupported enum or bitwise operation",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported enum or bitwise operation.",
+        "The 1.0 enum and bitwise algebra boundary is limited to lowerable enum declarations, same-enum value algebra, primitive integral bitwise/shift operations, and boolean bitwise operations.",
+        "Use supported enum members, same-enum operands, non-null primitive integral operands with an int-compatible shift count, or boolean operands where the operator allows them.");
+
+    public static readonly DiagnosticDescriptor UnsupportedTypeSharpFunctionApplication = new(
+        "TS2215",
+        "Unsupported TypeSharp function application",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported TypeSharp function application.",
+        "The 1.0 TypeSharp-owned function application boundary is limited to lowerable parameter lists, direct calls, first-argument pipelines, and direct unary named-function composition with known signatures.",
+        "Use a supported params/default parameter shape, match the declared TypeSharp parameters and generic type arguments, add required arguments, or provide an explicit function type annotation for public composition values.");
+
+    public static readonly DiagnosticDescriptor UnsupportedAssignmentTarget = new(
+        "TS2216",
+        "Unsupported assignment target",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported assignment target.",
+        "The 1.0 assignment-target boundary is limited to mutable local bindings and selected metadata-backed imported C# member/indexer targets, including bounded null-conditional assignment forms that can lower to C# 7.3-compatible guard code.",
+        "Use let mut for local mutation, assign through a supported imported C# field/property/indexer with the required getter/setter shape, or avoid the unsupported null-conditional or target form.");
+
+    public static readonly DiagnosticDescriptor UnsupportedImportedOperator = new(
+        "TS2217",
+        "Unsupported imported C# operator",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported imported C# operator.",
+        "The 1.0 imported-operator boundary accepts only selected ordinary public static binary C# operator metadata that can lower through C# 7.3-compatible compound assignment forms.",
+        "Use a primitive supported operand shape, expose exactly one ordinary public static binary operator with an assignable result, or avoid checked-only, instance-compound-only, ambiguous, nullable, or non-assignable operator metadata.");
+
+    public static readonly DiagnosticDescriptor InvalidMatchGuard = new(
+        "TS2218",
+        "Invalid match guard",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid match guard.",
+        "A TypeSharp match guard must be a known non-null bool expression checked in the narrowed arm scope; guarded arms still do not prove exhaustiveness.",
+        "Return a non-null bool from the guard expression, add an explicit comparison or predicate call, or move non-boolean logic into the arm body.");
+
+    public static readonly DiagnosticDescriptor UnsupportedConstructionExpression = new(
+        "TS2219",
+        "Unsupported construction expression",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported construction expression.",
+        "The 1.0 construction boundary accepts only lowerable array/List collection expressions and expected nominal TypeSharp record expressions with supported spreads and field shapes.",
+        "Use a known array or List<T> collection target with compatible elements, spread only arrays or List<T>, provide every required record field, remove unknown record fields, or spread only nominal record values.");
+
+    public static readonly DiagnosticDescriptor StructuralProofFailed = new(
+        "TS2220",
+        "Structural proof failed",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Structural proof failed.",
+        "TypeSharp structural shapes and type-level union discriminants are compile-time proof tools; the checker requires required members, compatible member types, and possible discriminant literals before C# lowering.",
+        "Add the required structural member, change the member type to match the structural shape, access an existing structural member, or compare against a possible discriminant literal.");
+
+    public static readonly DiagnosticDescriptor UnsupportedExtensionMethod = new(
+        "TS2221",
+        "Unsupported extension method",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported extension method.",
+        "The 1.0 TypeSharp-authored extension-method surface requires an explicit receiver type and a first method parameter with a matching non-params receiver type so lowering can emit an ordinary C# 7.3-compatible extension method.",
+        "Add the extension receiver type, add a first parameter with the same receiver type, remove params from the receiver parameter, or make the receiver and first parameter types match exactly.");
+
+    public static readonly DiagnosticDescriptor InvalidArithmeticCompoundAssignment = new(
+        "TS2222",
+        "Invalid arithmetic compound assignment",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid arithmetic compound assignment.",
+        "The 1.0 arithmetic compound-assignment boundary accepts only supported non-null primitive numeric operands whose promoted result can assign back to the target, plus the separately documented imported C# operator slice.",
+        "Use supported non-null primitive numeric operands, change the target type so the promoted result can assign back, add a null guard, or expose a supported imported C# operator when operating on imported nominal types.");
+
+    public static readonly DiagnosticDescriptor UnsupportedNullConditionalAccess = new(
+        "TS2223",
+        "Unsupported null-conditional access",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Unsupported null-conditional access.",
+        "The 1.0 null-conditional read boundary accepts only readable metadata-backed imported C# instance field/property/indexer targets that can lower through C# 7.3-compatible guard code.",
+        "Use a supported imported C# instance field/property/indexer read, narrow the receiver before ordinary access, or avoid invocation, chains, events, static, local, and TypeSharp-owned null-conditional targets until they are promoted.");
+
+    public static readonly DiagnosticDescriptor InvalidYieldExpression = new(
+        "TS2224",
+        "Invalid yield expression",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid yield expression.",
+        "The 1.0 iterator boundary requires yield expressions to appear in functions returning IEnumerable<T> or IEnumerator<T>, and yielded values must assign to the iterator element type.",
+        "Change the function return type to IEnumerable<T> or IEnumerator<T>, yield a compatible element value, or change the iterator element type.");
+
+    public static readonly DiagnosticDescriptor InvalidLockExpression = new(
+        "TS2225",
+        "Invalid lock expression",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid lock expression.",
+        "The 1.0 lock boundary lowers to C# lock, so a known synchronization expression must be a non-null reference type.",
+        "Lock on a non-null reference object, add a reference-typed gate, or avoid locking primitive, value-type, nullable, or null expressions.");
+
+    public static readonly DiagnosticDescriptor InvalidMatchCase = new(
+        "TS2226",
+        "Invalid match case",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid match case.",
+        "The 1.0 nominal-union match boundary requires each case-name pattern to name a case declared by the matched union.",
+        "Use one of the union's declared case names, add the missing case to the union, or use '_' when an intentional catch-all arm is needed.");
+
+    public static readonly DiagnosticDescriptor InvalidSatisfiesExpression = new(
+        "TS2227",
+        "Invalid satisfies expression",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid satisfies expression.",
+        "The 1.0 satisfies boundary is a compile-time proof check; after nullability and structural proof checks, the expression must still be assignable to the target type.",
+        "Change the expression, change the target type, or use a supported structural shape when a structural proof is intended.");
+
+    public static readonly DiagnosticDescriptor InvalidReturnExpression = new(
+        "TS2228",
+        "Invalid return expression",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid return expression.",
+        "A function body expression has a known type that is not assignable to the function's declared return type after nullability and structural proof checks.",
+        "Return a compatible value, change the function return type, or add an explicit conversion once conversions are supported.");
+
+    public static readonly DiagnosticDescriptor InvalidValueInitializer = new(
+        "TS2229",
+        "Invalid value initializer",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid value initializer.",
+        "A value declaration initializer has a known type that is not assignable to its explicit annotation after nullability and structural proof checks.",
+        "Change the initializer, change the annotation, or add an explicit conversion once conversions are supported.");
+
+    public static readonly DiagnosticDescriptor InvalidAssignmentValue = new(
+        "TS2230",
+        "Invalid assignment value",
+        DiagnosticSeverity.Error,
+        DiagnosticCategory.TypeChecking,
+        "Invalid assignment value.",
+        "A simple assignment value has a known type that is not assignable to the mutable target after nullability and structural proof checks.",
+        "Assign a compatible value, change the target type, or add an explicit conversion once conversions are supported.");
+
     public static readonly DiagnosticDescriptor NonExhaustiveMatch = new(
         "TS2203",
         "Non-exhaustive match",
@@ -445,6 +634,27 @@ public static class DiagnosticDescriptors
         DynamicCallRequiresCapability,
         CapabilityCallRequiresMarker,
         UnknownAccessRequiresNarrowing,
+        UnsupportedTypeSharpMember,
+        UnsupportedMatchPattern,
+        TypeOperatorLimitExceeded,
+        UnsupportedExtensionProperty,
+        UnsupportedEnumOrBitwiseOperation,
+        UnsupportedTypeSharpFunctionApplication,
+        UnsupportedAssignmentTarget,
+        UnsupportedImportedOperator,
+        InvalidMatchGuard,
+        UnsupportedConstructionExpression,
+        StructuralProofFailed,
+        UnsupportedExtensionMethod,
+        InvalidArithmeticCompoundAssignment,
+        UnsupportedNullConditionalAccess,
+        InvalidYieldExpression,
+        InvalidLockExpression,
+        InvalidMatchCase,
+        InvalidSatisfiesExpression,
+        InvalidReturnExpression,
+        InvalidValueInitializer,
+        InvalidAssignmentValue,
         MissingReference,
         AmbiguousCSharpOverload,
         InvalidByRefInterop,

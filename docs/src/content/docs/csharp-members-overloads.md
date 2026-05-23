@@ -34,7 +34,7 @@ C# named types can expose fields, constants, properties, methods, constructors, 
 | Constructor | Imported and emitted for classes | Named, optional, `params`, generic type substitution, ambiguity, and no-match cases are diagnosed. |
 | Event | Imported and emitted | Delegate-compatible add/remove calls are validated for the implemented subset. |
 | Indexer | Imported metadata calls | Known receiver and argument metadata drive exact and relationship ranking. |
-| Operator | Limited expression lowering | Full C# operator overloading is not stable TypeSharp surface yet. |
+| Operator | Limited expression lowering | TypeSharp-authored operator declarations are post-1.0. Current operator expressions use built-in numeric/enum/bool/assignment rules or selected imported C# static binary metadata; records, classes, interfaces, unions, and extension declarations cannot introduce overload or conversion operators. |
 | Nested type | Imported when metadata reader can resolve it | Native nested declarations remain future work unless canonical docs change. |
 | Finalizer | Not TypeSharp-authored stable surface | Imported metadata may exist, but TypeSharp docs should not recommend authoring finalizers. |
 
@@ -85,19 +85,24 @@ Validation includes:
 
 TypeSharp overload resolution is deliberately narrower than full C# overload resolution.
 
-Current ranking prefers:
+The 1.0 overload and conversion contract freezes the implemented ranking set instead of promising full C# compiler parity.
 
-1. arity and named argument match,
-2. exact nominal type match,
-3. nullable compatibility,
-4. known literal, unary numeric, homogeneous collection expression array arguments, and fitting numeric conversions,
-5. imported metadata relationship distance,
-6. generic inference and constraint satisfaction in implemented positions,
-7. delegate/lambda contextual checks,
-8. `object` fallback,
-9. explicit `dynamic` boundary.
+| Rank Input | 1.0 Rule | Primary Evidence |
+| --- | --- | --- |
+| Arity, named arguments, optional parameters, `params`, and byref modifiers | Candidates must match the supplied positional/named/byref shape before later ranking applies. A single compatible collection expression in the final `params T[]` position is ranked as an array argument before expanded element matching. | Imported optional/named/params/ref/out/in call smokes and no-match diagnostics. |
+| Exact nominal and primitive matches | Exact metadata type matches outrank conversions, relationship matches, and `object` fallback. | Exact overload and exact overloaded indexer smokes. |
+| `null` literals | `null` rejects non-nullable value-type parameters, ranks concrete nullable/reference targets ahead of `object`, and ranks nearer metadata-related reference targets ahead of farther base/interface candidates. Unrelated reference targets remain ambiguous. | Null literal overload, parenthesized null, indexer null, and ambiguous overload/indexer smokes. |
+| Numeric literals and direct unary numeric literals | Fitting integral constant conversions are accepted for supported primitive numeric targets; impossible numeric literal conversions report diagnostics before emission. | Numeric literal, unary numeric, and indexer numeric conversion smokes plus no-match diagnostics. |
+| Imported metadata relationship distance | Metadata-backed arguments and receivers prefer the nearest base/interface relationship over farther interface or `object` fallback candidates. | Metadata relationship overload, indexer, and extension receiver smokes. |
+| Collections | Homogeneous collection expressions can infer array arguments, a single `params T[]` array argument, and implemented `T[]` generic method positions. Incompatible element targets report `TS2406`. | Collection expression overload, `params` collection array, delegate collection-return, and generic array constraint smokes. |
+| Delegates and lambdas | Known `System.Func`/`System.Action` targets use arity and the implemented lambda return inference set, including member chains, method calls, extension/static calls, binary predicate/value results, `nameof`, checked/unchecked, `satisfies`, parenthesized/logical-not/unary numeric/if/block/collection/null-coalescing/indexer bodies. | Delegate lambda overload arity and return-ranking smokes. |
+| Generic methods and constructors | Explicit generic arity, inferred generic positions, constructed generic positions, and C# generic constraints are validated for implemented metadata shapes. | Explicit/inferred generic method, generic array constraint, constructed generic constraint, and generic constructor smokes. |
+| Extension receivers | Imported extension receiver candidates rank exact known non-null receivers first, then nearer metadata relationships, then `object` fallback. | Extension method instance call, receiver relationship, and object fallback smokes. |
+| Ambiguity and unsupported conversions | Equally stable candidates report `TS2402`; no applicable method or constructor reports `TS2406`; unsatisfied generic constraints report `TS2417`; missing imported members use the specific `TS2407`-`TS2416` family; dynamic calls require explicit capability markers. TypeSharp does not fall through to generated C# compile failures for these 1.0-ranked paths. | Ambiguous/no-match build-stop smokes and diagnostic descriptor contract. |
 
-If two candidates remain equally plausible, TypeSharp reports ambiguity instead of relying on generated C# compilation.
+Post-1.0 conversion and ranking work includes full C# overload conversion parity, user-defined conversion operators, TypeSharp-authored operator overload ranking, richer contextual typing, imported pipeline/composition overload ranking, nullable receiver lifting beyond documented shapes, general collection-builder conversions, function-typed value overload inference, and dynamic dispatch without explicit capability boundaries.
+
+If two candidates remain equally plausible within the supported matrix, TypeSharp reports ambiguity instead of relying on generated C# compilation.
 
 Homogeneous collection expression arguments such as `["Ada"]` infer an array argument type for imported C# overload filtering and ranking. They also infer implemented `T` positions for imported generic method parameters shaped like `T[]`, so constraints such as `where T : class` are validated before emission. In a `params T[]` position, a single compatible collection expression is ranked as the params array argument before falling back to expanded element matching. Incompatible array element targets report `TS2406` before generated C# emission instead of falling through to a C# compiler error.
 
@@ -200,23 +205,28 @@ The checker validates:
 
 ## Events
 
-Events are delegate-backed C# members. TypeSharp validates event add/remove when receiver metadata is known and the handler type is compatible.
+Events are delegate-backed C# members. TypeSharp validates imported C# event add/remove when receiver metadata is known and the handler type is compatible.
 
 ```tysh
-public delegate ChangedHandler(sender: object): unit
+import { LegacyEvents } from "Legacy.Tools"
 
-public class ObservableCounter {
-  public event Changed: ChangedHandler
+export fun subscribe(): string {
+  let source = LegacyEvents()
+  source.Transform += text => text
+  source.Transform -= text => text
+  source.Raise("value")
 }
 ```
 
-When consuming imported C# events, the receiver must expose a public event and the handler must match the event delegate.
+The receiver must expose a public event and the handler must match the event delegate. TypeSharp-authored `public delegate` and `public event` declarations are parser-visible but deferred from the 1.0 public ABI until the compiler has lowering, class-member diagnostics, and C# consumer evidence for generated event metadata.
 
 ## Extension Members
 
 Imported C# extension methods are available when the extension type namespace is imported or opened. TypeSharp-authored explicit-receiver extension methods lower to C# extension methods.
 
-TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match. Nullable receiver declarations, nullable receiver accesses before lifting is implemented, duplicate exact receiver/name declarations, declarations that would be hidden by the currently implemented ordinary/structural member precedence, and helper names such as `GetWordCount(this string text)` that collide with TypeSharp-authored extension methods or generated property helpers in the same extension container report `TS2201` before backend emission.
+The 1.0 TypeSharp-authored extension member policy is intentionally narrow: explicit-receiver extension methods and getter-only extension properties are the only promoted shapes. This keeps generated `net48` source C# 7.3-compatible and gives C# consumers ordinary static extension methods or helper methods, not C# 14 extension-block metadata. Extension method receiver-shape diagnostics report `TS2221` when the declaration omits the receiver type, omits the first receiver parameter, marks that parameter `params`, or gives it a type that does not exactly match the extension receiver.
+
+TypeSharp-authored getter-only extension properties use a declaration receiver name and lower to static helper methods rather than C# 14 extension blocks. Member access such as `value.WordCount` is rewritten to that helper when the receiver type is an exact known non-null match. Nullable receiver declarations, nullable receiver accesses before lifting is implemented, duplicate exact receiver/name declarations, declarations that would be hidden by the currently implemented ordinary/structural member precedence, and helper names such as `GetWordCount(this string text)` that collide with TypeSharp-authored extension methods or generated property helpers in the same extension container report `TS2213` before backend emission.
 
 ```tysh
 namespace Company.Billing
@@ -232,7 +242,7 @@ public extension string {
 }
 ```
 
-Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact non-null receiver matching first, nullable receiver declaration/access diagnostics, duplicate/conflict diagnostics over the implemented lookup precedence, and getter-only helper lowering only. Assignment to these properties reports `TS2201` before backend emission. Null-conditional `?.` reads and simple assignment targets for these properties also report `TS2201` before nullable receiver lifting or TypeSharp-owned null-conditional lowering expands the surface; nullable receiver lifting, setters, static extension properties, operators, imported extension property metadata, and richer ranking remain backlog.
+Imported C# extension receiver ranking prefers closer metadata relationships. `object` receiver fallback is accepted only after more specific applicable receivers. TypeSharp-authored extension properties are intentionally narrower: exact non-null receiver matching first, nullable receiver declaration/access diagnostics, duplicate/conflict diagnostics over the implemented lookup precedence, and getter-only helper lowering only. Assignment to these properties reports `TS2213` before backend emission. Null-conditional `?.` reads and simple assignment targets for these properties also report `TS2213` before nullable receiver lifting or TypeSharp-owned null-conditional lowering expands the surface; nullable receiver lifting, setters, static extension properties, extension operators, imported extension property metadata, richer ranking, and C# 14 `extension(...)` block emission remain post-1.0.
 
 ## Exceptions And Domain Failures
 
@@ -244,23 +254,28 @@ Guidance:
 - Let truly exceptional .NET failures remain exceptions unless the boundary deliberately wraps them.
 - Do not document exception swallowing as a normal interop pattern.
 - Use wrapper functions when a legacy API throws for ordinary validation outcomes.
+- Current `TypeSharp.Core.Result<T,E>` construction is a C# consumer ABI through `Result<T,E>.Ok(...)` and `Result<T,E>.Error(...)`; direct TypeSharp source imports named `Ok` and `Error` are future ergonomics.
 
 ```tysh
-import { Result, Ok, Error } from "TypeSharp.Core"
 import { Decimal } from "System"
 
 public union ParseError {
   InvalidDecimal(source: string)
 }
 
-export fun parseMoney(text: string): Result<decimal, ParseError> {
+public union ParseMoneyResult {
+  Parsed(value: decimal)
+  Invalid(error: ParseError)
+}
+
+export fun parseMoney(text: string): ParseMoneyResult {
   let mut parsed = 0m
 
   if Decimal.TryParse(text, out parsed) {
-    Ok(parsed)
+    Parsed(parsed)
   }
   else {
-    Error(InvalidDecimal(text))
+    Invalid(InvalidDecimal(text))
   }
 }
 ```

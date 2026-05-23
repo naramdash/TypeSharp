@@ -9,6 +9,12 @@ TypeSharp is for teams that need to keep `.NET Framework 4.8` deployment and hos
 
 For a complete study sequence by background and experience level, use [Learning Paths](../learning-paths/). For a one-page explanation of the language before the formal reference, use [Language Tour](../language-tour/).
 
+## Install First
+
+Use [Install](../install/) for the versioned release artifact route: download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract the archive, run `typesharp version`, create a project, add supported dependencies, and build a generated `net48` artifact.
+
+If the release asset for the tag you need is not published yet, use the source-built fallback at the end of this page.
+
 ### I Maintain .NET Framework Applications
 
 Start with:
@@ -62,9 +68,10 @@ Start with:
 
 Implemented features are backed by smoke tests or fixtures. Planned and backlog items are documented separately and should not be treated as production guarantees. Use [Feature Status](../feature-status/) for the canonical status map. [Document Ownership](../document-ownership/) tracks canonical docs ownership.
 
-## Fast First Command
+## Source-Built Fallback
 
 ```powershell
 dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj
-dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll version
+$tysh = "dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll"
+& $tysh version
 ```

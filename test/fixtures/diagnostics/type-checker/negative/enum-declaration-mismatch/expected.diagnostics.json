@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2228",
       "severity": "error",
       "message": "Cannot return expression of type 'Size' from function returning 'Color'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 12, "column": 13 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Enum 'Color' does not contain member 'Blue'.",
       "file": "input.tysh",

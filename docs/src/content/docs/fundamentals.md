@@ -85,6 +85,7 @@ Diagnostics use stable codes. Examples:
 - `TS2202`: nullability contract violation
 - `TS2204`: compile-time type leaked through public boundary
 - `TS2209`: unknown access requires narrowing
+- `TS2228`/`TS2229`/`TS2230`: return, initializer, and assignment value mismatches
 - `TS2401`: missing referenced assembly
 - `TS2404`: unknown C# nullability
 

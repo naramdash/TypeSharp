@@ -70,7 +70,7 @@ paths = ["lib/Legacy.Tools.dll"]
 packages = []
 ```
 
-The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`; package restore cannot become stable until the [Project Policy](../project-policy/) defines and implements lock files, package source mapping, audit severity, license inventory, checksum/signature, transitive dependency, and offline-cache behavior.
+The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`; package restore cannot become stable until the [Project Policy](../project-policy/) defines and implements lock files, package source mapping, audit severity, license inventory, checksum/signature, transitive dependency, and offline-cache behavior.
 
 ## Source Aliases
 

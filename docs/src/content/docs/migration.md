@@ -67,18 +67,22 @@ paths = [
 namespace Company.Billing.Rules
 
 import { LegacyCalculator } from "Legacy.Billing"
-import { Result, Ok } from "TypeSharp.Core"
 
 public union PriceError {
   MissingSku(sku: string)
   InvalidAmount(message: string)
 }
 
+public union QuoteResult {
+  Quoted(value: PriceQuote)
+  Failed(error: PriceError)
+}
+
 public record PriceQuote(Sku: string, Amount: decimal)
 
-export fun quote(sku: string): Result<PriceQuote, PriceError> {
+export fun quote(sku: string): QuoteResult {
   let amount = LegacyCalculator.Calculate(sku)
-  Ok(PriceQuote(sku, amount))
+  Quoted(PriceQuote(sku, amount))
 }
 ```
 
@@ -179,7 +183,7 @@ Include `TypeSharp.Core.dll` when public APIs expose `Option<T>`, `Result<T,E>`,
 
 TypeSharp reference-like types are non-null by default. Treat unannotated C# reference returns as unknown nullability, add guards or nullable annotations at interop boundaries, and prefer `Option<T>` when absence is part of the domain.
 
-Use `Result<T,E>` for expected domain failure:
+Use nominal result-style unions for expected domain failure in TypeSharp source. `TypeSharp.Core.Result<T,E>` remains the standard C#-visible helper type, but direct TypeSharp imports named `Ok` and `Error` are not part of the current release ABI.
 
 ```tysh
 public union ParseError {
@@ -187,12 +191,17 @@ public union ParseError {
   Invalid(message: string)
 }
 
-export fun parse(text: string): Result<int, ParseError> =
+public union ParseResult {
+  Parsed(value: int)
+  Failed(error: ParseError)
+}
+
+export fun parse(text: string): ParseResult =
   if text == "" {
-    Error(Empty)
+    Failed(Empty)
   }
   else {
-    Ok(42)
+    Parsed(42)
   }
 ```
 

@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2228",
       "severity": "error",
       "message": "Cannot return expression of type '\"Tier\"' from function returning 'CustomerKey'.",
       "file": "input.tysh",

@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2216",
       "severity": "error",
       "message": "Cannot assign to immutable binding 'value'. Use 'let mut' when mutation is intended.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 7, "column": 8 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2216",
       "severity": "error",
       "message": "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.",
       "file": "input.tysh",
@@ -17,7 +17,7 @@
       "end": { "line": 12, "column": 4 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'bool' and 'bool'.",
       "file": "input.tysh",
@@ -25,7 +25,7 @@
       "end": { "line": 18, "column": 16 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'string' and 'string'.",
       "file": "input.tysh",
@@ -33,7 +33,7 @@
       "end": { "line": 24, "column": 14 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '%=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'int' and 'int?'.",
       "file": "input.tysh",
@@ -41,7 +41,7 @@
       "end": { "line": 31, "column": 17 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Cannot assign multiplicative compound assignment result of type 'long' to 'int'.",
       "file": "input.tysh",
@@ -49,7 +49,7 @@
       "end": { "line": 37, "column": 18 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'Box' and 'int'.",
       "file": "input.tysh",
@@ -57,7 +57,7 @@
       "end": { "line": 43, "column": 15 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'RateKind' and 'RateKind'.",
       "file": "input.tysh",
@@ -65,7 +65,7 @@
       "end": { "line": 54, "column": 18 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'decimal' and 'double'.",
       "file": "input.tysh",
@@ -73,7 +73,7 @@
       "end": { "line": 60, "column": 19 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Cannot assign multiplicative compound assignment result of type 'double' to 'float'.",
       "file": "input.tysh",
@@ -81,7 +81,7 @@
       "end": { "line": 66, "column": 19 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2222",
       "severity": "error",
       "message": "Multiplicative compound assignment '/=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type, but found 'float' and 'float?'.",
       "file": "input.tysh",

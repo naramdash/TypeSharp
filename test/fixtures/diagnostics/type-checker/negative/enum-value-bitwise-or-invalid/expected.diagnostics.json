@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Enum value '|' operands must have the same enum type, but found 'Permission' and 'Color'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 13, "column": 56 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Enum value '|' operands must be enum values of the same type, but found 'Permission' and 'int'.",
       "file": "input.tysh",

@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Bitwise operator '|' operands must be integral numeric values or boolean values of a supported primitive type, but found 'string' and 'string'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 3, "column": 25 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Bitwise operator '^' operands must be integral numeric values or boolean values of a supported primitive type, but found 'decimal' and 'decimal'.",
       "file": "input.tysh",
@@ -17,7 +17,7 @@
       "end": { "line": 5, "column": 25 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Bitwise operator '~' operand must be an integral numeric value or enum value, but found 'int?'.",
       "file": "input.tysh",
@@ -25,7 +25,7 @@
       "end": { "line": 9, "column": 35 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Bitwise operator '~' operand must be an integral numeric value or enum value, but found 'string'.",
       "file": "input.tysh",

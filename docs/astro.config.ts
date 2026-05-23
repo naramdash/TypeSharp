@@ -49,6 +49,7 @@ export default defineConfig({
           items: [
             { label: 'Overview', slug: 'index' },
             { label: 'Start Here', slug: 'start-here' },
+            { label: 'Install', slug: 'install' },
             { label: 'Learning Paths', slug: 'learning-paths' },
             { label: 'Language Tour', slug: 'language-tour' },
             { label: 'Tutorials', slug: 'tutorials' },

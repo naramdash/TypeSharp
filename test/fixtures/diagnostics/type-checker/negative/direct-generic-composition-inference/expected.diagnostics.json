@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Composition operator '>>' cannot compose 'genericString' with 'increment': 'genericString' returns 'string', but 'increment' expects 'int'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 21, "column": 67 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Composition operator '>>' cannot compose 'stringify' with 'genericTakesInt': 'stringify' returns 'string', but 'genericTakesInt' expects 'int'.",
       "file": "input.tysh",
@@ -17,7 +17,7 @@
       "end": { "line": 22, "column": 72 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Composition operator '>>' cannot compose 'genericStringArray' with 'numberArrayCount': 'genericStringArray' returns 'string[]', but 'numberArrayCount' expects 'int[]'.",
       "file": "input.tysh",
@@ -25,7 +25,7 @@
       "end": { "line": 23, "column": 78 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Composition operator '>>' cannot compose 'genericStringList' with 'numberListCount': 'genericStringList' returns 'List<string>', but 'numberListCount' expects 'List<int>'.",
       "file": "input.tysh",

@@ -41,6 +41,9 @@ Common diagnostics:
 - `TS2201`: type mismatch
 - `TS2202`: nullability contract violation
 - `TS2204`: compile-time type leaked through public boundary
+- `TS2228`: invalid function return expression
+- `TS2229`: invalid value initializer
+- `TS2230`: invalid assignment value
 - `TS2402`: ambiguous C# overload or constructor
 - `TS2403`: invalid byref interop use
 - `TS2405`: unsupported package reference

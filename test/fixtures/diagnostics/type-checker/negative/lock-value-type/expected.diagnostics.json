@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2225",
       "severity": "error",
       "message": "Lock expression requires a non-null reference type, but found 'int'.",
       "file": "input.tysh",

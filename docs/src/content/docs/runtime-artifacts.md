@@ -173,7 +173,9 @@ This keeps TypeSharp's build graph aligned with ordinary .NET artifact consumpti
 | `TypeSharp.Core.dll` | User-facing `Option<T>`, `Result<T, E>`, `Unit`, and small core public helpers. | TypeSharp source imports `TypeSharp.Core` or exposes core types to C# consumers. |
 | `TypeSharp.Runtime.dll` | Generated-code helper surface for nominal union cases, pattern matching, equality/hash composition, and async helpers. | Generated C# needs `TypeSharp.Runtime` helpers, for example nominal unions or union matches. |
 
-Current preview builds require these assemblies to be available as local `net48` DLL references when a project uses them. A generated assembly that exposes `Option<T>` to C# consumers also requires the consuming C# project to reference `TypeSharp.Core.dll`. A generated assembly that exposes nominal union cases or calls runtime pattern helpers requires the host or consumer project to deploy `TypeSharp.Runtime.dll` beside the generated assembly.
+Current preview builds require these assemblies to be available as local `net48` DLL references when a project uses them. The release runtime archive is `typesharp-runtime-net48-<tag>.zip` and expands to `lib/net48/TypeSharp.Core.dll` plus `lib/net48/TypeSharp.Runtime.dll`. A generated assembly that exposes `Option<T>` or `Result<T,E>` to C# consumers also requires the consuming C# project to reference `TypeSharp.Core.dll`. A generated assembly that exposes nominal union cases or calls runtime pattern helpers requires the host or consumer project to deploy `TypeSharp.Runtime.dll` beside the generated assembly.
+
+The 1.0 runtime resolution policy is explicit installed runtime archive references: extract the matching runtime zip and reference `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` through `references.paths`. The CLI does not implicitly discover repository build folders, auto-copy runtime assemblies, or add hidden template references for 1.0; CLI auto-copy and implicit template references remain post-1.0 ergonomics unless they are promoted with separate release evidence.
 
 ## Source To Artifact Example
 
@@ -182,26 +184,33 @@ This TypeSharp source:
 ```tysh
 namespace Company.Billing
 
-import { Result, Ok, Error } from "TypeSharp.Core"
+import { Option, Result } from "TypeSharp.Core"
 
 public union InvoiceStatus {
   Draft
   Posted(id: string)
 }
 
-export fun status(id: string?): Result<InvoiceStatus, string> =
-  if id == null {
-    Error("missing id")
-  } else {
-    Ok(Posted(id))
+export fun keepOption(value: Option<string>): Option<string> = value
+
+export fun keepResult(value: Result<InvoiceStatus, string>): Result<InvoiceStatus, string> = value
+
+export fun posted(id: string): InvoiceStatus = Posted(id)
+
+export fun describe(status: InvoiceStatus): string =
+  match status {
+    Draft => "Draft"
+    Posted(id) => $"Posted:{id}"
   }
 ```
 
 needs both `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll`:
 
-- `Result<T, E>`, `Ok`, and `Error` come from `TypeSharp.Core`.
+- `Option<T>` and `Result<T, E>` come from `TypeSharp.Core`.
 - `InvoiceStatus` lowers to CLR-visible generated union classes that implement runtime union metadata from `TypeSharp.Runtime`.
 - The generated project builds a `net48` assembly that C# can reference together with both TypeSharp helper assemblies.
+
+The current release ABI exposes `Result<T,E>` factories to C# as `Result<T,E>.Ok(...)` and `Result<T,E>.Error(...)`. Direct TypeSharp imports named `Ok` and `Error` are future source ergonomics, not the current installed runtime reference shape.
 
 ## Deployment Set
 
@@ -239,6 +248,19 @@ The deployable set is:
 5. the normal .NET Framework assemblies available to the target host.
 
 TypeSharp does not require a custom loader, startup hook, ASP.NET Core migration, or nonstandard AppDomain lifecycle hook for the current artifact shape.
+
+## Release Runtime Layout Smoke
+
+The release-style smoke stages the CLI wrapper and runtime archive layout, then works from a clean directory outside the repository:
+
+1. Extract `typesharp-cli-dotnet-<tag>.zip` and run `typesharp.cmd`.
+2. Extract `typesharp-runtime-net48-<tag>.zip` under a workspace-local runtime folder.
+3. Create a library with `typesharp new library`.
+4. Reference `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` through `references.paths`.
+5. Build TypeSharp source that exposes `Option<T>`, `Result<T,E>`, a nominal union, union match lowering, and generated `net48` output.
+6. Compile a separate C# `net48` consumer that references the generated assembly plus the extracted Core/Runtime DLLs and calls `TypeSharp.Runtime` union and async helper APIs.
+
+This proves the supported preview shape is explicit local DLL references from the installed runtime archive, not discovery from repository build folders.
 
 ## Invariants
 

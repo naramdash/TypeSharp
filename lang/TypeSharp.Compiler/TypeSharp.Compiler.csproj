@@ -3,5 +3,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>TypeSharp.Compiler</AssemblyName>
     <RootNamespace>TypeSharp.Compiler</RootNamespace>
+    <TypeSharpBuildMetadata Condition="'$(TypeSharpBuildMetadata)' == ''">local</TypeSharpBuildMetadata>
+    <TypeSharpSourceRevision Condition="'$(TypeSharpSourceRevision)' == ''">unknown</TypeSharpSourceRevision>
   </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="TypeSharpBuildMetadata" Value="$(TypeSharpBuildMetadata)" />
+    <AssemblyMetadata Include="TypeSharpSourceRevision" Value="$(TypeSharpSourceRevision)" />
+  </ItemGroup>
 </Project>

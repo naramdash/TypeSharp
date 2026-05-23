@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2221",
       "severity": "error",
       "message": "Extension method first parameter must match receiver type 'string', but found 'int'.",
       "file": "input.tysh",

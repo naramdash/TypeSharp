@@ -59,7 +59,7 @@ Rules:
 
 - `assemblies` names .NET Framework reference assemblies or framework/GAC assemblies.
 - `paths` names explicit repository or build-environment DLL paths compatible with `net48`.
-- The metadata reader indexes available `net48` framework reference assemblies and local DLL public top-level types plus selected public members, including finite public enum member names, underlying type names, literal numeric member values for imported C# enums, and public static binary multiplicative operator metadata for imported C# user-defined `operator *`, `operator /`, and `operator %`.
+- The metadata reader indexes available `net48` framework reference assemblies and local DLL public top-level types plus selected public members, including finite public enum member names, underlying type names, literal numeric member values for imported C# enums, and ordinary public static binary `op_Multiply`, `op_Division`, and `op_Modulus` metadata for imported C# user-defined `operator *`, `operator /`, and `operator %`. It does not consume checked user-defined operator metadata such as `op_CheckedMultiply`, `op_CheckedDivision`, or `op_CheckedModulus` in 1.0.
 - Missing framework/local metadata is reported before generated C# emission when the compiler has enough metadata context. Examples include `TS2408` for missing framework types, `TS2407` for missing framework static methods, and `TS2409` for missing framework static members.
 - `packages` is a reserved manifest surface. The current compiler does not restore NuGet packages and reports `TS2405`.
 - Future package support must include `net48` asset selection, transitive dependencies, checked-in lock files, locked-mode CI, package source mapping, vulnerability audit policy, license inventory, checksum/signature policy, and offline-cache behavior.
@@ -200,6 +200,8 @@ Avoid exposing these compile-time-only shapes directly:
 
 - structural shape and intersection aliases,
 - type-level union aliases,
+- `keyof`, indexed access, and unresolved computed type aliases,
+- `unknown`,
 - anonymous or inferred public boundaries.
 
 If C# callers need the concept, wrap it in a named public type.
@@ -228,15 +230,21 @@ Current ABI fields:
 Rules:
 
 - The compiler and runtime `RuntimeAbiVersion` values must stay aligned.
+- `TypeSharp.Compiler.TypeSharpCompilerInfo.RuntimeTargetFramework` and `TypeSharp.Runtime.TypeSharpRuntimeInfo.TargetFramework` must stay aligned.
 - CLI `version --json` and text output must show the runtime ABI targeted by the compiler.
 - A generated assembly must reference `TypeSharp.Core` and `TypeSharp.Runtime` with the same major runtime ABI.
-- ABI `0` is the pre-1.0 preview ABI. Breaking changes are allowed only when linked docs or release notes name the affected public surface.
+- ABI `0` is the pre-1.0 preview ABI and is the clear versioning rule for the current release line, not a 1.0 stability claim. Breaking changes are allowed only when linked docs or release notes name the affected public surface and migration path.
 
 ABI-covered surface:
 
-- `TypeSharp.Core.Option<T>`, `Result<T,E>`, and `Unit`,
-- `TypeSharp.Runtime.TypeSharpRuntimeInfo`,
-- generated-code helper APIs in `TypeSharp.Runtime`,
+- `TypeSharp.Core.Option<T>`, including `Some`, `None`, `IsSome`, `IsNone`, and `Value`,
+- `TypeSharp.Core.Result<T,E>`, including `Ok`, `Error`, `IsOk`, `IsError`, `Value`, and `ErrorValue`,
+- `TypeSharp.Core.Unit`, including `Value`, equality, hash, and display behavior,
+- `TypeSharp.Runtime.TypeSharpRuntimeInfo`, including `RuntimeAbiVersion` and `TargetFramework`,
+- `TypeSharp.Runtime.ITypeSharpUnionCase` and `TypeSharpUnion` union metadata, payload, equality, and hash helpers,
+- `TypeSharp.Runtime.TypeSharpPattern` case and payload checks used by generated pattern matching lowering,
+- `TypeSharp.Runtime.TypeSharpEquality` equality, sequence equality, and hash composition helpers used by generated records and union cases,
+- `TypeSharp.Runtime.TypeSharpAsync` package-free `Task` creation helpers used by generated async lowering,
 - generated public member signatures and metadata shape,
 - generated assembly target framework and runtime/core reference shape.
 
@@ -265,11 +273,19 @@ The runtime ABI version does not need to change for:
 Before closing a public ABI change:
 
 - verify compiler/runtime ABI version alignment,
+- verify compiler/runtime target framework alignment,
 - build `lang/TypeSharp.Core/TypeSharp.Core.csproj`,
 - build `lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj`,
 - run generated `net48` assembly smoke tests,
 - run C# `net48` consumer smokes when public surface is observable from C#,
 - run ASP.NET/WCF/worker host compatibility smokes when runtime/core reference shape changes.
+
+Current preview evidence:
+
+- `runtime ABI constants are aligned` verifies compiler/runtime ABI and runtime target framework constants.
+- Core helper tests cover `Option<T>`, `Result<T,E>`, and `Unit` state behavior.
+- Runtime helper tests cover union metadata, pattern helper matching, equality/hash composition, and async `Task` helper behavior.
+- The release-staged runtime artifact smoke builds generated `net48` output and a separate C# `net48` consumer against the same extracted Core/Runtime archive layout.
 
 ## Host Project Compatibility
 

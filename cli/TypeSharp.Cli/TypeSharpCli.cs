@@ -7,6 +7,7 @@ using TypeSharp.Compiler.Projects;
 using TypeSharp.LanguageServer;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 
 namespace TypeSharp.Cli;
 
@@ -68,11 +69,18 @@ public static class TypeSharpCli
         if (json)
         {
             output.WriteLine("{");
-            output.WriteLine($"  \"cli\": \"{TypeSharpCompilerInfo.CliVersion}\",");
-            output.WriteLine($"  \"compiler\": \"{TypeSharpCompilerInfo.CompilerVersion}\",");
-            output.WriteLine($"  \"language\": \"{TypeSharpCompilerInfo.LanguageVersion}\",");
+            output.WriteLine($"  \"cli\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.CliVersion)},");
+            output.WriteLine($"  \"compiler\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.CompilerVersion)},");
+            output.WriteLine($"  \"language\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.LanguageVersion)},");
+            output.WriteLine($"  \"releaseChannel\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.ReleaseChannel)},");
             output.WriteLine($"  \"runtimeAbi\": {TypeSharpCompilerInfo.RuntimeAbiVersion},");
-            output.WriteLine($"  \"targetDefault\": \"{TypeSharpCompilerInfo.DefaultTargetFramework}\"");
+            output.WriteLine($"  \"runtimeAbiStatus\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.RuntimeAbiStatus)},");
+            output.WriteLine($"  \"targetDefault\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.DefaultTargetFramework)},");
+            output.WriteLine($"  \"cliTargetFramework\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.CliTargetFramework)},");
+            output.WriteLine($"  \"runtimeTargetFramework\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.RuntimeTargetFramework)},");
+            output.WriteLine($"  \"artifactKind\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.ArtifactKind)},");
+            output.WriteLine($"  \"buildMetadata\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.BuildMetadata)},");
+            output.WriteLine($"  \"sourceRevision\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.SourceRevision)}");
             output.WriteLine("}");
             return 0;
         }
@@ -80,8 +88,15 @@ public static class TypeSharpCli
         output.WriteLine($"TypeSharp CLI {TypeSharpCompilerInfo.CliVersion}");
         output.WriteLine($"Compiler {TypeSharpCompilerInfo.CompilerVersion}");
         output.WriteLine($"Language {TypeSharpCompilerInfo.LanguageVersion}");
+        output.WriteLine($"Release channel {TypeSharpCompilerInfo.ReleaseChannel}");
         output.WriteLine($"Runtime ABI {TypeSharpCompilerInfo.RuntimeAbiVersion}");
+        output.WriteLine($"Runtime ABI status {TypeSharpCompilerInfo.RuntimeAbiStatus}");
         output.WriteLine($"Target default {TypeSharpCompilerInfo.DefaultTargetFramework}");
+        output.WriteLine($"CLI target {TypeSharpCompilerInfo.CliTargetFramework}");
+        output.WriteLine($"Runtime target {TypeSharpCompilerInfo.RuntimeTargetFramework}");
+        output.WriteLine($"Artifact kind {TypeSharpCompilerInfo.ArtifactKind}");
+        output.WriteLine($"Build metadata {TypeSharpCompilerInfo.BuildMetadata}");
+        output.WriteLine($"Source revision {TypeSharpCompilerInfo.SourceRevision}");
         return 0;
     }
 
@@ -158,6 +173,10 @@ public static class TypeSharpCli
         File.WriteAllText(
             Path.Combine(projectDirectory, ".gitignore"),
             "bin/\nobj/\ngenerated/\n.vs/\n",
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        File.WriteAllText(
+            Path.Combine(projectDirectory, "README.md"),
+            NewReadme(projectName, isConsole),
             new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
         output.WriteLine($"Created TypeSharp {parseResult.Template} project at {projectDirectory}");
@@ -958,6 +977,34 @@ public static class TypeSharpCli
               namespace {rootNamespace}
 
               export fun greeting(name: string): string = name
+              """.Replace("\r\n", "\n", StringComparison.Ordinal);
+
+    private static string NewReadme(string projectName, bool isConsole) =>
+        isConsole
+            ? $"""
+              # {projectName}
+
+              This TypeSharp console project targets `net48` and generates a runnable .NET Framework executable.
+
+              ```powershell
+              typesharp check TypeSharp.toml
+              typesharp build TypeSharp.toml
+              typesharp run TypeSharp.toml
+              ```
+
+              Generated C# source and build outputs are written under `generated/`.
+              """.Replace("\r\n", "\n", StringComparison.Ordinal)
+            : $"""
+              # {projectName}
+
+              This TypeSharp library project targets `net48` and generates a .NET Framework class library.
+
+              ```powershell
+              typesharp check TypeSharp.toml
+              typesharp build TypeSharp.toml
+              ```
+
+              Generated C# source and build outputs are written under `generated/`.
               """.Replace("\r\n", "\n", StringComparison.Ordinal);
 
     private static string ToRootNamespace(string projectName)

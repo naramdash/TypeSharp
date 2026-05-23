@@ -47,7 +47,7 @@ Goal: understand where TypeSharp is intentionally similar to TypeScript and wher
 1. Read [Language Tour](../language-tour/) for type inference, structural shapes, type-level unions, narrowing, and public boundary rules.
 2. Read [Type System](../type-system/) for `unknown`, `dynamic`, structural shapes, type-level unions, and public CLR boundaries.
 3. Read [Modules And Imports](../modules/) for TypeScript-style source files and relative module paths.
-4. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, and `TS2204`.
+4. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, `TS2204`, and the narrower assignability diagnostics `TS2228`, `TS2229`, and `TS2230`.
 5. Read [Grammar And Language Reference](../reference/) when you need formal syntax boundaries.
 6. Use [Cookbook](../cookbook/) for common interop workflows.
 

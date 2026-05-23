@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2229",
       "severity": "error",
       "message": "Cannot assign expression of type 'string' to 'int'.",
       "file": "input.tysh",

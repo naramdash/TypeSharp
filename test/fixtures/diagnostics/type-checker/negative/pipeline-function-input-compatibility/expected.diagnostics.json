@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Pipeline target 'increment' expects 'int' for its first parameter, but pipeline input has type 'string'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 17, "column": 37 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Pipeline target 'append' expects 'string' for its first parameter, but pipeline input has type 'int'.",
       "file": "input.tysh",

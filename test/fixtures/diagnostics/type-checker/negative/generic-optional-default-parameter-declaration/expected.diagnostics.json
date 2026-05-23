@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Defaulted parameter 'fallback' cannot use generic type parameter type 'T'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 3, "column": 51 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Defaulted parameter 'values' cannot use generic type parameter type 'T[]'.",
       "file": "input.tysh",

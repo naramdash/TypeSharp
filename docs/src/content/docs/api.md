@@ -40,7 +40,7 @@ packages = []
 paths = ["../Shared/TypeSharp.toml"]
 ```
 
-`references.packages` is reserved for future NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `references.paths`.
+The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. `references.packages` is reserved for post-1.0 NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `references.paths`.
 
 `projectReferences.paths` names direct TypeSharp manifests. `typesharp check` validates the direct project graph and exported source members; `typesharp build` builds referenced projects first and consumes their generated assemblies through explicit local references.
 
@@ -75,31 +75,33 @@ Rules:
 - `TypeSharp.Runtime` helpers may appear in generated implementation code, but should not appear directly in user public APIs.
 - Public helper stability and generated helper compatibility follow the runtime ABI policy in [.NET Interop](../dotnet-interop/).
 
-Core public types:
+Current Core public ABI:
 
-```tysh
+```csharp
 namespace TypeSharp.Core
-
-public union Option<T> {
-  Some(value: T)
-  None
+{
+    public abstract class Option<T> { }
+    public abstract class Result<T, E> { }
+    public struct Unit { }
 }
-
-public union Result<T, E> {
-  Ok(value: T)
-  Error(error: E)
-}
-
-public struct Unit { }
 ```
 
 `Option<T>` models possible absence. `Result<T,E>` models success or failure. `Unit` is the value representation used when `unit` must exist in value or generic position; return-position `unit` lowers to C# `void`.
 
+C# consumers construct values through the current static factories:
+
+```csharp
+var some = TypeSharp.Core.Option<string>.Some("value");
+var ok = TypeSharp.Core.Result<int, string>.Ok(42);
+```
+
+Direct TypeSharp source imports for ergonomic case constructors such as `Some`, `None`, `Ok`, and `Error` are not part of the current release ABI. Treat them as future source-language ergonomics unless a later versioned policy adds explicit importable symbols.
+
 Standard library imports should be explicit:
 
 ```tysh
-import { Result, Ok, Error } from "TypeSharp.Core"
-import { Option, Some, None } from "TypeSharp.Core"
+import { Result } from "TypeSharp.Core"
+import { Option } from "TypeSharp.Core"
 ```
 
 Initial collection helper policy:

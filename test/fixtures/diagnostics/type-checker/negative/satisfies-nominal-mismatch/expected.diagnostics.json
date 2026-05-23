@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2227",
+      "severity": "error",
+      "message": "Expression of type 'int' does not satisfy 'Person'.",
+      "file": "input.tysh",
+      "start": { "line": 6, "column": 3 },
+      "end": { "line": 6, "column": 22 }
+    }
+  ]
+}

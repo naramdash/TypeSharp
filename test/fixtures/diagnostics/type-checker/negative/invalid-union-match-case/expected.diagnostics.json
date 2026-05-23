@@ -1,0 +1,12 @@
+{
+  "diagnostics": [
+    {
+      "code": "TS2226",
+      "severity": "error",
+      "message": "Union 'PaymentStatus' does not contain case 'Refunded'.",
+      "file": "input.tysh",
+      "start": { "line": 11, "column": 5 },
+      "end": { "line": 11, "column": 13 }
+    }
+  ]
+}

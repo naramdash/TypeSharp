@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2219",
       "severity": "error",
       "message": "Spread element expects an array or List<T>, but found 'int'.",
       "file": "input.tysh",

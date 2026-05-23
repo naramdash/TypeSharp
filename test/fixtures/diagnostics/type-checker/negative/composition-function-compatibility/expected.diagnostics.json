@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Composition operator '>>' cannot compose 'stringify' with 'increment': 'stringify' returns 'string', but 'increment' expects 'int'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 13, "column": 56 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2215",
       "severity": "error",
       "message": "Composition operator '<<' cannot compose 'stringify' with 'increment': 'stringify' returns 'string', but 'increment' expects 'int'.",
       "file": "input.tysh",

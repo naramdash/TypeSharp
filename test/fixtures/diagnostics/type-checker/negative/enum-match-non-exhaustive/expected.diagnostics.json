@@ -9,7 +9,7 @@
       "end": { "line": 13, "column": 4 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Enum 'Color' does not contain member 'Purple'.",
       "file": "input.tysh",

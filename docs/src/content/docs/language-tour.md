@@ -228,6 +228,7 @@ Diagnostics use stable codes and are available from the CLI and language server.
 - `TS2202`: nullability contract violation
 - `TS2203`: non-exhaustive match
 - `TS2204`: compile-time-only type leaked through public boundary
+- `TS2228`/`TS2229`/`TS2230`: return, initializer, and assignment value mismatches
 - `TS2401`: missing local C# DLL reference
 - `TS2404`: unknown C# nullability metadata
 

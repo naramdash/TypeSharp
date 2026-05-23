@@ -60,6 +60,9 @@ public static class TypeSharpTypeChecker
             "ushort",
             "void"
         };
+        private const int TypeOperatorAliasDepthLimit = 16;
+        private const int TypeOperatorNormalizedUnionWidthLimit = 64;
+        private const int TypeOperatorKeyCountLimit = 64;
 
         private readonly string _file;
         private readonly IReadOnlyList<MetadataAssemblySymbol> _metadataAssemblies;
@@ -92,6 +95,7 @@ public static class TypeSharpTypeChecker
 
             CollectTopLevelTypesAndFunctions(root, scope);
             CollectExtensionProperties(root, scope);
+            CheckTypeAliasCyclesAndDepth(root);
             foreach (var child in root.Children)
             {
                 CheckTopLevelDeclaration(child, scope);
@@ -298,13 +302,13 @@ public static class TypeSharpTypeChecker
 
                     if (TryGetExtensionPropertyPrecedenceConflict(scope, receiverType, propertyName, out var conflictMessage))
                     {
-                        ReportMismatch(property, conflictMessage);
+                        ReportUnsupportedExtensionProperty(property, conflictMessage);
                         continue;
                     }
 
                     if (!scope.TryDeclareExtensionProperty(receiverType, propertyName, propertyType))
                     {
-                        ReportMismatch(property, $"Extension property '{propertyName}' is already declared for receiver type '{receiverType}'.");
+                        ReportUnsupportedExtensionProperty(property, $"Extension property '{propertyName}' is already declared for receiver type '{receiverType}'.");
                     }
                 }
             }
@@ -332,14 +336,14 @@ public static class TypeSharpTypeChecker
                 var helperName = GetExtensionPropertyHelperName(propertyName);
                 if (methodNames.Contains(helperName))
                 {
-                    ReportMismatch(
+                    ReportUnsupportedExtensionProperty(
                         property,
                         $"Extension property '{propertyName}' generates helper method '{helperName}', which conflicts with extension method '{helperName}' in the same extension declaration.");
                 }
 
                 if (generatedHelpers.TryGetValue(helperName, out var existingPropertyName))
                 {
-                    ReportMismatch(
+                    ReportUnsupportedExtensionProperty(
                         property,
                         $"Extension property '{propertyName}' generates helper method '{helperName}', which conflicts with extension property '{existingPropertyName}' in the same extension declaration.");
                 }
@@ -435,6 +439,11 @@ public static class TypeSharpTypeChecker
                     {
                         CheckGenericConstraints(function);
                     }
+
+                    if (node.Kind is SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration)
+                    {
+                        CheckClassInterfaceMemberBoundary(node);
+                    }
                     break;
 
                 case SyntaxKind.EnumDeclaration:
@@ -470,6 +479,38 @@ public static class TypeSharpTypeChecker
             }
         }
 
+        private void CheckClassInterfaceMemberBoundary(SyntaxNode node)
+        {
+            var isClass = node.Kind == SyntaxKind.ClassDeclaration;
+            var declarationKind = isClass ? "Class" : "Interface";
+
+            if (isClass)
+            {
+                foreach (var parameterList in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList))
+                {
+                    ReportUnsupportedTypeSharpMember(parameterList, "TypeSharp-authored class constructors are not part of the 1.0 class member subset; use methods on the supported class surface or imported C# constructors.");
+                }
+            }
+
+            foreach (var child in node.Children.Where(child => !child.IsToken))
+            {
+                switch (child.Kind)
+                {
+                    case SyntaxKind.ValueDeclaration:
+                        ReportUnsupportedTypeSharpMember(child, $"{declarationKind} field and property declarations are not part of the 1.0 class/interface member subset; expose data through records or methods.");
+                        break;
+
+                    case SyntaxKind.EventDeclaration:
+                        ReportUnsupportedTypeSharpMember(child, "TypeSharp-authored event members are not part of the 1.0 public ABI; use imported C# events or callback parameters.");
+                        break;
+
+                    case SyntaxKind.SkippedToken:
+                        ReportUnsupportedTypeSharpMember(child, $"{declarationKind} member syntax is not supported in the 1.0 class/interface member subset.");
+                        break;
+                }
+            }
+        }
+
         private void CheckEnumDeclaration(SyntaxNode node)
         {
             var annotation = node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
@@ -483,7 +524,7 @@ public static class TypeSharpTypeChecker
 
                 if (!IsValidEnumUnderlyingType(underlyingType.Name))
                 {
-                    ReportMismatch(
+                    ReportUnsupportedEnumOrBitwiseOperation(
                         annotation,
                         $"Enum underlying type must be one of 'byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', or 'ulong', but found '{underlyingType}'.");
                     return;
@@ -515,7 +556,7 @@ public static class TypeSharpTypeChecker
                 {
                     if (!BigInteger.TryParse(literalText, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value))
                     {
-                        ReportMismatch(
+                        ReportUnsupportedEnumOrBitwiseOperation(
                             initializer,
                             $"Enum member value '{literalText}' must be an integer literal for underlying type '{underlyingTypeName}'.");
                         continue;
@@ -523,7 +564,7 @@ public static class TypeSharpTypeChecker
 
                     if (value < minimum || value > maximum)
                     {
-                        ReportMismatch(
+                        ReportUnsupportedEnumOrBitwiseOperation(
                             initializer,
                             $"Enum member value '{literalText}' is outside the range of underlying type '{underlyingTypeName}'.");
                     }
@@ -549,7 +590,7 @@ public static class TypeSharpTypeChecker
                             continue;
                         }
 
-                        ReportMismatch(
+                        ReportUnsupportedEnumOrBitwiseOperation(
                             target,
                             isAlias
                                 ? $"Enum member alias '{memberName}' must reference a previously declared member of the same enum, but found '{targetName}'."
@@ -566,12 +607,202 @@ public static class TypeSharpTypeChecker
 
         private void CheckTypeAliasDeclaration(SyntaxNode node, TypeScope scope)
         {
-            if (!IsPublicBoundaryDeclaration(node) || !TryGetTypeAliasTarget(node, out var target))
+            if (!TryGetTypeAliasTarget(node, out var target))
             {
                 return;
             }
 
-            ReportPublicBoundaryLeaks(target, scope);
+            CheckTypeOperatorLimits(node, target, scope);
+
+            if (IsPublicBoundaryDeclaration(node))
+            {
+                ReportPublicBoundaryLeaks(target, scope);
+            }
+        }
+
+        private void CheckTypeAliasCyclesAndDepth(SyntaxNode root)
+        {
+            var aliases = new Dictionary<string, SyntaxNode>(StringComparer.Ordinal);
+            CollectTypeAliasTargets(root, aliases);
+
+            foreach (var alias in aliases)
+            {
+                var visiting = new HashSet<string>(StringComparer.Ordinal);
+                var visited = new HashSet<string>(StringComparer.Ordinal);
+                CheckTypeAliasCycles(alias.Key, aliases, visiting, visited);
+            }
+
+            foreach (var alias in aliases)
+            {
+                var depth = GetTypeAliasDepth(alias.Key, aliases, new HashSet<string>(StringComparer.Ordinal));
+                if (depth > TypeOperatorAliasDepthLimit)
+                {
+                    ReportTypeOperatorLimitExceeded(
+                        alias.Value,
+                        $"Type alias '{alias.Key}' exceeds the 1.0 alias instantiation depth limit of {TypeOperatorAliasDepthLimit}; use a nominal type or flatten the local type alias chain.");
+                }
+            }
+        }
+
+        private static void CollectTypeAliasTargets(SyntaxNode node, Dictionary<string, SyntaxNode> aliases)
+        {
+            if (node.Kind == SyntaxKind.TypeAliasDeclaration &&
+                TryGetDeclarationName(node, out var aliasName) &&
+                TryGetTypeAliasTarget(node, out var target) &&
+                !aliases.ContainsKey(aliasName))
+            {
+                aliases.Add(aliasName, target);
+            }
+
+            foreach (var child in node.Children.Where(child => !child.IsToken))
+            {
+                CollectTypeAliasTargets(child, aliases);
+            }
+        }
+
+        private bool CheckTypeAliasCycles(
+            string aliasName,
+            IReadOnlyDictionary<string, SyntaxNode> aliases,
+            HashSet<string> visiting,
+            HashSet<string> visited)
+        {
+            if (visited.Contains(aliasName))
+            {
+                return false;
+            }
+
+            if (!visiting.Add(aliasName))
+            {
+                if (aliases.TryGetValue(aliasName, out var target))
+                {
+                    ReportTypeOperatorLimitExceeded(
+                        target,
+                        $"Type alias cycle detected at '{aliasName}'. Recursive type aliases are not part of the 1.0 type-operator boundary.");
+                }
+
+                return true;
+            }
+
+            var foundCycle = false;
+            if (aliases.TryGetValue(aliasName, out var aliasTarget))
+            {
+                foreach (var dependency in GetTypeAliasDependencies(aliasTarget, aliases.Keys))
+                {
+                    foundCycle |= CheckTypeAliasCycles(dependency, aliases, visiting, visited);
+                }
+            }
+
+            visiting.Remove(aliasName);
+            visited.Add(aliasName);
+            return foundCycle;
+        }
+
+        private static int GetTypeAliasDepth(string aliasName, IReadOnlyDictionary<string, SyntaxNode> aliases, HashSet<string> visiting)
+        {
+            if (!aliases.TryGetValue(aliasName, out var target) || !visiting.Add(aliasName))
+            {
+                return 0;
+            }
+
+            var depth = 1;
+            foreach (var dependency in GetTypeAliasDependencies(target, aliases.Keys))
+            {
+                depth = Math.Max(depth, 1 + GetTypeAliasDepth(dependency, aliases, visiting));
+            }
+
+            visiting.Remove(aliasName);
+            return depth;
+        }
+
+        private void CheckTypeOperatorLimits(SyntaxNode alias, SyntaxNode target, TypeScope scope)
+        {
+            var aliasName = TryGetDeclarationName(alias, out var name) ? name : "anonymous";
+            if (target.Kind == SyntaxKind.UnionType)
+            {
+                var width = target.Children
+                    .Where(child => !child.IsToken)
+                    .Select(GetTypeSyntaxText)
+                    .Where(text => text.Length > 0)
+                    .Distinct(StringComparer.Ordinal)
+                    .Count();
+                if (width > TypeOperatorNormalizedUnionWidthLimit)
+                {
+                    ReportTypeOperatorLimitExceeded(
+                        target,
+                        $"Type-level union alias '{aliasName}' exceeds the 1.0 normalized union width limit of {TypeOperatorNormalizedUnionWidthLimit} members; use a nominal union or split the local type.");
+                }
+            }
+
+            if (target.Kind == SyntaxKind.KeyofType &&
+                TryGetKeyofShape(target.Children.FirstOrDefault(child => !child.IsToken) ?? target, scope, out var keyofShape) &&
+                keyofShape.Members.Count > TypeOperatorKeyCountLimit)
+            {
+                ReportTypeOperatorLimitExceeded(
+                    target,
+                    $"keyof alias '{aliasName}' exceeds the 1.0 key count limit of {TypeOperatorKeyCountLimit} members; use an explicit nominal type or smaller local shape.");
+            }
+
+            if (target.Kind == SyntaxKind.IndexedAccessType &&
+                TryGetIndexedAccessParts(target, out _, out var keyTypeNode) &&
+                TryGetIndexedAccessKeyNames(keyTypeNode, scope, out var keyNames) &&
+                keyNames.Count > TypeOperatorKeyCountLimit)
+            {
+                ReportTypeOperatorLimitExceeded(
+                    target,
+                    $"Indexed access alias '{aliasName}' exceeds the 1.0 key count limit of {TypeOperatorKeyCountLimit} members; use an explicit nominal type or smaller local shape.");
+            }
+
+            if (target.Kind == SyntaxKind.IntersectionType &&
+                TryGetIntersectionStructuralShape(aliasName, target, scope, out var intersectionShape) &&
+                intersectionShape.Members.Count > TypeOperatorKeyCountLimit)
+            {
+                ReportTypeOperatorLimitExceeded(
+                    target,
+                    $"Intersection alias '{aliasName}' exceeds the 1.0 structural member count limit of {TypeOperatorKeyCountLimit} members; use a nominal record, class, or interface.");
+            }
+        }
+
+        private static IReadOnlyList<string> GetTypeAliasDependencies(SyntaxNode node, IEnumerable<string> aliasNames)
+        {
+            var aliasSet = aliasNames as IReadOnlySet<string> ?? new HashSet<string>(aliasNames, StringComparer.Ordinal);
+            var dependencies = new List<string>();
+            CollectTypeAliasDependencies(node, aliasSet, dependencies);
+            return dependencies.Distinct(StringComparer.Ordinal).ToArray();
+        }
+
+        private static void CollectTypeAliasDependencies(
+            SyntaxNode node,
+            IReadOnlySet<string> aliasNames,
+            List<string> dependencies)
+        {
+            if (node.Kind == SyntaxKind.TypeName)
+            {
+                var identifiers = node.Children.Where(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken).ToArray();
+                var hasDot = node.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.DotToken);
+                if (!hasDot && identifiers.Length == 1)
+                {
+                    var name = identifiers[0].Text ?? string.Empty;
+                    if (aliasNames.Contains(name))
+                    {
+                        dependencies.Add(name);
+                    }
+                }
+            }
+
+            foreach (var child in node.Children.Where(child => !child.IsToken))
+            {
+                CollectTypeAliasDependencies(child, aliasNames, dependencies);
+            }
+        }
+
+        private static string GetTypeSyntaxText(SyntaxNode node)
+        {
+            if (node.IsToken)
+            {
+                return node.Text ?? string.Empty;
+            }
+
+            return string.Concat(node.Children.Select(GetTypeSyntaxText));
         }
 
         private void CheckFunction(SyntaxNode node, TypeScope parentScope)
@@ -620,11 +851,11 @@ public static class TypeSharpTypeChecker
                 }
                 else if (expectedReturnTypeKnown && actualReturnType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, comparisonReturnType, actualReturnType, out var structuralMessage))
                 {
-                    ReportMismatch(body, structuralMessage);
+                    ReportStructuralProofFailed(body, structuralMessage);
                 }
                 else if (expectedReturnTypeKnown && actualReturnType.IsKnown && !CanAssign(scope, comparisonReturnType, actualReturnType))
                 {
-                    ReportMismatch(
+                    ReportInvalidReturnExpression(
                         body,
                         $"Cannot return expression of type '{actualReturnType}' from function returning '{expectedReturnType}'.");
                 }
@@ -648,14 +879,14 @@ public static class TypeSharpTypeChecker
             {
                 foreach (var duplicate in paramsIndexes.Skip(1))
                 {
-                    ReportMismatch(duplicate.Parameter, "A parameter list can declare only one params parameter.");
+                    ReportUnsupportedTypeSharpFunctionApplication(duplicate.Parameter, "A parameter list can declare only one params parameter.");
                 }
             }
 
             var firstParams = paramsIndexes[0];
             if (firstParams.Index != parameters.Length - 1)
             {
-                ReportMismatch(firstParams.Parameter, "The params parameter must be the final parameter.");
+                ReportUnsupportedTypeSharpFunctionApplication(firstParams.Parameter, "The params parameter must be the final parameter.");
             }
 
             foreach (var item in paramsIndexes)
@@ -665,7 +896,7 @@ public static class TypeSharpTypeChecker
                     !TryGetArrayElementTypeName(parameterType, out _))
                 {
                     var name = item.Parameter.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? "parameter";
-                    ReportMismatch(item.Parameter, $"Params parameter '{name}' must have an array type.");
+                    ReportUnsupportedTypeSharpFunctionApplication(item.Parameter, $"Params parameter '{name}' must have an array type.");
                 }
             }
         }
@@ -690,17 +921,13 @@ public static class TypeSharpTypeChecker
                 foreach (var item in defaultedParameters)
                 {
                     var name = GetParameterName(item.Parameter) ?? "parameter";
-                    ReportMismatch(
-                        item.Parameter,
-                        $"Defaulted parameter '{name}' is supported only on TypeSharp-owned function declarations.");
+                    ReportUnsupportedTypeSharpFunctionApplication(item.Parameter, $"Defaulted parameter '{name}' is supported only on TypeSharp-owned function declarations.");
                 }
             }
 
             if (parameters.Any(IsParamsParameter))
             {
-                ReportMismatch(
-                    defaultedParameters[0].Parameter,
-                    "Defaulted parameters cannot be combined with params parameters in the initial optional-parameter slice.");
+                ReportUnsupportedTypeSharpFunctionApplication(defaultedParameters[0].Parameter, "Defaulted parameters cannot be combined with params parameters in the initial optional-parameter slice.");
             }
 
             var defaultedSuffixStarted = false;
@@ -716,7 +943,7 @@ public static class TypeSharpTypeChecker
                 if (defaultedSuffixStarted)
                 {
                     var name = GetParameterName(parameter) ?? "parameter";
-                    ReportMismatch(parameter, $"Required parameter '{name}' cannot follow a defaulted parameter.");
+                    ReportUnsupportedTypeSharpFunctionApplication(parameter, $"Required parameter '{name}' cannot follow a defaulted parameter.");
                 }
             }
         }
@@ -731,22 +958,20 @@ public static class TypeSharpTypeChecker
                 !TryGetType(annotation, scope, out var parameterType) ||
                 !parameterType.IsKnown)
             {
-                ReportMismatch(parameter, $"Defaulted parameter '{name}' must declare an explicit type.");
+                ReportUnsupportedTypeSharpFunctionApplication(parameter, $"Defaulted parameter '{name}' must declare an explicit type.");
                 return;
             }
 
             if (containingTypeParameterNames.Count > 0 &&
                 GenericTypeReferencesAny(parameterType, containingTypeParameterNames, containingTypeParameterNames))
             {
-                ReportMismatch(
-                    parameter,
-                    $"Defaulted parameter '{name}' cannot use generic type parameter type '{parameterType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(parameter, $"Defaulted parameter '{name}' cannot use generic type parameter type '{parameterType}'.");
                 return;
             }
 
             if (IsParamsParameter(parameter))
             {
-                ReportMismatch(parameter, $"Params parameter '{name}' cannot declare a default value.");
+                ReportUnsupportedTypeSharpFunctionApplication(parameter, $"Params parameter '{name}' cannot declare a default value.");
             }
 
             var initializerExpression = GetParameterInitializerExpression(parameter);
@@ -757,9 +982,7 @@ public static class TypeSharpTypeChecker
 
             if (!IsSupportedDefaultParameterExpression(initializerExpression))
             {
-                ReportMismatch(
-                    initializerExpression,
-                    $"Defaulted parameter '{name}' must use a string, numeric, bool, or null literal.");
+                ReportUnsupportedTypeSharpFunctionApplication(initializerExpression, $"Defaulted parameter '{name}' must use a string, numeric, bool, or null literal.");
                 return;
             }
 
@@ -771,7 +994,7 @@ public static class TypeSharpTypeChecker
 
             if (IsNullabilityViolation(parameterType, initializerType))
             {
-                ReportMismatch(
+                ReportUnsupportedTypeSharpFunctionApplication(
                     initializerExpression,
                     initializerType.IsNull
                         ? $"Default value for parameter '{name}' cannot be null because it expects non-null type '{parameterType}'."
@@ -779,13 +1002,11 @@ public static class TypeSharpTypeChecker
             }
             else if (TryGetStructuralAssignmentDiagnostic(scope, parameterType, initializerType, out var structuralMessage))
             {
-                ReportMismatch(initializerExpression, structuralMessage);
+                ReportStructuralProofFailed(initializerExpression, structuralMessage);
             }
             else if (!CanAssign(scope, parameterType, initializerType))
             {
-                ReportMismatch(
-                    initializerExpression,
-                    $"Default value for parameter '{name}' expects '{parameterType}', but found '{initializerType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(initializerExpression, $"Default value for parameter '{name}' expects '{parameterType}', but found '{initializerType}'.");
             }
         }
 
@@ -810,17 +1031,17 @@ public static class TypeSharpTypeChecker
 
                 if (!hasReceiverType)
                 {
-                    ReportMismatch(node, "Extension declaration requires a receiver type.");
+                    ReportUnsupportedExtensionMethod(node, "Extension declaration requires a receiver type.");
                 }
                 else if (firstParameter is null ||
                     !TryGetDirectTypeAnnotation(firstParameter, out var parameterTypeNode) ||
                     !TryGetType(parameterTypeNode, scope, out var parameterType))
                 {
-                    ReportMismatch(function, $"Extension method requires a first receiver parameter of type '{receiverType}'.");
+                    ReportUnsupportedExtensionMethod(function, $"Extension method requires a first receiver parameter of type '{receiverType}'.");
                 }
                 else if (IsParamsParameter(firstParameter))
                 {
-                    ReportMismatch(firstParameter, "Extension method receiver parameter cannot be a params parameter.");
+                    ReportUnsupportedExtensionMethod(firstParameter, "Extension method receiver parameter cannot be a params parameter.");
                 }
                 else if (parameterType.IsKnown &&
                     receiverType.IsKnown &&
@@ -828,7 +1049,7 @@ public static class TypeSharpTypeChecker
                         parameterType.IsNullable != receiverType.IsNullable ||
                         parameterType.IsNull != receiverType.IsNull))
                 {
-                    ReportMismatch(function, $"Extension method first parameter must match receiver type '{receiverType}', but found '{parameterType}'.");
+                    ReportUnsupportedExtensionMethod(function, $"Extension method first parameter must match receiver type '{receiverType}', but found '{parameterType}'.");
                 }
 
                 CheckFunction(function, scope);
@@ -838,39 +1059,39 @@ public static class TypeSharpTypeChecker
             {
                 if (!hasReceiverType)
                 {
-                    ReportMismatch(node, "Extension declaration requires a receiver type.");
+                    ReportUnsupportedExtensionProperty(node, "Extension declaration requires a receiver type.");
                 }
 
                 if (receiverIdentifier is null)
                 {
-                    ReportMismatch(property, "Extension property requires a receiver name in the extension declaration.");
+                    ReportUnsupportedExtensionProperty(property, "Extension property requires a receiver name in the extension declaration.");
                 }
 
                 if (receiverType.IsKnown && receiverType.IsNullable)
                 {
-                    ReportMismatch(
+                    ReportUnsupportedExtensionProperty(
                         property,
                         FormatNullableExtensionPropertyReceiverMessage(receiverType));
                 }
 
                 if (IsMutableValueDeclaration(property))
                 {
-                    ReportMismatch(property, "Extension property cannot be mutable.");
+                    ReportUnsupportedExtensionProperty(property, "Extension property cannot be mutable.");
                 }
 
                 if (!TryGetDirectTypeAnnotation(property, out _))
                 {
-                    ReportMismatch(property, "Extension property requires an explicit type annotation.");
+                    ReportUnsupportedExtensionProperty(property, "Extension property requires an explicit type annotation.");
                 }
 
                 if (!HasInitializer(property))
                 {
-                    ReportMismatch(property, "Extension property requires an initializer expression.");
+                    ReportUnsupportedExtensionProperty(property, "Extension property requires an initializer expression.");
                 }
 
                 if (property.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock))
                 {
-                    ReportMismatch(property, "Extension property accessor blocks are not supported in this slice; use an initializer expression.");
+                    ReportUnsupportedExtensionProperty(property, "Extension property accessor blocks are not supported in this slice; use an initializer expression.");
                 }
 
                 CheckPublicValueBoundary(property, scope);
@@ -1023,9 +1244,7 @@ public static class TypeSharpTypeChecker
                 !IsShiftLikeCompositionExpression(initializerExpression, scope) &&
                 IsPublicBoundaryDeclaration(node))
             {
-                ReportMismatch(
-                    node,
-                    "Public direct composition values require an explicit function type annotation.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, "Public direct composition values require an explicit function type annotation.");
             }
 
             if (functionAnnotationKnown && initializerExpression is not null)
@@ -1048,11 +1267,11 @@ public static class TypeSharpTypeChecker
             }
             else if (annotationKnown && initializerType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, expectedType, initializerType, out var structuralMessage))
             {
-                ReportMismatch(node, structuralMessage);
+                ReportStructuralProofFailed(node, structuralMessage);
             }
             else if (annotationKnown && initializerType.IsKnown && !CanAssign(scope, expectedType, initializerType))
             {
-                ReportMismatch(
+                ReportInvalidValueInitializer(
                     node,
                     $"Cannot assign expression of type '{initializerType}' to '{expectedType}'.");
             }
@@ -1234,7 +1453,7 @@ public static class TypeSharpTypeChecker
 
                 if (!targetInfo.IsMutable)
                 {
-                    ReportMismatch(targetIdentifier, $"Cannot assign to immutable binding '{targetName}'. Use 'let mut' when mutation is intended.");
+                    ReportUnsupportedAssignmentTarget(targetIdentifier, $"Cannot assign to immutable binding '{targetName}'. Use 'let mut' when mutation is intended.");
                 }
 
                 return operatorKind switch
@@ -1253,14 +1472,14 @@ public static class TypeSharpTypeChecker
             if (TryGetNullableExtensionPropertyAssignmentTarget(target, scope, out var nullableAssignmentExtensionProperty, out var nullableReceiverType))
             {
                 CheckExpression(value, scope);
-                ReportMismatch(target, FormatNullableExtensionPropertyAccessMessage(nullableReceiverType, nullableAssignmentExtensionProperty));
+                ReportUnsupportedExtensionProperty(target, FormatNullableExtensionPropertyAccessMessage(nullableReceiverType, nullableAssignmentExtensionProperty));
                 return nullableAssignmentExtensionProperty.Type;
             }
 
             if (TryGetExtensionPropertyAssignmentTarget(target, scope, out var extensionProperty))
             {
                 CheckExpression(value, scope);
-                ReportMismatch(
+                ReportUnsupportedExtensionProperty(
                     target,
                     $"Extension property '{extensionProperty.Name}' is getter-only and cannot be assigned; extension property setters are not supported in this slice.");
                 return extensionProperty.Type;
@@ -1284,7 +1503,7 @@ public static class TypeSharpTypeChecker
                 return targetType;
             }
 
-            ReportMismatch(target, "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.");
+            ReportUnsupportedAssignmentTarget(target, "Assignment target must be a mutable local binding or a supported imported C# member, indexer, or event target.");
             CheckExpression(target, scope);
             CheckExpression(value, scope);
             return SimpleType.Unknown;
@@ -1381,11 +1600,11 @@ public static class TypeSharpTypeChecker
             }
             else if (TryGetStructuralAssignmentDiagnostic(scope, targetType, valueType, out var structuralMessage))
             {
-                ReportMismatch(assignment, structuralMessage);
+                ReportStructuralProofFailed(assignment, structuralMessage);
             }
             else if (!CanAssign(scope, targetType, valueType))
             {
-                ReportMismatch(assignment, $"Cannot assign expression of type '{valueType}' to '{targetType}'.");
+                ReportInvalidAssignmentValue(assignment, $"Cannot assign expression of type '{valueType}' to '{targetType}'.");
             }
 
             return targetType;
@@ -1417,13 +1636,12 @@ public static class TypeSharpTypeChecker
                         out var additiveReceiverType))
                 {
                     CheckExpression(value, scope);
-                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(additiveReceiverType, additiveExtensionProperty));
+                    ReportUnsupportedExtensionProperty(target, FormatNullConditionalExtensionPropertyAssignmentMessage(additiveReceiverType, additiveExtensionProperty));
                     return additiveExtensionProperty.Type;
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional additive compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
                 return SimpleType.Unknown;
             }
@@ -1449,13 +1667,12 @@ public static class TypeSharpTypeChecker
                         out var multiplicativeReceiverType))
                 {
                     CheckExpression(value, scope);
-                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(multiplicativeReceiverType, multiplicativeExtensionProperty));
+                    ReportUnsupportedExtensionProperty(target, FormatNullConditionalExtensionPropertyAssignmentMessage(multiplicativeReceiverType, multiplicativeExtensionProperty));
                     return multiplicativeExtensionProperty.Type;
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional multiplicative compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
                 return SimpleType.Unknown;
             }
@@ -1479,13 +1696,12 @@ public static class TypeSharpTypeChecker
                         out var bitwiseReceiverType))
                 {
                     CheckExpression(value, scope);
-                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(bitwiseReceiverType, bitwiseExtensionProperty));
+                    ReportUnsupportedExtensionProperty(target, FormatNullConditionalExtensionPropertyAssignmentMessage(bitwiseReceiverType, bitwiseExtensionProperty));
                     return bitwiseExtensionProperty.Type;
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional bitwise compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
                 return SimpleType.Unknown;
             }
@@ -1509,13 +1725,12 @@ public static class TypeSharpTypeChecker
                         out var shiftReceiverType))
                 {
                     CheckExpression(value, scope);
-                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(shiftReceiverType, shiftExtensionProperty));
+                    ReportUnsupportedExtensionProperty(target, FormatNullConditionalExtensionPropertyAssignmentMessage(shiftReceiverType, shiftExtensionProperty));
                     return shiftExtensionProperty.Type;
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional shift compound assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
                 return SimpleType.Unknown;
             }
@@ -1539,13 +1754,12 @@ public static class TypeSharpTypeChecker
                         out var logicalShiftReceiverType))
                 {
                     CheckExpression(value, scope);
-                    ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(logicalShiftReceiverType, logicalShiftExtensionProperty));
+                    ReportUnsupportedExtensionProperty(target, FormatNullConditionalExtensionPropertyAssignmentMessage(logicalShiftReceiverType, logicalShiftExtensionProperty));
                     return logicalShiftExtensionProperty.Type;
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional logical unsigned shift assignment '?.' is supported only for readable and writable metadata-backed imported C# instance field/property targets.");
                 return SimpleType.Unknown;
             }
@@ -1554,8 +1768,7 @@ public static class TypeSharpTypeChecker
             {
                 CheckNullConditionalReceiver(target, scope);
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    assignment,
+                ReportUnsupportedAssignmentTarget(assignment,
                     "Null-conditional assignment '?.' supports only simple '=', bounded additive compound '+=', '-=', bounded multiplicative compound '*=', '/=', '%=', bounded bitwise compound '|=', '&=', '^=', bounded shift compound '<<=', '>>=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance field/property targets; other compound assignment, increment, decrement, indexer, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
@@ -1572,13 +1785,12 @@ public static class TypeSharpTypeChecker
                     out var receiverType))
             {
                 CheckExpression(value, scope);
-                ReportMismatch(target, FormatNullConditionalExtensionPropertyAssignmentMessage(receiverType, extensionProperty));
+                ReportUnsupportedExtensionProperty(target, FormatNullConditionalExtensionPropertyAssignmentMessage(receiverType, extensionProperty));
                 return extensionProperty.Type;
             }
 
             CheckExpression(value, scope);
-            ReportMismatch(
-                target,
+            ReportUnsupportedAssignmentTarget(target,
                 "Null-conditional assignment '?.' is supported only for writable metadata-backed imported C# instance field/property targets.");
             return SimpleType.Unknown;
         }
@@ -1596,12 +1808,12 @@ public static class TypeSharpTypeChecker
                     out var extensionProperty,
                     out var receiverType))
             {
-                ReportMismatch(node, FormatNullConditionalExtensionPropertyAccessMessage(receiverType, extensionProperty));
+                ReportUnsupportedExtensionProperty(node, FormatNullConditionalExtensionPropertyAccessMessage(receiverType, extensionProperty));
                 return extensionProperty.Type;
             }
 
             CheckNullConditionalReceiver(node, scope);
-            ReportMismatch(
+            ReportUnsupportedNullConditionalAccess(
                 node,
                 "Null-conditional member access '?.' is supported only for readable metadata-backed imported C# instance field/property targets in this slice; invocation, chains, events, static, local, and TypeSharp-owned targets are not supported.");
             return SimpleType.Unknown;
@@ -1627,8 +1839,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional additive compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
                 return SimpleType.Unknown;
             }
@@ -1648,8 +1859,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional multiplicative compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
                 return SimpleType.Unknown;
             }
@@ -1667,8 +1877,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional bitwise compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
                 return SimpleType.Unknown;
             }
@@ -1686,8 +1895,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional shift compound assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
                 return SimpleType.Unknown;
             }
@@ -1705,8 +1913,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    target,
+                ReportUnsupportedAssignmentTarget(target,
                     "Null-conditional logical unsigned shift assignment '?[]' is supported only for readable and writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
                 return SimpleType.Unknown;
             }
@@ -1715,8 +1922,7 @@ public static class TypeSharpTypeChecker
             {
                 CheckNullConditionalIndexerParts(target, scope);
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    assignment,
+                ReportUnsupportedAssignmentTarget(assignment,
                     "Null-conditional assignment '?[]' supports only simple '=', bounded additive compound '+=', '-=', bounded multiplicative compound '*=', '/=', '%=', bounded bitwise compound '|=', '&=', '^=', bounded shift compound '<<=', '>>=', or bounded logical unsigned shift '>>>=' over metadata-backed imported C# instance indexer targets; other compound assignment, increment, decrement, member, event, static, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
@@ -1727,8 +1933,7 @@ public static class TypeSharpTypeChecker
             }
 
             CheckExpression(value, scope);
-            ReportMismatch(
-                target,
+            ReportUnsupportedAssignmentTarget(target,
                 "Null-conditional assignment '?[]' is supported only for writable metadata-backed imported C# instance indexer targets with a matching public getter and setter.");
             return SimpleType.Unknown;
         }
@@ -1741,7 +1946,7 @@ public static class TypeSharpTypeChecker
             }
 
             CheckNullConditionalIndexerParts(node, scope);
-            ReportMismatch(
+            ReportUnsupportedNullConditionalAccess(
                 node,
                 "Null-conditional indexer access '?[]' is supported only for readable metadata-backed imported C# instance indexer targets with a matching public getter.");
             return SimpleType.Unknown;
@@ -1805,7 +2010,7 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
+                ReportUnsupportedAssignmentTarget(
                     assignment,
                     "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter.");
                 return SimpleType.Unknown;
@@ -1813,8 +2018,7 @@ public static class TypeSharpTypeChecker
 
             var fallbackTargetType = CheckExpression(target, scope);
             CheckExpression(value, scope);
-            ReportMismatch(
-                assignment,
+            ReportUnsupportedAssignmentTarget(assignment,
                 "Logical unsigned shift assignment '>>>=' is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; event and unresolved imported member targets are not supported.");
             return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
@@ -1854,16 +2058,14 @@ public static class TypeSharpTypeChecker
                 }
 
                 CheckExpression(value, scope);
-                ReportMismatch(
-                    assignment,
+                ReportUnsupportedAssignmentTarget(assignment,
                     "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.");
                 return SimpleType.Unknown;
             }
 
             var fallbackTargetType = CheckExpression(target, scope);
             CheckExpression(value, scope);
-            ReportMismatch(
-                assignment,
+            ReportUnsupportedAssignmentTarget(assignment,
                 "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.");
             return fallbackTargetType.IsKnown ? fallbackTargetType : SimpleType.Unknown;
         }
@@ -1891,7 +2093,7 @@ public static class TypeSharpTypeChecker
 
             if (!TryGetBinaryIntegralShiftResultType(targetType, valueType, out _))
             {
-                ReportMismatch(
+                ReportUnsupportedEnumOrBitwiseOperation(
                     assignment,
                     $"Shift assignment '{operatorText}' operands must be non-null primitive integral values with an int-compatible shift count, but found '{targetType}' and '{valueType}'.");
                 return targetType;
@@ -1922,7 +2124,7 @@ public static class TypeSharpTypeChecker
 
             if (!TryGetBinaryIntegralAdditiveResultType(targetType, valueType, out var resultType))
             {
-                ReportMismatch(
+                ReportInvalidArithmeticCompoundAssignment(
                     assignment,
                     $"Additive compound assignment '{operatorText}' operands must be non-null primitive integral numeric values of a supported type, but found '{targetType}' and '{valueType}'.");
                 return targetType;
@@ -1930,7 +2132,7 @@ public static class TypeSharpTypeChecker
 
             if (resultType.IsKnown && !CanAssign(scope, targetType, resultType))
             {
-                ReportMismatch(assignment, $"Cannot assign additive compound assignment result of type '{resultType}' to '{targetType}'.");
+                ReportInvalidArithmeticCompoundAssignment(assignment, $"Cannot assign additive compound assignment result of type '{resultType}' to '{targetType}'.");
             }
 
             return targetType;
@@ -1956,7 +2158,7 @@ public static class TypeSharpTypeChecker
             {
                 if (primitiveResultType.IsKnown && !CanAssign(scope, targetType, primitiveResultType))
                 {
-                    ReportMismatch(assignment, $"Cannot assign multiplicative compound assignment result of type '{primitiveResultType}' to '{targetType}'.");
+                    ReportInvalidArithmeticCompoundAssignment(assignment, $"Cannot assign multiplicative compound assignment result of type '{primitiveResultType}' to '{targetType}'.");
                 }
 
                 return targetType;
@@ -1973,7 +2175,7 @@ public static class TypeSharpTypeChecker
             {
                 if (operatorResultType.IsKnown && !CanAssign(scope, targetType, operatorResultType))
                 {
-                    ReportMismatch(assignment, $"Cannot assign user-defined multiplicative compound assignment result of type '{operatorResultType}' to '{targetType}'.");
+                    ReportUnsupportedImportedOperator(assignment, $"Cannot assign user-defined multiplicative compound assignment result of type '{operatorResultType}' to '{targetType}'.");
                 }
 
                 return targetType;
@@ -1981,7 +2183,7 @@ public static class TypeSharpTypeChecker
 
             if (allowImportedStaticOperators && isAmbiguous)
             {
-                ReportMismatch(
+                ReportUnsupportedImportedOperator(
                     assignment,
                     $"User-defined multiplicative compound assignment '{operatorText}' is ambiguous for operand types '{targetType}' and '{valueType}'.");
                 return targetType;
@@ -1993,9 +2195,14 @@ public static class TypeSharpTypeChecker
             var importedOperatorPolicy = allowImportedStaticOperators && HasImportedOperatorOperand(targetType, valueType)
                 ? " or match one imported C# public static binary operator"
                 : string.Empty;
-            ReportMismatch(
-                assignment,
-                $"Multiplicative compound assignment '{operatorText}' operands must be {numericPolicy}{importedOperatorPolicy}, but found '{targetType}' and '{valueType}'.");
+            var message = $"Multiplicative compound assignment '{operatorText}' operands must be {numericPolicy}{importedOperatorPolicy}, but found '{targetType}' and '{valueType}'.";
+            if (importedOperatorPolicy.Length > 0)
+            {
+                ReportUnsupportedImportedOperator(assignment, message);
+                return targetType;
+            }
+
+            ReportInvalidArithmeticCompoundAssignment(assignment, message);
             return targetType;
         }
 
@@ -2128,7 +2335,7 @@ public static class TypeSharpTypeChecker
                 resultType.IsKnown &&
                 !CanAssign(scope, targetType, resultType))
             {
-                ReportMismatch(assignment, $"Cannot assign compound assignment result of type '{resultType}' to '{targetType}'.");
+                ReportUnsupportedEnumOrBitwiseOperation(assignment, $"Cannot assign compound assignment result of type '{resultType}' to '{targetType}'.");
             }
 
             return targetType;
@@ -2149,7 +2356,7 @@ public static class TypeSharpTypeChecker
             {
                 if (!targetIsEnum || !valueIsEnum || !MetadataTypeNameMatches(targetType.Name, valueType.Name))
                 {
-                    ReportMismatch(node, $"Enum compound assignment '{operatorText}' operands must be enum values of the same type, but found '{targetType}' and '{valueType}'.");
+                    ReportUnsupportedEnumOrBitwiseOperation(node, $"Enum compound assignment '{operatorText}' operands must be enum values of the same type, but found '{targetType}' and '{valueType}'.");
                     return false;
                 }
 
@@ -2165,11 +2372,11 @@ public static class TypeSharpTypeChecker
 
             if (IsKnownNonNullableBoolType(targetType) || IsKnownNonNullableBoolType(valueType))
             {
-                ReportMismatch(node, $"Boolean compound assignment '{operatorText}' operands must both be 'bool', but found '{targetType}' and '{valueType}'.");
+                ReportUnsupportedEnumOrBitwiseOperation(node, $"Boolean compound assignment '{operatorText}' operands must both be 'bool', but found '{targetType}' and '{valueType}'.");
                 return false;
             }
 
-            ReportMismatch(node, $"Bitwise compound assignment '{operatorText}' operands must be integral numeric values or boolean values of a supported primitive type, but found '{targetType}' and '{valueType}'.");
+            ReportUnsupportedEnumOrBitwiseOperation(node, $"Bitwise compound assignment '{operatorText}' operands must be integral numeric values or boolean values of a supported primitive type, but found '{targetType}' and '{valueType}'.");
             return false;
         }
 
@@ -2189,7 +2396,7 @@ public static class TypeSharpTypeChecker
                     return SimpleType.Named(enumName);
                 }
 
-                ReportMismatch(node, $"Enum '{enumName}' does not contain member '{member.Text}'.");
+                ReportUnsupportedEnumOrBitwiseOperation(node, $"Enum '{enumName}' does not contain member '{member.Text}'.");
                 return SimpleType.Unknown;
             }
 
@@ -2226,11 +2433,11 @@ public static class TypeSharpTypeChecker
 
                 if (TryGetNullableExtensionPropertyAccess(receiverType, memberName, scope, out var nullableShapeExtensionProperty))
                 {
-                    ReportMismatch(node, FormatNullableExtensionPropertyAccessMessage(receiverType, nullableShapeExtensionProperty));
+                ReportUnsupportedExtensionProperty(node, FormatNullableExtensionPropertyAccessMessage(receiverType, nullableShapeExtensionProperty));
                     return nullableShapeExtensionProperty.Type;
                 }
 
-                ReportMismatch(node, $"Type '{receiverType}' does not contain member '{memberName}'.");
+                ReportStructuralProofFailed(node, $"Type '{receiverType}' does not contain member '{memberName}'.");
                 return SimpleType.Unknown;
             }
 
@@ -2241,7 +2448,7 @@ public static class TypeSharpTypeChecker
 
             if (TryGetNullableExtensionPropertyAccess(receiverType, memberName, scope, out var nullableExtensionProperty))
             {
-                ReportMismatch(node, FormatNullableExtensionPropertyAccessMessage(receiverType, nullableExtensionProperty));
+                ReportUnsupportedExtensionProperty(node, FormatNullableExtensionPropertyAccessMessage(receiverType, nullableExtensionProperty));
                 return nullableExtensionProperty.Type;
             }
 
@@ -2866,7 +3073,7 @@ public static class TypeSharpTypeChecker
 
                 if (operandType.IsKnown)
                 {
-                    ReportMismatch(node, $"Bitwise operator '~' operand must be an integral numeric value or enum value, but found '{operandType}'.");
+                    ReportUnsupportedEnumOrBitwiseOperation(node, $"Bitwise operator '~' operand must be an integral numeric value or enum value, but found '{operandType}'.");
                 }
 
                 return SimpleType.Unknown;
@@ -2895,13 +3102,13 @@ public static class TypeSharpTypeChecker
             {
                 if (!leftIsEnum || !rightIsEnum)
                 {
-                    ReportMismatch(node, $"Enum value '{operatorText}' operands must be enum values of the same type, but found '{leftType}' and '{rightType}'.");
+                    ReportUnsupportedEnumOrBitwiseOperation(node, $"Enum value '{operatorText}' operands must be enum values of the same type, but found '{leftType}' and '{rightType}'.");
                     return SimpleType.Unknown;
                 }
 
                 if (!string.Equals(leftType.Name, rightType.Name, StringComparison.Ordinal))
                 {
-                    ReportMismatch(node, $"Enum value '{operatorText}' operands must have the same enum type, but found '{leftType}' and '{rightType}'.");
+                    ReportUnsupportedEnumOrBitwiseOperation(node, $"Enum value '{operatorText}' operands must have the same enum type, but found '{leftType}' and '{rightType}'.");
                     return SimpleType.Unknown;
                 }
 
@@ -2920,11 +3127,11 @@ public static class TypeSharpTypeChecker
 
             if (IsKnownNonNullableBoolType(leftType) || IsKnownNonNullableBoolType(rightType))
             {
-                ReportMismatch(node, $"Boolean bitwise operator '{operatorText}' operands must both be 'bool', but found '{leftType}' and '{rightType}'.");
+                ReportUnsupportedEnumOrBitwiseOperation(node, $"Boolean bitwise operator '{operatorText}' operands must both be 'bool', but found '{leftType}' and '{rightType}'.");
                 return SimpleType.Unknown;
             }
 
-            ReportMismatch(node, $"Bitwise operator '{operatorText}' operands must be integral numeric values or boolean values of a supported primitive type, but found '{leftType}' and '{rightType}'.");
+            ReportUnsupportedEnumOrBitwiseOperation(node, $"Bitwise operator '{operatorText}' operands must be integral numeric values or boolean values of a supported primitive type, but found '{leftType}' and '{rightType}'.");
             return SimpleType.Unknown;
         }
 
@@ -2967,7 +3174,7 @@ public static class TypeSharpTypeChecker
             {
                 if (hasNamedArguments)
                 {
-                    ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
                 }
 
                 CheckArgumentExpressions(arguments, scope);
@@ -2978,9 +3185,7 @@ public static class TypeSharpTypeChecker
             {
                 if (TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out _, out _, out _))
                 {
-                    ReportMismatch(
-                        node,
-                        $"Named arguments cannot be used with TypeSharp params parameter function '{functionName}' in this slice.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments cannot be used with TypeSharp params parameter function '{functionName}' in this slice.");
                     CheckArgumentExpressions(arguments, scope);
                     return function.ReturnType;
                 }
@@ -3045,9 +3250,7 @@ public static class TypeSharpTypeChecker
         {
             if (arguments.Count < paramsIndex)
             {
-                ReportMismatch(
-                    node,
-                    $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
             }
 
             for (var index = 0; index < Math.Min(arguments.Count, paramsIndex); index++)
@@ -3106,7 +3309,7 @@ public static class TypeSharpTypeChecker
         {
             if (!TryBuildParameterIndex(parameterNames, parameterTypes.Count, out var parameterIndexes))
             {
-                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
                 CheckArgumentExpressions(arguments, scope);
                 return returnType;
             }
@@ -3125,14 +3328,14 @@ public static class TypeSharpTypeChecker
                     var argumentExpression = GetArgumentExpression(argument);
                     if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
                     {
-                        ReportMismatch(argument, $"Function '{functionName}' has no parameter named '{argumentName}'.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' has no parameter named '{argumentName}'.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
 
                     if (suppliedParameters[parameterIndex])
                     {
-                        ReportMismatch(argument, $"Function '{functionName}' parameter '{argumentName}' is supplied more than once.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' parameter '{argumentName}' is supplied more than once.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
@@ -3144,15 +3347,13 @@ public static class TypeSharpTypeChecker
 
                 if (sawNamedArgument)
                 {
-                    ReportMismatch(argument, $"Function '{functionName}' positional arguments cannot follow named arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' positional arguments cannot follow named arguments.");
                 }
 
                 var positionalIndex = nextPositionalParameter++;
                 if (positionalIndex >= parameterTypes.Count)
                 {
-                    ReportMismatch(
-                        argument,
-                        $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies more arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies more arguments.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -3160,7 +3361,7 @@ public static class TypeSharpTypeChecker
                 if (suppliedParameters[positionalIndex])
                 {
                     var parameterName = knownParameterNames[positionalIndex];
-                    ReportMismatch(argument, $"Function '{functionName}' parameter '{parameterName}' is supplied more than once.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' parameter '{parameterName}' is supplied more than once.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -3201,9 +3402,7 @@ public static class TypeSharpTypeChecker
             {
                 if (explicitTypeArguments.Count != function.TypeParameters.Count)
                 {
-                    ReportMismatch(
-                        node,
-                        $"Function '{functionName}' expects {FormatGenericTypeArgumentCount(function.TypeParameters.Count)}, but call supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' expects {FormatGenericTypeArgumentCount(function.TypeParameters.Count)}, but call supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
                     CheckArgumentExpressions(arguments, scope);
                     return SimpleType.Unknown;
                 }
@@ -3217,23 +3416,21 @@ public static class TypeSharpTypeChecker
             var returnType = SubstituteGenericType(function.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
             if (function.ParameterTypes is not { } parameterTypes)
             {
-                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
                 CheckArgumentExpressions(arguments, scope);
                 return returnType;
             }
 
             if (TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out _, out _, out _))
             {
-                ReportMismatch(
-                    node,
-                    $"Named arguments cannot be used with TypeSharp params parameter function '{functionName}' in this generic slice.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments cannot be used with TypeSharp params parameter function '{functionName}' in this generic slice.");
                 CheckArgumentExpressions(arguments, scope);
                 return returnType;
             }
 
             if (!TryBuildParameterIndex(function.ParameterNames, parameterTypes.Count, out var parameterIndexes))
             {
-                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for function '{functionName}'.");
                 CheckArgumentExpressions(arguments, scope);
                 return returnType;
             }
@@ -3252,14 +3449,14 @@ public static class TypeSharpTypeChecker
                     var argumentExpression = GetArgumentExpression(argument);
                     if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
                     {
-                        ReportMismatch(argument, $"Function '{functionName}' has no parameter named '{argumentName}'.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' has no parameter named '{argumentName}'.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
 
                     if (suppliedParameters[parameterIndex])
                     {
-                        ReportMismatch(argument, $"Function '{functionName}' parameter '{argumentName}' is supplied more than once.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' parameter '{argumentName}' is supplied more than once.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
@@ -3271,15 +3468,13 @@ public static class TypeSharpTypeChecker
 
                 if (sawNamedArgument)
                 {
-                    ReportMismatch(argument, $"Function '{functionName}' positional arguments cannot follow named arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' positional arguments cannot follow named arguments.");
                 }
 
                 var positionalIndex = nextPositionalParameter++;
                 if (positionalIndex >= parameterTypes.Count)
                 {
-                    ReportMismatch(
-                        argument,
-                        $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies more arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' expects {FormatArgumentCount(parameterTypes.Count)}, but call supplies more arguments.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -3287,7 +3482,7 @@ public static class TypeSharpTypeChecker
                 if (suppliedParameters[positionalIndex])
                 {
                     var parameterName = knownParameterNames[positionalIndex];
-                    ReportMismatch(argument, $"Function '{functionName}' parameter '{parameterName}' is supplied more than once.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Function '{functionName}' parameter '{parameterName}' is supplied more than once.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -3379,9 +3574,7 @@ public static class TypeSharpTypeChecker
             {
                 if (explicitTypeArguments.Count != function.TypeParameters.Count)
                 {
-                    ReportMismatch(
-                        node,
-                        $"Function '{functionName}' expects {FormatGenericTypeArgumentCount(function.TypeParameters.Count)}, but call supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' expects {FormatGenericTypeArgumentCount(function.TypeParameters.Count)}, but call supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
 
                     foreach (var argument in arguments)
                     {
@@ -3410,9 +3603,7 @@ public static class TypeSharpTypeChecker
             var hasParams = TryGetParamsParameter(parameterTypes, function.ParamsParameterIndex, out var paramsIndex, out _, out _);
             if (hasParams && arguments.Count < paramsIndex)
             {
-                ReportMismatch(
-                    node,
-                    $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' expects at least {FormatArgumentCount(paramsIndex)}, but call supplies {FormatArgumentCount(arguments.Count)}.");
             }
             else if (!hasParams)
             {
@@ -3546,7 +3737,7 @@ public static class TypeSharpTypeChecker
                 var previousIndex = inferredFromArgument.TryGetValue(typeParameterName, out var inferredIndex)
                     ? inferredIndex + 1
                     : 1;
-                ReportMismatch(
+                ReportUnsupportedTypeSharpFunctionApplication(
                     node,
                     $"{subjectDescription} cannot infer generic type parameter '{typeParameterName}' consistently: argument {previousIndex} inferred '{inferredType}', but argument {index + 1} inferred '{inferredArgumentType}'.");
             }
@@ -3704,9 +3895,7 @@ public static class TypeSharpTypeChecker
                 var expects = requiredCount == parameterTypes.Count
                     ? FormatArgumentCount(parameterTypes.Count)
                     : $"at least {FormatArgumentCount(requiredCount)}";
-                ReportMismatch(
-                    node,
-                    $"Function '{functionName}' expects {expects}, but call supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' expects {expects}, but call supplies {FormatArgumentCount(suppliedArgumentCount)}.");
                 return;
             }
 
@@ -3715,9 +3904,7 @@ public static class TypeSharpTypeChecker
                 var expects = requiredCount == parameterTypes.Count
                     ? FormatArgumentCount(parameterTypes.Count)
                     : $"at most {FormatArgumentCount(parameterTypes.Count)}";
-                ReportMismatch(
-                    node,
-                    $"Function '{functionName}' expects {expects}, but call supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' expects {expects}, but call supplies {FormatArgumentCount(suppliedArgumentCount)}.");
             }
         }
 
@@ -3734,9 +3921,7 @@ public static class TypeSharpTypeChecker
                 var expects = requiredCount == parameterTypes.Count
                     ? FormatArgumentCount(parameterTypes.Count)
                     : $"at least {FormatArgumentCount(requiredCount)}";
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' expects {expects} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects {expects} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
                 return;
             }
 
@@ -3745,9 +3930,7 @@ public static class TypeSharpTypeChecker
                 var expects = requiredCount == parameterTypes.Count
                     ? FormatArgumentCount(parameterTypes.Count)
                     : $"at most {FormatArgumentCount(parameterTypes.Count)}";
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' expects {expects} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects {expects} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
             }
         }
 
@@ -3818,7 +4001,7 @@ public static class TypeSharpTypeChecker
                     continue;
                 }
 
-                ReportMismatch(node, $"Function '{functionName}' requires argument for parameter '{parameterNames[index]}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' requires argument for parameter '{parameterNames[index]}'.");
             }
         }
 
@@ -3837,7 +4020,7 @@ public static class TypeSharpTypeChecker
                     continue;
                 }
 
-                ReportMismatch(node, $"Pipeline target '{targetName}' requires argument for parameter '{parameterNames[index]}' after pipeline lowering.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' requires argument for parameter '{parameterNames[index]}' after pipeline lowering.");
             }
         }
 
@@ -3868,7 +4051,7 @@ public static class TypeSharpTypeChecker
 
             if (IsNullabilityViolation(expectedType, argumentType))
             {
-                ReportMismatch(
+                ReportUnsupportedTypeSharpFunctionApplication(
                     node,
                     argumentType.IsNull
                         ? $"Function '{functionName}' argument {parameterIndex + 1} cannot be null because it expects non-null type '{expectedType}'."
@@ -3876,13 +4059,11 @@ public static class TypeSharpTypeChecker
             }
             else if (TryGetStructuralAssignmentDiagnostic(scope, expectedType, argumentType, out var structuralMessage))
             {
-                ReportMismatch(node, structuralMessage);
+                ReportStructuralProofFailed(node, structuralMessage);
             }
             else if (!CanAssign(scope, expectedType, argumentType))
             {
-                ReportMismatch(
-                    node,
-                    $"Function '{functionName}' argument {parameterIndex + 1} expects '{expectedType}', but found '{argumentType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function '{functionName}' argument {parameterIndex + 1} expects '{expectedType}', but found '{argumentType}'.");
             }
         }
 
@@ -3983,7 +4164,7 @@ public static class TypeSharpTypeChecker
             {
                 if (hasNamedArguments)
                 {
-                    ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
                 }
 
                 CheckArgumentExpressions(targetArguments, scope);
@@ -3994,9 +4175,7 @@ public static class TypeSharpTypeChecker
             {
                 if (TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out _, out _, out _))
                 {
-                    ReportMismatch(
-                        node,
-                        $"Named arguments cannot be used with TypeSharp params parameter pipeline target '{targetName}' in this slice.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments cannot be used with TypeSharp params parameter pipeline target '{targetName}' in this slice.");
                     CheckArgumentExpressions(targetArguments, scope);
                     return targetFunction.ReturnType;
                 }
@@ -4031,7 +4210,7 @@ public static class TypeSharpTypeChecker
             var suppliedArgumentCount = targetArguments.Count + 1;
             if (parameterTypes.Count == 0)
             {
-                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
             }
             else
             {
@@ -4048,9 +4227,7 @@ public static class TypeSharpTypeChecker
                 parameterTypes[0].IsKnown &&
                 !CanAssign(scope, parameterTypes[0], inputType))
             {
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' expects '{parameterTypes[0]}' for its first parameter, but pipeline input has type '{inputType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects '{parameterTypes[0]}' for its first parameter, but pipeline input has type '{inputType}'.");
             }
 
             for (var index = 0; index < targetArguments.Count; index++)
@@ -4082,7 +4259,7 @@ public static class TypeSharpTypeChecker
         {
             if (!TryBuildParameterIndex(parameterNames, parameterTypes.Count, out var parameterIndexes))
             {
-                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
                 CheckArgumentExpressions(targetArguments, scope);
                 return returnType;
             }
@@ -4092,7 +4269,7 @@ public static class TypeSharpTypeChecker
             var boundArguments = new List<BoundCallArgument>();
             if (parameterTypes.Count == 0)
             {
-                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
             }
             else
             {
@@ -4113,23 +4290,21 @@ public static class TypeSharpTypeChecker
                     var argumentExpression = GetArgumentExpression(argument);
                     if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
                     {
-                        ReportMismatch(argument, $"Pipeline target '{targetName}' has no parameter named '{argumentName}'.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' has no parameter named '{argumentName}'.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
 
                     if (parameterIndex == 0)
                     {
-                        ReportMismatch(
-                            argument,
-                            $"Pipeline target '{targetName}' already receives parameter '{argumentName}' from the pipeline input.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' already receives parameter '{argumentName}' from the pipeline input.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
 
                     if (suppliedParameters[parameterIndex])
                     {
-                        ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{argumentName}' is supplied more than once.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' parameter '{argumentName}' is supplied more than once.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
@@ -4141,15 +4316,13 @@ public static class TypeSharpTypeChecker
 
                 if (sawNamedArgument)
                 {
-                    ReportMismatch(argument, $"Pipeline target '{targetName}' positional arguments cannot follow named arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' positional arguments cannot follow named arguments.");
                 }
 
                 var positionalIndex = nextPositionalParameter++;
                 if (positionalIndex >= parameterTypes.Count)
                 {
-                    ReportMismatch(
-                        argument,
-                        $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies more arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies more arguments.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -4157,7 +4330,7 @@ public static class TypeSharpTypeChecker
                 if (suppliedParameters[positionalIndex])
                 {
                     var parameterName = knownParameterNames[positionalIndex];
-                    ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{parameterName}' is supplied more than once.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' parameter '{parameterName}' is supplied more than once.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -4200,9 +4373,7 @@ public static class TypeSharpTypeChecker
             {
                 if (explicitTypeArguments.Count != targetFunction.TypeParameters.Count)
                 {
-                    ReportMismatch(
-                        node,
-                        $"Pipeline target '{targetName}' expects {FormatGenericTypeArgumentCount(targetFunction.TypeParameters.Count)}, but pipeline supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects {FormatGenericTypeArgumentCount(targetFunction.TypeParameters.Count)}, but pipeline supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
                     CheckArgumentExpressions(targetArguments, scope);
                     return SimpleType.Unknown;
                 }
@@ -4216,23 +4387,21 @@ public static class TypeSharpTypeChecker
             var returnType = SubstituteGenericType(targetFunction.ReturnType, substitutions, typeParameterNames, unresolvedTypeParameterIsUnknown: true);
             if (targetFunction.ParameterTypes is not { } parameterTypes)
             {
-                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
                 CheckArgumentExpressions(targetArguments, scope);
                 return returnType;
             }
 
             if (TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out _, out _, out _))
             {
-                ReportMismatch(
-                    node,
-                    $"Named arguments cannot be used with TypeSharp params parameter pipeline target '{targetName}' in this generic slice.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments cannot be used with TypeSharp params parameter pipeline target '{targetName}' in this generic slice.");
                 CheckArgumentExpressions(targetArguments, scope);
                 return returnType;
             }
 
             if (!TryBuildParameterIndex(targetFunction.ParameterNames, parameterTypes.Count, out var parameterIndexes))
             {
-                ReportMismatch(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Named arguments require a known TypeSharp parameter list for pipeline target '{targetName}'.");
                 CheckArgumentExpressions(targetArguments, scope);
                 return returnType;
             }
@@ -4242,7 +4411,7 @@ public static class TypeSharpTypeChecker
             var boundArguments = new List<BoundCallArgument>();
             if (parameterTypes.Count == 0)
             {
-                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
             }
             else
             {
@@ -4259,23 +4428,21 @@ public static class TypeSharpTypeChecker
                     var argumentExpression = GetArgumentExpression(argument);
                     if (!parameterIndexes.TryGetValue(argumentName, out var parameterIndex))
                     {
-                        ReportMismatch(argument, $"Pipeline target '{targetName}' has no parameter named '{argumentName}'.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' has no parameter named '{argumentName}'.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
 
                     if (parameterIndex == 0)
                     {
-                        ReportMismatch(
-                            argument,
-                            $"Pipeline target '{targetName}' already receives parameter '{argumentName}' from the pipeline input.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' already receives parameter '{argumentName}' from the pipeline input.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
 
                     if (suppliedParameters[parameterIndex])
                     {
-                        ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{argumentName}' is supplied more than once.");
+                        ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' parameter '{argumentName}' is supplied more than once.");
                         CheckExpression(argumentExpression, scope);
                         continue;
                     }
@@ -4287,15 +4454,13 @@ public static class TypeSharpTypeChecker
 
                 if (sawNamedArgument)
                 {
-                    ReportMismatch(argument, $"Pipeline target '{targetName}' positional arguments cannot follow named arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' positional arguments cannot follow named arguments.");
                 }
 
                 var positionalIndex = nextPositionalParameter++;
                 if (positionalIndex >= parameterTypes.Count)
                 {
-                    ReportMismatch(
-                        argument,
-                        $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies more arguments.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' expects {FormatArgumentCount(parameterTypes.Count)} after pipeline lowering, but pipeline supplies more arguments.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -4303,7 +4468,7 @@ public static class TypeSharpTypeChecker
                 if (suppliedParameters[positionalIndex])
                 {
                     var parameterName = knownParameterNames[positionalIndex];
-                    ReportMismatch(argument, $"Pipeline target '{targetName}' parameter '{parameterName}' is supplied more than once.");
+                    ReportUnsupportedTypeSharpFunctionApplication(argument, $"Pipeline target '{targetName}' parameter '{parameterName}' is supplied more than once.");
                     CheckExpression(GetArgumentExpression(argument), scope);
                     continue;
                 }
@@ -4418,9 +4583,7 @@ public static class TypeSharpTypeChecker
             var suppliedArgumentCount = targetArguments.Count + 1;
             if (suppliedArgumentCount < paramsIndex)
             {
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
             }
 
             if (paramsIndex > 0 && parameterTypes[0].IsKnown)
@@ -4508,9 +4671,7 @@ public static class TypeSharpTypeChecker
             {
                 if (explicitTypeArguments.Count != targetFunction.TypeParameters.Count)
                 {
-                    ReportMismatch(
-                        node,
-                        $"Pipeline target '{targetName}' expects {FormatGenericTypeArgumentCount(targetFunction.TypeParameters.Count)}, but pipeline supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
+                    ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects {FormatGenericTypeArgumentCount(targetFunction.TypeParameters.Count)}, but pipeline supplies {FormatGenericTypeArgumentCount(explicitTypeArguments.Count)}.");
 
                     foreach (var argument in targetArguments)
                     {
@@ -4540,13 +4701,11 @@ public static class TypeSharpTypeChecker
             var hasParams = TryGetParamsParameter(parameterTypes, targetFunction.ParamsParameterIndex, out var paramsIndex, out _, out _);
             if (parameterTypes.Count == 0)
             {
-                ReportMismatch(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' cannot receive a pipeline input because it declares no parameters.");
             }
             else if (hasParams && suppliedArgumentCount < paramsIndex)
             {
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects at least {FormatArgumentCount(paramsIndex)} after pipeline lowering, but pipeline supplies {FormatArgumentCount(suppliedArgumentCount)}.");
             }
             else if (!hasParams)
             {
@@ -4688,9 +4847,7 @@ public static class TypeSharpTypeChecker
             if (inputType.IsKnown &&
                 !CanAssign(scope, expectedType, inputType))
             {
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' expects '{expectedType}' for its first parameter, but pipeline input has type '{inputType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' expects '{expectedType}' for its first parameter, but pipeline input has type '{inputType}'.");
             }
         }
 
@@ -4721,7 +4878,7 @@ public static class TypeSharpTypeChecker
 
             if (IsNullabilityViolation(expectedType, argumentType))
             {
-                ReportMismatch(
+                ReportUnsupportedTypeSharpFunctionApplication(
                     node,
                     argumentType.IsNull
                         ? $"Pipeline target '{targetName}' argument {parameterIndex + 1} cannot be null because it expects non-null type '{expectedType}'."
@@ -4729,13 +4886,11 @@ public static class TypeSharpTypeChecker
             }
             else if (TryGetStructuralAssignmentDiagnostic(scope, expectedType, argumentType, out var structuralMessage))
             {
-                ReportMismatch(node, structuralMessage);
+                ReportStructuralProofFailed(node, structuralMessage);
             }
             else if (!CanAssign(scope, expectedType, argumentType))
             {
-                ReportMismatch(
-                    node,
-                    $"Pipeline target '{targetName}' argument {parameterIndex + 1} expects '{expectedType}', but found '{argumentType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Pipeline target '{targetName}' argument {parameterIndex + 1} expects '{expectedType}', but found '{argumentType}'.");
             }
         }
 
@@ -4779,7 +4934,7 @@ public static class TypeSharpTypeChecker
 
             if (ShouldReportShiftOperandDiagnostic(scope, leftType, rightType))
             {
-                ReportMismatch(
+                ReportUnsupportedEnumOrBitwiseOperation(
                     node,
                     $"Shift operator '{operatorText}' operands must be non-null primitive integral values with an int-compatible shift count, but found '{leftType}' and '{rightType}'.");
                 return SimpleType.Unknown;
@@ -4811,7 +4966,7 @@ public static class TypeSharpTypeChecker
 
             if (ShouldReportLogicalUnsignedShiftOperandDiagnostic(scope, expressions[0], leftType, expressions[1], rightType))
             {
-                ReportMismatch(
+                ReportUnsupportedEnumOrBitwiseOperation(
                     node,
                     $"Shift operator '>>>' operands must be non-null primitive integral values with an int-compatible shift count, but found '{leftType}' and '{rightType}'.");
             }
@@ -4870,9 +5025,7 @@ public static class TypeSharpTypeChecker
                 return;
             }
 
-            ReportMismatch(
-                node,
-                $"Composition operator '{operatorText}' cannot compose '{firstName}' with '{secondName}': '{firstName}' returns '{firstReturnType}', but '{secondName}' expects '{secondParameterType}'.");
+            ReportUnsupportedTypeSharpFunctionApplication(node, $"Composition operator '{operatorText}' cannot compose '{firstName}' with '{secondName}': '{firstName}' returns '{firstReturnType}', but '{secondName}' expects '{secondParameterType}'.");
         }
 
         private void CheckCompositionFunctionTypeAnnotation(
@@ -4895,9 +5048,7 @@ public static class TypeSharpTypeChecker
 
             if (firstParameterType.IsKnown && !CanAssign(scope, firstParameterType, annotationParameterType))
             {
-                ReportMismatch(
-                    node,
-                    $"Function type annotation for composition supplies input '{annotationParameterType}', but '{firstName}' expects '{firstParameterType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function type annotation for composition supplies input '{annotationParameterType}', but '{firstName}' expects '{firstParameterType}'.");
             }
 
             if (!secondReturnType.IsKnown)
@@ -4907,7 +5058,7 @@ public static class TypeSharpTypeChecker
 
             if (IsNullabilityViolation(annotationReturnType, secondReturnType))
             {
-                ReportMismatch(
+                ReportUnsupportedTypeSharpFunctionApplication(
                     node,
                     secondReturnType.IsNull
                         ? $"Function type annotation for composition expects non-null result '{annotationReturnType}', but '{secondName}' returns null."
@@ -4915,13 +5066,11 @@ public static class TypeSharpTypeChecker
             }
             else if (TryGetStructuralAssignmentDiagnostic(scope, annotationReturnType, secondReturnType, out var structuralMessage))
             {
-                ReportMismatch(node, structuralMessage);
+                ReportStructuralProofFailed(node, structuralMessage);
             }
             else if (!CanAssign(scope, annotationReturnType, secondReturnType))
             {
-                ReportMismatch(
-                    node,
-                    $"Function type annotation for composition expects result '{annotationReturnType}', but '{secondName}' returns '{secondReturnType}'.");
+                ReportUnsupportedTypeSharpFunctionApplication(node, $"Function type annotation for composition expects result '{annotationReturnType}', but '{secondName}' returns '{secondReturnType}'.");
             }
         }
 
@@ -5655,7 +5804,7 @@ public static class TypeSharpTypeChecker
             {
                 if (!fields.TryGetValue(member.Name, out var field) || field.IsOptional)
                 {
-                    ReportMismatch(
+                    ReportUnsupportedConstructionExpression(
                         node,
                         $"Record expression for '{expectedType}' is missing required field '{member.Name}'.");
                 }
@@ -5666,7 +5815,7 @@ public static class TypeSharpTypeChecker
                 var member = shape.Members.FirstOrDefault(candidate => string.Equals(candidate.Name, field.Key, StringComparison.Ordinal));
                 if (member.Name is null)
                 {
-                    ReportMismatch(
+                    ReportUnsupportedConstructionExpression(
                         field.Value.Node,
                         $"Type '{expectedType}' does not contain field '{field.Key}'.");
                     continue;
@@ -5674,7 +5823,7 @@ public static class TypeSharpTypeChecker
 
                 if (field.Value.Type.IsKnown && !CanAssign(scope, member.Type, field.Value.Type))
                 {
-                    ReportMismatch(
+                    ReportUnsupportedConstructionExpression(
                         field.Value.Node,
                         $"Record expression field '{field.Key}' expects '{member.Type}' but found '{field.Value.Type}'.");
                 }
@@ -5722,7 +5871,7 @@ public static class TypeSharpTypeChecker
             {
                 if (expectedShape.HasValue)
                 {
-                    ReportMismatch(spreadField, "Record spread expects a nominal record value, but found 'unknown'.");
+                    ReportUnsupportedConstructionExpression(spreadField, "Record spread expects a nominal record value, but found 'unknown'.");
                 }
 
                 return;
@@ -5732,7 +5881,7 @@ public static class TypeSharpTypeChecker
             {
                 if (expectedShape.HasValue)
                 {
-                    ReportMismatch(spreadField, $"Record spread expects a nominal record value, but found '{spreadType}'.");
+                    ReportUnsupportedConstructionExpression(spreadField, $"Record spread expects a nominal record value, but found '{spreadType}'.");
                 }
 
                 return;
@@ -5776,11 +5925,11 @@ public static class TypeSharpTypeChecker
             }
             else if (TryGetStructuralAssignmentDiagnostic(scope, targetType, expressionType, out var message))
             {
-                ReportMismatch(node, message);
+                ReportStructuralProofFailed(node, message);
             }
             else if (!CanAssign(scope, targetType, expressionType))
             {
-                ReportMismatch(node, $"Expression of type '{expressionType}' does not satisfy '{targetType}'.");
+                ReportInvalidSatisfiesExpression(node, $"Expression of type '{expressionType}' does not satisfy '{targetType}'.");
             }
 
             return expressionType;
@@ -5797,7 +5946,7 @@ public static class TypeSharpTypeChecker
 
             if (!TryGetIteratorElementType(expectedType.Value, out var elementType))
             {
-                ReportMismatch(node, "Yield expression requires a function returning 'IEnumerable<T>' or 'IEnumerator<T>'.");
+                ReportInvalidYieldExpression(node, "Yield expression requires a function returning 'IEnumerable<T>' or 'IEnumerator<T>'.");
                 return SimpleType.Unknown;
             }
 
@@ -5811,11 +5960,11 @@ public static class TypeSharpTypeChecker
             }
             else if (actualType.IsKnown && TryGetStructuralAssignmentDiagnostic(scope, elementType, actualType, out var structuralMessage))
             {
-                ReportMismatch(node, structuralMessage);
+                ReportStructuralProofFailed(node, structuralMessage);
             }
             else if (actualType.IsKnown && !CanAssign(scope, elementType, actualType))
             {
-                ReportMismatch(
+                ReportInvalidYieldExpression(
                     node,
                     $"Yield expression of type '{actualType}' is not assignable to iterator element type '{elementType}'.");
             }
@@ -5832,7 +5981,7 @@ public static class TypeSharpTypeChecker
 
             if (gateType.IsKnown && !IsLockableType(gateType))
             {
-                ReportMismatch(node, $"Lock expression requires a non-null reference type, but found '{gateType}'.");
+                ReportInvalidLockExpression(node, $"Lock expression requires a non-null reference type, but found '{gateType}'.");
             }
 
             if (body is not null)
@@ -5864,7 +6013,7 @@ public static class TypeSharpTypeChecker
                     elementType.IsNullable != actual.IsNullable ||
                     elementType.IsNull != actual.IsNull)
                 {
-                    ReportMismatch(
+                    ReportUnsupportedConstructionExpression(
                         node,
                         $"Collection expression elements must have a consistent type. Expected '{elementType}' but found '{actual}'.");
                     return SimpleType.Unknown;
@@ -5882,7 +6031,7 @@ public static class TypeSharpTypeChecker
                 if (IsNullabilityViolation(expectedElementType, elementType) ||
                     !CanAssign(scope, expectedElementType, elementType))
                 {
-                    ReportMismatch(
+                    ReportUnsupportedConstructionExpression(
                         node,
                         $"Collection expression element expects '{expectedElementType}' but found '{elementType}'.");
                     return SimpleType.Unknown;
@@ -5910,7 +6059,7 @@ public static class TypeSharpTypeChecker
 
             if (!TryGetCollectionElementType(spreadType, out var elementType))
             {
-                ReportMismatch(node, $"Spread element expects an array or List<T>, but found '{spreadType}'.");
+                ReportUnsupportedConstructionExpression(node, $"Spread element expects an array or List<T>, but found '{spreadType}'.");
                 return SimpleType.Unknown;
             }
 
@@ -6208,7 +6357,7 @@ public static class TypeSharpTypeChecker
 
             if (matchedMembers.Count == 0)
             {
-                ReportMismatch(
+                ReportStructuralProofFailed(
                     condition,
                     $"Discriminant member '{memberName}' on type-level union '{union.Name}' has no member with literal type {literalType}.");
                 return false;
@@ -6303,7 +6452,12 @@ public static class TypeSharpTypeChecker
                 {
                     var armScope = new TypeScope(scope);
                     SyntaxNode? expression = null;
-                    var matchedArm = TryGetUnionArm(arm, union, out var unionCase, out var payloadName, out expression, out var isDiscard);
+                    var supportedPattern = ValidateUnionMatchPattern(arm, union);
+                    UnionCaseInfo unionCase = default;
+                    var payloadName = string.Empty;
+                    var isDiscard = false;
+                    var matchedArm = supportedPattern &&
+                        TryGetUnionArm(arm, union, out unionCase, out payloadName, out expression, out isDiscard);
                     if (matchedArm)
                     {
                         if (!isDiscard)
@@ -6376,7 +6530,12 @@ public static class TypeSharpTypeChecker
                 {
                     var armScope = new TypeScope(scope);
                     SyntaxNode? expression = null;
-                    var matchedArm = TryGetTypeLevelUnionArm(arm, typeLevelUnion, out var member, out var variableName, out expression, out var isDiscard);
+                    var supportedPattern = ValidateTypeLevelUnionMatchPattern(arm, typeLevelUnion);
+                    TypeLevelUnionMemberInfo member = default;
+                    var variableName = string.Empty;
+                    var isDiscard = false;
+                    var matchedArm = supportedPattern &&
+                        TryGetTypeLevelUnionArm(arm, typeLevelUnion, out member, out variableName, out expression, out isDiscard);
                     if (matchedArm)
                     {
                         if (!isDiscard)
@@ -6434,7 +6593,9 @@ public static class TypeSharpTypeChecker
             foreach (var arm in node.Children.Where(child => child.Kind == SyntaxKind.MatchArm))
             {
                 var armScope = new TypeScope(scope);
-                if (TryGetTypePattern(arm, out var narrowedType, out var variableName) && variableName.Length > 0)
+                if (ValidateGeneralMatchPattern(arm, inputType) &&
+                    TryGetTypePattern(arm, out var narrowedType, out var variableName) &&
+                    variableName.Length > 0)
                 {
                     armScope.DeclareValue(variableName, narrowedType);
                 }
@@ -6463,29 +6624,38 @@ public static class TypeSharpTypeChecker
             {
                 var armScope = new TypeScope(scope);
                 var guard = GetMatchArmGuard(arm);
+                var pattern = GetMatchArmPattern(arm);
                 if (guard is not null)
                 {
                     CheckMatchGuard(guard, armScope);
                 }
 
-                if (IsDiscardPattern(arm))
+                if (ReportUnsupportedRecordPattern(pattern))
+                {
+                    // Keep checking the arm expression, but do not count unsupported record patterns as coverage.
+                }
+                else if (IsDiscardPattern(arm))
                 {
                     if (guard is null)
                     {
                         hasDiscardArm = true;
                     }
                 }
-                else if (TryGetLiteralPatternType(arm, out var literalType, out var pattern))
+                else if (TryGetLiteralPatternType(arm, out var literalType, out var literalPattern))
                 {
                     if (!TryGetLiteralRuntimeType(literalType, out var runtimeType) ||
                         !string.Equals(runtimeType.Name, "bool", StringComparison.Ordinal))
                     {
-                        ReportMismatch(pattern, $"Match pattern of type '{runtimeType}' is not compatible with input type 'bool'.");
+                        ReportUnsupportedMatchPattern(literalPattern, $"Match pattern of type '{runtimeType}' is not compatible with input type 'bool'.");
                     }
                     else if (guard is null)
                     {
                         coveredCases.Add(literalType.Name);
                     }
+                }
+                else if (pattern is not null)
+                {
+                    ReportUnsupportedMatchPattern(pattern, "Bool match patterns support only 'true', 'false', or '_'.");
                 }
 
                 var expression = GetMatchArmExpression(arm);
@@ -6527,28 +6697,39 @@ public static class TypeSharpTypeChecker
             {
                 var armScope = new TypeScope(scope);
                 var guard = GetMatchArmGuard(arm);
+                var pattern = GetMatchArmPattern(arm);
                 if (guard is not null)
                 {
                     CheckMatchGuard(guard, armScope);
                 }
 
-                if (IsDiscardPattern(arm))
+                if (ReportUnsupportedRecordPattern(pattern))
+                {
+                    // Keep checking the arm expression, but do not count unsupported record patterns as coverage.
+                }
+                else if (IsDiscardPattern(arm))
                 {
                     if (guard is null)
                     {
                         hasDiscardArm = true;
                     }
                 }
-                else if (TryGetLiteralPatternType(arm, out var literalType, out var pattern))
+                else if (TryGetLiteralPatternType(arm, out var literalType, out var literalPattern))
                 {
                     if (!memberSet.Contains(literalType.Name))
                     {
-                        ReportMismatch(pattern, $"Match pattern '{literalType}' is not part of type-level union '{typeLevelUnion.Name}'.");
+                        ReportUnsupportedMatchPattern(literalPattern, $"Match pattern '{literalType}' is not part of type-level union '{typeLevelUnion.Name}'.");
                     }
                     else if (guard is null)
                     {
                         coveredMembers.Add(literalType.Name);
                     }
+                }
+                else if (pattern is not null)
+                {
+                    ReportUnsupportedMatchPattern(
+                        pattern,
+                        $"Literal type-level union match patterns for '{typeLevelUnion.Name}' support only literal members or '_'.");
                 }
 
                 var expression = GetMatchArmExpression(arm);
@@ -6595,18 +6776,19 @@ public static class TypeSharpTypeChecker
                     CheckMatchGuard(guard, armScope);
                 }
 
-                if (IsDiscardPattern(arm))
+                var supportedPattern = ValidateEnumMatchPattern(arm, enumName);
+                if (supportedPattern && IsDiscardPattern(arm))
                 {
                     if (guard is null)
                     {
                         hasDiscardArm = true;
                     }
                 }
-                else if (TryGetEnumPattern(arm, out var memberName, out var pattern))
+                else if (supportedPattern && TryGetEnumPattern(arm, out var memberName, out var pattern))
                 {
                     if (!memberSet.Contains(memberName))
                     {
-                        ReportMismatch(pattern, $"Enum '{enumName}' does not contain member '{memberName}'.");
+                        ReportUnsupportedEnumOrBitwiseOperation(pattern, $"Enum '{enumName}' does not contain member '{memberName}'.");
                     }
                     else if (guard is null)
                     {
@@ -6639,6 +6821,203 @@ public static class TypeSharpTypeChecker
             return MergeBranchTypes(branchTypes);
         }
 
+        private bool ValidateUnionMatchPattern(SyntaxNode arm, UnionInfo union)
+        {
+            var pattern = GetMatchArmPattern(arm);
+            if (ReportUnsupportedRecordPattern(pattern))
+            {
+                return false;
+            }
+
+            if (pattern is null || pattern.Kind != SyntaxKind.Pattern)
+            {
+                return false;
+            }
+
+            if (TryGetLiteralPatternType(arm, out _, out _))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Union match patterns for '{union.Name}' support only case names, a single identifier payload capture, or '_'.");
+                return false;
+            }
+
+            if (TryGetDirectTypeAnnotation(pattern, out _))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Union match patterns for '{union.Name}' do not support type patterns; match by union case name.");
+                return false;
+            }
+
+            var caseName = pattern.Children.FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?.Text ?? string.Empty;
+            if (caseName == "_")
+            {
+                return true;
+            }
+
+            var unionCase = union.Cases.FirstOrDefault(candidate => string.Equals(candidate.Name, caseName, StringComparison.Ordinal));
+            if (unionCase.Name is null)
+            {
+                ReportInvalidMatchCase(pattern, $"Union '{union.Name}' does not contain case '{caseName}'.");
+                return false;
+            }
+
+            var argumentList = pattern.Children.FirstOrDefault(child => child.Kind == SyntaxKind.PatternArgumentList);
+            if (argumentList is null)
+            {
+                return true;
+            }
+
+            var arguments = argumentList.Children.Where(child => child.Kind is SyntaxKind.Pattern or SyntaxKind.RecordPattern).ToArray();
+            if (unionCase.Parameters.Count == 0)
+            {
+                ReportUnsupportedMatchPattern(pattern, $"Union case '{unionCase.Name}' does not carry a payload.");
+                return false;
+            }
+
+            if (unionCase.Parameters.Count != 1 ||
+                arguments.Length != 1 ||
+                !IsSimpleIdentifierCapture(arguments[0]))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Union case '{unionCase.Name}' payload patterns support only a single identifier capture in 1.0.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateTypeLevelUnionMatchPattern(SyntaxNode arm, TypeLevelUnionInfo union)
+        {
+            var pattern = GetMatchArmPattern(arm);
+            if (ReportUnsupportedRecordPattern(pattern))
+            {
+                return false;
+            }
+
+            if (pattern is null || pattern.Kind != SyntaxKind.Pattern)
+            {
+                return false;
+            }
+
+            if (IsDiscardPattern(arm))
+            {
+                return true;
+            }
+
+            if (TryGetLiteralPatternType(arm, out _, out _))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Type-level union match patterns for '{union.Name}' support typed member patterns like 'value: Type' or '_'. Literal patterns are supported only for literal-only type-level unions.");
+                return false;
+            }
+
+            if (!TryGetTypePattern(arm, out var narrowedType, out _))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Type-level union match patterns for '{union.Name}' support typed member patterns like 'value: Type' or '_'.");
+                return false;
+            }
+
+            if (!union.Members.Any(member => member.Type.Name == narrowedType.Name))
+            {
+                ReportUnsupportedMatchPattern(pattern, $"Type-level union '{union.Name}' does not contain member type '{narrowedType}'.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateEnumMatchPattern(SyntaxNode arm, string enumName)
+        {
+            var pattern = GetMatchArmPattern(arm);
+            if (ReportUnsupportedRecordPattern(pattern))
+            {
+                return false;
+            }
+
+            if (pattern is null || pattern.Kind != SyntaxKind.Pattern)
+            {
+                return false;
+            }
+
+            if (IsDiscardPattern(arm))
+            {
+                return true;
+            }
+
+            if (TryGetLiteralPatternType(arm, out _, out _) ||
+                TryGetDirectTypeAnnotation(pattern, out _) ||
+                pattern.Children.Any(child => child.Kind == SyntaxKind.PatternArgumentList))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Enum match patterns for '{enumName}' support only member names or '_'. Numeric, flag-style, and extractor patterns are not part of 1.0.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateGeneralMatchPattern(SyntaxNode arm, SimpleType inputType)
+        {
+            var pattern = GetMatchArmPattern(arm);
+            if (ReportUnsupportedRecordPattern(pattern))
+            {
+                return false;
+            }
+
+            if (pattern is null || pattern.Kind != SyntaxKind.Pattern || IsDiscardPattern(arm))
+            {
+                return true;
+            }
+
+            if (TryGetLiteralPatternType(arm, out _, out _))
+            {
+                var inputName = inputType.IsKnown ? inputType.ToString() : "unknown";
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    $"Literal match patterns for input type '{inputName}' are supported only for bool inputs and literal-only type-level unions in 1.0.");
+                return false;
+            }
+
+            if (pattern.Children.Any(child => child.Kind == SyntaxKind.PatternArgumentList))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    "Extractor-style match patterns are parsed for future syntax but are not part of the 1.0 pattern matching boundary.");
+                return false;
+            }
+
+            if (!TryGetDirectTypeAnnotation(pattern, out _) &&
+                pattern.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken))
+            {
+                ReportUnsupportedMatchPattern(
+                    pattern,
+                    "Identifier binding match patterns are not part of the 1.0 pattern matching boundary; use '_' or a supported type pattern.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ReportUnsupportedRecordPattern(SyntaxNode? pattern)
+        {
+            if (pattern?.Kind != SyntaxKind.RecordPattern)
+            {
+                return false;
+            }
+
+            ReportUnsupportedMatchPattern(
+                pattern,
+                "Record and structural match patterns are parsed for future syntax but are not part of the 1.0 pattern matching boundary.");
+            return true;
+        }
+
         private void CheckMatchGuard(SyntaxNode guard, TypeScope scope)
         {
             var guardType = CheckExpression(guard, scope);
@@ -6647,7 +7026,7 @@ public static class TypeSharpTypeChecker
                     guardType.IsNullable ||
                     !string.Equals(guardType.Name, "bool", StringComparison.Ordinal)))
             {
-                ReportMismatch(guard, $"Match guard expression must be 'bool', but found '{guardType}'.");
+                ReportInvalidMatchGuard(guard, $"Match guard expression must be 'bool', but found '{guardType}'.");
             }
         }
 
@@ -6958,11 +7337,211 @@ public static class TypeSharpTypeChecker
             return expected.Name == actual.Name && actual.IsNullable && !expected.IsNullable;
         }
 
-        private void ReportMismatch(SyntaxNode node, string message)
+        private void ReportUnsupportedTypeSharpMember(SyntaxNode node, string message)
         {
             _diagnostics.Add(new Diagnostic(
-                DiagnosticDescriptors.TypeMismatch.Code,
-                DiagnosticDescriptors.TypeMismatch.DefaultSeverity,
+                DiagnosticDescriptors.UnsupportedTypeSharpMember.Code,
+                DiagnosticDescriptors.UnsupportedTypeSharpMember.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedMatchPattern(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedMatchPattern.Code,
+                DiagnosticDescriptors.UnsupportedMatchPattern.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidMatchGuard(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidMatchGuard.Code,
+                DiagnosticDescriptors.InvalidMatchGuard.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedConstructionExpression(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedConstructionExpression.Code,
+                DiagnosticDescriptors.UnsupportedConstructionExpression.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportStructuralProofFailed(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.StructuralProofFailed.Code,
+                DiagnosticDescriptors.StructuralProofFailed.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportTypeOperatorLimitExceeded(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.TypeOperatorLimitExceeded.Code,
+                DiagnosticDescriptors.TypeOperatorLimitExceeded.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedExtensionProperty(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedExtensionProperty.Code,
+                DiagnosticDescriptors.UnsupportedExtensionProperty.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedExtensionMethod(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedExtensionMethod.Code,
+                DiagnosticDescriptors.UnsupportedExtensionMethod.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidArithmeticCompoundAssignment(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidArithmeticCompoundAssignment.Code,
+                DiagnosticDescriptors.InvalidArithmeticCompoundAssignment.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedNullConditionalAccess(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedNullConditionalAccess.Code,
+                DiagnosticDescriptors.UnsupportedNullConditionalAccess.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidYieldExpression(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidYieldExpression.Code,
+                DiagnosticDescriptors.InvalidYieldExpression.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidLockExpression(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidLockExpression.Code,
+                DiagnosticDescriptors.InvalidLockExpression.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidMatchCase(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidMatchCase.Code,
+                DiagnosticDescriptors.InvalidMatchCase.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidSatisfiesExpression(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidSatisfiesExpression.Code,
+                DiagnosticDescriptors.InvalidSatisfiesExpression.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidReturnExpression(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidReturnExpression.Code,
+                DiagnosticDescriptors.InvalidReturnExpression.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidValueInitializer(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidValueInitializer.Code,
+                DiagnosticDescriptors.InvalidValueInitializer.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportInvalidAssignmentValue(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.InvalidAssignmentValue.Code,
+                DiagnosticDescriptors.InvalidAssignmentValue.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedEnumOrBitwiseOperation(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedEnumOrBitwiseOperation.Code,
+                DiagnosticDescriptors.UnsupportedEnumOrBitwiseOperation.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedTypeSharpFunctionApplication(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedTypeSharpFunctionApplication.Code,
+                DiagnosticDescriptors.UnsupportedTypeSharpFunctionApplication.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedAssignmentTarget(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedAssignmentTarget.Code,
+                DiagnosticDescriptors.UnsupportedAssignmentTarget.DefaultSeverity,
+                message,
+                _file,
+                node.Span));
+        }
+
+        private void ReportUnsupportedImportedOperator(SyntaxNode node, string message)
+        {
+            _diagnostics.Add(new Diagnostic(
+                DiagnosticDescriptors.UnsupportedImportedOperator.Code,
+                DiagnosticDescriptors.UnsupportedImportedOperator.DefaultSeverity,
                 message,
                 _file,
                 node.Span));
@@ -7159,6 +7738,14 @@ public static class TypeSharpTypeChecker
 
             if (node.Kind == SyntaxKind.TypeName &&
                 TryGetSimpleTypeName(node, out var name) &&
+                string.Equals(name, "unknown", StringComparison.Ordinal))
+            {
+                kind = CompileTimeOnlyTypeKind.Unknown;
+                return true;
+            }
+
+            if (node.Kind == SyntaxKind.TypeName &&
+                TryGetSimpleTypeName(node, out name) &&
                 scope.ResolveCompileTimeOnlyType(name, out kind))
             {
                 return true;
@@ -8623,6 +9210,20 @@ public static class TypeSharpTypeChecker
                 .FirstOrDefault(child => child.IsToken && child.Kind == SyntaxKind.IdentifierToken)?
                 .Text == "_";
 
+        private static bool IsSimpleIdentifierCapture(SyntaxNode pattern)
+        {
+            if (pattern.Kind != SyntaxKind.Pattern ||
+                TryGetDirectTypeAnnotation(pattern, out _) ||
+                pattern.Children.Any(child => child.Kind == SyntaxKind.PatternArgumentList))
+            {
+                return false;
+            }
+
+            var token = pattern.Children.FirstOrDefault(child => child.IsToken);
+            return token?.Kind == SyntaxKind.IdentifierToken &&
+                !string.Equals(token.Text, "_", StringComparison.Ordinal);
+        }
+
         private static bool TryGetLiteralPatternType(SyntaxNode arm, out SimpleType type, out SyntaxNode pattern)
         {
             type = SimpleType.Unknown;
@@ -9245,7 +9846,8 @@ public static class TypeSharpTypeChecker
         None,
         TypeLevelUnion,
         StructuralShape,
-        IntersectionType
+        IntersectionType,
+        Unknown
     }
 
 }

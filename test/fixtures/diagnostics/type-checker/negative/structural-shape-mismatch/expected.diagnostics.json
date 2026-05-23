@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2220",
       "severity": "error",
       "message": "Type 'HasAge' is missing required member 'Name' for structural type 'Named'.",
       "file": "input.tysh",
@@ -9,7 +9,7 @@
       "end": { "line": 10, "column": 34 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2220",
       "severity": "error",
       "message": "Member 'Name' on type 'WrongName' has type 'int', which is not assignable to structural member type 'string' on 'Named'.",
       "file": "input.tysh",
@@ -17,7 +17,7 @@
       "end": { "line": 13, "column": 35 }
     },
     {
-      "code": "TS2201",
+      "code": "TS2220",
       "severity": "error",
       "message": "Type 'Named' does not contain member 'Missing'.",
       "file": "input.tysh",

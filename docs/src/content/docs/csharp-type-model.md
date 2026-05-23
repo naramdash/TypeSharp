@@ -56,7 +56,7 @@ C# separates value types from reference types because assignment, nullability, b
 | `string`, `object` | Reference type | Non-null by default in TypeSharp source unless annotated nullable. |
 | `T?` where `T` is a value type | `System.Nullable<T>` | Public metadata can represent this directly. |
 | `T?` where `T` is a reference type | Nullable reference contract | Runtime type is still `T`; metadata annotations can be incomplete in legacy assemblies. |
-| `record`, `class`, `interface`, `delegate`, nominal `union` | Named CLR type | Preferred public API shapes. |
+| `record`, `class`, `interface`, nominal `union` | Named CLR type | Preferred TypeSharp-authored public API shapes. Imported C# delegates are also supported through metadata. |
 | structural shape, type-level union, intersection alias | Compile-time only | Rejected directly at public CLR boundaries. |
 
 ## Built-In Type Mapping
@@ -84,8 +84,8 @@ C# documentation treats classes, structs, records, interfaces, delegates, and en
 | Class | `public class` | Use for object identity, mutable state, or C# consumer object APIs. |
 | Interface | `public interface` | Use for C#-friendly contracts. |
 | Record | `public record` | Use for immutable data and stable generated properties. |
-| Delegate | `public delegate` | Use for callbacks and events. |
-| Enum | Imported C# enum metadata | Native TypeSharp enum declaration remains future work unless canonical docs change. |
+| Delegate | Imported C# delegate metadata or explicit `System.Func`/`System.Action` shape | TypeSharp-authored `public delegate` syntax is parser-visible but deferred from the 1.0 public ABI until lowering and C# consumer evidence exist. |
+| Enum | `public enum` or imported C# enum metadata | TypeSharp-owned enums lower to CLR enums in the implemented subset; imported C# enums are metadata-backed. |
 | Struct | Imported C# struct metadata | Native struct declaration remains future work unless canonical docs change. |
 | Nominal union | `public union` | Generated as a named CLR-visible domain type backed by runtime helpers. |
 
@@ -101,6 +101,27 @@ public interface DiscountPolicy {
 }
 ```
 
+## Public Declaration ABI Matrix
+
+This matrix is the current 1.0 ABI ledger for TypeSharp-authored declarations. "Public ABI slice" means the documented subset lowers to C# 7.3-compatible `net48` metadata and has generated build or C# consumer evidence. "Deferred from 1.0" means the syntax or model can remain parser-visible, but TypeSharp must not claim it as a stable public ABI form until a later version adds lowering, diagnostics, and C# consumer evidence. "Compile-time-only" means it can help TypeSharp source checking but must not cross a public CLR boundary directly.
+
+| TypeSharp declaration form | 1.0 public ABI status | CLR-visible shape | Current evidence and boundary |
+| --- | --- | --- | --- |
+| `fun` | Public ABI slice | Static method on generated module/container; optional/default metadata for the supported suffix rules. | Generic function and generated `net48` C# consumer smokes cover the current explicit-parameter subset. Function overload ranking and broader higher-order inference remain backlog. |
+| `record` | Public ABI slice | Named immutable CLR class with constructor/properties plus generated equality/hash members. | Backend snapshots and C# consumer smokes cover immutable records, record updates, and record expression construction. |
+| `class` | Public ABI slice, MVP limited | Named CLR class with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor, and public instance `fun` methods. | Class API, generic type, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset. TypeSharp-authored constructors, fields, properties, events, explicit inheritance/implementation clauses, static/abstract/virtual/override members, setters, indexers, operators, nested types, partial methods, and broader member-body analysis remain backlog. |
+| `interface` | Public ABI slice, MVP limited | Named CLR interface with optional generic parameters/constraints, `partial`, and method signatures. | Interface API, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset. Broader member kinds, events, properties, setters, indexers, operators, inheritance clauses, default implementations, nested types, and partial methods remain backlog. |
+| `delegate` | Deferred from 1.0 | Intended named CLR delegate. | Parser and public-type guidance exist, but TypeSharp-authored delegate lowering and C# consumer evidence are not part of the 1.0 public ABI. Use explicit `System.Func`/`System.Action` function-type annotations or imported C# delegates in the current slice. |
+| `event` | Deferred from 1.0 | Intended CLR event member on a named type. | Imported C# event add/remove is metadata-backed. TypeSharp-authored event declarations are parser-visible but not part of the 1.0 public ABI until class-member semantics, lowering, and C# consumer evidence are added. |
+| `enum` | Public ABI slice, MVP limited | CLR enum with optional integral underlying type and selected constant/member forms. | Enum declaration API, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset. Arbitrary computed enum values and flag-aware pattern algebra remain backlog. |
+| `union` | Public ABI slice, MVP limited | Named abstract CLR base type with nested sealed case types plus runtime helper metadata. | Nominal union API, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation. Alternative representations and richer recursive ergonomics remain backlog. |
+| `type` alias to named CLR-visible type | Source ABI convenience, not a new CLR type | Alias erased to the referenced named type or generated using-alias shape. | Useful for source modules and imports, but it does not create a stable independent binary contract. Public APIs should expose the underlying named CLR-visible type directly when binary identity matters. |
+| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only | No direct CLR metadata shape. | Public boundary diagnostics reject these forms before generated C# emission. Wrap them in a nominal union, record, class, interface, imported C# delegate, or explicit function type before export. |
+| Explicit-receiver extension method | Public ABI slice, MVP limited | Static C# extension method in generated helper container. | Backend snapshots and C# consumer smokes cover explicit non-null receiver methods. Nullable receiver lifting, richer conversion ranking, static extension members, and operators remain backlog. |
+| Getter-only extension property | Public ABI slice, MVP limited | Static helper method such as `GetName(this T receiver)`; not a CLR property. | Backend snapshots and C# consumer smokes cover getter-only helper lowering and diagnostics for assignment/collisions. Setters, nullable receiver lifting, imported extension property metadata, and C# 14 extension-block emission remain backlog. |
+
+Do not treat parser visibility as public ABI stability. A declaration form becomes a 1.0 public ABI claim only after the compiler rejects unsupported public shapes before emission and the generated `net48` artifact can be referenced from an ordinary C# consumer.
+
 ## Compile-Time-Only Types
 
 TypeScript-style flexibility stays local unless it is wrapped in a named public type.
@@ -114,7 +135,7 @@ type DraftShape = {
 type DraftInput = DraftShape | string
 ```
 
-These shapes help TypeSharp check source. They do not have stable CLR metadata names. Public functions must use named records, classes, interfaces, delegates, nominal unions, framework types, or core library types.
+These shapes help TypeSharp check source. They do not have stable CLR metadata names. Public functions must use named records, classes, interfaces, nominal unions, framework types, core library types, imported C# delegates, or explicit `System.Func`/`System.Action` function-type annotations.
 
 ## Nullability
 
@@ -129,6 +150,8 @@ TypeSharp nullability is a source-level contract. The compiler should catch inco
 | Public nullable reference type | Keep CLR type and preserve nullable contract where metadata supports it. |
 
 When interop metadata is incomplete, isolate the boundary with a wrapper function and return a clear nominal type.
+
+The 1.0 warning-versus-error policy is fixed: strict-mode imported C# reference returns with missing nullable metadata produce warning `TS2404`, while TypeSharp-owned nullability contract violations produce error `TS2202`. Public `unknown` and other compile-time-only public boundaries produce error `TS2204`, and member or indexer access on an unproved `unknown` value produces error `TS2209`.
 
 ## Generics And Constraints
 
@@ -166,17 +189,17 @@ Tuple and anonymous object public boundaries remain unsuitable unless a TypeShar
 
 ## Function Types And Delegates
 
-Local function types can be convenient, but public callbacks should prefer named delegates because C# consumers understand delegate metadata and event patterns.
+Local function types can be convenient. In the 1.0 public ABI slice, public callbacks should use imported C# delegates or explicit function type annotations that lower to `System.Func`/`System.Action`; TypeSharp-authored named delegate declarations remain post-1.0 public ABI work.
 
 ```tysh
 namespace Company.Billing
 
 public record InvoiceId(value: string)
 
-public delegate InvoiceChanged(sender: object, id: InvoiceId): unit
+export let onInvoiceChanged: object -> InvoiceId -> unit = sender => id => ()
 ```
 
-Function-valued `export let` declarations lower only when explicitly annotated and currently use `System.Func` or `System.Action` shapes. For long-lived public API, a named delegate is clearer.
+Function-valued `export let` declarations lower only when explicitly annotated and currently use `System.Func` or `System.Action` shapes. TypeSharp-authored named delegate declarations remain post-1.0 public ABI work; imported C# delegates are still supported through metadata-backed interop.
 
 ## Async Tasks
 
@@ -201,7 +224,7 @@ Generated code must remain compatible with .NET Framework 4.8. Do not document A
 | Immutable data for C# consumers | `public record` | anonymous object, structural shape |
 | Mutable object or service facade | `public class` | global mutable state |
 | Host-provided behavior contract | `public interface` | structural shape in public signature |
-| Callback or event handler | `public delegate` | inferred function type |
+| Callback or event handler | imported C# delegate or explicit function type annotation | inferred function type or TypeSharp-authored `public delegate` before post-1.0 lowering evidence |
 | Success/failure result | `Result<T,E>` | throwing for ordinary domain failure |
 | Optional value | `Option<T>` or nullable when CLR-friendly | sentinel strings or untyped `object` |
 | Local flexible parsing | type-level union or shape | exposing those directly as public ABI |

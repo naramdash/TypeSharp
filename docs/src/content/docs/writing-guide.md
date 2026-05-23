@@ -84,8 +84,6 @@ Use `tysh` fences for TypeSharp source:
 ```tysh
 namespace Company.Billing.Rules
 
-import { Result, Ok, Error } from "TypeSharp.Core"
-
 public record InvoiceDraft(customerId: string, amount: decimal)
 
 public union BillingError {
@@ -93,21 +91,28 @@ public union BillingError {
   InvalidAmount(amount: decimal)
 }
 
+public union DraftResult {
+  Created(draft: InvoiceDraft)
+  Failed(error: BillingError)
+}
+
 export fun createDraft(
   customerId: string,
   amount: decimal
-): Result<InvoiceDraft, BillingError> {
+): DraftResult {
   if customerId.Trim().Length == 0 {
-    Error(MissingCustomer)
+    Failed(MissingCustomer)
   }
   elif amount <= 0m {
-    Error(InvalidAmount(amount))
+    Failed(InvalidAmount(amount))
   }
   else {
-    Ok(InvoiceDraft(customerId: customerId, amount: amount))
+    Created(InvoiceDraft(customerId: customerId, amount: amount))
   }
 }
 ```
+
+When an example uses `TypeSharp.Core.Result<T,E>`, keep construction aligned with the current ABI: C# consumers use `Result<T,E>.Ok(...)` and `Result<T,E>.Error(...)`; direct TypeSharp source imports named `Ok` and `Error` are not a current release guarantee.
 
 Then show the commands that prove the example:
 

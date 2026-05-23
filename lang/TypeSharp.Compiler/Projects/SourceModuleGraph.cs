@@ -58,6 +58,17 @@ public sealed record SourceModuleGraph(
         if (TryGetDependencyKind(node, out var kind) &&
             TryGetModuleSpecifier(node, out var specifierToken, out var specifier))
         {
+            if (node.Kind == SyntaxKind.ImportSideEffectDeclaration)
+            {
+                diagnostics.Add(new Diagnostic(
+                    DiagnosticDescriptors.UnsupportedSourceModuleImport.Code,
+                    DiagnosticDescriptors.UnsupportedSourceModuleImport.DefaultSeverity,
+                    $"Side-effect-only import '{specifier}' is parsed but not supported by the TypeSharp source module graph.",
+                    module.SourceFile.RelativePath,
+                    specifierToken.Span));
+                goto VisitChildren;
+            }
+
             if (!TryResolveSourceModulePath(module, specifier, specifierToken, aliases, externalModuleBySpecifier, diagnostics, out var resolvedModulePath, out var externalModule))
             {
                 if (LooksLikeProjectSourceModuleSpecifier(specifier))
@@ -270,6 +281,7 @@ public sealed record SourceModuleGraph(
             case SyntaxKind.ImportNamedDeclaration:
             case SyntaxKind.ImportTypeDeclaration:
             case SyntaxKind.ImportNamespaceDeclaration:
+            case SyntaxKind.ImportSideEffectDeclaration:
                 kind = SourceModuleDependencyKind.Import;
                 return true;
 
@@ -392,6 +404,14 @@ public sealed record SourceModuleGraph(
 
     private static bool TryGetModuleSpecifier(SyntaxNode node, out SyntaxNode specifierToken, out string specifier)
     {
+        if (node.Kind == SyntaxKind.ImportSideEffectDeclaration &&
+            node.Children.FirstOrDefault(child => child.Kind == SyntaxKind.StringLiteralToken) is { } sideEffectSpecifier)
+        {
+            specifierToken = sideEffectSpecifier;
+            specifier = Unquote(specifierToken.Text ?? string.Empty);
+            return true;
+        }
+
         for (var index = 0; index < node.Children.Count - 1; index++)
         {
             if (node.Children[index].Kind == SyntaxKind.FromKeyword &&

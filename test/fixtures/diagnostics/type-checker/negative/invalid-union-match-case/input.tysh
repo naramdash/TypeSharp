@@ -1,0 +1,13 @@
+namespace Samples.Match.InvalidUnionCase
+
+union PaymentStatus {
+  Pending
+  Paid(at: string)
+}
+
+fun describe(status: PaymentStatus): string =
+  match status {
+    Pending => "Waiting"
+    Refunded => "Refunded"
+    Paid(at) => at
+  }

@@ -1,0 +1,5 @@
+namespace Samples.Yield.NonIterator
+
+fun broken(): int {
+  yield 42
+}

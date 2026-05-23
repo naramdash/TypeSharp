@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2224",
       "severity": "error",
       "message": "Yield expression of type 'int' is not assignable to iterator element type 'string'.",
       "file": "input.tysh",

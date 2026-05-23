@@ -91,12 +91,18 @@ jobs:
           }
 
       - name: Publish CLI host
-        run: >
-          dotnet publish cli\TypeSharp.Cli\TypeSharp.Cli.csproj
-          -c $env:CONFIGURATION
-          --no-restore
-          -p:UseAppHost=false
-          -o artifacts\staging\typesharp-cli-dotnet
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $sourceRevision = git rev-parse --short=12 HEAD
+          dotnet publish cli\TypeSharp.Cli\TypeSharp.Cli.csproj `
+            -c $env:CONFIGURATION `
+            --no-restore `
+            -p:UseAppHost=false `
+            -p:TypeSharpBuildMetadata=$env:RELEASE_TAG `
+            -p:TypeSharpSourceRevision=$sourceRevision `
+            -o artifacts\staging\typesharp-cli-dotnet
 
       - name: Build net48 runtime libraries
         run: |
@@ -120,8 +126,25 @@ jobs:
           $releaseRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\release'
           $stagingRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\staging'
           $tag = $env:RELEASE_TAG
+          $sourceRevision = git rev-parse --short=12 HEAD
 
           $cliRoot = Join-Path $stagingRoot 'typesharp-cli-dotnet'
+          @(
+            '@echo off',
+            'setlocal',
+            'set "TYPESHARP_HOME=%~dp0"',
+            'dotnet "%TYPESHARP_HOME%typesharp.dll" %*'
+          ) | Set-Content -Encoding ascii -Path (Join-Path $cliRoot 'typesharp.cmd')
+          @(
+            "# TypeSharp CLI $tag",
+            '',
+            'This archive contains the framework-dependent modern .NET TypeSharp CLI host.',
+            '',
+            "Build metadata: $tag",
+            "Source revision: $sourceRevision",
+            '',
+            'Run `typesharp.cmd version` from this directory, or add the extracted directory to `PATH` and run `typesharp version`.'
+          ) | Set-Content -Encoding utf8 -Path (Join-Path $cliRoot 'README.md')
           $cliZip = Join-Path $releaseRoot "typesharp-cli-dotnet-$tag.zip"
           Compress-Archive -Path (Join-Path $cliRoot '*') -DestinationPath $cliZip -Force
 
@@ -158,19 +181,26 @@ jobs:
             '',
             "Date: $releaseDate",
             "Channel: $channel",
+            "Build metadata: $tag",
+            "Source revision: $sourceRevision",
             'Runtime ABI: 0',
+            'Runtime ABI status: preview',
             'Default target framework: net48',
             '',
             '## Artifacts',
             '',
-            "- typesharp-cli-dotnet-$tag.zip: framework-dependent modern .NET CLI host.",
+            "- typesharp-cli-dotnet-$tag.zip: framework-dependent modern .NET CLI host with Windows typesharp.cmd wrapper.",
             "- typesharp-runtime-net48-$tag.zip: TypeSharp.Core and TypeSharp.Runtime net48 libraries.",
             "- typesharp-vscode-$tag.vsix: VS Code extension with bundled language server.",
             '- SHA256SUMS.txt: SHA-256 manifest for release assets.',
             '',
             '## Verification',
             '',
-            'Use SHA256SUMS.txt to verify downloaded release assets.'
+            'Use SHA256SUMS.txt to verify downloaded release assets.',
+            '',
+            '## Rollback',
+            '',
+            'Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.'
           ) | Set-Content -Encoding utf8 -Path (Join-Path $releaseRoot 'RELEASE_NOTES.md')
 
           $checksumPath = Join-Path $releaseRoot 'SHA256SUMS.txt'
@@ -236,4 +266,124 @@ jobs:
             }
 
             & gh @createArgs
+          }
+
+      - name: Smoke published GitHub Release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          function Assert-Contains([string] $value, [string] $expected, [string] $message) {
+            if (-not $value.Contains($expected)) {
+              throw $message
+            }
+          }
+
+          function Verify-ReleaseAssetHash([string] $assetName, [string] $assetPath, [string] $checksumPath) {
+            $match = Select-String -SimpleMatch $assetName -Path $checksumPath | Select-Object -First 1
+            if ($null -eq $match) {
+              throw "SHA256SUMS.txt does not list $assetName."
+            }
+
+            $expectedHash = (($match.Line -split '\s+', 2)[0]).ToLowerInvariant()
+            $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $assetPath).Hash.ToLowerInvariant()
+            if ($actualHash -ne $expectedHash) {
+              throw "Checksum mismatch for $assetName. Expected $expectedHash but found $actualHash."
+            }
+          }
+
+          $releaseBase = "https://github.com/${{ github.repository }}/releases/download/$env:RELEASE_TAG"
+          $downloadRoot = Join-Path $env:RUNNER_TEMP "typesharp-hosted-release-smoke"
+          $installRoot = Join-Path $downloadRoot "typesharp-cli"
+          $runtimeRoot = Join-Path $downloadRoot "typesharp-runtime"
+          $workspaceRoot = Join-Path $downloadRoot "workspace"
+          Remove-Item -Recurse -Force $downloadRoot -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force $downloadRoot, $installRoot, $runtimeRoot, $workspaceRoot | Out-Null
+
+          $cliAsset = "typesharp-cli-dotnet-$env:RELEASE_TAG.zip"
+          $runtimeAsset = "typesharp-runtime-net48-$env:RELEASE_TAG.zip"
+          $checksumAsset = "SHA256SUMS.txt"
+          $cliZip = Join-Path $downloadRoot $cliAsset
+          $runtimeZip = Join-Path $downloadRoot $runtimeAsset
+          $checksumPath = Join-Path $downloadRoot $checksumAsset
+
+          Invoke-WebRequest "$releaseBase/$cliAsset" -OutFile $cliZip
+          Invoke-WebRequest "$releaseBase/$runtimeAsset" -OutFile $runtimeZip
+          Invoke-WebRequest "$releaseBase/$checksumAsset" -OutFile $checksumPath
+
+          Verify-ReleaseAssetHash $cliAsset $cliZip $checksumPath
+          Verify-ReleaseAssetHash $runtimeAsset $runtimeZip $checksumPath
+
+          Expand-Archive $cliZip -DestinationPath $installRoot -Force
+          Expand-Archive $runtimeZip -DestinationPath $runtimeRoot -Force
+          if (-not (Test-Path (Join-Path $installRoot 'typesharp.cmd'))) {
+            throw 'Hosted CLI archive does not contain typesharp.cmd.'
+          }
+          if (-not (Test-Path (Join-Path $runtimeRoot 'lib\net48\TypeSharp.Core.dll'))) {
+            throw 'Hosted runtime archive does not contain lib/net48/TypeSharp.Core.dll.'
+          }
+          if (-not (Test-Path (Join-Path $runtimeRoot 'lib\net48\TypeSharp.Runtime.dll'))) {
+            throw 'Hosted runtime archive does not contain lib/net48/TypeSharp.Runtime.dll.'
+          }
+
+          $release = gh release view $env:RELEASE_TAG --json body,tagName,isPrerelease | ConvertFrom-Json
+          if ($release.tagName -ne $env:RELEASE_TAG) {
+            throw "Release page tag '$($release.tagName)' did not match '$env:RELEASE_TAG'."
+          }
+
+          Assert-Contains $release.body "Build metadata: $env:RELEASE_TAG" 'Release page does not include build metadata.'
+          Assert-Contains $release.body 'Source revision:' 'Release page does not include source revision.'
+          Assert-Contains $release.body 'Runtime ABI: 0' 'Release page does not include runtime ABI.'
+          $sourceRevisionLine = $release.body -split "`n" | Where-Object { $_.StartsWith('Source revision:') } | Select-Object -First 1
+          $sourceRevision = $sourceRevisionLine.Substring('Source revision:'.Length).Trim()
+          if ([string]::IsNullOrWhiteSpace($sourceRevision)) {
+            throw 'Release page source revision is empty.'
+          }
+
+          $versionJsonText = & (Join-Path $installRoot 'typesharp.cmd') version --json
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Hosted CLI version --json failed.'
+          }
+          $version = ($versionJsonText -join "`n") | ConvertFrom-Json
+          if ($version.buildMetadata -ne $env:RELEASE_TAG) {
+            throw "Hosted CLI build metadata '$($version.buildMetadata)' did not match '$env:RELEASE_TAG'."
+          }
+          if ($version.sourceRevision -ne $sourceRevision) {
+            throw "Hosted CLI source revision '$($version.sourceRevision)' did not match release page '$sourceRevision'."
+          }
+          if ($version.targetDefault -ne 'net48') {
+            throw "Hosted CLI target default '$($version.targetDefault)' did not match net48."
+          }
+          if ($version.artifactKind -ne 'framework-dependent-dotnet') {
+            throw "Hosted CLI artifact kind '$($version.artifactKind)' did not match framework-dependent-dotnet."
+          }
+          if ($version.runtimeAbi -ne 0) {
+            throw "Hosted CLI runtime ABI '$($version.runtimeAbi)' did not match 0."
+          }
+
+          Push-Location $workspaceRoot
+          try {
+            & (Join-Path $installRoot 'typesharp.cmd') new console HostedReleaseSmoke --target net48 --output HostedReleaseSmoke
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Hosted CLI new console smoke failed.'
+            }
+
+            & (Join-Path $installRoot 'typesharp.cmd') check HostedReleaseSmoke\TypeSharp.toml
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Hosted CLI check smoke failed.'
+            }
+
+            & (Join-Path $installRoot 'typesharp.cmd') build HostedReleaseSmoke\TypeSharp.toml
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Hosted CLI build smoke failed.'
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
+          if (-not (Test-Path (Join-Path $workspaceRoot 'HostedReleaseSmoke\generated\bin\Debug\net48\HostedReleaseSmoke.exe'))) {
+            throw 'Hosted CLI build did not produce the expected net48 executable.'
           }

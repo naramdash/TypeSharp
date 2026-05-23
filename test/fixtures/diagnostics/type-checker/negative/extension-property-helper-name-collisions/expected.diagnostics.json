@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2213",
       "severity": "error",
       "message": "Extension property 'WordCount' generates helper method 'GetWordCount', which conflicts with extension method 'GetWordCount' in the same extension declaration.",
       "file": "input.tysh",

@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2214",
       "severity": "error",
       "message": "Enum underlying type must be one of 'byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', or 'ulong', but found 'string'.",
       "file": "input.tysh",

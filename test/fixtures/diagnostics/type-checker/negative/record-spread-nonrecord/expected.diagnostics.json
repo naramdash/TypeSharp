@@ -1,7 +1,7 @@
 {
   "diagnostics": [
     {
-      "code": "TS2201",
+      "code": "TS2219",
       "severity": "error",
       "message": "Record spread expects a nominal record value, but found 'int'.",
       "file": "input.tysh",
