@@ -526,6 +526,8 @@ internal static partial class TypeSharpCompilerTestCases
         new TypeSharpCompilerTestCase("CLI build compiles floating and decimal multiplicative compound assignment API", CliBuildCompilesFloatingAndDecimalMultiplicativeCompoundAssignmentApi),
         new TypeSharpCompilerTestCase("CLI build compiles imported static user-defined multiplicative operator local assignment", CliBuildCompilesImportedStaticMultiplicativeOperatorLocalAssignment),
         new TypeSharpCompilerTestCase("checker rejects unsupported imported static user-defined multiplicative operator local assignment", CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorLocalAssignment),
+        new TypeSharpCompilerTestCase("CLI build compiles imported static user-defined multiplicative operator member assignment", CliBuildCompilesImportedStaticMultiplicativeOperatorMemberAssignment),
+        new TypeSharpCompilerTestCase("checker rejects unsupported imported static user-defined multiplicative operator member assignment", CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorMemberAssignment),
         new TypeSharpCompilerTestCase("CLI build compiles imported multiplicative compound assignment member targets", CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTargets),
         new TypeSharpCompilerTestCase("checker rejects unsupported imported multiplicative compound assignment member targets", CheckerRejectsUnsupportedImportedMultiplicativeCompoundAssignmentMemberTargets),
         new TypeSharpCompilerTestCase("CLI build compiles imported multiplicative compound assignment indexer targets", CliBuildCompilesImportedMultiplicativeCompoundAssignmentIndexerTargets),

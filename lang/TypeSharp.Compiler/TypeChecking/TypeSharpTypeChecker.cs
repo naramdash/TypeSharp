@@ -1241,7 +1241,7 @@ public static class TypeSharpTypeChecker
                 {
                     SyntaxKind.EqualsToken => CheckSimpleAssignmentValue(node, value, scope, targetInfo.Type),
                     SyntaxKind.StarEqualsToken or SyntaxKind.SlashEqualsToken or SyntaxKind.PercentEqualsToken =>
-                        CheckLocalMultiplicativeCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true),
+                        CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(node, value, scope, targetInfo.Type, operatorKind, allowFloatingDecimal: true),
                     SyntaxKind.PipeEqualsToken or SyntaxKind.AmpersandEqualsToken or SyntaxKind.CaretEqualsToken =>
                         CheckBitwiseCompoundAssignmentValue(node, value, scope, targetInfo.Type, operatorKind),
                     SyntaxKind.LessLessEqualsToken or SyntaxKind.GreaterGreaterEqualsToken or SyntaxKind.LogicalUnsignedShiftEqualsToken =>
@@ -1827,7 +1827,7 @@ public static class TypeSharpTypeChecker
             if (target.Kind == SyntaxKind.MemberAccessExpression &&
                 TryGetImportedMemberAssignmentTargetType(target, scope, out var targetType))
             {
-                return CheckMultiplicativeCompoundAssignmentValue(
+                return CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
                     assignment,
                     value,
                     scope,
@@ -1932,7 +1932,7 @@ public static class TypeSharpTypeChecker
             return targetType;
         }
 
-        private SimpleType CheckLocalMultiplicativeCompoundAssignmentValue(
+        private SimpleType CheckMultiplicativeCompoundAssignmentValueWithImportedStaticOperators(
             SyntaxNode assignment,
             SyntaxNode value,
             TypeScope scope,

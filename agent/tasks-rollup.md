@@ -9792,6 +9792,67 @@ Remaining:
 - Imported C# indexer/null-conditional user-defined operator targets, true C# 14 instance compound-assignment operators, TypeSharp-authored operators, checked user-defined operators, and broader overload ranking remain future slices.
 - Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
 
+## Task 0469 Imported C# Regular Member User-Defined Multiplicative Operator Policy
+
+Status: Done
+Queue: Q1
+Completed: 2026-05-23
+
+Summary:
+
+- Extended the Task 0467 imported C# static binary multiplicative operator precursor from mutable local `let mut` `*=`, `/=`, and `%=` targets to regular readable/writable metadata-backed imported C# instance/static field/property member targets.
+- Reused the bounded imported public static binary `operator *`, `operator /`, and `operator %` selection policy: exactly one operator must match the member value and right operand, and the result must assign back to the field/property type.
+- Preserved existing primitive integral/floating-point/decimal member multiplicative assignment behavior and generated package-free `net48`/C# 7.3 ordinary compound-assignment lowering.
+- Added deterministic diagnostics for missing, ambiguous, nullable, non-assignable, getter-only, readonly, and unsupported member operator shapes before backend emission.
+- Raised the shared catalog to 572 cases with package-free shard expectations `143`, `143`, `143`, and `143`; raised the MTP package-shard minimum to 576 tests.
+- Kept Task 0401 blocked absent explicit user approval and selected Task 0470 as the next roadmap refresh.
+
+Primary implementation evidence:
+
+- `lang/TypeSharp.Compiler/TypeChecking/TypeSharpTypeChecker.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`
+- `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`
+- `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`
+- `.github/workflows/regression.yml`
+- `test/README.md`
+- [Feature Status](../docs/src/content/docs/feature-status.md)
+- [.NET Interop](../docs/src/content/docs/dotnet-interop.md)
+- [Type System](../docs/src/content/docs/type-system.md)
+- [Lowering](../docs/src/content/docs/lowering.md)
+- [Diagnostics](../docs/src/content/docs/diagnostics.md)
+- [Project Policy](../docs/src/content/docs/project-policy.md)
+- [Work Ledger](../docs/src/content/docs/work-ledger.md)
+- [tasks.md](tasks.md)
+- [traceability.md](traceability.md)
+
+Verification:
+
+```powershell
+dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --nologo --verbosity quiet
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "imported static user-defined multiplicative operator member assignment"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "multiplicative"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build --filter "test runner shard selection is stable"
+dotnet run --project test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj --no-build
+dotnet build test\TypeSharp.Compiler.Tests.MSTest\TypeSharp.Compiler.Tests.MSTest.csproj --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard0\TypeSharp.Compiler.Tests.MSTest.Shard0.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard1\TypeSharp.Compiler.Tests.MSTest.Shard1.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard2\TypeSharp.Compiler.Tests.MSTest.Shard2.csproj --no-restore --nologo --verbosity quiet
+dotnet build test\TypeSharp.Compiler.Tests.MSTest.Shard3\TypeSharp.Compiler.Tests.MSTest.Shard3.csproj --no-restore --nologo --verbosity quiet
+dotnet test --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" --root-directory . --max-parallel-test-modules 4 --minimum-expected-tests 576 --no-progress
+npm run build # in docs
+rg -n "0469-imported-csharp-regular-member-user-defined-multiplicative-operator-policy\.md|Task 0469 is active|Task 0469 should|TBD pending final verification|Completed work covered \| 0001-0400, 0402-0468|Completed range\s*\| 0001-0400, 0402-0468" agent docs\src\content\docs\work-ledger.md docs\src\content\docs\project-policy.md test .github --glob "!agent/tasks-rollup.md"
+rg -n "AssertEqual\(570|Assert\.AreEqual\(570|--minimum-expected-tests 574|--minimum-expected-tests 570|minimum-expected-tests 570" test .github docs\src\content\docs\project-policy.md test\README.md
+git diff --check
+```
+
+Result: All listed commands passed. The compiler test project built cleanly, the focused member-operator filter passed the new positive and negative cases, the broader multiplicative filter passed 16 tests, shard selection remained stable, and the full package-free custom catalog passed across 572 cases including the VS Code live smoke. The MSTest bridge plus four shard projects built successfully, the MTP module-level package-shard run executed 576 tests successfully, and the docs build completed with the existing Vite chunk-size warning. The stale-reference scans found no stale Task 0469 active-packet references, stale completed-range pointers, or stale current test-count/package-minimum constants outside the rollup, and `git diff --check` reported no whitespace errors beyond Git line-ending warnings.
+
+Remaining:
+
+- Task 0470 is active for the roadmap refresh after imported C# regular member user-defined multiplicative operator policy.
+- Imported C# indexer/null-conditional user-defined operator targets, true C# 14 instance compound-assignment operators, TypeSharp-authored operators, checked user-defined operators, and broader overload ranking remain future slices.
+- Task 0401 remains blocked until the user explicitly approves the GitHub Actions CI implementation fix.
+
 ## Verification Summary
 
 Representative commands used across the completed range:

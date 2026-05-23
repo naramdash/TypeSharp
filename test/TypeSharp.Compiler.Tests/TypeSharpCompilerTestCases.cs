@@ -35,7 +35,7 @@ static void VersionDefaultsMatchCliContract()
 
 static void TestRunnerShardSelectionIsStable()
 {
-    AssertEqual(570, TypeSharpCompilerTestCases.All.Count);
+    AssertEqual(572, TypeSharpCompilerTestCases.All.Count);
     AssertEqual("version defaults match the documented CLI contract", TypeSharpCompilerTestCases.All[0].Name);
     AssertEqual("CLI build stops before emission on diagnostics", TypeSharpCompilerTestCases.All[TypeSharpCompilerTestCases.All.Count - 1].Name);
     AssertEqual(
@@ -88,8 +88,8 @@ static void MSTestPackageShardBridgeProjectsAreStable()
 
     AssertEqual(143, shardCounts[0]);
     AssertEqual(143, shardCounts[1]);
-    AssertEqual(142, shardCounts[2]);
-    AssertEqual(142, shardCounts[3]);
+    AssertEqual(143, shardCounts[2]);
+    AssertEqual(143, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -2746,7 +2746,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(Array.Empty<string>(), display.Parameters.Select(parameter => parameter.Type).ToArray());
 
         var legacyFields = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFields"), "LegacyFields metadata should be present.");
-        AssertSequence(["MutableColor", "MutableCount", "MutableDecimal", "MutableFlag", "MutableFloat", "MutableStaticCount", "MutableStaticDecimal", "MutableStaticName", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["MutableBrokenQuantity", "MutableColor", "MutableCount", "MutableDecimal", "MutableFlag", "MutableFloat", "MutableOperatorLeft", "MutableQuantity", "MutableScalar", "MutableStaticCount", "MutableStaticDecimal", "MutableStaticName", "MutableStaticQuantity", "ReadonlyQuantity", "StaticName"], legacyFields.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticName = Require(legacyFields.Properties.SingleOrDefault(property => property.Name == "StaticName"), "StaticName property metadata should be present.");
         AssertTrue(staticName.IsStatic, "StaticName should be marked static.");
         AssertTrue(staticName.HasPublicGetter, "StaticName should expose a public getter.");
@@ -2755,7 +2755,7 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertTrue(mutableStaticName.IsStatic, "MutableStaticName should be marked static.");
         AssertTrue(mutableStaticName.HasPublicGetter, "MutableStaticName should expose a public getter.");
         AssertTrue(mutableStaticName.HasPublicSetter, "MutableStaticName should expose a public setter.");
-        AssertSequence(["InstanceCode", "MutableCode", "MutableDouble", "MutableLong", "MutableStaticByte", "MutableStaticCode", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        AssertSequence(["InstanceCode", "MutableCode", "MutableDouble", "MutableLong", "MutableQuantityField", "MutableStaticByte", "MutableStaticCode", "MutableStaticQuantityField", "ReadonlyQuantityField", "StaticCode"], legacyFields.Fields.Select(field => field.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
         var staticCode = Require(legacyFields.Fields.SingleOrDefault(field => field.Name == "StaticCode"), "StaticCode field metadata should be present.");
         AssertEqual("string", staticCode.Type);
         AssertTrue(staticCode.IsStatic, "StaticCode should be marked static.");
@@ -14222,7 +14222,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
-    AssertContains("--minimum-expected-tests 574", regressionWorkflow);
+    AssertContains("--minimum-expected-tests 576", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
 
@@ -23559,6 +23559,238 @@ static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorLocalAs
         "Instance compound-assignment operator metadata should not satisfy the static binary operator policy.");
 }
 
+static void CliBuildCompilesImportedStaticMultiplicativeOperatorMemberAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "ImportedStaticMultiplicativeOperatorMemberAssignmentApi"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.ImportedStaticMultiplicativeOperatorMemberAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.ImportedStaticMultiplicativeOperatorMemberAssignment
+
+            import { LegacyFields, LegacyQuantity } from "Legacy.Tools"
+
+            export fun instanceProperty(value: int, factor: int): LegacyQuantity {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableQuantity = LegacyQuantity(value)
+              fields.MutableQuantity *= factor
+              fields.MutableQuantity /= 2
+              fields.MutableQuantity %= 5
+              fields.MutableQuantity
+            }
+
+            export fun instanceField(value: int, factor: int): LegacyQuantity {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableQuantityField = LegacyQuantity(value)
+              fields.MutableQuantityField *= factor
+              fields.MutableQuantityField /= 2
+              fields.MutableQuantityField %= 7
+              fields.MutableQuantityField
+            }
+
+            export fun staticProperty(value: int, factor: int): LegacyQuantity {
+              LegacyFields.MutableStaticQuantity = LegacyQuantity(value)
+              LegacyFields.MutableStaticQuantity *= factor
+              LegacyFields.MutableStaticQuantity /= 3
+              LegacyFields.MutableStaticQuantity %= 7
+              LegacyFields.MutableStaticQuantity
+            }
+
+            export fun staticField(value: int, factor: int): LegacyQuantity {
+              LegacyFields.MutableStaticQuantityField = LegacyQuantity(value)
+              LegacyFields.MutableStaticQuantityField *= factor
+              LegacyFields.MutableStaticQuantityField /= 2
+              LegacyFields.MutableStaticQuantityField %= 5
+              LegacyFields.MutableStaticQuantityField
+            }
+            """);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = TypeSharpCli.Run(["build", manifestPath], output, error);
+
+        AssertEqual(0, exitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/ImportedStaticMultiplicativeOperatorMemberAssignmentApi.dll", output.ToString());
+        AssertEqual(string.Empty, error.ToString());
+
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("fields.MutableQuantity *= factor;", generatedSource);
+        AssertContains("fields.MutableQuantity /= 2;", generatedSource);
+        AssertContains("fields.MutableQuantity %= 5;", generatedSource);
+        AssertContains("fields.MutableQuantityField *= factor;", generatedSource);
+        AssertContains("fields.MutableQuantityField /= 2;", generatedSource);
+        AssertContains("fields.MutableQuantityField %= 7;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticQuantity *= factor;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticQuantity /= 3;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticQuantity %= 7;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticQuantityField *= factor;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticQuantityField /= 2;", generatedSource);
+        AssertContains("LegacyFields.MutableStaticQuantityField %= 5;", generatedSource);
+
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedStaticMultiplicativeOperatorMemberAssignmentApi.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported static user-defined multiplicative operator member assignment APIs.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "ImportedStaticMultiplicativeOperatorMemberAssignmentConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>ImportedStaticMultiplicativeOperatorMemberAssignmentConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="ImportedStaticMultiplicativeOperatorMemberAssignmentApi">
+                  <HintPath>../generated/bin/Debug/net48/ImportedStaticMultiplicativeOperatorMemberAssignmentApi.dll</HintPath>
+                </Reference>
+                <Reference Include="Legacy.Tools">
+                  <HintPath>../lib/Legacy.Tools.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace ImportedStaticMultiplicativeOperatorMemberAssignmentConsumer
+            {
+                public static class Consumer
+                {
+                    public static bool Read()
+                    {
+                        return Samples.ImportedStaticMultiplicativeOperatorMemberAssignment.Module.instanceProperty(13, 3).Value == 4 &&
+                            Samples.ImportedStaticMultiplicativeOperatorMemberAssignment.Module.instanceField(22, 5).Value == 6 &&
+                            Samples.ImportedStaticMultiplicativeOperatorMemberAssignment.Module.staticProperty(21, 3).Value == 0 &&
+                            Samples.ImportedStaticMultiplicativeOperatorMemberAssignment.Module.staticField(23, 4).Value == 1;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build ImportedStaticMultiplicativeOperatorMemberAssignmentConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated imported static user-defined multiplicative operator member assignment APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
+    });
+}
+
+static void CheckerRejectsUnsupportedImportedStaticMultiplicativeOperatorMemberAssignment()
+{
+    WithWorkspace(root =>
+    {
+        BuildLegacyReferenceDll(root, "Legacy.Tools");
+        var manifestPath = WriteManifest(root, """
+            [project]
+            name = "InvalidImportedStaticMultiplicativeOperatorMemberAssignment"
+            targetFramework = "net48"
+            outputType = "library"
+            rootNamespace = "Samples.InvalidImportedStaticMultiplicativeOperatorMemberAssignment"
+            generatedOutputRoot = "generated"
+
+            [references]
+            paths = ["lib/Legacy.Tools.dll"]
+            """);
+        WriteFile(root, "src/Main.tysh", """
+            namespace Samples.InvalidImportedStaticMultiplicativeOperatorMemberAssignment
+
+            import { LegacyFields, LegacyOperatorRight } from "Legacy.Tools"
+
+            export fun missingOperator(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableScalar *= 2
+              0
+            }
+
+            export fun nonAssignable(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableBrokenQuantity *= 2
+              0
+            }
+
+            export fun ambiguous(): int {
+              let fields: LegacyFields = LegacyFields()
+              let right: LegacyOperatorRight = LegacyOperatorRight(2)
+              fields.MutableOperatorLeft *= right
+              0
+            }
+
+            export fun nullableFactor(factor: int?): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.MutableQuantity *= factor
+              0
+            }
+
+            export fun getterOnly(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.ReadonlyQuantity *= 2
+              0
+            }
+
+            export fun readonlyField(): int {
+              let fields: LegacyFields = LegacyFields()
+              fields.ReadonlyQuantityField *= 2
+              0
+            }
+            """);
+
+        var result = TypeSharpChecker.Check(manifestPath);
+        const string unsupportedImportedMessage = "Multiplicative compound assignment is supported only for mutable local bindings or readable and writable metadata-backed imported C# field/property/indexer targets; indexer targets require a matching public getter and setter plus supported index arguments, and event, unresolved, and TypeSharp-owned targets are not supported.";
+        var diagnosticText = string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToCliText()));
+
+        AssertTrue(result.HasErrors, "Unsupported imported static user-defined multiplicative operator member assignments should produce diagnostics.");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyScalar", StringComparison.Ordinal)),
+            $"Imported member target without a matching static binary operator should be rejected.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Cannot assign user-defined multiplicative compound assignment result of type 'Legacy.Tools.LegacyProduct'", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyBrokenQuantity", StringComparison.Ordinal)),
+            $"Imported member target whose operator result cannot assign back should be rejected.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("User-defined multiplicative compound assignment '*=' is ambiguous", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorLeft", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyOperatorRight", StringComparison.Ordinal)),
+            $"Ambiguous imported static binary operators should be rejected for member targets.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message.Contains("Multiplicative compound assignment '*=' operands must be non-null primitive numeric values of a supported integral, floating-point, or decimal type or match one imported C# public static binary operator", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("LegacyQuantity", StringComparison.Ordinal) &&
+                diagnostic.Message.Contains("int?", StringComparison.Ordinal)),
+            $"Nullable operands should not bind imported static user-defined operators for member targets.\n{diagnosticText}");
+        AssertTrue(
+            result.Diagnostics.Count(diagnostic =>
+                diagnostic.Code == "TS2201" &&
+                diagnostic.Message == unsupportedImportedMessage) >= 2,
+            $"Getter-only properties and readonly fields should remain unsupported member targets.\n{diagnosticText}");
+    });
+}
+
 static void CliBuildCompilesImportedMultiplicativeCompoundAssignmentMemberTargets()
 {
     WithWorkspace(root =>
@@ -30124,6 +30356,27 @@ static void BuildLegacyReferenceDll(string root, string assemblyName)
                 public decimal MutableDecimal { get; set; }
 
                 public static decimal MutableStaticDecimal { get; set; }
+
+                public LegacyQuantity MutableQuantity { get; set; }
+
+                public static LegacyQuantity MutableStaticQuantity { get; set; }
+
+                public LegacyScalar MutableScalar { get; set; }
+
+                public LegacyBrokenQuantity MutableBrokenQuantity { get; set; }
+
+                public LegacyOperatorLeft MutableOperatorLeft { get; set; }
+
+                public LegacyQuantity ReadonlyQuantity
+                {
+                    get { return MutableQuantity; }
+                }
+
+                public LegacyQuantity MutableQuantityField;
+
+                public static LegacyQuantity MutableStaticQuantityField;
+
+                public readonly LegacyQuantity ReadonlyQuantityField = new LegacyQuantity(1);
             }
 
             public static class LegacyExtensions
