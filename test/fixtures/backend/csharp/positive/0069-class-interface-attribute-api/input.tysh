@@ -1,0 +1,13 @@
+namespace Samples.TypeAttributes
+
+import { ObsoleteAttribute } from "System"
+
+[ObsoleteAttribute("Use NewGreeter.")]
+public class Greeter {
+  public fun Echo(value: string): string = value
+}
+
+[ObsoleteAttribute("Use INewGreeter.")]
+public interface IGreeter {
+  fun Echo(value: string): string
+}

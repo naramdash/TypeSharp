@@ -228,6 +228,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Hosted public docs probes, README Install links, starter README recovery links, Astro canonical site metadata, rendered and hosted canonical/Open Graph URLs, and rendered and hosted sitemap URLs now use the configured GitHub Pages URL `https://naramdash.github.io/TypeSharp/`, not the stale `https://typesharp.github.io/TypeSharp/` URL that returns the legacy 404 page.", languageTasks);
     AssertContains("The docs Astro config defaults local builds to the repository base when `GITHUB_REPOSITORY` is absent, `npm run verify:rendered-install-route` rejects canonical, Open Graph, page-link, or sitemap output that loses the `/TypeSharp` base path or reintroduces the stale `https://typesharp.github.io/TypeSharp` host, and `release-artifacts.yml` repeats those canonical/Open Graph/sitemap stale-host checks against the deployed public Pages routes before release asset publication.", languageTasks);
     AssertContains("The main 1.0 risk is not \"missing everything\"; the latest pushed Docs, Regression, release-tag Docs dispatch, and `v0.1.0-preview.4` Release Artifacts workflows now succeed on GitHub Actions, including the hosted release/download smoke.", languageTasks);
+    AssertContains("TypeSharp-authored class/interface declaration attributes", languageTasks);
     AssertContains("generated class instance/static getter-only property reads", languageTasks);
     AssertContains("generated class instance/static get/set property reads/writes", languageTasks);
     AssertContains("generated interface getter-only property reads", languageTasks);
@@ -446,8 +447,9 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The interface getter-only property ABI promotion push `ff366e0d78625398933778eb6081e12c7ab2ba7e` proved Docs run `26411343950` and Regression run `26411343969` both completed successfully", languageProgress);
+    AssertContains("The interface mutable get/set property ABI promotion push `ca583dddde87e87072bfdcfa83a77812e06078a2` proved Docs run `26412480056` and Regression run `26412480121` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16266,8 +16268,8 @@ static void DocsSiteContractIsStable()
     AssertContains("structural shape, or `unknown` type appears in a public boundary", typeSystemPage);
     AssertContains("1.0 Class Interface And Member Boundary", typeSystemPage);
     AssertContains("The 1.0 TypeSharp-authored class and interface surface is intentionally small", typeSystemPage);
-    AssertContains("Accepted class declarations lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list whose parameters have CLR-visible types, public instance/static `fun` methods with supported parameter and return types, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance `event` members backed by named delegate types, and typed static `event` members backed by named delegate types", typeSystemPage);
-    AssertContains("Accepted interface declarations lower to named CLR interfaces with optional type parameters, supported generic constraints, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, and typed instance `event` members backed by named delegate types", typeSystemPage);
+    AssertContains("Accepted class declarations lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list whose parameters have CLR-visible types, public instance/static `fun` methods with supported parameter and return types, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance `event` members backed by named delegate types, and typed static `event` members backed by named delegate types", typeSystemPage);
+    AssertContains("Accepted interface declarations lower to named CLR interfaces with optional type parameters, supported generic constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, and typed instance `event` members backed by named delegate types", typeSystemPage);
     AssertContains("TypeSharp-authored constructor bodies, constructor parameter capture in member initializers/bodies, constructor default parameters, custom property accessors, custom add/remove events, interface static events, generated event invocation helpers, explicit inheritance or interface implementation clauses, static member forms beyond class static methods/values/events/properties, abstract/virtual/override members, interface default implementations, indexers, operators, attributes on individual class/interface members beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0", typeSystemPage);
     AssertContains("1.0 Pattern Matching Boundary", typeSystemPage);
     AssertContains("Supported arm patterns are union case names with an optional single identifier payload capture", typeSystemPage);
@@ -16322,8 +16324,8 @@ static void DocsSiteContractIsStable()
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class API, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
-    AssertContains("Interface API, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Class API, class declaration attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Interface API, interface declaration attribute, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
@@ -16372,8 +16374,8 @@ static void DocsSiteContractIsStable()
     var featureStatusPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "feature-status.md"));
     AssertContains("TypeSharp-authored operator declarations are explicitly post-1.0", featureStatusPage);
     AssertContains("True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog", featureStatusPage);
-    AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, and typed instance/static `event` members backed by named delegate types", featureStatusPage);
-    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, and typed instance `event` members backed by named delegate types", featureStatusPage);
+    AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, and typed instance/static `event` members backed by named delegate types", featureStatusPage);
+    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, and typed instance `event` members backed by named delegate types", featureStatusPage);
     AssertContains("The 1.0 overload and conversion contract is metadata-backed and intentionally narrower than full C#", featureStatusPage);
     AssertContains("Full C# overload conversion parity, user-defined conversion operators, TypeSharp-authored operator overload ranking", featureStatusPage);
     AssertContains("The 1.0 warning/error boundary is explicit", featureStatusPage);
@@ -16488,8 +16490,8 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp-owned enums support optional integral underlying types, explicit integer values, aliases, initializer-local composite-or values, same-enum value `|`/`&`/`^`/`~`, and match exhaustiveness", referencePage);
     AssertContains("Enum-valued shifts, flag algebra beyond same-enum value operators, flag-aware match reasoning, imported numeric enum flag reasoning, arbitrary computed enum values, numeric pattern algebra, numeric enum patterns, and broad attribute target validation are post-1.0", referencePage);
     AssertContains("The 1.0 class/interface member surface is deliberately bounded", referencePage);
-    AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, and typed instance/static `event` members backed by named delegate types", referencePage);
-    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, and typed instance `event` members backed by named delegate types", referencePage);
+    AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, and typed instance/static `event` members backed by named delegate types", referencePage);
+    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, and typed instance `event` members backed by named delegate types", referencePage);
     AssertContains("Constructor bodies, constructor parameter capture, constructor default parameters, custom property accessors, custom add/remove events, interface static events, generated event invocation helpers, inheritance/implementation clauses, static member forms beyond class static methods/values/events/properties, abstract/virtual/override members, interface default implementations, indexers, operators, nested types, partial methods, and broader member-body analysis are post-1.0", referencePage);
     AssertContains("The 1.0 collection and object construction surface is bounded", referencePage);
     AssertContains("collection expressions require a known array or `System.Collections.Generic.List<T>` target", referencePage);
@@ -16507,6 +16509,7 @@ static void DocsSiteContractIsStable()
     var loweringPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "lowering.md"));
     AssertContains("Func<object, TResult>", loweringPage);
     AssertContains("inferred function-valued top-level `let` exports", loweringPage);
+    AssertContains("TypeSharp-authored class and interface declaration attributes lower to C# attributes on the generated type declaration", loweringPage);
     AssertContains("TypeSharp-authored class constructor parameter lists with explicit CLR-visible parameter types lower to ordinary C# constructors with empty bodies", loweringPage);
     AssertContains("TypeSharp-authored class methods lower as instance or static methods according to the class member modifier", loweringPage);
     AssertContains("Immutable class `let` and `static let` values with explicit types and initializers lower to C# `readonly` and `static readonly` fields", loweringPage);
@@ -16522,6 +16525,7 @@ static void DocsSiteContractIsStable()
     AssertContains("test/fixtures/backend/csharp/positive/0066-class-setter-property-api", loweringPage);
     AssertContains("test/fixtures/backend/csharp/positive/0067-interface-getter-property-api", loweringPage);
     AssertContains("test/fixtures/backend/csharp/positive/0068-interface-setter-property-api", loweringPage);
+    AssertContains("test/fixtures/backend/csharp/positive/0069-class-interface-attribute-api", loweringPage);
 
     var apiPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
     AssertContains("CLI Commands", apiPage);
@@ -24338,6 +24342,9 @@ static void CliBuildCompilesClassDeclarationApi()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.Classes
 
+            import { ObsoleteAttribute } from "System"
+
+            [ObsoleteAttribute("Use NewGreeter.")]
             public class Greeter {
               public fun Echo(value: string): string = value
             }
@@ -24352,6 +24359,7 @@ static void CliBuildCompilesClassDeclarationApi()
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("[ObsoleteAttribute(\"Use NewGreeter.\")]", generatedSource);
         AssertContains("public class Greeter", generatedSource);
         AssertContains("public string Echo(string value)", generatedSource);
 
@@ -24385,6 +24393,8 @@ static void CliBuildCompilesClassDeclarationApi()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System;
+
             namespace ClassApiConsumer
             {
                 public static class Consumer
@@ -24392,7 +24402,10 @@ static void CliBuildCompilesClassDeclarationApi()
                     public static string Read()
                     {
                         var greeter = new Samples.Classes.Greeter();
-                        return greeter.Echo("value");
+                        var attribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.Classes.Greeter),
+                            typeof(ObsoleteAttribute));
+                        return attribute.Message + ":" + greeter.Echo("value");
                     }
                 }
             }
@@ -24421,8 +24434,9 @@ static void CliBuildCompilesInterfaceDeclarationApi()
             WriteFile(root, "src/Main.tysh", """
             namespace Samples.Interfaces
 
-            public delegate ChangedHandler(value: string): unit
+            import { ObsoleteAttribute } from "System"
 
+            [ObsoleteAttribute("Use INewGreeter.")]
             public interface IGreeter {
               public event Changed: ChangedHandler
 
@@ -24432,6 +24446,8 @@ static void CliBuildCompilesInterfaceDeclarationApi()
 
               fun Echo(value: string): string
             }
+
+            public delegate ChangedHandler(value: string): unit
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -24443,6 +24459,7 @@ static void CliBuildCompilesInterfaceDeclarationApi()
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("[ObsoleteAttribute(\"Use INewGreeter.\")]", generatedSource);
         AssertContains("public interface IGreeter", generatedSource);
         AssertContains("event ChangedHandler Changed;", generatedSource);
         AssertContains("string Name { get; }", generatedSource);
@@ -24479,6 +24496,8 @@ static void CliBuildCompilesInterfaceDeclarationApi()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System;
+
             namespace InterfaceApiConsumer
             {
                 public sealed class Greeter : Samples.Interfaces.IGreeter
@@ -24504,7 +24523,10 @@ static void CliBuildCompilesInterfaceDeclarationApi()
                     {
                         greeter.Changed += value => { };
                         greeter.Alias = "alias";
-                        return greeter.Name + greeter.Alias + greeter.Echo("value");
+                        var attribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.Interfaces.IGreeter),
+                            typeof(ObsoleteAttribute));
+                        return attribute.Message + ":" + greeter.Name + greeter.Alias + greeter.Echo("value");
                     }
                 }
             }

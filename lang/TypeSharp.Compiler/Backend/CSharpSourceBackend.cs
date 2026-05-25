@@ -1061,6 +1061,7 @@ public static class CSharpSourceBackend
             var name = GetClassDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
 
+            EmitAttributeLists(node, "    ");
             _builder.AppendLine($"    {visibility}{partialModifier} class {name}{typeParameters}");
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
@@ -1123,6 +1124,7 @@ public static class CSharpSourceBackend
             var name = GetInterfaceDeclarationName(node);
             var typeParameters = GetTypeParameterList(node);
 
+            EmitAttributeLists(node, "    ");
             _builder.AppendLine($"    {visibility}{partialModifier} interface {name}{typeParameters}");
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
