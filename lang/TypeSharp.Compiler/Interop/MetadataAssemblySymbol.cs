@@ -44,6 +44,8 @@ public sealed record MetadataTypeSymbol(
 
     public IReadOnlyList<MetadataGenericParameterSymbol> GenericParameters { get; init; } = [];
 
+    public IReadOnlyList<string> CustomAttributes { get; init; } = [];
+
     public string? BaseTypeName { get; init; }
 
     public IReadOnlyList<string> InterfaceNames { get; init; } = [];
@@ -59,6 +61,8 @@ public sealed record MetadataMethodSymbol(
     bool IsExtension = false)
 {
     public IReadOnlyList<MetadataGenericParameterSymbol> GenericParameters { get; init; } = [];
+
+    public IReadOnlyList<string> CustomAttributes { get; init; } = [];
 }
 
 public sealed record MetadataGenericParameterSymbol(
@@ -79,6 +83,8 @@ public sealed record MetadataPropertySymbol(
     int ParameterCount = 0)
 {
     public IReadOnlyList<string> ParameterTypes { get; init; } = [];
+
+    public IReadOnlyList<string> CustomAttributes { get; init; } = [];
 }
 
 public sealed record MetadataFieldSymbol(
@@ -89,6 +95,8 @@ public sealed record MetadataFieldSymbol(
     bool IsReadOnly = false)
 {
     public string? LiteralValue { get; init; }
+
+    public IReadOnlyList<string> CustomAttributes { get; init; } = [];
 }
 
 public sealed record MetadataEventSymbol(
@@ -96,7 +104,10 @@ public sealed record MetadataEventSymbol(
     string Type,
     bool IsStatic,
     bool HasPublicAdder,
-    bool HasPublicRemover);
+    bool HasPublicRemover)
+{
+    public IReadOnlyList<string> CustomAttributes { get; init; } = [];
+}
 
 public sealed record MetadataParameterSymbol(
     string Name,

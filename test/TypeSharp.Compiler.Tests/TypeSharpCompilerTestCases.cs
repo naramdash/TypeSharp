@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generic ABI Actions reconciliation push `ced06b86d794eb65d5f45b2221c73d5d2ce28f1d` proved Docs run `26422347210` and Regression run `26422347227` both completed successfully", languageProgress);
+    AssertContains("The enum ABI value push `ae4fbae12393704dc7ffb95edeae1344dbe16567` proved Docs run `26422858744` and Regression run `26422858738` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -455,6 +455,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the TypeSharp-authored named delegate declaration attribute and params ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
     AssertContains("Deepened generated enum public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened generated attribute public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16340,11 +16341,11 @@ static void DocsSiteContractIsStable()
     AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default, generic constraint, and generic optional/default parameter subsets", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
-    AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
+    AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint metadata snapshots, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
-    AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint metadata snapshots, partial declaration, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Class API, class declaration/member attribute metadata snapshots, generic type, generic constraint metadata snapshots, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Interface API, interface declaration/member attribute metadata snapshots, interface getter-only and get/set properties, interface event, generic constraint metadata snapshots, partial declaration, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named CLR delegate with optional generic parameters, supported C# 7.3-compatible generic constraints, declaration attributes, typed parameters, optional `params`, and an explicit or `void` return", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots, generated public ABI snapshots, and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
@@ -24425,6 +24426,27 @@ static void CliBuildCompilesClassDeclarationApi()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ClassApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with class declaration API.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "ClassApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/ClassApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated class declaration assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Classes.Greeter", abiSnapshotText);
+        AssertContains("  attribute System.ObsoleteAttribute", abiSnapshotText);
+        AssertContains("  event add remove Samples.Classes.ChangedHandler Changed", abiSnapshotText);
+        AssertContains("  field readonly string Name", abiSnapshotText);
+        AssertContains("  property get string DisplayName", abiSnapshotText);
+        AssertContains("  property get set string Nickname", abiSnapshotText);
+        AssertContains("  method string Echo(string value)", abiSnapshotText);
+        AssertEqual(5, CountOccurrences(abiSnapshotText, "    attribute System.ObsoleteAttribute"));
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "ClassApiConsumer.csproj", """
@@ -24561,6 +24583,26 @@ static void CliBuildCompilesInterfaceDeclarationApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "InterfaceApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with interface declaration API.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "InterfaceApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/InterfaceApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated interface declaration assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Interfaces.IGreeter", abiSnapshotText);
+        AssertContains("  attribute System.ObsoleteAttribute", abiSnapshotText);
+        AssertContains("  event add remove Samples.Interfaces.ChangedHandler Changed", abiSnapshotText);
+        AssertContains("  property get string Name", abiSnapshotText);
+        AssertContains("  property get set string Alias", abiSnapshotText);
+        AssertContains("  method string Echo(string value)", abiSnapshotText);
+        AssertEqual(4, CountOccurrences(abiSnapshotText, "    attribute System.ObsoleteAttribute"));
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -24835,12 +24877,14 @@ static void CliBuildCompilesEnumDeclarationApi()
         AssertFalse(metadata.HasErrors, "Generated enum declaration assembly metadata should be readable.");
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
         AssertContains("type Samples.Enums.Color", abiSnapshotText);
+        AssertContains("  attribute System.FlagsAttribute", abiSnapshotText);
         AssertContains("  enum underlying byte", abiSnapshotText);
         AssertContains("  enum member Blue = 4", abiSnapshotText);
         AssertContains("  enum member Crimson = 1", abiSnapshotText);
         AssertContains("  enum member Green = 2", abiSnapshotText);
         AssertContains("  enum member Purple = 5", abiSnapshotText);
         AssertContains("  enum member Red = 1", abiSnapshotText);
+        AssertContains("    attribute System.ObsoleteAttribute", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

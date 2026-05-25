@@ -105,6 +105,7 @@ public static class TypeSharpMetadataReader
                     Constructors = ReadPublicConstructors(reader, type, assemblyHasNullableMetadata),
                     Operators = ReadPublicOperators(reader, type, assemblyHasNullableMetadata),
                     GenericParameters = ReadGenericParameters(reader, type.GetGenericParameters()),
+                    CustomAttributes = ReadPublicAbiCustomAttributeNames(reader, type.GetCustomAttributes()),
                     HasPublicParameterlessConstructor = HasPublicParameterlessConstructor(reader, type),
                     InterfaceNames = ReadInterfaceNames(reader, type),
                     IsInterface = type.Attributes.HasFlag(System.Reflection.TypeAttributes.Interface),
@@ -285,7 +286,8 @@ public static class TypeSharpMetadataReader
             genericParameters.Count,
             HasCustomAttribute(reader, method.GetCustomAttributes(), "System.Runtime.CompilerServices.ExtensionAttribute"))
         {
-            GenericParameters = genericParameters
+            GenericParameters = genericParameters,
+            CustomAttributes = ReadPublicAbiCustomAttributeNames(reader, method.GetCustomAttributes())
         };
     }
 
@@ -339,7 +341,8 @@ public static class TypeSharpMetadataReader
                     signature.ParameterTypes.Length > 0,
                     signature.ParameterTypes.Length)
                 {
-                    ParameterTypes = signature.ParameterTypes.Select(type => type.Name).ToArray()
+                    ParameterTypes = signature.ParameterTypes.Select(type => type.Name).ToArray(),
+                    CustomAttributes = ReadPublicAbiCustomAttributeNames(reader, property.GetCustomAttributes())
                 });
             }
         }
@@ -367,7 +370,8 @@ public static class TypeSharpMetadataReader
                 field.Attributes.HasFlag(System.Reflection.FieldAttributes.Literal),
                 field.Attributes.HasFlag(System.Reflection.FieldAttributes.InitOnly))
             {
-                LiteralValue = ReadLiteralValue(reader, field)
+                LiteralValue = ReadLiteralValue(reader, field),
+                CustomAttributes = ReadPublicAbiCustomAttributeNames(reader, field.GetCustomAttributes())
             });
         }
 
@@ -439,7 +443,10 @@ public static class TypeSharpMetadataReader
                     GetEventTypeName(reader, eventDefinition.Type),
                     IsStaticAccessor(reader, accessors.Adder) || IsStaticAccessor(reader, accessors.Remover),
                     hasPublicAdder,
-                    hasPublicRemover));
+                    hasPublicRemover)
+                {
+                    CustomAttributes = ReadPublicAbiCustomAttributeNames(reader, eventDefinition.GetCustomAttributes())
+                });
             }
         }
 
@@ -488,6 +495,32 @@ public static class TypeSharpMetadataReader
 
         return false;
     }
+
+    private static IReadOnlyList<string> ReadPublicAbiCustomAttributeNames(
+        MetadataReader reader,
+        CustomAttributeHandleCollection attributes)
+    {
+        var names = new List<string>();
+        foreach (var handle in attributes)
+        {
+            var attribute = reader.GetCustomAttribute(handle);
+            var name = GetAttributeTypeName(reader, attribute.Constructor);
+            if (IsPublicAbiCustomAttributeName(name))
+            {
+                names.Add(name);
+            }
+        }
+
+        return names
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static bool IsPublicAbiCustomAttributeName(string name) =>
+        !string.IsNullOrWhiteSpace(name) &&
+        !name.StartsWith("System.Runtime.CompilerServices.", StringComparison.Ordinal) &&
+        !string.Equals(name, "System.ParamArrayAttribute", StringComparison.Ordinal);
 
     private static bool HasNullableMetadata(MetadataReader reader, CustomAttributeHandleCollection attributes) =>
         HasCustomAttribute(reader, attributes, "System.Runtime.CompilerServices.NullableAttribute") ||

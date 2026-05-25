@@ -22,6 +22,8 @@ public static class TypeSharpPublicAbiChecker
                 lines.Add($"  generic {FormatGenericParameter(parameter)}");
             }
 
+            AppendAttributes(lines, "  ", type.CustomAttributes);
+
             if (type.IsEnum)
             {
                 if (!string.IsNullOrWhiteSpace(type.EnumUnderlyingTypeName))
@@ -35,6 +37,8 @@ public static class TypeSharpPublicAbiChecker
                         ? $" = {literalValue}"
                         : string.Empty;
                     lines.Add($"  enum member {member}{value}");
+                    var field = type.Fields.FirstOrDefault(field => string.Equals(field.Name, member, StringComparison.Ordinal));
+                    AppendAttributes(lines, "    ", field?.CustomAttributes ?? []);
                 }
             }
 
@@ -42,11 +46,13 @@ public static class TypeSharpPublicAbiChecker
                 .OrderBy(constructor => FormatParameters(constructor.Parameters), StringComparer.Ordinal))
             {
                 lines.Add($"  constructor {type.Name}({FormatParameters(constructor.Parameters)})");
+                AppendAttributes(lines, "    ", constructor.CustomAttributes);
             }
 
             foreach (var property in type.Properties.OrderBy(property => property.Name, StringComparer.Ordinal))
             {
                 lines.Add($"  property {FormatPropertyModifiers(property)}{property.Type} {property.Name}");
+                AppendAttributes(lines, "    ", property.CustomAttributes);
             }
 
             foreach (var field in type.Fields
@@ -54,11 +60,13 @@ public static class TypeSharpPublicAbiChecker
                 .OrderBy(field => field.Name, StringComparer.Ordinal))
             {
                 lines.Add($"  field {FormatFieldModifiers(field)}{field.Type} {field.Name}");
+                AppendAttributes(lines, "    ", field.CustomAttributes);
             }
 
             foreach (var eventSymbol in type.Events.OrderBy(eventSymbol => eventSymbol.Name, StringComparer.Ordinal))
             {
                 lines.Add($"  event {FormatEventModifiers(eventSymbol)}{eventSymbol.Type} {eventSymbol.Name}");
+                AppendAttributes(lines, "    ", eventSymbol.CustomAttributes);
             }
 
             foreach (var method in type.Methods
@@ -66,6 +74,7 @@ public static class TypeSharpPublicAbiChecker
                 .ThenBy(method => FormatParameters(method.Parameters), StringComparer.Ordinal))
             {
                 lines.Add($"  method {FormatMethodModifiers(method)}{method.ReturnType} {method.Name}({FormatParameters(method.Parameters)})");
+                AppendAttributes(lines, "    ", method.CustomAttributes);
                 foreach (var parameter in method.GenericParameters
                     .OrderBy(parameter => parameter.Index)
                     .ThenBy(parameter => parameter.Name, StringComparer.Ordinal))
@@ -76,6 +85,14 @@ public static class TypeSharpPublicAbiChecker
         }
 
         return new PublicAbiSnapshot(lines);
+    }
+
+    private static void AppendAttributes(List<string> lines, string indent, IReadOnlyList<string> attributes)
+    {
+        foreach (var attribute in attributes.OrderBy(attribute => attribute, StringComparer.Ordinal))
+        {
+            lines.Add($"{indent}attribute {attribute}");
+        }
     }
 
     private static string FormatPropertyModifiers(MetadataPropertySymbol property)
