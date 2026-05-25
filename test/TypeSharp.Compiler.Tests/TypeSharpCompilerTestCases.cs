@@ -133,40 +133,34 @@ static void TestRunnerShardSelectionIsStable()
             .ToArray());
 
     var languageProgress = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-progress.md")).Replace("\r\n", "\n");
-    AssertContains("| Current slice | Hosted release/download smoke remains the largest open 1.0 adoption evidence gap after completing broad `TS2201` reduction and simplifying the Docs deployment workflow. |", languageProgress);
+    AssertContains("| Current slice | First hosted release/download smoke is now green on `v0.1.0-preview.4`; remaining adoption work is cleanup around fallback wording and broader pre-1.0 MVP-limited areas. |", languageProgress);
     AssertContains("| Verification target | Test catalog tracker-count guard, workflow contract, diagnostic fixture README drift checks, docs contract, compiler test build, docs build, diff hygiene, workflow/docs-script forbidden-tooling scan, deployed public-docs probe, and hosted-release probe. |", languageProgress);
-    AssertContains("The `d4128c8ffb6e5b045dd71092f06f1017ce41c446` push proved Docs run `26390965036` and Regression run `26390965099` both succeed, including package-free shards, MSTest bridge smoke, and MTP package shard bridge execution, and no release-artifacts validation-failure run was created for that SHA.", languageProgress);
+    AssertContains("The `be320542569bf50cb295acc012fb81d699a007ee` push proved Docs run `26394300733`, Regression run `26394300735`, release-dispatched Docs run `26394397996`, and Release Artifacts run `26394303889` all succeed.", languageProgress);
     AssertContains("Regression run `26387486368` ran on `windows-latest` and failed because a rendered-verifier mutation test used LF-only string replacements against a CRLF checkout, and `release-artifacts.yml` run `26387485907` still failed before jobs were created", languageProgress);
     var legacyForbiddenToolingScanName = string.Concat("Python", " scan");
     AssertFalse(languageProgress.Contains(legacyForbiddenToolingScanName, StringComparison.Ordinal), "Progress ledger should use workflow/docs-script forbidden-tooling scan wording.");
     AssertContains("the shared package-free catalog is 586 cases", languageProgress);
     AssertContains("the MTP `--minimum-expected-tests 590` gate is 586 catalog cases plus one `CatalogIsExposedForPackageRunners` bridge smoke in each of the four shard assemblies", languageProgress);
-    AssertEqual(5, Regex.Matches(languageTasks, "(?m)^- \\[ \\] ").Count);
-    AssertEqual(5, Regex.Matches(languageProgress, "(?m)^\\| [^|\\r\\n]+ \\| In progress \\|").Count);
+    AssertEqual(2, Regex.Matches(languageTasks, "(?m)^- \\[ \\] ").Count);
+    AssertEqual(2, Regex.Matches(languageProgress, "(?m)^\\| [^|\\r\\n]+ \\| In progress \\|").Count);
     AssertSequence(
         [
-            "Publish a complete official download and installation path for the CLI.",
             "Make the first project path release-grade.",
-            "Make the official webpage-to-build docs path coherent.",
-            "Add release-style end-to-end adoption tests.",
-            "Stabilize download, release, and versioning metadata."
+            "Make the official webpage-to-build docs path coherent."
         ],
         Regex.Matches(languageTasks, "(?m)^- \\[ \\] (.+)$")
             .Select(match => match.Groups[1].Value)
             .ToArray());
     AssertSequence(
         [
-            "Publish official CLI download/install path",
             "Make first project path release-grade",
-            "Make official webpage-to-build docs path coherent",
-            "Add release-style end-to-end adoption tests",
-            "Stabilize download, release, and versioning metadata"
+            "Make official webpage-to-build docs path coherent"
         ],
         Regex.Matches(languageProgress, "(?m)^\\| ([^|\\r\\n]+) \\| In progress \\|")
             .Select(match => match.Groups[1].Value.Trim())
             .ToArray());
-    AssertContains("- [ ] Publish a complete official download and installation path for the CLI.", languageTasks);
-    AssertContains("| Publish official CLI download/install path | In progress |", languageProgress);
+    AssertContains("- [x] Publish a complete official download and installation path for the CLI.", languageTasks);
+    AssertContains("| Publish official CLI download/install path | Done |", languageProgress);
     AssertContains("Docs contract coverage now pins the primary Learn sidebar's opening sequence to `Overview`, `Install`, `Start Here`, then `Learning Paths`, and pins the docs home `Start Here` list to start with the Install link.", languageTasks);
     AssertContains("Docs contract coverage now asserts the Install page's create/build command blocks keep the installed-CLI console `new`/`check`/`build`/`run` sequence and library `new`/`check`/`build` sequence intact.", languageTasks);
     AssertContains("Docs contract coverage now asserts the Install page keeps archive extraction, wrapper `typesharp.cmd version`, PATH setup, and bare `typesharp version` before the first project creation command.", languageTasks);
@@ -207,8 +201,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Project Configuration and Runtime Artifacts now show `references.assemblies`, local `references.paths`, explicit `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` paths from `typesharp-runtime-net48-<tag>.zip`, `[projectReferences]`, `references.packages = []`, and checksum verification with `SHA256SUMS.txt`", languageProgress);
     AssertContains("docs contract coverage keeps Runtime Artifacts pointing Core/Runtime paths at the verified extracted runtime archive instead of repository build folders", languageProgress);
     AssertContains("Troubleshooting covers downloaded CLI host prerequisites separately from generated `net48`, missing and invalid local DLL metadata recovery through `TS2401` and `references.paths`, direct TypeSharp project-reference recovery through `[projectReferences]`", languageProgress);
-    AssertContains("- [ ] Add release-style end-to-end adoption tests.", languageTasks);
-    AssertContains("| Add release-style end-to-end adoption tests | In progress |", languageProgress);
+    AssertContains("- [x] Add release-style end-to-end adoption tests.", languageTasks);
+    AssertContains("| Add release-style end-to-end adoption tests | Done |", languageProgress);
     AssertContains("The staged VSIX path packages the VS Code extension archive shape into `typesharp-vscode-staged-test.vsix`, verifies it through the same staged `SHA256SUMS.txt`, extracts it, and verifies the bundled language server, README/Marketplace docs, package display/category/activation metadata, and TypeSharp language/grammar contribution metadata.", languageTasks);
     AssertContains("The staged release-notes path writes `RELEASE_NOTES.md`, verifies the same canonical metadata header prefix", languageTasks);
     AssertContains("exact mandatory section set/order with no unexpected `##` sections", languageTasks);
@@ -237,12 +231,12 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("The hosted smoke resolves the repository checkout, hosted download/extraction root, and clean smoke workspace paths and fails if the hosted download/extraction root or smoke workspace is under the checkout.", languageTasks);
     AssertContains("The hosted smoke resolves the repository checkout, hosted download/extraction root, and clean smoke workspace paths and fails if the hosted download/extraction root or clean workspace moves under the checkout.", languageProgress);
     AssertContains("Hardened the hosted GitHub Release smoke so it resolves the repository checkout, hosted download/extraction root, and clean smoke workspace paths and fails if the hosted download/extraction root or clean workspace is ever moved under the checkout", languageProgress);
-    AssertContains("- [ ] Stabilize download, release, and versioning metadata.", languageTasks);
-    AssertContains("| Stabilize download, release, and versioning metadata | In progress |", languageProgress);
+    AssertContains("- [x] Stabilize download, release, and versioning metadata.", languageTasks);
+    AssertContains("| Stabilize download, release, and versioning metadata | Done |", languageProgress);
     AssertContains("`typesharp version` reports CLI, compiler, language, release channel, runtime ABI/status, default generated target, CLI host target, runtime target, artifact kind, build metadata, and source revision useful for support.", languageTasks);
     AssertContains("Hosted public docs probes, README Install links, starter README recovery links, Astro canonical site metadata, rendered and hosted canonical/Open Graph URLs, and rendered and hosted sitemap URLs now use the configured GitHub Pages URL `https://naramdash.github.io/TypeSharp/`, not the stale `https://typesharp.github.io/TypeSharp/` URL that returns the legacy 404 page.", languageTasks);
     AssertContains("The docs Astro config defaults local builds to the repository base when `GITHUB_REPOSITORY` is absent, `npm run verify:rendered-install-route` rejects canonical, Open Graph, page-link, or sitemap output that loses the `/TypeSharp` base path or reintroduces the stale `https://typesharp.github.io/TypeSharp` host, and `release-artifacts.yml` repeats those canonical/Open Graph/sitemap stale-host checks against the deployed public Pages routes before release asset publication.", languageTasks);
-    AssertContains("The main 1.0 risk is not \"missing everything\"; it is that the hosted release/download evidence is still external, the latest pushed Docs and Regression workflows now succeed after removing the nonessential Docs post-deploy verifier and fixing Windows runner issues, the release workflow still needs hosted validation after moving release-tag resolution out of validation-time expressions, several supported areas remain explicitly `MVP limited`, and broader TypeScript/F#/C# parity items are intentionally represented as post-1.0 backlog in canonical docs.", languageTasks);
+    AssertContains("The main 1.0 risk is not \"missing everything\"; the latest pushed Docs, Regression, release-tag Docs dispatch, and `v0.1.0-preview.4` Release Artifacts workflows now succeed on GitHub Actions, including the hosted release/download smoke.", languageTasks);
     AssertContains("GitHub Pages API probing reports workflow deployment at `https://naramdash.github.io/TypeSharp/`, and the latest correctly cache-busted external configured Pages content probe found the project home, Install, Project Policy, `sitemap-index.xml`, and `sitemap-0.xml` routes return HTTP 200 with configured-host canonical/sitemap output and no exact legacy GitHub Pages 404 markers.", languageTasks);
     AssertContains("The current tree leaves hosted public Pages validation in the release workflow before asset publication and removes exact legacy 404 marker literals from the public Project Policy page", languageTasks);
     AssertContains("Install canonical URL pages, Install Open Graph URL pages, Install `/TypeSharp` base-path pages, stale legacy `https://typesharp.github.io/TypeSharp` page URLs, sitemap index URL pages, sitemap public-route URL pages, stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
@@ -449,16 +443,16 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Added local archive metadata pre-upload verification so CLI/runtime README provenance and VSIX package identity/language/grammar contribution drift fails before workflow artifact upload or GitHub Release mutation.", languageProgress);
     AssertContains("Added local archive README exact-string contract coverage so release workflow contract preserves pre-upload CLI/runtime README tag, build metadata, source revision, wrapper/PATH guidance, Runtime ABI/status, target framework, and runtime DLL list checks before a tag run.", languageProgress);
     AssertContains("Project Policy now records the manifest scope, the generated release notes and Install page state that detached signatures and Authenticode signing are not published for preview releases yet, and release workflow contract coverage asserts `SHA256SUMS.txt` is generated from release assets while excluding generated release notes and the manifest itself", languageProgress);
-    AssertContains("but a real hosted release download has not yet been smoke-tested from the public page", languageTasks);
-    AssertContains("remaining evidence requires the first tagged release run to pass this smoke", languageTasks);
-    AssertContains("The release workflow now has hosted asset and public-docs gates, but the remaining 1.0 blocker is still external evidence: a real tagged GitHub Release must publish assets and pass the hosted download/checksum/version/build smoke.", languageProgress);
-    AssertContains("still has no hosted release evidence because `gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries.", languageProgress);
-    AssertContains("Current configured public Pages probing reports the configured `https://naramdash.github.io/TypeSharp/` project home, Install, Project Policy, `sitemap-index.xml`, and `sitemap-0.xml` routes return HTTP 200, contain the configured host, and do not contain exact legacy GitHub Pages 404 markers, so the remaining external adoption evidence gap is the first tagged hosted release download/checksum/version/build smoke rather than the configured Pages route availability smoke.", languageProgress);
-    AssertContains("Run the first tagged release and confirm the hosted release asset smoke passes against real public assets.", languageProgress);
+    AssertContains("`v0.1.0-preview.4` passed the hosted release download/checksum/version/build smoke from the public release page", languageTasks);
+    AssertContains("`v0.1.0-preview.4` Release Artifacts run `26394303889` passed this smoke against real public assets.", languageTasks);
+    AssertContains("First hosted release/download smoke is now green on `v0.1.0-preview.4`", languageProgress);
+    AssertContains("Release Artifacts run `26394303889` all succeed", languageProgress);
+    AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
+    AssertContains("The pushed `be320542569bf50cb295acc012fb81d699a007ee` Docs, Regression, release-dispatched Docs, and Release Artifacts runs all completed successfully.", languageProgress);
     AssertContains("Replace remaining fallback language after a hosted release asset is available", languageProgress);
-    AssertContains("Run the first tagged release, verify the hosted asset smoke, then remove fallback-first wording when publication is active", languageProgress);
-    AssertContains("Run the first tagged release and capture the hosted smoke pass", languageProgress);
-    AssertContains("Run the first tagged release and verify the hosted metadata/checksum smoke result from public assets", languageProgress);
+    AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
+    AssertContains("Reopen only if release-style adoption coverage changes.", languageProgress);
+    AssertContains("Reopen only if release metadata, versioning, or checksum policy changes.", languageProgress);
 
     var defaults = TestRunnerSettings.Create([]);
     AssertEqual(TestShardDefaults.ShardIndex, defaults.ShardIndex);
