@@ -1,6 +1,6 @@
 # TypeSharp Language And Adoption 1.0 Tasks
 
-Last audited: 2026-05-25
+Last audited: 2026-05-26
 
 This file records the current language implementation level, the end-to-end user adoption level, and the remaining gaps before TypeSharp can honestly call the language and toolchain surface `1.0`.
 
@@ -327,7 +327,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
 - [x] Harden TypeSharp-authored class/interface/member semantics.
   - 1.0 TypeSharp-authored classes lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, and typed instance/static `event` members backed by named delegate types.
   - 1.0 TypeSharp-authored interfaces lower to named CLR interfaces with optional type parameters, supported generic constraints, `partial`, method signatures, and typed instance `event` members backed by named delegate types.
-  - C# `net48` consumer smokes cover generated classes, generated class instance/static methods, generated class instance/static value reads/writes, generated class instance/static events, generated interfaces, generated interface events, generic classes, generic constraints, and partial declarations.
+  - C# `net48` consumer smokes cover generated classes, generated class instance/static methods, generated class instance/static value reads/writes, generated class instance/static getter-only property reads, generated class instance/static events, generated interfaces, generated interface events, generic classes, generic constraints, and partial declarations.
   - TypeSharp-authored constructor bodies, constructor parameter capture in member initializers/bodies, constructor default parameters, property setters or custom accessors, custom add/remove events, interface static events, generated event invocation helpers, explicit inheritance or interface implementation clauses, static member forms beyond class static methods/values/events/properties, abstract/virtual/override members, interface default implementations, indexers, operators, class/interface member attributes beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0.
   - Unsupported class/interface member forms now report deterministic `TS2210` diagnostics before backend emission, and build-stop coverage verifies generated C# source/project/assembly output is not produced for those forms.
 
