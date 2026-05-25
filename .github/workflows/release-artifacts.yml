@@ -1464,9 +1464,9 @@ jobs:
             & gh @createArgs
           }
 
-          $releaseForLatest = gh api "repos/${{ github.repository }}/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          $releaseForLatest = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
           $expectedMakeLatest = if ($expectedPrerelease) { 'false' } else { 'true' }
-          gh api "repos/${{ github.repository }}/releases/$($releaseForLatest.id)" -X PATCH -f "make_latest=$expectedMakeLatest" | Out-Null
+          gh api "repos/$env:GITHUB_REPOSITORY/releases/$($releaseForLatest.id)" -X PATCH -f "make_latest=$expectedMakeLatest" | Out-Null
 
       - name: Smoke published GitHub Release assets
         env:
@@ -1584,7 +1584,7 @@ jobs:
             return $asset
           }
 
-          $releaseBase = "https://github.com/${{ github.repository }}/releases/download/$env:RELEASE_TAG"
+          $releaseBase = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/$env:RELEASE_TAG"
           $downloadRoot = Join-Path $env:RUNNER_TEMP "typesharp-hosted-release-smoke"
           $installRoot = Join-Path $downloadRoot "typesharp-cli"
           $workspaceRoot = Join-Path $downloadRoot "workspace"
@@ -1613,11 +1613,11 @@ jobs:
 
           $expectedPrerelease = $env:RELEASE_TAG -like 'v0.*' -or $env:RELEASE_TAG -like '*-*'
           $expectedChannel = if ($expectedPrerelease) { 'Preview' } else { 'Stable' }
-          $releaseDownloadMetadata = gh api "repos/${{ github.repository }}/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          $releaseDownloadMetadata = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
           if ($releaseDownloadMetadata.tag_name -ne $env:RELEASE_TAG) {
             throw "Hosted release API tag '$($releaseDownloadMetadata.tag_name)' did not match '$env:RELEASE_TAG' before asset download."
           }
-          $expectedReleaseUrl = "https://github.com/${{ github.repository }}/releases/tag/$env:RELEASE_TAG"
+          $expectedReleaseUrl = "https://github.com/$env:GITHUB_REPOSITORY/releases/tag/$env:RELEASE_TAG"
           if ([string] $releaseDownloadMetadata.html_url -ne $expectedReleaseUrl) {
             throw "Hosted release API html_url '$($releaseDownloadMetadata.html_url)' did not match '$expectedReleaseUrl' before asset download."
           }
@@ -1799,7 +1799,7 @@ jobs:
           if ($release.tagName -ne $env:RELEASE_TAG) {
             throw "Release page tag '$($release.tagName)' did not match '$env:RELEASE_TAG'."
           }
-          $expectedReleaseUrl = "https://github.com/${{ github.repository }}/releases/tag/$env:RELEASE_TAG"
+          $expectedReleaseUrl = "https://github.com/$env:GITHUB_REPOSITORY/releases/tag/$env:RELEASE_TAG"
           if ($release.url -ne $expectedReleaseUrl) {
             throw "Release page URL '$($release.url)' did not match '$expectedReleaseUrl'."
           }
@@ -1841,7 +1841,7 @@ jobs:
           }
           $latestRelease = $null
           try {
-            $latestRelease = gh api "repos/${{ github.repository }}/releases/latest" | ConvertFrom-Json
+            $latestRelease = gh api "repos/$env:GITHUB_REPOSITORY/releases/latest" | ConvertFrom-Json
           }
           catch {
             $latestRelease = $null

@@ -18463,9 +18463,10 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("'--verify-tag'", workflow);
     AssertContains("if ($expectedPrerelease) {\n              $createArgs += '--prerelease'\n              $createArgs += '--latest=false'\n            }\n            else {\n              $createArgs += '--latest'\n            }", workflow);
     AssertContains("& gh @createArgs", workflow);
-    AssertContains("$releaseForLatest = gh api \"repos/${{ github.repository }}/releases/tags/$env:RELEASE_TAG\" | ConvertFrom-Json", workflow);
+    AssertContains("$releaseForLatest = gh api \"repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG\" | ConvertFrom-Json", workflow);
     AssertContains("$expectedMakeLatest = if ($expectedPrerelease) { 'false' } else { 'true' }", workflow);
-    AssertContains("gh api \"repos/${{ github.repository }}/releases/$($releaseForLatest.id)\" -X PATCH -f \"make_latest=$expectedMakeLatest\" | Out-Null", workflow);
+    AssertContains("gh api \"repos/$env:GITHUB_REPOSITORY/releases/$($releaseForLatest.id)\" -X PATCH -f \"make_latest=$expectedMakeLatest\" | Out-Null", workflow);
+    AssertFalse(workflow.Contains("${{ github.repository }}", StringComparison.Ordinal), "Large release workflow PowerShell blocks should use GITHUB_REPOSITORY instead of GitHub expressions to stay under GitHub's expression length limit.");
     AssertContains("Smoke published GitHub Release assets", workflow);
     AssertContains("typesharp-hosted-release-smoke", workflow);
     AssertContains("$repositoryRoot = (Resolve-Path $env:GITHUB_WORKSPACE).Path", workflow);
@@ -18507,9 +18508,9 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Hosted release API asset '$assetName' digest was '$($asset.digest)' instead of sha256:<64 lowercase hex chars>.", workflow);
     AssertContains("$expectedPrerelease = $env:RELEASE_TAG -like 'v0.*' -or $env:RELEASE_TAG -like '*-*'", workflow);
     AssertContains("$expectedChannel = if ($expectedPrerelease) { 'Preview' } else { 'Stable' }", workflow);
-    AssertContains("$releaseDownloadMetadata = gh api \"repos/${{ github.repository }}/releases/tags/$env:RELEASE_TAG\" | ConvertFrom-Json", workflow);
+    AssertContains("$releaseDownloadMetadata = gh api \"repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG\" | ConvertFrom-Json", workflow);
     AssertContains("Hosted release API tag '$($releaseDownloadMetadata.tag_name)' did not match '$env:RELEASE_TAG' before asset download.", workflow);
-    AssertContains("$expectedReleaseUrl = \"https://github.com/${{ github.repository }}/releases/tag/$env:RELEASE_TAG\"", workflow);
+    AssertContains("$expectedReleaseUrl = \"https://github.com/$env:GITHUB_REPOSITORY/releases/tag/$env:RELEASE_TAG\"", workflow);
     AssertContains("Hosted release API html_url '$($releaseDownloadMetadata.html_url)' did not match '$expectedReleaseUrl' before asset download.", workflow);
     AssertContains("Hosted release API title '$($releaseDownloadMetadata.name)' did not match 'TypeSharp $env:RELEASE_TAG' before asset download.", workflow);
     AssertContains("Hosted release API reports '$env:RELEASE_TAG' as a draft before asset download.", workflow);
@@ -18586,7 +18587,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("gh release view $env:RELEASE_TAG --json assets,body,tagName,name,isDraft,isPrerelease,publishedAt,url", workflow);
     AssertContains("if ($release.tagName -ne $env:RELEASE_TAG) {", workflow);
     AssertContains("Release page tag '$($release.tagName)' did not match '$env:RELEASE_TAG'.", workflow);
-    AssertContains("$expectedReleaseUrl = \"https://github.com/${{ github.repository }}/releases/tag/$env:RELEASE_TAG\"", workflow);
+    AssertContains("$expectedReleaseUrl = \"https://github.com/$env:GITHUB_REPOSITORY/releases/tag/$env:RELEASE_TAG\"", workflow);
     AssertContains("if ($release.url -ne $expectedReleaseUrl) {", workflow);
     AssertContains("Release page URL '$($release.url)' did not match '$expectedReleaseUrl'.", workflow);
     AssertContains("$releaseAssetNames = @($release.assets | ForEach-Object { $_.name } | Sort-Object)", workflow);
@@ -18618,7 +18619,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("if ($release.isPrerelease -ne $expectedPrerelease) {", workflow);
     AssertContains("Release prerelease flag '$($release.isPrerelease)' did not match expected '$expectedPrerelease'", workflow);
     AssertContains("$latestRelease = $null", workflow);
-    AssertContains("gh api \"repos/${{ github.repository }}/releases/latest\" | ConvertFrom-Json", workflow);
+    AssertContains("gh api \"repos/$env:GITHUB_REPOSITORY/releases/latest\" | ConvertFrom-Json", workflow);
     AssertContains("if ($expectedPrerelease -and $null -ne $latestRelease -and $latestRelease.tag_name -eq $env:RELEASE_TAG) {", workflow);
     AssertContains("Preview release '$env:RELEASE_TAG' was marked as the repository latest release.", workflow);
     AssertContains("if (-not $expectedPrerelease -and ($null -eq $latestRelease -or $latestRelease.tag_name -ne $env:RELEASE_TAG)) {", workflow);
