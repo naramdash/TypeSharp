@@ -65,6 +65,7 @@ This file tracks implementation progress for [lang-1.0-tasks.md](lang-1.0-tasks.
 
 ### 2026-05-25
 
+- Reconciled the release metadata tracker after the `v0.1.0-preview.4` hosted smoke: `agent/lang-1.0-tasks.md` no longer describes hosted release evidence as pending or absent, and now points at Release Artifacts run `26394303889` as the real post-publication proof.
 - Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication, updated rendered/docs contract checks to use the new heading, and closed the first-project plus official webpage-to-build adoption rows.
 - Published and verified `v0.1.0-preview.4`: Docs run `26394300733`, Regression run `26394300735`, release-dispatched Docs run `26394397996`, and Release Artifacts run `26394303889` all succeeded on GitHub Actions for commit `be320542569bf50cb295acc012fb81d699a007ee`.
 - Fixed the hosted release path issues exposed by real tags: `v0.1.0-preview.1` failed because release smoke inherited `CONFIGURATION=Release` while expecting Debug runtime output; `v0.1.0-preview.2` failed because an intended missing-host wrapper check left `$LASTEXITCODE` as the step exit code; `v0.1.0-preview.3` published assets but failed final hosted smoke because raw `dotnet build` helper projects inherited Release output while later checks expected `bin\Debug\net48`.
