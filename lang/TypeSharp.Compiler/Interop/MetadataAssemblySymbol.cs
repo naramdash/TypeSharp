@@ -42,6 +42,8 @@ public sealed record MetadataTypeSymbol(
 
     public IReadOnlyList<MetadataMethodSymbol> Operators { get; init; } = [];
 
+    public IReadOnlyList<MetadataGenericParameterSymbol> GenericParameters { get; init; } = [];
+
     public string? BaseTypeName { get; init; }
 
     public IReadOnlyList<string> InterfaceNames { get; init; } = [];
@@ -60,6 +62,7 @@ public sealed record MetadataMethodSymbol(
 }
 
 public sealed record MetadataGenericParameterSymbol(
+    int Index,
     string Name,
     bool HasReferenceTypeConstraint,
     bool HasNotNullableValueTypeConstraint,

@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The event metadata ABI evidence push `27b55b37123f7e332bf5ed7c1a384ef6729eb99d` proved Docs run `26419767649` and Regression run `26419767602` both completed successfully", languageProgress);
+    AssertContains("The public ABI snapshot depth push `6e109db613f262eff8dd04b7153f1f4913a9808b` proved Docs run `26420665505` and Regression run `26420665512` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -459,6 +459,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored event metadata ABI evidence locally", languageProgress);
     AssertContains("Promoted the generated public ABI snapshot depth locally", languageProgress);
+    AssertContains("Promoted the generated generic constraint public ABI snapshot evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16334,18 +16335,18 @@ static void DocsSiteContractIsStable()
     AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
     AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Static method on generated module/container; `params` and optional/default metadata for the supported suffix rules", csharpTypeModelPage);
-    AssertContains("Generic function plus generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default, and generic optional/default parameter subsets", csharpTypeModelPage);
+    AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default, generic constraint, and generic optional/default parameter subsets", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
     AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint metadata snapshots, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named CLR delegate with optional generic parameters, supported C# 7.3-compatible generic constraints, declaration attributes, typed parameters, optional `params`, and an explicit or `void` return", csharpTypeModelPage);
-    AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
-    AssertContains("including declaration attribute and `params` metadata", csharpTypeModelPage);
+    AssertContains("Delegate declaration backend snapshots, generated public ABI snapshots, and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
+    AssertContains("including declaration attribute, generic constraint, and `params` metadata", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class/interface event backend snapshots, generated public ABI snapshots, generated metadata checks, and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
@@ -32146,6 +32147,22 @@ static void CliBuildCompilesGenericTypeDeclarationApi()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericTypes.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic type declaration API.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "GenericTypes",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/GenericTypes.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated generic type assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.GenericTypes.Box`1", abiSnapshotText);
+        AssertContains("  generic T", abiSnapshotText);
+        AssertContains("  method !0 Keep(!0 value)", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "GenericTypesConsumer.csproj", """
@@ -32242,6 +32259,28 @@ static void CliBuildCompilesGenericConstraintApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericConstraints.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic constraint APIs.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "GenericConstraints",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/GenericConstraints.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated generic constraint assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.GenericConstraints.Repository`1", abiSnapshotText);
+        AssertContains("  generic T : class, Samples.GenericConstraints.IEntity, new()", abiSnapshotText);
+        AssertContains("  method !0 Keep(!0 value)", abiSnapshotText);
+        AssertContains("type Samples.GenericConstraints.IFactory", abiSnapshotText);
+        AssertContains("  method !!0 Create()", abiSnapshotText);
+        AssertContains("    generic T : class, new()", abiSnapshotText);
+        AssertContains("type Samples.GenericConstraints.Module", abiSnapshotText);
+        AssertContains("  method static !!0 keep(!!0 value)", abiSnapshotText);
+        AssertContains("    generic T : class, Samples.GenericConstraints.IEntity", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

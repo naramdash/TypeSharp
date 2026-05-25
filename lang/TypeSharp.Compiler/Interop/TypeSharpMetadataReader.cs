@@ -104,6 +104,7 @@ public static class TypeSharpMetadataReader
                     BaseTypeName = baseTypeName,
                     Constructors = ReadPublicConstructors(reader, type, assemblyHasNullableMetadata),
                     Operators = ReadPublicOperators(reader, type, assemblyHasNullableMetadata),
+                    GenericParameters = ReadGenericParameters(reader, type.GetGenericParameters()),
                     HasPublicParameterlessConstructor = HasPublicParameterlessConstructor(reader, type),
                     InterfaceNames = ReadInterfaceNames(reader, type),
                     IsInterface = type.Attributes.HasFlag(System.Reflection.TypeAttributes.Interface),
@@ -305,6 +306,7 @@ public static class TypeSharpMetadataReader
                 .ToArray();
 
             parameters.Add(new MetadataGenericParameterSymbol(
+                parameter.Index,
                 reader.GetString(parameter.Name),
                 attributes.HasFlag(System.Reflection.GenericParameterAttributes.ReferenceTypeConstraint),
                 attributes.HasFlag(System.Reflection.GenericParameterAttributes.NotNullableValueTypeConstraint),

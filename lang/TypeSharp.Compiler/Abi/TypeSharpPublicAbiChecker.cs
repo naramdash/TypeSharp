@@ -15,6 +15,13 @@ public static class TypeSharpPublicAbiChecker
         {
             lines.Add($"type {type.FullName}");
 
+            foreach (var parameter in type.GenericParameters
+                .OrderBy(parameter => parameter.Index)
+                .ThenBy(parameter => parameter.Name, StringComparer.Ordinal))
+            {
+                lines.Add($"  generic {FormatGenericParameter(parameter)}");
+            }
+
             foreach (var constructor in type.Constructors
                 .OrderBy(constructor => FormatParameters(constructor.Parameters), StringComparer.Ordinal))
             {
@@ -41,6 +48,12 @@ public static class TypeSharpPublicAbiChecker
                 .ThenBy(method => FormatParameters(method.Parameters), StringComparer.Ordinal))
             {
                 lines.Add($"  method {FormatMethodModifiers(method)}{method.ReturnType} {method.Name}({FormatParameters(method.Parameters)})");
+                foreach (var parameter in method.GenericParameters
+                    .OrderBy(parameter => parameter.Index)
+                    .ThenBy(parameter => parameter.Name, StringComparer.Ordinal))
+                {
+                    lines.Add($"    generic {FormatGenericParameter(parameter)}");
+                }
             }
         }
 
@@ -128,6 +141,31 @@ public static class TypeSharpPublicAbiChecker
 
     private static string FormatParameters(IReadOnlyList<MetadataParameterSymbol> parameters) =>
         string.Join(", ", parameters.Select(FormatParameter));
+
+    private static string FormatGenericParameter(MetadataGenericParameterSymbol parameter)
+    {
+        var constraints = new List<string>();
+        if (parameter.HasReferenceTypeConstraint)
+        {
+            constraints.Add("class");
+        }
+
+        if (parameter.HasNotNullableValueTypeConstraint)
+        {
+            constraints.Add("struct");
+        }
+
+        constraints.AddRange(parameter.TypeConstraints.OrderBy(constraint => constraint, StringComparer.Ordinal));
+
+        if (parameter.HasDefaultConstructorConstraint)
+        {
+            constraints.Add("new()");
+        }
+
+        return constraints.Count == 0
+            ? parameter.Name
+            : $"{parameter.Name} : {string.Join(", ", constraints)}";
+    }
 
     private static string FormatParameter(MetadataParameterSymbol parameter)
     {
