@@ -69,19 +69,41 @@ public sealed class TypeSharpCompilerMSTestCatalog
 
     private static string FindRepositoryRoot()
     {
-        var directory = AppContext.BaseDirectory;
+        var candidates = new[]
+        {
+            Environment.GetEnvironmentVariable("GITHUB_WORKSPACE") ?? string.Empty,
+            Environment.CurrentDirectory,
+            AppContext.BaseDirectory
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var repositoryRoot = TryFindRepositoryRoot(candidate);
+            if (repositoryRoot.Length > 0)
+            {
+                return repositoryRoot;
+            }
+        }
+
+        throw new DirectoryNotFoundException("Could not find the TypeSharp repository root.");
+    }
+
+    private static string TryFindRepositoryRoot(string startDirectory)
+    {
+        var directory = startDirectory;
         while (!string.IsNullOrEmpty(directory))
         {
-            if (File.Exists(Path.Combine(directory, "agent.md")) &&
+            if ((File.Exists(Path.Combine(directory, "AGENTS.md")) ||
+                 File.Exists(Path.Combine(directory, "agent.md"))) &&
                 File.Exists(Path.Combine(directory, "Directory.Build.props")) &&
                 Directory.Exists(Path.Combine(directory, "test")))
             {
                 return directory;
             }
 
-            directory = Directory.GetParent(directory)?.FullName;
+            directory = Directory.GetParent(directory)?.FullName ?? string.Empty;
         }
 
-        throw new DirectoryNotFoundException("Could not find the TypeSharp repository root.");
+        return string.Empty;
     }
 }
