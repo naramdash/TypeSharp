@@ -1277,8 +1277,9 @@ public static class CSharpSourceBackend
             var type = GetValueDeclarationType(node, initializer);
             var value = EmitExpression(initializer, type);
             var staticModifier = HasStaticModifier(node) ? " static" : string.Empty;
+            var accessorText = IsMutableValueDeclaration(node) ? "{ get; set; }" : "{ get; }";
 
-            _builder.AppendLine($"        {visibility}{staticModifier} {type} {name} {{ get; }} = {value};");
+            _builder.AppendLine($"        {visibility}{staticModifier} {type} {name} {accessorText} = {value};");
         }
 
         private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
@@ -6420,19 +6421,29 @@ public static class CSharpSourceBackend
 
         private static bool CanLowerClassPropertyDeclaration(SyntaxNode node) =>
             IsClassPropertyDeclaration(node) &&
-            !IsMutableValueDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
-            node.Children
-                .Where(child => child.Kind == SyntaxKind.AccessorBlock)
-                .SelectMany(child => child.Children)
-                .Count(child => child.Kind == SyntaxKind.AccessorDeclaration) == 1 &&
-            node.Children
+            HasSupportedClassPropertyAccessors(node);
+
+        private static bool HasSupportedClassPropertyAccessors(SyntaxNode node)
+        {
+            var accessors = node.Children
                 .Where(child => child.Kind == SyntaxKind.AccessorBlock)
                 .SelectMany(child => child.Children)
                 .Where(child => child.Kind == SyntaxKind.AccessorDeclaration)
-                .All(accessor => accessor.Children.Count == 1 &&
-                    accessor.Children.Any(child => child.Kind == SyntaxKind.GetKeyword));
+                .ToArray();
+
+            if (accessors.Any(accessor => accessor.Children.Any(child => child.Kind is not (SyntaxKind.GetKeyword or SyntaxKind.SetKeyword))))
+            {
+                return false;
+            }
+
+            var getterCount = accessors.Count(accessor => accessor.Children.Any(child => child.Kind == SyntaxKind.GetKeyword));
+            var setterCount = accessors.Count(accessor => accessor.Children.Any(child => child.Kind == SyntaxKind.SetKeyword));
+            return IsMutableValueDeclaration(node)
+                ? accessors.Length == 2 && getterCount == 1 && setterCount == 1
+                : accessors.Length == 1 && getterCount == 1 && setterCount == 0;
+        }
 
         private static bool IsClassPropertyDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&

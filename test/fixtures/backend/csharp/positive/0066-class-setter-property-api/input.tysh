@@ -1,0 +1,9 @@
+namespace Samples.Properties
+
+public class RuntimeOptions {
+  public let mut Mode: string = "debug" { get set }
+
+  public static let mut Channel: string = "local" { get set }
+
+  public fun Echo(value: string): string = value
+}

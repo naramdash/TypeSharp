@@ -599,13 +599,8 @@ public static class TypeSharpTypeChecker
         {
             var isValid = true;
             var isStatic = HasStaticModifier(node);
+            var isMutable = IsMutableValueDeclaration(node);
             var propertyKind = isStatic ? "class static properties" : "class instance properties";
-
-            if (IsMutableValueDeclaration(node))
-            {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class properties must use immutable `let`; property setters are not supported in this slice.");
-                isValid = false;
-            }
 
             if (!TryGetDirectTypeAnnotation(node, out var annotation))
             {
@@ -622,17 +617,42 @@ public static class TypeSharpTypeChecker
             foreach (var accessorBlock in node.Children.Where(child => child.Kind == SyntaxKind.AccessorBlock))
             {
                 var accessors = accessorBlock.Children.Where(child => child.Kind == SyntaxKind.AccessorDeclaration).ToArray();
-                if (accessors.Length != 1 || !accessors[0].Children.Any(child => child.IsToken && child.Kind == SyntaxKind.GetKeyword))
+                foreach (var accessor in accessors)
                 {
-                    ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored class properties support only a single getter accessor in this slice.");
-                    isValid = false;
-                    continue;
+                    if (accessor.Children.Any(child => child.Kind is not (SyntaxKind.GetKeyword or SyntaxKind.SetKeyword)))
+                    {
+                        ReportUnsupportedTypeSharpMember(accessor, "TypeSharp-authored class property accessors cannot declare modifiers or custom bodies in this slice.");
+                        isValid = false;
+                    }
                 }
 
-                if (accessors[0].Children.Any(child => child.Kind != SyntaxKind.GetKeyword))
+                var getterCount = accessors.Count(accessor => accessor.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.GetKeyword));
+                var setterCount = accessors.Count(accessor => accessor.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.SetKeyword));
+                if (isMutable)
                 {
-                    ReportUnsupportedTypeSharpMember(accessors[0], "TypeSharp-authored class property getter accessors cannot declare modifiers in this slice.");
-                    isValid = false;
+                    if (accessors.Length != 2 || getterCount != 1 || setterCount != 1)
+                    {
+                        ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored mutable class properties must declare exactly one getter and one setter accessor in this slice.");
+                        isValid = false;
+                    }
+                }
+                else
+                {
+                    if (accessors.Length == 1 && getterCount == 1 && setterCount == 0)
+                    {
+                        continue;
+                    }
+
+                    if (setterCount > 0)
+                    {
+                        ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored class properties with setters must use mutable `let mut`.");
+                        isValid = false;
+                    }
+                    else
+                    {
+                        ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored class properties support only getter-only or mutable get/set auto-property accessors in this slice.");
+                        isValid = false;
+                    }
                 }
             }
 
