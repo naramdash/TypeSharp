@@ -1,0 +1,9 @@
+namespace Samples.Properties
+
+public class BuildInfo {
+  public let Name: string = "build" { get }
+
+  public static let Version: string = "1.0" { get }
+
+  public fun Echo(value: string): string = value
+}

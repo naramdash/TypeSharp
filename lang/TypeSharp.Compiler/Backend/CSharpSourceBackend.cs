@@ -1068,7 +1068,8 @@ public static class CSharpSourceBackend
             var hasConstructor = HasClassConstructorParameterList(node);
             var members = node.Children
                 .Where(child => ((child.Kind is SyntaxKind.EventDeclaration or SyntaxKind.FunctionDeclaration) && !IsAmbientDeclaration(child))
-                    || CanLowerClassValueDeclaration(child))
+                    || CanLowerClassValueDeclaration(child)
+                    || CanLowerClassPropertyDeclaration(child))
                 .ToArray();
 
             if (hasConstructor)
@@ -1089,7 +1090,14 @@ public static class CSharpSourceBackend
                 }
                 else if (members[index].Kind == SyntaxKind.ValueDeclaration)
                 {
-                    EmitClassValueDeclaration(members[index]);
+                    if (IsClassPropertyDeclaration(members[index]))
+                    {
+                        EmitClassPropertyDeclaration(members[index]);
+                    }
+                    else
+                    {
+                        EmitClassValueDeclaration(members[index]);
+                    }
                 }
                 else
                 {
@@ -1259,6 +1267,18 @@ public static class CSharpSourceBackend
             var storage = GetClassValueStorageModifier(node);
 
             _builder.AppendLine($"        {visibility} {storage}{type} {name} = {value};");
+        }
+
+        private void EmitClassPropertyDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetLocalDeclarationName(node);
+            var initializer = GetInitializerExpression(node);
+            var type = GetValueDeclarationType(node, initializer);
+            var value = EmitExpression(initializer, type);
+            var staticModifier = HasStaticModifier(node) ? " static" : string.Empty;
+
+            _builder.AppendLine($"        {visibility}{staticModifier} {type} {name} {{ get; }} = {value};");
         }
 
         private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
@@ -6393,9 +6413,30 @@ public static class CSharpSourceBackend
 
         private static bool CanLowerClassValueDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&
+            !IsClassPropertyDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
             node.Children.All(child => child.Kind != SyntaxKind.AccessorBlock);
+
+        private static bool CanLowerClassPropertyDeclaration(SyntaxNode node) =>
+            IsClassPropertyDeclaration(node) &&
+            !IsMutableValueDeclaration(node) &&
+            TryGetDirectTypeAnnotation(node, out _) &&
+            GetInitializerExpression(node) is not null &&
+            node.Children
+                .Where(child => child.Kind == SyntaxKind.AccessorBlock)
+                .SelectMany(child => child.Children)
+                .Count(child => child.Kind == SyntaxKind.AccessorDeclaration) == 1 &&
+            node.Children
+                .Where(child => child.Kind == SyntaxKind.AccessorBlock)
+                .SelectMany(child => child.Children)
+                .Where(child => child.Kind == SyntaxKind.AccessorDeclaration)
+                .All(accessor => accessor.Children.Count == 1 &&
+                    accessor.Children.Any(child => child.Kind == SyntaxKind.GetKeyword));
+
+        private static bool IsClassPropertyDeclaration(SyntaxNode node) =>
+            node.Kind == SyntaxKind.ValueDeclaration &&
+            node.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock);
 
         private static bool HasClassConstructorParameterList(SyntaxNode node) =>
             node.Kind == SyntaxKind.ClassDeclaration &&

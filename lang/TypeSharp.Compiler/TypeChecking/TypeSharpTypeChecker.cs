@@ -565,6 +565,12 @@ public static class TypeSharpTypeChecker
 
         private void CheckClassValueMember(SyntaxNode node, TypeScope scope)
         {
+            if (node.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock))
+            {
+                CheckClassPropertyMember(node, scope);
+                return;
+            }
+
             var isValid = true;
             var isStatic = HasStaticModifier(node);
             var valueKind = isStatic ? "class static values" : "class instance values";
@@ -580,10 +586,54 @@ public static class TypeSharpTypeChecker
                 isValid = false;
             }
 
-            if (node.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock))
+            if (!isValid)
             {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class properties with accessor blocks are not part of the 1.0 class member subset.");
+                return;
+            }
+
+            ReportPublicBoundaryLeaks(annotation, scope);
+            CheckValueDeclaration(node, new TypeScope(scope));
+        }
+
+        private void CheckClassPropertyMember(SyntaxNode node, TypeScope scope)
+        {
+            var isValid = true;
+            var isStatic = HasStaticModifier(node);
+            var propertyKind = isStatic ? "class static properties" : "class instance properties";
+
+            if (IsMutableValueDeclaration(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class properties must use immutable `let`; property setters are not supported in this slice.");
                 isValid = false;
+            }
+
+            if (!TryGetDirectTypeAnnotation(node, out var annotation))
+            {
+                ReportUnsupportedTypeSharpMember(node, $"TypeSharp-authored {propertyKind} must declare an explicit CLR-visible type.");
+                isValid = false;
+            }
+
+            if (!HasInitializer(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, $"TypeSharp-authored {propertyKind} must declare an initializer.");
+                isValid = false;
+            }
+
+            foreach (var accessorBlock in node.Children.Where(child => child.Kind == SyntaxKind.AccessorBlock))
+            {
+                var accessors = accessorBlock.Children.Where(child => child.Kind == SyntaxKind.AccessorDeclaration).ToArray();
+                if (accessors.Length != 1 || !accessors[0].Children.Any(child => child.IsToken && child.Kind == SyntaxKind.GetKeyword))
+                {
+                    ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored class properties support only a single getter accessor in this slice.");
+                    isValid = false;
+                    continue;
+                }
+
+                if (accessors[0].Children.Any(child => child.Kind != SyntaxKind.GetKeyword))
+                {
+                    ReportUnsupportedTypeSharpMember(accessors[0], "TypeSharp-authored class property getter accessors cannot declare modifiers in this slice.");
+                    isValid = false;
+                }
             }
 
             if (!isValid)
