@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The public ABI snapshot depth push `6e109db613f262eff8dd04b7153f1f4913a9808b` proved Docs run `26420665505` and Regression run `26420665512` both completed successfully", languageProgress);
+    AssertContains("The generic ABI constraint push `13a018d7669e62d8efe12a0ab2afbecf768e6770` proved Docs run `26421462160` and Regression run `26421462158` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -460,6 +460,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the TypeSharp-authored event metadata ABI evidence locally", languageProgress);
     AssertContains("Promoted the generated public ABI snapshot depth locally", languageProgress);
     AssertContains("Promoted the generated generic constraint public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened the generated generic constraint public ABI snapshot evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16342,11 +16343,11 @@ static void DocsSiteContractIsStable()
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint metadata snapshots, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
-    AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint metadata snapshots, partial declaration, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named CLR delegate with optional generic parameters, supported C# 7.3-compatible generic constraints, declaration attributes, typed parameters, optional `params`, and an explicit or `void` return", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots, generated public ABI snapshots, and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
-    AssertContains("including declaration attribute, generic constraint, and `params` metadata", csharpTypeModelPage);
+    AssertContains("including declaration attribute, generic constraint metadata snapshots, and `params` metadata", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class/interface event backend snapshots, generated public ABI snapshots, generated metadata checks, and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
@@ -32239,6 +32240,12 @@ static void CliBuildCompilesGenericConstraintApi()
             public interface IFactory {
               fun Create<T>(): T where T: class + new()
             }
+
+            public interface IRegistry<T> where T: class + IEntity {
+              fun Get(): T
+            }
+
+            public delegate Project<T>(value: T): string where T: class + IEntity
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -32256,6 +32263,9 @@ static void CliBuildCompilesGenericConstraintApi()
         AssertContains("where T : class, IEntity, new()", generatedSource);
         AssertContains("T Create<T>()", generatedSource);
         AssertContains("where T : class, new();", generatedSource);
+        AssertContains("public interface IRegistry<T>", generatedSource);
+        AssertContains("where T : class, IEntity", generatedSource);
+        AssertContains("public delegate string Project<T>(T value)", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "GenericConstraints.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with generic constraint APIs.");
@@ -32278,9 +32288,15 @@ static void CliBuildCompilesGenericConstraintApi()
         AssertContains("type Samples.GenericConstraints.IFactory", abiSnapshotText);
         AssertContains("  method !!0 Create()", abiSnapshotText);
         AssertContains("    generic T : class, new()", abiSnapshotText);
+        AssertContains("type Samples.GenericConstraints.IRegistry`1", abiSnapshotText);
+        AssertContains("  generic T : class, Samples.GenericConstraints.IEntity", abiSnapshotText);
+        AssertContains("  method !0 Get()", abiSnapshotText);
         AssertContains("type Samples.GenericConstraints.Module", abiSnapshotText);
         AssertContains("  method static !!0 keep(!!0 value)", abiSnapshotText);
         AssertContains("    generic T : class, Samples.GenericConstraints.IEntity", abiSnapshotText);
+        AssertContains("type Samples.GenericConstraints.Project`1", abiSnapshotText);
+        AssertContains("  generic T : class, Samples.GenericConstraints.IEntity", abiSnapshotText);
+        AssertContains("  method string Invoke(!0 value)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -32327,14 +32343,24 @@ static void CliBuildCompilesGenericConstraintApi()
                     }
                 }
 
+                public sealed class Registry : Samples.GenericConstraints.IRegistry<Entity>
+                {
+                    public Entity Get()
+                    {
+                        return new Entity();
+                    }
+                }
+
                 public static class Consumer
                 {
                     public static string Read()
                     {
                         var entity = new Entity();
                         var repository = new Samples.GenericConstraints.Repository<Entity>();
+                        var registry = new Registry();
+                        Samples.GenericConstraints.Project<Entity> project = value => value.Id();
                         var kept = Samples.GenericConstraints.Module.keep<Entity>(repository.Keep(entity));
-                        return kept.Id();
+                        return project(registry.Get()) + kept.Id();
                     }
                 }
             }
