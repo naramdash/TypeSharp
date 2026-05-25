@@ -133,7 +133,7 @@ static void TestRunnerShardSelectionIsStable()
             .ToArray());
 
     var languageProgress = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-progress.md")).Replace("\r\n", "\n");
-    AssertContains("| Current slice | First hosted release/download smoke is now green on `v0.1.0-preview.4`; remaining adoption work is cleanup around fallback wording and broader pre-1.0 MVP-limited areas. |", languageProgress);
+    AssertContains("| Current slice | First hosted release/download smoke is green on `v0.1.0-preview.4`, and the first-project plus webpage-to-build adoption route is closed; remaining pre-1.0 work is broader MVP-limited language parity, not the release/install path. |", languageProgress);
     AssertContains("| Verification target | Test catalog tracker-count guard, workflow contract, diagnostic fixture README drift checks, docs contract, compiler test build, docs build, diff hygiene, workflow/docs-script forbidden-tooling scan, deployed public-docs probe, and hosted-release probe. |", languageProgress);
     AssertContains("The `be320542569bf50cb295acc012fb81d699a007ee` push proved Docs run `26394300733`, Regression run `26394300735`, release-dispatched Docs run `26394397996`, and Release Artifacts run `26394303889` all succeed.", languageProgress);
     AssertContains("Regression run `26387486368` ran on `windows-latest` and failed because a rendered-verifier mutation test used LF-only string replacements against a CRLF checkout, and `release-artifacts.yml` run `26387485907` still failed before jobs were created", languageProgress);
@@ -141,21 +141,15 @@ static void TestRunnerShardSelectionIsStable()
     AssertFalse(languageProgress.Contains(legacyForbiddenToolingScanName, StringComparison.Ordinal), "Progress ledger should use workflow/docs-script forbidden-tooling scan wording.");
     AssertContains("the shared package-free catalog is 586 cases", languageProgress);
     AssertContains("the MTP `--minimum-expected-tests 590` gate is 586 catalog cases plus one `CatalogIsExposedForPackageRunners` bridge smoke in each of the four shard assemblies", languageProgress);
-    AssertEqual(2, Regex.Matches(languageTasks, "(?m)^- \\[ \\] ").Count);
-    AssertEqual(2, Regex.Matches(languageProgress, "(?m)^\\| [^|\\r\\n]+ \\| In progress \\|").Count);
+    AssertEqual(0, Regex.Matches(languageTasks, "(?m)^- \\[ \\] ").Count);
+    AssertEqual(0, Regex.Matches(languageProgress, "(?m)^\\| [^|\\r\\n]+ \\| In progress \\|").Count);
     AssertSequence(
-        [
-            "Make the first project path release-grade.",
-            "Make the official webpage-to-build docs path coherent."
-        ],
+        Array.Empty<string>(),
         Regex.Matches(languageTasks, "(?m)^- \\[ \\] (.+)$")
             .Select(match => match.Groups[1].Value)
             .ToArray());
     AssertSequence(
-        [
-            "Make first project path release-grade",
-            "Make official webpage-to-build docs path coherent"
-        ],
+        Array.Empty<string>(),
         Regex.Matches(languageProgress, "(?m)^\\| ([^|\\r\\n]+) \\| In progress \\|")
             .Select(match => match.Groups[1].Value.Trim())
             .ToArray());
@@ -174,33 +168,30 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("package-manager global install, and hidden global tool commands across the public docs and repository README install route.", languageTasks);
     AssertContains("The docs primary Learn sidebar now exposes Install before Start Here, and the docs home first link list puts the release Install path before Start Here; docs contract coverage preserves both orderings", languageProgress);
     AssertContains("The Install checksum helper now fails clearly when `SHA256SUMS.txt` does not list an asset, rejects duplicate entries for the requested asset, rejects malformed/non-lowercase SHA-256 rows, matches the requested asset name exactly, and parses whitespace in the same shape as the release manifest", languageProgress);
-    AssertContains("Install now documents direct rollback by choosing a previous `$version`, downloading the previous CLI/runtime archives and `SHA256SUMS.txt`, verifying both archives, extracting the previous CLI, checking `typesharp.cmd version`, and keeping C# consumers on the same runtime archive tag and Runtime ABI", languageProgress);
+    AssertContains("direct rollback steps for a previous CLI/runtime archive pair", languageProgress);
     AssertContains("Docs contract coverage now preserves the Install page installed-CLI first-project command blocks for console `new`/`check`/`build`/`run` and library `new`/`check`/`build`", languageProgress);
     AssertContains("also asserts archive extraction, wrapper `typesharp.cmd version`, PATH setup, and bare `typesharp version` remain before the first project command", languageProgress);
     AssertContains("package-manager global install, or hidden global tool commands across public docs and the repository README release install route", languageProgress);
-    AssertContains("README, docs home, Install, Start Here, and Tutorials now label the source-built path as a preview contributor fallback instead of an end-user install route", languageProgress);
-    AssertContains("- [ ] Make the first project path release-grade.", languageTasks);
-    AssertContains("| Make first project path release-grade | In progress |", languageProgress);
+    AssertContains("README, docs home, Install, Start Here, and Tutorials now keep source-built commands contributor-only while the first project docs use release-installed `typesharp` commands.", languageTasks);
+    AssertContains("- [x] Make the first project path release-grade.", languageTasks);
+    AssertContains("| Make first project path release-grade | Done |", languageProgress);
     AssertContains("Generated console and library README files now assume the release-installed `typesharp` command is on `PATH`, link to the public Install/Troubleshooting/Runtime Artifacts docs, and contract tests reject repo-local CLI DLL commands or source-built fallback wording in starter READMEs.", languageTasks);
         AssertContains("Generated starter projects must default to `net48`, avoid preview features by default, and build without manual edits.", languageTasks);
         AssertContains("Console, library, release-staged console, and release-staged library starter tests now assert generated manifests preserve complete starter defaults, including target/output type, root namespace, source roots, generated output root, entry-point policy, preview strictness, framework references, empty local/package references, and tooling defaults", languageTasks);
         AssertContains("source-built clean console/library and release-staged starter tests also verify source files, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape", languageTasks);
     AssertContains("Docs contract coverage now asserts the CLI page keeps the generated starter file list: `TypeSharp.toml`, `src/Main.tysh` or `src/Library.tysh`, `.gitignore`, and `README.md`.", languageTasks);
     AssertContains("Docs contract coverage now asserts the Tutorials Hello Project command block keeps the installed-CLI `typesharp new console`, `cd`, `typesharp check`, `typesharp build`, and `typesharp run` sequence together.", languageTasks);
-    AssertContains("The generated console/library READMEs now assume the release-installed `typesharp` command from the public Install docs is on `PATH`, link to Troubleshooting or Runtime Artifacts for recovery/consumer guidance, and tests reject repo-local CLI DLL commands or source-built fallback wording in those starter READMEs", languageProgress);
-        AssertContains("Console, library, release-staged console, and release-staged library starter tests now assert generated manifests preserve complete starter defaults, including target/output type, root namespace, source roots, generated output root, entry-point policy, preview strictness, framework references, empty local/package references, and tooling defaults.", languageProgress);
-        AssertContains("Raw, source-built clean, and release-staged starter tests verify source files, starter `format --check`, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape, and generated `net48` assembly evidence before console `run` or dependency-specific edits; raw library starter coverage also verifies `typesharp run` rejects library output with the executable `outputType` requirement.", languageProgress);
-    AssertContains("Docs contract coverage now asserts the CLI page keeps the generated starter file list: `TypeSharp.toml`, `src/Main.tysh` or `src/Library.tysh`, `.gitignore`, and `README.md`.", languageProgress);
-    AssertContains("Docs contract coverage now preserves the Tutorials release install sentence before its preview contributor fallback mention and first PowerShell block, and keeps the Hello Project installed-CLI command block from `typesharp new console` through `check`, `build`, and `run`", languageProgress);
-    AssertContains("- [ ] Make the official webpage-to-build docs path coherent.", languageTasks);
-    AssertContains("| Make official webpage-to-build docs path coherent | In progress |", languageProgress);
+    AssertContains("Starter templates emit `TypeSharp.toml`, source files, `.gitignore`, and README guidance that assumes release-installed `typesharp` on `PATH`", languageProgress);
+        AssertContains("Console and library starter tests verify manifest defaults, source files, `format --check`, `check`, `build`, generated `net48` assembly evidence, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape, and library `run` rejection before dependency-specific edits.", languageProgress);
+    AssertContains("Hosted `v0.1.0-preview.4` release smoke repeats the first project route against downloaded assets from clean directories.", languageProgress);
+    AssertContains("- [x] Make the official webpage-to-build docs path coherent.", languageTasks);
+    AssertContains("| Make official webpage-to-build docs path coherent | Done |", languageProgress);
     AssertContains("Project Configuration now shows the same dependency terminology in one manifest shape: `references.assemblies`, local `references.paths`, explicit Core/Runtime DLL paths from `typesharp-runtime-net48-<tag>.zip`, `[projectReferences]`, `references.packages = []`, and checksum verification through `SHA256SUMS.txt`.", languageTasks);
     AssertContains("The route must include generated-output expectations: where generated source/project/assembly files appear and which files should be copied or referenced by a C# `net48` consumer.", languageTasks);
     AssertContains("Docs contract coverage asserts Project Configuration keeps the generated source, generated C# project, and `bin/Release/net48` output example, and Runtime Artifacts keeps the C# consumer deployable set of generated `net48` DLL plus required Core/Runtime DLLs from the same verified runtime archive tag and Runtime ABI.", languageTasks);
     AssertContains("Troubleshooting now covers downloaded CLI host prerequisites separately from generated `net48`, names the explicit CLI/generated/runtime target split with text/JSON `typesharp version` verification", languageTasks);
-    AssertContains("Project Configuration and Runtime Artifacts now show `references.assemblies`, local `references.paths`, explicit `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` paths from `typesharp-runtime-net48-<tag>.zip`, `[projectReferences]`, `references.packages = []`, and checksum verification with `SHA256SUMS.txt`", languageProgress);
-    AssertContains("docs contract coverage keeps Runtime Artifacts pointing Core/Runtime paths at the verified extracted runtime archive instead of repository build folders", languageProgress);
-    AssertContains("Troubleshooting covers downloaded CLI host prerequisites separately from generated `net48`, missing and invalid local DLL metadata recovery through `TS2401` and `references.paths`, direct TypeSharp project-reference recovery through `[projectReferences]`", languageProgress);
+    AssertContains("README, docs home, Install, Start Here, Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Tutorials, CLI, Diagnostics, Advanced Topics, Project Configuration, Project Policy, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting use the same release zip/VSIX names", languageProgress);
+    AssertContains("Rendered verifier coverage checks all 34 public docs routes, canonical/Open Graph/sitemap URL identity, release-note and exact-asset guidance, release asset names, checksum markers, runtime paths, generated-output paths, hidden global tool rejection, repo-local command exclusions, and release-tag metadata before Pages upload", languageProgress);
     AssertContains("- [x] Add release-style end-to-end adoption tests.", languageTasks);
     AssertContains("| Add release-style end-to-end adoption tests | Done |", languageProgress);
     AssertContains("The staged VSIX path packages the VS Code extension archive shape into `typesharp-vscode-staged-test.vsix`, verifies it through the same staged `SHA256SUMS.txt`, extracts it, and verifies the bundled language server, README/Marketplace docs, package display/category/activation metadata, and TypeSharp language/grammar contribution metadata.", languageTasks);
@@ -445,11 +436,11 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Project Policy now records the manifest scope, the generated release notes and Install page state that detached signatures and Authenticode signing are not published for preview releases yet, and release workflow contract coverage asserts `SHA256SUMS.txt` is generated from release assets while excluding generated release notes and the manifest itself", languageProgress);
     AssertContains("`v0.1.0-preview.4` passed the hosted release download/checksum/version/build smoke from the public release page", languageTasks);
     AssertContains("`v0.1.0-preview.4` Release Artifacts run `26394303889` passed this smoke against real public assets.", languageTasks);
-    AssertContains("First hosted release/download smoke is now green on `v0.1.0-preview.4`", languageProgress);
+    AssertContains("First hosted release/download smoke is green on `v0.1.0-preview.4`", languageProgress);
     AssertContains("Release Artifacts run `26394303889` all succeed", languageProgress);
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("The pushed `be320542569bf50cb295acc012fb81d699a007ee` Docs, Regression, release-dispatched Docs, and Release Artifacts runs all completed successfully.", languageProgress);
-    AssertContains("Replace remaining fallback language after a hosted release asset is available", languageProgress);
+    AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
     AssertContains("Reopen only if release-style adoption coverage changes.", languageProgress);
     AssertContains("Reopen only if release metadata, versioning, or checksum policy changes.", languageProgress);
@@ -15808,11 +15799,11 @@ static void DocsSiteContractIsStable()
     AssertContains("VS Code extension and bundled language server", docsHomePage);
     AssertContains("Tag-specific GitHub Release notes for channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify", docsHomePage);
     AssertContains("Start with [Install](install/)", docsHomePage);
-    AssertContainsBefore(docsHomePage, "## Install", "## Preview Contributor Source-Built Fallback");
-    AssertContainsBefore(docsHomePage, "Start with [Install](install/)", "preview contributor source-built fallback below");
-    AssertContainsBefore(docsHomePage, "## Preview Contributor Source-Built Fallback", repoLocalCliCommand);
-    AssertContains("preview contributor source-built fallback", docsHomePage);
-    AssertContains("## Preview Contributor Source-Built Fallback", docsHomePage);
+    AssertContainsBefore(docsHomePage, "## Install", "## Contributor Source-Built Development Path");
+    AssertContainsBefore(docsHomePage, "Start with [Install](install/)", "source-built commands below are for contributors changing TypeSharp itself");
+    AssertContainsBefore(docsHomePage, "## Contributor Source-Built Development Path", repoLocalCliCommand);
+    AssertContains("source-built commands below are for contributors changing TypeSharp itself", docsHomePage);
+    AssertContains("## Contributor Source-Built Development Path", docsHomePage);
 
     var repositoryReadme = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "README.md"));
     AssertContains("## Install", repositoryReadme);
@@ -15822,11 +15813,11 @@ static void DocsSiteContractIsStable()
     AssertContains("covered by the same checksum manifest", repositoryReadme);
     AssertContains("The tag-specific GitHub Release notes are the source of truth for the release channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.", repositoryReadme);
     AssertContains("Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", repositoryReadme);
-    AssertContainsBefore(repositoryReadme, "## Install", "## Preview Contributor Source-Built Fallback");
-    AssertContainsBefore(repositoryReadme, "Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", "preview contributor source-built fallback below");
+    AssertContainsBefore(repositoryReadme, "## Install", "## Contributor Source-Built Development Path");
+    AssertContainsBefore(repositoryReadme, "Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", "source-built commands below are for contributors changing TypeSharp itself");
     AssertContainsBefore(repositoryReadme, "Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", "```powershell");
-    AssertContainsBefore(repositoryReadme, "## Preview Contributor Source-Built Fallback", "git clone https://github.com/naramdash/TypeSharp.git");
-    AssertContainsBefore(repositoryReadme, "## Preview Contributor Source-Built Fallback", repoLocalCliCommand);
+    AssertContainsBefore(repositoryReadme, "## Contributor Source-Built Development Path", "git clone https://github.com/naramdash/TypeSharp.git");
+    AssertContainsBefore(repositoryReadme, "## Contributor Source-Built Development Path", repoLocalCliCommand);
     foreach (var hiddenInstallCommand in hiddenGlobalInstallCommands)
     {
         AssertFalse(
@@ -15839,9 +15830,9 @@ static void DocsSiteContractIsStable()
     AssertContainsBefore(startHerePage, "Use [Install](../install/) for the versioned release artifact route", "```powershell");
     AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", startHerePage);
     AssertContains("verify that runtime archive with the same manifest", startHerePage);
-    AssertContains("preview contributor source-built fallback", startHerePage);
-    AssertContains("## Preview Contributor Source-Built Fallback", startHerePage);
-    AssertContainsBefore(startHerePage, "## Preview Contributor Source-Built Fallback", repoLocalCliCommand);
+    AssertContains("Contributor source-built commands at the end of this page are for contributors changing TypeSharp itself", startHerePage);
+    AssertContains("## Contributor Source-Built Development Path", startHerePage);
+    AssertContainsBefore(startHerePage, "## Contributor Source-Built Development Path", repoLocalCliCommand);
     AssertContains("I Maintain .NET Framework Applications", startHerePage);
     AssertContains("I Know C#", startHerePage);
     AssertContains("I Know F#", startHerePage);
@@ -15849,7 +15840,7 @@ static void DocsSiteContractIsStable()
     AssertContains("I Am Evaluating The Compiler Or Tooling", startHerePage);
 
     var installPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "install.md"));
-    AssertContains("preview contributor source-built fallback", installPage);
+    AssertContains("Contributor source builds are not part of the normal install path", installPage);
     AssertFalse(
         installPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
         "Install page should keep the release asset route primary and must not include repo-local CLI DLL commands.");
@@ -15997,10 +15988,9 @@ static void DocsSiteContractIsStable()
         "Language Tour should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var tutorialsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "tutorials.md"));
-    AssertContains("preview contributor source-built fallback", tutorialsPage);
     AssertContains("Start by opening the tag-specific GitHub Release notes, confirming the exact asset names, and installing `typesharp-cli-dotnet-<tag>.zip` with the `SHA256SUMS.txt` checksum flow", tutorialsPage);
     AssertContains("verify it with the same manifest when a tutorial references TypeSharp Core/Runtime DLLs", tutorialsPage);
-    AssertContainsBefore(tutorialsPage, "Start by opening the tag-specific GitHub Release notes", "preview contributor source-built fallback");
+    AssertContains("Tutorial commands assume the release-installed `typesharp` command from Install is on `PATH`", tutorialsPage);
     AssertContainsBefore(tutorialsPage, "Start by opening the tag-specific GitHub Release notes", "```powershell");
     AssertContains("typesharp-cli-dotnet-<tag>.zip", tutorialsPage);
     AssertContains("typesharp-runtime-net48-<tag>.zip", tutorialsPage);
@@ -16745,7 +16735,7 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("Rendered docs home next-page link must label Install.", renderedRouteScript);
     AssertContains("Rendered docs home must expose Install before Start Here.", renderedRouteScript);
     AssertContains("Start with <a href=\"/TypeSharp/install/\">Install</a>", renderedRouteScript);
-    AssertContains("Rendered docs home must keep the release install route before the source-built fallback.", renderedRouteScript);
+    AssertContains("Rendered docs home must keep the release install route before the contributor development path.", renderedRouteScript);
     AssertContains("Rendered docs home must name the CLI release asset.", renderedRouteScript);
     AssertContains("Rendered docs home must name the runtime release asset.", renderedRouteScript);
     AssertContains("Rendered docs home must name the VSIX release asset.", renderedRouteScript);
@@ -16767,7 +16757,7 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("Rendered Install page must set the release download version to RELEASE_TAG.", renderedRouteScript);
     AssertContains("`Build metadata ${releaseTag}`", renderedRouteScript);
     AssertContains("Rendered Install page version sample must show RELEASE_TAG as build metadata.", renderedRouteScript);
-    AssertContains("Rendered Start Here page must keep Install First before the source-built fallback.", renderedRouteScript);
+    AssertContains("Rendered Start Here page must keep Install First before the contributor development path.", renderedRouteScript);
     AssertContains("assertNoHiddenGlobalDotnetToolInstall(startHere, 'Start Here');", renderedRouteScript);
     AssertContains("if (startHere.includes('dotnet cli\\\\TypeSharp.Cli'))", renderedRouteScript);
     AssertContains("Rendered Start Here page must keep Install before repo-local fallback commands.", renderedRouteScript);
@@ -17535,7 +17525,7 @@ static void WriteRenderedInstallRouteFixture(
         {{(homeVsixReleaseAsset ? "typesharp-vscode-\n" : string.Empty)}}
         SHA256SUMS.txt
         {{(homeHiddenGlobalToolInstall ? "dotnet tool install TypeSharp.Cli\n" : string.Empty)}}
-        <h2 id="preview-contributor-source-built-fallback"></h2>
+        <h2 id="contributor-source-built-development-path"></h2>
         """);
 
     WriteRenderedRouteFile(root, "dist/install/index.html", "/install/", $$"""
@@ -17575,7 +17565,7 @@ static void WriteRenderedInstallRouteFixture(
         SHA256SUMS.txt
         {{startHereHiddenGlobalToolInstallContent}}
         <h2 id="install-first"></h2>
-        {{startHereFallbackAfterInstallContent}}<h2 id="preview-contributor-source-built-fallback"></h2>
+        {{startHereFallbackAfterInstallContent}}<h2 id="contributor-source-built-development-path"></h2>
         """);
 
     var tutorialsFirstProject = "typesharp new console\n";
@@ -19357,8 +19347,8 @@ static void RepositoryMonorepoLayoutIsStable()
     AssertContains("| [agent](agent) | short repository-local notes, ADR guidance, and the language 1.0 gap tracker |", rootReadme);
     AssertContains("| [examples](examples) | single-file examples and runnable adoption projects |", rootReadme);
     AssertContains("| [vscode](vscode) | VS Code extension workspace", rootReadme);
-    AssertContains("preview contributor source-built fallback", rootReadme);
-    AssertContains("## Preview Contributor Source-Built Fallback", rootReadme);
+    AssertContains("source-built commands below are for contributors changing TypeSharp itself", rootReadme);
+    AssertContains("## Contributor Source-Built Development Path", rootReadme);
 
     var projectLedger = File.ReadAllText(Path.Combine(repositoryRoot, "docs", "src", "content", "docs", "project-ledger.md"));
     AssertContains("## Repository Layout", projectLedger);

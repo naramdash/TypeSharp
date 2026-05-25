@@ -13,7 +13,7 @@ For a complete study sequence by background and experience level, use [Learning 
 
 Use [Install](../install/) for the versioned release artifact route: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the archive, run `typesharp version`, create a project, add supported dependencies, download the matching `typesharp-runtime-net48-<tag>.zip` when Core/Runtime DLLs are needed, verify that runtime archive with the same manifest, and build a generated `net48` artifact.
 
-If the release asset for the tag you need is not published yet, use the preview contributor source-built fallback at the end of this page.
+Contributor source-built commands at the end of this page are for contributors changing TypeSharp itself, not a prerequisite for the normal first project path.
 
 ### I Maintain .NET Framework Applications
 
@@ -68,7 +68,9 @@ Start with:
 
 Implemented features are backed by smoke tests or fixtures. Planned and backlog items are documented separately and should not be treated as production guarantees. Use [Feature Status](../feature-status/) for the canonical status map. [Document Ownership](../document-ownership/) tracks canonical docs ownership.
 
-## Preview Contributor Source-Built Fallback
+## Contributor Source-Built Development Path
+
+Use this path only when you are editing this repository or validating a local compiler/tooling change.
 
 ```powershell
 dotnet build test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj

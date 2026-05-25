@@ -289,7 +289,7 @@ assertContains(renderedNextWindow, 'Install', 'Rendered docs home next-page link
 assertContainsAny(index, homeInstallHrefCandidates, 'Rendered docs home must link to Install.');
 assertContainsAny(index, homeStartHereHrefCandidates, 'Rendered docs home must link to Start Here.');
 assertAnyBefore(index, homeInstallHrefCandidates, homeStartHereHrefCandidates, 'Rendered docs home must expose Install before Start Here.');
-assertAnyBefore(index, homeInstallSentenceCandidates, '<h2 id="preview-contributor-source-built-fallback">', 'Rendered docs home must keep the release install route before the source-built fallback.');
+assertAnyBefore(index, homeInstallSentenceCandidates, '<h2 id="contributor-source-built-development-path">', 'Rendered docs home must keep the release install route before the contributor development path.');
 assertRenderedReleaseNotesRoute(index, 'docs home');
 assertContains(index, 'typesharp-cli-dotnet-', 'Rendered docs home must name the CLI release asset.');
 assertContains(index, 'typesharp-runtime-net48-', 'Rendered docs home must name the runtime release asset.');
@@ -326,7 +326,7 @@ assertContains(startHere, 'typesharp-cli-dotnet-', 'Rendered Start Here page mus
 assertContains(startHere, 'typesharp-runtime-net48-', 'Rendered Start Here page must name the runtime release asset.');
 assertContains(startHere, 'SHA256SUMS.txt', 'Rendered Start Here page must name the checksum manifest.');
 assertNoHiddenGlobalDotnetToolInstall(startHere, 'Start Here');
-assertBefore(startHere, '<h2 id="install-first">', '<h2 id="preview-contributor-source-built-fallback">', 'Rendered Start Here page must keep Install First before the source-built fallback.');
+assertBefore(startHere, '<h2 id="install-first">', '<h2 id="contributor-source-built-development-path">', 'Rendered Start Here page must keep Install First before the contributor development path.');
 if (startHere.includes('dotnet cli\\TypeSharp.Cli')) {
   assertAnyBefore(startHere, pageInstallHrefCandidates, 'dotnet cli\\TypeSharp.Cli\\bin\\Debug\\net10.0\\typesharp.dll', 'Rendered Start Here page must keep Install before repo-local fallback commands.');
 }

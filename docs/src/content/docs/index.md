@@ -43,9 +43,11 @@ Preview releases use GitHub Release assets:
 - `SHA256SUMS.txt` for release asset verification,
 - Tag-specific GitHub Release notes for channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.
 
-Start with [Install](install/) for the download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the preview contributor source-built fallback below.
+Start with [Install](install/) for the download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. The source-built commands below are for contributors changing TypeSharp itself, not the normal install path.
 
-## Preview Contributor Source-Built Fallback
+## Contributor Source-Built Development Path
+
+Use this path only when you are editing this repository or validating a local compiler/tooling change.
 
 From the repository root:
 

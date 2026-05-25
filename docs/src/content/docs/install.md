@@ -5,7 +5,7 @@ description: Download, verify, install, and run the TypeSharp CLI release artifa
 
 TypeSharp preview releases use GitHub Release assets from this repository. The CLI archive is a framework-dependent modern .NET host; generated projects and TypeSharp runtime libraries remain `net48`.
 
-Use the preview contributor source-built fallback on [Start Here](../start-here/) only when the versioned release asset for the tag you need is not published yet.
+Contributor source builds are not part of the normal install path. Use [Start Here](../start-here/) only when you are changing TypeSharp itself.
 
 ## Download The CLI
 

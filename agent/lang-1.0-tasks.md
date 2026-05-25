@@ -99,8 +99,8 @@ This is the concrete adoption scenario that the 1.0 tracker must preserve. It st
   - Docs contract coverage asserts the docs home Install link appears before the first PowerShell fallback command block, so the official entry page cannot regress to showing contributor commands before the release install route.
   - Docs contract coverage asserts the repository README Install route appears before the first PowerShell fallback command block, so the repository public entry point also keeps contributor commands behind the release install route.
   - Docs contract coverage asserts Start Here's `Install First` release route appears before its first PowerShell fallback command block.
-  - Docs contract coverage asserts Tutorials starts from the release zip/checksum route before its first preview contributor fallback mention and first PowerShell command block.
-  - Docs contract coverage asserts README and the docs home expose the release install route before the preview contributor source-built fallback.
+  - Docs contract coverage asserts Tutorials starts from the release zip/checksum route before its first PowerShell command block.
+  - Docs contract coverage asserts README and the docs home expose the release install route before the contributor source-built development path.
   - Docs contract coverage confines repo-local CLI DLL commands to the explicit docs home and Start Here fallback pages and asserts Tutorials begin with the release zip/checksum install path plus installed `typesharp` commands.
   - Docs contract coverage now extracts the CLI/runtime/VSIX release asset names from `.github/workflows/release-artifacts.yml` and asserts README, docs home, Start Here, Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, CLI, Diagnostics, Advanced Topics, Tutorials, Project Policy, Runtime Artifacts, VS Code And LSP, Install, Project Configuration, Migration, and Troubleshooting use the matching `typesharp-cli-dotnet-<tag>.zip`, `typesharp-runtime-net48-<tag>.zip`, `typesharp-vscode-<tag>.vsix`, `$version`, and `SHA256SUMS.txt` forms.
   - README and docs home now name the `typesharp-vscode-<tag>.vsix` release asset alongside the CLI/runtime archives, checksum manifest, and tag-specific release notes metadata/compatibility/integrity/rollback guidance, including exact asset names to verify, so the first public entry point reflects the same artifact and release-note set that hosted smoke verifies.
@@ -189,7 +189,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Add a clean-machine smoke that runs the downloaded artifact from outside the repository.
   - Acceptance evidence must start from the public page or a staged equivalent of the public page, follow the linked release artifact, verify checksums, and run `typesharp version` from the extracted layout.
 
-- [ ] Make the first project path release-grade.
+- [x] Make the first project path release-grade.
   - `typesharp new console` and `typesharp new library` should create a complete `TypeSharp.toml`, source file, `.gitignore`, and minimal local README or docs link.
   - Generated console and library README files now assume the release-installed `typesharp` command is on `PATH`, link to the public Install/Troubleshooting/Runtime Artifacts docs, and contract tests reject repo-local CLI DLL commands or source-built fallback wording in starter READMEs.
   - The hosted release smoke now verifies the downloaded CLI's generated console starter manifest keeps the complete 1.0 starter defaults: `targetFramework = "net48"`, `outputType = "exe"`, root namespace, `sourceRoots = ["src"]`, `generatedOutputRoot = "generated"`, `main`, preview language strictness, empty `previewFeatures`, framework assembly references, empty local/package reference arrays, and tooling defaults; it also verifies the generated starter README keeps release-installed `typesharp` guidance, local `check`/`build`/`run` commands, the public Troubleshooting link, and no repo-local CLI DLL, source-built fallback, or hidden global tool-install guidance, verifies `src/Main.tysh` plus `.gitignore` preserve the generated starter file set, and verifies the generated console C# project preserves `net48`, C# 7.3, executable output, assembly/root namespace, framework references, and offline `NuGet.config` before `run`.
@@ -200,9 +200,9 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Docs contract coverage now asserts the CLI page keeps the generated starter file list: `TypeSharp.toml`, `src/Main.tysh` or `src/Library.tysh`, `.gitignore`, and `README.md`.
   - The official tutorial must show exact commands for `typesharp new`, `typesharp check`, `typesharp build`, and `typesharp run`.
   - Docs contract coverage now asserts the Tutorials Hello Project command block keeps the installed-CLI `typesharp new console`, `cd`, `typesharp check`, `typesharp build`, and `typesharp run` sequence together.
-  - Docs contract coverage now asserts the Tutorials release install sentence appears before the preview contributor fallback mention and before the first PowerShell command block.
-  - Add release-artifact smoke coverage from an empty directory, not only from repo-local examples.
-  - README, docs home, Install, Start Here, and Tutorials now label the source-built path as a preview contributor fallback; the first project docs must not switch between source-built `dotnet ...TypeSharp.Cli...` commands and installed `typesharp` commands without that contributor-only or preview-fallback label.
+  - Docs contract coverage now asserts Tutorials starts from the release-installed `typesharp` route before the first PowerShell command block.
+  - Hosted release smoke coverage now creates, checks, builds, and runs starter projects from clean directories against downloaded release assets, not repo-local build output.
+  - README, docs home, Install, Start Here, and Tutorials now keep source-built commands contributor-only while the first project docs use release-installed `typesharp` commands.
 
 - [x] Define the 1.0 dependency acquisition story.
   - 1.0 supports framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive.
@@ -225,11 +225,11 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Generated C# projects use deterministic generated-project-relative `<HintPath>` values and write an offline `NuGet.config` with package sources cleared.
   - Docs distinguish source project references, local binary references, framework references, matching runtime DLL references, and unsupported package references.
 
-- [ ] Make the official webpage-to-build docs path coherent.
+- [x] Make the official webpage-to-build docs path coherent.
   - The docs home, Start Here, Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, Advanced Topics, CLI, Project Configuration, Runtime Artifacts, Tutorials, Migration, and Troubleshooting pages should form one consistent route.
   - Each page should use the same install command, project command names, generated output paths, and dependency terminology.
   - The docs should clearly separate repo contributor commands from end-user commands.
-  - README, docs home, Install, Start Here, and Tutorials keep the source-built commands behind a preview contributor fallback label while the primary route uses installed `typesharp` commands.
+  - README, docs home, Install, Start Here, and Tutorials keep the source-built commands in a contributor development path while the primary route uses installed `typesharp` commands.
   - The docs primary navigation and docs home first link list now expose Install before Start Here, preserving the public entry route to the release zip/checksum flow.
   - Docs contract coverage now pins the primary Learn sidebar's opening sequence and the docs home first `Start Here` bullet so the official page-to-install entry route cannot be weakened by inserting another route ahead of Install.
   - The GitHub Pages docs workflow now verifies rendered public URL identity for all 34 sidebar docs routes before uploading Pages artifacts, keeping the source docs route, rendered sidebar, rendered next-page pagination, sitemap entries for all 34 sidebar public-docs routes, Start Here fallback ordering, Tutorials first-project ordering, broader/CLI/dependency/runtime/VSIX/migration/troubleshooting route markers, uploaded static site route, and release-tag Install metadata aligned.
@@ -237,8 +237,8 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Rendered and release pre-publication verifier route tables now assert exactly 34 public-docs routes and reject duplicate route paths, so route-table copy/paste mistakes fail before public URL identity evidence is accepted.
   - The release workflow's hosted exact legacy 404 marker check now iterates the same `$publicDocsCanonicalRoutes` table used for hosted canonical/Open Graph and sitemap URL identity verification.
   - Docs contract coverage now checks README, docs home, and Start Here show the release install route before their first PowerShell fallback command blocks.
-  - Docs contract coverage now checks README and docs home keep the release install route before the preview contributor source-built fallback.
-  - Docs contract coverage now checks repo-local `dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll` commands are limited to explicit fallback pages, appear after the `Preview Contributor Source-Built Fallback` heading where they are allowed, and that Tutorials and Install use installed `typesharp` commands for the first project.
+  - Docs contract coverage now checks README and docs home keep the release install route before the contributor source-built development path.
+  - Docs contract coverage now checks repo-local `dotnet cli\TypeSharp.Cli\bin\Debug\net10.0\typesharp.dll` commands are limited to explicit contributor pages, appear after the `Contributor Source-Built Development Path` heading where they are allowed, and that Tutorials and Install use installed `typesharp` commands for the first project.
   - Docs contract coverage now compares the public docs asset names against the release workflow's CLI/runtime/VSIX artifact names so the Install/Learning Paths/Language Tour/Fundamentals/Guides/Cookbook/API/Examples/CLI/Diagnostics/Advanced/Tutorials/Project Configuration/VS Code route cannot drift from the published artifact names.
   - Learning Paths now starts by sending readers to Install for the release CLI/checksum/version flow, names the matching runtime archive and VSIX asset, keeps the beginner path install-first, and keeps the "Create a project" lookup pointed through Install plus Tutorials.
   - Guides now starts from Install for the release CLI/checksum/version flow, uses the release-installed `typesharp` command for CLI workflow examples, and shows framework assemblies, local DLL paths, direct `[projectReferences]`, `packages = []`, and the post-1.0 package-restore boundary in the same dependency terminology as Project Configuration.
