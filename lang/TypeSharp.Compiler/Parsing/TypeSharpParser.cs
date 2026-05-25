@@ -1088,6 +1088,11 @@ public sealed class TypeSharpParser
 
         while (Current.Kind is SyntaxKind.OpenBracketToken or SyntaxKind.QuestionToken)
         {
+            if (HasLeadingNewline(Current))
+            {
+                break;
+            }
+
             if (Current.Kind == SyntaxKind.OpenBracketToken && Peek(1).Kind == SyntaxKind.CloseBracketToken)
             {
                 result = Node(SyntaxKind.ArrayType, [result, TokenNode(NextToken()), TokenNode(NextToken())]);

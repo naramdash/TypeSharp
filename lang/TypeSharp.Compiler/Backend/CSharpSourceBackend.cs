@@ -1189,6 +1189,7 @@ public static class CSharpSourceBackend
             var type = GetEventType(node);
             var name = GetEventDeclarationName(node);
 
+            EmitAttributeLists(node, "        ");
             _builder.AppendLine($"        {visibility}{staticModifier} event {type} {name};");
         }
 
@@ -1197,6 +1198,7 @@ public static class CSharpSourceBackend
             var type = GetEventType(node);
             var name = GetEventDeclarationName(node);
 
+            EmitAttributeLists(node, "        ");
             _builder.AppendLine($"        event {type} {name};");
         }
 
@@ -1274,6 +1276,7 @@ public static class CSharpSourceBackend
             var value = EmitExpression(initializer, type);
             var storage = GetClassValueStorageModifier(node);
 
+            EmitAttributeLists(node, "        ");
             _builder.AppendLine($"        {visibility} {storage}{type} {name} = {value};");
         }
 
@@ -1287,6 +1290,7 @@ public static class CSharpSourceBackend
             var staticModifier = HasStaticModifier(node) ? " static" : string.Empty;
             var accessorText = IsMutableValueDeclaration(node) ? "{ get; set; }" : "{ get; }";
 
+            EmitAttributeLists(node, "        ");
             _builder.AppendLine($"        {visibility}{staticModifier} {type} {name} {accessorText} = {value};");
         }
 
@@ -1296,6 +1300,7 @@ public static class CSharpSourceBackend
             var type = GetValueDeclarationType(node, initializer: null);
             var accessorText = IsMutableValueDeclaration(node) ? "{ get; set; }" : "{ get; }";
 
+            EmitAttributeLists(node, "        ");
             _builder.AppendLine($"        {type} {name} {accessorText}");
         }
 
@@ -1377,6 +1382,7 @@ public static class CSharpSourceBackend
 
             try
             {
+                EmitAttributeLists(node, "        ");
                 _builder.AppendLine($"        {visibility}{staticModifier}{asyncModifier} {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
                 EmitWhereClauses(node, "        ");
                 _builder.AppendLine("        {");
@@ -1434,6 +1440,7 @@ public static class CSharpSourceBackend
             var returnType = GetReturnType(node);
             var whereClauses = GetWhereClauses(node).ToArray();
 
+            EmitAttributeLists(node, "        ");
             if (whereClauses.Length == 0)
             {
                 _builder.AppendLine($"        {returnType} {name}{typeParameters}({parameters});");

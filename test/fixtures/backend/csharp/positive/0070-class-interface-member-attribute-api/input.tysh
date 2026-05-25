@@ -1,0 +1,36 @@
+namespace Samples.MemberAttributes
+
+import { ObsoleteAttribute } from "System"
+
+public class Greeter {
+  [ObsoleteAttribute("Use NewChanged.")]
+  public event Changed: ChangedHandler
+
+  [ObsoleteAttribute("Use NewName.")]
+  public let Name: string = "Ada"
+
+  [ObsoleteAttribute("Use DisplayName2.")]
+  public let DisplayName: string = "Ada Lovelace" { get }
+
+  [ObsoleteAttribute("Use Nickname2.")]
+  public let mut Nickname: string = "ada" { get set }
+
+  [ObsoleteAttribute("Use Say.")]
+  public fun Echo(value: string): string = value
+}
+
+public interface IGreeter {
+  [ObsoleteAttribute("Use NewUpdated.")]
+  public event Updated: ChangedHandler
+
+  [ObsoleteAttribute("Use Title2.")]
+  public let Title: string { get }
+
+  [ObsoleteAttribute("Use Alias2.")]
+  public let mut Alias: string { get set }
+
+  [ObsoleteAttribute("Use Talk.")]
+  fun Echo(value: string): string
+}
+
+public delegate ChangedHandler(value: string): unit
