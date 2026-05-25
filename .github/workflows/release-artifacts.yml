@@ -2334,7 +2334,7 @@ jobs:
 
             Push-Location $legacySourceRoot
             try {
-              dotnet build Legacy.Tools.csproj --nologo --verbosity quiet --ignore-failed-sources
+              dotnet build Legacy.Tools.csproj -c Debug --nologo --verbosity quiet --ignore-failed-sources
               if ($LASTEXITCODE -ne 0) {
                 throw 'Hosted local DLL dependency build smoke failed.'
               }
@@ -2513,7 +2513,7 @@ jobs:
 
             Push-Location $localDllConsumerRoot
             try {
-              dotnet build HostedLocalDllConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources
+                dotnet build HostedLocalDllConsumer.csproj -c Debug --nologo --verbosity quiet --ignore-failed-sources
               if ($LASTEXITCODE -ne 0) {
                 throw 'Hosted local-DLL C# net48 consumer build smoke failed.'
               }
@@ -2962,7 +2962,7 @@ jobs:
 
             Push-Location $consumerRoot
             try {
-              dotnet build HostedRuntimeConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources
+              dotnet build HostedRuntimeConsumer.csproj -c Debug --nologo --verbosity quiet --ignore-failed-sources
               if ($LASTEXITCODE -ne 0) {
                 throw 'Hosted runtime C# net48 consumer build smoke failed.'
               }

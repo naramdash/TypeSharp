@@ -15893,7 +15893,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Target default net48", installPage);
     AssertContains("CLI target net10.0", installPage);
     AssertContains("Runtime target net48", installPage);
-    AssertContains("Build metadata v0.1.0-preview.3", installPage);
+    AssertContains("Build metadata v0.1.0-preview.4", installPage);
     AssertContains("same 12-character lowercase commit prefix recorded on the GitHub Release page", installPage);
     AssertContains("Source revision <12-character-commit-prefix>", installPage);
     AssertContains("""
@@ -17426,7 +17426,7 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             root,
             new Dictionary<string, string>
             {
-                ["RELEASE_TAG"] = "v0.1.0-preview.3"
+                ["RELEASE_TAG"] = "v0.1.0-preview.4"
             });
 
         AssertTrue(
@@ -17436,7 +17436,7 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             "Rendered Install page must set the release download version to RELEASE_TAG.",
             mismatchedTag.StandardOutput + mismatchedTag.StandardError);
 
-        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", buildMetadataTag: "v0.1.0-preview.3");
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", buildMetadataTag: "v0.1.0-preview.4");
         var mismatchedBuildMetadata = RunProcessWithEnvironment(
             "node",
             "scripts/verify-rendered-install-route.cjs",
@@ -18926,7 +18926,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Hosted CLI run smoke failed.", workflow);
     AssertContains("Hello, TypeSharp", workflow);
     AssertContains("HostedReleaseSmoke\\generated\\bin\\Debug\\net48\\HostedReleaseSmoke.exe", workflow);
-    AssertContains("dotnet build Legacy.Tools.csproj --nologo --verbosity quiet --ignore-failed-sources", workflow);
+    AssertContains("dotnet build Legacy.Tools.csproj -c Debug --nologo --verbosity quiet --ignore-failed-sources", workflow);
     AssertContains("typesharp new library HostedLocalDllSmoke --target net48 --output HostedLocalDllSmoke", workflow);
     AssertContains("$hostedLibraryStarterManifest = Get-Content -Raw -LiteralPath 'HostedLocalDllSmoke\\TypeSharp.toml'", workflow);
     AssertContains("Assert-Contains $hostedLibraryStarterManifest 'targetFramework = \"net48\"' 'Hosted CLI library starter manifest did not preserve the net48 target.'", workflow);
@@ -18985,7 +18985,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("<Reference Include=\"Legacy.Tools\">", workflow);
     AssertContains("../lib/Legacy.Tools.dll", workflow);
     AssertContains("HostedLocalDllConsumer.csproj", workflow);
-    AssertContains("dotnet build HostedLocalDllConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", workflow);
+    AssertContains("dotnet build HostedLocalDllConsumer.csproj -c Debug --nologo --verbosity quiet --ignore-failed-sources", workflow);
     AssertContains("HostedLocalDllSmoke\\generated\\bin\\Debug\\net48\\HostedLocalDllSmoke.dll", workflow);
     AssertContains("typesharp new library HostedBadDeps --target net48 --output HostedBadDeps", workflow);
     AssertContains("paths = [\"../lib/Missing.Tools.dll\"]", workflow);
@@ -19060,7 +19060,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("<HintPath>..\\typesharp-runtime\\lib\\net48\\TypeSharp.Core.dll</HintPath>", workflow);
     AssertContains("<clear />", workflow);
     AssertContains("TypeSharpRuntimeInfo.RuntimeAbiVersion", workflow);
-    AssertContains("dotnet build HostedRuntimeConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", workflow);
+    AssertContains("dotnet build HostedRuntimeConsumer.csproj -c Debug --nologo --verbosity quiet --ignore-failed-sources", workflow);
     AssertContains("Hosted runtime C# net48 consumer build did not produce the consumer assembly.", workflow);
     AssertContains("Hosted runtime C# net48 consumer output did not include the generated TypeSharp assembly.", workflow);
     AssertContains("Hosted runtime C# net48 consumer output did not include TypeSharp.Core.dll.", workflow);
