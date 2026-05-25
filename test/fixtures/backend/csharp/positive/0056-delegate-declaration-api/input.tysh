@@ -1,5 +1,9 @@
 namespace Samples.Delegates
 
+import { ObsoleteAttribute } from "System"
+
+[ObsoleteAttribute("Use NewTransformer.")]
 public delegate Transformer(value: string): string
 
+[ObsoleteAttribute("Use NewProject.")]
 public delegate Project<T>(value: T): string where T: class

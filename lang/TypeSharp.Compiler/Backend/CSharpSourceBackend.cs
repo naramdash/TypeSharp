@@ -1167,6 +1167,7 @@ public static class CSharpSourceBackend
             var returnType = GetDelegateReturnType(node);
             var parameters = GetParameters(node);
 
+            EmitAttributeLists(node, "    ");
             var whereClauses = GetWhereClauses(node).ToArray();
             if (whereClauses.Length == 0)
             {

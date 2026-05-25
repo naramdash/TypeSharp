@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The class/interface declaration attribute ABI promotion push `bce400a893c81daeefd5d19b4095ac5adca395cb` proved Docs run `26413654126` and Regression run `26413654068` both completed successfully", languageProgress);
+    AssertContains("The class/interface member attribute ABI promotion push `21bdd28e5e8735602b1ac644393583567a70568a` proved Docs run `26414741204` and Regression run `26414741205` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -16271,6 +16271,8 @@ static void DocsSiteContractIsStable()
     AssertContains("The 1.0 TypeSharp-authored class and interface surface is intentionally small", typeSystemPage);
     AssertContains("Accepted class declarations lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list whose parameters have CLR-visible types, public instance/static `fun` methods with supported parameter and return types, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance `event` members backed by named delegate types, typed static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", typeSystemPage);
     AssertContains("Accepted interface declarations lower to named CLR interfaces with optional type parameters, supported generic constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", typeSystemPage);
+    AssertContains("TypeSharp-authored named delegates lower to named CLR delegates with typed parameters, supported generic constraints, declaration attributes, optional `params`, and explicit or `void` returns", typeSystemPage);
+    AssertContains("preserving generated class/interface/delegate declaration and supported member attributes", typeSystemPage);
     AssertContains("TypeSharp-authored constructor bodies, constructor parameter capture in member initializers/bodies, constructor default parameters, custom property accessors, custom add/remove events, interface static events, generated event invocation helpers, explicit inheritance or interface implementation clauses, static member forms beyond class static methods/values/events/properties, abstract/virtual/override members, interface default implementations, indexers, operators, accessor/parameter attributes, partial methods, nested type declarations, broader attribute target validation, and broader member-body analysis are post-1.0", typeSystemPage);
     AssertContains("1.0 Pattern Matching Boundary", typeSystemPage);
     AssertContains("Supported arm patterns are union case names with an optional single identifier payload capture", typeSystemPage);
@@ -16328,7 +16330,9 @@ static void DocsSiteContractIsStable()
     AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("Named CLR delegate with optional generic parameters, supported C# 7.3-compatible generic constraints, declaration attributes, typed parameters, optional `params`, and an explicit or `void` return", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
+    AssertContains("including declaration attribute metadata", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class/interface event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
@@ -16361,7 +16365,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Ref, Out, And In", csharpMembersPage);
     AssertContains("Delegates And Lambdas", csharpMembersPage);
     AssertContains("Extension Members", csharpMembersPage);
-    AssertContains("TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata, and TypeSharp-authored class/interface `public event` declarations now lower to generated CLR event metadata in the implemented 1.0 slice", csharpMembersPage);
+    AssertContains("TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata, including declaration attributes, and TypeSharp-authored class/interface `public event` declarations now lower to generated CLR event metadata in the implemented 1.0 slice", csharpMembersPage);
     AssertContains("Class events may be instance or static; interface events are instance-only in the C# 7.3-compatible slice", csharpMembersPage);
     AssertContains("TypeSharp-authored operator declarations are post-1.0", csharpMembersPage);
     AssertContains("records, classes, interfaces, unions, and extension declarations cannot introduce overload or conversion operators", csharpMembersPage);
@@ -16377,6 +16381,7 @@ static void DocsSiteContractIsStable()
     AssertContains("True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog", featureStatusPage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance/static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", featureStatusPage);
     AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", featureStatusPage);
+    AssertContains("| Delegates | Implemented | TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata with optional generic parameters/constraints, declaration attributes, typed parameters, optional `params`, and explicit or `void` returns", featureStatusPage);
     AssertContains("The 1.0 overload and conversion contract is metadata-backed and intentionally narrower than full C#", featureStatusPage);
     AssertContains("Full C# overload conversion parity, user-defined conversion operators, TypeSharp-authored operator overload ranking", featureStatusPage);
     AssertContains("The 1.0 warning/error boundary is explicit", featureStatusPage);
@@ -16493,6 +16498,7 @@ static void DocsSiteContractIsStable()
     AssertContains("The 1.0 class/interface member surface is deliberately bounded", referencePage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance/static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", referencePage);
     AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", referencePage);
+    AssertContains("TypeSharp-authored named delegates lower to named CLR delegates with declaration attributes, typed parameters, optional `params`, supported generic constraints, and explicit or `void` returns", referencePage);
     AssertContains("Constructor bodies, constructor parameter capture, constructor default parameters, custom property accessors, custom add/remove events, interface static events, generated event invocation helpers, inheritance/implementation clauses, static member forms beyond class static methods/values/events/properties, abstract/virtual/override members, interface default implementations, indexers, operators, accessor/parameter attributes, nested types, partial methods, broader attribute target validation, and broader member-body analysis are post-1.0", referencePage);
     AssertContains("The 1.0 collection and object construction surface is bounded", referencePage);
     AssertContains("collection expressions require a known array or `System.Collections.Generic.List<T>` target", referencePage);
@@ -16510,7 +16516,7 @@ static void DocsSiteContractIsStable()
     var loweringPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "lowering.md"));
     AssertContains("Func<object, TResult>", loweringPage);
     AssertContains("inferred function-valued top-level `let` exports", loweringPage);
-    AssertContains("TypeSharp-authored class and interface declaration attributes lower to C# attributes on the generated type declaration, and supported member attributes lower to C# attributes on emitted class/interface methods, values, properties, and events", loweringPage);
+    AssertContains("TypeSharp-authored class, interface, and named delegate declaration attributes lower to C# attributes on the generated type declaration, and supported member attributes lower to C# attributes on emitted class/interface methods, values, properties, and events", loweringPage);
     AssertContains("TypeSharp-authored class constructor parameter lists with explicit CLR-visible parameter types lower to ordinary C# constructors with empty bodies", loweringPage);
     AssertContains("TypeSharp-authored class methods lower as instance or static methods according to the class member modifier", loweringPage);
     AssertContains("Immutable class `let` and `static let` values with explicit types and initializers lower to C# `readonly` and `static readonly` fields", loweringPage);
@@ -34646,7 +34652,11 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.GeneratedInterop
 
+            import { ObsoleteAttribute } from "System"
+
+            [ObsoleteAttribute("Use NewTransform.")]
             public delegate Transform(value: string): string
+
             public delegate ChangedHandler(value: string): unit
 
             public class Notifier(seed: string) {
@@ -34689,7 +34699,9 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "InteropSource.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "TypeSharp build should produce a generated assembly for the C# consumer.");
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("[ObsoleteAttribute(\"Use NewTransform.\")]", generatedSource);
         AssertContains("public delegate string Transform(string value);", generatedSource);
+        AssertContains("public delegate void ChangedHandler(string value);", generatedSource);
         AssertContains("public Notifier(string seed)", generatedSource);
         AssertContains("public readonly string Name = \"instance\";", generatedSource);
         AssertContains("public string DisplayName { get; } = \"display\";", generatedSource);
@@ -34730,12 +34742,17 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System;
+
             namespace ConsumerSmoke
             {
                 public static class Consumer
                 {
                     public static string CallTypeSharp()
                     {
+                        var delegateAttribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.GeneratedInterop.Transform),
+                            typeof(ObsoleteAttribute));
                         var transform = new Samples.GeneratedInterop.Transform(value => value + " from C#");
                         var notifier = new Samples.GeneratedInterop.Notifier("seed");
                         Samples.GeneratedInterop.Notifier.GlobalChanged += value => { };
@@ -34744,7 +34761,7 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
                         notifier.Count = notifier.Count + 1;
                         Samples.GeneratedInterop.Notifier.Channel = Samples.GeneratedInterop.Notifier.Channel + ":updated";
                         Samples.GeneratedInterop.Notifier.MutableKind = Samples.GeneratedInterop.Notifier.MutableKind + ":updated";
-                        return transform(notifier.Echo(notifier.Name + notifier.DisplayName + notifier.DisplayCode + notifier.Count.ToString() + Samples.GeneratedInterop.Notifier.Kind + Samples.GeneratedInterop.Notifier.Build + Samples.GeneratedInterop.Notifier.Channel + Samples.GeneratedInterop.Notifier.MutableKind + Samples.GeneratedInterop.Notifier.StaticEcho(Samples.GeneratedInterop.Module.greeting())));
+                        return delegateAttribute.Message + ":" + transform(notifier.Echo(notifier.Name + notifier.DisplayName + notifier.DisplayCode + notifier.Count.ToString() + Samples.GeneratedInterop.Notifier.Kind + Samples.GeneratedInterop.Notifier.Build + Samples.GeneratedInterop.Notifier.Channel + Samples.GeneratedInterop.Notifier.MutableKind + Samples.GeneratedInterop.Notifier.StaticEcho(Samples.GeneratedInterop.Module.greeting())));
                     }
                 }
             }
