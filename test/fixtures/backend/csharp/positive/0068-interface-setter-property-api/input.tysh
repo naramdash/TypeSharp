@@ -1,0 +1,7 @@
+namespace Samples.InterfaceProperties
+
+public interface IBuildInfo {
+  public let mut Name: string { get set }
+
+  let mut Version: int { get set }
+}

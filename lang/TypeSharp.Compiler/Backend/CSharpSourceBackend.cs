@@ -1292,8 +1292,9 @@ public static class CSharpSourceBackend
         {
             var name = GetLocalDeclarationName(node);
             var type = GetValueDeclarationType(node, initializer: null);
+            var accessorText = IsMutableValueDeclaration(node) ? "{ get; set; }" : "{ get; }";
 
-            _builder.AppendLine($"        {type} {name} {{ get; }}");
+            _builder.AppendLine($"        {type} {name} {accessorText}");
         }
 
         private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
@@ -6442,7 +6443,6 @@ public static class CSharpSourceBackend
         private static bool CanLowerInterfacePropertyDeclaration(SyntaxNode node) =>
             IsPropertyDeclaration(node) &&
             !HasStaticModifier(node) &&
-            !IsMutableValueDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is null &&
             HasSupportedInterfacePropertyAccessors(node);
@@ -6475,9 +6475,16 @@ public static class CSharpSourceBackend
                 .Where(child => child.Kind == SyntaxKind.AccessorDeclaration)
                 .ToArray();
 
-            return accessors.Length == 1 &&
-                accessors[0].Children.Count(child => child.Kind == SyntaxKind.GetKeyword) == 1 &&
-                accessors[0].Children.All(child => child.Kind == SyntaxKind.GetKeyword);
+            if (accessors.Any(accessor => accessor.Children.Any(child => child.Kind is not (SyntaxKind.GetKeyword or SyntaxKind.SetKeyword))))
+            {
+                return false;
+            }
+
+            var getterCount = accessors.Count(accessor => accessor.Children.Any(child => child.Kind == SyntaxKind.GetKeyword));
+            var setterCount = accessors.Count(accessor => accessor.Children.Any(child => child.Kind == SyntaxKind.SetKeyword));
+            return IsMutableValueDeclaration(node)
+                ? accessors.Length == 2 && getterCount == 1 && setterCount == 1
+                : accessors.Length == 1 && getterCount == 1 && setterCount == 0;
         }
 
         private static bool IsPropertyDeclaration(SyntaxNode node) =>

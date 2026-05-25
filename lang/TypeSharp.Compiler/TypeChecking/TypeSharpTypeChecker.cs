@@ -679,11 +679,7 @@ public static class TypeSharpTypeChecker
                 isValid = false;
             }
 
-            if (IsMutableValueDeclaration(node))
-            {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored interface properties support only getter-only accessors in this slice.");
-                isValid = false;
-            }
+            var isMutable = IsMutableValueDeclaration(node);
 
             if (!TryGetDirectTypeAnnotation(node, out var annotation))
             {
@@ -702,15 +698,33 @@ public static class TypeSharpTypeChecker
                 var accessors = accessorBlock.Children.Where(child => child.Kind == SyntaxKind.AccessorDeclaration).ToArray();
                 foreach (var accessor in accessors)
                 {
-                    if (accessor.Children.Any(child => child.Kind is not SyntaxKind.GetKeyword))
+                    if (accessor.Children.Any(child => child.Kind is not (SyntaxKind.GetKeyword or SyntaxKind.SetKeyword)))
                     {
-                        ReportUnsupportedTypeSharpMember(accessor, "TypeSharp-authored interface property accessors cannot declare setters, modifiers, or custom bodies in this slice.");
+                        ReportUnsupportedTypeSharpMember(accessor, "TypeSharp-authored interface property accessors cannot declare modifiers or custom bodies in this slice.");
                         isValid = false;
                     }
                 }
 
                 var getterCount = accessors.Count(accessor => accessor.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.GetKeyword));
-                if (accessors.Length != 1 || getterCount != 1)
+                var setterCount = accessors.Count(accessor => accessor.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.SetKeyword));
+                if (isMutable)
+                {
+                    if (accessors.Length != 2 || getterCount != 1 || setterCount != 1)
+                    {
+                        ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored mutable interface properties must declare exactly one getter and one setter accessor in this slice.");
+                        isValid = false;
+                    }
+                }
+                else if (accessors.Length == 1 && getterCount == 1 && setterCount == 0)
+                {
+                    continue;
+                }
+                else if (setterCount > 0)
+                {
+                    ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored interface properties with setters must use mutable `let mut`.");
+                    isValid = false;
+                }
+                else
                 {
                     ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored interface properties must declare exactly one getter accessor in this slice.");
                     isValid = false;
