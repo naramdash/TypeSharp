@@ -135,8 +135,8 @@ static void TestRunnerShardSelectionIsStable()
     var languageProgress = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-progress.md"));
     AssertContains("| Current slice | Hosted release/download smoke remains the largest open 1.0 adoption evidence gap after completing broad `TS2201` reduction and simplifying the Docs deployment workflow. |", languageProgress);
     AssertContains("| Verification target | Test catalog tracker-count guard, workflow contract, diagnostic fixture README drift checks, docs contract, compiler test build, docs build, diff hygiene, workflow/docs-script forbidden-tooling scan, deployed public-docs probe, and hosted-release probe. |", languageProgress);
-    AssertContains("The current tree removes that nonessential Docs post-deploy remote fetch gate; the release workflow remains the hosted public Pages gate before release asset publication.", languageProgress);
-    AssertContains("The latest `Regression` run `26385836851` already used `windows-latest`; its failed shard was a contract expectation drift around the rendered public-docs route tuple shape, not a Linux runtime issue.", languageProgress);
+    AssertContains("The `079e005b7dfa716a7b326b557278c8a81cd631a7` push proved Docs run `26387486369` succeeds after removing the nonessential post-deploy verifier.", languageProgress);
+    AssertContains("Regression run `26387486368` ran on `windows-latest` and failed because a rendered-verifier mutation test used LF-only string replacements against a CRLF checkout.", languageProgress);
     var legacyForbiddenToolingScanName = string.Concat("Python", " scan");
     AssertFalse(languageProgress.Contains(legacyForbiddenToolingScanName, StringComparison.Ordinal), "Progress ledger should use workflow/docs-script forbidden-tooling scan wording.");
     AssertContains("the shared package-free catalog is 586 cases", languageProgress);
@@ -242,9 +242,9 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`typesharp version` reports CLI, compiler, language, release channel, runtime ABI/status, default generated target, CLI host target, runtime target, artifact kind, build metadata, and source revision useful for support.", languageTasks);
     AssertContains("Hosted public docs probes, README Install links, starter README recovery links, Astro canonical site metadata, rendered and hosted canonical/Open Graph URLs, and rendered and hosted sitemap URLs now use the configured GitHub Pages URL `https://naramdash.github.io/TypeSharp/`, not the stale `https://typesharp.github.io/TypeSharp/` URL that returns the legacy 404 page.", languageTasks);
     AssertContains("The docs Astro config defaults local builds to the repository base when `GITHUB_REPOSITORY` is absent, `npm run verify:rendered-install-route` rejects canonical, Open Graph, page-link, or sitemap output that loses the `/TypeSharp` base path or reintroduces the stale `https://typesharp.github.io/TypeSharp` host, and `release-artifacts.yml` repeats those canonical/Open Graph/sitemap stale-host checks against the deployed public Pages routes before release asset publication.", languageTasks);
-    AssertContains("The main 1.0 risk is not \"missing everything\"; it is that the hosted release/download evidence is still external, the latest public docs deployment fixed configured-host canonical/sitemap output but the post-deploy workflow still failed on a PowerShell URI interpolation bug in the pushed workflow, several supported areas remain explicitly `MVP limited`, and broader TypeScript/F#/C# parity items are intentionally represented as post-1.0 backlog in canonical docs.", languageTasks);
+    AssertContains("The main 1.0 risk is not \"missing everything\"; it is that the hosted release/download evidence is still external, the latest pushed Docs workflow now succeeds after removing the nonessential post-deploy verifier, the release workflow still needs hosted validation after moving release-tag resolution out of validation-time expressions, several supported areas remain explicitly `MVP limited`, and broader TypeScript/F#/C# parity items are intentionally represented as post-1.0 backlog in canonical docs.", languageTasks);
     AssertContains("GitHub Pages API probing reports workflow deployment at `https://naramdash.github.io/TypeSharp/`, and the latest external configured Pages content probe found all 34 sidebar deployed public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml` return HTTP 200 with configured-host canonical/sitemap output.", languageTasks);
-    AssertContains("the current tree removes that nonessential Docs post-deploy remote fetch gate and leaves hosted public Pages validation in the release workflow before asset publication", languageTasks);
+    AssertContains("The current tree leaves hosted public Pages validation in the release workflow before asset publication and removes exact legacy 404 marker literals from the public Project Policy page", languageTasks);
     AssertContains("Install canonical URL pages, Install Open Graph URL pages, Install `/TypeSharp` base-path pages, stale legacy `https://typesharp.github.io/TypeSharp` page URLs, sitemap index URL pages, sitemap public-route URL pages, stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
     AssertContains("stale legacy `https://typesharp.github.io/TypeSharp` page URLs", languageTasks);
     AssertContains("stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
@@ -252,24 +252,26 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("sitemap-index/sitemap routes to preserve `https://naramdash.github.io/TypeSharp/` URLs for all 34 sidebar public-docs routes", languageTasks);
     AssertContains("Docs site, GitHub Pages workflow, and release workflow contract coverage now extracts the public sidebar slugs from `docs/astro.config.ts` and asserts `docs/scripts/verify-rendered-install-route.cjs`, `.github/workflows/docs.yml`, and `.github/workflows/release-artifacts.yml` cover the same 34 public-docs routes", languageTasks);
     AssertContains("The rendered verifier and release workflow pre-publication verifier now also fail on a non-34 public-docs route table or duplicate public-docs route paths before route fetch/canonical/sitemap checks continue.", languageTasks);
-    AssertContains("The rendered verifier now rejects the configured exact legacy 404 marker set across all 34 rendered sidebar public-docs pages before upload, matching the post-deploy and pre-publication hosted marker gates.", languageTasks);
+    AssertContains("The rendered verifier now rejects the configured exact legacy 404 marker set across all 34 rendered sidebar public-docs pages before upload, matching the release pre-publication hosted marker gate.", languageTasks);
     AssertContains("Added controlled rendered-verifier fixture coverage for canonical/Open Graph/base-path/sitemap URL drift, so `GitHub Pages workflow contract is stable` now proves missing Install canonical URL, missing Install Open Graph URL, missing Install `/TypeSharp` base-path link, missing sitemap index URL, and missing sitemap public-route URL failures before Pages upload.", languageProgress);
     AssertContains("Rejected stale legacy `https://typesharp.github.io/TypeSharp` URLs in both the rendered Install verifier and the hosted release public-docs probe, with controlled fixture coverage for stale Install page URLs and stale sitemap URLs before Pages upload.", languageProgress);
     AssertContains("Added hosted public docs canonical/sitemap URL probes so `release-artifacts.yml` verifies public Pages canonical/Open Graph URLs and sitemap entries for all checked public-docs routes stay under `https://naramdash.github.io/TypeSharp/` before publishing release assets.", languageProgress);
     AssertContains("Expanded the 1.0 task tracker adoption-map evidence list to match the current public webpage-to-build route surface, including Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, Advanced Topics, Project Policy, and .NET Interop alongside the original public entry/support pages.", languageProgress);
     AssertContains("Aligned the 1.0 task tracker evidence list with the current release/docs verification surface by naming `.github/workflows/docs.yml`, `.github/workflows/release-artifacts.yml`, and `docs/scripts/verify-rendered-install-route.cjs` alongside the compiler catalog, test cases, MSTest catalog, and regression workflow.", languageProgress);
-    AssertContains("Expanded rendered, post-deploy, and release pre-publication public URL identity checks from the adoption-facing 19-route set to all 34 sidebar public-docs routes", languageProgress);
+    AssertContains("Expanded rendered and release pre-publication public URL identity checks from the adoption-facing 19-route set to all 34 sidebar public-docs routes", languageProgress);
     AssertContains("Added sidebar-derived route coverage guards so the docs site, GitHub Pages workflow, and release workflow contract tests now extract public sidebar slugs from `docs/astro.config.ts` and assert the rendered verifier plus both workflow route tables cover the same 34 public-docs routes.", languageProgress);
-    AssertContains("Added exact 34-route and duplicate-path self-checks to the rendered verifier, docs workflow post-deploy route table, and release workflow pre-publication canonical/sitemap route table so route-table copy/paste mistakes fail before public URL identity evidence is accepted.", languageProgress);
+    AssertContains("Added exact 34-route and duplicate-path self-checks to the rendered verifier and release workflow pre-publication canonical/sitemap route table so route-table copy/paste mistakes fail before public URL identity evidence is accepted.", languageProgress);
     AssertContains("Rechecked the latest `release-artifacts.yml` workflow on the `main` push `e542035a77f5fda2fa94ea06166a667268797324`: run `26385836353` failed before jobs were created, matching an invalid workflow-file failure from the pushed workflow's direct `inputs.tag` use outside a workflow-dispatch-only context.", languageProgress);
-    AssertContains("Fixed the release workflow's tag/ref context usage to `github.event.inputs.tag || github.ref_name`, `github.event.inputs.tag || github.ref`, and matching `RELEASE_TAG` assignment, so push-triggered workflow parsing no longer depends on direct `inputs.tag` expressions.", languageProgress);
-    AssertContains("Added broader release workflow contract guards that reject direct `${{ inputs.* }}` and bare `inputs.tag` expressions while preserving the `github.event.inputs.tag` fallback form.", languageProgress);
+    AssertContains("Fixed the release workflow's first validation issue by replacing direct workflow-dispatch input expressions with `github.event.inputs.tag` fallbacks.", languageProgress);
+    AssertContains("Rechecked the pushed `079e005b7dfa716a7b326b557278c8a81cd631a7` Actions runs: Docs run `26387486369` succeeded, Regression run `26387486368` ran on `windows-latest` and failed because a rendered-verifier mutation test used LF-only string replacements against a CRLF checkout, and `release-artifacts.yml` run `26387485907` still failed before jobs were created, showing the release workflow still had validation-time release-tag expression usage.", languageProgress);
+    AssertContains("Moved release-tag resolution out of validation-time workflow expressions: `release-artifacts.yml` now resolves `RELEASE_TAG` at runtime from `GITHUB_EVENT_PATH` or `GITHUB_REF_NAME`, writes it through `GITHUB_ENV`, avoids expression-selected checkout refs and tag-derived artifact names, and checks out the validated tag after runner allocation.", languageProgress);
+    AssertContains("Added broader release workflow contract guards that reject validation-time workflow-dispatch input expressions in concurrency, checkout ref, and artifact-name fields while preserving runtime `GITHUB_EVENT_PATH`/`GITHUB_ENV` release-tag resolution.", languageProgress);
+    AssertContains("Made the rendered-verifier mutation tests line-ending independent by normalizing the script source to LF before applying controlled replacement patterns, so the Windows Actions checkout cannot skip the intended mutation.", languageProgress);
     AssertContains("Rechecked the latest `docs.yml` run `26385836869` for the same `main` push: build, upload, and Pages deployment completed, but the post-deploy verifier failed when PowerShell parsed `\"$uri?typesharp-cache-bust=...\"` as an invalid hostname.", languageProgress);
     AssertContains("Fixed the docs and release hosted-route cache-busting interpolation to `\"$($uri)?typesharp-cache-bust=...\"`, so cache-busted public Pages probes preserve the full configured URL before adding query parameters.", languageProgress);
     AssertContains("Added explicit GitHub Pages and release workflow contract guards that reject the broken unparenthesized `\"$uri?typesharp-cache-bust=...\"` interpolation shape while preserving the fixed `\"$($uri)?typesharp-cache-bust=...\"` form.", languageProgress);
-    AssertContains("`gh` recheck on 2026-05-25 found `release-artifacts.yml` run `26386680510` failed before any jobs were created from the pushed workflow-file context bug, `Docs` run `26385836869` failed after deployment on the pushed `$uri?` cache-busting interpolation bug, and `Regression` run `26385836851` already ran on `windows-latest` but failed because the GitHub Pages workflow contract still expected the old rendered verifier tuple shape; the current tree fixes all three local causes.", languageTasks);
-    AssertContains("The latest `Regression` run `26385836851` already used `windows-latest`; its failed shard was a contract expectation drift around the rendered public-docs route tuple shape, not a Linux runtime issue.", languageProgress);
-    AssertContains("Added a local rendered public-docs exact legacy 404 marker gate so `npm run verify:rendered-install-route` rejects the configured marker set across all 34 rendered sidebar public-docs pages before upload, matching the deployed docs and release hosted-route gates.", languageProgress);
+    AssertContains("`gh` recheck on 2026-05-25 found `release-artifacts.yml` run `26386680510` failed before any jobs were created from the pushed workflow-file context bug, `Docs` run `26385836869` failed after deployment on the pushed `$uri?` cache-busting interpolation bug, and `Regression` run `26385836851` already ran on `windows-latest` but failed because the GitHub Pages workflow contract still expected the old rendered verifier tuple shape. The later `079e005b7dfa716a7b326b557278c8a81cd631a7` push proved Docs run `26387486369` succeeds, while `release-artifacts.yml` run `26387485907` still failed before job creation from validation-time release-tag expression usage and Regression run `26387486368` failed because a rendered-verifier mutation test used LF-only replacements against a CRLF checkout.", languageTasks);
+    AssertContains("Added a local rendered public-docs exact legacy 404 marker gate so `npm run verify:rendered-install-route` rejects the configured marker set across all 34 rendered sidebar public-docs pages before upload, matching the release hosted-route gate.", languageProgress);
     AssertContains("Re-probed the configured public Pages deployment across all 34 sidebar public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`: all 36 checks returned HTTP 200 and all 36 bodies contained the configured `https://naramdash.github.io/TypeSharp` host; only Project Policy still contained the stale legacy host as a forbidden example and exact legacy marker literals from previously deployed policy prose.", languageProgress);
     AssertContains("Removed exact legacy 404 marker literals from the public Project Policy page while keeping the stale legacy host only as the allowed forbidden-example text, so the deployed content verifier can reject the configured marker set without matching its own policy wording.", languageProgress);
     AssertContains("Re-probed external Pages with cache-busted no-cache requests across all 34 sidebar public-docs routes plus both sitemaps", languageProgress);
@@ -402,7 +404,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("The hosted smoke verifies generated C# project build failures report `TS3501` through both text diagnostics and `--diagnostic-format json`, including the generated project name.", languageTasks);
     AssertContains("The hosted smoke checks installed `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501`, so the downloaded CLI can explain the same failure codes the smoke just triggered.", languageTasks);
     AssertContains("Release workflow contract coverage now explicitly rejects the unparenthesized `\"$uri?typesharp-cache-bust=...\"` PowerShell interpolation shape that broke the latest hosted-route verifier, preserving the fixed `\"$($uri)?typesharp-cache-bust=...\"` form locally.", languageTasks);
-    AssertContains("Release workflow contract coverage also rejects direct `${{ inputs.* }}` and bare `inputs.tag` expressions, preserving `github.event.inputs.tag` fallbacks so tag-push workflow validation does not depend on workflow-dispatch-only context.", languageTasks);
+    AssertContains("Release workflow contract coverage rejects validation-time workflow-dispatch input expressions in concurrency, checkout ref, and artifact-name fields; `release-artifacts.yml` resolves `RELEASE_TAG` at runtime from `GITHUB_EVENT_PATH` or `GITHUB_REF_NAME` through `GITHUB_ENV`, then checks out the validated tag with `git checkout --detach`.", languageTasks);
     AssertContains("Extended the hosted GitHub Release smoke to follow the Install page command setup more closely: after extracting the CLI zip, it prepends the install directory to `PATH`, verifies bare `typesharp` resolves to the downloaded `typesharp.cmd`, and runs `typesharp version --json` through that installed command path.", languageProgress);
     AssertContains("Aligned Project Policy, Runtime Artifacts, and .NET Interop with the installed-command hosted release smoke so the canonical docs now describe the `PATH` setup, bare `typesharp` resolution, clean console `new`/`check`/`build`/`run`, and runtime-backed library plus C# `net48` consumer output coverage against downloaded release assets.", languageProgress);
     AssertContains("After `PATH` setup, the hosted smoke runs the console, formatter, local-DLL dependency, negative dependency diagnostics, generated C# build-failure diagnostics, direct project-reference, and runtime TypeSharp project commands through bare `typesharp` instead of wrapper absolute paths.", languageProgress);
@@ -444,7 +446,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("but a real hosted release download has not yet been smoke-tested from the public page", languageTasks);
     AssertContains("remaining evidence requires the first tagged release run to pass this smoke", languageTasks);
     AssertContains("The release workflow now has hosted asset and public-docs gates, but the remaining 1.0 blocker is still external evidence: a real tagged GitHub Release must publish assets and pass the hosted download/checksum/version/build smoke.", languageProgress);
-    AssertContains("`gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries, so hosted release evidence remains pending.", languageProgress);
+    AssertContains("still has no hosted release evidence because `gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries.", languageProgress);
     AssertContains("Current configured public Pages probing confirms `https://naramdash.github.io/TypeSharp/install/` returns HTTP 200 with CLI/runtime/repository/release-download markers; the stale `https://typesharp.github.io/TypeSharp/install/` route still returns the legacy 404 page and is no longer the release gate target.", languageProgress);
     AssertContains("Run the first tagged release and confirm the hosted release asset smoke passes against real public assets.", languageProgress);
     AssertContains("Replace remaining fallback language after a hosted release asset is available", languageProgress);
@@ -16840,11 +16842,13 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             matchingTagWithoutStartHereFallback.ExitCode == 0,
             $"Rendered install verifier should accept a matching dist fixture after the Start Here repo-local fallback is removed.\nSTDOUT:\n{matchingTagWithoutStartHereFallback.StandardOutput}\nSTDERR:\n{matchingTagWithoutStartHereFallback.StandardError}");
 
-        var duplicateBroaderRouteLabelScript = renderedRouteScript.Replace(
+        var renderedRouteScriptForMutation = renderedRouteScript.Replace("\r\n", "\n");
+
+        var duplicateBroaderRouteLabelScript = renderedRouteScriptForMutation.Replace(
             "  'Learning Paths',\n  'Language Tour',",
             "  'Learning Paths',\n  'Learning Paths',");
         AssertTrue(
-            duplicateBroaderRouteLabelScript != renderedRouteScript,
+            duplicateBroaderRouteLabelScript != renderedRouteScriptForMutation,
             "Rendered verifier script mutation should create a duplicate broader-route label.");
         WriteFile(root, "scripts/verify-rendered-install-route.cjs", duplicateBroaderRouteLabelScript);
         var duplicateBroaderRouteLabel = RunProcessWithEnvironment(
@@ -16863,11 +16867,11 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             "Rendered broader release routes contains duplicate route labels.",
             duplicateBroaderRouteLabel.StandardOutput + duplicateBroaderRouteLabel.StandardError);
 
-        var missingBroaderRouteLabelScript = renderedRouteScript.Replace(
+        var missingBroaderRouteLabelScript = renderedRouteScriptForMutation.Replace(
             "  'Diagnostics',\n  'Advanced Topics'\n], 'broader release routes');",
             "  'Diagnostics'\n], 'broader release routes');");
         AssertTrue(
-            missingBroaderRouteLabelScript != renderedRouteScript,
+            missingBroaderRouteLabelScript != renderedRouteScriptForMutation,
             "Rendered verifier script mutation should remove one broader-route label.");
         WriteFile(root, "scripts/verify-rendered-install-route.cjs", missingBroaderRouteLabelScript);
         var missingBroaderRouteLabel = RunProcessWithEnvironment(
@@ -16886,11 +16890,11 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             "Rendered broader release route subset must contain 9 routes",
             missingBroaderRouteLabel.StandardOutput + missingBroaderRouteLabel.StandardError);
 
-        var overlappingCommandPolicyRouteScript = renderedRouteScript.Replace(
+        var overlappingCommandPolicyRouteScript = renderedRouteScriptForMutation.Replace(
             "  'Advanced Topics'\n], 'broader release routes');",
             "  'CLI'\n], 'broader release routes');");
         AssertTrue(
-            overlappingCommandPolicyRouteScript != renderedRouteScript,
+            overlappingCommandPolicyRouteScript != renderedRouteScriptForMutation,
             "Rendered verifier script mutation should overlap broader and support route labels.");
         WriteFile(root, "scripts/verify-rendered-install-route.cjs", overlappingCommandPolicyRouteScript);
         var overlappingCommandPolicyRoute = RunProcessWithEnvironment(
@@ -17767,19 +17771,22 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("$env:RELEASE_TAG -notmatch '^v\\d+\\.\\d+\\.\\d+(-preview\\.\\d+)?$'", workflow);
     AssertContains("must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-preview.N", workflow);
     AssertContains("$tagCommit = git rev-list -n 1 \"refs/tags/$env:RELEASE_TAG\"", workflow);
+    AssertContains("git checkout --force --detach \"refs/tags/$env:RELEASE_TAG\"", workflow);
     AssertContains("$headCommit = git rev-parse HEAD", workflow);
     AssertContains("Release checkout commit '$headCommit' did not match tag '$env:RELEASE_TAG' commit '$tagCommit'.", workflow);
     AssertFalse(workflow.Contains("(-[0-9A-Za-z.-]+)?", StringComparison.Ordinal), "Release workflow should not allow arbitrary prerelease labels outside preview.N.");
     AssertContains("contents: write", workflow);
     AssertContains("actions: write", workflow);
     AssertContains("concurrency:", workflow);
-    AssertContains("group: release-artifacts-${{ github.event.inputs.tag || github.ref_name }}", workflow);
-    AssertContains("RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}", workflow);
-    AssertContains("ref: ${{ github.event.inputs.tag || github.ref }}", workflow);
-    AssertFalse(workflow.Contains("&& inputs.tag", StringComparison.Ordinal), "Release workflow should not use a direct inputs context in conditional expressions.");
-    AssertFalse(workflow.Contains(" inputs.tag ||", StringComparison.Ordinal), "Release workflow should use github.event.inputs.tag so non-dispatch workflow validation does not fail on a direct inputs context.");
-    AssertFalse(workflow.Contains("${{ inputs.", StringComparison.Ordinal), "Release workflow should not use direct workflow-dispatch inputs in expressions that also validate on tag push events.");
-    AssertFalse(Regex.IsMatch(workflow, @"(?<!event\.)inputs\.tag"), "Release workflow should reference github.event.inputs.tag instead of direct inputs.tag.");
+    AssertContains("group: release-artifacts-${{ github.ref }}", workflow);
+    AssertContains("Resolve release tag", workflow);
+    AssertContains("$event = Get-Content -Raw -LiteralPath $env:GITHUB_EVENT_PATH | ConvertFrom-Json", workflow);
+    AssertContains("$releaseTag = [string] $event.inputs.tag", workflow);
+    AssertContains("$releaseTag = [string] $env:GITHUB_REF_NAME", workflow);
+    AssertContains("\"RELEASE_TAG=$releaseTag\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append", workflow);
+    AssertFalse(workflow.Contains("github.event.inputs.tag", StringComparison.Ordinal), "Release workflow should not use GitHub expression inputs for workflow-file validation-sensitive fields.");
+    AssertFalse(workflow.Contains("${{ inputs.", StringComparison.Ordinal), "Release workflow should not use direct workflow-dispatch inputs in expressions that also validate before runner allocation.");
+    AssertFalse(workflow.Contains("ref: ${{", StringComparison.Ordinal), "Release checkout should avoid expression-selected refs and detach to the validated tag at runtime.");
     AssertContains("$PSNativeCommandUseErrorActionPreference = $true", workflow);
     AssertContains("runs-on: windows-latest", workflow);
     AssertContains("uses: actions/checkout@v6", workflow);
@@ -17799,7 +17806,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Verify docs site before release", workflow);
     AssertContains("run: |\n          npm ci\n          npm run build", workflow);
     AssertContains("npm run verify:rendered-install-route", workflow);
-    AssertContains("working-directory: docs\n        env:\n          RELEASE_TAG: ${{ env.RELEASE_TAG }}", workflow);
+    AssertContains("working-directory: docs", workflow);
     AssertContains("Verify GitHub Pages configuration", workflow);
     AssertContains("gh api \"repos/$env:GITHUB_REPOSITORY/pages\" | ConvertFrom-Json", workflow);
     AssertContains("GitHub Pages build type was '$($pages.build_type)' instead of workflow.", workflow);
@@ -18210,6 +18217,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.", workflow);
     AssertContains("Install a previous GitHub Release asset with a matching runtime ABI", workflow);
     AssertContains("uses: actions/upload-artifact@v5", workflow);
+    AssertContains("name: typesharp-release-artifacts-${{ github.run_id }}", workflow);
     AssertContains("if-no-files-found: error", workflow);
     AssertContains("GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}", workflow);
     AssertContains("'release',", workflow);
