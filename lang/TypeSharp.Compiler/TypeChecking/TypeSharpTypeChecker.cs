@@ -500,9 +500,9 @@ public static class TypeSharpTypeChecker
                 switch (child.Kind)
                 {
                     case SyntaxKind.ValueDeclaration:
-                        if (isClass && HasStaticModifier(child))
+                        if (isClass)
                         {
-                            CheckClassStaticValueMember(child, scope);
+                            CheckClassValueMember(child, scope);
                         }
                         else
                         {
@@ -522,24 +522,29 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private void CheckClassStaticValueMember(SyntaxNode node, TypeScope scope)
+        private void CheckClassValueMember(SyntaxNode node, TypeScope scope)
         {
             var isValid = true;
+            var isStatic = HasStaticModifier(node);
+            var valueKind = isStatic ? "class static values" : "class instance values";
             if (IsMutableValueDeclaration(node))
             {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class static values must use immutable `let`; mutable class static fields are not part of the 1.0 class member subset.");
+                var message = isStatic
+                    ? "TypeSharp-authored class static values must use immutable `let`; mutable class static fields are not part of the 1.0 class member subset."
+                    : "TypeSharp-authored class instance values must use immutable `let`; mutable instance class fields are not part of the 1.0 class member subset.";
+                ReportUnsupportedTypeSharpMember(node, message);
                 isValid = false;
             }
 
             if (!TryGetDirectTypeAnnotation(node, out var annotation))
             {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class static values must declare an explicit CLR-visible type.");
+                ReportUnsupportedTypeSharpMember(node, $"TypeSharp-authored {valueKind} must declare an explicit CLR-visible type.");
                 isValid = false;
             }
 
             if (!HasInitializer(node))
             {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class static values must declare an initializer.");
+                ReportUnsupportedTypeSharpMember(node, $"TypeSharp-authored {valueKind} must declare an initializer.");
                 isValid = false;
             }
 

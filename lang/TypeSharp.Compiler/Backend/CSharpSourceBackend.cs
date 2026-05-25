@@ -1067,7 +1067,7 @@ public static class CSharpSourceBackend
 
             var members = node.Children
                 .Where(child => ((child.Kind is SyntaxKind.EventDeclaration or SyntaxKind.FunctionDeclaration) && !IsAmbientDeclaration(child))
-                    || CanLowerClassStaticValueDeclaration(child))
+                    || CanLowerClassValueDeclaration(child))
                 .ToArray();
 
             for (var index = 0; index < members.Length; index++)
@@ -1083,7 +1083,7 @@ public static class CSharpSourceBackend
                 }
                 else if (members[index].Kind == SyntaxKind.ValueDeclaration)
                 {
-                    EmitClassStaticValueDeclaration(members[index]);
+                    EmitClassValueDeclaration(members[index]);
                 }
                 else
                 {
@@ -1235,15 +1235,16 @@ public static class CSharpSourceBackend
             _builder.AppendLine($"        {visibility} {storage} {type} {name} = {value};");
         }
 
-        private void EmitClassStaticValueDeclaration(SyntaxNode node)
+        private void EmitClassValueDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
             var name = GetLocalDeclarationName(node);
             var initializer = GetInitializerExpression(node);
             var type = GetValueDeclarationType(node, initializer);
             var value = EmitExpression(initializer, type);
+            var storage = HasStaticModifier(node) ? "static readonly" : "readonly";
 
-            _builder.AppendLine($"        {visibility} static readonly {type} {name} = {value};");
+            _builder.AppendLine($"        {visibility} {storage} {type} {name} = {value};");
         }
 
         private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
@@ -6376,9 +6377,8 @@ public static class CSharpSourceBackend
         private static bool CanLowerTopLevelValueDeclaration(SyntaxNode node) =>
             !IsFunctionValueDeclaration(node) || HasFunctionTypeAnnotation(node) || HasLambdaInitializer(node);
 
-        private static bool CanLowerClassStaticValueDeclaration(SyntaxNode node) =>
+        private static bool CanLowerClassValueDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&
-            HasStaticModifier(node) &&
             !IsMutableValueDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
