@@ -15893,7 +15893,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Target default net48", installPage);
     AssertContains("CLI target net10.0", installPage);
     AssertContains("Runtime target net48", installPage);
-    AssertContains("Build metadata v0.1.0-preview.2", installPage);
+    AssertContains("Build metadata v0.1.0-preview.3", installPage);
     AssertContains("same 12-character lowercase commit prefix recorded on the GitHub Release page", installPage);
     AssertContains("Source revision <12-character-commit-prefix>", installPage);
     AssertContains("""
@@ -17426,7 +17426,7 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             root,
             new Dictionary<string, string>
             {
-                ["RELEASE_TAG"] = "v0.1.0-preview.2"
+                ["RELEASE_TAG"] = "v0.1.0-preview.3"
             });
 
         AssertTrue(
@@ -17436,7 +17436,7 @@ static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string ren
             "Rendered Install page must set the release download version to RELEASE_TAG.",
             mismatchedTag.StandardOutput + mismatchedTag.StandardError);
 
-        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", buildMetadataTag: "v0.1.0-preview.2");
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", buildMetadataTag: "v0.1.0-preview.3");
         var mismatchedBuildMetadata = RunProcessWithEnvironment(
             "node",
             "scripts/verify-rendered-install-route.cjs",
@@ -18165,6 +18165,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("if ($localMissingHostExitCode -eq 0) {", workflow);
     AssertContains("Local CLI host-prerequisite smoke unexpectedly succeeded without dotnet on PATH before upload.", workflow);
     AssertContains("Assert-LocalTextContains ($localMissingHostOutput -join \"`n\") 'dotnet' 'Local CLI host-prerequisite smoke did not report the missing dotnet host before upload.'", workflow);
+    AssertContains("$global:LASTEXITCODE = 0", workflow);
     AssertContains("Assert-LocalTextContains $localCliReadme \"# TypeSharp CLI $tag\" 'Local CLI README does not identify the release tag before upload.'", workflow);
     AssertContains("Assert-LocalTextContains $localCliReadme \"Build metadata: $tag\" 'Local CLI README does not include build metadata before upload.'", workflow);
     AssertContains("Assert-LocalTextContains $localCliReadme \"Source revision: $sourceRevision\" 'Local CLI README source revision does not match the checkout before upload.'", workflow);
@@ -18856,6 +18857,7 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("if ($missingHostExitCode -eq 0) {", workflow);
     AssertContains("Hosted CLI host-prerequisite smoke unexpectedly succeeded without dotnet on PATH.", workflow);
     AssertContains("Assert-Contains ($missingHostOutput -join \"`n\") 'dotnet' 'Hosted CLI host-prerequisite smoke did not report the missing dotnet host.'", workflow);
+    AssertContains("$global:LASTEXITCODE = 0", workflow);
     AssertContains("typesharp version --json", workflow);
     AssertContains("Hosted CLI version text failed.", workflow);
     AssertContains("Assert-Contains $versionTextJoined 'TypeSharp CLI ' 'Hosted CLI version text did not include the CLI version.'", workflow);

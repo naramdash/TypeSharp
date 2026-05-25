@@ -943,6 +943,7 @@ jobs:
             throw 'Local CLI host-prerequisite smoke unexpectedly succeeded without dotnet on PATH before upload.'
           }
           Assert-LocalTextContains ($localMissingHostOutput -join "`n") 'dotnet' 'Local CLI host-prerequisite smoke did not report the missing dotnet host before upload.'
+          $global:LASTEXITCODE = 0
           $localCliReadme = Get-Content -Raw -LiteralPath (Join-Path $localCliRoot 'README.md')
           Assert-LocalTextContains $localCliReadme "# TypeSharp CLI $tag" 'Local CLI README does not identify the release tag before upload.'
           Assert-LocalTextContains $localCliReadme "Build metadata: $tag" 'Local CLI README does not include build metadata before upload.'
@@ -1800,6 +1801,7 @@ jobs:
             throw 'Hosted CLI host-prerequisite smoke unexpectedly succeeded without dotnet on PATH.'
           }
           Assert-Contains ($missingHostOutput -join "`n") 'dotnet' 'Hosted CLI host-prerequisite smoke did not report the missing dotnet host.'
+          $global:LASTEXITCODE = 0
 
           $release = gh release view $env:RELEASE_TAG --json assets,body,tagName,name,isDraft,isPrerelease,publishedAt,url | ConvertFrom-Json
           if ($release.tagName -ne $env:RELEASE_TAG) {

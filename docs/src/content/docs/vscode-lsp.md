@@ -37,7 +37,7 @@ The syntax highlighting extension is the package under `vscode/typesharp`. It co
 Release VSIX install:
 
 ```powershell
-$version = "v0.1.0-preview.2"
+$version = "v0.1.0-preview.3"
 $repo = "naramdash/TypeSharp"
 $release = "https://github.com/$repo/releases/download/$version"
 $downloadRoot = Join-Path $env:TEMP "typesharp-$version"

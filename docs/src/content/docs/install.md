@@ -12,7 +12,7 @@ Use the preview contributor source-built fallback on [Start Here](../start-here/
 Choose a release tag and download the CLI zip plus checksum manifest.
 
 ```powershell
-$version = "v0.1.0-preview.2"
+$version = "v0.1.0-preview.3"
 $repo = "naramdash/TypeSharp"
 $release = "https://github.com/$repo/releases/download/$version"
 $releasePage = "https://github.com/$repo/releases/tag/$version"
@@ -94,7 +94,7 @@ Target default net48
 CLI target net10.0
 Runtime target net48
 Artifact kind framework-dependent-dotnet
-Build metadata v0.1.0-preview.2
+Build metadata v0.1.0-preview.3
 Source revision <12-character-commit-prefix>
 ```
 
