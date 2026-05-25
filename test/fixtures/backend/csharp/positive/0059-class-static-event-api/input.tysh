@@ -1,0 +1,11 @@
+namespace Samples.StaticEvents
+
+public delegate ChangedHandler(value: string): unit
+
+public class Notifier {
+  public static event GlobalChanged: ChangedHandler
+
+  public event Changed: ChangedHandler
+
+  public fun Echo(value: string): string = value
+}

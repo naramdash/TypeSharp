@@ -1150,10 +1150,11 @@ public static class CSharpSourceBackend
         private void EmitEventDeclaration(SyntaxNode node)
         {
             var visibility = GetVisibility(node);
+            var staticModifier = GetStaticModifier(node);
             var type = GetEventType(node);
             var name = GetEventDeclarationName(node);
 
-            _builder.AppendLine($"        {visibility} event {type} {name};");
+            _builder.AppendLine($"        {visibility}{staticModifier} event {type} {name};");
         }
 
         private void EmitInterfaceEventDeclaration(SyntaxNode node)
@@ -6584,6 +6585,9 @@ public static class CSharpSourceBackend
 
         private static string GetPartialModifier(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.PartialModifier) ? " partial" : string.Empty;
+
+        private static string GetStaticModifier(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.StaticModifier) ? " static" : string.Empty;
 
         private static bool IsAsyncFunction(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);

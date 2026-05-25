@@ -139,6 +139,7 @@ public enum SyntaxKind
     AsyncModifier,
     PublicModifier,
     PrivateModifier,
+    StaticModifier,
     PartialModifier,
     AmbientModifier,
     DynamicModifier,
