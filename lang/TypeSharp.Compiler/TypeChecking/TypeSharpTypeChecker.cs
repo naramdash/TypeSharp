@@ -491,7 +491,7 @@ public static class TypeSharpTypeChecker
             {
                 foreach (var parameterList in node.Children.Where(child => child.Kind == SyntaxKind.ParameterList))
                 {
-                    ReportUnsupportedTypeSharpMember(parameterList, "TypeSharp-authored class constructors are not part of the 1.0 class member subset; use methods on the supported class surface or imported C# constructors.");
+                    CheckClassConstructorParameterList(parameterList, scope);
                 }
             }
 
@@ -518,6 +518,47 @@ public static class TypeSharpTypeChecker
                     case SyntaxKind.SkippedToken:
                         ReportUnsupportedTypeSharpMember(child, $"{declarationKind} member syntax is not supported in the 1.0 class/interface member subset.");
                         break;
+                }
+            }
+        }
+
+        private void CheckClassConstructorParameterList(SyntaxNode parameterList, TypeScope scope)
+        {
+            var parameters = parameterList.Children.Where(child => child.Kind == SyntaxKind.Parameter).ToArray();
+            var paramsIndexes = parameters
+                .Select((parameter, index) => (Parameter: parameter, Index: index))
+                .Where(item => IsParamsParameter(item.Parameter))
+                .ToArray();
+
+            if (paramsIndexes.Length > 1)
+            {
+                foreach (var duplicate in paramsIndexes.Skip(1))
+                {
+                    ReportUnsupportedTypeSharpMember(duplicate.Parameter, "TypeSharp-authored class constructors can declare only one params parameter.");
+                }
+            }
+
+            if (paramsIndexes.Length > 0 && paramsIndexes[0].Index != parameters.Length - 1)
+            {
+                ReportUnsupportedTypeSharpMember(paramsIndexes[0].Parameter, "TypeSharp-authored class constructor params parameters must be the final parameter.");
+            }
+
+            foreach (var parameter in parameters)
+            {
+                if (!TryGetDirectTypeAnnotation(parameter, out var annotation))
+                {
+                    var name = GetParameterName(parameter) ?? "parameter";
+                    ReportUnsupportedTypeSharpMember(parameter, $"TypeSharp-authored class constructor parameter '{name}' must declare an explicit CLR-visible type.");
+                    continue;
+                }
+
+                ReportPublicBoundaryLeaks(annotation, scope);
+
+                if (IsParamsParameter(parameter) &&
+                    (!TryGetType(annotation, scope, out var parameterType) || !TryGetArrayElementTypeName(parameterType, out _)))
+                {
+                    var name = GetParameterName(parameter) ?? "parameter";
+                    ReportUnsupportedTypeSharpMember(parameter, $"TypeSharp-authored class constructor params parameter '{name}' must have an array type.");
                 }
             }
         }

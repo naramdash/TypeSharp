@@ -1065,14 +1065,20 @@ public static class CSharpSourceBackend
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
 
+            var hasConstructor = HasClassConstructorParameterList(node);
             var members = node.Children
                 .Where(child => ((child.Kind is SyntaxKind.EventDeclaration or SyntaxKind.FunctionDeclaration) && !IsAmbientDeclaration(child))
                     || CanLowerClassValueDeclaration(child))
                 .ToArray();
 
+            if (hasConstructor)
+            {
+                EmitClassConstructor(node, name, visibility);
+            }
+
             for (var index = 0; index < members.Length; index++)
             {
-                if (index > 0)
+                if (index > 0 || hasConstructor)
                 {
                     _builder.AppendLine();
                 }
@@ -1092,6 +1098,14 @@ public static class CSharpSourceBackend
             }
 
             _builder.AppendLine("    }");
+        }
+
+        private void EmitClassConstructor(SyntaxNode node, string name, string visibility)
+        {
+            var parameters = GetParameters(node);
+            _builder.AppendLine($"        {visibility} {name}({FormatParameters(parameters)})");
+            _builder.AppendLine("        {");
+            _builder.AppendLine("        }");
         }
 
         private void EmitInterfaceDeclaration(SyntaxNode node)
@@ -6382,6 +6396,10 @@ public static class CSharpSourceBackend
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
             node.Children.All(child => child.Kind != SyntaxKind.AccessorBlock);
+
+        private static bool HasClassConstructorParameterList(SyntaxNode node) =>
+            node.Kind == SyntaxKind.ClassDeclaration &&
+            node.Children.Any(child => child.Kind == SyntaxKind.ParameterList);
 
         private static bool IsFunctionValueDeclaration(SyntaxNode node)
         {

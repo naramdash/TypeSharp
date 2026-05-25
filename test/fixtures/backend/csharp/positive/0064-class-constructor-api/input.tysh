@@ -1,0 +1,7 @@
+namespace Samples.Constructors
+
+public class Formatter(prefix: string, params values: string[]) {
+  public let mut Count: int = 0
+
+  public fun Echo(value: string): string = value
+}
