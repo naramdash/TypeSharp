@@ -37150,10 +37150,27 @@ static string PublishStagedCliArtifact(string root)
     var releaseRoot = Path.Combine(root, "artifact", "release");
     var installRoot = Path.Combine(root, "artifact", "install", "typesharp-cli-dotnet");
     var publishRoot = Path.Combine(stagingRoot, "typesharp-cli-dotnet");
-    var publish = RunProcess(
-        "dotnet",
-        $"publish {QuoteProcessArgument(Path.Combine(repositoryRoot, "cli", "TypeSharp.Cli", "TypeSharp.Cli.csproj"))} -c Debug --no-restore -p:UseAppHost=false -p:TypeSharpBuildMetadata=staged-test -p:TypeSharpSourceRevision=staged-test -o {QuoteProcessArgument(publishRoot)}",
-        repositoryRoot);
+    ProcessResult publish;
+    using (var publishLock = new Mutex(initiallyOwned: false, "TypeSharp.Compiler.Tests.StagedCliPublish"))
+    {
+        var ownsLock = false;
+        try
+        {
+            ownsLock = publishLock.WaitOne(TimeSpan.FromMinutes(5));
+            AssertTrue(ownsLock, "Timed out waiting for staged CLI publish lock.");
+            publish = RunProcess(
+                "dotnet",
+                $"publish {QuoteProcessArgument(Path.Combine(repositoryRoot, "cli", "TypeSharp.Cli", "TypeSharp.Cli.csproj"))} -c Debug --no-restore -p:UseAppHost=false -p:TypeSharpBuildMetadata=staged-test -p:TypeSharpSourceRevision=staged-test -o {QuoteProcessArgument(publishRoot)}",
+                repositoryRoot);
+        }
+        finally
+        {
+            if (ownsLock)
+            {
+                publishLock.ReleaseMutex();
+            }
+        }
+    }
 
     AssertTrue(
         publish.ExitCode == 0,
