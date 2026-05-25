@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The function parameter ABI evidence push `a9827410be2d0a11e23cc382584de76b27bd4cb9` proved Docs run `26418667022` and Regression run `26418667025` both completed successfully", languageProgress);
+    AssertContains("The delegate params ABI evidence push `3b42d933e10d513ddbfa6e94435a2de33aaffe34` proved Docs run `26419231937` and Regression run `26419231935` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -457,6 +457,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored event metadata ABI evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16345,7 +16346,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("including declaration attribute and `params` metadata", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class/interface event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
+    AssertContains("Class/interface event backend snapshots, generated metadata checks, and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("CLR enum with declaration/member attributes, optional integral underlying type, and selected constant/member forms", csharpTypeModelPage);
     AssertContains("Enum declaration API, declaration/member attribute metadata, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
@@ -34822,6 +34823,12 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
               public fun Echo(value: string): string = value
             }
 
+            public interface IListener {
+              public event Changed: ChangedHandler
+
+              fun Echo(value: string): string
+            }
+
             export fun greeting(): string = "Hello from TypeSharp"
             """);
         using var output = new StringWriter();
@@ -34852,6 +34859,8 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         AssertContains("public static string StaticEcho(string value)", generatedSource);
         AssertContains("public static event ChangedHandler GlobalChanged;", generatedSource);
         AssertContains("public event ChangedHandler Changed;", generatedSource);
+        AssertContains("public interface IListener", generatedSource);
+        AssertContains("event ChangedHandler Changed;", generatedSource);
 
         var metadata = TypeSharpMetadataReader.Read(
         [
@@ -34867,6 +34876,36 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
         AssertContains("type Samples.GeneratedInterop.Joiner", abiSnapshotText);
         AssertContains("  method string Invoke(string separator, params string[] values)", abiSnapshotText);
+        var generatedMetadata = metadata.Assemblies.Single();
+        var notifierType = Require(
+            generatedMetadata.Types.SingleOrDefault(type => string.Equals(type.FullName, "Samples.GeneratedInterop.Notifier", StringComparison.Ordinal)),
+            "Generated Notifier metadata should be present.");
+        var changedEvent = Require(
+            notifierType.Events.SingleOrDefault(eventSymbol => string.Equals(eventSymbol.Name, "Changed", StringComparison.Ordinal)),
+            "Generated Notifier instance event metadata should be present.");
+        AssertEqual("Samples.GeneratedInterop.ChangedHandler", changedEvent.Type);
+        AssertFalse(changedEvent.IsStatic, "Generated Notifier.Changed event should be instance metadata.");
+        AssertTrue(changedEvent.HasPublicAdder, "Generated Notifier.Changed event should expose a public add accessor.");
+        AssertTrue(changedEvent.HasPublicRemover, "Generated Notifier.Changed event should expose a public remove accessor.");
+
+        var globalChangedEvent = Require(
+            notifierType.Events.SingleOrDefault(eventSymbol => string.Equals(eventSymbol.Name, "GlobalChanged", StringComparison.Ordinal)),
+            "Generated Notifier static event metadata should be present.");
+        AssertEqual("Samples.GeneratedInterop.ChangedHandler", globalChangedEvent.Type);
+        AssertTrue(globalChangedEvent.IsStatic, "Generated Notifier.GlobalChanged event should be static metadata.");
+        AssertTrue(globalChangedEvent.HasPublicAdder, "Generated Notifier.GlobalChanged event should expose a public add accessor.");
+        AssertTrue(globalChangedEvent.HasPublicRemover, "Generated Notifier.GlobalChanged event should expose a public remove accessor.");
+
+        var listenerType = Require(
+            generatedMetadata.Types.SingleOrDefault(type => string.Equals(type.FullName, "Samples.GeneratedInterop.IListener", StringComparison.Ordinal)),
+            "Generated IListener metadata should be present.");
+        var listenerChangedEvent = Require(
+            listenerType.Events.SingleOrDefault(eventSymbol => string.Equals(eventSymbol.Name, "Changed", StringComparison.Ordinal)),
+            "Generated IListener event metadata should be present.");
+        AssertEqual("Samples.GeneratedInterop.ChangedHandler", listenerChangedEvent.Type);
+        AssertFalse(listenerChangedEvent.IsStatic, "Generated IListener.Changed event should be instance metadata.");
+        AssertTrue(listenerChangedEvent.HasPublicAdder, "Generated IListener.Changed event should expose a public add accessor.");
+        AssertTrue(listenerChangedEvent.HasPublicRemover, "Generated IListener.Changed event should expose a public remove accessor.");
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -34901,6 +34940,16 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
             {
                 public static class Consumer
                 {
+                    private sealed class Listener : Samples.GeneratedInterop.IListener
+                    {
+                        public event Samples.GeneratedInterop.ChangedHandler Changed;
+
+                        public string Echo(string value)
+                        {
+                            return value;
+                        }
+                    }
+
                     public static string CallTypeSharp()
                     {
                         var delegateAttribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
@@ -34911,6 +34960,8 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
                         var notifier = new Samples.GeneratedInterop.Notifier("seed");
                         Samples.GeneratedInterop.Notifier.GlobalChanged += value => { };
                         notifier.Changed += value => { };
+                        Samples.GeneratedInterop.IListener listener = new Listener();
+                        listener.Changed += value => { };
                         notifier.DisplayCode = notifier.DisplayCode + ":updated";
                         notifier.Count = notifier.Count + 1;
                         Samples.GeneratedInterop.Notifier.Channel = Samples.GeneratedInterop.Notifier.Channel + ":updated";
