@@ -447,13 +447,14 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The enum declaration/member attribute ABI evidence push `397b13b7ca83859a04fbff5e74ee7a75be395865` proved Docs run `26417137701` and Regression run `26417137680` both completed successfully", languageProgress);
+    AssertContains("The partial declaration ABI evidence push `192c967589ed6cf1169fb620c14984bef6ede71b` proved Docs run `26418081936` and Regression run `26418081974` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored record/union declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16328,6 +16329,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Public Type Decision Matrix", csharpTypeModelPage);
     AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
     AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("Static method on generated module/container; `params` and optional/default metadata for the supported suffix rules", csharpTypeModelPage);
+    AssertContains("Generic function plus generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default, and generic optional/default parameter subsets", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
     AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
@@ -33490,6 +33493,21 @@ static void CliBuildCompilesTypeSharpParamsParameterLowering()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeSharpParamsParameterLowering.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with TypeSharp params parameter lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "TypeSharpParamsParameterLowering",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/TypeSharpParamsParameterLowering.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated params parameter assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("  method string join(string separator, params string[] values)", abiSnapshotText);
+        AssertContains("  method int sum(params int[] values)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
