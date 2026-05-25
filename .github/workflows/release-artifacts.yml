@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-artifacts-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  group: release-artifacts-${{ github.event.inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 defaults:
@@ -27,7 +27,7 @@ env:
   CONFIGURATION: Release
   DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '24'
-  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
   package:
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -196,7 +196,7 @@ jobs:
             $lastError = $null
             for ($attempt = 1; $attempt -le 60; $attempt++) {
               $cacheBust = [System.Uri]::EscapeDataString("$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-$attempt")
-              $requestUri = "$uri?typesharp-cache-bust=$cacheBust"
+              $requestUri = "$($uri)?typesharp-cache-bust=$cacheBust"
               try {
                 $response = Invoke-WebRequest -Uri $requestUri -UseBasicParsing -TimeoutSec 30 -Headers @{
                   'Cache-Control' = 'no-cache'

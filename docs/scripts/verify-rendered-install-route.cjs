@@ -170,6 +170,12 @@ if (publicPageRoutes.length !== expectedPublicPageRouteCount) {
   throw new Error(`Rendered public page route table must contain ${expectedPublicPageRouteCount} routes, found ${publicPageRoutes.length}.`);
 }
 
+const exactLegacy404Markers = [
+  'Document not found (404)',
+  'This page could not be found',
+  'Page not found'
+];
+
 const publicPageRoutePaths = publicPageRoutes.map(([, , path]) => path);
 const duplicatePublicPageRoutePaths = publicPageRoutePaths.filter((path, index) => publicPageRoutePaths.indexOf(path) !== index);
 if (duplicatePublicPageRoutePaths.length > 0) {
@@ -247,6 +253,9 @@ if (uniqueCommandPolicyRoutePaths.length !== commandPolicyRoutePaths.length) {
 
 for (const [label, page, path, allowStaleHostText] of publicPageRoutes) {
   assertRenderedPublicCanonical(page, path, label, allowStaleHostText);
+  for (const exactLegacy404Marker of exactLegacy404Markers) {
+    assertNotContains(page, exactLegacy404Marker, `Rendered ${label} page must not include exact legacy 404 marker ${exactLegacy404Marker}.`);
+  }
 }
 
 assertContains(sitemapIndex, 'https://naramdash.github.io/TypeSharp/sitemap-0.xml', 'Rendered sitemap index must use the public GitHub Pages /TypeSharp URL.');

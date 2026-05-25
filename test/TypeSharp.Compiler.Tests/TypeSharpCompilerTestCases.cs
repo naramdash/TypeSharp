@@ -113,7 +113,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Release workflow contract coverage also pins every hosted broader/support-route fetch, hosted canonical-route table entry, and hosted legacy 404 rejection for Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, Advanced Topics, CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting before release assets can publish.", languageTasks);
     AssertContains("Project Policy now states that hosted broader public-docs routes and support routes must not be legacy 404 pages before release asset publication, matching the release workflow contract coverage for every hosted broader/support-route fetch, canonical-route table entry, and legacy 404 rejection.", languageTasks);
     AssertContains("The hosted public-docs route probe now rejects exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found` across the home, Install, Start Here, Tutorials, broader public-docs, CLI, and support routes before release asset publication.", languageTasks);
-    AssertContains("After GitHub Pages deployment, `docs.yml` now verifies the deployed `https://naramdash.github.io/TypeSharp` route, all 34 sidebar public-docs pages, `sitemap-index.xml`, and `sitemap-0.xml` with cache-busting query strings and no-cache request headers, requiring public canonical/Open Graph URLs, public sitemap URLs for all 34 sidebar public-docs routes, rejection of stale `https://typesharp.github.io/TypeSharp` URLs from adoption-facing page bodies and sitemap output, and rejection of exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found`. Policy pages may mention the stale legacy URL as a forbidden example, but must not emit it as public URL metadata or sitemap output.", languageTasks);
+    AssertContains("`docs.yml` now stops after the Pages deployment result instead of running a separate post-deploy remote fetch gate; release-time hosted public Pages validation remains in `release-artifacts.yml`, while Docs verifies rendered public-docs canonical/Open Graph/sitemap URL identity, stale-host rejection, and exact legacy 404 marker rejection before upload.", languageTasks);
     AssertSequence(
         [
             "1. Visit the official TypeSharp web page.",
@@ -133,9 +133,10 @@ static void TestRunnerShardSelectionIsStable()
             .ToArray());
 
     var languageProgress = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-progress.md"));
-    AssertContains("| Current slice | Hosted release/download smoke and deployed public-docs drift remain the largest open 1.0 adoption evidence gaps after completing broad `TS2201` reduction. |", languageProgress);
+    AssertContains("| Current slice | Hosted release/download smoke remains the largest open 1.0 adoption evidence gap after completing broad `TS2201` reduction and simplifying the Docs deployment workflow. |", languageProgress);
     AssertContains("| Verification target | Test catalog tracker-count guard, workflow contract, diagnostic fixture README drift checks, docs contract, compiler test build, docs build, diff hygiene, workflow/docs-script forbidden-tooling scan, deployed public-docs probe, and hosted-release probe. |", languageProgress);
-    AssertContains("| External evidence state | GitHub Pages API reports workflow deployment at `https://naramdash.github.io/TypeSharp/`; the latest configured Pages content probe returned HTTP 200 for all 34 sidebar public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`, but none of the 36 checked route/sitemap bodies contained the configured host and all 36 still served stale `https://typesharp.github.io/TypeSharp` URLs. The probe found no exact `Document not found (404)`, `This page could not be found`, or `Page not found` legacy 404 page markers; 10 checked bodies contained broad `404` substrings from diagnostic-code or policy-code references. The latest 10 listed `docs.yml` runs are still 2026-05-23 `main` push runs, not tag or workflow-dispatch corrected deployments. `gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries, so both deployed public-docs and hosted release evidence remain pending. |", languageProgress);
+    AssertContains("The current tree removes that nonessential Docs post-deploy remote fetch gate; the release workflow remains the hosted public Pages gate before release asset publication.", languageProgress);
+    AssertContains("The latest `Regression` run `26385836851` already used `windows-latest`; its failed shard was a contract expectation drift around the rendered public-docs route tuple shape, not a Linux runtime issue.", languageProgress);
     var legacyForbiddenToolingScanName = string.Concat("Python", " scan");
     AssertFalse(languageProgress.Contains(legacyForbiddenToolingScanName, StringComparison.Ordinal), "Progress ledger should use workflow/docs-script forbidden-tooling scan wording.");
     AssertContains("the shared package-free catalog is 586 cases", languageProgress);
@@ -241,15 +242,17 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`typesharp version` reports CLI, compiler, language, release channel, runtime ABI/status, default generated target, CLI host target, runtime target, artifact kind, build metadata, and source revision useful for support.", languageTasks);
     AssertContains("Hosted public docs probes, README Install links, starter README recovery links, Astro canonical site metadata, rendered and hosted canonical/Open Graph URLs, and rendered and hosted sitemap URLs now use the configured GitHub Pages URL `https://naramdash.github.io/TypeSharp/`, not the stale `https://typesharp.github.io/TypeSharp/` URL that returns the legacy 404 page.", languageTasks);
     AssertContains("The docs Astro config defaults local builds to the repository base when `GITHUB_REPOSITORY` is absent, `npm run verify:rendered-install-route` rejects canonical, Open Graph, page-link, or sitemap output that loses the `/TypeSharp` base path or reintroduces the stale `https://typesharp.github.io/TypeSharp` host, and `release-artifacts.yml` repeats those canonical/Open Graph/sitemap stale-host checks against the deployed public Pages routes before release asset publication.", languageTasks);
-    AssertContains("The main 1.0 risk is not \"missing everything\"; it is that the hosted release/download evidence is still external, the currently deployed public docs still carry stale legacy canonical/sitemap URLs until a tag-dispatched docs workflow publishes corrected pages, several supported areas remain explicitly `MVP limited`, and broader TypeScript/F#/C# parity items are intentionally represented as post-1.0 backlog in canonical docs.", languageTasks);
-    AssertContains("GitHub Pages API probing reports workflow deployment at `https://naramdash.github.io/TypeSharp/`, but the latest external configured Pages content probe still finds all 34 sidebar deployed public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml` return HTTP 200 while none of the 36 checked route/sitemap bodies contains the configured host and all 36 checked bodies still carry stale `https://typesharp.github.io/TypeSharp` URLs. The current probe found no exact `Document not found (404)`, `This page could not be found`, or `Page not found` legacy 404 page markers in those route bodies; 10 checked bodies contain broad `404` substrings from diagnostic-code or policy-code references rather than legacy 404 page markers. The latest 10 listed `docs.yml` runs are still 2026-05-23 `main` push runs, not tag or workflow-dispatch corrected deployments, so public-docs deployment evidence remains pending on stale host/canonical/sitemap output until a tag-dispatched docs workflow publishes corrected rendered pages and the release gate re-probes them.", languageTasks);
+    AssertContains("The main 1.0 risk is not \"missing everything\"; it is that the hosted release/download evidence is still external, the latest public docs deployment fixed configured-host canonical/sitemap output but the post-deploy workflow still failed on a PowerShell URI interpolation bug in the pushed workflow, several supported areas remain explicitly `MVP limited`, and broader TypeScript/F#/C# parity items are intentionally represented as post-1.0 backlog in canonical docs.", languageTasks);
+    AssertContains("GitHub Pages API probing reports workflow deployment at `https://naramdash.github.io/TypeSharp/`, and the latest external configured Pages content probe found all 34 sidebar deployed public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml` return HTTP 200 with configured-host canonical/sitemap output.", languageTasks);
+    AssertContains("the current tree removes that nonessential Docs post-deploy remote fetch gate and leaves hosted public Pages validation in the release workflow before asset publication", languageTasks);
     AssertContains("Install canonical URL pages, Install Open Graph URL pages, Install `/TypeSharp` base-path pages, stale legacy `https://typesharp.github.io/TypeSharp` page URLs, sitemap index URL pages, sitemap public-route URL pages, stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
     AssertContains("stale legacy `https://typesharp.github.io/TypeSharp` page URLs", languageTasks);
     AssertContains("stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
     AssertContains("hosted canonical/Open Graph URL identity verification across all 34 sidebar public-docs routes, hosted sitemap-index/sitemap URL verification that rejects deployed output losing `/TypeSharp` URLs for any of the 34 sidebar public-docs routes", languageTasks);
     AssertContains("sitemap-index/sitemap routes to preserve `https://naramdash.github.io/TypeSharp/` URLs for all 34 sidebar public-docs routes", languageTasks);
     AssertContains("Docs site, GitHub Pages workflow, and release workflow contract coverage now extracts the public sidebar slugs from `docs/astro.config.ts` and asserts `docs/scripts/verify-rendered-install-route.cjs`, `.github/workflows/docs.yml`, and `.github/workflows/release-artifacts.yml` cover the same 34 public-docs routes", languageTasks);
-    AssertContains("The rendered verifier, docs workflow post-deploy verifier, and release workflow pre-publication verifier now also fail on a non-34 public-docs route table or duplicate public-docs route paths before route fetch/canonical/sitemap checks continue.", languageTasks);
+    AssertContains("The rendered verifier and release workflow pre-publication verifier now also fail on a non-34 public-docs route table or duplicate public-docs route paths before route fetch/canonical/sitemap checks continue.", languageTasks);
+    AssertContains("The rendered verifier now rejects the configured exact legacy 404 marker set across all 34 rendered sidebar public-docs pages before upload, matching the post-deploy and pre-publication hosted marker gates.", languageTasks);
     AssertContains("Added controlled rendered-verifier fixture coverage for canonical/Open Graph/base-path/sitemap URL drift, so `GitHub Pages workflow contract is stable` now proves missing Install canonical URL, missing Install Open Graph URL, missing Install `/TypeSharp` base-path link, missing sitemap index URL, and missing sitemap public-route URL failures before Pages upload.", languageProgress);
     AssertContains("Rejected stale legacy `https://typesharp.github.io/TypeSharp` URLs in both the rendered Install verifier and the hosted release public-docs probe, with controlled fixture coverage for stale Install page URLs and stale sitemap URLs before Pages upload.", languageProgress);
     AssertContains("Added hosted public docs canonical/sitemap URL probes so `release-artifacts.yml` verifies public Pages canonical/Open Graph URLs and sitemap entries for all checked public-docs routes stay under `https://naramdash.github.io/TypeSharp/` before publishing release assets.", languageProgress);
@@ -258,6 +261,17 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Expanded rendered, post-deploy, and release pre-publication public URL identity checks from the adoption-facing 19-route set to all 34 sidebar public-docs routes", languageProgress);
     AssertContains("Added sidebar-derived route coverage guards so the docs site, GitHub Pages workflow, and release workflow contract tests now extract public sidebar slugs from `docs/astro.config.ts` and assert the rendered verifier plus both workflow route tables cover the same 34 public-docs routes.", languageProgress);
     AssertContains("Added exact 34-route and duplicate-path self-checks to the rendered verifier, docs workflow post-deploy route table, and release workflow pre-publication canonical/sitemap route table so route-table copy/paste mistakes fail before public URL identity evidence is accepted.", languageProgress);
+    AssertContains("Rechecked the latest `release-artifacts.yml` workflow on the `main` push `e542035a77f5fda2fa94ea06166a667268797324`: run `26385836353` failed before jobs were created, matching an invalid workflow-file failure from the pushed workflow's direct `inputs.tag` use outside a workflow-dispatch-only context.", languageProgress);
+    AssertContains("Fixed the release workflow's tag/ref context usage to `github.event.inputs.tag || github.ref_name`, `github.event.inputs.tag || github.ref`, and matching `RELEASE_TAG` assignment, so push-triggered workflow parsing no longer depends on direct `inputs.tag` expressions.", languageProgress);
+    AssertContains("Added broader release workflow contract guards that reject direct `${{ inputs.* }}` and bare `inputs.tag` expressions while preserving the `github.event.inputs.tag` fallback form.", languageProgress);
+    AssertContains("Rechecked the latest `docs.yml` run `26385836869` for the same `main` push: build, upload, and Pages deployment completed, but the post-deploy verifier failed when PowerShell parsed `\"$uri?typesharp-cache-bust=...\"` as an invalid hostname.", languageProgress);
+    AssertContains("Fixed the docs and release hosted-route cache-busting interpolation to `\"$($uri)?typesharp-cache-bust=...\"`, so cache-busted public Pages probes preserve the full configured URL before adding query parameters.", languageProgress);
+    AssertContains("Added explicit GitHub Pages and release workflow contract guards that reject the broken unparenthesized `\"$uri?typesharp-cache-bust=...\"` interpolation shape while preserving the fixed `\"$($uri)?typesharp-cache-bust=...\"` form.", languageProgress);
+    AssertContains("`gh` recheck on 2026-05-25 found `release-artifacts.yml` run `26386680510` failed before any jobs were created from the pushed workflow-file context bug, `Docs` run `26385836869` failed after deployment on the pushed `$uri?` cache-busting interpolation bug, and `Regression` run `26385836851` already ran on `windows-latest` but failed because the GitHub Pages workflow contract still expected the old rendered verifier tuple shape; the current tree fixes all three local causes.", languageTasks);
+    AssertContains("The latest `Regression` run `26385836851` already used `windows-latest`; its failed shard was a contract expectation drift around the rendered public-docs route tuple shape, not a Linux runtime issue.", languageProgress);
+    AssertContains("Added a local rendered public-docs exact legacy 404 marker gate so `npm run verify:rendered-install-route` rejects the configured marker set across all 34 rendered sidebar public-docs pages before upload, matching the deployed docs and release hosted-route gates.", languageProgress);
+    AssertContains("Re-probed the configured public Pages deployment across all 34 sidebar public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`: all 36 checks returned HTTP 200 and all 36 bodies contained the configured `https://naramdash.github.io/TypeSharp` host; only Project Policy still contained the stale legacy host as a forbidden example and exact legacy marker literals from previously deployed policy prose.", languageProgress);
+    AssertContains("Removed exact legacy 404 marker literals from the public Project Policy page while keeping the stale legacy host only as the allowed forbidden-example text, so the deployed content verifier can reject the configured marker set without matching its own policy wording.", languageProgress);
     AssertContains("Re-probed external Pages with cache-busted no-cache requests across all 34 sidebar public-docs routes plus both sitemaps", languageProgress);
     AssertContains("Added cache-busting query strings and no-cache request headers to the docs workflow post-deploy Pages verifier and the release workflow pre-publication hosted public-docs probe so CDN or Pages cache reuse cannot hide stale canonical/sitemap output during release gating.", languageProgress);
     AssertContains("Earlier in the same slice, re-probed external Pages and Docs workflow state across the then-current 19 public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`; that probe found HTTP 200 responses with stale `https://typesharp.github.io/TypeSharp` URLs, no configured host, no exact legacy 404 markers, `TS2404` as the remaining broad `404` substring source, and 2026-05-23 `main` push runs as the latest listed `docs.yml` runs.", languageProgress);
@@ -387,6 +401,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("The hosted smoke verifies `typesharp check --diagnostic-format json` reports `TS2401` and `TS2405` with error severity for the same hosted missing-DLL and unsupported-package failure path.", languageTasks);
     AssertContains("The hosted smoke verifies generated C# project build failures report `TS3501` through both text diagnostics and `--diagnostic-format json`, including the generated project name.", languageTasks);
     AssertContains("The hosted smoke checks installed `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501`, so the downloaded CLI can explain the same failure codes the smoke just triggered.", languageTasks);
+    AssertContains("Release workflow contract coverage now explicitly rejects the unparenthesized `\"$uri?typesharp-cache-bust=...\"` PowerShell interpolation shape that broke the latest hosted-route verifier, preserving the fixed `\"$($uri)?typesharp-cache-bust=...\"` form locally.", languageTasks);
+    AssertContains("Release workflow contract coverage also rejects direct `${{ inputs.* }}` and bare `inputs.tag` expressions, preserving `github.event.inputs.tag` fallbacks so tag-push workflow validation does not depend on workflow-dispatch-only context.", languageTasks);
     AssertContains("Extended the hosted GitHub Release smoke to follow the Install page command setup more closely: after extracting the CLI zip, it prepends the install directory to `PATH`, verifies bare `typesharp` resolves to the downloaded `typesharp.cmd`, and runs `typesharp version --json` through that installed command path.", languageProgress);
     AssertContains("Aligned Project Policy, Runtime Artifacts, and .NET Interop with the installed-command hosted release smoke so the canonical docs now describe the `PATH` setup, bare `typesharp` resolution, clean console `new`/`check`/`build`/`run`, and runtime-backed library plus C# `net48` consumer output coverage against downloaded release assets.", languageProgress);
     AssertContains("After `PATH` setup, the hosted smoke runs the console, formatter, local-DLL dependency, negative dependency diagnostics, generated C# build-failure diagnostics, direct project-reference, and runtime TypeSharp project commands through bare `typesharp` instead of wrapper absolute paths.", languageProgress);
@@ -427,8 +443,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Project Policy now records the manifest scope, the generated release notes and Install page state that detached signatures and Authenticode signing are not published for preview releases yet, and release workflow contract coverage asserts `SHA256SUMS.txt` is generated from release assets while excluding generated release notes and the manifest itself", languageProgress);
     AssertContains("but a real hosted release download has not yet been smoke-tested from the public page", languageTasks);
     AssertContains("remaining evidence requires the first tagged release run to pass this smoke", languageTasks);
-    AssertContains("The release workflow now has hosted asset and public-docs gates, but the remaining 1.0 blockers are still external evidence: the configured Pages deployment must shed stale legacy canonical/sitemap URLs, and a real tagged GitHub Release must publish assets and pass the hosted download/checksum/version/build smoke.", languageProgress);
-    AssertContains("`gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries, so both deployed public-docs and hosted release evidence remain pending.", languageProgress);
+    AssertContains("The release workflow now has hosted asset and public-docs gates, but the remaining 1.0 blocker is still external evidence: a real tagged GitHub Release must publish assets and pass the hosted download/checksum/version/build smoke.", languageProgress);
+    AssertContains("`gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries, so hosted release evidence remains pending.", languageProgress);
     AssertContains("Current configured public Pages probing confirms `https://naramdash.github.io/TypeSharp/install/` returns HTTP 200 with CLI/runtime/repository/release-download markers; the stale `https://typesharp.github.io/TypeSharp/install/` route still returns the legacy 404 page and is no longer the release gate target.", languageProgress);
     AssertContains("Run the first tagged release and confirm the hosted release asset smoke passes against real public assets.", languageProgress);
     AssertContains("Replace remaining fallback language after a hosted release asset is available", languageProgress);
@@ -480,10 +496,10 @@ static void MSTestPackageShardBridgeProjectsAreStable()
         shardCounts[index % shardCounts.Length]++;
     }
 
-    AssertEqual(146, shardCounts[0]);
-    AssertEqual(146, shardCounts[1]);
-    AssertEqual(145, shardCounts[2]);
-    AssertEqual(145, shardCounts[3]);
+    AssertEqual(147, shardCounts[0]);
+    AssertEqual(147, shardCounts[1]);
+    AssertEqual(146, shardCounts[2]);
+    AssertEqual(146, shardCounts[3]);
 
     for (var shard = 0; shard < shardCounts.Length; shard++)
     {
@@ -16703,6 +16719,11 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("assertRenderedReleaseNotesRoute(tutorials, 'Tutorials');", renderedRouteScript);
     AssertContains("assertRenderedReleaseNotesRoute(vscodeLsp, 'VS Code And LSP');", renderedRouteScript);
     AssertContains("['Project Policy', projectPolicy, '/project-policy/', true]", renderedRouteScript);
+    AssertContains("const exactLegacy404Markers = [", renderedRouteScript);
+    AssertContains("'Document not found (404)'", renderedRouteScript);
+    AssertContains("'This page could not be found'", renderedRouteScript);
+    AssertContains("'Page not found'", renderedRouteScript);
+    AssertContains("Rendered ${label} page must not include exact legacy 404 marker ${exactLegacy404Marker}.", renderedRouteScript);
     AssertContains("homeInstallHrefCandidates", renderedRouteScript);
     AssertContains("homeStartHereHrefCandidates", renderedRouteScript);
     AssertContains("pageInstallHrefCandidates", renderedRouteScript);
@@ -16750,8 +16771,8 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("assertNoHiddenGlobalDotnetToolInstall(tutorials, 'Tutorials');", renderedRouteScript);
     AssertContains("const learningPaths = fs.readFileSync('dist/learning-paths/index.html', 'utf8');", renderedRouteScript);
     AssertContains("const advanced = fs.readFileSync('dist/advanced/index.html', 'utf8');", renderedRouteScript);
-    AssertContains("['Learning Paths', learningPaths]", renderedRouteScript);
-    AssertContains("['API And CLI Reference', api]", renderedRouteScript);
+    AssertContains("['Learning Paths', learningPaths, '/learning-paths/']", renderedRouteScript);
+    AssertContains("['API And CLI Reference', api, '/api/']", renderedRouteScript);
     AssertContains("Rendered ${label} page must link to Install.", renderedRouteScript);
     AssertContains("Rendered ${label} page must name the CLI release asset.", renderedRouteScript);
     AssertContains("Rendered CLI page must name the CLI release asset.", renderedRouteScript);
@@ -16774,62 +16795,14 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("uses: actions/upload-pages-artifact@v5", workflow);
     AssertContains("path: docs/dist", workflow);
     AssertContains("uses: actions/deploy-pages@v5", workflow);
-    AssertContains("Verify deployed GitHub Pages route", workflow);
-    AssertContains("shell: pwsh", workflow);
-    AssertContains("$docsBaseUri = '${{ steps.deployment.outputs.page_url }}'.TrimEnd('/')", workflow);
-    AssertContains("Deployed GitHub Pages URL was '$docsBaseUri' instead of https://naramdash.github.io/TypeSharp.", workflow);
-    AssertContains("function Get-DeployedDocsPage([string] $relativePath)", workflow);
-    AssertContains("$cacheBust = [System.Uri]::EscapeDataString(\"$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-$attempt\")", workflow);
-    AssertContains("$requestUri = \"$uri?typesharp-cache-bust=$cacheBust\"", workflow);
-    AssertContains("'Cache-Control' = 'no-cache'", workflow);
-    AssertContains("'Pragma' = 'no-cache'", workflow);
-    AssertContains("function Assert-DeployedDocsContains([string] $content, [string] $expected, [string] $message)", workflow);
-    AssertContains("function Assert-DeployedDocsNotContains([string] $content, [string] $unexpected, [string] $message)", workflow);
-    AssertContains("$deployedDocsRoutes = @(", workflow);
-    AssertContains("@{ Label = 'home'; Path = '/' }", workflow);
-    AssertContains("@{ Label = 'Learning Paths'; Path = '/learning-paths/' }", workflow);
-    AssertContains("@{ Label = '.NET Interop'; Path = '/dotnet-interop/' }", workflow);
-    AssertContains("@{ Label = 'Modules And Imports'; Path = '/modules/' }", workflow);
-    AssertContains("@{ Label = 'Type System'; Path = '/type-system/' }", workflow);
-    AssertContains("@{ Label = 'C# And CLR Type Model'; Path = '/csharp-type-model/' }", workflow);
-    AssertContains("@{ Label = 'C# Members And Overloads'; Path = '/csharp-members-overloads/' }", workflow);
-    AssertContains("@{ Label = 'Feature Status'; Path = '/feature-status/' }", workflow);
-    AssertContains("@{ Label = 'Grammar'; Path = '/grammar/' }", workflow);
-    AssertContains("@{ Label = 'Language Reference'; Path = '/reference/' }", workflow);
-    AssertContains("@{ Label = 'Lowering'; Path = '/lowering/' }", workflow);
-    AssertContains("@{ Label = 'API And CLI Reference'; Path = '/api/' }", workflow);
-    AssertContains("@{ Label = 'Runtime Artifacts'; Path = '/runtime-artifacts/' }", workflow);
-    AssertContains("@{ Label = 'Troubleshooting'; Path = '/troubleshooting/' }", workflow);
-    AssertContains("@{ Label = 'Core Goal'; Path = '/goal/' }", workflow);
-    AssertContains("@{ Label = 'Project Requirements'; Path = '/requirements/' }", workflow);
-    AssertContains("@{ Label = 'Project Policy'; Path = '/project-policy/'; AllowStaleHostText = $true }", workflow);
-    AssertContains("@{ Label = 'Project Ledger'; Path = '/project-ledger/' }", workflow);
-    AssertContains("@{ Label = 'Writing Guide'; Path = '/writing-guide/' }", workflow);
-    AssertContains("@{ Label = 'Document Ownership'; Path = '/document-ownership/' }", workflow);
-    AssertContains("if ($deployedDocsRoutes.Count -ne 34)", workflow);
-    AssertContains("Deployed docs route table must contain 34 sidebar public-docs routes", workflow);
-    AssertContains("$deployedDocsUniqueRoutePathCount", workflow);
-    AssertContains("Deployed docs route table contains duplicate public-docs paths.", workflow);
-    AssertContains("$canonicalUrl = \"https://naramdash.github.io/TypeSharp$($deployedDocsRoute.Path)\"", workflow);
-    AssertContains("rel=`\"canonical`\" href=`\"$canonicalUrl`\"", workflow);
-    AssertContains("property=`\"og:url`\" content=`\"$canonicalUrl`\"", workflow);
-    AssertContains("Deployed docs $($deployedDocsRoute.Label) route still uses the stale legacy GitHub Pages URL.", workflow);
-    AssertContains("'Document not found (404)'", workflow);
-    AssertContains("'This page could not be found'", workflow);
-    AssertContains("'Page not found'", workflow);
-    AssertContains("Deployed docs $($deployedDocsRoute.Label) route resolved to legacy 404 marker '$legacy404Marker'.", workflow);
-    AssertContains("$sitemapIndex = Get-DeployedDocsPage '/sitemap-index.xml'", workflow);
-    AssertContains("$sitemap = Get-DeployedDocsPage '/sitemap-0.xml'", workflow);
-    AssertContains("Assert-DeployedDocsContains $sitemapIndex 'https://naramdash.github.io/TypeSharp/sitemap-0.xml'", workflow);
-    AssertContains("$sitemapUrl = \"https://naramdash.github.io/TypeSharp$($deployedDocsRoute.Path)\"", workflow);
-    AssertContains("Deployed docs sitemap does not include the public GitHub Pages URL for $($deployedDocsRoute.Label).", workflow);
-    AssertContains("Assert-DeployedDocsNotContains $sitemapIndex 'https://typesharp.github.io/TypeSharp'", workflow);
-    AssertContains("Assert-DeployedDocsNotContains $sitemap 'https://typesharp.github.io/TypeSharp'", workflow);
+    AssertFalse(workflow.Contains("Verify deployed GitHub Pages route", StringComparison.Ordinal), "Docs workflow should not keep the nonessential post-deploy remote fetch verifier.");
+    AssertFalse(workflow.Contains("Get-DeployedDocsPage", StringComparison.Ordinal), "Docs workflow should leave hosted public Pages route probing to the release workflow.");
+    AssertFalse(workflow.Contains("$deployedDocsRoutes", StringComparison.Ordinal), "Docs workflow should not duplicate the release workflow hosted public-docs route table.");
+    AssertFalse(workflow.Contains("$requestUri = \"$uri?typesharp-cache-bust=$cacheBust\"", StringComparison.Ordinal), "Docs workflow should not contain the broken unparenthesized cache-busting interpolation.");
     AssertRenderedVerifierCoversSidebarPublicRoutes(sidebarPublicRoutes, renderedRouteScript);
-    AssertWorkflowRouteTableCoversSidebarPublicRoutes(sidebarPublicRoutes, workflow, "GitHub Pages workflow");
     AssertContains("if: github.event_name != 'pull_request'", workflow);
     AssertFalse(workflow.Contains("docs-site", StringComparison.Ordinal), "Docs workflow should no longer reference the former docs-site path.");
-    AssertPowerShellRunBlocksParse(workflowPath, workflow, minimumBlockCount: 1, workflowLabel: "GitHub Pages");
+    AssertPowerShellRunBlocksParse(workflowPath, workflow, minimumBlockCount: 0, workflowLabel: "GitHub Pages");
     VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(renderedRouteScript);
 }
 
@@ -17800,6 +17773,13 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("contents: write", workflow);
     AssertContains("actions: write", workflow);
     AssertContains("concurrency:", workflow);
+    AssertContains("group: release-artifacts-${{ github.event.inputs.tag || github.ref_name }}", workflow);
+    AssertContains("RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}", workflow);
+    AssertContains("ref: ${{ github.event.inputs.tag || github.ref }}", workflow);
+    AssertFalse(workflow.Contains("&& inputs.tag", StringComparison.Ordinal), "Release workflow should not use a direct inputs context in conditional expressions.");
+    AssertFalse(workflow.Contains(" inputs.tag ||", StringComparison.Ordinal), "Release workflow should use github.event.inputs.tag so non-dispatch workflow validation does not fail on a direct inputs context.");
+    AssertFalse(workflow.Contains("${{ inputs.", StringComparison.Ordinal), "Release workflow should not use direct workflow-dispatch inputs in expressions that also validate on tag push events.");
+    AssertFalse(Regex.IsMatch(workflow, @"(?<!event\.)inputs\.tag"), "Release workflow should reference github.event.inputs.tag instead of direct inputs.tag.");
     AssertContains("$PSNativeCommandUseErrorActionPreference = $true", workflow);
     AssertContains("runs-on: windows-latest", workflow);
     AssertContains("uses: actions/checkout@v6", workflow);
@@ -17851,7 +17831,8 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("function Get-PublicDocsPage([string] $relativePath)", workflow);
     AssertContains("for ($attempt = 1; $attempt -le 60; $attempt++)", workflow);
     AssertContains("$cacheBust = [System.Uri]::EscapeDataString(\"$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-$attempt\")", workflow);
-    AssertContains("$requestUri = \"$uri?typesharp-cache-bust=$cacheBust\"", workflow);
+    AssertContains("$requestUri = \"$($uri)?typesharp-cache-bust=$cacheBust\"", workflow);
+    AssertFalse(workflow.Contains("$requestUri = \"$uri?typesharp-cache-bust=$cacheBust\"", StringComparison.Ordinal), "Release workflow must parenthesize $uri before appending cache-busting query strings.");
     AssertContains("Invoke-WebRequest -Uri $requestUri -UseBasicParsing -TimeoutSec 30 -Headers @", workflow);
     AssertContains("'Cache-Control' = 'no-cache'", workflow);
     AssertContains("'Pragma' = 'no-cache'", workflow);
@@ -19079,16 +19060,15 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
     AssertContains("SHA256SUMS.txt", projectPolicyPage);
     AssertContains("before upload, it verifies the docs site contract, builds the Astro docs site, verifies the base-aware release-tag rendered public install route with `RELEASE_TAG`, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, dispatches the GitHub Pages docs workflow for the release tag", projectPolicyPage);
-    AssertContains("requires that tag-ref docs workflow to pass the current tag into the rendered Install verifier and then verify the deployed public Pages route, canonical/Open Graph URLs, sitemap URLs, stale-host rejection, and exact legacy 404 marker rejection after deployment", projectPolicyPage);
+    AssertContains("requires that tag-ref docs workflow to pass the current tag into the rendered Install verifier and deploy successfully", projectPolicyPage);
     AssertContains("used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", projectPolicyPage);
     AssertContains("verifies the hosted GitHub Pages home route links to Install and preserves release notes, exact asset-name guidance, CLI/runtime/VSIX asset names, checksum manifest, canonical URL, Open Graph URL, and sitemap URL identity there", projectPolicyPage);
     AssertContains("verifies hosted Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics routes are not legacy 404 pages, link back to Install, and preserve release notes, exact asset-name guidance, CLI/runtime assets, checksum manifest, canonical/Open Graph URL identity", projectPolicyPage);
     AssertContains("verifies hosted CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting routes are not legacy 404 pages, link back to Install, and preserve release notes, exact asset-name guidance, runtime/checksum, extracted runtime path, generated-output, VSIX markers where applicable, canonical/Open Graph URL identity", projectPolicyPage);
-    AssertContains("Hosted public-docs route checks reject exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found` across the home, Install, Start Here, Tutorials, broader public-docs, CLI, and support routes before release asset publication.", projectPolicyPage);
-    AssertContains("After every non-PR Pages deployment, `docs.yml` fetches the deployed `https://naramdash.github.io/TypeSharp` site, all 34 sidebar public-docs routes, `sitemap-index.xml`, and `sitemap-0.xml`", projectPolicyPage);
-    AssertContains("with cache-busting query strings and `Cache-Control: no-cache`/`Pragma: no-cache` headers", projectPolicyPage);
-    AssertContains("the deployment fails if any checked route loses public canonical/Open Graph URL identity, the sitemap loses any public `/TypeSharp` URL for the same 34 checked routes, canonical/Open Graph/sitemap output reintroduces stale `https://typesharp.github.io/TypeSharp` URLs, or exact legacy 404 markers `Document not found (404)`, `This page could not be found`, or `Page not found` appear.", projectPolicyPage);
-    AssertContains("Policy pages may mention the stale legacy URL as a forbidden example, but must not emit it as public URL metadata or sitemap output.", projectPolicyPage);
+    AssertContains("Hosted public-docs route checks reject the configured exact legacy 404 marker set across the home, Install, Start Here, Tutorials, broader public-docs, CLI, and support routes before release asset publication.", projectPolicyPage);
+    AssertContains("`docs.yml` stops after the Pages deployment result; it does not run a separate post-deploy remote fetch gate.", projectPolicyPage);
+    AssertContains("The release workflow remains the hosted public Pages gate before release asset publication, while `docs.yml` relies on the rendered public-docs verifier before upload.", projectPolicyPage);
+    AssertContains("The rendered public-docs verifier rejects the configured exact legacy 404 marker set across the 34 rendered sidebar public-docs pages before upload, so marker regressions fail locally and in `docs.yml` before a Pages artifact can become the public deployment.", projectPolicyPage);
     AssertContains("The rendered public-docs verifier reads `docs/dist/learning-paths/index.html`, `docs/dist/language-tour/index.html`, `docs/dist/fundamentals/index.html`, `docs/dist/guides/index.html`, `docs/dist/cookbook/index.html`, `docs/dist/api/index.html`, `docs/dist/examples/index.html`, `docs/dist/diagnostics/index.html`, and `docs/dist/advanced/index.html` before Pages upload", projectPolicyPage);
     AssertContains("requiring those broader public-docs routes to link back to Install, preserve GitHub Release notes, exact asset-name guidance, CLI/runtime asset names, and `SHA256SUMS.txt`, and reject repo-local CLI commands or hidden global .NET tool-install guidance.", projectPolicyPage);
     AssertContains("The rendered public-docs verifier also reads `docs/dist/cli/index.html`, `docs/dist/project-configuration/index.html`, `docs/dist/runtime-artifacts/index.html`, `docs/dist/vscode-lsp/index.html`, `docs/dist/migration/index.html`, and `docs/dist/troubleshooting/index.html` before Pages upload", projectPolicyPage);
