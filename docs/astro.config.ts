@@ -4,10 +4,10 @@ import mermaid from 'astro-mermaid';
 import starlight from '@astrojs/starlight';
 
 const require = createRequire(import.meta.url);
-const repository = process.env.GITHUB_REPOSITORY ?? '';
+const repository = process.env.GITHUB_REPOSITORY ?? 'naramdash/TypeSharp';
 const repositoryName = repository.includes('/') ? repository.split('/')[1] : '';
 const base = process.env.TYPE_SHARP_DOCS_BASE ?? (repositoryName ? `/${repositoryName}` : '/');
-const site = process.env.TYPE_SHARP_DOCS_SITE ?? 'https://typesharp.github.io';
+const site = process.env.TYPE_SHARP_DOCS_SITE ?? 'https://naramdash.github.io';
 const typesharpTextMateGrammar = require('../vscode/typesharp/syntaxes/typesharp.tmLanguage.json') as {
   name: string;
   scopeName: string;
@@ -48,8 +48,8 @@ export default defineConfig({
           label: 'Learn',
           items: [
             { label: 'Overview', slug: 'index' },
-            { label: 'Start Here', slug: 'start-here' },
             { label: 'Install', slug: 'install' },
+            { label: 'Start Here', slug: 'start-here' },
             { label: 'Learning Paths', slug: 'learning-paths' },
             { label: 'Language Tour', slug: 'language-tour' },
             { label: 'Tutorials', slug: 'tutorials' },

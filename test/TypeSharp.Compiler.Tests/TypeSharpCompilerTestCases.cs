@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Linq;
 using TypeSharp.Compiler;
@@ -83,6 +85,356 @@ static void TestRunnerShardSelectionIsStable()
     AssertEqual(
         TypeSharpCompilerTestCases.All.Count,
         TypeSharpCompilerTestCases.All.Select(test => test.Name).Distinct(StringComparer.Ordinal).Count());
+
+    var repositoryRoot = Directory.GetCurrentDirectory();
+    var languageTasks = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-tasks.md"));
+    AssertContains("Current adoption map: `README.md`, `docs/src/content/docs/index.md`, `docs/src/content/docs/install.md`, `docs/src/content/docs/start-here.md`, `docs/src/content/docs/learning-paths.md`, `docs/src/content/docs/language-tour.md`, `docs/src/content/docs/tutorials.md`, `docs/src/content/docs/fundamentals.md`, `docs/src/content/docs/guides.md`, `docs/src/content/docs/dotnet-interop.md`, `docs/src/content/docs/cookbook.md`, `docs/src/content/docs/examples.md`, `docs/src/content/docs/migration.md`, `docs/src/content/docs/modules.md`, `docs/src/content/docs/type-system.md`, `docs/src/content/docs/csharp-type-model.md`, `docs/src/content/docs/csharp-members-overloads.md`, `docs/src/content/docs/feature-status.md`, `docs/src/content/docs/grammar.md`, `docs/src/content/docs/reference.md`, `docs/src/content/docs/lowering.md`, `docs/src/content/docs/api.md`, `docs/src/content/docs/cli.md`, `docs/src/content/docs/diagnostics.md`, `docs/src/content/docs/advanced.md`, `docs/src/content/docs/project-configuration.md`, `docs/src/content/docs/project-policy.md`, `docs/src/content/docs/runtime-artifacts.md`, `docs/src/content/docs/vscode-lsp.md`, `docs/src/content/docs/troubleshooting.md`, `docs/src/content/docs/goal.md`, `docs/src/content/docs/requirements.md`, `docs/src/content/docs/project-ledger.md`, `docs/src/content/docs/writing-guide.md`, `docs/src/content/docs/document-ownership.md`", languageTasks);
+    AssertContains("Current test and release evidence: `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCatalog.cs`, `test/TypeSharp.Compiler.Tests/TypeSharpCompilerTestCases.cs`, `test/TypeSharp.Compiler.Tests.MSTest/TypeSharpCompilerMSTestCatalog.cs`, `.github/workflows/regression.yml`, `.github/workflows/docs.yml`, `.github/workflows/release-artifacts.yml`, `docs/scripts/verify-rendered-install-route.cjs`", languageTasks);
+    AssertContains("The package-free compiler test catalog is currently asserted at 586 cases", languageTasks);
+    AssertContains("the MSTest/MTP package shard gate expects 590 discovered tests", languageTasks);
+    AssertContains("586 shared catalog cases plus one bridge smoke in each of the four shard assemblies", languageTasks);
+    AssertContains("Working assessment: **usable MVP / pre-1.0 language and toolchain**, not yet a stable 1.0 contract.", languageTasks);
+    AssertContains("The current release line uses Runtime ABI `0` as the explicit pre-1.0 preview ABI rule, not a 1.0 stability claim.", languageTasks);
+    AssertContains("A real 1.0 user must be able to complete this path without cloning the TypeSharp repository or knowing repo-internal build commands:", languageTasks);
+    AssertContains("`typesharp version` prints enough metadata for support: CLI version, compiler version, language version/channel, runtime ABI/status, CLI host target, generated target default, runtime target, artifact kind, build metadata, and source revision.", languageTasks);
+    AssertContains("This is the concrete adoption scenario that the 1.0 tracker must preserve. It starts from the public website and ends with user-owned build output, not repo-local developer commands.", languageTasks);
+    AssertContains("The user downloads `typesharp-cli-dotnet-<tag>.zip`, verifies it against `SHA256SUMS.txt`, extracts it to a normal user-writable tools directory, and runs `typesharp.cmd` from a shell.", languageTasks);
+    AssertContains("The user downloads the matching `typesharp-runtime-net48-<tag>.zip` archive when runtime/core libraries are needed and verifies that archive against the same `SHA256SUMS.txt` manifest before referencing its DLLs.", languageTasks);
+    AssertContains("The user can add supported dependencies in `TypeSharp.toml` using `references.assemblies`, `references.paths`, direct `[projectReferences]`, and explicit TypeSharp Core/Runtime DLL paths from the matching runtime archive.", languageTasks);
+    AssertContains("The user can run `typesharp build` and receive generated C# source, an offline generated project, and a `net48` DLL or EXE without NuGet restore or repository-relative paths.", languageTasks);
+    AssertContains("For library projects, an ordinary C# `.NET Framework 4.8` consumer can reference the generated DLL plus the matching `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` from the release runtime archive.", languageTasks);
+    AssertContains("requiring the base-aware rendered navigation, pagination, canonical/Open Graph URLs, sitemap URLs", languageTasks);
+    AssertContains("verifies hosted sitemap-index/sitemap URLs include the public URLs for all 34 sidebar public-docs routes under `https://naramdash.github.io/TypeSharp/`", languageTasks);
+    AssertContains("losing canonical/Open Graph/sitemap URL identity", languageTasks);
+    AssertContains("sitemap-index/sitemap routes to preserve `https://naramdash.github.io/TypeSharp/` URLs for all 34 sidebar public-docs routes and reject stale `https://typesharp.github.io/TypeSharp` URLs", languageTasks);
+    AssertContains("verifies hosted canonical/Open Graph/sitemap URL identity and exact legacy 404 marker rejection across all 34 sidebar public-docs routes", languageTasks);
+    AssertContains("verifies hosted Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics link back to Install", languageTasks);
+    AssertContains("verifies hosted CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting link back to Install", languageTasks);
+    AssertContains("Release workflow contract coverage also pins every hosted broader/support-route fetch, hosted canonical-route table entry, and hosted legacy 404 rejection for Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, Advanced Topics, CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting before release assets can publish.", languageTasks);
+    AssertContains("Project Policy now states that hosted broader public-docs routes and support routes must not be legacy 404 pages before release asset publication, matching the release workflow contract coverage for every hosted broader/support-route fetch, canonical-route table entry, and legacy 404 rejection.", languageTasks);
+    AssertContains("The hosted public-docs route probe now rejects exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found` across the home, Install, Start Here, Tutorials, broader public-docs, CLI, and support routes before release asset publication.", languageTasks);
+    AssertContains("After GitHub Pages deployment, `docs.yml` now verifies the deployed `https://naramdash.github.io/TypeSharp` route, all 34 sidebar public-docs pages, `sitemap-index.xml`, and `sitemap-0.xml` with cache-busting query strings and no-cache request headers, requiring public canonical/Open Graph URLs, public sitemap URLs for all 34 sidebar public-docs routes, rejection of stale `https://typesharp.github.io/TypeSharp` URLs from adoption-facing page bodies and sitemap output, and rejection of exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found`. Policy pages may mention the stale legacy URL as a forbidden example, but must not emit it as public URL metadata or sitemap output.", languageTasks);
+    AssertSequence(
+        [
+            "1. Visit the official TypeSharp web page.",
+            "2. Download or install a versioned CLI artifact from that page.",
+            "3. Verify the CLI with `typesharp version`.",
+            "4. Create a console or library project with `typesharp new`.",
+            "5. Add supported dependencies through `TypeSharp.toml`.",
+            "6. Run `typesharp check`.",
+            "7. Run `typesharp build` and get a generated `net48` DLL or EXE.",
+            "8. Run executable projects with `typesharp run` when local security policy allows.",
+            "9. Reference generated library output plus required TypeSharp Core/Runtime DLLs from a C# `.NET Framework 4.8` consumer project.",
+            "10. Diagnose missing toolchain, missing dependency, unsupported package, build, and runtime-deployment failures from docs and CLI messages."
+        ],
+        Regex.Matches(languageTasks, "(?m)^\\d+\\. .+$")
+            .Take(10)
+            .Select(match => match.Value)
+            .ToArray());
+
+    var languageProgress = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-progress.md"));
+    AssertContains("| Current slice | Hosted release/download smoke and deployed public-docs drift remain the largest open 1.0 adoption evidence gaps after completing broad `TS2201` reduction. |", languageProgress);
+    AssertContains("| Verification target | Test catalog tracker-count guard, workflow contract, diagnostic fixture README drift checks, docs contract, compiler test build, docs build, diff hygiene, workflow/docs-script forbidden-tooling scan, deployed public-docs probe, and hosted-release probe. |", languageProgress);
+    AssertContains("| External evidence state | GitHub Pages API reports workflow deployment at `https://naramdash.github.io/TypeSharp/`; the latest configured Pages content probe returned HTTP 200 for all 34 sidebar public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`, but none of the 36 checked route/sitemap bodies contained the configured host and all 36 still served stale `https://typesharp.github.io/TypeSharp` URLs. The probe found no exact `Document not found (404)`, `This page could not be found`, or `Page not found` legacy 404 page markers; 10 checked bodies contained broad `404` substrings from diagnostic-code or policy-code references. The latest 10 listed `docs.yml` runs are still 2026-05-23 `main` push runs, not tag or workflow-dispatch corrected deployments. `gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries, so both deployed public-docs and hosted release evidence remain pending. |", languageProgress);
+    var legacyForbiddenToolingScanName = string.Concat("Python", " scan");
+    AssertFalse(languageProgress.Contains(legacyForbiddenToolingScanName, StringComparison.Ordinal), "Progress ledger should use workflow/docs-script forbidden-tooling scan wording.");
+    AssertContains("the shared package-free catalog is 586 cases", languageProgress);
+    AssertContains("the MTP `--minimum-expected-tests 590` gate is 586 catalog cases plus one `CatalogIsExposedForPackageRunners` bridge smoke in each of the four shard assemblies", languageProgress);
+    AssertEqual(5, Regex.Matches(languageTasks, "(?m)^- \\[ \\] ").Count);
+    AssertEqual(5, Regex.Matches(languageProgress, "(?m)^\\| [^|\\r\\n]+ \\| In progress \\|").Count);
+    AssertSequence(
+        [
+            "Publish a complete official download and installation path for the CLI.",
+            "Make the first project path release-grade.",
+            "Make the official webpage-to-build docs path coherent.",
+            "Add release-style end-to-end adoption tests.",
+            "Stabilize download, release, and versioning metadata."
+        ],
+        Regex.Matches(languageTasks, "(?m)^- \\[ \\] (.+)$")
+            .Select(match => match.Groups[1].Value)
+            .ToArray());
+    AssertSequence(
+        [
+            "Publish official CLI download/install path",
+            "Make first project path release-grade",
+            "Make official webpage-to-build docs path coherent",
+            "Add release-style end-to-end adoption tests",
+            "Stabilize download, release, and versioning metadata"
+        ],
+        Regex.Matches(languageProgress, "(?m)^\\| ([^|\\r\\n]+) \\| In progress \\|")
+            .Select(match => match.Groups[1].Value.Trim())
+            .ToArray());
+    AssertContains("- [ ] Publish a complete official download and installation path for the CLI.", languageTasks);
+    AssertContains("| Publish official CLI download/install path | In progress |", languageProgress);
+    AssertContains("Docs contract coverage now pins the primary Learn sidebar's opening sequence to `Overview`, `Install`, `Start Here`, then `Learning Paths`, and pins the docs home `Start Here` list to start with the Install link.", languageTasks);
+    AssertContains("Docs contract coverage now asserts the Install page's create/build command blocks keep the installed-CLI console `new`/`check`/`build`/`run` sequence and library `new`/`check`/`build` sequence intact.", languageTasks);
+    AssertContains("Docs contract coverage now asserts the Install page keeps archive extraction, wrapper `typesharp.cmd version`, PATH setup, and bare `typesharp version` before the first project creation command.", languageTasks);
+    AssertContains("The same rendered verifier now also reads `docs/dist/learning-paths/index.html`, `docs/dist/language-tour/index.html`, `docs/dist/fundamentals/index.html`, `docs/dist/guides/index.html`, `docs/dist/cookbook/index.html`, `docs/dist/api/index.html`, `docs/dist/examples/index.html`, `docs/dist/diagnostics/index.html`, and `docs/dist/advanced/index.html`, requiring them to link back to Install, preserve GitHub Release notes, exact asset-name guidance, CLI/runtime asset names, and `SHA256SUMS.txt`, and reject repo-local CLI or hidden global .NET tool-install guidance before Pages upload.", languageTasks);
+    AssertContains("The checksum policy must cover both the CLI archive and the matching runtime archive.", languageTasks);
+    AssertContains("The Install page checksum helper verifies both archive names against exact `SHA256SUMS.txt` asset-name entries, reports missing and duplicate manifest entries explicitly, rejects malformed/non-lowercase SHA-256 rows, and parses whitespace-delimited manifest rows.", languageTasks);
+    AssertContains("Install documents uninstall and rollback directly: remove the extracted CLI folder/PATH entry, then install a previous CLI/runtime archive pair after checksum verification.", languageTasks);
+    AssertContains("Install now has a direct rollback section that downloads the previous CLI archive, previous runtime archive, and `SHA256SUMS.txt`, verifies both archives, extracts the previous CLI, checks `typesharp.cmd version`, and tells users to keep generated projects/C# consumers on the same runtime archive tag and Runtime ABI.", languageTasks);
+    AssertContains("The flow must not require cloning this repository, building the CLI from source", languageTasks);
+    AssertContains("installing hidden global tools.", languageTasks);
+    AssertContains("package-manager global install, and hidden global tool commands across the public docs and repository README install route.", languageTasks);
+    AssertContains("The docs primary Learn sidebar now exposes Install before Start Here, and the docs home first link list puts the release Install path before Start Here; docs contract coverage preserves both orderings", languageProgress);
+    AssertContains("The Install checksum helper now fails clearly when `SHA256SUMS.txt` does not list an asset, rejects duplicate entries for the requested asset, rejects malformed/non-lowercase SHA-256 rows, matches the requested asset name exactly, and parses whitespace in the same shape as the release manifest", languageProgress);
+    AssertContains("Install now documents direct rollback by choosing a previous `$version`, downloading the previous CLI/runtime archives and `SHA256SUMS.txt`, verifying both archives, extracting the previous CLI, checking `typesharp.cmd version`, and keeping C# consumers on the same runtime archive tag and Runtime ABI", languageProgress);
+    AssertContains("Docs contract coverage now preserves the Install page installed-CLI first-project command blocks for console `new`/`check`/`build`/`run` and library `new`/`check`/`build`", languageProgress);
+    AssertContains("also asserts archive extraction, wrapper `typesharp.cmd version`, PATH setup, and bare `typesharp version` remain before the first project command", languageProgress);
+    AssertContains("package-manager global install, or hidden global tool commands across public docs and the repository README release install route", languageProgress);
+    AssertContains("README, docs home, Install, Start Here, and Tutorials now label the source-built path as a preview contributor fallback instead of an end-user install route", languageProgress);
+    AssertContains("- [ ] Make the first project path release-grade.", languageTasks);
+    AssertContains("| Make first project path release-grade | In progress |", languageProgress);
+    AssertContains("Generated console and library README files now assume the release-installed `typesharp` command is on `PATH`, link to the public Install/Troubleshooting/Runtime Artifacts docs, and contract tests reject repo-local CLI DLL commands or source-built fallback wording in starter READMEs.", languageTasks);
+        AssertContains("Generated starter projects must default to `net48`, avoid preview features by default, and build without manual edits.", languageTasks);
+        AssertContains("Console, library, release-staged console, and release-staged library starter tests now assert generated manifests preserve complete starter defaults, including target/output type, root namespace, source roots, generated output root, entry-point policy, preview strictness, framework references, empty local/package references, and tooling defaults", languageTasks);
+        AssertContains("source-built clean console/library and release-staged starter tests also verify source files, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape", languageTasks);
+    AssertContains("Docs contract coverage now asserts the CLI page keeps the generated starter file list: `TypeSharp.toml`, `src/Main.tysh` or `src/Library.tysh`, `.gitignore`, and `README.md`.", languageTasks);
+    AssertContains("Docs contract coverage now asserts the Tutorials Hello Project command block keeps the installed-CLI `typesharp new console`, `cd`, `typesharp check`, `typesharp build`, and `typesharp run` sequence together.", languageTasks);
+    AssertContains("The generated console/library READMEs now assume the release-installed `typesharp` command from the public Install docs is on `PATH`, link to Troubleshooting or Runtime Artifacts for recovery/consumer guidance, and tests reject repo-local CLI DLL commands or source-built fallback wording in those starter READMEs", languageProgress);
+        AssertContains("Console, library, release-staged console, and release-staged library starter tests now assert generated manifests preserve complete starter defaults, including target/output type, root namespace, source roots, generated output root, entry-point policy, preview strictness, framework references, empty local/package references, and tooling defaults.", languageProgress);
+        AssertContains("Raw, source-built clean, and release-staged starter tests verify source files, starter `format --check`, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape, and generated `net48` assembly evidence before console `run` or dependency-specific edits; raw library starter coverage also verifies `typesharp run` rejects library output with the executable `outputType` requirement.", languageProgress);
+    AssertContains("Docs contract coverage now asserts the CLI page keeps the generated starter file list: `TypeSharp.toml`, `src/Main.tysh` or `src/Library.tysh`, `.gitignore`, and `README.md`.", languageProgress);
+    AssertContains("Docs contract coverage now preserves the Tutorials release install sentence before its preview contributor fallback mention and first PowerShell block, and keeps the Hello Project installed-CLI command block from `typesharp new console` through `check`, `build`, and `run`", languageProgress);
+    AssertContains("- [ ] Make the official webpage-to-build docs path coherent.", languageTasks);
+    AssertContains("| Make official webpage-to-build docs path coherent | In progress |", languageProgress);
+    AssertContains("Project Configuration now shows the same dependency terminology in one manifest shape: `references.assemblies`, local `references.paths`, explicit Core/Runtime DLL paths from `typesharp-runtime-net48-<tag>.zip`, `[projectReferences]`, `references.packages = []`, and checksum verification through `SHA256SUMS.txt`.", languageTasks);
+    AssertContains("The route must include generated-output expectations: where generated source/project/assembly files appear and which files should be copied or referenced by a C# `net48` consumer.", languageTasks);
+    AssertContains("Docs contract coverage asserts Project Configuration keeps the generated source, generated C# project, and `bin/Release/net48` output example, and Runtime Artifacts keeps the C# consumer deployable set of generated `net48` DLL plus required Core/Runtime DLLs from the same verified runtime archive tag and Runtime ABI.", languageTasks);
+    AssertContains("Troubleshooting now covers downloaded CLI host prerequisites separately from generated `net48`, names the explicit CLI/generated/runtime target split with text/JSON `typesharp version` verification", languageTasks);
+    AssertContains("Project Configuration and Runtime Artifacts now show `references.assemblies`, local `references.paths`, explicit `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` paths from `typesharp-runtime-net48-<tag>.zip`, `[projectReferences]`, `references.packages = []`, and checksum verification with `SHA256SUMS.txt`", languageProgress);
+    AssertContains("docs contract coverage keeps Runtime Artifacts pointing Core/Runtime paths at the verified extracted runtime archive instead of repository build folders", languageProgress);
+    AssertContains("Troubleshooting covers downloaded CLI host prerequisites separately from generated `net48`, missing and invalid local DLL metadata recovery through `TS2401` and `references.paths`, direct TypeSharp project-reference recovery through `[projectReferences]`", languageProgress);
+    AssertContains("- [ ] Add release-style end-to-end adoption tests.", languageTasks);
+    AssertContains("| Add release-style end-to-end adoption tests | In progress |", languageProgress);
+    AssertContains("The staged VSIX path packages the VS Code extension archive shape into `typesharp-vscode-staged-test.vsix`, verifies it through the same staged `SHA256SUMS.txt`, extracts it, and verifies the bundled language server, README/Marketplace docs, package display/category/activation metadata, and TypeSharp language/grammar contribution metadata.", languageTasks);
+    AssertContains("The staged release-notes path writes `RELEASE_NOTES.md`, verifies the same canonical metadata header prefix", languageTasks);
+    AssertContains("exact mandatory section set/order with no unexpected `##` sections", languageTasks);
+    AssertContains("integrity policy expected by the hosted release body, and verifies release notes remain outside the checksum manifest", languageTasks);
+    AssertContains("The release-staged checksum helper now verifies the staged `SHA256SUMS.txt` entry set is exactly the CLI archive, runtime archive, and VSIX asset after all staged assets exist.", languageTasks);
+    AssertContains("The release-staged VSIX helper now packages `typesharp-vscode-staged-test.vsix`, adds a lowercase SHA-256 manifest entry in the same staged `SHA256SUMS.txt`, extracts the archive", languageProgress);
+    AssertContains("The release-staged release-notes helper now writes `RELEASE_NOTES.md`, verifies Summary, Compatibility Matrix, Breaking Changes, Migration Notes, Stable Features, Preview Features, Diagnostics And Tooling, Security, Checksums And Signing, Artifacts, Verification, and Rollback sections", languageProgress);
+    AssertContains("After all staged assets exist, the staged checksum helper verifies the manifest entry set is exactly the CLI archive, runtime archive, and VSIX asset with lowercase SHA-256 hashes and no duplicate asset names", languageProgress);
+    AssertContains("The release-staged negative diagnostic smokes now parse installed-CLI JSON output and verify `TS2401`, `TS2405`, and `TS3501` keep error severity and the same recovery messages as the hosted smoke.", languageTasks);
+    AssertContains("The release-staged clean-console smoke now verifies installed-CLI `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501` before creating the first project.", languageTasks);
+    AssertContains("The release-staged runtime library smoke now verifies installed-CLI `typesharp run` rejects a library project with exit code `5` and the executable `outputType` requirement before the C# consumer build and output-copy check.", languageTasks);
+    AssertContains("checks installed `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501`", languageProgress);
+    AssertContains("Staged dependency negative smoke passes for missing local DLL and unsupported package diagnostics in text and JSON, including `TS2401`/`TS2405` error severity and recovery messages.", languageProgress);
+    AssertContains("Staged generated C# build-failure smoke passes with `check` success, generated source/project emission, `TS3501`, no generated assembly, and JSON `TS3501` error severity plus generated project-name coverage.", languageProgress);
+    AssertContains("verifies installed `typesharp run` rejects the runtime-backed library project with exit code `5` plus the executable `outputType` requirement before compiling the C# consumer", languageProgress);
+    AssertContains("hosted GitHub Pages probe covering all 34 sidebar public-docs routes plus hosted sitemap-index/sitemap URL probes", languageTasks);
+    AssertContains("the broader/CLI/support routes to not be legacy 404 pages, link back to Install, and preserve release-note/exact-asset guidance plus runtime/checksum/path/VSIX markers and canonical/Open Graph URL identity where applicable", languageTasks);
+    AssertContains("Start Here/Install/Tutorials/broader/support routes to reject hidden global .NET tool-install guidance", languageTasks);
+    AssertContains("Aligned the release-workflow tracker summary with the actual hosted broader-docs probe range", languageProgress);
+    AssertContains("The shard/tracker guard now asserts the task file keeps the broader hosted public-docs probe range", languageProgress);
+    AssertContains("verifies hosted Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics are not legacy 404 pages and link back to Install", languageProgress);
+    AssertContains("verifies hosted CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting are not legacy 404 pages and link back to Install", languageProgress);
+    AssertContains("hosted Start Here/Install/Tutorials/broader/support routes", languageProgress);
+    AssertContains("The hosted release smoke resolves the hosted download/extraction root and clean workspace, and fails if either is inside the repository checkout, with contract coverage for the exact resolved-path comparison conditions", languageTasks);
+    AssertContains("The hosted release smoke uses a clean workspace under runner temp and fails if that workspace is moved under the repository checkout.", languageTasks);
+    AssertContains("The hosted smoke resolves the repository checkout, hosted download/extraction root, and clean smoke workspace paths and fails if the hosted download/extraction root or smoke workspace is under the checkout.", languageTasks);
+    AssertContains("The hosted smoke resolves the repository checkout, hosted download/extraction root, and clean smoke workspace paths and fails if the hosted download/extraction root or clean workspace moves under the checkout.", languageProgress);
+    AssertContains("Hardened the hosted GitHub Release smoke so it resolves the repository checkout, hosted download/extraction root, and clean smoke workspace paths and fails if the hosted download/extraction root or clean workspace is ever moved under the checkout", languageProgress);
+    AssertContains("- [ ] Stabilize download, release, and versioning metadata.", languageTasks);
+    AssertContains("| Stabilize download, release, and versioning metadata | In progress |", languageProgress);
+    AssertContains("`typesharp version` reports CLI, compiler, language, release channel, runtime ABI/status, default generated target, CLI host target, runtime target, artifact kind, build metadata, and source revision useful for support.", languageTasks);
+    AssertContains("Hosted public docs probes, README Install links, starter README recovery links, Astro canonical site metadata, rendered and hosted canonical/Open Graph URLs, and rendered and hosted sitemap URLs now use the configured GitHub Pages URL `https://naramdash.github.io/TypeSharp/`, not the stale `https://typesharp.github.io/TypeSharp/` URL that returns the legacy 404 page.", languageTasks);
+    AssertContains("The docs Astro config defaults local builds to the repository base when `GITHUB_REPOSITORY` is absent, `npm run verify:rendered-install-route` rejects canonical, Open Graph, page-link, or sitemap output that loses the `/TypeSharp` base path or reintroduces the stale `https://typesharp.github.io/TypeSharp` host, and `release-artifacts.yml` repeats those canonical/Open Graph/sitemap stale-host checks against the deployed public Pages routes before release asset publication.", languageTasks);
+    AssertContains("The main 1.0 risk is not \"missing everything\"; it is that the hosted release/download evidence is still external, the currently deployed public docs still carry stale legacy canonical/sitemap URLs until a tag-dispatched docs workflow publishes corrected pages, several supported areas remain explicitly `MVP limited`, and broader TypeScript/F#/C# parity items are intentionally represented as post-1.0 backlog in canonical docs.", languageTasks);
+    AssertContains("GitHub Pages API probing reports workflow deployment at `https://naramdash.github.io/TypeSharp/`, but the latest external configured Pages content probe still finds all 34 sidebar deployed public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml` return HTTP 200 while none of the 36 checked route/sitemap bodies contains the configured host and all 36 checked bodies still carry stale `https://typesharp.github.io/TypeSharp` URLs. The current probe found no exact `Document not found (404)`, `This page could not be found`, or `Page not found` legacy 404 page markers in those route bodies; 10 checked bodies contain broad `404` substrings from diagnostic-code or policy-code references rather than legacy 404 page markers. The latest 10 listed `docs.yml` runs are still 2026-05-23 `main` push runs, not tag or workflow-dispatch corrected deployments, so public-docs deployment evidence remains pending on stale host/canonical/sitemap output until a tag-dispatched docs workflow publishes corrected rendered pages and the release gate re-probes them.", languageTasks);
+    AssertContains("Install canonical URL pages, Install Open Graph URL pages, Install `/TypeSharp` base-path pages, stale legacy `https://typesharp.github.io/TypeSharp` page URLs, sitemap index URL pages, sitemap public-route URL pages, stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
+    AssertContains("stale legacy `https://typesharp.github.io/TypeSharp` page URLs", languageTasks);
+    AssertContains("stale legacy `https://typesharp.github.io/TypeSharp` sitemap URLs", languageTasks);
+    AssertContains("hosted canonical/Open Graph URL identity verification across all 34 sidebar public-docs routes, hosted sitemap-index/sitemap URL verification that rejects deployed output losing `/TypeSharp` URLs for any of the 34 sidebar public-docs routes", languageTasks);
+    AssertContains("sitemap-index/sitemap routes to preserve `https://naramdash.github.io/TypeSharp/` URLs for all 34 sidebar public-docs routes", languageTasks);
+    AssertContains("Docs site, GitHub Pages workflow, and release workflow contract coverage now extracts the public sidebar slugs from `docs/astro.config.ts` and asserts `docs/scripts/verify-rendered-install-route.cjs`, `.github/workflows/docs.yml`, and `.github/workflows/release-artifacts.yml` cover the same 34 public-docs routes", languageTasks);
+    AssertContains("The rendered verifier, docs workflow post-deploy verifier, and release workflow pre-publication verifier now also fail on a non-34 public-docs route table or duplicate public-docs route paths before route fetch/canonical/sitemap checks continue.", languageTasks);
+    AssertContains("Added controlled rendered-verifier fixture coverage for canonical/Open Graph/base-path/sitemap URL drift, so `GitHub Pages workflow contract is stable` now proves missing Install canonical URL, missing Install Open Graph URL, missing Install `/TypeSharp` base-path link, missing sitemap index URL, and missing sitemap public-route URL failures before Pages upload.", languageProgress);
+    AssertContains("Rejected stale legacy `https://typesharp.github.io/TypeSharp` URLs in both the rendered Install verifier and the hosted release public-docs probe, with controlled fixture coverage for stale Install page URLs and stale sitemap URLs before Pages upload.", languageProgress);
+    AssertContains("Added hosted public docs canonical/sitemap URL probes so `release-artifacts.yml` verifies public Pages canonical/Open Graph URLs and sitemap entries for all checked public-docs routes stay under `https://naramdash.github.io/TypeSharp/` before publishing release assets.", languageProgress);
+    AssertContains("Expanded the 1.0 task tracker adoption-map evidence list to match the current public webpage-to-build route surface, including Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, Advanced Topics, Project Policy, and .NET Interop alongside the original public entry/support pages.", languageProgress);
+    AssertContains("Aligned the 1.0 task tracker evidence list with the current release/docs verification surface by naming `.github/workflows/docs.yml`, `.github/workflows/release-artifacts.yml`, and `docs/scripts/verify-rendered-install-route.cjs` alongside the compiler catalog, test cases, MSTest catalog, and regression workflow.", languageProgress);
+    AssertContains("Expanded rendered, post-deploy, and release pre-publication public URL identity checks from the adoption-facing 19-route set to all 34 sidebar public-docs routes", languageProgress);
+    AssertContains("Added sidebar-derived route coverage guards so the docs site, GitHub Pages workflow, and release workflow contract tests now extract public sidebar slugs from `docs/astro.config.ts` and assert the rendered verifier plus both workflow route tables cover the same 34 public-docs routes.", languageProgress);
+    AssertContains("Added exact 34-route and duplicate-path self-checks to the rendered verifier, docs workflow post-deploy route table, and release workflow pre-publication canonical/sitemap route table so route-table copy/paste mistakes fail before public URL identity evidence is accepted.", languageProgress);
+    AssertContains("Re-probed external Pages with cache-busted no-cache requests across all 34 sidebar public-docs routes plus both sitemaps", languageProgress);
+    AssertContains("Added cache-busting query strings and no-cache request headers to the docs workflow post-deploy Pages verifier and the release workflow pre-publication hosted public-docs probe so CDN or Pages cache reuse cannot hide stale canonical/sitemap output during release gating.", languageProgress);
+    AssertContains("Earlier in the same slice, re-probed external Pages and Docs workflow state across the then-current 19 public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`; that probe found HTTP 200 responses with stale `https://typesharp.github.io/TypeSharp` URLs, no configured host, no exact legacy 404 markers, `TS2404` as the remaining broad `404` substring source, and 2026-05-23 `main` push runs as the latest listed `docs.yml` runs.", languageProgress);
+    AssertContains("Extended the inline PowerShell parse guard to the GitHub Pages workflow so the post-deploy public Pages verifier in `docs.yml` is parser-checked alongside the release workflow's pre-publication and hosted-smoke run blocks.", languageProgress);
+    AssertContains("Added a post-deploy public Pages verifier to `docs.yml` so every non-PR docs deployment now fetches `https://naramdash.github.io/TypeSharp`, the same 19 public-docs routes, `sitemap-index.xml`, and `sitemap-0.xml`, then rejects missing public canonical/Open Graph URLs, missing sitemap URLs for any checked public-docs route, stale `https://typesharp.github.io/TypeSharp` URLs, and exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found`.", languageProgress);
+    AssertContains("Carried the docs workflow post-deploy public Pages verification policy into the 1.0 task tracker and Project Policy so the deployed stale-host gap is guarded by the docs deployment workflow as well as the release pre-publication gate.", languageProgress);
+    AssertContains("Pinned hosted broader public-docs route fetches, canonical-route table entries, and legacy 404 rejections in the release workflow contract test for Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics.", languageProgress);
+    AssertContains("Consolidated the hosted public-docs exact legacy 404 marker probe so `release-artifacts.yml` now checks the home, Install, Start Here, Tutorials, broader public-docs, CLI, and support routes through one route table and rejects `Document not found (404)`, `This page could not be found`, and `Page not found` before release asset publication.", languageProgress);
+    AssertContains("Carried the hosted public-docs legacy 404 marker policy into Project Policy so the canonical release automation docs now name `Document not found (404)`, `This page could not be found`, and `Page not found` as release-blocking hosted route markers.", languageProgress);
+    AssertContains("Aligned Project Policy with that hosted broader-route gate so the canonical release automation docs state broader public-docs and support routes must not be legacy 404 pages before release asset publication.", languageProgress);
+    AssertContains("Aligned the top-level task/progress hosted broader-route summary with the Project Policy legacy-404 gate so the tracker preserves that hosted broader/support routes must not be legacy 404 pages before release assets publish.", languageProgress);
+    AssertContains("Carried the hosted broader-route legacy-404 gate through the top-level task/progress summary so the tracker, Project Policy, and release workflow contract all preserve that hosted broader public-docs and support routes must not be legacy 404 pages before release assets publish.", languageProgress);
+    AssertContains("Aligned the publish-install progress row with the hosted broader-route legacy-404 gate so the top-level adoption evidence now says the hosted broader public-docs and support routes must not be legacy 404 pages before release assets publish.", languageProgress);
+    AssertContains("the shard/tracker guard preserves hosted sitemap stale-host rejection wording and hosted broader/support legacy-404 wording for release-style adoption tests.", languageProgress);
+    AssertContains("Aligned the release-style adoption task/progress wording with the hosted broader/support legacy-404 gate so release-style adoption evidence preserves that public docs routes must not be legacy 404 pages before release assets publish.", languageProgress);
+    AssertContains("Pinned support-route hosted legacy-404 workflow coverage in the tracker and contract guard so CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting cannot silently fall back to legacy 404 pages before release assets publish.", languageProgress);
+    AssertContains("Pinned support-route hosted canonical table entries in the release workflow contract guard so CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting cannot lose canonical/Open Graph route identity before release assets publish.", languageProgress);
+    AssertContains("Pinned rendered broader public-docs route verifier wording in the tracker/progress guard so Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics cannot silently drop Install-link, release-note, exact asset-name, CLI/runtime asset, checksum manifest, repo-local CLI rejection, or hidden global .NET tool-install rejection coverage before Pages upload.", languageProgress);
+    AssertContains("Carried the rendered broader public-docs route verifier wording into Project Policy so the canonical release automation docs name the same Learning Paths through Advanced Topics Pages-upload gate as the task/progress tracker.", languageProgress);
+    AssertContains("Carried the rendered support-route verifier wording into Project Policy so the canonical release automation docs name the same CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting Pages-upload gate as the task/progress tracker.", languageProgress);
+    AssertContains("Re-ran the GitHub Pages-base docs build and rendered install-route verifier with `GITHUB_REPOSITORY=naramdash/TypeSharp` and `RELEASE_TAG=v0.1.0-preview.1`, proving the current Project Policy release-gate wording still renders in the 35-page docs site and passes the release-tag-aware public-route verifier.", languageProgress);
+    AssertContains("A configured public Pages probe against `https://naramdash.github.io/TypeSharp/` found the currently deployed home/Install/broader/support routes and sitemap files return HTTP 200 but still contain stale `https://typesharp.github.io/TypeSharp` canonical/sitemap URLs, so deployed public-docs evidence remains pending even though the local release gate catches that drift before asset publication.", languageProgress);
+    AssertContains("Probed the currently deployed configured Pages routes at `https://naramdash.github.io/TypeSharp/` and found the home, Install, broader public-docs, support, sitemap-index, and sitemap pages still contain the stale `https://typesharp.github.io/TypeSharp` canonical/sitemap host even though the checked routes return HTTP 200, so external public-docs deployment evidence remains pending until the tag-dispatched docs workflow publishes the corrected rendered site.", languageProgress);
+    AssertContains("Found HTTP 200 for every checked route but stale `https://typesharp.github.io/TypeSharp` canonical/sitemap URLs in every checked deployed route and sitemap, so deployed public-docs evidence remains pending.", languageProgress);
+    AssertContains("Re-probed configured Pages and confirmed the external drift persists across the 19 checked public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`: all return HTTP 200, none of the checked route/sitemap bodies contains the configured `https://naramdash.github.io/TypeSharp` host, and every checked route/sitemap body still serves stale `https://typesharp.github.io/TypeSharp` URLs; exact `Document not found (404)`, `This page could not be found`, and `Page not found` legacy 404 page markers are absent, and the remaining `404` substrings on Language Tour, Fundamentals, Guides, and Diagnostics are `TS2404` diagnostic-code references. Local tags, remote `v*` tags, and hosted GitHub Releases are still absent.", languageProgress);
+    AssertContains("Re-probed configured Pages and confirmed the external drift persists: the 17 checked public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml` all return HTTP 200 while still serving stale legacy canonical/sitemap URLs instead of the configured host; the latest listed Docs workflow runs are still 2026-05-23 `main` push runs, not a tag-dispatched corrected deployment.", languageProgress);
+    AssertContains("Confirmed the GitHub Pages API still reports workflow deployment at `https://naramdash.github.io/TypeSharp/`, separating the repository Pages configuration from the stale deployed canonical/sitemap content.", languageProgress);
+    AssertContains("Rechecked release publication prerequisites and found no local `v*` tags, no remote `refs/tags/v*`, and no hosted GitHub Releases, so the first tagged release has not yet existed to run the publication and hosted smoke path.", languageProgress);
+    AssertContains("Tightened the release public-docs dispatch gate so `release-artifacts.yml` now requires the dispatched `docs.yml` run to report the release tag as its `headBranch` in both fallback lookup and final run metadata validation, preventing a same-commit non-tag workflow dispatch from satisfying the pre-publication docs gate.", languageProgress);
+    AssertContains("Tightened the hosted release API pre-download gate so the post-publication smoke now verifies the exact tag-page URL, release title, non-draft state, prerelease flag, and published timestamp from `gh api repos/<repo>/releases/tags/<tag>` before downloading any release asset.", languageProgress);
+    AssertContains("Rechecked the active progress evidence rows against that tracker wording and kept the release/download rows explicitly `In progress` until the first tagged GitHub Release proves the hosted asset smoke against real public assets.", languageProgress);
+    AssertContains("Added rendered canonical/sitemap base-path guards so `docs/astro.config.ts` defaults local builds to `naramdash/TypeSharp` when `GITHUB_REPOSITORY` is absent, and `npm run verify:rendered-install-route` rejects canonical, Open Graph, or sitemap output that loses the public `/TypeSharp` GitHub Pages base path.", languageProgress);
+    AssertContains("Aligned the hosted Pages URL contract with the configured repository Pages site so release workflow public-docs probes, Astro canonical site metadata, README Install links, and starter README recovery links use `https://naramdash.github.io/TypeSharp/` instead of the stale `https://typesharp.github.io/TypeSharp/` URL that returns the legacy 404 page.", languageProgress);
+    AssertContains("Release workflow tag validation now matches the Project Policy version line by accepting only `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-preview.N`, rejecting arbitrary prerelease labels before artifact publication.", languageTasks);
+    AssertContains("Generated release-note `Channel` metadata now uses the same `v0.*` or prerelease tag policy as the GitHub Release prerelease flag, with contract coverage so the two publication metadata paths cannot drift.", languageTasks);
+    AssertContains("Added release tag-policy/channel shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop `vMAJOR.MINOR.PATCH`/`vMAJOR.MINOR.PATCH-preview.N` tag validation, arbitrary prerelease-label rejection, generated release-note `Channel` metadata, or shared GitHub Release prerelease/channel tag-policy coherence before artifact publication while hosted release evidence remains pending.", languageProgress);
+    AssertContains("Existing GitHub Release updates now delete unexpected existing assets, re-upload expected assets, rewrite the title/notes, publish with `--draft=false`, and reset the prerelease flag from the same tag policy before the hosted smoke runs; new Release creation uses `--verify-tag` plus the same tag policy to add `--prerelease` and `--latest=false` for preview releases or `--latest` for stable releases, both branches patch GitHub's `make_latest` setting so preview releases are not Latest while stable releases are, and contract coverage preserves both publication branches.", languageTasks);
+    AssertContains("Current release-tag probing finds no local `v*` tags, no remote `refs/tags/v*`, and no hosted GitHub Releases, so hosted release evidence remains pending before the first tagged release can trigger the publication and post-publication smoke path.", languageTasks);
+    AssertContains("Added release publication-branch shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop existing GitHub Release unexpected-asset deletion, expected-asset re-upload, title/notes rewrite, `--draft=false`, prerelease reset, new Release `--verify-tag`, preview `--prerelease` plus `--latest=false`, stable `--latest`, or both-branch `make_latest` patch coverage before hosted smoke validation while hosted release evidence remains pending.", languageProgress);
+    AssertContains("The checksum manifest policy is explicit: it covers exactly the versioned CLI archive, runtime archive, and VSIX asset with duplicate-free lowercase 64-character SHA-256 entries, while excluding generated release notes and the manifest itself.", languageTasks);
+    AssertContains("The signature policy is explicit and hosted-smoke verified: current preview releases rely on `SHA256SUMS.txt` as the integrity gate, and detached signatures or Authenticode signing must not be implied until release notes and docs name that mechanism.", languageTasks);
+    AssertContains("Release workflow checkout validation now verifies the checked-out `HEAD` matches the release tag target commit before artifact build, so manual dispatch cannot publish tag-named artifacts from the wrong revision.", languageTasks);
+    AssertContains("Hosted release metadata verification now requires the release-page source revision to be the same 12-character lowercase hex commit prefix as the checked-out tag commit before comparing CLI/runtime README metadata and `typesharp version` output against it", languageTasks);
+    AssertContains("The release assembly step prepends the extracted local CLI directory to `PATH` and verifies bare `typesharp` resolves to the extracted `typesharp.cmd` before upload", languageTasks);
+    AssertContains("The release assembly step runs bare local `typesharp version --json` with the extracted CLI directory on `PATH` and verifies build metadata, source revision, release channel, target framework, CLI/runtime target frameworks, artifact kind, and Runtime ABI/status before upload", languageTasks);
+    AssertContains("The release assembly step runs extracted local `typesharp.cmd version --json` before upload and verifies build metadata, source revision, release channel, target frameworks, artifact kind, and Runtime ABI/status", languageTasks);
+    AssertContains("The release assembly step also checks extracted local `typesharp.cmd version` human-readable text for CLI/compiler/language, release channel, target frameworks, artifact kind, build metadata, source revision, and Runtime ABI/status before upload.", languageTasks);
+    AssertContains("The release publication step verifies the local release asset set is exactly the CLI archive, runtime archive, VSIX, and checksum manifest before upload, so stray or missing files fail before GitHub Release mutation.", languageTasks);
+    AssertContains("The release publication step verifies the local `SHA256SUMS.txt` still matches each local upload asset hash before upload, so stale or tampered files fail before GitHub Release mutation.", languageTasks);
+    AssertContains("The release assembly step verifies generated `RELEASE_NOTES.md` before upload, requiring a single top-level title, date/channel provenance, runtime ABI/default target metadata, exact mandatory section set/order with no unexpected `##` sections", languageTasks);
+    AssertContains("The release assembly step verifies the generated `SHA256SUMS.txt` before upload, requiring exactly the CLI archive, runtime archive, and VSIX entries with duplicate-free lowercase SHA-256 rows", languageTasks);
+    AssertContains("The release assembly step expands the local CLI, runtime, and VSIX archives before upload and verifies required archive-shape files, including CLI host/compiler/LSP files, runtime `lib/net48` DLLs, and VSIX extension/server files.", languageTasks);
+    AssertContains("The release assembly step verifies the local CLI/runtime archive README provenance, local human-readable version metadata, and VSIX package metadata before upload, with contract-covered exact strings for tag/build/source, wrapper/PATH guidance, Runtime ABI/status, target framework split, artifact kind, runtime DLL list, package identity, publisher, extension entrypoint, README/Marketplace docs, language configuration, bundled language-server file, language contribution, and grammar contribution drift before publication.", languageTasks);
+    AssertContains("The hosted release smoke now reads the GitHub Release API before asset download, verifies the API tag, exact tag-page URL, title, non-draft state, prerelease flag, published timestamp, and asset set, requires each expected asset to be `uploaded` with nonzero size, the expected `browser_download_url`, and a `sha256:<64 lowercase hex chars>` API digest, downloads through those API-provided release asset URLs, retries until each downloaded file's byte count matches the API-reported asset size, verifies every downloaded file against the hosted API digest, and verifies CLI/runtime/VSIX assets against `SHA256SUMS.txt` before extraction.", languageTasks);
+    AssertContains("The hosted release smoke verifies the downloaded `SHA256SUMS.txt` entry set is exactly the CLI archive, runtime archive, and VSIX, then verifies each downloaded file hash by exact asset-name lookup with contract coverage for missing, duplicate, and mismatched hash conditions, so missing, duplicate, extra, or substring-matched manifest entries fail before extraction.", languageTasks);
+    AssertContains("The hosted release smoke rejects malformed checksum rows, non-lowercase 64-character SHA-256 hashes, and duplicate checksum entries before extraction or build execution.", languageTasks);
+    AssertContains("The hosted release smoke downloads hosted assets with a bounded retry loop and contract-covered missing-file, API-size, final-attempt, and backoff checks so asset propagation delays do not hide missing, empty, partial, or mismatched release assets.", languageTasks);
+    AssertContains("The release workflow now includes a post-publication hosted asset smoke that reads the GitHub Release API before download, verifies expected asset names, uploaded state, nonzero sizes, expected `browser_download_url` values, and API SHA-256 digests", languageTasks);
+    AssertContains("The hosted release smoke expands the downloaded VSIX asset and verifies `extension/package.json`, `extension/extension.js`, `extension/language-configuration.json`, `extension/README.md`, `extension/MARKETPLACE.md`, `extension/syntaxes/typesharp.tmLanguage.json`, and `extension/server/TypeSharp.LanguageServer.dll`.", languageTasks);
+    AssertContains("The hosted release smoke parses the VSIX `extension/package.json` and verifies the package identity, display name, description, version, publisher, category, activation event, entrypoint, TypeSharp `.tysh` language contribution, and `source.typesharp` grammar contribution.", languageTasks);
+    AssertContains("The hosted release smoke downloads the published VSIX asset, verifies its checksum entry, and checks that the release page lists the CLI, runtime, VSIX, and checksum assets.", languageTasks);
+    AssertContains("The docs workflow now also runs on `v*.*.*` tag pushes with tag-aware rendered Install verification", languageTasks);
+    AssertContains("dispatches the docs workflow for the release tag, waits for that dispatched docs workflow run to succeed, verifies the completed docs run was created after the current dispatch started, used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", languageTasks);
+    AssertContains("verifies the hosted home route links to Install plus release notes/exact asset-name guidance and CLI/runtime/VSIX/checksum markers while rejecting hidden global .NET tool-install guidance there", languageTasks);
+    AssertContains("verifies hosted Install route release notes/exact asset-name guidance, release markers, official GitHub Release repository/download/tag URL shape, plus the current release-tag download version and build metadata", languageTasks);
+    AssertContains("reusing a stale prior docs workflow-dispatch run, serving a stale Install page for a different release tag, serving a stale/wrong Install download URL shape", languageTasks);
+    AssertContains("downloads through those API-provided URLs with bounded retry until the downloaded byte count matches the API asset size, verifies every downloaded asset against the hosted API digest, verifies CLI/runtime/VSIX assets against `SHA256SUMS.txt` using exact asset-name hash lookup", languageProgress);
+    AssertContains("verifies the hosted GitHub Release API tag, exact tag-page URL, release title, non-draft state, prerelease flag, published timestamp, exact asset set, uploaded asset state, nonzero asset sizes, expected `browser_download_url` values, and API SHA-256 digests before downloading through the API-provided URLs", languageProgress);
+    AssertContains("retries each download until the file byte count matches the API-reported asset size, verifies every downloaded file against the hosted API digest, verifies CLI/runtime/VSIX assets against `SHA256SUMS.txt`", languageProgress);
+    AssertContains("verifies the VSIX archive shape plus package identity and TypeSharp language/grammar contribution metadata", languageProgress);
+    AssertContains("The release workflow now adds a post-publication hosted GitHub Release smoke with bounded download retry, CLI/runtime/VSIX checksum verification, hosted VSIX archive-shape and package metadata verification", languageProgress);
+    AssertContains("Added hosted VSIX archive-shape verification for package metadata, extension entrypoint, language configuration, TextMate grammar, and bundled language server files after downloading and checksum-verifying the published VSIX.", languageProgress);
+    AssertContains("Added hosted VSIX package metadata verification for package name, publisher, extension entrypoint, TypeSharp `.tysh` language contribution, and `source.typesharp` grammar contribution.", languageProgress);
+    AssertContains("The docs workflow now runs on release tag pushes, and the docs workflow and release workflow share `npm run verify:rendered-install-route`; tag publication runs the docs site contract, Astro docs build, base-aware rendered public-route verifier, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, dispatches the GitHub Pages docs workflow for the same release tag, waits for that dispatched docs workflow run to succeed, verifies the completed docs run was created after the current dispatch started, used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", languageProgress);
+    AssertContains("Tightened the pre-publication public docs gate so `release-artifacts.yml` captures the dispatched `docs.yml` run id, falls back to finding the release-tag workflow-dispatch run by checkout commit and release tag ref, waits with `gh run watch --exit-status`, verifies the completed run's SHA, ref, status, conclusion, workflow name, and event", languageProgress);
+    AssertContains("the base-aware tag-aware `npm run verify:rendered-install-route` with `RELEASE_TAG` set to the release tag", languageTasks);
+    AssertContains("base-aware release-tag rendered public install-route verification with `RELEASE_TAG` set on the local pre-dispatch verifier", languageTasks);
+    AssertContains("Wired `RELEASE_TAG` into the release workflow's local pre-dispatch rendered docs verifier, so `npm run verify:rendered-install-route` checks the current tag's Install download version and build metadata before dispatching Pages and before probing the hosted routes.", languageProgress);
+    AssertContains("verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`", languageTasks);
+    AssertContains("Added a Pages build-type pre-publication guard so `release-artifacts.yml` verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/` before dispatching docs and probing hosted routes, preventing a tag from publishing release assets while Pages is pointed at a stale branch source.", languageProgress);
+    AssertContains("hosted Install release notes/exact asset-name guidance, release markers, official repository/download/tag URL shape, current release-tag download version, and build metadata", languageProgress);
+    AssertContains("Added hosted release API asset metadata checks before download so the hosted smoke must prove the release API tag, expected asset set, uploaded state, nonzero asset sizes, and expected `browser_download_url` values before downloading release assets.", languageProgress);
+    AssertContains("Added hosted release API digest verification so CLI/runtime/VSIX/checksum assets must expose `sha256:<64 lowercase hex chars>` through the GitHub Release API and each downloaded file must hash to that API digest before manifest parsing, extraction, or smoke execution.", languageProgress);
+    AssertContains("Added hosted checksum-manifest shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop hosted downloaded `SHA256SUMS.txt` exact CLI/runtime/VSIX entry-set verification, exact asset-name hash lookup, missing/duplicate/mismatched hash rejection, extra or substring-matched manifest entry rejection, malformed-row rejection, non-lowercase SHA-256 rejection, or duplicate checksum-entry rejection while hosted release evidence remains pending.", languageProgress);
+    AssertContains("Added hosted bounded-download retry shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop hosted asset bounded retry loops, missing-file checks, API-size byte-count checks, final-attempt failure checks, backoff checks, or protection against missing, empty, partial, and mismatched release assets while hosted release evidence remains pending.", languageProgress);
+    AssertContains("The hosted release smoke verifies the GitHub Release prerelease flag, repository Latest pointer, release-note channel, CLI/compiler/language identity, runtime ABI status, default target framework, CLI host target framework, runtime target framework, artifact kind, build metadata, and source revision against the tag policy plus JSON and human-readable `typesharp version` output, with contract coverage for the exact hosted prerelease, Latest-pointer, and JSON metadata comparison conditions.", languageTasks);
+    AssertContains("verifies the GitHub Release prerelease flag, repository Latest pointer, and release-note channel against the tag policy", languageProgress);
+    AssertContains("Added hosted publication-state shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop GitHub Release prerelease flag verification, repository Latest pointer verification, release-note channel verification, tag-policy comparison, preview-release not-Latest behavior, or stable-release Latest behavior while hosted release evidence remains pending.", languageProgress);
+    AssertContains("requires hosted release-page source revisions to match the checked-out tag commit's 12-character lowercase hex prefix before comparing CLI/runtime README metadata and `typesharp version` output against them", languageProgress);
+    AssertContains("Added release tag checkout validation so artifact builds fail early if the checked-out `HEAD` does not match the release tag target commit.", languageProgress);
+    AssertContains("The publish step now rejects missing, empty, whitespace-only, H1-title-line-mismatched, H1-title-extra, date-malformed, channel-mismatched, build-metadata-mismatched, source-revision-mismatched, runtime-metadata-missing, metadata-order-mismatched, metadata-header-position-mismatched, metadata-header-prefix-mismatched, metadata-duplicated, summary-adjacency-mismatched, mandatory-section-missing, mandatory-section-duplicated, mandatory-section-extra, mandatory-section-order-mismatched, unexpected-section, section-set-count-mismatched, section-body-count-mismatched, section-body-line-mismatched, summary-artifact-set-missing, summary-section-mismatched, breaking-changes-none-missing, migration-notes-guidance-missing, stable-target-policy-missing, stable-features-section-mismatched, preview-boundary-missing, preview-features-section-mismatched, diagnostics-tooling-guidance-missing, diagnostics-tooling-section-mismatched, security-no-restore-policy-missing, security-section-mismatched, compatibility-matrix-missing, compatibility-matrix-duplicated, compatibility-matrix-separator-missing, compatibility-matrix-extra-row, compatibility-matrix-row-count-mismatched, compatibility-matrix-row-order-mismatched, artifact-name-missing, artifact-description-missing, artifact-description-duplicated, artifact-description-extra, signature-policy-missing, checksum-signing-section-mismatched, verification-guidance-missing, verification-section-mismatched, rollback-guidance-missing, or rollback-section-guidance-missing release notes before GitHub Release mutation", languageTasks);
+    AssertContains("Added local release-note failure-matrix shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop pre-publication rejection of empty, whitespace-only, title/date/channel/build/source/runtime metadata, section-set/order/body, summary, breaking-change, migration, stable-target, preview-boundary, diagnostics/tooling, security, compatibility-matrix, artifact-name/description, signature-policy, checksum-signing, verification, or rollback release-note failures before GitHub Release mutation while hosted release evidence remains pending.", languageProgress);
+    AssertContains("The hosted release smoke verifies the GitHub Release is not a draft, verifies the API tag name and page URL identify the exact tag under the current repository, verifies the page has a `publishedAt` timestamp, verifies the page title is `TypeSharp <tag>`", languageTasks);
+    AssertContains("verifies the release-note body starts with the canonical metadata header, verifies every release-note metadata prefix appears exactly once, verifies `## Summary` immediately follows that header, verifies the release-note H1 title line is exactly `# TypeSharp <tag>` and no other H1 headings appear, verifies the release-note date uses `yyyy-MM-dd`, verifies the ordered release metadata block appears before mandatory sections", languageTasks);
+    AssertContains("Added hosted release page metadata condition contract coverage so the release workflow contract preserves exact API tag, title, draft-state, release-date, and source-revision extraction/format/checkout comparisons.", languageProgress);
+    AssertContains("Added hosted release-page identity shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop API tag-name verification, exact tag-page URL verification under the current repository, published timestamp verification, non-draft verification, `TypeSharp <tag>` page-title verification, release-note H1 uniqueness, `yyyy-MM-dd` date verification, canonical metadata-header verification, metadata-prefix uniqueness, Summary adjacency, metadata-order, or exact asset-set comparison while hosted release evidence remains pending.", languageProgress);
+    AssertContains("Generated release notes now include exactly the Project Policy mandatory section set once: `Summary`, `Compatibility Matrix`, `Breaking Changes`, `Migration Notes`, `Stable Features`, `Preview Features`, `Diagnostics And Tooling`, `Security`, `Checksums And Signing`, `Artifacts`, `Verification`, and `Rollback`", languageTasks);
+    AssertContains("the hosted release smoke verifies the exactly-once ordered section set, rejects unexpected `##` sections, and verifies the compatibility matrix header, separator, and expected release row exactly once with no unexpected matrix rows in the published GitHub Release body", languageTasks);
+    AssertContains("verifies the release-note body starts with the canonical metadata header, verifies every release-note metadata prefix appears exactly once, verifies `## Summary` immediately follows that header", languageTasks);
+    AssertContains("verifies mandatory release-note sections appear exactly once in canonical order with no unexpected `##` sections", languageTasks);
+    AssertContains("checks release-page build metadata, source revision, prerelease/channel policy, runtime ABI/status, default target framework, exact mandatory release-note section set/order with no unexpected `##` sections, exact ordered compatibility matrix row set with no unexpected matrix rows, exact ordered artifact-description row set, policy-line uniqueness, rollback guidance count, and exact nonblank section bodies for every mandatory release-note section", languageTasks);
+    AssertContains("checks the release page is not a draft, checks the release page title is `TypeSharp <tag>`, checks the release-note body title is `# TypeSharp <tag>`, checks the release-note date uses `yyyy-MM-dd`, checks the release page lists the expected assets, mandatory release-note sections, and preview signature policy", languageProgress);
+    AssertContains("Extended hosted release-body artifact-description verification so the published GitHub Release must describe the CLI archive as the Windows-wrapper CLI host, the runtime archive as the `net48` Core/Runtime library archive, the VSIX as the bundled language-server extension, and `SHA256SUMS.txt` as the release asset manifest.", languageProgress);
+    AssertContains("Added release-note policy-line uniqueness checks so staged, pre-publication, and hosted release notes reject duplicated single-line policy statements and require rollback guidance exactly once in Migration Notes and once in Rollback.", languageProgress);
+    AssertContains("Added release-note all-section body checks so staged, pre-publication, and hosted release notes keep the exact nonblank body lines for every mandatory release-note section.", languageProgress);
+    AssertContains("Added hosted release-body structure shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop hosted mandatory release-note section set/order, unexpected-section rejection, compatibility matrix header/separator/row checks, unexpected matrix-row rejection, artifact-description row checks, unexpected artifact-row rejection, policy-line uniqueness, rollback guidance count, or exact nonblank body-line checks while hosted release evidence remains pending.", languageProgress);
+    AssertContains("The hosted release smoke prepends the extracted CLI directory to `PATH`, verifies bare `typesharp` resolves to the downloaded `typesharp.cmd` with contract coverage for the exact command-resolution comparison condition, and runs `typesharp version --json` plus human-readable `typesharp version` through that installed command path.", languageTasks);
+    AssertContains("The hosted smoke verifies the Install page `PATH` setup by resolving bare `typesharp` from the extracted CLI directory before running text and JSON `typesharp version`, including contract-covered CLI/compiler/language identity, build metadata, source revision, release channel, artifact kind, Runtime ABI/status, and the CLI host `net10.0` plus runtime/generated `net48` target split.", languageTasks);
+    AssertContains("The hosted release smoke runs the downloaded `typesharp.cmd` with `PATH` restricted to the extracted CLI directory and verifies it reports the missing `dotnet` host, with contract coverage for the nonzero exit-code guard and exact missing-host output assertion.", languageTasks);
+    AssertContains("After `PATH` setup, the hosted release smoke uses bare `typesharp` for TypeSharp project commands instead of absolute wrapper paths.", languageTasks);
+    AssertContains("The hosted smoke uses bare `typesharp` for clean console, formatter, local-DLL dependency, negative dependency diagnostics, generated C# build-failure diagnostics, direct project-reference, and runtime library `new`, `check`, and `build` commands after that `PATH` setup", languageTasks);
+    AssertContains("The hosted release smoke now verifies the downloaded CLI's generated console starter manifest keeps the complete 1.0 starter defaults", languageTasks);
+    AssertContains("root namespace, `sourceRoots = [\"src\"]`, `generatedOutputRoot = \"generated\"`, `main`, preview language strictness, empty `previewFeatures`, framework assembly references, empty local/package reference arrays, and tooling defaults", languageTasks);
+    AssertContains("The hosted release smoke now also verifies the downloaded CLI's generated library starter before dependency-specific manifest edits, requiring the same complete manifest defaults with `outputType = \"library\"` and no executable `main`", languageTasks);
+    AssertContains("verifies the generated console C# project preserves `net48`, C# 7.3, executable output, assembly/root namespace, framework references, and offline `NuGet.config` before `run`", languageTasks);
+    AssertContains("verifies the generated library C# project preserves `net48`, C# 7.3, library output, assembly/root namespace, framework references, and offline `NuGet.config` before dependency-specific edits", languageTasks);
+    AssertContains("runs the generated library starter through `format --check`, `check`, and `build` with generated `net48` DLL verification before dependency-specific edits", languageTasks);
+    AssertContains("runs a clean console `new`/`format --check`/`check`/`build`/`run` path, builds a local C# `net48` DLL dependency and generated TypeSharp library consumed by a separate C# project", languageTasks);
+    AssertContains("The hosted release smoke verifies the downloaded `typesharp.cmd` wrapper content preserves command echo suppression, local environment scope, extracted-directory `TYPESHARP_HOME`, and `dotnet \"%TYPESHARP_HOME%typesharp.dll\" %*` launch behavior.", languageTasks);
+    AssertContains("The hosted smoke verifies the extracted CLI/runtime archive README files preserve the release tag, build metadata, source revision, wrapper command, `PATH` command route, runtime ABI/target framework metadata, and runtime DLL list.", languageTasks);
+    AssertContains("The hosted smoke rejects repo-local CLI DLL commands, source-built fallback wording, and hidden `dotnet tool install` guidance from the downloaded CLI/runtime READMEs before running the installed-command adoption path.", languageTasks);
+    AssertContains("builds a direct TypeSharp project-reference pair and verifies referenced/dependent generated assemblies", languageTasks);
+    AssertContains("builds a runtime-backed library with downloaded Core/Runtime references, verifies the generated project keeps downloaded Core/Runtime `HintPath` values, and verifies a separate C# `net48` consumer output directory contains the generated assembly and Core/Runtime DLLs byte-identical to the downloaded runtime archive", languageTasks);
+    AssertContains("The hosted smoke now expects the same library-project `typesharp run` exit code `5` as the source-built and release-staged installed CLI paths.", languageTasks);
+    AssertContains("The hosted smoke verifies `typesharp run` rejects a library project with the documented executable `outputType` requirement before the runtime-backed C# consumer build and output-copy check.", languageTasks);
+    AssertContains("verifies hosted missing-DLL `TS2401` and unsupported-package `TS2405` diagnostics stop before generated output, verifies hosted generated C# build failures report `TS3501` after generated source/project emission and before assembly output", languageTasks);
+    AssertContains("The hosted smoke verifies `typesharp check --diagnostic-format json` reports `TS2401` and `TS2405` with error severity for the same hosted missing-DLL and unsupported-package failure path.", languageTasks);
+    AssertContains("The hosted smoke verifies generated C# project build failures report `TS3501` through both text diagnostics and `--diagnostic-format json`, including the generated project name.", languageTasks);
+    AssertContains("The hosted smoke checks installed `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501`, so the downloaded CLI can explain the same failure codes the smoke just triggered.", languageTasks);
+    AssertContains("Extended the hosted GitHub Release smoke to follow the Install page command setup more closely: after extracting the CLI zip, it prepends the install directory to `PATH`, verifies bare `typesharp` resolves to the downloaded `typesharp.cmd`, and runs `typesharp version --json` through that installed command path.", languageProgress);
+    AssertContains("Aligned Project Policy, Runtime Artifacts, and .NET Interop with the installed-command hosted release smoke so the canonical docs now describe the `PATH` setup, bare `typesharp` resolution, clean console `new`/`check`/`build`/`run`, and runtime-backed library plus C# `net48` consumer output coverage against downloaded release assets.", languageProgress);
+    AssertContains("After `PATH` setup, the hosted smoke runs the console, formatter, local-DLL dependency, negative dependency diagnostics, generated C# build-failure diagnostics, direct project-reference, and runtime TypeSharp project commands through bare `typesharp` instead of wrapper absolute paths.", languageProgress);
+    AssertContains("Tightened the hosted first-project smoke so the downloaded CLI's generated console starter must preserve the complete manifest defaults for project identity, `net48` executable output, source root, generated output root, entry point, preview strictness, framework references, empty local/package references, tooling defaults", languageProgress);
+    AssertContains("generated C# project `net48`/C# 7.3/offline `NuGet.config` shape", languageProgress);
+    AssertContains("Tightened the hosted library-starter smoke so the downloaded CLI's generated library starter is verified before dependency-specific manifest edits, preserving the same complete manifest defaults with no executable `main`", languageProgress);
+    AssertContains("Tightened the source-built clean console smoke so the generated `HelloTypeSharp` starter now verifies complete manifest defaults, `src/Main.tysh`, `.gitignore`, README release-installed guidance, `format --check`, `check`, `build`, generated `net48` EXE evidence, and generated C# project `net48`/C# 7.3/offline `NuGet.config` shape before `run`.", languageProgress);
+    AssertContains("Tightened the raw `typesharp new` console/library template tests so they verify complete starter manifest defaults, source namespace/function shape, `.gitignore`, README release-installed guidance, hidden global tool rejection, `format --check`, generated `net48` build output, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape, and library `run` rejection with the executable `outputType` requirement.", languageProgress);
+    AssertContains("Tightened the source-built clean library dependency smoke so the untouched generated `Shared` starter now verifies complete manifest defaults, `src/Library.tysh`, `.gitignore`, README release-installed guidance, `format --check`, `check`, `build`, generated `net48` DLL evidence, and generated C# project `net48`/C# 7.3/offline `NuGet.config` shape before dependency-specific edits.", languageProgress);
+    AssertContains("Tightened the release-staged CLI clean-console smoke so the extracted wrapper path now verifies complete console starter manifest defaults, `src/Main.tysh`, generated C# project `net48`/C# 7.3/offline `NuGet.config` shape, and generated `net48` EXE evidence before `run`.", languageProgress);
+    AssertContains("Tightened the release-staged CLI library smoke so the untouched generated library starter now verifies complete manifest defaults, `src/Library.tysh`, `format --check`, `check`, `build`, generated `net48` DLL evidence, and generated C# project `net48`/C# 7.3/offline `NuGet.config` shape before dependency-specific edits.", languageProgress);
+    AssertContains("Added hosted first-project/local-DLL-consumer shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop hosted clean console `new`/`format --check`/`check`/`build`/`run`, local C# `net48` DLL dependency build, generated TypeSharp library build, or separate C# consumer coverage while hosted release evidence remains pending.", languageProgress);
+    AssertContains("text/JSON version metadata, downloaded wrapper missing-host behavior", languageProgress);
+    AssertContains("Added hosted version-metadata shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop hosted installed-command text/JSON `typesharp version` checks for CLI/compiler/language identity, build metadata, source revision, release channel, artifact kind, Runtime ABI/status, CLI host `net10.0`, generated target default `net48`, or runtime target `net48` while hosted release evidence remains pending.", languageProgress);
+    AssertContains("verifies `typesharp.dll`, `typesharp.cmd`, CLI README release metadata, runtime README ABI/target metadata and DLL list", languageProgress);
+    AssertContains("Tightened hosted CLI wrapper verification so the public release smoke now checks the downloaded `typesharp.cmd` content for command echo suppression, scoped environment changes, extracted-directory `TYPESHARP_HOME`, and `dotnet` launch behavior.", languageProgress);
+    AssertContains("Added hosted wrapper-content shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop downloaded `typesharp.cmd` command echo suppression, local environment scope, extracted-directory `TYPESHARP_HOME`, or `dotnet \"%TYPESHARP_HOME%typesharp.dll\" %*` launch behavior while hosted release evidence remains pending.", languageProgress);
+    AssertContains("Tightened local pre-upload, staged, and hosted CLI/runtime README verification so public release archives cannot document repo-local CLI DLL commands, source-built fallback wording, or hidden `dotnet tool install` guidance while the release install path promises extracted CLI/runtime archives plus the `typesharp.cmd` and `PATH` route.", languageProgress);
+    AssertContains("Added hosted CLI/runtime README shard/tracker assertions so `agent/lang-1.0-tasks.md` and this progress ledger cannot drop hosted CLI/runtime README release tag, build metadata, source revision, wrapper command, `PATH` command route, runtime ABI/target framework metadata, runtime DLL list, repo-local CLI DLL command rejection, source-built fallback wording rejection, or hidden `dotnet tool install` guidance rejection while hosted release evidence remains pending.", languageProgress);
+    AssertContains("direct TypeSharp project-reference build-order coverage, hosted library-project `typesharp run` rejection with exit code `5`, runtime-backed library build", languageProgress);
+    AssertContains("Extended the hosted GitHub Release smoke with a direct TypeSharp project-reference library pair through installed bare `typesharp`, proving the referenced generated `net48` assembly is built before the dependent generated assembly and preserving that evidence in Project Policy, Runtime Artifacts, and release workflow contract assertions.", languageProgress);
+    AssertContains("Added hosted library-project `typesharp run` rejection coverage so the downloaded installed CLI proves the documented executable `outputType` requirement before the runtime-backed C# consumer output-copy check.", languageProgress);
+    AssertContains("hosted missing-DLL and unsupported-package text/JSON diagnostics, hosted generated C# build-failure text/JSON diagnostics, installed `typesharp explain` text/JSON descriptor coverage for the same recovery codes", languageProgress);
+    AssertContains("checks installed `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501`", languageProgress);
+    AssertContains("Staged dependency negative smoke passes for missing local DLL and unsupported package diagnostics in text and JSON, including `TS2401`/`TS2405` error severity and recovery messages.", languageProgress);
+    AssertContains("Staged generated C# build-failure smoke passes with `check` success, generated source/project emission, `TS3501`, no generated assembly, and JSON `TS3501` error severity plus generated project-name coverage.", languageProgress);
+    AssertContains("Extended the post-publication hosted smoke beyond console build/layout checks: it now builds a `HostedRuntimeSmoke` library that references the downloaded runtime archive through `references.paths`, then compiles a separate C# `net48` consumer against the generated library plus downloaded `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll`.", languageProgress);
+    AssertContains("Tightened the runtime consumer output checks again so the staged smoke compares copied Core/Runtime DLL bytes against the installed runtime layout and the hosted smoke compares SHA-256 hashes against the downloaded runtime archive.", languageProgress);
+    AssertContains("Added local CLI version metadata pre-upload verification so extracted `typesharp.cmd version --json` must match the release tag, checkout source revision, channel, target frameworks, artifact kind, and Runtime ABI/status before workflow artifact upload or GitHub Release mutation.", languageProgress);
+    AssertContains("Added local bare installed-command version pre-upload verification so bare `typesharp version --json` with the extracted CLI directory on `PATH` must report matching build metadata, source revision, channel, target framework, artifact kind, and Runtime ABI/status before workflow artifact upload or GitHub Release mutation.", languageProgress);
+    AssertContains("Added local installed-command and wrapper version JSON condition contract coverage so the release workflow contract preserves exact pre-upload metadata comparisons for build metadata, source revision, release channel, target framework split, artifact kind, and Runtime ABI/status.", languageProgress);
+    AssertContains("Added a pre-publication local asset-set guard so the publish step fails before GitHub Release mutation if the release folder has missing or stray upload assets.", languageProgress);
+    AssertContains("Added generated checksum manifest pre-upload verification so malformed, duplicate, non-lowercase, missing, or stray checksum rows fail before GitHub Release mutation.", languageProgress);
+    AssertContains("Added generated release-notes pre-upload verification so missing title/date/channel provenance, runtime ABI/default target metadata, mandatory sections, artifact names, checksum/signature policy, verification guidance, or rollback guidance fails before GitHub Release mutation.", languageProgress);
+    AssertContains("Added local archive shape pre-upload verification so malformed CLI, runtime, or VSIX archives fail before workflow artifact upload or GitHub Release mutation.", languageProgress);
+    AssertContains("Added local archive metadata pre-upload verification so CLI/runtime README provenance and VSIX package identity/language/grammar contribution drift fails before workflow artifact upload or GitHub Release mutation.", languageProgress);
+    AssertContains("Added local archive README exact-string contract coverage so release workflow contract preserves pre-upload CLI/runtime README tag, build metadata, source revision, wrapper/PATH guidance, Runtime ABI/status, target framework, and runtime DLL list checks before a tag run.", languageProgress);
+    AssertContains("Project Policy now records the manifest scope, the generated release notes and Install page state that detached signatures and Authenticode signing are not published for preview releases yet, and release workflow contract coverage asserts `SHA256SUMS.txt` is generated from release assets while excluding generated release notes and the manifest itself", languageProgress);
+    AssertContains("but a real hosted release download has not yet been smoke-tested from the public page", languageTasks);
+    AssertContains("remaining evidence requires the first tagged release run to pass this smoke", languageTasks);
+    AssertContains("The release workflow now has hosted asset and public-docs gates, but the remaining 1.0 blockers are still external evidence: the configured Pages deployment must shed stale legacy canonical/sitemap URLs, and a real tagged GitHub Release must publish assets and pass the hosted download/checksum/version/build smoke.", languageProgress);
+    AssertContains("`gh release list --limit 10`, `git tag --list 'v*'`, and `git ls-remote --tags origin refs/tags/v*` all return no entries, so both deployed public-docs and hosted release evidence remain pending.", languageProgress);
+    AssertContains("Current configured public Pages probing confirms `https://naramdash.github.io/TypeSharp/install/` returns HTTP 200 with CLI/runtime/repository/release-download markers; the stale `https://typesharp.github.io/TypeSharp/install/` route still returns the legacy 404 page and is no longer the release gate target.", languageProgress);
+    AssertContains("Run the first tagged release and confirm the hosted release asset smoke passes against real public assets.", languageProgress);
+    AssertContains("Replace remaining fallback language after a hosted release asset is available", languageProgress);
+    AssertContains("Run the first tagged release, verify the hosted asset smoke, then remove fallback-first wording when publication is active", languageProgress);
+    AssertContains("Run the first tagged release and capture the hosted smoke pass", languageProgress);
+    AssertContains("Run the first tagged release and verify the hosted metadata/checksum smoke result from public assets", languageProgress);
 
     var defaults = TestRunnerSettings.Create([]);
     AssertEqual(TestShardDefaults.ShardIndex, defaults.ShardIndex);
@@ -276,17 +628,74 @@ static void CliNewCreatesConsoleProject()
         AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Main.tysh")), "Console template should create src/Main.tysh.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, ".gitignore")), "Console template should create .gitignore.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "Console template should create README.md.");
-        AssertContains("outputType = \"exe\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
-        AssertContains("main = \"HelloApp.main\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
-        AssertContains("export fun main(): string", File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh")));
+        var manifest = File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml"));
+        AssertContains("targetFramework = \"net48\"", manifest);
+        AssertContains("outputType = \"exe\"", manifest);
+        AssertContains("rootNamespace = \"HelloApp\"", manifest);
+        AssertContains("sourceRoots = [\"src\"]", manifest);
+        AssertContains("generatedOutputRoot = \"generated\"", manifest);
+        AssertContains("main = \"HelloApp.main\"", manifest);
+        AssertContains("version = \"preview\"", manifest);
+        AssertContains("strict = true", manifest);
+        AssertContains("nullable = \"strict\"", manifest);
+        AssertContains("previewFeatures = []", manifest);
+        AssertContains("\"System\"", manifest);
+        AssertContains("\"System.Core\"", manifest);
+        AssertContains("paths = []", manifest);
+        AssertContains("packages = []", manifest);
+        AssertContains("diagnosticFormat = \"text\"", manifest);
+        AssertContains("treatWarningsAsErrors = false", manifest);
+
+        var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+        AssertContains("namespace HelloApp", source);
+        AssertContains("export fun main(): string = \"Hello, TypeSharp\"", source);
+
+        var gitignore = File.ReadAllText(Path.Combine(projectRoot, ".gitignore"));
+        AssertContains("generated/", gitignore);
+
         var readme = File.ReadAllText(Path.Combine(projectRoot, "README.md"));
         AssertContains("# HelloApp", readme);
+        AssertContains("release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`", readme);
         AssertContains("typesharp check TypeSharp.toml", readme);
         AssertContains("typesharp build TypeSharp.toml", readme);
         AssertContains("typesharp run TypeSharp.toml", readme);
+        AssertContains("https://naramdash.github.io/TypeSharp/troubleshooting/", readme);
+        AssertFalse(readme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Console template README should not use repo-local CLI DLL commands.");
+        AssertFalse(readme.Contains("source-built", StringComparison.OrdinalIgnoreCase), "Console template README should not send end users to the source-built fallback.");
+        AssertFalse(readme.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase), "Console template README should not document a hidden global tool install.");
 
-        var checkExitCode = TypeSharpCli.Run(["check", Path.Combine(projectRoot, "TypeSharp.toml")], new StringWriter(), new StringWriter());
+        var manifestPath = Path.Combine(projectRoot, "TypeSharp.toml");
+        using var formatOutput = new StringWriter();
+        using var formatError = new StringWriter();
+        var formatExitCode = TypeSharpCli.Run(["format", manifestPath, "--check"], formatOutput, formatError);
+        AssertEqual(0, formatExitCode);
+        AssertContains("All TypeSharp files are formatted.", formatOutput.ToString());
+        AssertEqual(string.Empty, formatError.ToString());
+
+        var checkExitCode = TypeSharpCli.Run(["check", manifestPath], new StringWriter(), new StringWriter());
         AssertEqual(0, checkExitCode);
+
+        using var buildOutput = new StringWriter();
+        using var buildError = new StringWriter();
+        var buildExitCode = TypeSharpCli.Run(["build", manifestPath], buildOutput, buildError);
+        AssertEqual(0, buildExitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/HelloApp.exe", buildOutput.ToString());
+        AssertEqual(string.Empty, buildError.ToString());
+        AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "HelloApp.exe")), "Console template should build a generated net48 EXE.");
+
+        var generatedProject = File.ReadAllText(Path.Combine(projectRoot, "generated", "HelloApp.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", generatedProject);
+        AssertContains("<OutputType>Exe</OutputType>", generatedProject);
+        AssertContains("<LangVersion>7.3</LangVersion>", generatedProject);
+        AssertContains("<ImplicitUsings>false</ImplicitUsings>", generatedProject);
+        AssertContains("<Nullable>disable</Nullable>", generatedProject);
+        AssertContains("<AssemblyName>HelloApp</AssemblyName>", generatedProject);
+        AssertContains("<RootNamespace>HelloApp</RootNamespace>", generatedProject);
+        AssertContains("<Reference Include=\"System\" />", generatedProject);
+        AssertContains("<Reference Include=\"System.Core\" />", generatedProject);
+
+        var nugetConfig = File.ReadAllText(Path.Combine(projectRoot, "generated", "NuGet.config"));
+        AssertContains("<clear />", nugetConfig);
     });
 }
 
@@ -314,13 +723,86 @@ static void CliCleanConsoleProjectNewCheckBuildRunFlowIsStable()
         AssertEqual(string.Empty, newError.ToString());
         AssertTrue(File.Exists(manifestPath), "New should create TypeSharp.toml in the clean project directory.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Main.tysh")), "New should create src/Main.tysh in the clean project directory.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, ".gitignore")), "New should create .gitignore in the clean project directory.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "New should create README.md in the clean project directory.");
 
-        RunCliCommand(["check", manifestPath], expectedExitCode: 0);
-        RunCliCommand(["build", manifestPath], expectedExitCode: 0);
+        var manifest = File.ReadAllText(manifestPath);
+        AssertContains("targetFramework = \"net48\"", manifest);
+        AssertContains("outputType = \"exe\"", manifest);
+        AssertContains("rootNamespace = \"HelloTypeSharp\"", manifest);
+        AssertContains("sourceRoots = [\"src\"]", manifest);
+        AssertContains("generatedOutputRoot = \"generated\"", manifest);
+        AssertContains("main = \"HelloTypeSharp.main\"", manifest);
+        AssertContains("version = \"preview\"", manifest);
+        AssertContains("strict = true", manifest);
+        AssertContains("nullable = \"strict\"", manifest);
+        AssertContains("previewFeatures = []", manifest);
+        AssertContains("\"System\"", manifest);
+        AssertContains("\"System.Core\"", manifest);
+        AssertContains("paths = []", manifest);
+        AssertContains("packages = []", manifest);
+        AssertContains("diagnosticFormat = \"text\"", manifest);
+        AssertContains("treatWarningsAsErrors = false", manifest);
+
+        var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+        AssertContains("namespace HelloTypeSharp", source);
+        AssertContains("export fun main(): string = \"Hello, TypeSharp\"", source);
+
+        var readme = File.ReadAllText(Path.Combine(projectRoot, "README.md"));
+        AssertContains("release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`", readme);
+        AssertContains("typesharp check TypeSharp.toml", readme);
+        AssertContains("typesharp build TypeSharp.toml", readme);
+        AssertContains("typesharp run TypeSharp.toml", readme);
+        AssertContains("https://naramdash.github.io/TypeSharp/troubleshooting/", readme);
+        AssertFalse(readme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Clean console README should not use repo-local CLI DLL commands.");
+        AssertFalse(readme.Contains("source-built", StringComparison.OrdinalIgnoreCase), "Clean console README should not send users to the source-built fallback.");
+        AssertFalse(readme.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase), "Clean console README should not document a hidden global tool install.");
+
+        var gitignore = File.ReadAllText(Path.Combine(projectRoot, ".gitignore"));
+        AssertContains("generated/", gitignore);
+
+        using (var formatOutput = new StringWriter())
+        using (var formatError = new StringWriter())
+        {
+            var formatExitCode = TypeSharpCli.Run(["format", manifestPath, "--check"], formatOutput, formatError);
+            AssertEqual(0, formatExitCode);
+            AssertContains("All TypeSharp files are formatted.", formatOutput.ToString());
+            AssertEqual(string.Empty, formatError.ToString());
+        }
+
+        using (var checkOutput = new StringWriter())
+        using (var checkError = new StringWriter())
+        {
+            var checkExitCode = TypeSharpCli.Run(["check", manifestPath], checkOutput, checkError);
+            AssertEqual(0, checkExitCode);
+            AssertEqual(string.Empty, checkError.ToString());
+        }
+
+        using (var buildOutput = new StringWriter())
+        using (var buildError = new StringWriter())
+        {
+            var buildExitCode = TypeSharpCli.Run(["build", manifestPath], buildOutput, buildError);
+            AssertEqual(0, buildExitCode);
+            AssertContains("Generated assembly: bin/Debug/net48/HelloTypeSharp.exe", buildOutput.ToString());
+            AssertEqual(string.Empty, buildError.ToString());
+        }
 
         AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "Program.g.cs")), "Build should emit a generated entry point for the new console project.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "HelloTypeSharp.exe")), "Build should produce the generated net48 executable.");
+
+        var generatedProject = File.ReadAllText(Path.Combine(projectRoot, "generated", "HelloTypeSharp.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", generatedProject);
+        AssertContains("<OutputType>Exe</OutputType>", generatedProject);
+        AssertContains("<LangVersion>7.3</LangVersion>", generatedProject);
+        AssertContains("<ImplicitUsings>false</ImplicitUsings>", generatedProject);
+        AssertContains("<Nullable>disable</Nullable>", generatedProject);
+        AssertContains("<AssemblyName>HelloTypeSharp</AssemblyName>", generatedProject);
+        AssertContains("<RootNamespace>HelloTypeSharp</RootNamespace>", generatedProject);
+        AssertContains("<Reference Include=\"System\" />", generatedProject);
+        AssertContains("<Reference Include=\"System.Core\" />", generatedProject);
+
+        var nugetConfig = File.ReadAllText(Path.Combine(projectRoot, "generated", "NuGet.config"));
+        AssertContains("<clear />", nugetConfig);
 
         using var runOutput = new StringWriter();
         using var runError = new StringWriter();
@@ -363,6 +845,88 @@ static void CliCleanLibraryProjectBuildsSupportedDependencyReferences()
             AssertContains("Created TypeSharp library project", appNewOutput.ToString());
             AssertEqual(string.Empty, appNewError.ToString());
         }
+
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "TypeSharp.toml")), "Shared library starter should create TypeSharp.toml.");
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "src", "Library.tysh")), "Shared library starter should create src/Library.tysh.");
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, ".gitignore")), "Shared library starter should create .gitignore.");
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "README.md")), "Shared library starter should create README.md.");
+
+        var sharedStarterManifest = File.ReadAllText(Path.Combine(sharedRoot, "TypeSharp.toml"));
+        AssertContains("targetFramework = \"net48\"", sharedStarterManifest);
+        AssertContains("outputType = \"library\"", sharedStarterManifest);
+        AssertContains("rootNamespace = \"Shared\"", sharedStarterManifest);
+        AssertContains("sourceRoots = [\"src\"]", sharedStarterManifest);
+        AssertContains("generatedOutputRoot = \"generated\"", sharedStarterManifest);
+        AssertFalse(sharedStarterManifest.Contains("main = \"", StringComparison.Ordinal), "Shared library starter manifest should not declare an executable entry point.");
+        AssertContains("version = \"preview\"", sharedStarterManifest);
+        AssertContains("strict = true", sharedStarterManifest);
+        AssertContains("nullable = \"strict\"", sharedStarterManifest);
+        AssertContains("previewFeatures = []", sharedStarterManifest);
+        AssertContains("\"System\"", sharedStarterManifest);
+        AssertContains("\"System.Core\"", sharedStarterManifest);
+        AssertContains("paths = []", sharedStarterManifest);
+        AssertContains("packages = []", sharedStarterManifest);
+        AssertContains("diagnosticFormat = \"text\"", sharedStarterManifest);
+        AssertContains("treatWarningsAsErrors = false", sharedStarterManifest);
+
+        var sharedStarterReadme = File.ReadAllText(Path.Combine(sharedRoot, "README.md"));
+        AssertContains("release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`", sharedStarterReadme);
+        AssertContains("typesharp check TypeSharp.toml", sharedStarterReadme);
+        AssertContains("typesharp build TypeSharp.toml", sharedStarterReadme);
+        AssertContains("https://naramdash.github.io/TypeSharp/runtime-artifacts/", sharedStarterReadme);
+        AssertFalse(sharedStarterReadme.Contains("typesharp run TypeSharp.toml", StringComparison.Ordinal), "Shared library starter README should not suggest running a library project.");
+        AssertFalse(sharedStarterReadme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Shared library starter README should not use repo-local CLI DLL commands.");
+        AssertFalse(sharedStarterReadme.Contains("source-built", StringComparison.OrdinalIgnoreCase), "Shared library starter README should not send users to the source-built fallback.");
+        AssertFalse(sharedStarterReadme.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase), "Shared library starter README should not document a hidden global tool install.");
+
+        var sharedStarterSource = File.ReadAllText(Path.Combine(sharedRoot, "src", "Library.tysh"));
+        AssertContains("namespace Shared", sharedStarterSource);
+        AssertContains("export fun greeting(name: string): string = name", sharedStarterSource);
+
+        var sharedStarterGitIgnore = File.ReadAllText(Path.Combine(sharedRoot, ".gitignore"));
+        AssertContains("generated/", sharedStarterGitIgnore);
+
+        using (var sharedFormatOutput = new StringWriter())
+        using (var sharedFormatError = new StringWriter())
+        {
+            var sharedFormatExitCode = TypeSharpCli.Run(["format", Path.Combine(sharedRoot, "TypeSharp.toml"), "--check"], sharedFormatOutput, sharedFormatError);
+            AssertEqual(0, sharedFormatExitCode);
+            AssertContains("All TypeSharp files are formatted.", sharedFormatOutput.ToString());
+            AssertEqual(string.Empty, sharedFormatError.ToString());
+        }
+
+        using (var sharedCheckOutput = new StringWriter())
+        using (var sharedCheckError = new StringWriter())
+        {
+            var sharedCheckExitCode = TypeSharpCli.Run(["check", Path.Combine(sharedRoot, "TypeSharp.toml")], sharedCheckOutput, sharedCheckError);
+            AssertEqual(0, sharedCheckExitCode);
+            AssertEqual(string.Empty, sharedCheckError.ToString());
+        }
+
+        using (var sharedBuildOutput = new StringWriter())
+        using (var sharedBuildError = new StringWriter())
+        {
+            var sharedBuildExitCode = TypeSharpCli.Run(["build", Path.Combine(sharedRoot, "TypeSharp.toml")], sharedBuildOutput, sharedBuildError);
+            AssertEqual(0, sharedBuildExitCode);
+            AssertContains("Generated assembly: bin/Debug/net48/Shared.dll", sharedBuildOutput.ToString());
+            AssertEqual(string.Empty, sharedBuildError.ToString());
+        }
+
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "generated", "bin", "Debug", "net48", "Shared.dll")), "Shared library starter build should produce the generated net48 assembly.");
+
+        var sharedStarterGeneratedProject = File.ReadAllText(Path.Combine(sharedRoot, "generated", "Shared.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", sharedStarterGeneratedProject);
+        AssertContains("<OutputType>Library</OutputType>", sharedStarterGeneratedProject);
+        AssertContains("<LangVersion>7.3</LangVersion>", sharedStarterGeneratedProject);
+        AssertContains("<ImplicitUsings>false</ImplicitUsings>", sharedStarterGeneratedProject);
+        AssertContains("<Nullable>disable</Nullable>", sharedStarterGeneratedProject);
+        AssertContains("<AssemblyName>Shared</AssemblyName>", sharedStarterGeneratedProject);
+        AssertContains("<RootNamespace>Shared</RootNamespace>", sharedStarterGeneratedProject);
+        AssertContains("<Reference Include=\"System\" />", sharedStarterGeneratedProject);
+        AssertContains("<Reference Include=\"System.Core\" />", sharedStarterGeneratedProject);
+
+        var sharedStarterNuGetConfig = File.ReadAllText(Path.Combine(sharedRoot, "generated", "NuGet.config"));
+        AssertContains("<clear />", sharedStarterNuGetConfig);
 
         WriteFile(appRoot, "TypeSharp.toml", """
             [project]
@@ -520,13 +1084,110 @@ static void ReleaseStagedCliArtifactRunsCleanConsoleWorkflow()
         var workspaceRoot = Path.Combine(root, "clean-user-workspace");
         Directory.CreateDirectory(workspaceRoot);
 
+        var artifactRoot = Path.GetDirectoryName(cliCommand) ?? string.Empty;
+        var artifactReadme = File.ReadAllText(Path.Combine(artifactRoot, "README.md"));
+        AssertContains("# TypeSharp CLI staged-test", artifactReadme);
+        AssertContains("framework-dependent modern .NET TypeSharp CLI host", artifactReadme);
+        AssertContains("Build metadata: staged-test", artifactReadme);
+        AssertContains("Source revision: staged-test", artifactReadme);
+        AssertContains("Run `typesharp.cmd version` from this directory", artifactReadme);
+        AssertContains("add the extracted directory to `PATH` and run `typesharp version`", artifactReadme);
+        AssertFalse(artifactReadme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Staged CLI artifact README should not use repo-local CLI DLL commands.");
+
+        var missingHost = RunPublishedCliWithPath(cliCommand, "version", workspaceRoot, Path.GetDirectoryName(cliCommand) ?? string.Empty);
+        AssertTrue(
+            missingHost.ExitCode != 0,
+            $"Staged CLI wrapper should fail when dotnet is unavailable on PATH.\nSTDOUT:\n{missingHost.StandardOutput}\nSTDERR:\n{missingHost.StandardError}");
+        AssertContains("dotnet", missingHost.StandardOutput + missingHost.StandardError);
+
         var version = RunPublishedCli(cliCommand, "version", workspaceRoot);
         AssertEqual(0, version.ExitCode);
-        AssertContains("TypeSharp CLI", version.StandardOutput);
+        AssertContains("TypeSharp CLI 0.1.0-preview", version.StandardOutput);
+        AssertContains("Compiler 0.1.0-preview", version.StandardOutput);
+        AssertContains("Language preview", version.StandardOutput);
+        AssertContains("Release channel Preview", version.StandardOutput);
+        AssertContains("Runtime ABI 0", version.StandardOutput);
+        AssertContains("Runtime ABI status preview", version.StandardOutput);
+        AssertContains("Target default net48", version.StandardOutput);
+        AssertContains("CLI target net10.0", version.StandardOutput);
+        AssertContains("Runtime target net48", version.StandardOutput);
         AssertContains("Artifact kind framework-dependent-dotnet", version.StandardOutput);
         AssertContains("Build metadata staged-test", version.StandardOutput);
         AssertContains("Source revision staged-test", version.StandardOutput);
         AssertEqual(string.Empty, version.StandardError);
+
+        var versionJson = RunPublishedCli(cliCommand, "version --json", workspaceRoot);
+        AssertEqual(0, versionJson.ExitCode);
+        AssertEqual(string.Empty, versionJson.StandardError);
+        using (var stagedVersionJson = JsonDocument.Parse(versionJson.StandardOutput))
+        {
+            AssertEqual("0.1.0-preview", stagedVersionJson.RootElement.GetProperty("cli").GetString());
+            AssertEqual("0.1.0-preview", stagedVersionJson.RootElement.GetProperty("compiler").GetString());
+            AssertEqual("preview", stagedVersionJson.RootElement.GetProperty("language").GetString());
+            AssertEqual("Preview", stagedVersionJson.RootElement.GetProperty("releaseChannel").GetString());
+            AssertEqual(0, stagedVersionJson.RootElement.GetProperty("runtimeAbi").GetInt32());
+            AssertEqual("preview", stagedVersionJson.RootElement.GetProperty("runtimeAbiStatus").GetString());
+            AssertEqual("net48", stagedVersionJson.RootElement.GetProperty("targetDefault").GetString());
+            AssertEqual("net10.0", stagedVersionJson.RootElement.GetProperty("cliTargetFramework").GetString());
+            AssertEqual("net48", stagedVersionJson.RootElement.GetProperty("runtimeTargetFramework").GetString());
+            AssertEqual("framework-dependent-dotnet", stagedVersionJson.RootElement.GetProperty("artifactKind").GetString());
+            AssertEqual("staged-test", stagedVersionJson.RootElement.GetProperty("buildMetadata").GetString());
+            AssertEqual("staged-test", stagedVersionJson.RootElement.GetProperty("sourceRevision").GetString());
+        }
+
+        var missingReferenceExplain = RunPublishedCli(cliCommand, "explain TS2401", workspaceRoot);
+        AssertEqual(0, missingReferenceExplain.ExitCode);
+        AssertEqual(string.Empty, missingReferenceExplain.StandardError);
+        AssertContains("TS2401: Missing referenced assembly or namespace", missingReferenceExplain.StandardOutput);
+        AssertContains("Severity: error", missingReferenceExplain.StandardOutput);
+        AssertContains("Category: Interop", missingReferenceExplain.StandardOutput);
+        AssertContains("Suggested action: Fix the reference path or add the referenced assembly to the project environment.", missingReferenceExplain.StandardOutput);
+
+        var missingReferenceExplainJson = RunPublishedCli(cliCommand, "explain TS2401 --json", workspaceRoot);
+        AssertEqual(0, missingReferenceExplainJson.ExitCode);
+        AssertEqual(string.Empty, missingReferenceExplainJson.StandardError);
+        AssertDiagnosticDescriptorJson(
+            missingReferenceExplainJson.StandardOutput,
+            "TS2401",
+            "Missing referenced assembly or namespace",
+            "error",
+            "Interop");
+
+        var unsupportedPackageExplain = RunPublishedCli(cliCommand, "explain TS2405", workspaceRoot);
+        AssertEqual(0, unsupportedPackageExplain.ExitCode);
+        AssertEqual(string.Empty, unsupportedPackageExplain.StandardError);
+        AssertContains("TS2405: Unsupported package reference", unsupportedPackageExplain.StandardOutput);
+        AssertContains("Severity: error", unsupportedPackageExplain.StandardOutput);
+        AssertContains("Category: Interop", unsupportedPackageExplain.StandardOutput);
+        AssertContains("Suggested action: Resolve the package outside TypeSharp and reference a local net48-compatible DLL path, or remove the package reference until package restore is implemented.", unsupportedPackageExplain.StandardOutput);
+
+        var unsupportedPackageExplainJson = RunPublishedCli(cliCommand, "explain TS2405 --json", workspaceRoot);
+        AssertEqual(0, unsupportedPackageExplainJson.ExitCode);
+        AssertEqual(string.Empty, unsupportedPackageExplainJson.StandardError);
+        AssertDiagnosticDescriptorJson(
+            unsupportedPackageExplainJson.StandardOutput,
+            "TS2405",
+            "Unsupported package reference",
+            "error",
+            "Interop");
+
+        var generatedBuildFailureExplain = RunPublishedCli(cliCommand, "explain TS3501", workspaceRoot);
+        AssertEqual(0, generatedBuildFailureExplain.ExitCode);
+        AssertEqual(string.Empty, generatedBuildFailureExplain.StandardError);
+        AssertContains("TS3501: Generated C# project build failed", generatedBuildFailureExplain.StandardOutput);
+        AssertContains("Severity: error", generatedBuildFailureExplain.StandardOutput);
+        AssertContains("Category: Backend", generatedBuildFailureExplain.StandardOutput);
+        AssertContains("Suggested action: Inspect the generated C# project output and fix the TypeSharp source or backend lowering that produced invalid C#.", generatedBuildFailureExplain.StandardOutput);
+
+        var generatedBuildFailureExplainJson = RunPublishedCli(cliCommand, "explain TS3501 --json", workspaceRoot);
+        AssertEqual(0, generatedBuildFailureExplainJson.ExitCode);
+        AssertEqual(string.Empty, generatedBuildFailureExplainJson.StandardError);
+        AssertDiagnosticDescriptorJson(
+            generatedBuildFailureExplainJson.StandardOutput,
+            "TS3501",
+            "Generated C# project build failed",
+            "error",
+            "Backend");
 
         var create = RunPublishedCli(cliCommand, "new console StagedHello --target net48 --output StagedHello", workspaceRoot);
         AssertTrue(
@@ -538,7 +1199,41 @@ static void ReleaseStagedCliArtifactRunsCleanConsoleWorkflow()
         var projectRoot = Path.Combine(workspaceRoot, "StagedHello");
         var manifestPath = Path.Combine(projectRoot, "TypeSharp.toml");
         AssertTrue(File.Exists(manifestPath), "Staged CLI new should write TypeSharp.toml.");
+        var manifest = File.ReadAllText(manifestPath);
+        AssertContains("targetFramework = \"net48\"", manifest);
+        AssertContains("outputType = \"exe\"", manifest);
+        AssertContains("rootNamespace = \"StagedHello\"", manifest);
+        AssertContains("sourceRoots = [\"src\"]", manifest);
+        AssertContains("generatedOutputRoot = \"generated\"", manifest);
+        AssertContains("main = \"StagedHello.main\"", manifest);
+        AssertContains("version = \"preview\"", manifest);
+        AssertContains("strict = true", manifest);
+        AssertContains("nullable = \"strict\"", manifest);
+        AssertContains("previewFeatures = []", manifest);
+        AssertContains("\"System\"", manifest);
+        AssertContains("\"System.Core\"", manifest);
+        AssertContains("paths = []", manifest);
+        AssertContains("packages = []", manifest);
+        AssertContains("diagnosticFormat = \"text\"", manifest);
+        AssertContains("treatWarningsAsErrors = false", manifest);
+        AssertTrue(File.Exists(Path.Combine(projectRoot, ".gitignore")), "Staged CLI new should write .gitignore.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "Staged CLI new should write README.md.");
+        var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Main.tysh"));
+        AssertContains("namespace StagedHello", source);
+        AssertContains("export fun main(): string = \"Hello, TypeSharp\"", source);
+        var readme = File.ReadAllText(Path.Combine(projectRoot, "README.md"));
+        AssertContains("release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`", readme);
+        AssertContains("typesharp check TypeSharp.toml", readme);
+        AssertContains("typesharp build TypeSharp.toml", readme);
+        AssertContains("typesharp run TypeSharp.toml", readme);
+        AssertFalse(readme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Staged CLI new README should not use repo-local CLI DLL commands.");
+
+        var format = RunPublishedCli(cliCommand, "format StagedHello\\TypeSharp.toml --check", workspaceRoot);
+        AssertTrue(
+            format.ExitCode == 0,
+            $"Staged CLI format --check should pass for the generated console project.\nSTDOUT:\n{format.StandardOutput}\nSTDERR:\n{format.StandardError}");
+        AssertContains("All TypeSharp files are formatted.", format.StandardOutput);
+        AssertEqual(string.Empty, format.StandardError);
 
         var check = RunPublishedCli(cliCommand, "check StagedHello\\TypeSharp.toml", workspaceRoot);
         AssertTrue(
@@ -553,6 +1248,18 @@ static void ReleaseStagedCliArtifactRunsCleanConsoleWorkflow()
         AssertContains("Generated assembly: bin/Debug/net48/StagedHello.exe", build.StandardOutput);
         AssertEqual(string.Empty, build.StandardError);
         AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "StagedHello.exe")), "Staged CLI build should produce the generated net48 executable.");
+        var generatedProject = File.ReadAllText(Path.Combine(projectRoot, "generated", "StagedHello.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", generatedProject);
+        AssertContains("<OutputType>Exe</OutputType>", generatedProject);
+        AssertContains("<LangVersion>7.3</LangVersion>", generatedProject);
+        AssertContains("<ImplicitUsings>false</ImplicitUsings>", generatedProject);
+        AssertContains("<Nullable>disable</Nullable>", generatedProject);
+        AssertContains("<AssemblyName>StagedHello</AssemblyName>", generatedProject);
+        AssertContains("<RootNamespace>StagedHello</RootNamespace>", generatedProject);
+        AssertContains("<Reference Include=\"System\" />", generatedProject);
+        AssertContains("<Reference Include=\"System.Core\" />", generatedProject);
+        var generatedNuGetConfig = File.ReadAllText(Path.Combine(projectRoot, "generated", "NuGet.config"));
+        AssertContains("<clear />", generatedNuGetConfig);
 
         var run = RunPublishedCli(cliCommand, "run StagedHello\\TypeSharp.toml", workspaceRoot);
         if (run.ExitCode == 0)
@@ -589,6 +1296,69 @@ static void ReleaseStagedCliArtifactBuildsLibraryDependenciesAndCSharpConsumer()
 
         var appRoot = Path.Combine(workspaceRoot, "App");
         var sharedRoot = Path.Combine(workspaceRoot, "Shared");
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, ".gitignore")), "Staged shared library starter should write .gitignore.");
+        AssertTrue(File.Exists(Path.Combine(appRoot, ".gitignore")), "Staged app library starter should write .gitignore.");
+        var sharedManifest = File.ReadAllText(Path.Combine(sharedRoot, "TypeSharp.toml"));
+        AssertContains("targetFramework = \"net48\"", sharedManifest);
+        AssertContains("outputType = \"library\"", sharedManifest);
+        AssertContains("rootNamespace = \"Shared\"", sharedManifest);
+        AssertContains("sourceRoots = [\"src\"]", sharedManifest);
+        AssertContains("generatedOutputRoot = \"generated\"", sharedManifest);
+        AssertFalse(sharedManifest.Contains("main = \"", StringComparison.Ordinal), "Staged library starter manifest should not declare an executable entry point.");
+        AssertContains("version = \"preview\"", sharedManifest);
+        AssertContains("strict = true", sharedManifest);
+        AssertContains("nullable = \"strict\"", sharedManifest);
+        AssertContains("previewFeatures = []", sharedManifest);
+        AssertContains("\"System\"", sharedManifest);
+        AssertContains("\"System.Core\"", sharedManifest);
+        AssertContains("paths = []", sharedManifest);
+        AssertContains("packages = []", sharedManifest);
+        AssertContains("diagnosticFormat = \"text\"", sharedManifest);
+        AssertContains("treatWarningsAsErrors = false", sharedManifest);
+        var sharedSource = File.ReadAllText(Path.Combine(sharedRoot, "src", "Library.tysh"));
+        AssertContains("namespace Shared", sharedSource);
+        AssertContains("export fun greeting(name: string): string = name", sharedSource);
+        var sharedReadme = File.ReadAllText(Path.Combine(sharedRoot, "README.md"));
+        AssertContains("release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`", sharedReadme);
+        AssertContains("typesharp check TypeSharp.toml", sharedReadme);
+        AssertContains("typesharp build TypeSharp.toml", sharedReadme);
+        AssertContains("https://naramdash.github.io/TypeSharp/runtime-artifacts/", sharedReadme);
+        AssertFalse(sharedReadme.Contains("typesharp run TypeSharp.toml", StringComparison.Ordinal), "Staged library starter README should not suggest running a library project.");
+        AssertFalse(sharedReadme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Staged library starter README should not use repo-local CLI DLL commands.");
+        AssertFalse(sharedReadme.Contains("source-built", StringComparison.OrdinalIgnoreCase), "Staged library starter README should not send users to the source-built fallback.");
+        var sharedFormat = RunPublishedCli(cliCommand, "format Shared\\TypeSharp.toml --check", workspaceRoot);
+        AssertTrue(
+            sharedFormat.ExitCode == 0,
+            $"Staged CLI format --check should pass for the generated library starter.\nSTDOUT:\n{sharedFormat.StandardOutput}\nSTDERR:\n{sharedFormat.StandardError}");
+        AssertContains("All TypeSharp files are formatted.", sharedFormat.StandardOutput);
+        AssertEqual(string.Empty, sharedFormat.StandardError);
+
+        var sharedCheck = RunPublishedCli(cliCommand, "check Shared\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            sharedCheck.ExitCode == 0,
+            $"Staged CLI check should pass for the generated library starter.\nSTDOUT:\n{sharedCheck.StandardOutput}\nSTDERR:\n{sharedCheck.StandardError}");
+        AssertEqual(string.Empty, sharedCheck.StandardError);
+
+        var sharedBuild = RunPublishedCli(cliCommand, "build Shared\\TypeSharp.toml", workspaceRoot);
+        AssertTrue(
+            sharedBuild.ExitCode == 0,
+            $"Staged CLI build should pass for the generated library starter.\nSTDOUT:\n{sharedBuild.StandardOutput}\nSTDERR:\n{sharedBuild.StandardError}");
+        AssertContains("Generated assembly: bin/Debug/net48/Shared.dll", sharedBuild.StandardOutput);
+        AssertEqual(string.Empty, sharedBuild.StandardError);
+        AssertTrue(File.Exists(Path.Combine(sharedRoot, "generated", "bin", "Debug", "net48", "Shared.dll")), "Staged CLI build should produce the generated library starter net48 assembly.");
+        var sharedGeneratedProject = File.ReadAllText(Path.Combine(sharedRoot, "generated", "Shared.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", sharedGeneratedProject);
+        AssertContains("<OutputType>Library</OutputType>", sharedGeneratedProject);
+        AssertContains("<LangVersion>7.3</LangVersion>", sharedGeneratedProject);
+        AssertContains("<ImplicitUsings>false</ImplicitUsings>", sharedGeneratedProject);
+        AssertContains("<Nullable>disable</Nullable>", sharedGeneratedProject);
+        AssertContains("<AssemblyName>Shared</AssemblyName>", sharedGeneratedProject);
+        AssertContains("<RootNamespace>Shared</RootNamespace>", sharedGeneratedProject);
+        AssertContains("<Reference Include=\"System\" />", sharedGeneratedProject);
+        AssertContains("<Reference Include=\"System.Core\" />", sharedGeneratedProject);
+        var sharedGeneratedNuGetConfig = File.ReadAllText(Path.Combine(sharedRoot, "generated", "NuGet.config"));
+        AssertContains("<clear />", sharedGeneratedNuGetConfig);
+
         WriteFile(appRoot, "TypeSharp.toml", """
             [project]
             name = "App"
@@ -717,6 +1487,7 @@ static void ReleaseStagedRuntimeArtifactSupportsGeneratedLibraryAndCSharpConsume
     {
         var cliCommand = PublishStagedCliArtifact(root);
         var runtimeLibRoot = PublishStagedRuntimeArtifact(root);
+        PublishStagedVsixArtifact(root);
         var workspaceRoot = Path.Combine(root, "clean-runtime-workspace");
         Directory.CreateDirectory(workspaceRoot);
 
@@ -810,6 +1581,11 @@ static void ReleaseStagedRuntimeArtifactSupportsGeneratedLibraryAndCSharpConsume
         AssertContains("<Reference Include=\"TypeSharp.Runtime\">", generatedProject);
         AssertContains("<HintPath>../../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll</HintPath>", generatedProject);
 
+        var libraryRun = RunPublishedCli(cliCommand, "run RuntimeApp\\TypeSharp.toml", workspaceRoot);
+        AssertEqual(5, libraryRun.ExitCode);
+        AssertEqual(string.Empty, libraryRun.StandardOutput);
+        AssertContains("typesharp run requires project outputType = \"exe\".", libraryRun.StandardError);
+
         var consumerRoot = Path.Combine(workspaceRoot, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "RuntimeConsumer.csproj", $$"""
@@ -872,6 +1648,15 @@ static void ReleaseStagedRuntimeArtifactSupportsGeneratedLibraryAndCSharpConsume
         AssertTrue(
             consumerBuild.ExitCode == 0,
             $"C# net48 consumer should compile against generated output plus installed runtime artifact layout.\nSTDOUT:\n{consumerBuild.StandardOutput}\nSTDERR:\n{consumerBuild.StandardError}");
+        var consumerOutputRoot = Path.Combine(consumerRoot, "bin", "Debug", "net48");
+        AssertTrue(File.Exists(Path.Combine(consumerOutputRoot, "RuntimeConsumer.dll")), "C# net48 consumer build should produce the consumer assembly.");
+        AssertTrue(File.Exists(Path.Combine(consumerOutputRoot, "RuntimeApp.dll")), "C# net48 consumer output should include the generated TypeSharp assembly.");
+        var consumerCoreAssembly = Path.Combine(consumerOutputRoot, "TypeSharp.Core.dll");
+        var consumerRuntimeAssembly = Path.Combine(consumerOutputRoot, "TypeSharp.Runtime.dll");
+        AssertTrue(File.Exists(consumerCoreAssembly), "C# net48 consumer output should include TypeSharp.Core.dll from the installed runtime artifact.");
+        AssertTrue(File.Exists(consumerRuntimeAssembly), "C# net48 consumer output should include TypeSharp.Runtime.dll from the installed runtime artifact.");
+        AssertTrue(File.ReadAllBytes(consumerCoreAssembly).SequenceEqual(File.ReadAllBytes(installedCoreAssembly)), "C# net48 consumer output TypeSharp.Core.dll should match the installed runtime artifact.");
+        AssertTrue(File.ReadAllBytes(consumerRuntimeAssembly).SequenceEqual(File.ReadAllBytes(installedRuntimeAssembly)), "C# net48 consumer output TypeSharp.Runtime.dll should match the installed runtime artifact.");
     });
 }
 
@@ -935,6 +1720,20 @@ static void ReleaseStagedCliArtifactReportsDependencyDiagnostics()
         AssertContains("error TS2405", check.StandardError);
         AssertContains("NuGet package reference 'Newtonsoft.Json' is not supported by the current compiler.", check.StandardError);
 
+        var checkJson = RunPublishedCli(cliCommand, "check BadDeps\\TypeSharp.toml --diagnostic-format json", workspaceRoot);
+        AssertEqual(1, checkJson.ExitCode);
+        AssertEqual(string.Empty, checkJson.StandardOutput);
+        AssertJsonDiagnostic(
+            checkJson.StandardError,
+            "TS2401",
+            "error",
+            "Referenced assembly path '../lib/Missing.Tools.dll' does not exist.");
+        AssertJsonDiagnostic(
+            checkJson.StandardError,
+            "TS2405",
+            "error",
+            "NuGet package reference 'Newtonsoft.Json' is not supported by the current compiler.");
+
         var build = RunPublishedCli(cliCommand, "build BadDeps\\TypeSharp.toml", workspaceRoot);
         AssertEqual(1, build.ExitCode);
         AssertEqual(string.Empty, build.StandardOutput);
@@ -987,6 +1786,15 @@ static void ReleaseStagedCliArtifactReportsGeneratedCSharpBuildFailure()
         AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "src", "Library.g.cs")), "Staged CLI build should emit generated C# before the generated project build fails.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "GeneratedBuildFail.Generated.csproj")), "Staged CLI build should emit the generated C# project before its build fails.");
         AssertFalse(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "GeneratedBuildFail.dll")), "Staged CLI build should not report or leave a generated assembly after the generated project build fails.");
+
+        var buildJson = RunPublishedCli(cliCommand, "build GeneratedBuildFail\\TypeSharp.toml --diagnostic-format json", workspaceRoot);
+        AssertEqual(1, buildJson.ExitCode);
+        AssertEqual(string.Empty, buildJson.StandardOutput);
+        AssertJsonDiagnostic(
+            buildJson.StandardError,
+            "TS3501",
+            "error",
+            "Generated C# project build failed for 'GeneratedBuildFail.Generated.csproj'");
     });
 }
 
@@ -1006,19 +1814,80 @@ static void CliNewCreatesLibraryProject()
         AssertEqual(string.Empty, error.ToString());
         AssertTrue(File.Exists(Path.Combine(projectRoot, "TypeSharp.toml")), "Library template should create a manifest.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "src", "Library.tysh")), "Library template should create src/Library.tysh.");
+        AssertTrue(File.Exists(Path.Combine(projectRoot, ".gitignore")), "Library template should create .gitignore.");
         AssertTrue(File.Exists(Path.Combine(projectRoot, "README.md")), "Library template should create README.md.");
-        AssertContains("outputType = \"library\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
-        AssertContains("rootNamespace = \"Billing.Core\"", File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml")));
-        AssertContains("export fun greeting", File.ReadAllText(Path.Combine(projectRoot, "src", "Library.tysh")));
+        var manifest = File.ReadAllText(Path.Combine(projectRoot, "TypeSharp.toml"));
+        AssertContains("targetFramework = \"net48\"", manifest);
+        AssertContains("outputType = \"library\"", manifest);
+        AssertContains("rootNamespace = \"Billing.Core\"", manifest);
+        AssertContains("sourceRoots = [\"src\"]", manifest);
+        AssertContains("generatedOutputRoot = \"generated\"", manifest);
+        AssertFalse(manifest.Contains("main = \"", StringComparison.Ordinal), "Library template manifest should not declare an executable entry point.");
+        AssertContains("version = \"preview\"", manifest);
+        AssertContains("strict = true", manifest);
+        AssertContains("nullable = \"strict\"", manifest);
+        AssertContains("previewFeatures = []", manifest);
+        AssertContains("\"System\"", manifest);
+        AssertContains("\"System.Core\"", manifest);
+        AssertContains("paths = []", manifest);
+        AssertContains("packages = []", manifest);
+        AssertContains("diagnosticFormat = \"text\"", manifest);
+        AssertContains("treatWarningsAsErrors = false", manifest);
+
+        var source = File.ReadAllText(Path.Combine(projectRoot, "src", "Library.tysh"));
+        AssertContains("namespace Billing.Core", source);
+        AssertContains("export fun greeting(name: string): string = name", source);
+
+        var gitignore = File.ReadAllText(Path.Combine(projectRoot, ".gitignore"));
+        AssertContains("generated/", gitignore);
+
         var readme = File.ReadAllText(Path.Combine(projectRoot, "README.md"));
         AssertContains("# Billing.Core", readme);
+        AssertContains("release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`", readme);
         AssertContains("typesharp check TypeSharp.toml", readme);
         AssertContains("typesharp build TypeSharp.toml", readme);
+        AssertContains("https://naramdash.github.io/TypeSharp/runtime-artifacts/", readme);
         AssertFalse(readme.Contains("typesharp run TypeSharp.toml", StringComparison.Ordinal), "Library template README should not suggest running a library project.");
+        AssertFalse(readme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Library template README should not use repo-local CLI DLL commands.");
+        AssertFalse(readme.Contains("source-built", StringComparison.OrdinalIgnoreCase), "Library template README should not send end users to the source-built fallback.");
+        AssertFalse(readme.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase), "Library template README should not document a hidden global tool install.");
 
-        var buildExitCode = TypeSharpCli.Run(["build", Path.Combine(projectRoot, "TypeSharp.toml")], new StringWriter(), new StringWriter());
+        var manifestPath = Path.Combine(projectRoot, "TypeSharp.toml");
+        using var formatOutput = new StringWriter();
+        using var formatError = new StringWriter();
+        var formatExitCode = TypeSharpCli.Run(["format", manifestPath, "--check"], formatOutput, formatError);
+        AssertEqual(0, formatExitCode);
+        AssertContains("All TypeSharp files are formatted.", formatOutput.ToString());
+        AssertEqual(string.Empty, formatError.ToString());
+
+        using var buildOutput = new StringWriter();
+        using var buildError = new StringWriter();
+        var buildExitCode = TypeSharpCli.Run(["build", manifestPath], buildOutput, buildError);
         AssertEqual(0, buildExitCode);
+        AssertContains("Generated assembly: bin/Debug/net48/Billing.Core.dll", buildOutput.ToString());
+        AssertEqual(string.Empty, buildError.ToString());
         AssertTrue(File.Exists(Path.Combine(projectRoot, "generated", "bin", "Debug", "net48", "Billing.Core.dll")), "Library template should build a generated net48 DLL.");
+
+        var generatedProject = File.ReadAllText(Path.Combine(projectRoot, "generated", "Billing.Core.Generated.csproj"));
+        AssertContains("<TargetFramework>net48</TargetFramework>", generatedProject);
+        AssertContains("<OutputType>Library</OutputType>", generatedProject);
+        AssertContains("<LangVersion>7.3</LangVersion>", generatedProject);
+        AssertContains("<ImplicitUsings>false</ImplicitUsings>", generatedProject);
+        AssertContains("<Nullable>disable</Nullable>", generatedProject);
+        AssertContains("<AssemblyName>Billing.Core</AssemblyName>", generatedProject);
+        AssertContains("<RootNamespace>Billing.Core</RootNamespace>", generatedProject);
+        AssertContains("<Reference Include=\"System\" />", generatedProject);
+        AssertContains("<Reference Include=\"System.Core\" />", generatedProject);
+
+        var nugetConfig = File.ReadAllText(Path.Combine(projectRoot, "generated", "NuGet.config"));
+        AssertContains("<clear />", nugetConfig);
+
+        using var runOutput = new StringWriter();
+        using var runError = new StringWriter();
+        var runExitCode = TypeSharpCli.Run(["run", manifestPath], runOutput, runError);
+        AssertEqual(5, runExitCode);
+        AssertEqual(string.Empty, runOutput.ToString());
+        AssertContains("typesharp run requires project outputType = \"exe\".", runError.ToString());
     });
 }
 
@@ -1437,6 +2306,26 @@ static void DiagnosticFixturePolarityIsStable()
                 AssertTrue(diagnostic.GetProperty("start").TryGetProperty("column", out _), $"Fixture '{relativeFixture}' diagnostic should include a start column.");
                 AssertTrue(diagnostic.GetProperty("end").TryGetProperty("line", out _), $"Fixture '{relativeFixture}' diagnostic should include an end line.");
                 AssertTrue(diagnostic.GetProperty("end").TryGetProperty("column", out _), $"Fixture '{relativeFixture}' diagnostic should include an end column.");
+            }
+
+            if (fixtureSet.ShouldHaveDiagnostics)
+            {
+                var readmePath = Path.Combine(fixtureDirectory, "README.md");
+                if (File.Exists(readmePath))
+                {
+                    var expectedCodes = diagnostics
+                        .EnumerateArray()
+                        .Select(diagnostic => diagnostic.GetProperty("code").GetString())
+                        .Where(code => !string.IsNullOrWhiteSpace(code))
+                        .ToHashSet(StringComparer.Ordinal);
+                    var readme = File.ReadAllText(readmePath);
+                    if (!expectedCodes.Contains("TS2201") && Regex.IsMatch(readme, "`TS2201`"))
+                    {
+                        AssertTrue(
+                            false,
+                            $"Fixture '{relativeFixture}' README.md documents stale TS2201, but expected diagnostics contain {string.Join(", ", expectedCodes.OrderBy(code => code, StringComparer.Ordinal))}.");
+                    }
+                }
             }
         }
     }
@@ -14688,6 +15577,7 @@ static void DocsSiteContractIsStable()
 
     AssertEqual("typesharp-docs", root.GetProperty("name").GetString());
     AssertEqual("astro build", root.GetProperty("scripts").GetProperty("build").GetString());
+    AssertEqual("node scripts/verify-rendered-install-route.cjs", root.GetProperty("scripts").GetProperty("verify:rendered-install-route").GetString());
     AssertEqual("6.3.6", root.GetProperty("dependencies").GetProperty("astro").GetString());
     AssertEqual("0.39.2", root.GetProperty("dependencies").GetProperty("@astrojs/starlight").GetString());
     AssertEqual("2.0.1", root.GetProperty("dependencies").GetProperty("astro-mermaid").GetString());
@@ -14705,7 +15595,7 @@ static void DocsSiteContractIsStable()
         .Select(path => Path.GetRelativePath(siteRoot, path).Replace('\\', '/'))
         .OrderBy(path => path, StringComparer.Ordinal)
         .ToArray();
-    AssertEqual(string.Empty, string.Join(", ", docsOwnedJavaScript));
+    AssertEqual("scripts/verify-rendered-install-route.cjs", string.Join(", ", docsOwnedJavaScript));
 
     var astroConfig = File.ReadAllText(Path.Combine(siteRoot, "astro.config.ts"));
     AssertContains("starlight({", astroConfig);
@@ -14713,6 +15603,9 @@ static void DocsSiteContractIsStable()
     AssertContains("mermaid({", astroConfig);
     AssertContains("title: 'TypeSharp'", astroConfig);
     AssertContains("../vscode/typesharp/syntaxes/typesharp.tmLanguage.json", astroConfig);
+    AssertContains("const repository = process.env.GITHUB_REPOSITORY ?? 'naramdash/TypeSharp';", astroConfig);
+    AssertContains("const base = process.env.TYPE_SHARP_DOCS_BASE ?? (repositoryName ? `/${repositoryName}` : '/');", astroConfig);
+    AssertContains("const site = process.env.TYPE_SHARP_DOCS_SITE ?? 'https://naramdash.github.io';", astroConfig);
     AssertContains("expressiveCode:", astroConfig);
     AssertContains("langs: [typesharpShikiLanguage]", astroConfig);
     AssertContains("langAlias:", astroConfig);
@@ -14724,6 +15617,10 @@ static void DocsSiteContractIsStable()
     AssertContains("label: 'Tools And Project'", astroConfig);
     AssertContains("slug: 'start-here'", astroConfig);
     AssertContains("slug: 'install'", astroConfig);
+    AssertContainsBefore(astroConfig, "slug: 'install'", "slug: 'start-here'");
+    AssertContainsBefore(astroConfig, "{ label: 'Overview', slug: 'index' }", "{ label: 'Install', slug: 'install' }");
+    AssertContainsBefore(astroConfig, "{ label: 'Install', slug: 'install' }", "{ label: 'Start Here', slug: 'start-here' }");
+    AssertContainsBefore(astroConfig, "{ label: 'Start Here', slug: 'start-here' }", "{ label: 'Learning Paths', slug: 'learning-paths' }");
     AssertContains("slug: 'learning-paths'", astroConfig);
     AssertContains("slug: 'language-tour'", astroConfig);
     AssertContains("slug: 'tutorials'", astroConfig);
@@ -14753,6 +15650,42 @@ static void DocsSiteContractIsStable()
     var contentConfig = File.ReadAllText(Path.Combine(siteRoot, "src", "content.config.ts"));
     AssertContains("docsLoader", contentConfig);
     AssertContains("docsSchema", contentConfig);
+
+    var renderedVerifier = File.ReadAllText(Path.Combine(siteRoot, "scripts", "verify-rendered-install-route.cjs"));
+    AssertContains("function assertRenderedPublicCanonical(value, path, label, allowStaleHostText = false)", renderedVerifier);
+    AssertContains("function assertNotContains(value, unexpected, message)", renderedVerifier);
+    AssertContains("const canonicalUrl = `https://naramdash.github.io/TypeSharp${path}`;", renderedVerifier);
+    AssertContains("rel=\"canonical\" href=\"${canonicalUrl}\"", renderedVerifier);
+    AssertContains("property=\"og:url\" content=\"${canonicalUrl}\"", renderedVerifier);
+    AssertContains("https://typesharp.github.io/TypeSharp", renderedVerifier);
+    AssertContains("Rendered ${label} page must not use the stale legacy GitHub Pages URL.", renderedVerifier);
+    AssertContains("href=\"/TypeSharp/", renderedVerifier);
+    AssertContains("const publicPageRoutes = [", renderedVerifier);
+    AssertContains("const expectedPublicPageRouteCount = 34;", renderedVerifier);
+    AssertContains("Rendered public page route table must contain ${expectedPublicPageRouteCount} routes", renderedVerifier);
+    AssertContains("Rendered public page route table contains duplicate paths", renderedVerifier);
+    AssertContains("function selectPublicPageRoutesByLabel(routes, labels, groupName)", renderedVerifier);
+    AssertContains("Rendered ${groupName} contains duplicate route labels.", renderedVerifier);
+    AssertContains("Rendered ${groupName} must select exactly one public page route for ${label}", renderedVerifier);
+    AssertContains("Rendered ${groupName} contains duplicate selected route paths.", renderedVerifier);
+    AssertContains("const broaderReleaseRoutes = selectPublicPageRoutesByLabel(publicPageRoutes, [", renderedVerifier);
+    AssertContains("const supportReleaseRoutes = selectPublicPageRoutesByLabel(publicPageRoutes, [", renderedVerifier);
+    AssertContains("const tutorialReleaseRoutes = selectPublicPageRoutesByLabel(publicPageRoutes, [", renderedVerifier);
+    AssertContains("Rendered broader release route subset must contain 9 routes", renderedVerifier);
+    AssertContains("Rendered support release route subset must contain 6 routes", renderedVerifier);
+    AssertContains("Rendered tutorial release route subset must contain 1 route", renderedVerifier);
+    AssertContains("const commandPolicyRoutes = [...tutorialReleaseRoutes, ...supportReleaseRoutes, ...broaderReleaseRoutes];", renderedVerifier);
+    AssertContains("Rendered command policy route subset contains duplicate public page paths.", renderedVerifier);
+    AssertContains("for (const [label, page] of broaderReleaseRoutes)", renderedVerifier);
+    AssertContains("for (const [label, page] of commandPolicyRoutes)", renderedVerifier);
+    AssertContains("for (const [label, , path] of publicPageRoutes)", renderedVerifier);
+    AssertContains("https://naramdash.github.io/TypeSharp/sitemap-0.xml", renderedVerifier);
+    AssertContains("Rendered sitemap must include the public GitHub Pages URL for ${label}.", renderedVerifier);
+    AssertContains("Rendered sitemap index must not use the stale legacy GitHub Pages URL.", renderedVerifier);
+    AssertContains("Rendered sitemap must not use the stale legacy GitHub Pages URL.", renderedVerifier);
+    var sidebarPublicRoutes = ExtractAstroSidebarPublicRoutes(astroConfig);
+    AssertEqual(34, sidebarPublicRoutes.Count);
+    AssertRenderedVerifierCoversSidebarPublicRoutes(sidebarPublicRoutes, renderedVerifier);
 
     foreach (var page in new[]
     {
@@ -14808,9 +15741,84 @@ static void DocsSiteContractIsStable()
     AssertFalse(
         docsMarkdownText.Contains("import { Option, Some", StringComparison.Ordinal),
         "Docs should not show direct TypeSharp imports for Option Some/None until the Core ABI exposes those source symbols.");
+    var hiddenGlobalInstallCommands = new[]
+    {
+        "python",
+        "venv",
+        "pip install",
+        "npm install -g",
+        "dotnet tool install",
+        "choco install",
+        "winget install",
+        "scoop install"
+    };
+    foreach (var hiddenInstallCommand in hiddenGlobalInstallCommands)
+    {
+        AssertFalse(
+            docsMarkdownText.Contains(hiddenInstallCommand, StringComparison.OrdinalIgnoreCase),
+            $"Public docs must not require hidden global install command or runtime '{hiddenInstallCommand}' on the release install path.");
+    }
+
+    var repoLocalCliCommand = "dotnet cli\\TypeSharp.Cli\\bin\\Debug\\net10.0\\typesharp.dll";
+    var repoLocalCliDocs = docsMarkdownPages
+        .Where(path => File.ReadAllText(path).Contains(repoLocalCliCommand, StringComparison.Ordinal))
+        .Select(Path.GetFileName)
+        .ToArray();
+    AssertSequence(
+        new[] { "index.md", "start-here.md" },
+        repoLocalCliDocs);
+
+    var docsHomePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "index.md"));
+    AssertContains("## Install", docsHomePage);
+    AssertContains("""
+        ## Start Here
+
+        - [Install](install/) shows the release zip, checksum, wrapper command, and first project flow.
+        """.Replace("\r\n", "\n", StringComparison.Ordinal), docsHomePage);
+    AssertContains("[Install](install/) shows the release zip, checksum, wrapper command, and first project flow", docsHomePage);
+    AssertContainsBefore(docsHomePage, "[Install](install/) shows the release zip, checksum, wrapper command, and first project flow", "[Start Here](start-here/) helps new users choose the right path.");
+    AssertContainsBefore(docsHomePage, "[Install](install/) shows the release zip, checksum, wrapper command, and first project flow", "```powershell");
+    AssertContains("Preview releases use GitHub Release assets", docsHomePage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", docsHomePage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", docsHomePage);
+    AssertContains("typesharp-vscode-<tag>.vsix", docsHomePage);
+    AssertContains("VS Code extension and bundled language server", docsHomePage);
+    AssertContains("Tag-specific GitHub Release notes for channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify", docsHomePage);
+    AssertContains("Start with [Install](install/)", docsHomePage);
+    AssertContainsBefore(docsHomePage, "## Install", "## Preview Contributor Source-Built Fallback");
+    AssertContainsBefore(docsHomePage, "Start with [Install](install/)", "preview contributor source-built fallback below");
+    AssertContainsBefore(docsHomePage, "## Preview Contributor Source-Built Fallback", repoLocalCliCommand);
+    AssertContains("preview contributor source-built fallback", docsHomePage);
+    AssertContains("## Preview Contributor Source-Built Fallback", docsHomePage);
+
+    var repositoryReadme = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "README.md"));
+    AssertContains("## Install", repositoryReadme);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", repositoryReadme);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", repositoryReadme);
+    AssertContains("typesharp-vscode-<tag>.vsix", repositoryReadme);
+    AssertContains("covered by the same checksum manifest", repositoryReadme);
+    AssertContains("The tag-specific GitHub Release notes are the source of truth for the release channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.", repositoryReadme);
+    AssertContains("Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", repositoryReadme);
+    AssertContainsBefore(repositoryReadme, "## Install", "## Preview Contributor Source-Built Fallback");
+    AssertContainsBefore(repositoryReadme, "Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", "preview contributor source-built fallback below");
+    AssertContainsBefore(repositoryReadme, "Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page", "```powershell");
+    AssertContainsBefore(repositoryReadme, "## Preview Contributor Source-Built Fallback", "git clone https://github.com/naramdash/TypeSharp.git");
+    AssertContainsBefore(repositoryReadme, "## Preview Contributor Source-Built Fallback", repoLocalCliCommand);
+    foreach (var hiddenInstallCommand in hiddenGlobalInstallCommands)
+    {
+        AssertFalse(
+            repositoryReadme.Contains(hiddenInstallCommand, StringComparison.OrdinalIgnoreCase),
+            $"Repository README must not require hidden global install command or runtime '{hiddenInstallCommand}' on the release install path.");
+    }
 
     var startHerePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "start-here.md"));
     AssertContains("Install First", startHerePage);
+    AssertContainsBefore(startHerePage, "Use [Install](../install/) for the versioned release artifact route", "```powershell");
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", startHerePage);
+    AssertContains("verify that runtime archive with the same manifest", startHerePage);
+    AssertContains("preview contributor source-built fallback", startHerePage);
+    AssertContains("## Preview Contributor Source-Built Fallback", startHerePage);
+    AssertContainsBefore(startHerePage, "## Preview Contributor Source-Built Fallback", repoLocalCliCommand);
     AssertContains("I Maintain .NET Framework Applications", startHerePage);
     AssertContains("I Know C#", startHerePage);
     AssertContains("I Know F#", startHerePage);
@@ -14818,28 +15826,116 @@ static void DocsSiteContractIsStable()
     AssertContains("I Am Evaluating The Compiler Or Tooling", startHerePage);
 
     var installPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "install.md"));
+    AssertContains("preview contributor source-built fallback", installPage);
+    AssertFalse(
+        installPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Install page should keep the release asset route primary and must not include repo-local CLI DLL commands.");
     AssertContains("typesharp-cli-dotnet-$version.zip", installPage);
     AssertContains("SHA256SUMS.txt", installPage);
     AssertContains("$releasePage = \"https://github.com/$repo/releases/tag/$version\"", installPage);
-    AssertContains("Open `$releasePage` to read the release notes", installPage);
-    AssertContains("Select-String -SimpleMatch $assetName", installPage);
+    AssertContains("Open `$releasePage` to read the GitHub Release notes", installPage);
+    AssertContains("rollback guidance, and exact asset names to verify for the same tag", installPage);
+    AssertContains("Get-Content -LiteralPath \"$downloadRoot/SHA256SUMS.txt\" | ForEach-Object", installPage);
+    AssertContains("$parts = $_ -split '\\s+', 2", installPage);
+    AssertContains("$parts.Count -ne 2 -or $parts[0] -notmatch '^[0-9a-f]{64}$'", installPage);
+    AssertContains("Malformed SHA256SUMS.txt entry: $_", installPage);
+    AssertContains("Where-Object { $_.Name -eq $assetName }", installPage);
+    AssertContains("SHA256SUMS.txt does not list $assetName.", installPage);
+    AssertContains("SHA256SUMS.txt lists $assetName more than once.", installPage);
+    AssertContains("$expected = $matches[0].Hash", installPage);
+    AssertContains("Preview releases publish `SHA256SUMS.txt` as the artifact integrity gate", installPage);
+    AssertContains("Detached signatures and Authenticode signing are not published yet", installPage);
+    AssertContains("the release notes will name the signing mechanism and signer identity", installPage);
     AssertContains("typesharp.cmd", installPage);
     AssertContains("typesharp version --json", installPage);
+    AssertContains("""
+        Expand-Archive "$downloadRoot/typesharp-cli-dotnet-$version.zip" -DestinationPath $installRoot -Force
+
+        & "$installRoot/typesharp.cmd" version
+
+        $env:PATH = "$installRoot;$env:PATH"
+        typesharp version
+        """.Replace("\r\n", "\n", StringComparison.Ordinal), installPage);
+    AssertContainsBefore(
+        installPage,
+        "typesharp version\n```",
+        "typesharp new console HelloTypeSharp --target net48 --output .\\HelloTypeSharp");
     AssertContains("Artifact kind framework-dependent-dotnet", installPage);
+    AssertContains("Target default net48", installPage);
+    AssertContains("CLI target net10.0", installPage);
+    AssertContains("Runtime target net48", installPage);
     AssertContains("Build metadata v0.1.0-preview.1", installPage);
-    AssertContains("Source revision <release-commit>", installPage);
+    AssertContains("same 12-character lowercase commit prefix recorded on the GitHub Release page", installPage);
+    AssertContains("Source revision <12-character-commit-prefix>", installPage);
+    AssertContains("""
+        typesharp new console HelloTypeSharp --target net48 --output .\HelloTypeSharp
+        typesharp check .\HelloTypeSharp\TypeSharp.toml
+        typesharp build .\HelloTypeSharp\TypeSharp.toml
+        typesharp run .\HelloTypeSharp\TypeSharp.toml
+        """.Replace("\r\n", "\n", StringComparison.Ordinal), installPage);
+    AssertContains("""
+        typesharp new library Billing.Rules --target net48 --output .\Billing.Rules
+        typesharp check .\Billing.Rules\TypeSharp.toml
+        typesharp build .\Billing.Rules\TypeSharp.toml
+        """.Replace("\r\n", "\n", StringComparison.Ordinal), installPage);
     AssertContains("references.packages", installPage);
     AssertContains("The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs", installPage);
     AssertContains("reports `TS2405` instead of restoring NuGet packages", installPage);
     AssertContains("typesharp-runtime-net48-$version.zip", installPage);
     AssertContains("Assert-ReleaseAssetHash \"typesharp-runtime-net48-$version.zip\"", installPage);
+    AssertContains("$runtimeRoot = Join-Path $env:LOCALAPPDATA \"TypeSharp\\runtime-$version\"", installPage);
+    AssertContains("Expand-Archive \"$downloadRoot/typesharp-runtime-net48-$version.zip\" -DestinationPath $runtimeRoot -Force", installPage);
+    AssertContains("or paths relative to the `$runtimeRoot` location you chose", installPage);
     AssertContains("The 1.0 runtime resolution policy is explicit installed runtime archive references", installPage);
     AssertContains("The CLI does not implicitly discover repository build folders, auto-copy runtime assemblies, or add hidden template references for 1.0", installPage);
+    AssertContains("## Roll Back To A Previous Release", installPage);
+    AssertContains("$version = \"v0.1.0-preview.0\"", installPage);
+    AssertContains("Invoke-WebRequest \"$release/typesharp-cli-dotnet-$version.zip\"", installPage);
+    AssertContains("Invoke-WebRequest \"$release/typesharp-runtime-net48-$version.zip\"", installPage);
+    AssertContains("Assert-ReleaseAssetHash \"typesharp-cli-dotnet-$version.zip\"", installPage);
+    AssertContains("Assert-ReleaseAssetHash \"typesharp-runtime-net48-$version.zip\"", installPage);
+    var rollbackSectionStart = installPage.IndexOf("## Roll Back To A Previous Release", StringComparison.Ordinal);
+    AssertTrue(rollbackSectionStart >= 0, "Install page should contain rollback guidance.");
+    var rollbackSection = installPage.Substring(rollbackSectionStart);
+    AssertContainsBefore(rollbackSection, "Assert-ReleaseAssetHash \"typesharp-cli-dotnet-$version.zip\"", "Expand-Archive \"$downloadRoot/typesharp-cli-dotnet-$version.zip\"");
+    AssertContainsBefore(rollbackSection, "Assert-ReleaseAssetHash \"typesharp-runtime-net48-$version.zip\"", "Expand-Archive \"$downloadRoot/typesharp-cli-dotnet-$version.zip\"");
+    AssertContainsBefore(rollbackSection, "Expand-Archive \"$downloadRoot/typesharp-cli-dotnet-$version.zip\"", "& \"$installRoot/typesharp.cmd\" version");
+    AssertContains("Keep generated projects and C# consumers on the same runtime archive tag and Runtime ABI as the CLI release notes", installPage);
+    AssertContains("remove the newer extracted CLI folder", installPage);
+
+    var cliPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "cli.md"));
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", cliPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", cliPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", cliPage);
+    AssertContains("verify `SHA256SUMS.txt`", cliPage);
+    AssertContains("Verify the runtime archive with the same manifest", cliPage);
+    AssertContains("extract `typesharp.cmd` onto `PATH`", cliPage);
+    AssertContains("Generated starter files:", cliPage);
+    AssertContains("- `TypeSharp.toml`", cliPage);
+    AssertContains("- `src/Main.tysh` or `src/Library.tysh`", cliPage);
+    AssertContains("- `.gitignore`", cliPage);
+    AssertContains("- `README.md`", cliPage);
+    AssertContains("assumes the release-installed `typesharp` command from [Install](../install/) is on `PATH`", cliPage);
+    AssertContains("instead of repo-local CLI DLL commands", cliPage);
+    AssertContains("generatedOutputRoot = \"generated\"", cliPage);
+    AssertContains("generated starter projects set `generatedOutputRoot = \"generated\"`", cliPage);
 
     var apiCorePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "api.md"));
+    AssertContains("Command examples assume the release install route from [Install](../install/)", apiCorePage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", apiCorePage);
+    AssertContains("verify it with the same manifest when generated projects or C# consumers need TypeSharp Core/Runtime DLLs", apiCorePage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", apiCorePage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", apiCorePage);
+    AssertContains("SHA256SUMS.txt", apiCorePage);
     AssertContains("Direct TypeSharp source imports for ergonomic case constructors", apiCorePage);
     AssertContains("TypeSharp.Core.Result<int, string>.Ok(42)", apiCorePage);
     AssertContains("The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs", apiCorePage);
+    AssertContains("assemblies = [\"System\", \"System.Core\"]", apiCorePage);
+    AssertContains("Reference TypeSharp Core/Runtime DLLs explicitly from the verified runtime archive", apiCorePage);
+    AssertContains("obtain both assemblies from the verified `typesharp-runtime-net48-<tag>.zip` archive rather than from repository build folders", apiCorePage);
+    AssertFalse(
+        apiCorePage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "API reference should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var learningPathsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "learning-paths.md"));
     AssertContains("Programming Beginner", learningPathsPage);
@@ -14847,14 +15943,55 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeScript User", learningPathsPage);
     AssertContains("F# Or Functional Programming User", learningPathsPage);
     AssertContains("Advanced Implementer", learningPathsPage);
+    AssertContains("Before choosing a path, install the release CLI from [Install](../install/)", learningPathsPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", learningPathsPage);
+    AssertContains("verify it with the same manifest when a path needs TypeSharp Core/Runtime DLLs", learningPathsPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", learningPathsPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", learningPathsPage);
+    AssertContains("typesharp-vscode-<tag>.vsix", learningPathsPage);
+    AssertContains("SHA256SUMS.txt", learningPathsPage);
+    AssertContains("Install the release CLI and verify `typesharp version` on [Install](../install/)", learningPathsPage);
+    AssertContainsBefore(learningPathsPage, "Install the release CLI and verify `typesharp version` on [Install](../install/)", "Read [Start Here](../start-here/) to understand what TypeSharp is for.");
+    AssertContains("| Create a project | [Install](../install/) and [Tutorials](../tutorials/) |", learningPathsPage);
+    AssertFalse(
+        learningPathsPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Learning Paths should route users through the release install path and must not include repo-local CLI DLL commands.");
 
     var languageTourPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "language-tour.md"));
+    AssertContains("Start from [Install](../install/) before running tour commands", languageTourPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", languageTourPage);
+    AssertContains("verify it with the same manifest when a tour project needs TypeSharp Core/Runtime DLLs", languageTourPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", languageTourPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", languageTourPage);
+    AssertContains("SHA256SUMS.txt", languageTourPage);
     AssertContains("Files And Projects", languageTourPage);
+    AssertContains("Use the release-installed `typesharp` command", languageTourPage);
     AssertContains("Type-Level Unions", languageTourPage);
     AssertContains("C# Interop", languageTourPage);
     AssertContains("Current Stability Model", languageTourPage);
+    AssertFalse(
+        languageTourPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Language Tour should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var tutorialsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "tutorials.md"));
+    AssertContains("preview contributor source-built fallback", tutorialsPage);
+    AssertContains("Start by opening the tag-specific GitHub Release notes, confirming the exact asset names, and installing `typesharp-cli-dotnet-<tag>.zip` with the `SHA256SUMS.txt` checksum flow", tutorialsPage);
+    AssertContains("verify it with the same manifest when a tutorial references TypeSharp Core/Runtime DLLs", tutorialsPage);
+    AssertContainsBefore(tutorialsPage, "Start by opening the tag-specific GitHub Release notes", "preview contributor source-built fallback");
+    AssertContainsBefore(tutorialsPage, "Start by opening the tag-specific GitHub Release notes", "```powershell");
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", tutorialsPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", tutorialsPage);
+    AssertContains("SHA256SUMS.txt", tutorialsPage);
+    AssertContains("""
+        typesharp new console HelloTypeSharp --target net48 --output .\HelloTypeSharp
+        cd .\HelloTypeSharp
+        typesharp check
+        typesharp build
+        typesharp run
+        """.Replace("\r\n", "\n", StringComparison.Ordinal), tutorialsPage);
+    AssertFalse(
+        tutorialsPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Tutorials should keep the installed CLI command path primary and must not reintroduce repo-local CLI DLL commands.");
     AssertContains("Hello Project", tutorialsPage);
     AssertContains("nominal invoice records", tutorialsPage);
     AssertContains("Library Public API", tutorialsPage);
@@ -14873,6 +16010,20 @@ static void DocsSiteContractIsStable()
     AssertContains("Option, Result, Records, And Unions", guidesPage);
     AssertContains("Project Configuration", guidesPage);
     AssertContains("Modules And Imports", guidesPage);
+    AssertContains("Start from [Install](../install/) before using these guides", guidesPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", guidesPage);
+    AssertContains("verify it with the same manifest", guidesPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", guidesPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", guidesPage);
+    AssertContains("SHA256SUMS.txt", guidesPage);
+    AssertContains("Use the release-installed `typesharp` command", guidesPage);
+    AssertContains("assemblies = [\"System\", \"System.Core\"]", guidesPage);
+    AssertContains("packages = []", guidesPage);
+    AssertContains("[projectReferences]", guidesPage);
+    AssertContains("NuGet package restore is post-1.0", guidesPage);
+    AssertFalse(
+        guidesPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Guides should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var projectConfigurationPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "project-configuration.md"));
     AssertContains("Minimal Manifest", projectConfigurationPage);
@@ -14880,7 +16031,31 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated Output", projectConfigurationPage);
     AssertContains("References", projectConfigurationPage);
     AssertContains("Configuration And Target Overrides", projectConfigurationPage);
+    AssertContains("`generatedOutputRoot` tells the CLI where generated C# source, the generated C# project, and build outputs belong.", projectConfigurationPage);
+    AssertContains("generated/", projectConfigurationPage);
+    AssertContains("src/Main.g.cs", projectConfigurationPage);
+    AssertContains("BillingRules.Generated.csproj", projectConfigurationPage);
+    AssertContains("bin/Release/net48/BillingRules.dll", projectConfigurationPage);
+    AssertContains("assemblies = [\"System\", \"System.Core\"]", projectConfigurationPage);
+    AssertContains("../typesharp-runtime/lib/net48/TypeSharp.Core.dll", projectConfigurationPage);
+    AssertContains("../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll", projectConfigurationPage);
+    AssertContains("Open the tag-specific GitHub Release notes, confirm the exact asset names", projectConfigurationPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", projectConfigurationPage);
+    AssertContains("verify it with `SHA256SUMS.txt`", projectConfigurationPage);
+    AssertContains("does not auto-discover repository build folders or add hidden runtime references", projectConfigurationPage);
     AssertContains("The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs", projectConfigurationPage);
+
+    var migrationPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "migration.md"));
+    AssertContains("Adopting TypeSharp from existing .NET Framework and C# projects", migrationPage);
+    AssertContains("signed stable 1.0 release artifacts or marketplace/package-manager distribution", migrationPage);
+    AssertContains("Open the tag-specific GitHub Release notes, confirm the exact asset names", migrationPage);
+    AssertContains("matching `typesharp-runtime-net48-<tag>.zip` archive", migrationPage);
+    AssertContains("..\\typesharp-runtime\\lib\\net48\\TypeSharp.Core.dll", migrationPage);
+    AssertContains("..\\typesharp-runtime\\lib\\net48\\TypeSharp.Runtime.dll", migrationPage);
+    AssertContains("verify it against `SHA256SUMS.txt`", migrationPage);
+    AssertContains("Confirm the exact runtime archive name in the tag-specific GitHub Release notes", migrationPage);
+    AssertContains("artifact signing beyond the current `SHA256SUMS.txt` release manifest", migrationPage);
+    AssertFalse(migrationPage.Contains("release signing/checksum pipeline", StringComparison.Ordinal), "Migration should not describe checksum automation as missing after release manifests were added.");
 
     var runtimeArtifactsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "runtime-artifacts.md"));
     AssertContains("Artifact Boundary", runtimeArtifactsPage);
@@ -14888,14 +16063,44 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated Project Shape", runtimeArtifactsPage);
     AssertContains("Deployment Set", runtimeArtifactsPage);
     AssertEqual(3, CountOccurrences(runtimeArtifactsPage, "```mermaid"));
+    AssertContains("generated/src/*.g.cs", runtimeArtifactsPage);
+    AssertContains("<ProjectName>.Generated.csproj", runtimeArtifactsPage);
     AssertContains("TypeSharp.Core.dll", runtimeArtifactsPage);
     AssertContains("TypeSharp.Runtime.dll", runtimeArtifactsPage);
     AssertContains("bin/<Configuration>/net48", runtimeArtifactsPage);
+    AssertContains("\"../typesharp-runtime/lib/net48/TypeSharp.Core.dll\"", runtimeArtifactsPage);
+    AssertContains("\"../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll\"", runtimeArtifactsPage);
+    AssertContains("Runtime/Core paths should point at the verified extracted runtime archive, not repository build folders.", runtimeArtifactsPage);
+    AssertContains("CoreDll[\"typesharp-runtime/lib/net48/TypeSharp.Core.dll\"]", runtimeArtifactsPage);
+    AssertContains("RuntimeDll[\"typesharp-runtime/lib/net48/TypeSharp.Runtime.dll\"]", runtimeArtifactsPage);
+    AssertContains("The deployable set is:", runtimeArtifactsPage);
+    AssertContains("1. the generated TypeSharp assembly,", runtimeArtifactsPage);
+    AssertContains("2. `typesharp-runtime/lib/net48/TypeSharp.Core.dll` from the verified matching runtime archive when public APIs or source imports use core types,", runtimeArtifactsPage);
+    AssertContains("3. `typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` from the verified matching runtime archive when generated code uses runtime helpers,", runtimeArtifactsPage);
+    AssertContains("The C# host may reference those paths directly during build or copy the DLLs beside the generated assembly for deployment", runtimeArtifactsPage);
+    AssertContains("same verified runtime archive tag and Runtime ABI as the CLI release", runtimeArtifactsPage);
     AssertContains("Current preview builds require these assemblies to be available as local `net48` DLL references", runtimeArtifactsPage);
+    AssertContains("Open the tag-specific GitHub Release notes, confirm the exact asset names", runtimeArtifactsPage);
     AssertContains("typesharp-runtime-net48-<tag>.zip", runtimeArtifactsPage);
     AssertContains("The 1.0 runtime resolution policy is explicit installed runtime archive references", runtimeArtifactsPage);
     AssertContains("CLI auto-copy and implicit template references remain post-1.0 ergonomics", runtimeArtifactsPage);
-    AssertContains("Release Runtime Layout Smoke", runtimeArtifactsPage);
+    AssertContains("Release Runtime Layout Smokes", runtimeArtifactsPage);
+    AssertContains("hosted release workflow resolves the hosted download/extraction root and clean smoke workspace outside the repository checkout", runtimeArtifactsPage);
+    AssertContains("then repeats the same installed-command, host-prerequisite failure, local-DLL dependency, dependency-diagnostic, generated-build-failure, project-reference build-order, runtime-backed library, and C# consumer output shape", runtimeArtifactsPage);
+    AssertContains("confirm the exact asset names, extract verified `typesharp-cli-dotnet-<tag>.zip`", runtimeArtifactsPage);
+    AssertContains("verify bare `typesharp` resolves to the downloaded `typesharp.cmd`", runtimeArtifactsPage);
+    AssertContains("Verify the downloaded wrapper reports a missing `dotnet` host when the host is removed from `PATH`", runtimeArtifactsPage);
+    AssertContains("Extract verified `typesharp-runtime-net48-<tag>.zip`", runtimeArtifactsPage);
+    AssertContains("Create, check, build, and run a clean console project through the installed `typesharp` command", runtimeArtifactsPage);
+    AssertContains("reference it with `references.paths = [\"../lib/Legacy.Tools.dll\"]`", runtimeArtifactsPage);
+    AssertContains("Verify missing local DLL and unsupported package references report `TS2401`/`TS2405`", runtimeArtifactsPage);
+    AssertContains("Verify generated C# project build failures report `TS3501` after generated source/project emission", runtimeArtifactsPage);
+    AssertContains("build the dependent project through installed `typesharp` and verify the referenced generated assembly exists before the dependent assembly", runtimeArtifactsPage);
+    AssertContains("preview signature policy, installed `typesharp version` text plus JSON CLI/compiler/language identity and target/framework/runtime metadata, and downloaded wrapper host-prerequisite failure before exercising `typesharp new`, `typesharp format --check`, `typesharp check`, `typesharp build`, and `typesharp run` through the installed command path, compiling a local C# DLL dependency path, verifying text and JSON dependency diagnostics, verifying text and JSON generated C# build-failure diagnostics", runtimeArtifactsPage);
+    AssertContains("checking installed `typesharp explain` output for those recovery codes", runtimeArtifactsPage);
+    AssertContains("hosted smoke also verifies the hosted download/extraction root and clean smoke workspace stay outside the repository checkout", runtimeArtifactsPage);
+    AssertContains("the release page metadata, `SHA256SUMS.txt`, the exact CLI/runtime/VSIX/checksum asset set, the exact CLI/runtime/VSIX checksum manifest entry set, duplicate-free lowercase SHA-256 manifest rows, the VSIX checksum entry, archive shape, package identity, and TypeSharp language/grammar contribution metadata, the CLI archive `typesharp.dll`/`typesharp.cmd`/`TypeSharp.Compiler.dll`/`TypeSharp.LanguageServer.dll` files, CLI README release metadata, runtime README tag/build/source/ABI/target metadata and DLL list, the downloaded wrapper content for command echo suppression, local environment scope, extracted-directory `TYPESHARP_HOME`, and `dotnet \"%TYPESHARP_HOME%typesharp.dll\" %*` launch behavior", runtimeArtifactsPage);
+    AssertContains("verifying library-project `typesharp run` rejection", runtimeArtifactsPage);
     AssertContains("union and async helper APIs", runtimeArtifactsPage);
     AssertContains("`references.assemblies` becomes framework `<Reference Include=\"...\"/>` items", runtimeArtifactsPage);
     AssertContains("`references.paths` becomes local `<Reference>` items with generated-project-relative `<HintPath>` values", runtimeArtifactsPage);
@@ -14939,20 +16144,51 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp.Runtime.TypeSharpAsync", dotnetInteropPage);
     AssertContains("verify compiler/runtime target framework alignment", dotnetInteropPage);
     AssertContains("The release-staged runtime artifact smoke builds generated `net48` output and a separate C# `net48` consumer", dotnetInteropPage);
+    AssertContains("The post-publication hosted GitHub Release smoke verifies the hosted download/extraction root and clean smoke workspace are outside the repository checkout", dotnetInteropPage);
+    AssertContains("verifies downloaded CLI/runtime/VSIX assets against `SHA256SUMS.txt` plus release metadata", dotnetInteropPage);
+    AssertContains("verifies the installed bare `typesharp` command path and missing-host behavior", dotnetInteropPage);
+    AssertContains("runs console `new`/`format --check`/`check`/`build`/`run`", dotnetInteropPage);
+    AssertContains("covers local C# `net48` DLL references, dependency diagnostics for missing DLLs and unsupported packages, generated C# build-failure diagnostics", dotnetInteropPage);
+    AssertContains("direct TypeSharp project-reference build ordering", dotnetInteropPage);
+    AssertContains("the runtime-backed TypeSharp library plus C# `net48` consumer output", dotnetInteropPage);
     AssertContains("ordinary public static binary `op_Multiply`, `op_Division`, and `op_Modulus` metadata", dotnetInteropPage);
     AssertContains("It does not consume checked user-defined operator metadata such as `op_CheckedMultiply`, `op_CheckedDivision`, or `op_CheckedModulus` in 1.0", dotnetInteropPage);
 
     var cookbookPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "cookbook.md"));
+    AssertContains("Start from [Install](../install/) before running these recipes", cookbookPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", cookbookPage);
+    AssertContains("verify it with the same manifest when a recipe needs TypeSharp Core/Runtime DLLs", cookbookPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", cookbookPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", cookbookPage);
+    AssertContains("SHA256SUMS.txt", cookbookPage);
     AssertContains("Call A Local C# DLL", cookbookPage);
     AssertContains("Expose A TypeSharp API To C#", cookbookPage);
     AssertContains("Model Nullable Input Safely", cookbookPage);
     AssertContains("Consume Generated DLLs From A Host Project", cookbookPage);
+    AssertContains("assemblies = [\"System\", \"System.Core\"]", cookbookPage);
+    AssertContains("packages = []", cookbookPage);
+    AssertContains("typesharp check TypeSharp.toml", cookbookPage);
+    AssertContains("typesharp build TypeSharp.toml", cookbookPage);
+    AssertContains("same-tag `typesharp-runtime-net48-<tag>.zip` archive", cookbookPage);
+    AssertFalse(
+        cookbookPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Cookbook should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var fundamentalsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "fundamentals.md"));
+    AssertContains("Start from [Install](../install/) before running local commands", fundamentalsPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", fundamentalsPage);
+    AssertContains("verify it with the same manifest when Core/Runtime DLLs are needed", fundamentalsPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", fundamentalsPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", fundamentalsPage);
+    AssertContains("SHA256SUMS.txt", fundamentalsPage);
     AssertContains("Values And Functions", fundamentalsPage);
     AssertContains("Structural Shapes Versus Nominal Public API", fundamentalsPage);
     AssertContains("Collections, Pipelines, And Async", fundamentalsPage);
     AssertContains("Type System", fundamentalsPage);
+    AssertContains("release-installed `typesharp explain TS2202` command", fundamentalsPage);
+    AssertFalse(
+        fundamentalsPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Fundamentals should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var modulesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "modules.md"));
     AssertContains("Files Are Modules", modulesPage);
@@ -14972,13 +16208,24 @@ static void DocsSiteContractIsStable()
     AssertContains("Non-relative forwarding and non-lowerable forwarding forms still report `TS2003`", modulesPage);
 
     var examplesPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "examples.md"));
+    AssertContains("Start from [Install](../install/) before running runnable examples", examplesPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", examplesPage);
+    AssertContains("verify it with the same manifest when an example references TypeSharp Core/Runtime DLLs", examplesPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", examplesPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", examplesPage);
+    AssertContains("SHA256SUMS.txt", examplesPage);
     AssertContains("invoice-style", examplesPage);
     AssertContains("billing API", examplesPage);
     AssertContains("C# host smoke project", examplesPage);
     AssertContains("named/optional/params/out calls", examplesPage);
     AssertContains("billing work-item", examplesPage);
     AssertContains("nullable customer profile flow", examplesPage);
+    AssertContains("release-installed `typesharp` command", examplesPage);
+    AssertContains("verified runtime archive rather than repository build folders", examplesPage);
     AssertContains("introduce every command, output, TypeSharp, C#, or XML code block with a short explanation before the block", examplesPage);
+    AssertFalse(
+        examplesPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Examples docs should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var typeSystemPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "type-system.md"));
     AssertContains("Local Inference", typeSystemPage);
@@ -15128,6 +16375,12 @@ static void DocsSiteContractIsStable()
     AssertContains("Public/exported unannotated direct composition values report `TS2215`", featureStatusPage);
 
     var diagnosticsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "diagnostics.md"));
+    AssertContains("Command examples assume the release install route from [Install](../install/)", diagnosticsPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", diagnosticsPage);
+    AssertContains("verify it with the same manifest when reproducing diagnostics that involve TypeSharp Core/Runtime DLL references", diagnosticsPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", diagnosticsPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", diagnosticsPage);
+    AssertContains("SHA256SUMS.txt", diagnosticsPage);
     AssertContains("| `TS2212` | Type Checking | Error | Type operator limit exceeded |", diagnosticsPage);
     AssertContains("`TS2212` reports 1.0 type-operator budget failures", diagnosticsPage);
     AssertContains("alias cycles, alias depth, local union width, `keyof`/indexed key count, and structural intersection member count", diagnosticsPage);
@@ -15191,6 +16444,9 @@ static void DocsSiteContractIsStable()
     AssertContains("| `TS2230` | Type Checking | Error | Invalid assignment value |", diagnosticsPage);
     AssertContains("`TS2230` reports simple assignment values whose value type is not assignable to the mutable target after nullability and structural proof checks", diagnosticsPage);
     AssertContains("assignment value failures like `TS2230`", diagnosticsPage);
+    AssertFalse(
+        diagnosticsPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Diagnostics should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var referencePage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "reference.md"));
     AssertContains("Declarations", referencePage);
@@ -15227,17 +16483,124 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated Assembly Layout", apiPage);
 
     var advancedPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "advanced.md"));
+    AssertContains("Command examples and workflow references assume the release install route from [Install](../install/)", advancedPage);
+    AssertContains("open the tag-specific GitHub Release notes, confirm the exact asset names", advancedPage);
+    AssertContains("verify it with the same manifest when an advanced workflow needs TypeSharp Core/Runtime DLLs", advancedPage);
+    AssertContains("typesharp-cli-dotnet-<tag>.zip", advancedPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", advancedPage);
+    AssertContains("SHA256SUMS.txt", advancedPage);
     AssertContains("Compiler Pipeline", advancedPage);
     AssertContains("Public ABI Contract", advancedPage);
     AssertContains("Metadata Reader And Interop Validation", advancedPage);
     AssertContains("Regression Strategy", advancedPage);
+    AssertContains("The release-installed `typesharp check` command stops before emission", advancedPage);
+    AssertFalse(
+        advancedPage.Contains(repoLocalCliCommand, StringComparison.Ordinal),
+        "Advanced Topics should keep the installed CLI command path primary and must not include repo-local CLI DLL commands.");
 
     var troubleshootingPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "troubleshooting.md"));
     AssertContains("The CLI Cannot Find A Manifest", troubleshootingPage);
+    AssertContains("The Downloaded CLI Does Not Start", troubleshootingPage);
+    AssertContains("The release CLI archive is a framework-dependent modern .NET host", troubleshootingPage);
+    AssertContains("the CLI host target and generated artifact target are separate", troubleshootingPage);
+    AssertContains("Generated projects still target `.NET Framework 4.8`", troubleshootingPage);
+    AssertContains("Do not change generated project targets away from `net48` to fix a CLI host prerequisite", troubleshootingPage);
+    AssertContains("& \"$installRoot/typesharp.cmd\" version", troubleshootingPage);
+    AssertContains("CLI host target: `net10.0`", troubleshootingPage);
+    AssertContains("generated project target default: `net48`", troubleshootingPage);
+    AssertContains("TypeSharp runtime target: `net48`", troubleshootingPage);
+    AssertContains("`typesharp version` and `typesharp version --json` should report the same split", troubleshootingPage);
+    AssertContains("A Local C# DLL Has Invalid Metadata", troubleshootingPage);
+    AssertContains("`references.paths` must point at readable `.NET Framework 4.8`-compatible assemblies", troubleshootingPage);
+    AssertContains("`typesharp check` reports `TS2401` before generated C# is emitted", troubleshootingPage);
+    AssertContains("typesharp check TypeSharp.toml", troubleshootingPage);
+    AssertContains("paths = [\"lib/Legacy.Tools.dll\"]", troubleshootingPage);
+    AssertContains("Do not replace this with `references.packages`; package restore is still post-1.0", troubleshootingPage);
+    AssertContains("`TS2401`: missing local DLL or unreadable assembly metadata", troubleshootingPage);
+    AssertContains("A TypeSharp Project Reference Fails", troubleshootingPage);
+    AssertContains("Direct TypeSharp project references use manifest paths, not DLL paths or package names", troubleshootingPage);
+    AssertContains("[projectReferences]", troubleshootingPage);
+    AssertContains("paths = [\"../Shared/TypeSharp.toml\"]", troubleshootingPage);
+    AssertContains("typesharp check TypeSharp.toml", troubleshootingPage);
+    AssertContains("typesharp build TypeSharp.toml", troubleshootingPage);
+    AssertContains("Project-reference diagnostics stop before dependent generated C# is emitted", troubleshootingPage);
+    AssertContains("`TS0100`: referenced manifest cannot be found", troubleshootingPage);
+    AssertContains("`TS0103`: invalid referenced manifest, duplicate direct project name, cycle, or incompatible target framework", troubleshootingPage);
+    AssertContains("`TS0112`: unresolved direct project source module specifier", troubleshootingPage);
+    AssertContains("`TS0114`: imported or re-exported project member is not exported by the referenced project", troubleshootingPage);
+    AssertContains("hidden transitive project references and arbitrary sibling folders are outside the 1.0 source graph", troubleshootingPage);
     AssertContains("Generated `.exe` Is Blocked", troubleshootingPage);
+    AssertContains("""
+        typesharp check TypeSharp.toml
+        typesharp build TypeSharp.toml
+        typesharp run TypeSharp.toml
+        """.Replace("\r\n", "\n", StringComparison.Ordinal), troubleshootingPage);
+    AssertContains("generated/bin/<Configuration>/net48/<ProjectName>.exe", troubleshootingPage);
+    AssertContains("If the executable exists and `typesharp run` reports `Could not run generated executable`", troubleshootingPage);
+    AssertContains("local policy or permission failure rather than a TypeSharp type-checking failure", troubleshootingPage);
+    AssertContains("Only add antivirus exclusions for folders you trust", troubleshootingPage);
+    AssertContains("TypeSharp Core Or Runtime DLLs Are Missing", troubleshootingPage);
+    AssertContains("Open the tag-specific GitHub Release notes, confirm the exact asset names", troubleshootingPage);
+    AssertContains("typesharp-runtime-net48-<tag>.zip", troubleshootingPage);
+    AssertContains("../typesharp-runtime/lib/net48/TypeSharp.Core.dll", troubleshootingPage);
+    AssertContains("../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll", troubleshootingPage);
+    AssertContains("Keep the runtime archive tag and Runtime ABI aligned with the CLI release notes", troubleshootingPage);
+    AssertContains("Generated C# Build Fails", troubleshootingPage);
+    AssertContains("reports `TS3501`", troubleshootingPage);
+    AssertContains("generated/bin/<Configuration>/net48", troubleshootingPage);
+    AssertContains("typesharp build TypeSharp.toml --verbosity diagnostic", troubleshootingPage);
+    AssertContains("typesharp build TypeSharp.toml --diagnostic-format json", troubleshootingPage);
+    AssertContains("typesharp explain TS3501", troubleshootingPage);
+    AssertContains("generated/<ProjectName>.Generated.csproj", troubleshootingPage);
+    AssertContains("generated/bin/<Configuration>/net48/<ProjectName>.dll", troubleshootingPage);
+    AssertContains("was not produced before copying artifacts to another project", troubleshootingPage);
     AssertContains("typesharp explain TS2202", troubleshootingPage);
 
     var vscodeLspPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "vscode-lsp.md"));
+    var releaseWorkflow = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "release-artifacts.yml"));
+    var projectPolicyPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "project-policy.md"));
+    AssertReleaseInstallRouteUsesWorkflowAssetNames(
+        releaseWorkflow,
+        new Dictionary<string, string>
+        {
+            { "README.md", repositoryReadme },
+            { "docs home", docsHomePage },
+            { "Start Here", startHerePage },
+            { "Learning Paths", learningPathsPage },
+            { "Language Tour", languageTourPage },
+            { "Fundamentals", fundamentalsPage },
+            { "Guides", guidesPage },
+            { "Cookbook", cookbookPage },
+            { "API And CLI Reference", apiPage },
+            { "Examples", examplesPage },
+            { "CLI", cliPage },
+            { "Diagnostics", diagnosticsPage },
+            { "Advanced Topics", advancedPage },
+            { "Tutorials", tutorialsPage },
+            { "Project Policy", projectPolicyPage },
+            { "Runtime Artifacts", runtimeArtifactsPage },
+        },
+        new Dictionary<string, string>
+        {
+            { "Project Configuration", projectConfigurationPage },
+            { "Migration", migrationPage },
+            { "Troubleshooting", troubleshootingPage },
+        },
+        new Dictionary<string, string>
+        {
+            { "Learning Paths", learningPathsPage },
+            { "Project Policy", projectPolicyPage },
+            { "VS Code And LSP", vscodeLspPage },
+        },
+        installPage);
+
+    AssertContains("typesharp-vscode-<tag>.vsix", vscodeLspPage);
+    AssertContains("Open the tag-specific GitHub Release notes and confirm the exact asset names before download", vscodeLspPage);
+    AssertContains("typesharp-vscode-$version.vsix", vscodeLspPage);
+    AssertContains("Invoke-WebRequest \"$release/typesharp-vscode-$version.vsix\"", vscodeLspPage);
+    AssertContains("Assert-ReleaseAssetHash \"typesharp-vscode-$version.vsix\"", vscodeLspPage);
+    AssertContains("same `SHA256SUMS.txt` manifest as the CLI and runtime archives", vscodeLspPage);
+    AssertContains("same tag as the CLI release", vscodeLspPage);
     AssertContains("npm run check", vscodeLspPage);
     AssertContains("npm run check:smoke", vscodeLspPage);
     AssertContains("npm run check:live", vscodeLspPage);
@@ -15278,10 +16641,16 @@ static void GitHubPagesWorkflowContractIsStable()
 {
     var workflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "docs.yml");
     var workflow = File.ReadAllText(workflowPath);
+    var docsPackageJson = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "package.json"));
+    var renderedRouteScript = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "scripts", "verify-rendered-install-route.cjs"));
+    var astroConfig = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "astro.config.ts"));
+    var sidebarPublicRoutes = ExtractAstroSidebarPublicRoutes(astroConfig);
 
     AssertContains("name: Docs", workflow);
     AssertContains("branches:", workflow);
     AssertContains("- main", workflow);
+    AssertContains("tags:", workflow);
+    AssertContains("- 'v*.*.*'", workflow);
     AssertContains("pages: write", workflow);
     AssertContains("id-token: write", workflow);
     AssertContains("uses: actions/checkout@v6", workflow);
@@ -15293,25 +16662,1143 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("run: npm ci", workflow);
     AssertContains("run: npm run build", workflow);
     AssertContains("working-directory: docs", workflow);
+    AssertContains("Verify rendered install route", workflow);
+    AssertContains("run: npm run verify:rendered-install-route", workflow);
+    AssertContains("RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}", workflow);
+    AssertContains("\"verify:rendered-install-route\": \"node scripts/verify-rendered-install-route.cjs\"", docsPackageJson);
+    AssertContains("fs.readFileSync('dist/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/install/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/start-here/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/tutorials/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/cli/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/dotnet-interop/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/modules/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/type-system/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/csharp-type-model/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/csharp-members-overloads/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/feature-status/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/grammar/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/reference/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/lowering/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/project-configuration/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/runtime-artifacts/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/vscode-lsp/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/migration/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/troubleshooting/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/goal/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/requirements/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/project-policy/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/project-ledger/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/writing-guide/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("fs.readFileSync('dist/document-ownership/index.html', 'utf8')", renderedRouteScript);
+    AssertContains("firstMatchIndex", renderedRouteScript);
+    AssertContains("assertContainsAny", renderedRouteScript);
+    AssertContains("firstExistingIndex", renderedRouteScript);
+    AssertContains("assertAnyBefore", renderedRouteScript);
+    AssertContains("assertNoRepoLocalCliCommand", renderedRouteScript);
+    AssertContains("assertRenderedRuntimeRoute", renderedRouteScript);
+    AssertContains("function assertRenderedReleaseNotesRoute", renderedRouteScript);
+    AssertContains("assertRenderedReleaseNotesRoute(index, 'docs home');", renderedRouteScript);
+    AssertContains("assertRenderedReleaseNotesRoute(startHere, 'Start Here');", renderedRouteScript);
+    AssertContains("assertRenderedReleaseNotesRoute(tutorials, 'Tutorials');", renderedRouteScript);
+    AssertContains("assertRenderedReleaseNotesRoute(vscodeLsp, 'VS Code And LSP');", renderedRouteScript);
+    AssertContains("['Project Policy', projectPolicy, '/project-policy/', true]", renderedRouteScript);
+    AssertContains("homeInstallHrefCandidates", renderedRouteScript);
+    AssertContains("homeStartHereHrefCandidates", renderedRouteScript);
+    AssertContains("pageInstallHrefCandidates", renderedRouteScript);
+    AssertContains("homeInstallSentenceCandidates", renderedRouteScript);
+    AssertContains("href=\"/TypeSharp/install/\"", renderedRouteScript);
+    AssertContains("href=\"/TypeSharp/start-here/\"", renderedRouteScript);
+    AssertContains("Rendered docs home must include a rendered Install navigation link.", renderedRouteScript);
+    AssertContains("Rendered docs home must include a rendered Start Here navigation link.", renderedRouteScript);
+    AssertContains("Rendered docs navigation must expose Install before Start Here.", renderedRouteScript);
+    AssertContains("Rendered docs home must include a next-page pagination link.", renderedRouteScript);
+    AssertContains("Rendered docs home next-page link must point to Install.", renderedRouteScript);
+    AssertContains("Rendered docs home next-page link must label Install.", renderedRouteScript);
+    AssertContains("Rendered docs home must expose Install before Start Here.", renderedRouteScript);
+    AssertContains("Start with <a href=\"/TypeSharp/install/\">Install</a>", renderedRouteScript);
+    AssertContains("Rendered docs home must keep the release install route before the source-built fallback.", renderedRouteScript);
+    AssertContains("Rendered docs home must name the CLI release asset.", renderedRouteScript);
+    AssertContains("Rendered docs home must name the runtime release asset.", renderedRouteScript);
+    AssertContains("Rendered docs home must name the VSIX release asset.", renderedRouteScript);
+    AssertContains("Rendered docs home must name the checksum manifest.", renderedRouteScript);
+    AssertContains("assertNoHiddenGlobalDotnetToolInstall(index, 'docs home');", renderedRouteScript);
+    AssertContains("Rendered Install page must name the official GitHub repository.", renderedRouteScript);
+    AssertContains("Rendered Install page must show the GitHub Release download URL shape.", renderedRouteScript);
+    AssertContains("Rendered Install page must show the GitHub Release tag URL shape.", renderedRouteScript);
+    AssertContains("assertRenderedReleaseNotesRoute(install, 'Install');", renderedRouteScript);
+    AssertContains("Rendered Install page must name the CLI release asset.", renderedRouteScript);
+    AssertContains("Rendered Install page must name the runtime release asset.", renderedRouteScript);
+    AssertContains("Rendered Install page must name the checksum manifest.", renderedRouteScript);
+    AssertContains("function assertNoHiddenGlobalDotnetToolInstall", renderedRouteScript);
+    AssertContains("must not include hidden global .NET tool-install guidance.", renderedRouteScript);
+    AssertContains("assertNoHiddenGlobalDotnetToolInstall(install, 'Install');", renderedRouteScript);
+    AssertContains("const releaseTag = process.env.RELEASE_TAG;", renderedRouteScript);
+    AssertContains("RELEASE_TAG must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-preview.N", renderedRouteScript);
+    AssertContains("`&#x22;${releaseTag}&#x22;`", renderedRouteScript);
+    AssertContains("Rendered Install page must set the release download version to RELEASE_TAG.", renderedRouteScript);
+    AssertContains("`Build metadata ${releaseTag}`", renderedRouteScript);
+    AssertContains("Rendered Install page version sample must show RELEASE_TAG as build metadata.", renderedRouteScript);
+    AssertContains("Rendered Start Here page must keep Install First before the source-built fallback.", renderedRouteScript);
+    AssertContains("assertNoHiddenGlobalDotnetToolInstall(startHere, 'Start Here');", renderedRouteScript);
+    AssertContains("if (startHere.includes('dotnet cli\\\\TypeSharp.Cli'))", renderedRouteScript);
+    AssertContains("Rendered Start Here page must keep Install before repo-local fallback commands.", renderedRouteScript);
+    AssertContains("Rendered Tutorials page must keep the release install route before first project commands.", renderedRouteScript);
+    AssertContains("Rendered Tutorials page must name the CLI release asset.", renderedRouteScript);
+    AssertContains("Rendered Tutorials page must name the runtime release asset.", renderedRouteScript);
+    AssertContains("Rendered Tutorials page must name the checksum manifest.", renderedRouteScript);
+    AssertContains("assertNoHiddenGlobalDotnetToolInstall(tutorials, 'Tutorials');", renderedRouteScript);
+    AssertContains("const learningPaths = fs.readFileSync('dist/learning-paths/index.html', 'utf8');", renderedRouteScript);
+    AssertContains("const advanced = fs.readFileSync('dist/advanced/index.html', 'utf8');", renderedRouteScript);
+    AssertContains("['Learning Paths', learningPaths]", renderedRouteScript);
+    AssertContains("['API And CLI Reference', api]", renderedRouteScript);
+    AssertContains("Rendered ${label} page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered ${label} page must name the CLI release asset.", renderedRouteScript);
+    AssertContains("Rendered CLI page must name the CLI release asset.", renderedRouteScript);
+    AssertContains("Rendered CLI page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered Project Configuration page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered Project Configuration page must show runtime Core DLL paths from the extracted runtime archive.", renderedRouteScript);
+    AssertContains("Rendered Runtime Artifacts page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered Runtime Artifacts page must show generated net48 output paths.", renderedRouteScript);
+    AssertContains("Rendered VS Code And LSP page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered VS Code And LSP page must name the VSIX release asset.", renderedRouteScript);
+    AssertContains("Rendered Migration page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered Troubleshooting page must link to Install.", renderedRouteScript);
+    AssertContains("Rendered ${label} page must tell users to confirm exact asset names.", renderedRouteScript);
+    AssertContains("Rendered ${label} page must name the runtime release asset.", renderedRouteScript);
+    AssertContains("Rendered Troubleshooting page must show generated net48 output paths.", renderedRouteScript);
+    AssertContains("Rendered Troubleshooting page must show runtime helper DLL paths from the extracted runtime archive.", renderedRouteScript);
+    AssertContains("Rendered ${label} page must not include repo-local CLI commands.", renderedRouteScript);
+    AssertContains("assertNoHiddenGlobalDotnetToolInstall(page, label);", renderedRouteScript);
     AssertContains("uses: actions/configure-pages@v6", workflow);
     AssertContains("uses: actions/upload-pages-artifact@v5", workflow);
     AssertContains("path: docs/dist", workflow);
     AssertContains("uses: actions/deploy-pages@v5", workflow);
+    AssertContains("Verify deployed GitHub Pages route", workflow);
+    AssertContains("shell: pwsh", workflow);
+    AssertContains("$docsBaseUri = '${{ steps.deployment.outputs.page_url }}'.TrimEnd('/')", workflow);
+    AssertContains("Deployed GitHub Pages URL was '$docsBaseUri' instead of https://naramdash.github.io/TypeSharp.", workflow);
+    AssertContains("function Get-DeployedDocsPage([string] $relativePath)", workflow);
+    AssertContains("$cacheBust = [System.Uri]::EscapeDataString(\"$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-$attempt\")", workflow);
+    AssertContains("$requestUri = \"$uri?typesharp-cache-bust=$cacheBust\"", workflow);
+    AssertContains("'Cache-Control' = 'no-cache'", workflow);
+    AssertContains("'Pragma' = 'no-cache'", workflow);
+    AssertContains("function Assert-DeployedDocsContains([string] $content, [string] $expected, [string] $message)", workflow);
+    AssertContains("function Assert-DeployedDocsNotContains([string] $content, [string] $unexpected, [string] $message)", workflow);
+    AssertContains("$deployedDocsRoutes = @(", workflow);
+    AssertContains("@{ Label = 'home'; Path = '/' }", workflow);
+    AssertContains("@{ Label = 'Learning Paths'; Path = '/learning-paths/' }", workflow);
+    AssertContains("@{ Label = '.NET Interop'; Path = '/dotnet-interop/' }", workflow);
+    AssertContains("@{ Label = 'Modules And Imports'; Path = '/modules/' }", workflow);
+    AssertContains("@{ Label = 'Type System'; Path = '/type-system/' }", workflow);
+    AssertContains("@{ Label = 'C# And CLR Type Model'; Path = '/csharp-type-model/' }", workflow);
+    AssertContains("@{ Label = 'C# Members And Overloads'; Path = '/csharp-members-overloads/' }", workflow);
+    AssertContains("@{ Label = 'Feature Status'; Path = '/feature-status/' }", workflow);
+    AssertContains("@{ Label = 'Grammar'; Path = '/grammar/' }", workflow);
+    AssertContains("@{ Label = 'Language Reference'; Path = '/reference/' }", workflow);
+    AssertContains("@{ Label = 'Lowering'; Path = '/lowering/' }", workflow);
+    AssertContains("@{ Label = 'API And CLI Reference'; Path = '/api/' }", workflow);
+    AssertContains("@{ Label = 'Runtime Artifacts'; Path = '/runtime-artifacts/' }", workflow);
+    AssertContains("@{ Label = 'Troubleshooting'; Path = '/troubleshooting/' }", workflow);
+    AssertContains("@{ Label = 'Core Goal'; Path = '/goal/' }", workflow);
+    AssertContains("@{ Label = 'Project Requirements'; Path = '/requirements/' }", workflow);
+    AssertContains("@{ Label = 'Project Policy'; Path = '/project-policy/'; AllowStaleHostText = $true }", workflow);
+    AssertContains("@{ Label = 'Project Ledger'; Path = '/project-ledger/' }", workflow);
+    AssertContains("@{ Label = 'Writing Guide'; Path = '/writing-guide/' }", workflow);
+    AssertContains("@{ Label = 'Document Ownership'; Path = '/document-ownership/' }", workflow);
+    AssertContains("if ($deployedDocsRoutes.Count -ne 34)", workflow);
+    AssertContains("Deployed docs route table must contain 34 sidebar public-docs routes", workflow);
+    AssertContains("$deployedDocsUniqueRoutePathCount", workflow);
+    AssertContains("Deployed docs route table contains duplicate public-docs paths.", workflow);
+    AssertContains("$canonicalUrl = \"https://naramdash.github.io/TypeSharp$($deployedDocsRoute.Path)\"", workflow);
+    AssertContains("rel=`\"canonical`\" href=`\"$canonicalUrl`\"", workflow);
+    AssertContains("property=`\"og:url`\" content=`\"$canonicalUrl`\"", workflow);
+    AssertContains("Deployed docs $($deployedDocsRoute.Label) route still uses the stale legacy GitHub Pages URL.", workflow);
+    AssertContains("'Document not found (404)'", workflow);
+    AssertContains("'This page could not be found'", workflow);
+    AssertContains("'Page not found'", workflow);
+    AssertContains("Deployed docs $($deployedDocsRoute.Label) route resolved to legacy 404 marker '$legacy404Marker'.", workflow);
+    AssertContains("$sitemapIndex = Get-DeployedDocsPage '/sitemap-index.xml'", workflow);
+    AssertContains("$sitemap = Get-DeployedDocsPage '/sitemap-0.xml'", workflow);
+    AssertContains("Assert-DeployedDocsContains $sitemapIndex 'https://naramdash.github.io/TypeSharp/sitemap-0.xml'", workflow);
+    AssertContains("$sitemapUrl = \"https://naramdash.github.io/TypeSharp$($deployedDocsRoute.Path)\"", workflow);
+    AssertContains("Deployed docs sitemap does not include the public GitHub Pages URL for $($deployedDocsRoute.Label).", workflow);
+    AssertContains("Assert-DeployedDocsNotContains $sitemapIndex 'https://typesharp.github.io/TypeSharp'", workflow);
+    AssertContains("Assert-DeployedDocsNotContains $sitemap 'https://typesharp.github.io/TypeSharp'", workflow);
+    AssertRenderedVerifierCoversSidebarPublicRoutes(sidebarPublicRoutes, renderedRouteScript);
+    AssertWorkflowRouteTableCoversSidebarPublicRoutes(sidebarPublicRoutes, workflow, "GitHub Pages workflow");
     AssertContains("if: github.event_name != 'pull_request'", workflow);
     AssertFalse(workflow.Contains("docs-site", StringComparison.Ordinal), "Docs workflow should no longer reference the former docs-site path.");
+    AssertPowerShellRunBlocksParse(workflowPath, workflow, minimumBlockCount: 1, workflowLabel: "GitHub Pages");
+    VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(renderedRouteScript);
+}
+
+static void VerifyRenderedInstallRouteScriptRejectsInvalidReleaseTags(string renderedRouteScript)
+{
+    WithWorkspace(root =>
+    {
+        WriteFile(root, "scripts/verify-rendered-install-route.cjs", renderedRouteScript);
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1");
+
+        var matchingTag = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            matchingTag.ExitCode == 0,
+            $"Rendered install verifier should accept a dist fixture with a matching release tag.\nSTDOUT:\n{matchingTag.StandardOutput}\nSTDERR:\n{matchingTag.StandardError}");
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", includeStartHereFallback: false);
+        var matchingTagWithoutStartHereFallback = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            matchingTagWithoutStartHereFallback.ExitCode == 0,
+            $"Rendered install verifier should accept a matching dist fixture after the Start Here repo-local fallback is removed.\nSTDOUT:\n{matchingTagWithoutStartHereFallback.StandardOutput}\nSTDERR:\n{matchingTagWithoutStartHereFallback.StandardError}");
+
+        var duplicateBroaderRouteLabelScript = renderedRouteScript.Replace(
+            "  'Learning Paths',\n  'Language Tour',",
+            "  'Learning Paths',\n  'Learning Paths',");
+        AssertTrue(
+            duplicateBroaderRouteLabelScript != renderedRouteScript,
+            "Rendered verifier script mutation should create a duplicate broader-route label.");
+        WriteFile(root, "scripts/verify-rendered-install-route.cjs", duplicateBroaderRouteLabelScript);
+        var duplicateBroaderRouteLabel = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            duplicateBroaderRouteLabel.ExitCode != 0,
+            "Rendered install verifier should reject duplicate broader route subset labels.");
+        AssertContains(
+            "Rendered broader release routes contains duplicate route labels.",
+            duplicateBroaderRouteLabel.StandardOutput + duplicateBroaderRouteLabel.StandardError);
+
+        var missingBroaderRouteLabelScript = renderedRouteScript.Replace(
+            "  'Diagnostics',\n  'Advanced Topics'\n], 'broader release routes');",
+            "  'Diagnostics'\n], 'broader release routes');");
+        AssertTrue(
+            missingBroaderRouteLabelScript != renderedRouteScript,
+            "Rendered verifier script mutation should remove one broader-route label.");
+        WriteFile(root, "scripts/verify-rendered-install-route.cjs", missingBroaderRouteLabelScript);
+        var missingBroaderRouteLabel = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingBroaderRouteLabel.ExitCode != 0,
+            "Rendered install verifier should reject broader route subset count drift.");
+        AssertContains(
+            "Rendered broader release route subset must contain 9 routes",
+            missingBroaderRouteLabel.StandardOutput + missingBroaderRouteLabel.StandardError);
+
+        var overlappingCommandPolicyRouteScript = renderedRouteScript.Replace(
+            "  'Advanced Topics'\n], 'broader release routes');",
+            "  'CLI'\n], 'broader release routes');");
+        AssertTrue(
+            overlappingCommandPolicyRouteScript != renderedRouteScript,
+            "Rendered verifier script mutation should overlap broader and support route labels.");
+        WriteFile(root, "scripts/verify-rendered-install-route.cjs", overlappingCommandPolicyRouteScript);
+        var overlappingCommandPolicyRoute = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            overlappingCommandPolicyRoute.ExitCode != 0,
+            "Rendered install verifier should reject command policy route subset overlap.");
+        AssertContains(
+            "Rendered command policy route subset contains duplicate public page paths.",
+            overlappingCommandPolicyRoute.StandardOutput + overlappingCommandPolicyRoute.StandardError);
+
+        WriteFile(root, "scripts/verify-rendered-install-route.cjs", renderedRouteScript);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", homeVsixReleaseAsset: false);
+        var missingHomeVsixReleaseAsset = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingHomeVsixReleaseAsset.ExitCode != 0,
+            "Rendered install verifier should reject docs home pages that lose the VSIX release asset.");
+        AssertContains(
+            "Rendered docs home must name the VSIX release asset.",
+            missingHomeVsixReleaseAsset.StandardOutput + missingHomeVsixReleaseAsset.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", homeHiddenGlobalToolInstall: true);
+        var homeHiddenGlobalToolInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            homeHiddenGlobalToolInstall.ExitCode != 0,
+            "Rendered install verifier should reject docs home pages that expose hidden global .NET tool-install guidance.");
+        AssertContains(
+            "Rendered docs home page must not include hidden global .NET tool-install guidance.",
+            homeHiddenGlobalToolInstall.StandardOutput + homeHiddenGlobalToolInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", vscodeExactAssetNames: false);
+        var missingVscodeExactAssetNames = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingVscodeExactAssetNames.ExitCode != 0,
+            "Rendered install verifier should reject VS Code And LSP pages that lose exact asset-name guidance.");
+        AssertContains(
+            "Rendered VS Code And LSP page must tell users to confirm exact asset names.",
+            missingVscodeExactAssetNames.StandardOutput + missingVscodeExactAssetNames.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", cliInstallLink: false);
+        var missingCliInstallLink = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingCliInstallLink.ExitCode != 0,
+            "Rendered install verifier should reject CLI pages that no longer link back to Install.");
+        AssertContains(
+            "Rendered CLI page must link to Install.",
+            missingCliInstallLink.StandardOutput + missingCliInstallLink.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", broaderDocsInstallLinks: false);
+        var missingBroaderDocsInstallLinks = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingBroaderDocsInstallLinks.ExitCode != 0,
+            "Rendered install verifier should reject broader public docs pages that no longer link back to Install.");
+        AssertContains(
+            "Rendered Learning Paths page must link to Install.",
+            missingBroaderDocsInstallLinks.StandardOutput + missingBroaderDocsInstallLinks.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", broaderDocsRuntimeRoute: false);
+        var missingBroaderDocsRuntimeRoute = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingBroaderDocsRuntimeRoute.ExitCode != 0,
+            "Rendered install verifier should reject broader public docs pages that lose release-note/checksum/runtime markers.");
+        AssertContains(
+            "Rendered Learning Paths page must point to GitHub Release notes.",
+            missingBroaderDocsRuntimeRoute.StandardOutput + missingBroaderDocsRuntimeRoute.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", broaderDocsRepoLocalCommand: true);
+        var broaderDocsRepoLocalCommand = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            broaderDocsRepoLocalCommand.ExitCode != 0,
+            "Rendered install verifier should reject broader public docs pages that expose repo-local CLI commands.");
+        AssertContains(
+            "Rendered Learning Paths page must not include repo-local CLI commands.",
+            broaderDocsRepoLocalCommand.StandardOutput + broaderDocsRepoLocalCommand.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", broaderDocsHiddenGlobalToolInstall: true);
+        var broaderDocsHiddenGlobalToolInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            broaderDocsHiddenGlobalToolInstall.ExitCode != 0,
+            "Rendered install verifier should reject broader public docs pages that expose hidden global .NET tool-install guidance.");
+        AssertContains(
+            "Rendered Learning Paths page must not include hidden global .NET tool-install guidance.",
+            broaderDocsHiddenGlobalToolInstall.StandardOutput + broaderDocsHiddenGlobalToolInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", supportInstallLinks: false);
+        var missingSupportInstallLinks = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingSupportInstallLinks.ExitCode != 0,
+            "Rendered install verifier should reject support pages that no longer link back to Install.");
+        AssertContains(
+            "Rendered Project Configuration page must link to Install.",
+            missingSupportInstallLinks.StandardOutput + missingSupportInstallLinks.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", supportRuntimeRoute: false);
+        var missingSupportRuntimeRoute = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingSupportRuntimeRoute.ExitCode != 0,
+            "Rendered install verifier should reject support pages that lose release-note/checksum/runtime markers.");
+        AssertContains(
+            "Rendered Project Configuration page must point to GitHub Release notes.",
+            missingSupportRuntimeRoute.StandardOutput + missingSupportRuntimeRoute.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", startHereFallbackBeforeInstall: true);
+        var startHereFallbackBeforeInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            startHereFallbackBeforeInstall.ExitCode != 0,
+            "Rendered install verifier should reject a Start Here fixture that shows repo-local fallback commands before Install.");
+        AssertContains(
+            "Rendered Start Here page must keep Install before repo-local fallback commands.",
+            startHereFallbackBeforeInstall.StandardOutput + startHereFallbackBeforeInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", startHereHiddenGlobalToolInstall: true);
+        var startHereHiddenGlobalToolInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            startHereHiddenGlobalToolInstall.ExitCode != 0,
+            "Rendered install verifier should reject Start Here pages that expose hidden global .NET tool-install guidance.");
+        AssertContains(
+            "Rendered Start Here page must not include hidden global .NET tool-install guidance.",
+            startHereHiddenGlobalToolInstall.StandardOutput + startHereHiddenGlobalToolInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installGitHubReleaseDownloadUrl: false);
+        var missingInstallGitHubReleaseRoute = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingInstallGitHubReleaseRoute.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that lose the GitHub Release download route.");
+        AssertContains(
+            "Rendered Install page must show the GitHub Release download URL shape.",
+            missingInstallGitHubReleaseRoute.StandardOutput + missingInstallGitHubReleaseRoute.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installExactAssetNames: false);
+        var missingInstallExactAssetNames = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingInstallExactAssetNames.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that lose exact asset-name guidance.");
+        AssertContains(
+            "Rendered Install page must tell users to confirm exact asset names.",
+            missingInstallExactAssetNames.StandardOutput + missingInstallExactAssetNames.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", startHereExactAssetNames: false);
+        var missingStartHereExactAssetNames = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingStartHereExactAssetNames.ExitCode != 0,
+            "Rendered install verifier should reject Start Here pages that stop telling users to confirm exact asset names.");
+        AssertContains(
+            "Rendered Start Here page must tell users to confirm exact asset names.",
+            missingStartHereExactAssetNames.StandardOutput + missingStartHereExactAssetNames.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", tutorialsProjectBeforeInstall: true);
+        var tutorialsProjectBeforeInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            tutorialsProjectBeforeInstall.ExitCode != 0,
+            "Rendered install verifier should reject a Tutorials fixture that shows project commands before the release install route.");
+        AssertContains(
+            "Rendered Tutorials page must keep the release install route before first project commands.",
+            tutorialsProjectBeforeInstall.StandardOutput + tutorialsProjectBeforeInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", cliRepoLocalCommand: true);
+        var cliRepoLocalCommand = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            cliRepoLocalCommand.ExitCode != 0,
+            "Rendered install verifier should reject support routes that expose repo-local CLI commands.");
+        AssertContains(
+            "Rendered CLI page must not include repo-local CLI commands.",
+            cliRepoLocalCommand.StandardOutput + cliRepoLocalCommand.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", cliHiddenGlobalToolInstall: true);
+        var cliHiddenGlobalToolInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            cliHiddenGlobalToolInstall.ExitCode != 0,
+            "Rendered install verifier should reject support routes that expose hidden global .NET tool-install guidance.");
+        AssertContains(
+            "Rendered CLI page must not include hidden global .NET tool-install guidance.",
+            cliHiddenGlobalToolInstall.StandardOutput + cliHiddenGlobalToolInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installHiddenGlobalToolInstall: true);
+        var installHiddenGlobalToolInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            installHiddenGlobalToolInstall.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that expose hidden global .NET tool-install guidance.");
+        AssertContains(
+            "Rendered Install page must not include hidden global .NET tool-install guidance.",
+            installHiddenGlobalToolInstall.StandardOutput + installHiddenGlobalToolInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", tutorialsHiddenGlobalToolInstall: true);
+        var tutorialsHiddenGlobalToolInstall = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            tutorialsHiddenGlobalToolInstall.ExitCode != 0,
+            "Rendered install verifier should reject Tutorials pages that expose hidden global .NET tool-install guidance.");
+        AssertContains(
+            "Rendered Tutorials page must not include hidden global .NET tool-install guidance.",
+            tutorialsHiddenGlobalToolInstall.StandardOutput + tutorialsHiddenGlobalToolInstall.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installCanonicalUrl: false);
+        var missingInstallCanonicalUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingInstallCanonicalUrl.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that lose the public GitHub Pages canonical URL.");
+        AssertContains(
+            "Rendered Install page must use the public GitHub Pages canonical URL.",
+            missingInstallCanonicalUrl.StandardOutput + missingInstallCanonicalUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installOpenGraphUrl: false);
+        var missingInstallOpenGraphUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingInstallOpenGraphUrl.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that lose the public GitHub Pages Open Graph URL.");
+        AssertContains(
+            "Rendered Install page must use the public GitHub Pages Open Graph URL.",
+            missingInstallOpenGraphUrl.StandardOutput + missingInstallOpenGraphUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installBasePathHref: false);
+        var missingInstallBasePathHref = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingInstallBasePathHref.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that lose the GitHub Pages /TypeSharp base path.");
+        AssertContains(
+            "Rendered Install page must use the GitHub Pages /TypeSharp base path.",
+            missingInstallBasePathHref.StandardOutput + missingInstallBasePathHref.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", installStaleLegacyUrl: true);
+        var staleInstallLegacyUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            staleInstallLegacyUrl.ExitCode != 0,
+            "Rendered install verifier should reject Install pages that still contain the stale legacy GitHub Pages URL.");
+        AssertContains(
+            "Rendered Install page must not use the stale legacy GitHub Pages URL.",
+            staleInstallLegacyUrl.StandardOutput + staleInstallLegacyUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", sitemapInstallUrl: false);
+        var missingSitemapInstallUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingSitemapInstallUrl.ExitCode != 0,
+            "Rendered install verifier should reject sitemaps that lose the public GitHub Pages Install URL.");
+        AssertContains(
+            "Rendered sitemap must include the public GitHub Pages URL for Install.",
+            missingSitemapInstallUrl.StandardOutput + missingSitemapInstallUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", sitemapIndexUrl: false);
+        var missingSitemapIndexUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingSitemapIndexUrl.ExitCode != 0,
+            "Rendered install verifier should reject sitemap indexes that lose the public GitHub Pages sitemap URL.");
+        AssertContains(
+            "Rendered sitemap index must use the public GitHub Pages /TypeSharp URL.",
+            missingSitemapIndexUrl.StandardOutput + missingSitemapIndexUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", sitemapRuntimeArtifactsUrl: false);
+        var missingSitemapRuntimeArtifactsUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingSitemapRuntimeArtifactsUrl.ExitCode != 0,
+            "Rendered install verifier should reject sitemaps that lose the public GitHub Pages Runtime Artifacts URL.");
+        AssertContains(
+            "Rendered sitemap must include the public GitHub Pages URL for Runtime Artifacts.",
+            missingSitemapRuntimeArtifactsUrl.StandardOutput + missingSitemapRuntimeArtifactsUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", sitemapVscodeUrl: false);
+        var missingSitemapVscodeUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            missingSitemapVscodeUrl.ExitCode != 0,
+            "Rendered install verifier should reject sitemaps that lose the public GitHub Pages VS Code URL.");
+        AssertContains(
+            "Rendered sitemap must include the public GitHub Pages URL for VS Code And LSP.",
+            missingSitemapVscodeUrl.StandardOutput + missingSitemapVscodeUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", sitemapStaleLegacyUrl: true);
+        var staleSitemapLegacyUrl = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            staleSitemapLegacyUrl.ExitCode != 0,
+            "Rendered install verifier should reject sitemaps that still contain the stale legacy GitHub Pages URL.");
+        AssertContains(
+            "Rendered sitemap must not use the stale legacy GitHub Pages URL.",
+            staleSitemapLegacyUrl.StandardOutput + staleSitemapLegacyUrl.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1");
+        var mismatchedTag = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.2"
+            });
+
+        AssertTrue(
+            mismatchedTag.ExitCode != 0,
+            "Rendered install verifier should reject a dist fixture whose Install route names a different release tag.");
+        AssertContains(
+            "Rendered Install page must set the release download version to RELEASE_TAG.",
+            mismatchedTag.StandardOutput + mismatchedTag.StandardError);
+
+        WriteRenderedInstallRouteFixture(root, "v0.1.0-preview.1", buildMetadataTag: "v0.1.0-preview.2");
+        var mismatchedBuildMetadata = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-preview.1"
+            });
+
+        AssertTrue(
+            mismatchedBuildMetadata.ExitCode != 0,
+            "Rendered install verifier should reject a dist fixture whose version sample names a different build metadata tag.");
+        AssertContains(
+            "Rendered Install page version sample must show RELEASE_TAG as build metadata.",
+            mismatchedBuildMetadata.StandardOutput + mismatchedBuildMetadata.StandardError);
+
+        var malformedTag = RunProcessWithEnvironment(
+            "node",
+            "scripts/verify-rendered-install-route.cjs",
+            root,
+            new Dictionary<string, string>
+            {
+                ["RELEASE_TAG"] = "v0.1.0-alpha.1"
+            });
+
+        AssertTrue(
+            malformedTag.ExitCode != 0,
+            "Rendered install verifier should reject release tags outside the documented preview.N tag policy.");
+        AssertContains(
+            "RELEASE_TAG must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-preview.N",
+            malformedTag.StandardOutput + malformedTag.StandardError);
+    });
+}
+
+static void WriteRenderedInstallRouteFixture(
+    string root,
+    string releaseTag,
+    string? buildMetadataTag = null,
+    bool homeVsixReleaseAsset = true,
+    bool homeHiddenGlobalToolInstall = false,
+    bool vscodeExactAssetNames = true,
+    bool cliInstallLink = true,
+    bool broaderDocsInstallLinks = true,
+    bool broaderDocsRuntimeRoute = true,
+    bool broaderDocsRepoLocalCommand = false,
+    bool broaderDocsHiddenGlobalToolInstall = false,
+    bool supportInstallLinks = true,
+    bool supportRuntimeRoute = true,
+    bool includeStartHereFallback = true,
+    bool startHereFallbackBeforeInstall = false,
+    bool tutorialsProjectBeforeInstall = false,
+    bool cliRepoLocalCommand = false,
+    bool cliHiddenGlobalToolInstall = false,
+    bool installHiddenGlobalToolInstall = false,
+    bool installGitHubReleaseRepository = true,
+    bool installGitHubReleaseDownloadUrl = true,
+    bool installGitHubReleaseTagUrl = true,
+    bool installExactAssetNames = true,
+    bool startHereHiddenGlobalToolInstall = false,
+    bool startHereExactAssetNames = true,
+    bool tutorialsHiddenGlobalToolInstall = false,
+    bool installCanonicalUrl = true,
+    bool installOpenGraphUrl = true,
+    bool installBasePathHref = true,
+    bool installStaleLegacyUrl = false,
+    bool sitemapIndexUrl = true,
+    bool sitemapInstallUrl = true,
+    bool sitemapRuntimeArtifactsUrl = true,
+    bool sitemapVscodeUrl = true,
+    bool sitemapStaleLegacyUrl = false)
+{
+    var runtimeRoute = """
+        tag-specific GitHub Release notes
+        exact asset names
+        typesharp-runtime-net48-
+        SHA256SUMS.txt
+        """;
+    var installGitHubReleaseRouteContent = string.Concat(
+        installGitHubReleaseRepository ? "naramdash/TypeSharp\n" : string.Empty,
+        installGitHubReleaseDownloadUrl ? "https://github.com/$repo/releases/download/$version\n" : string.Empty,
+        installGitHubReleaseTagUrl ? "https://github.com/$repo/releases/tag/$version\n" : string.Empty);
+    var releaseNotesRoute = """
+        GitHub Release notes
+        exact asset names
+        """;
+    var installReleaseNotesRoute = installExactAssetNames
+        ? releaseNotesRoute
+        : "GitHub Release notes\n";
+    var startHereReleaseNotesRoute = startHereExactAssetNames
+        ? releaseNotesRoute
+        : "GitHub Release notes\n";
+
+    WriteRenderedRouteFile(root, "dist/index.html", "/", $$"""
+        <a href="/TypeSharp/install/">Install</a>
+        <a href="/TypeSharp/start-here/">Start Here</a>
+        <a rel="next" href="/TypeSharp/install/">Install</a>
+        Start with <a href="/TypeSharp/install/">Install</a>
+        GitHub Release notes
+        exact asset names
+        typesharp-cli-dotnet-
+        typesharp-runtime-net48-
+        {{(homeVsixReleaseAsset ? "typesharp-vscode-\n" : string.Empty)}}
+        SHA256SUMS.txt
+        {{(homeHiddenGlobalToolInstall ? "dotnet tool install TypeSharp.Cli\n" : string.Empty)}}
+        <h2 id="preview-contributor-source-built-fallback"></h2>
+        """);
+
+    WriteRenderedRouteFile(root, "dist/install/index.html", "/install/", $$"""
+        typesharp-cli-dotnet-
+        typesharp-runtime-net48-
+        SHA256SUMS.txt
+        {{installGitHubReleaseRouteContent}}
+        {{installReleaseNotesRoute}}
+        &#x22;{{releaseTag}}&#x22;
+        Build metadata {{buildMetadataTag ?? releaseTag}}
+        {{(installStaleLegacyUrl ? "https://typesharp.github.io/TypeSharp/install/\n" : string.Empty)}}
+        {{(installHiddenGlobalToolInstall ? "dotnet tool install TypeSharp.Cli\n" : string.Empty)}}
+        """,
+        includeCanonical: installCanonicalUrl,
+        includeOpenGraph: installOpenGraphUrl,
+        includeBasePathHref: installBasePathHref);
+
+    var startHereFallback = includeStartHereFallback
+        ? "dotnet cli\\TypeSharp.Cli\\bin\\Debug\\net10.0\\typesharp.dll\n"
+        : string.Empty;
+    var startHereFallbackBeforeInstallContent = startHereFallbackBeforeInstall
+        ? startHereFallback
+        : string.Empty;
+    var startHereFallbackAfterInstallContent = startHereFallbackBeforeInstall
+        ? string.Empty
+        : startHereFallback;
+    var startHereHiddenGlobalToolInstallContent = startHereHiddenGlobalToolInstall
+        ? "dotnet tool install TypeSharp.Cli\n"
+        : string.Empty;
+
+    WriteRenderedRouteFile(root, "dist/start-here/index.html", "/start-here/", $$"""
+        {{startHereFallbackBeforeInstallContent}}
+        <a href="/TypeSharp/install/">Install</a>
+        {{startHereReleaseNotesRoute}}
+        typesharp-cli-dotnet-
+        typesharp-runtime-net48-
+        SHA256SUMS.txt
+        {{startHereHiddenGlobalToolInstallContent}}
+        <h2 id="install-first"></h2>
+        {{startHereFallbackAfterInstallContent}}<h2 id="preview-contributor-source-built-fallback"></h2>
+        """);
+
+    var tutorialsFirstProject = "typesharp new console\n";
+    var tutorialsProjectBeforeInstallContent = tutorialsProjectBeforeInstall
+        ? tutorialsFirstProject
+        : string.Empty;
+    var tutorialsProjectAfterInstallContent = tutorialsProjectBeforeInstall
+        ? string.Empty
+        : tutorialsFirstProject;
+    var cliRepoLocalCommandContent = cliRepoLocalCommand
+        ? "dotnet cli\\TypeSharp.Cli\\bin\\Debug\\net10.0\\typesharp.dll\n"
+        : string.Empty;
+    var cliHiddenGlobalToolInstallContent = cliHiddenGlobalToolInstall
+        ? "dotnet tool install TypeSharp.Cli\n"
+        : string.Empty;
+    var tutorialsHiddenGlobalToolInstallContent = tutorialsHiddenGlobalToolInstall
+        ? "dotnet tool install TypeSharp.Cli\n"
+        : string.Empty;
+
+    WriteRenderedRouteFile(root, "dist/tutorials/index.html", "/tutorials/", $$"""
+        {{tutorialsProjectBeforeInstallContent}}
+        <a href="/TypeSharp/install/">Install</a>
+        {{releaseNotesRoute}}
+        typesharp-cli-dotnet-
+        typesharp-runtime-net48-
+        SHA256SUMS.txt
+        {{tutorialsHiddenGlobalToolInstallContent}}
+        {{tutorialsProjectAfterInstallContent}}
+        """);
+
+    WriteRenderedRouteFile(root, "dist/cli/index.html", "/cli/", $$"""
+        {{(cliInstallLink ? "<a href=\"/TypeSharp/install/\">Install</a>\n" : string.Empty)}}
+        {{runtimeRoute}}
+        typesharp-cli-dotnet-
+        {{cliRepoLocalCommandContent}}
+        {{cliHiddenGlobalToolInstallContent}}
+        """);
+
+    var broaderDocsInstallLink = broaderDocsInstallLinks
+        ? "<a href=\"/TypeSharp/install/\">Install</a>\n"
+        : string.Empty;
+    var broaderDocsRuntimeRouteContent = broaderDocsRuntimeRoute
+        ? runtimeRoute
+        : string.Empty;
+    var broaderDocsRepoLocalCommandContent = broaderDocsRepoLocalCommand
+        ? "dotnet cli\\TypeSharp.Cli\\bin\\Debug\\net10.0\\typesharp.dll\n"
+        : string.Empty;
+    var broaderDocsHiddenGlobalToolInstallContent = broaderDocsHiddenGlobalToolInstall
+        ? "dotnet tool install TypeSharp.Cli\n"
+        : string.Empty;
+    var broaderDocsRoute = string.Concat(
+        broaderDocsInstallLink,
+        broaderDocsRuntimeRouteContent,
+        "typesharp-cli-dotnet-\n",
+        broaderDocsRepoLocalCommandContent,
+        broaderDocsHiddenGlobalToolInstallContent);
+    WriteRenderedRouteFile(root, "dist/learning-paths/index.html", "/learning-paths/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/language-tour/index.html", "/language-tour/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/fundamentals/index.html", "/fundamentals/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/guides/index.html", "/guides/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/dotnet-interop/index.html", "/dotnet-interop/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/cookbook/index.html", "/cookbook/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/api/index.html", "/api/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/examples/index.html", "/examples/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/diagnostics/index.html", "/diagnostics/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/advanced/index.html", "/advanced/", broaderDocsRoute);
+    WriteRenderedRouteFile(root, "dist/modules/index.html", "/modules/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/type-system/index.html", "/type-system/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/csharp-type-model/index.html", "/csharp-type-model/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/csharp-members-overloads/index.html", "/csharp-members-overloads/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/feature-status/index.html", "/feature-status/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/grammar/index.html", "/grammar/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/reference/index.html", "/reference/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/lowering/index.html", "/lowering/", string.Empty);
+
+    var vscodeReleaseNotesRoute = vscodeExactAssetNames
+        ? releaseNotesRoute
+        : "GitHub Release notes\n";
+    var supportInstallLink = supportInstallLinks
+        ? "<a href=\"/TypeSharp/install/\">Install</a>\n"
+        : string.Empty;
+    var supportRuntimeRouteContent = supportRuntimeRoute
+        ? runtimeRoute
+        : string.Empty;
+
+    WriteRenderedRouteFile(root, "dist/project-configuration/index.html", "/project-configuration/", $$"""
+        {{supportInstallLink}}
+        {{supportRuntimeRouteContent}}
+        ../typesharp-runtime/lib/net48/TypeSharp.Core.dll
+        ../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll
+        """);
+
+    WriteRenderedRouteFile(root, "dist/runtime-artifacts/index.html", "/runtime-artifacts/", $$"""
+        {{supportInstallLink}}
+        {{supportRuntimeRouteContent}}
+        typesharp-cli-dotnet-
+        generated/bin/
+        ../typesharp-runtime/lib/net48/TypeSharp.Core.dll
+        ../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll
+        """);
+
+    WriteRenderedRouteFile(root, "dist/vscode-lsp/index.html", "/vscode-lsp/", $$"""
+        {{supportInstallLink}}
+        {{vscodeReleaseNotesRoute}}
+        typesharp-vscode-
+        SHA256SUMS.txt
+        """);
+
+    WriteRenderedRouteFile(root, "dist/migration/index.html", "/migration/", supportInstallLink + supportRuntimeRouteContent);
+
+    WriteRenderedRouteFile(root, "dist/troubleshooting/index.html", "/troubleshooting/", $$"""
+        {{supportInstallLink}}
+        {{supportRuntimeRouteContent}}
+        generated/bin/
+        ../typesharp-runtime/lib/net48/TypeSharp.Core.dll
+        ../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll
+        """);
+
+    WriteRenderedRouteFile(root, "dist/goal/index.html", "/goal/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/requirements/index.html", "/requirements/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/project-policy/index.html", "/project-policy/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/project-ledger/index.html", "/project-ledger/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/writing-guide/index.html", "/writing-guide/", string.Empty);
+    WriteRenderedRouteFile(root, "dist/document-ownership/index.html", "/document-ownership/", string.Empty);
+
+    WriteFile(root, "dist/sitemap-index.xml", sitemapIndexUrl
+        ? """
+            https://naramdash.github.io/TypeSharp/sitemap-0.xml
+            """
+        : string.Empty);
+    WriteFile(root, "dist/sitemap-0.xml", string.Concat(
+        "https://naramdash.github.io/TypeSharp/\n",
+        sitemapInstallUrl ? "https://naramdash.github.io/TypeSharp/install/\n" : string.Empty,
+        "https://naramdash.github.io/TypeSharp/start-here/\n",
+        "https://naramdash.github.io/TypeSharp/tutorials/\n",
+        "https://naramdash.github.io/TypeSharp/learning-paths/\n",
+        "https://naramdash.github.io/TypeSharp/language-tour/\n",
+        "https://naramdash.github.io/TypeSharp/fundamentals/\n",
+        "https://naramdash.github.io/TypeSharp/guides/\n",
+        "https://naramdash.github.io/TypeSharp/dotnet-interop/\n",
+        "https://naramdash.github.io/TypeSharp/cookbook/\n",
+        "https://naramdash.github.io/TypeSharp/api/\n",
+        "https://naramdash.github.io/TypeSharp/examples/\n",
+        "https://naramdash.github.io/TypeSharp/diagnostics/\n",
+        "https://naramdash.github.io/TypeSharp/advanced/\n",
+        "https://naramdash.github.io/TypeSharp/modules/\n",
+        "https://naramdash.github.io/TypeSharp/type-system/\n",
+        "https://naramdash.github.io/TypeSharp/csharp-type-model/\n",
+        "https://naramdash.github.io/TypeSharp/csharp-members-overloads/\n",
+        "https://naramdash.github.io/TypeSharp/feature-status/\n",
+        "https://naramdash.github.io/TypeSharp/grammar/\n",
+        "https://naramdash.github.io/TypeSharp/reference/\n",
+        "https://naramdash.github.io/TypeSharp/lowering/\n",
+        "https://naramdash.github.io/TypeSharp/cli/\n",
+        "https://naramdash.github.io/TypeSharp/project-configuration/\n",
+        sitemapRuntimeArtifactsUrl ? "https://naramdash.github.io/TypeSharp/runtime-artifacts/\n" : string.Empty,
+        sitemapVscodeUrl ? "https://naramdash.github.io/TypeSharp/vscode-lsp/\n" : string.Empty,
+        "https://naramdash.github.io/TypeSharp/migration/\n",
+        "https://naramdash.github.io/TypeSharp/troubleshooting/\n",
+        "https://naramdash.github.io/TypeSharp/goal/\n",
+        "https://naramdash.github.io/TypeSharp/requirements/\n",
+        "https://naramdash.github.io/TypeSharp/project-policy/\n",
+        "https://naramdash.github.io/TypeSharp/project-ledger/\n",
+        "https://naramdash.github.io/TypeSharp/writing-guide/\n",
+        "https://naramdash.github.io/TypeSharp/document-ownership/\n",
+        sitemapStaleLegacyUrl ? "https://typesharp.github.io/TypeSharp/install/\n" : string.Empty));
+}
+
+static void WriteRenderedRouteFile(
+    string root,
+    string relativePath,
+    string publicPath,
+    string content,
+    bool includeCanonical = true,
+    bool includeOpenGraph = true,
+    bool includeBasePathHref = true)
+{
+    var canonicalUrl = $"https://naramdash.github.io/TypeSharp{publicPath}";
+    var metadata = string.Concat(
+        includeCanonical ? $"<link rel=\"canonical\" href=\"{canonicalUrl}\">\n" : string.Empty,
+        includeOpenGraph ? $"<meta property=\"og:url\" content=\"{canonicalUrl}\">\n" : string.Empty,
+        includeBasePathHref ? "<a href=\"/TypeSharp/\">Overview</a>\n" : string.Empty);
+    WriteFile(root, relativePath, metadata + content);
 }
 
 static void ReleaseAndRegressionWorkflowContractsAreStable()
 {
     var workflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "release-artifacts.yml");
     var workflow = File.ReadAllText(workflowPath);
+    var astroConfig = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "astro.config.ts"));
+    var sidebarPublicRoutes = ExtractAstroSidebarPublicRoutes(astroConfig);
 
     AssertContains("name: Release Artifacts", workflow);
     AssertContains("tags:", workflow);
     AssertContains("- 'v*.*.*'", workflow);
     AssertContains("workflow_dispatch:", workflow);
     AssertContains("tag:", workflow);
+    AssertContains("$env:RELEASE_TAG -notmatch '^v\\d+\\.\\d+\\.\\d+(-preview\\.\\d+)?$'", workflow);
+    AssertContains("must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-preview.N", workflow);
+    AssertContains("$tagCommit = git rev-list -n 1 \"refs/tags/$env:RELEASE_TAG\"", workflow);
+    AssertContains("$headCommit = git rev-parse HEAD", workflow);
+    AssertContains("Release checkout commit '$headCommit' did not match tag '$env:RELEASE_TAG' commit '$tagCommit'.", workflow);
+    AssertFalse(workflow.Contains("(-[0-9A-Za-z.-]+)?", StringComparison.Ordinal), "Release workflow should not allow arbitrary prerelease labels outside preview.N.");
     AssertContains("contents: write", workflow);
+    AssertContains("actions: write", workflow);
     AssertContains("concurrency:", workflow);
     AssertContains("$PSNativeCommandUseErrorActionPreference = $true", workflow);
     AssertContains("runs-on: windows-latest", workflow);
@@ -15327,7 +17814,242 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("generated C# compiles in net48 project", workflow);
     AssertContains("net48 runtime artifacts avoid external package dependencies", workflow);
     AssertContains("runnable example project commands are smoke-tested", workflow);
+    AssertContains("docs site contract is stable", workflow);
     AssertContains("VS Code extension package shape is stable", workflow);
+    AssertContains("Verify docs site before release", workflow);
+    AssertContains("run: |\n          npm ci\n          npm run build", workflow);
+    AssertContains("npm run verify:rendered-install-route", workflow);
+    AssertContains("working-directory: docs\n        env:\n          RELEASE_TAG: ${{ env.RELEASE_TAG }}", workflow);
+    AssertContains("Verify GitHub Pages configuration", workflow);
+    AssertContains("gh api \"repos/$env:GITHUB_REPOSITORY/pages\" | ConvertFrom-Json", workflow);
+    AssertContains("GitHub Pages build type was '$($pages.build_type)' instead of workflow.", workflow);
+    AssertContains("GitHub Pages URL was '$($pages.html_url)' instead of https://naramdash.github.io/TypeSharp/.", workflow);
+    AssertContains("Dispatch public docs for release", workflow);
+    AssertContains("$headCommit = git rev-parse HEAD", workflow);
+    AssertContains("$dispatchStartedAt = [DateTimeOffset]::UtcNow.AddSeconds(-10)", workflow);
+    AssertContains("$dispatchOutput = gh workflow run docs.yml --ref $env:RELEASE_TAG 2>&1", workflow);
+    AssertContains("if ($dispatchText -match '/actions/runs/(\\d+)')", workflow);
+    AssertContains("gh run list --workflow docs.yml --commit $headCommit --event workflow_dispatch --json databaseId,headSha,headBranch,status,conclusion,url,createdAt --limit 10", workflow);
+    AssertContains("[string] $_.headBranch -eq $env:RELEASE_TAG", workflow);
+    AssertContains("[DateTimeOffset]::Parse([string] $_.createdAt) -ge $dispatchStartedAt", workflow);
+    AssertContains("Could not find the dispatched docs.yml workflow run for release tag '$env:RELEASE_TAG'.", workflow);
+    AssertContains("gh run watch $docsWorkflowRunId --exit-status --interval 10", workflow);
+    AssertContains("gh run view $docsWorkflowRunId --json databaseId,headSha,headBranch,status,conclusion,url,workflowName,event,createdAt", workflow);
+    AssertContains("$docsWorkflowRunCreatedAt = [DateTimeOffset]::Parse([string] $docsWorkflowRun.createdAt)", workflow);
+    AssertContains("if ($docsWorkflowRunCreatedAt -lt $dispatchStartedAt)", workflow);
+    AssertContains("before dispatch started at '$dispatchStartedAt'", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' used head SHA", workflow);
+    AssertContains("if ([string] $docsWorkflowRun.headBranch -ne $env:RELEASE_TAG)", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' used ref", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' status was", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' conclusion was", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' workflow name was", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' event was", workflow);
+    AssertContains("GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}", workflow);
+    AssertContains("Verify public docs route before release", workflow);
+    AssertContains("$docsBaseUri = 'https://naramdash.github.io/TypeSharp'", workflow);
+    AssertContains("function Get-PublicDocsPage([string] $relativePath)", workflow);
+    AssertContains("for ($attempt = 1; $attempt -le 60; $attempt++)", workflow);
+    AssertContains("$cacheBust = [System.Uri]::EscapeDataString(\"$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-$attempt\")", workflow);
+    AssertContains("$requestUri = \"$uri?typesharp-cache-bust=$cacheBust\"", workflow);
+    AssertContains("Invoke-WebRequest -Uri $requestUri -UseBasicParsing -TimeoutSec 30 -Headers @", workflow);
+    AssertContains("'Cache-Control' = 'no-cache'", workflow);
+    AssertContains("'Pragma' = 'no-cache'", workflow);
+    AssertContains("Start-Sleep -Seconds 20", workflow);
+    AssertContains("Public docs route '$uri' was not available before release after 60 attempts.", workflow);
+    AssertContains("function Assert-PublicDocsContains([string] $content, [string] $expected, [string] $message)", workflow);
+    AssertContains("function Assert-PublicDocsContainsAny([string] $content, [string[]] $expectedValues, [string] $message)", workflow);
+    AssertContains("function Assert-PublicDocsNotContains([string] $content, [string] $unexpected, [string] $message)", workflow);
+    AssertContains("function Assert-PublicDocsBefore([string] $content, [string] $earlier, [string] $later, [string] $message)", workflow);
+    AssertContains("function Assert-PublicDocsReleaseNotesRoute([string] $content, [string] $label)", workflow);
+    AssertContains("function Assert-PublicDocsRuntimeRoute([string] $content, [string] $label)", workflow);
+    AssertContains("function Assert-PublicDocsCanonicalRoute([string] $content, [string] $relativePath, [string] $label, [bool] $allowStaleHostText = $false)", workflow);
+    AssertContains("$canonicalUrl = \"https://naramdash.github.io/TypeSharp$relativePath\"", workflow);
+    AssertContains("rel=`\"canonical`\" href=`\"$canonicalUrl`\"", workflow);
+    AssertContains("property=`\"og:url`\" content=`\"$canonicalUrl`\"", workflow);
+    AssertContains("Public docs $label route still uses the stale legacy GitHub Pages URL before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $content 'GitHub Release notes'", workflow);
+    AssertContains("Assert-PublicDocsContains $content 'exact asset names'", workflow);
+    AssertContains("Assert-PublicDocsContains $content 'typesharp-runtime-net48-'", workflow);
+    AssertContains("Assert-PublicDocsContains $content 'SHA256SUMS.txt'", workflow);
+    AssertContains("$publicDocsHome = Get-PublicDocsPage '/'", workflow);
+    AssertContains("$publicDocsInstall = Get-PublicDocsPage '/install/'", workflow);
+    AssertContains("$publicDocsStartHere = Get-PublicDocsPage '/start-here/'", workflow);
+    AssertContains("$publicDocsTutorials = Get-PublicDocsPage '/tutorials/'", workflow);
+    AssertContains("$publicDocsLearningPaths = Get-PublicDocsPage '/learning-paths/'", workflow);
+    AssertContains("$publicDocsLanguageTour = Get-PublicDocsPage '/language-tour/'", workflow);
+    AssertContains("$publicDocsFundamentals = Get-PublicDocsPage '/fundamentals/'", workflow);
+    AssertContains("$publicDocsGuides = Get-PublicDocsPage '/guides/'", workflow);
+    AssertContains("$publicDocsDotnetInterop = Get-PublicDocsPage '/dotnet-interop/'", workflow);
+    AssertContains("$publicDocsCookbook = Get-PublicDocsPage '/cookbook/'", workflow);
+    AssertContains("$publicDocsApi = Get-PublicDocsPage '/api/'", workflow);
+    AssertContains("$publicDocsExamples = Get-PublicDocsPage '/examples/'", workflow);
+    AssertContains("$publicDocsDiagnostics = Get-PublicDocsPage '/diagnostics/'", workflow);
+    AssertContains("$publicDocsAdvanced = Get-PublicDocsPage '/advanced/'", workflow);
+    AssertContains("$publicDocsModules = Get-PublicDocsPage '/modules/'", workflow);
+    AssertContains("$publicDocsTypeSystem = Get-PublicDocsPage '/type-system/'", workflow);
+    AssertContains("$publicDocsCsharpTypeModel = Get-PublicDocsPage '/csharp-type-model/'", workflow);
+    AssertContains("$publicDocsCsharpMembersOverloads = Get-PublicDocsPage '/csharp-members-overloads/'", workflow);
+    AssertContains("$publicDocsFeatureStatus = Get-PublicDocsPage '/feature-status/'", workflow);
+    AssertContains("$publicDocsGrammar = Get-PublicDocsPage '/grammar/'", workflow);
+    AssertContains("$publicDocsReference = Get-PublicDocsPage '/reference/'", workflow);
+    AssertContains("$publicDocsLowering = Get-PublicDocsPage '/lowering/'", workflow);
+    AssertContains("$publicDocsCli = Get-PublicDocsPage '/cli/'", workflow);
+    AssertContains("$publicDocsProjectConfiguration = Get-PublicDocsPage '/project-configuration/'", workflow);
+    AssertContains("$publicDocsRuntimeArtifacts = Get-PublicDocsPage '/runtime-artifacts/'", workflow);
+    AssertContains("$publicDocsVscodeLsp = Get-PublicDocsPage '/vscode-lsp/'", workflow);
+    AssertContains("$publicDocsMigration = Get-PublicDocsPage '/migration/'", workflow);
+    AssertContains("$publicDocsTroubleshooting = Get-PublicDocsPage '/troubleshooting/'", workflow);
+    AssertContains("$publicDocsGoal = Get-PublicDocsPage '/goal/'", workflow);
+    AssertContains("$publicDocsRequirements = Get-PublicDocsPage '/requirements/'", workflow);
+    AssertContains("$publicDocsProjectPolicy = Get-PublicDocsPage '/project-policy/'", workflow);
+    AssertContains("$publicDocsProjectLedger = Get-PublicDocsPage '/project-ledger/'", workflow);
+    AssertContains("$publicDocsWritingGuide = Get-PublicDocsPage '/writing-guide/'", workflow);
+    AssertContains("$publicDocsDocumentOwnership = Get-PublicDocsPage '/document-ownership/'", workflow);
+    AssertContains("$publicDocsSitemapIndex = Get-PublicDocsPage '/sitemap-index.xml'", workflow);
+    AssertContains("$publicDocsSitemap = Get-PublicDocsPage '/sitemap-0.xml'", workflow);
+    AssertContains("$publicDocsCanonicalRoutes = @(", workflow);
+    AssertContains("if ($publicDocsCanonicalRoutes.Count -ne 34)", workflow);
+    AssertContains("Public docs canonical route table must contain 34 sidebar public-docs routes", workflow);
+    AssertContains("$publicDocsUniqueCanonicalRoutePathCount", workflow);
+    AssertContains("Public docs canonical route table contains duplicate public-docs paths.", workflow);
+    AssertContains("function Select-PublicDocsRoutesByLabel([object[]] $routes, [string[]] $labels, [string] $groupName)", workflow);
+    AssertContains("Public docs $groupName contains duplicate route labels.", workflow);
+    AssertContains("Public docs $groupName must select exactly one canonical route for '$label'", workflow);
+    AssertContains("Public docs $groupName contains duplicate selected route paths.", workflow);
+    AssertContains("$publicDocsBroaderReleaseRoutes = @(Select-PublicDocsRoutesByLabel $publicDocsCanonicalRoutes @(", workflow);
+    AssertContains("$publicDocsSupportReleaseRoutes = @(Select-PublicDocsRoutesByLabel $publicDocsCanonicalRoutes @(", workflow);
+    AssertContains("$publicDocsCommandPolicyRoutes = @($publicDocsSupportReleaseRoutes + $publicDocsBroaderReleaseRoutes)", workflow);
+    AssertContains("if ($publicDocsBroaderReleaseRoutes.Count -ne 9)", workflow);
+    AssertContains("Public docs broader release route subset must contain 9 routes", workflow);
+    AssertContains("if ($publicDocsSupportReleaseRoutes.Count -ne 6)", workflow);
+    AssertContains("Public docs support release route subset must contain 6 routes", workflow);
+    AssertContains("$publicDocsUniqueCommandPolicyRoutePathCount", workflow);
+    AssertContains("Public docs command policy route subset contains duplicate public-docs paths.", workflow);
+    AssertContains("Assert-PublicDocsCanonicalRoute $publicDocsCanonicalRoute.Content $publicDocsCanonicalRoute.Path $publicDocsCanonicalRoute.Label", workflow);
+    AssertContains("Public docs $label route does not use the public GitHub Pages canonical URL before release.", workflow);
+    AssertContains("Public docs $label route does not use the public GitHub Pages Open Graph URL before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsSitemapIndex 'https://naramdash.github.io/TypeSharp/sitemap-0.xml'", workflow);
+    AssertContains("$sitemapUrl = \"https://naramdash.github.io/TypeSharp$($publicDocsCanonicalRoute.Path)\"", workflow);
+    AssertContains("Public docs sitemap does not include the public GitHub Pages URL for $($publicDocsCanonicalRoute.Label) before release.", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsSitemapIndex 'https://typesharp.github.io/TypeSharp'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsSitemap 'https://typesharp.github.io/TypeSharp'", workflow);
+    AssertWorkflowRouteTableCoversSidebarPublicRoutes(sidebarPublicRoutes, workflow, "release workflow");
+    AssertContains("@{ Label = 'Learning Paths'; Content = $publicDocsLearningPaths; Path = '/learning-paths/' }", workflow);
+    AssertContains("@{ Label = 'Language Tour'; Content = $publicDocsLanguageTour; Path = '/language-tour/' }", workflow);
+    AssertContains("@{ Label = 'Fundamentals'; Content = $publicDocsFundamentals; Path = '/fundamentals/' }", workflow);
+    AssertContains("@{ Label = 'Guides'; Content = $publicDocsGuides; Path = '/guides/' }", workflow);
+    AssertContains("@{ Label = '.NET Interop'; Content = $publicDocsDotnetInterop; Path = '/dotnet-interop/' }", workflow);
+    AssertContains("@{ Label = 'Cookbook'; Content = $publicDocsCookbook; Path = '/cookbook/' }", workflow);
+    AssertContains("@{ Label = 'API And CLI Reference'; Content = $publicDocsApi; Path = '/api/' }", workflow);
+    AssertContains("@{ Label = 'Examples'; Content = $publicDocsExamples; Path = '/examples/' }", workflow);
+    AssertContains("@{ Label = 'Diagnostics'; Content = $publicDocsDiagnostics; Path = '/diagnostics/' }", workflow);
+    AssertContains("@{ Label = 'Advanced Topics'; Content = $publicDocsAdvanced; Path = '/advanced/' }", workflow);
+    AssertContains("@{ Label = 'Modules And Imports'; Content = $publicDocsModules; Path = '/modules/' }", workflow);
+    AssertContains("@{ Label = 'Type System'; Content = $publicDocsTypeSystem; Path = '/type-system/' }", workflow);
+    AssertContains("@{ Label = 'C# And CLR Type Model'; Content = $publicDocsCsharpTypeModel; Path = '/csharp-type-model/' }", workflow);
+    AssertContains("@{ Label = 'C# Members And Overloads'; Content = $publicDocsCsharpMembersOverloads; Path = '/csharp-members-overloads/' }", workflow);
+    AssertContains("@{ Label = 'Feature Status'; Content = $publicDocsFeatureStatus; Path = '/feature-status/' }", workflow);
+    AssertContains("@{ Label = 'Grammar'; Content = $publicDocsGrammar; Path = '/grammar/' }", workflow);
+    AssertContains("@{ Label = 'Language Reference'; Content = $publicDocsReference; Path = '/reference/' }", workflow);
+    AssertContains("@{ Label = 'Lowering'; Content = $publicDocsLowering; Path = '/lowering/' }", workflow);
+    AssertContains("@{ Label = 'CLI'; Content = $publicDocsCli; Path = '/cli/' }", workflow);
+    AssertContains("@{ Label = 'Project Configuration'; Content = $publicDocsProjectConfiguration; Path = '/project-configuration/' }", workflow);
+    AssertContains("@{ Label = 'Runtime Artifacts'; Content = $publicDocsRuntimeArtifacts; Path = '/runtime-artifacts/' }", workflow);
+    AssertContains("@{ Label = 'VS Code And LSP'; Content = $publicDocsVscodeLsp; Path = '/vscode-lsp/' }", workflow);
+    AssertContains("@{ Label = 'Migration'; Content = $publicDocsMigration; Path = '/migration/' }", workflow);
+    AssertContains("@{ Label = 'Troubleshooting'; Content = $publicDocsTroubleshooting; Path = '/troubleshooting/' }", workflow);
+    AssertContains("@{ Label = 'Core Goal'; Content = $publicDocsGoal; Path = '/goal/' }", workflow);
+    AssertContains("@{ Label = 'Project Requirements'; Content = $publicDocsRequirements; Path = '/requirements/' }", workflow);
+    AssertContains("@{ Label = 'Project Policy'; Content = $publicDocsProjectPolicy; Path = '/project-policy/'; AllowStaleHostText = $true }", workflow);
+    AssertContains("@{ Label = 'Project Ledger'; Content = $publicDocsProjectLedger; Path = '/project-ledger/' }", workflow);
+    AssertContains("@{ Label = 'Writing Guide'; Content = $publicDocsWritingGuide; Path = '/writing-guide/' }", workflow);
+    AssertContains("@{ Label = 'Document Ownership'; Content = $publicDocsDocumentOwnership; Path = '/document-ownership/' }", workflow);
+    AssertContains("foreach ($publicDocsLegacy404Route in $publicDocsCanonicalRoutes)", workflow);
+    AssertContains("'Learning Paths'", workflow);
+    AssertContains("'Language Tour'", workflow);
+    AssertContains("'Fundamentals'", workflow);
+    AssertContains("'Guides'", workflow);
+    AssertContains("'Diagnostics'", workflow);
+    AssertContains("'Advanced Topics'", workflow);
+    AssertContains("'Project Configuration'", workflow);
+    AssertContains("'Runtime Artifacts'", workflow);
+    AssertContains("'VS Code And LSP'", workflow);
+    AssertContains("foreach ($publicDocsLegacy404Marker in @(", workflow);
+    AssertContains("'Document not found (404)'", workflow);
+    AssertContains("'This page could not be found'", workflow);
+    AssertContains("'Page not found'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsLegacy404Route.Content $publicDocsLegacy404Marker", workflow);
+    AssertContains("Public docs $($publicDocsLegacy404Route.Label) route resolved to legacy 404 marker '$publicDocsLegacy404Marker' before release.", workflow);
+    AssertContains("Assert-PublicDocsContainsAny $publicDocsHome @('href=\"/TypeSharp/install/\"', 'href=\"/install/\"', 'href=\"install/\"')", workflow);
+    AssertContains("Assert-PublicDocsReleaseNotesRoute $publicDocsHome 'home'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsHome 'typesharp-cli-dotnet-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsHome 'typesharp-runtime-net48-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsHome 'typesharp-vscode-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsHome 'SHA256SUMS.txt'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsHome 'dotnet tool install'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'Download The CLI'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'naramdash/TypeSharp'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'https://github.com/$repo/releases/download/$version'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'https://github.com/$repo/releases/tag/$version'", workflow);
+    AssertContains("Assert-PublicDocsReleaseNotesRoute $publicDocsInstall 'Install'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'typesharp-cli-dotnet-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'typesharp-runtime-net48-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall 'SHA256SUMS.txt'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall \"&#x22;$env:RELEASE_TAG&#x22;\"", workflow);
+    AssertContains("Public docs Install route does not set the release download version to the current tag before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsInstall \"Build metadata $env:RELEASE_TAG\"", workflow);
+    AssertContains("Public docs Install route does not show the current release tag as build metadata before release.", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsInstall 'dotnet cli\\TypeSharp.Cli'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsInstall 'dotnet tool install'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsStartHere 'Install First'", workflow);
+    AssertContains("Assert-PublicDocsReleaseNotesRoute $publicDocsStartHere 'Start Here'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsStartHere 'typesharp-cli-dotnet-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsStartHere 'typesharp-runtime-net48-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsStartHere 'SHA256SUMS.txt'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsStartHere 'dotnet tool install'", workflow);
+    AssertContains("if ($publicDocsStartHere.Contains('dotnet cli\\TypeSharp.Cli'))", workflow);
+    AssertContains("Assert-PublicDocsBefore $publicDocsStartHere 'Install First' 'dotnet cli\\TypeSharp.Cli'", workflow);
+    AssertContains("Assert-PublicDocsReleaseNotesRoute $publicDocsTutorials 'Tutorials'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTutorials 'typesharp-cli-dotnet-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTutorials 'typesharp-runtime-net48-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTutorials 'SHA256SUMS.txt'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTutorials 'typesharp new console'", workflow);
+    AssertContains("Assert-PublicDocsBefore $publicDocsTutorials 'typesharp-cli-dotnet-' 'typesharp new console'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsTutorials 'dotnet cli\\TypeSharp.Cli'", workflow);
+    AssertContains("Assert-PublicDocsNotContains $publicDocsTutorials 'dotnet tool install'", workflow);
+    AssertContains("Public docs $($publicDocsLegacy404Route.Label) route resolved to legacy 404 marker '$publicDocsLegacy404Marker' before release.", workflow);
+    AssertContains("foreach ($publicDocsRoute in $publicDocsBroaderReleaseRoutes)", workflow);
+    AssertContains("Public docs $($publicDocsRoute.Label) route does not link to Install before release.", workflow);
+    AssertContains("Public docs $($publicDocsRoute.Label) route does not expose the CLI release asset before release.", workflow);
+    AssertContains("Assert-PublicDocsRuntimeRoute $publicDocsCli 'CLI'", workflow);
+    AssertContains("Public docs CLI route does not link to Install before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsCli 'typesharp-cli-dotnet-'", workflow);
+    AssertContains("Assert-PublicDocsRuntimeRoute $publicDocsProjectConfiguration 'Project Configuration'", workflow);
+    AssertContains("Public docs Project Configuration route does not link to Install before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsProjectConfiguration '../typesharp-runtime/lib/net48/TypeSharp.Core.dll'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsProjectConfiguration '../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll'", workflow);
+    AssertContains("Assert-PublicDocsRuntimeRoute $publicDocsRuntimeArtifacts 'Runtime Artifacts'", workflow);
+    AssertContains("Public docs Runtime Artifacts route does not link to Install before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsRuntimeArtifacts 'typesharp-cli-dotnet-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsRuntimeArtifacts 'generated/bin/'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsRuntimeArtifacts '../typesharp-runtime/lib/net48/TypeSharp.Core.dll'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsRuntimeArtifacts '../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll'", workflow);
+    AssertContains("Assert-PublicDocsReleaseNotesRoute $publicDocsVscodeLsp 'VS Code And LSP'", workflow);
+    AssertContains("Public docs VS Code And LSP route does not link to Install before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsVscodeLsp 'typesharp-vscode-'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsVscodeLsp 'SHA256SUMS.txt'", workflow);
+    AssertContains("Assert-PublicDocsRuntimeRoute $publicDocsMigration 'Migration'", workflow);
+    AssertContains("Public docs Migration route does not link to Install before release.", workflow);
+    AssertContains("Assert-PublicDocsRuntimeRoute $publicDocsTroubleshooting 'Troubleshooting'", workflow);
+    AssertContains("Public docs Troubleshooting route does not link to Install before release.", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTroubleshooting 'generated/bin/'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTroubleshooting '../typesharp-runtime/lib/net48/TypeSharp.Core.dll'", workflow);
+    AssertContains("Assert-PublicDocsContains $publicDocsTroubleshooting '../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll'", workflow);
+    AssertContains("foreach ($publicDocsRoute in $publicDocsCommandPolicyRoutes)", workflow);
+    AssertContains("Public docs $($publicDocsRoute.Label) route must not expose repo-local CLI commands before release.", workflow);
+    AssertContains("Public docs $($publicDocsRoute.Label) route must not expose hidden global .NET tool install guidance before release.", workflow);
+    AssertContains("working-directory: docs", workflow);
     AssertContains("dotnet publish cli\\TypeSharp.Cli\\TypeSharp.Cli.csproj", workflow);
     AssertContains("-p:UseAppHost=false", workflow);
     AssertContains("-p:TypeSharpBuildMetadata=$env:RELEASE_TAG", workflow);
@@ -15340,6 +18062,145 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("Compress-Archive", workflow);
     AssertContains("Get-FileHash -Algorithm SHA256", workflow);
     AssertContains("SHA256SUMS.txt", workflow);
+    AssertContains("Where-Object { $_.Name -ne 'SHA256SUMS.txt' -and $_.Name -ne 'RELEASE_NOTES.md' }", workflow);
+    AssertContains("Generated SHA256SUMS.txt entry is malformed: $_", workflow);
+    AssertContains("Generated SHA256SUMS.txt hash for '$($parts[1])' is not lowercase SHA-256.", workflow);
+    AssertContains("$duplicateGeneratedChecksumAssetName = $checksumAssetNames", workflow);
+    AssertContains("Generated SHA256SUMS.txt lists '$($duplicateGeneratedChecksumAssetName.Name)' more than once.", workflow);
+    AssertContains("Generated checksum manifest asset set mismatch. Expected '$($expectedChecksumAssetNames -join ', ')' but found '$($checksumAssetNames -join ', ')'.", workflow);
+    AssertContains("Assert-LocalArchiveContains", workflow);
+    AssertContains("Assert-LocalTextContains", workflow);
+    AssertContains("Assert-LocalTextNotContains", workflow);
+    AssertContains("typesharp-release-local-shape-", workflow);
+    AssertContains("$localRepositoryRoot = (Resolve-Path $env:GITHUB_WORKSPACE).Path", workflow);
+    AssertContains("$resolvedLocalShapeRoot = (Resolve-Path $localShapeRoot).Path", workflow);
+    AssertContains("if ($resolvedLocalShapeRoot.StartsWith($localRepositoryRoot, [System.StringComparison]::OrdinalIgnoreCase)) {", workflow);
+    AssertContains("Local release archive extraction workspace must be outside the repository checkout before upload.", workflow);
+    AssertContains("Local CLI archive does not contain typesharp.dll before upload.", workflow);
+    AssertContains("Local CLI archive does not contain typesharp.cmd before upload.", workflow);
+    AssertContains("Local CLI archive does not contain TypeSharp.Compiler.dll before upload.", workflow);
+    AssertContains("Local CLI archive does not contain TypeSharp.LanguageServer.dll before upload.", workflow);
+    AssertContains("Local CLI wrapper does not disable command echo before upload.", workflow);
+    AssertContains("Local CLI wrapper does not isolate environment changes before upload.", workflow);
+    AssertContains("Local CLI wrapper does not set TYPESHARP_HOME to the extracted directory before upload.", workflow);
+    AssertContains("Local CLI wrapper does not launch typesharp.dll through dotnet before upload.", workflow);
+    AssertContains("$env:PATH = \"$localCliRoot;$env:PATH\"", workflow);
+    AssertContains("$resolvedLocalTypeSharpCommand = (Get-Command typesharp -CommandType Application).Source", workflow);
+    AssertContains("if ($resolvedLocalTypeSharpCommand -ne $localWrapperPath) {", workflow);
+    AssertContains("Local PATH smoke resolved typesharp to '$resolvedLocalTypeSharpCommand' instead of '$localWrapperPath' before upload.", workflow);
+    AssertContains("$localInstalledVersionJsonText = typesharp version --json", workflow);
+    AssertContains("$localInstalledVersionText = typesharp version", workflow);
+    AssertContains("Local installed-command version --json failed before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.buildMetadata -ne $tag) {", workflow);
+    AssertContains("Local installed-command build metadata '$($localInstalledVersion.buildMetadata)' did not match '$tag' before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.sourceRevision -ne $sourceRevision) {", workflow);
+    AssertContains("Local installed-command source revision '$($localInstalledVersion.sourceRevision)' did not match checkout '$sourceRevision' before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.releaseChannel -ne $channel) {", workflow);
+    AssertContains("Local installed-command release channel '$($localInstalledVersion.releaseChannel)' did not match expected '$channel' before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.targetDefault -ne 'net48') {", workflow);
+    AssertContains("Local installed-command target default '$($localInstalledVersion.targetDefault)' did not match net48 before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.cliTargetFramework -ne 'net10.0') {", workflow);
+    AssertContains("Local installed-command CLI target framework '$($localInstalledVersion.cliTargetFramework)' did not match net10.0 before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.runtimeTargetFramework -ne 'net48') {", workflow);
+    AssertContains("Local installed-command runtime target framework '$($localInstalledVersion.runtimeTargetFramework)' did not match net48 before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.artifactKind -ne 'framework-dependent-dotnet') {", workflow);
+    AssertContains("Local installed-command artifact kind '$($localInstalledVersion.artifactKind)' did not match framework-dependent-dotnet before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.runtimeAbi -ne 0) {", workflow);
+    AssertContains("Local installed-command runtime ABI '$($localInstalledVersion.runtimeAbi)' did not match 0 before upload.", workflow);
+    AssertContains("if ($localInstalledVersion.runtimeAbiStatus -ne 'preview') {", workflow);
+    AssertContains("Local installed-command runtime ABI status '$($localInstalledVersion.runtimeAbiStatus)' did not match preview before upload.", workflow);
+    AssertContains("Local installed-command version text failed before upload.", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'TypeSharp CLI ' 'Local installed-command version text did not include the CLI version before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Compiler ' 'Local installed-command version text did not include the compiler version before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Language ' 'Local installed-command version text did not include the language version before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined \"Release channel $channel\" 'Local installed-command version text did not include the expected release channel before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Runtime ABI 0' 'Local installed-command version text did not include the runtime ABI before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Runtime ABI status preview' 'Local installed-command version text did not include the runtime ABI status before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Target default net48' 'Local installed-command version text did not include the default target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'CLI target net10.0' 'Local installed-command version text did not include the CLI target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Runtime target net48' 'Local installed-command version text did not include the runtime target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined 'Artifact kind framework-dependent-dotnet' 'Local installed-command version text did not include the artifact kind before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined \"Build metadata $tag\" 'Local installed-command version text did not include the release build metadata before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localInstalledVersionTextJoined \"Source revision $sourceRevision\" 'Local installed-command version text did not include the release source revision before upload.'", workflow);
+    AssertContains("Local PATH smoke resolved typesharp", workflow);
+    AssertContains("$localVersionJsonText = & $localWrapperPath version --json", workflow);
+    AssertContains("Local CLI version --json failed before upload.", workflow);
+    AssertContains("if ($localVersion.buildMetadata -ne $tag) {", workflow);
+    AssertContains("Local CLI build metadata '$($localVersion.buildMetadata)' did not match '$tag' before upload.", workflow);
+    AssertContains("if ($localVersion.sourceRevision -ne $sourceRevision) {", workflow);
+    AssertContains("Local CLI source revision '$($localVersion.sourceRevision)' did not match checkout '$sourceRevision' before upload.", workflow);
+    AssertContains("if ($localVersion.releaseChannel -ne $channel) {", workflow);
+    AssertContains("Local CLI release channel '$($localVersion.releaseChannel)' did not match expected '$channel' before upload.", workflow);
+    AssertContains("if ($localVersion.targetDefault -ne 'net48') {", workflow);
+    AssertContains("Local CLI target default '$($localVersion.targetDefault)' did not match net48 before upload.", workflow);
+    AssertContains("if ($localVersion.cliTargetFramework -ne 'net10.0') {", workflow);
+    AssertContains("Local CLI target framework '$($localVersion.cliTargetFramework)' did not match net10.0 before upload.", workflow);
+    AssertContains("if ($localVersion.runtimeTargetFramework -ne 'net48') {", workflow);
+    AssertContains("Local CLI runtime target framework '$($localVersion.runtimeTargetFramework)' did not match net48 before upload.", workflow);
+    AssertContains("if ($localVersion.artifactKind -ne 'framework-dependent-dotnet') {", workflow);
+    AssertContains("Local CLI artifact kind '$($localVersion.artifactKind)' did not match framework-dependent-dotnet before upload.", workflow);
+    AssertContains("if ($localVersion.runtimeAbi -ne 0) {", workflow);
+    AssertContains("Local CLI runtime ABI '$($localVersion.runtimeAbi)' did not match 0 before upload.", workflow);
+    AssertContains("if ($localVersion.runtimeAbiStatus -ne 'preview') {", workflow);
+    AssertContains("Local CLI runtime ABI status '$($localVersion.runtimeAbiStatus)' did not match preview before upload.", workflow);
+    AssertContains("$localVersionText = & $localWrapperPath version", workflow);
+    AssertContains("Local CLI version text failed before upload.", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'TypeSharp CLI ' 'Local CLI version text did not include the CLI version before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Compiler ' 'Local CLI version text did not include the compiler version before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Language ' 'Local CLI version text did not include the language version before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined \"Release channel $channel\" 'Local CLI version text did not include the expected release channel before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Runtime ABI 0' 'Local CLI version text did not include the runtime ABI before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Runtime ABI status preview' 'Local CLI version text did not include the runtime ABI status before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Target default net48' 'Local CLI version text did not include the default target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'CLI target net10.0' 'Local CLI version text did not include the CLI target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Runtime target net48' 'Local CLI version text did not include the runtime target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined 'Artifact kind framework-dependent-dotnet' 'Local CLI version text did not include the artifact kind before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined \"Build metadata $tag\" 'Local CLI version text did not include the release build metadata before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localVersionTextJoined \"Source revision $sourceRevision\" 'Local CLI version text did not include the release source revision before upload.'", workflow);
+    AssertContains("$env:PATH = $localCliRoot", workflow);
+    AssertContains("$localMissingHostOutput = & $localWrapperPath version 2>&1", workflow);
+    AssertContains("$localMissingHostExitCode = $LASTEXITCODE", workflow);
+    AssertContains("if ($localMissingHostExitCode -eq 0) {", workflow);
+    AssertContains("Local CLI host-prerequisite smoke unexpectedly succeeded without dotnet on PATH before upload.", workflow);
+    AssertContains("Assert-LocalTextContains ($localMissingHostOutput -join \"`n\") 'dotnet' 'Local CLI host-prerequisite smoke did not report the missing dotnet host before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localCliReadme \"# TypeSharp CLI $tag\" 'Local CLI README does not identify the release tag before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localCliReadme \"Build metadata: $tag\" 'Local CLI README does not include build metadata before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localCliReadme \"Source revision: $sourceRevision\" 'Local CLI README source revision does not match the checkout before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localCliReadme 'Run `typesharp.cmd version` from this directory' 'Local CLI README does not document the local wrapper command before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localCliReadme 'add the extracted directory to `PATH` and run `typesharp version`' 'Local CLI README does not document the PATH command route before upload.'", workflow);
+    AssertContains("Assert-LocalTextNotContains $localCliReadme 'dotnet cli\\TypeSharp.Cli' 'Local CLI README must not document repo-local CLI DLL commands before upload.'", workflow);
+    AssertContains("Assert-LocalTextNotContains $localCliReadme 'source-built' 'Local CLI README must not document the source-built fallback before upload.'", workflow);
+    AssertContains("Assert-LocalTextNotContains $localCliReadme 'dotnet tool install' 'Local CLI README must not document a hidden global dotnet tool install before upload.'", workflow);
+    AssertContains("Local runtime archive does not contain lib/net48/TypeSharp.Core.dll before upload.", workflow);
+    AssertContains("Local runtime archive does not contain lib/net48/TypeSharp.Runtime.dll before upload.", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme \"# TypeSharp Runtime $tag\" 'Local runtime README does not identify the release tag before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme \"Build metadata: $tag\" 'Local runtime README does not include build metadata before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme \"Source revision: $sourceRevision\" 'Local runtime README source revision does not match the checkout before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme 'Runtime ABI: 0' 'Local runtime README does not include runtime ABI before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme 'Runtime ABI status: preview' 'Local runtime README does not include runtime ABI status before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme 'Target framework: net48' 'Local runtime README does not include target framework before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme 'lib/net48/TypeSharp.Core.dll' 'Local runtime README does not list TypeSharp.Core.dll before upload.'", workflow);
+    AssertContains("Assert-LocalTextContains $localRuntimeReadme 'lib/net48/TypeSharp.Runtime.dll' 'Local runtime README does not list TypeSharp.Runtime.dll before upload.'", workflow);
+    AssertContains("Assert-LocalTextNotContains $localRuntimeReadme 'dotnet cli\\TypeSharp.Cli' 'Local runtime README must not document repo-local CLI DLL commands before upload.'", workflow);
+    AssertContains("Assert-LocalTextNotContains $localRuntimeReadme 'source-built' 'Local runtime README must not document the source-built fallback before upload.'", workflow);
+    AssertContains("Assert-LocalTextNotContains $localRuntimeReadme 'dotnet tool install' 'Local runtime README must not document a hidden global dotnet tool install before upload.'", workflow);
+    AssertContains("Local VSIX archive does not contain extension/package.json before upload.", workflow);
+    AssertContains("Local VSIX archive does not contain extension/extension.js before upload.", workflow);
+    AssertContains("Local VSIX archive does not contain extension/language-configuration.json before upload.", workflow);
+    AssertContains("Local VSIX archive does not contain extension/README.md before upload.", workflow);
+    AssertContains("Local VSIX archive does not contain extension/MARKETPLACE.md before upload.", workflow);
+    AssertContains("Local VSIX archive does not contain extension/syntaxes/typesharp.tmLanguage.json before upload.", workflow);
+    AssertContains("Local VSIX archive does not contain extension/server/TypeSharp.LanguageServer.dll before upload.", workflow);
+    AssertContains("Local VSIX package name '$($localVsixPackage.name)' did not match typesharp-vscode before upload.", workflow);
+    AssertContains("Local VSIX display name '$($localVsixPackage.displayName)' did not match TypeSharp before upload.", workflow);
+    AssertContains("Local VSIX description '$($localVsixPackage.description)' did not match the expected release description before upload.", workflow);
+    AssertContains("Local VSIX package version '$($localVsixPackage.version)' did not match 0.1.0 before upload.", workflow);
+    AssertContains("Local VSIX publisher '$($localVsixPackage.publisher)' did not match typesharp before upload.", workflow);
+    AssertContains("Local VSIX main '$($localVsixPackage.main)' did not match ./extension.js before upload.", workflow);
+    AssertContains("Local VSIX package does not list the Programming Languages category before upload.", workflow);
+    AssertContains("Local VSIX package does not activate on the TypeSharp language before upload.", workflow);
+    AssertContains("Local VSIX package does not contribute the TypeSharp .tysh language before upload.", workflow);
+    AssertContains("Local VSIX package does not contribute the expected TypeSharp grammar before upload.", workflow);
     AssertContains("typesharp-cli-dotnet-$tag.zip", workflow);
     AssertContains("typesharp.cmd", workflow);
     AssertContains("dotnet \"%TYPESHARP_HOME%typesharp.dll\" %*", workflow);
@@ -15347,44 +18208,978 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("typesharp-vscode-$tag.vsix", workflow);
     AssertContains("Build metadata: $tag", workflow);
     AssertContains("Source revision: $sourceRevision", workflow);
+    AssertContains("$channel = if ($tag -like 'v0.*' -or $tag -like '*-*') { 'Preview' } else { 'Stable' }", workflow);
+    AssertContains("$releaseNotesPath = Join-Path $releaseRoot 'RELEASE_NOTES.md'", workflow);
+    AssertContains("$generatedReleaseNotes = Get-Content -LiteralPath $releaseNotesPath -Raw", workflow);
+    AssertContains("$expectedReleaseNoteFragments = @(", workflow);
+    AssertContains("Generated RELEASE_NOTES.md is missing required content: $fragment", workflow);
+    AssertContains("## Summary", workflow);
+    AssertContains("## Compatibility Matrix", workflow);
+    AssertContains("'## Compatibility Matrix',\n            '| CLI line | Language | Runtime ABI | Generated target | Runtime asset |',", workflow);
+    AssertContains("'| CLI line | Language | Runtime ABI | Generated target | Runtime asset |',\n            \"| 0.1.0-preview | preview | 0 preview | net48 | typesharp-runtime-net48-$tag.zip |\",", workflow);
+    AssertContains("## Breaking Changes", workflow);
+    AssertContains("## Migration Notes", workflow);
+    AssertContains("## Stable Features", workflow);
+    AssertContains("## Preview Features", workflow);
+    AssertContains("## Diagnostics And Tooling", workflow);
+    AssertContains("## Security", workflow);
+    AssertContains("## Checksums And Signing", workflow);
+    AssertContains("Generated projects target net48 with C# 7.3-compatible output.", workflow);
+    AssertContains("Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.", workflow);
+    AssertContains("Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.", workflow);
     AssertContains("Install a previous GitHub Release asset with a matching runtime ABI", workflow);
     AssertContains("uses: actions/upload-artifact@v5", workflow);
     AssertContains("if-no-files-found: error", workflow);
     AssertContains("GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}", workflow);
     AssertContains("'release',", workflow);
     AssertContains("'create',", workflow);
-    AssertContains("gh release upload", workflow);
+    AssertContains("$releaseExists = $false", workflow);
+    AssertContains("catch {", workflow);
+    AssertContains("Release notes were not produced.", workflow);
+    AssertContains("if ((Get-Item -LiteralPath $notesPath).Length -eq 0) {", workflow);
+    AssertContains("Release notes were empty before publication.", workflow);
+    AssertContains("$releaseNotesText = Get-Content -LiteralPath $notesPath -Raw", workflow);
+    AssertContains("if ([string]::IsNullOrWhiteSpace($releaseNotesText)) {", workflow);
+    AssertContains("Release notes contained only whitespace before publication.", workflow);
+    AssertContains("$expectedReleaseNoteTitlePattern = '(?m)^# TypeSharp ' + [regex]::Escape($env:RELEASE_TAG) + '\\r?$'", workflow);
+    AssertContains("if ($releaseNotesText -notmatch $expectedReleaseNoteTitlePattern) {", workflow);
+    AssertContains("Release notes title did not match TypeSharp $env:RELEASE_TAG before publication.", workflow);
+    AssertContains("$releaseNoteTopLevelHeadings = @($releaseNoteLines | Where-Object { $_.StartsWith('# ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("if ($releaseNoteTopLevelHeadings.Count -ne 1 -or $releaseNoteTopLevelHeadings[0] -ne \"# TypeSharp $env:RELEASE_TAG\") {", workflow);
+    AssertContains("Release notes must contain exactly one top-level title before publication: # TypeSharp $env:RELEASE_TAG", workflow);
+    AssertContains("$releaseNoteDateLine = @($releaseNotesText -split '\\r?\\n' | Where-Object { $_ -like 'Date: *' } | Select-Object -First 1)", workflow);
+    AssertContains("if ($releaseNoteDateLine.Count -eq 0 -or $releaseNoteDateLine[0] -notmatch '^Date: \\d{4}-\\d{2}-\\d{2}$') {", workflow);
+    AssertContains("Release notes date did not use yyyy-MM-dd before publication.", workflow);
+    AssertContains("$expectedPrerelease = $env:RELEASE_TAG -like 'v0.*' -or $env:RELEASE_TAG -like '*-*'", workflow);
+    AssertContains("$expectedReleaseNoteChannel = if ($expectedPrerelease) { 'Preview' } else { 'Stable' }", workflow);
+    AssertContains("$releaseNoteChannelLine = @($releaseNotesText -split '\\r?\\n' | Where-Object { $_ -like 'Channel: *' } | Select-Object -First 1)", workflow);
+    AssertContains("if ($releaseNoteChannelLine.Count -eq 0 -or $releaseNoteChannelLine[0] -ne \"Channel: $expectedReleaseNoteChannel\") {", workflow);
+    AssertContains("Release notes channel did not match $expectedReleaseNoteChannel before publication.", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains(\"Build metadata: $env:RELEASE_TAG\")) {", workflow);
+    AssertContains("Release notes build metadata did not match $env:RELEASE_TAG before publication.", workflow);
+    AssertContains("$expectedReleaseNoteSourceRevision = git rev-parse --short=12 HEAD", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains(\"Source revision: $expectedReleaseNoteSourceRevision\")) {", workflow);
+    AssertContains("Release notes source revision did not match checkout $expectedReleaseNoteSourceRevision before publication.", workflow);
+    AssertContains("foreach ($expectedReleaseNoteRuntimeFragment in @('Runtime ABI: 0', 'Runtime ABI status: preview', 'Default target framework: net48')) {", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteRuntimeFragment)) {", workflow);
+    AssertContains("Release notes runtime metadata missing before publication: $expectedReleaseNoteRuntimeFragment", workflow);
+    AssertContains("$expectedReleaseNoteMetadataLines = @(", workflow);
+    AssertContains("\"# TypeSharp $env:RELEASE_TAG\",", workflow);
+    AssertContains("$releaseNoteDateLine[0],", workflow);
+    AssertContains("\"Channel: $expectedReleaseNoteChannel\",", workflow);
+    AssertContains("\"Build metadata: $env:RELEASE_TAG\",", workflow);
+    AssertContains("\"Source revision: $expectedReleaseNoteSourceRevision\",", workflow);
+    AssertContains("$releaseNoteLines = @($releaseNotesText -split '\\r?\\n')", workflow);
+    AssertContains("foreach ($expectedReleaseNoteMetadataPrefix in @(", workflow);
+    AssertContains("'# TypeSharp ',", workflow);
+    AssertContains("'Date:',", workflow);
+    AssertContains("'Build metadata:',", workflow);
+    AssertContains("$releaseNoteMetadataPrefixMatches = @($releaseNoteLines | Where-Object { $_.StartsWith($expectedReleaseNoteMetadataPrefix, [StringComparison]::Ordinal) })", workflow);
+    AssertContains("Release notes metadata prefix '$expectedReleaseNoteMetadataPrefix' must appear exactly once before publication.", workflow);
+    AssertContains("$releaseNoteMetadataCursor = -1", workflow);
+    AssertContains("foreach ($expectedReleaseNoteMetadataLine in $expectedReleaseNoteMetadataLines) {", workflow);
+    AssertContains("$releaseNoteMetadataIndex = $releaseNotesText.IndexOf($expectedReleaseNoteMetadataLine, [StringComparison]::Ordinal)", workflow);
+    AssertContains("Release notes metadata line missing before publication: $expectedReleaseNoteMetadataLine", workflow);
+    AssertContains("if ($releaseNoteMetadataIndex -le $releaseNoteMetadataCursor) {", workflow);
+    AssertContains("Release notes metadata order mismatch before publication: $expectedReleaseNoteMetadataLine", workflow);
+    AssertContains("$releaseNoteMetadataCursor = $releaseNoteMetadataIndex", workflow);
+    AssertContains("$releaseNoteFirstSectionIndex = $releaseNotesText.IndexOf('## Summary', [StringComparison]::Ordinal)", workflow);
+    AssertContains("if ($releaseNoteFirstSectionIndex -ge 0 -and $releaseNoteFirstSectionIndex -le $releaseNoteMetadataCursor) {", workflow);
+    AssertContains("Release notes metadata block must appear before mandatory sections before publication.", workflow);
+    AssertContains("$expectedReleaseNoteHeaderPrefix = @(", workflow);
+    AssertContains("\"# TypeSharp $env:RELEASE_TAG\",\n            '',\n            $releaseNoteDateLine[0],", workflow);
+    AssertContains("'Default target framework: net48',\n            ''", workflow);
+    AssertContains("$normalizedReleaseNotesText = $releaseNotesText.Replace(\"`r`n\", \"`n\")", workflow);
+    AssertContains("if (-not $normalizedReleaseNotesText.StartsWith($expectedReleaseNoteHeaderPrefix, [StringComparison]::Ordinal)) {", workflow);
+    AssertContains("Release notes must start with the canonical metadata header before publication.", workflow);
+    AssertContains("$expectedReleaseNoteHeaderAndFirstSectionPrefix = $expectedReleaseNoteHeaderPrefix + \"`n## Summary\"", workflow);
+    AssertContains("if (-not $normalizedReleaseNotesText.StartsWith($expectedReleaseNoteHeaderAndFirstSectionPrefix, [StringComparison]::Ordinal)) {", workflow);
+    AssertContains("Release notes Summary section must immediately follow the canonical metadata header before publication.", workflow);
+    AssertContains("$expectedReleaseNoteSections = @(", workflow);
+    AssertContains("'## Summary',", workflow);
+    AssertContains("'## Compatibility Matrix',", workflow);
+    AssertContains("'## Breaking Changes',", workflow);
+    AssertContains("'## Migration Notes',", workflow);
+    AssertContains("'## Stable Features',", workflow);
+    AssertContains("'## Preview Features',", workflow);
+    AssertContains("'## Diagnostics And Tooling',", workflow);
+    AssertContains("'## Security',", workflow);
+    AssertContains("'## Checksums And Signing',", workflow);
+    AssertContains("'## Artifacts',", workflow);
+    AssertContains("'## Verification',", workflow);
+    AssertContains("'## Rollback'", workflow);
+    AssertContains("$releaseNoteSections = @($releaseNoteLines | Where-Object { $_.StartsWith('## ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("$releaseNoteUnexpectedSections = @($releaseNoteSections | Where-Object { $expectedReleaseNoteSections -notcontains $_ })", workflow);
+    AssertContains("if ($releaseNoteUnexpectedSections.Count -ne 0) {", workflow);
+    AssertContains("Release notes contained unexpected sections before publication: $($releaseNoteUnexpectedSections -join ', ')", workflow);
+    AssertContains("if ($releaseNoteSections.Count -ne $expectedReleaseNoteSections.Count) {", workflow);
+    AssertContains("Release notes section set count mismatch before publication. Expected $($expectedReleaseNoteSections.Count) but found $($releaseNoteSections.Count).", workflow);
+    AssertContains("foreach ($expectedReleaseNoteSection in $expectedReleaseNoteSections) {", workflow);
+    AssertContains("$releaseNoteSectionCursor = -1", workflow);
+    AssertContains("$releaseNoteSectionMatches = @($releaseNotesText -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseNoteSection })", workflow);
+    AssertContains("if ($releaseNoteSectionMatches.Count -ne 1) {", workflow);
+    AssertContains("Release notes mandatory section must appear exactly once before publication: $expectedReleaseNoteSection", workflow);
+    AssertContains("$releaseNoteSectionIndex = $releaseNotesText.IndexOf($expectedReleaseNoteSection, [StringComparison]::Ordinal)", workflow);
+    AssertContains("if ($releaseNoteSectionIndex -lt 0) {", workflow);
+    AssertContains("Release notes mandatory section missing before publication: $expectedReleaseNoteSection", workflow);
+    AssertContains("if ($releaseNoteSectionIndex -le $releaseNoteSectionCursor) {", workflow);
+    AssertContains("Release notes mandatory section order mismatch before publication: $expectedReleaseNoteSection", workflow);
+    AssertContains("$releaseNoteSectionCursor = $releaseNoteSectionIndex", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Breaking Changes\\r?\\n\\r?\\nNone\\.\\r?$') {", workflow);
+    AssertContains("Release notes Breaking Changes section did not explicitly say None before publication.", workflow);
+    AssertContains("$expectedReleaseNoteSummary = 'Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteSummary)) {", workflow);
+    AssertContains("Release notes Summary artifact set missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Summary\\r?\\n\\r?\\nPreview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension\\.\\r?$') {", workflow);
+    AssertContains("Release notes Summary section body mismatch before publication.", workflow);
+    AssertContains("$expectedReleaseNoteStableTargetPolicy = 'Generated projects target net48 with C# 7.3-compatible output.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteStableTargetPolicy)) {", workflow);
+    AssertContains("Release notes stable target policy missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Stable Features\\r?\\n\\r?\\nGenerated projects target net48 with C# 7\\.3-compatible output\\.\\r?$') {", workflow);
+    AssertContains("Release notes Stable Features section body mismatch before publication.", workflow);
+    AssertContains("$expectedReleaseNotePreviewBoundary = 'The CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNotePreviewBoundary)) {", workflow);
+    AssertContains("Release notes preview boundary missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Preview Features\\r?\\n\\r?\\nThe CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview\\.\\r?$') {", workflow);
+    AssertContains("Release notes Preview Features section body mismatch before publication.", workflow);
+    AssertContains("$expectedReleaseNoteDiagnosticsGuidance = 'Use typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteDiagnosticsGuidance)) {", workflow);
+    AssertContains("Release notes diagnostics/tooling guidance missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Diagnostics And Tooling\\r?\\n\\r?\\nUse typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics\\.\\r?$') {", workflow);
+    AssertContains("Release notes Diagnostics And Tooling section body mismatch before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Migration Notes\\r?\\n\\r?\\nInstall a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS\\.txt\\.\\r?$') {", workflow);
+    AssertContains("Release notes Migration Notes guidance missing before publication.", workflow);
+    AssertContains("$expectedReleaseNoteSecurityPolicy = 'Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteSecurityPolicy)) {", workflow);
+    AssertContains("Release notes Security no-restore policy missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Security\\r?\\n\\r?\\nGenerated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build\\.\\r?$') {", workflow);
+    AssertContains("Release notes Security section body mismatch before publication.", workflow);
+    AssertContains("$expectedReleaseNoteMatrixRows = @(", workflow);
+    AssertContains("foreach ($expectedReleaseNoteMatrixFragment in $expectedReleaseNoteMatrixRows) {", workflow);
+    AssertContains("'| CLI line | Language | Runtime ABI | Generated target | Runtime asset |',", workflow);
+    AssertContains("'| --- | --- | --- | --- | --- |',", workflow);
+    AssertContains("| 0.1.0-preview | preview | 0 preview | net48 | typesharp-runtime-net48-$env:RELEASE_TAG.zip |", workflow);
+    AssertContains("$releaseNoteMatrixFragmentMatches = @($releaseNotesText -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseNoteMatrixFragment })", workflow);
+    AssertContains("if ($releaseNoteMatrixFragmentMatches.Count -ne 1) {", workflow);
+    AssertContains("Release notes compatibility matrix fragment must appear exactly once before publication: $expectedReleaseNoteMatrixFragment", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteMatrixFragment)) {", workflow);
+    AssertContains("Release notes compatibility matrix missing before publication: $expectedReleaseNoteMatrixFragment", workflow);
+    AssertContains("$releaseNoteMatrixSectionStart = [Array]::IndexOf($releaseNoteLines, '## Compatibility Matrix')", workflow);
+    AssertContains("$releaseNoteMatrixSectionEnd = [Array]::IndexOf($releaseNoteLines, '## Breaking Changes')", workflow);
+    AssertContains("Release notes compatibility matrix section boundaries were not canonical before publication.", workflow);
+    AssertContains("$releaseNoteMatrixRows = @($releaseNoteLines[($releaseNoteMatrixSectionStart + 1)..($releaseNoteMatrixSectionEnd - 1)] | Where-Object { $_.StartsWith('| ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("$releaseNoteUnexpectedMatrixRows = @($releaseNoteMatrixRows | Where-Object { $expectedReleaseNoteMatrixRows -notcontains $_ })", workflow);
+    AssertContains("Release notes contained unexpected compatibility matrix rows before publication: $($releaseNoteUnexpectedMatrixRows -join ', ')", workflow);
+    AssertContains("if ($releaseNoteMatrixRows.Count -ne $expectedReleaseNoteMatrixRows.Count) {", workflow);
+    AssertContains("Release notes compatibility matrix row count mismatch before publication. Expected $($expectedReleaseNoteMatrixRows.Count) but found $($releaseNoteMatrixRows.Count).", workflow);
+    AssertContains("for ($releaseNoteMatrixRowIndex = 0; $releaseNoteMatrixRowIndex -lt $expectedReleaseNoteMatrixRows.Count; $releaseNoteMatrixRowIndex++) {", workflow);
+    AssertContains("if ($releaseNoteMatrixRows[$releaseNoteMatrixRowIndex] -ne $expectedReleaseNoteMatrixRows[$releaseNoteMatrixRowIndex]) {", workflow);
+    AssertContains("Release notes compatibility matrix row order mismatch before publication at index $releaseNoteMatrixRowIndex.", workflow);
+    AssertContains("foreach ($expectedReleaseNoteArtifactName in @(", workflow);
+    AssertContains("typesharp-cli-dotnet-$env:RELEASE_TAG.zip", workflow);
+    AssertContains("typesharp-runtime-net48-$env:RELEASE_TAG.zip", workflow);
+    AssertContains("typesharp-vscode-$env:RELEASE_TAG.vsix", workflow);
+    AssertContains("'SHA256SUMS.txt'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteArtifactName)) {", workflow);
+    AssertContains("Release notes artifact name missing before publication: $expectedReleaseNoteArtifactName", workflow);
+    AssertContains("$expectedReleaseNoteArtifactDescriptions = @(", workflow);
+    AssertContains("- typesharp-cli-dotnet-$env:RELEASE_TAG.zip: framework-dependent modern .NET CLI host with Windows typesharp.cmd wrapper.", workflow);
+    AssertContains("- typesharp-runtime-net48-$env:RELEASE_TAG.zip: TypeSharp.Core and TypeSharp.Runtime net48 libraries.", workflow);
+    AssertContains("- typesharp-vscode-$env:RELEASE_TAG.vsix: VS Code extension with bundled language server.", workflow);
+    AssertContains("- SHA256SUMS.txt: SHA-256 manifest for release assets.", workflow);
+    AssertContains("$releaseNoteArtifactSectionStart = [Array]::IndexOf($releaseNoteLines, '## Artifacts')", workflow);
+    AssertContains("$releaseNoteArtifactSectionEnd = [Array]::IndexOf($releaseNoteLines, '## Verification')", workflow);
+    AssertContains("if ($releaseNoteArtifactSectionStart -lt 0 -or $releaseNoteArtifactSectionEnd -le $releaseNoteArtifactSectionStart) {", workflow);
+    AssertContains("Release notes artifact section boundaries were not canonical before publication.", workflow);
+    AssertContains("$releaseNoteArtifactDescriptionRows = @($releaseNoteLines[($releaseNoteArtifactSectionStart + 1)..($releaseNoteArtifactSectionEnd - 1)] | Where-Object { $_.StartsWith('- ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("$releaseNoteUnexpectedArtifactDescriptions = @($releaseNoteArtifactDescriptionRows | Where-Object { $expectedReleaseNoteArtifactDescriptions -notcontains $_ })", workflow);
+    AssertContains("if ($releaseNoteUnexpectedArtifactDescriptions.Count -ne 0) {", workflow);
+    AssertContains("Release notes contained unexpected artifact descriptions before publication: $($releaseNoteUnexpectedArtifactDescriptions -join ', ')", workflow);
+    AssertContains("if ($releaseNoteArtifactDescriptionRows.Count -ne $expectedReleaseNoteArtifactDescriptions.Count) {", workflow);
+    AssertContains("Release notes artifact description row count mismatch before publication. Expected $($expectedReleaseNoteArtifactDescriptions.Count) but found $($releaseNoteArtifactDescriptionRows.Count).", workflow);
+    AssertContains("for ($releaseNoteArtifactDescriptionIndex = 0; $releaseNoteArtifactDescriptionIndex -lt $expectedReleaseNoteArtifactDescriptions.Count; $releaseNoteArtifactDescriptionIndex++) {", workflow);
+    AssertContains("if ($releaseNoteArtifactDescriptionRows[$releaseNoteArtifactDescriptionIndex] -ne $expectedReleaseNoteArtifactDescriptions[$releaseNoteArtifactDescriptionIndex]) {", workflow);
+    AssertContains("Release notes artifact description order mismatch before publication at index $releaseNoteArtifactDescriptionIndex.", workflow);
+    AssertContains("foreach ($expectedReleaseNoteArtifactDescription in $expectedReleaseNoteArtifactDescriptions) {", workflow);
+    AssertContains("$releaseNoteArtifactDescriptionMatches = @($releaseNotesText -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseNoteArtifactDescription })", workflow);
+    AssertContains("if ($releaseNoteArtifactDescriptionMatches.Count -ne 1) {", workflow);
+    AssertContains("Release notes artifact description must appear exactly once before publication: $expectedReleaseNoteArtifactDescription", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteArtifactDescription)) {", workflow);
+    AssertContains("Release notes artifact description missing before publication: $expectedReleaseNoteArtifactDescription", workflow);
+    AssertContains("$expectedReleaseNoteSignaturePolicy = 'Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteSignaturePolicy)) {", workflow);
+    AssertContains("Release notes signature policy missing before publication.", workflow);
+    AssertContains("$expectedReleaseNoteVerificationGuidance = 'Use SHA256SUMS.txt to verify downloaded release assets.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteVerificationGuidance)) {", workflow);
+    AssertContains("Release notes verification guidance missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Checksums And Signing\\r?\\n\\r?\\nSignature policy: preview releases publish SHA256SUMS\\.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet\\.\\r?$') {", workflow);
+    AssertContains("Release notes Checksums And Signing section policy missing before publication.", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Verification\\r?\\n\\r?\\nUse SHA256SUMS\\.txt to verify downloaded release assets\\.\\r?$') {", workflow);
+    AssertContains("Release notes Verification section guidance missing before publication.", workflow);
+    AssertContains("$expectedReleaseNoteRollbackGuidance = 'Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.'", workflow);
+    AssertContains("if (-not $releaseNotesText.Contains($expectedReleaseNoteRollbackGuidance)) {", workflow);
+    AssertContains("Release notes rollback guidance missing before publication.", workflow);
+    AssertContains("foreach ($expectedReleaseNotePolicyLine in @(", workflow);
+    AssertContains("$releaseNotePolicyLineMatches = @($releaseNoteLines | Where-Object { $_ -eq $expectedReleaseNotePolicyLine })", workflow);
+    AssertContains("if ($releaseNotePolicyLineMatches.Count -ne 1) {", workflow);
+    AssertContains("Release notes policy line must appear exactly once before publication: $expectedReleaseNotePolicyLine", workflow);
+    AssertContains("$releaseNoteRollbackGuidanceMatches = @($releaseNoteLines | Where-Object { $_ -eq $expectedReleaseNoteRollbackGuidance })", workflow);
+    AssertContains("if ($releaseNoteRollbackGuidanceMatches.Count -ne 2) {", workflow);
+    AssertContains("Release notes rollback guidance must appear exactly twice before publication: $expectedReleaseNoteRollbackGuidance", workflow);
+    AssertContains("if ($releaseNotesText -notmatch '(?m)^## Rollback\\r?\\n\\r?\\nInstall a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS\\.txt\\.\\r?$') {", workflow);
+    AssertContains("Release notes Rollback section guidance missing before publication.", workflow);
+    AssertContains("$expectedReleaseNoteSectionBodies = [ordered]@{", workflow);
+    AssertContains("'## Summary' = @($expectedReleaseNoteSummary)", workflow);
+    AssertContains("'## Compatibility Matrix' = $expectedReleaseNoteMatrixRows", workflow);
+    AssertContains("'## Artifacts' = $expectedReleaseNoteArtifactDescriptions", workflow);
+    AssertContains("for ($releaseNoteSectionBodyIndex = 0; $releaseNoteSectionBodyIndex -lt $expectedReleaseNoteSections.Count; $releaseNoteSectionBodyIndex++) {", workflow);
+    AssertContains("$releaseNoteSectionBodyLines = @($releaseNoteLines[($releaseNoteSectionBodyStart + 1)..($releaseNoteSectionBodyEnd - 1)] | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })", workflow);
+    AssertContains("Release notes section body line count mismatch before publication for $releaseNoteSectionBodyName. Expected $($expectedReleaseNoteSectionBodyLines.Count) but found $($releaseNoteSectionBodyLines.Count).", workflow);
+    AssertContains("Release notes section body mismatch before publication for $releaseNoteSectionBodyName at line $releaseNoteSectionBodyLineIndex.", workflow);
+    AssertContains("$assetNames = @($assetPaths | ForEach-Object { Split-Path -Leaf $_ } | Sort-Object)", workflow);
+    AssertContains("$expectedAssetNames = @(", workflow);
+    AssertContains("typesharp-cli-dotnet-$env:RELEASE_TAG.zip", workflow);
+    AssertContains("typesharp-runtime-net48-$env:RELEASE_TAG.zip", workflow);
+    AssertContains("typesharp-vscode-$env:RELEASE_TAG.vsix", workflow);
+    AssertContains("$assetSetDifference = Compare-Object -ReferenceObject $expectedAssetNames -DifferenceObject $assetNames", workflow);
+    AssertContains("if ($null -ne $assetSetDifference) {", workflow);
+    AssertContains("Local release asset set mismatch before publication. Expected '$($expectedAssetNames -join ', ')' but found '$($assetNames -join ', ')'.", workflow);
+    AssertContains("$localChecksumEntries = @(", workflow);
+    AssertContains("$parts = $_ -split '\\s+', 2", workflow);
+    AssertContains("if ($parts.Count -ne 2 -or [string]::IsNullOrWhiteSpace($parts[1])) {", workflow);
+    AssertContains("Local SHA256SUMS.txt entry is malformed before publication: $_", workflow);
+    AssertContains("if ($parts[0] -notmatch '^[0-9a-f]{64}$') {", workflow);
+    AssertContains("Local SHA256SUMS.txt hash for '$($parts[1])' is not lowercase SHA-256 before publication.", workflow);
+    AssertContains("$expectedLocalChecksumAssetNames = @(", workflow);
+    AssertContains("$localChecksumAssetNames = @($localChecksumEntries | ForEach-Object { $_.Name } | Sort-Object)", workflow);
+    AssertContains("$localChecksumSetDifference = Compare-Object -ReferenceObject $expectedLocalChecksumAssetNames -DifferenceObject $localChecksumAssetNames", workflow);
+    AssertContains("if ($null -ne $localChecksumSetDifference) {", workflow);
+    AssertContains("Local checksum manifest asset set mismatch before publication. Expected '$($expectedLocalChecksumAssetNames -join ', ')' but found '$($localChecksumAssetNames -join ', ')'.", workflow);
+    AssertContains("$matches = @($localChecksumEntries | Where-Object { $_.Name -eq $expectedLocalChecksumAssetName })", workflow);
+    AssertContains("if ($matches.Count -ne 1) {", workflow);
+    AssertContains("Local SHA256SUMS.txt must list $expectedLocalChecksumAssetName exactly once before publication.", workflow);
+    AssertContains("$actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $assetPath).Hash.ToLowerInvariant()", workflow);
+    AssertContains("if ($actualHash -ne $expectedHash) {", workflow);
+    AssertContains("Local release asset checksum mismatch before publication for $expectedLocalChecksumAssetName. Expected $expectedHash but found $actualHash.", workflow);
+    AssertContains("if ($releaseExists) {", workflow);
+    AssertContains("$existingRelease = gh release view $env:RELEASE_TAG --json assets | ConvertFrom-Json", workflow);
+    AssertContains("foreach ($existingAssetName in @($existingRelease.assets | ForEach-Object { $_.name })) {", workflow);
+    AssertContains("if ($expectedAssetNames -notcontains $existingAssetName) {", workflow);
+    AssertContains("& gh release delete-asset $env:RELEASE_TAG $existingAssetName --yes", workflow);
+    AssertContains("& gh release upload $env:RELEASE_TAG @assetPaths --clobber", workflow);
+    AssertContains("gh release edit $env:RELEASE_TAG --title \"TypeSharp $env:RELEASE_TAG\" --notes-file $notesPath --draft=false \"--prerelease=$expectedPrerelease\"", workflow);
+    AssertContains("$createArgs = @(", workflow);
+    AssertContains("'release',\n              'create',\n              $env:RELEASE_TAG", workflow);
+    AssertContains(") + $assetPaths + @(", workflow);
+    AssertContains("'--verify-tag'", workflow);
+    AssertContains("if ($expectedPrerelease) {\n              $createArgs += '--prerelease'\n              $createArgs += '--latest=false'\n            }\n            else {\n              $createArgs += '--latest'\n            }", workflow);
+    AssertContains("& gh @createArgs", workflow);
+    AssertContains("$releaseForLatest = gh api \"repos/${{ github.repository }}/releases/tags/$env:RELEASE_TAG\" | ConvertFrom-Json", workflow);
+    AssertContains("$expectedMakeLatest = if ($expectedPrerelease) { 'false' } else { 'true' }", workflow);
+    AssertContains("gh api \"repos/${{ github.repository }}/releases/$($releaseForLatest.id)\" -X PATCH -f \"make_latest=$expectedMakeLatest\" | Out-Null", workflow);
     AssertContains("Smoke published GitHub Release assets", workflow);
     AssertContains("typesharp-hosted-release-smoke", workflow);
-    AssertContains("Invoke-WebRequest \"$releaseBase/$cliAsset\" -OutFile $cliZip", workflow);
+    AssertContains("$repositoryRoot = (Resolve-Path $env:GITHUB_WORKSPACE).Path", workflow);
+    AssertContains("$resolvedDownloadRoot = (Resolve-Path $downloadRoot).Path", workflow);
+    AssertContains("if ($resolvedDownloadRoot.StartsWith($repositoryRoot, [System.StringComparison]::OrdinalIgnoreCase)) {", workflow);
+    AssertContains("Hosted release download and extraction workspace must be outside the repository checkout.", workflow);
+    AssertContains("$resolvedWorkspaceRoot = (Resolve-Path $workspaceRoot).Path", workflow);
+    AssertContains("if ($resolvedWorkspaceRoot.StartsWith($repositoryRoot, [System.StringComparison]::OrdinalIgnoreCase)) {", workflow);
+    AssertContains("Hosted release smoke workspace must be outside the repository checkout.", workflow);
+    AssertContains("function Invoke-ReleaseAssetDownload([string] $uri, [string] $assetPath, [string] $assetName, [int64] $expectedSize) {", workflow);
+    AssertContains("$maxAttempts = 6", workflow);
+    AssertContains("for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {", workflow);
+    AssertContains("Invoke-WebRequest $uri -OutFile $assetPath", workflow);
+    AssertContains("if (-not (Test-Path $assetPath)) {", workflow);
+    AssertContains("Downloaded $assetName but the file was missing.", workflow);
+    AssertContains("$actualSize = [int64] (Get-Item -LiteralPath $assetPath).Length", workflow);
+    AssertContains("if ($actualSize -eq $expectedSize) {", workflow);
+    AssertContains("Downloaded $assetName but the file size was $actualSize bytes instead of the GitHub Release API size $expectedSize bytes.", workflow);
+    AssertContains("if ($attempt -eq $maxAttempts) {", workflow);
+    AssertContains("Could not download $assetName from $uri after $maxAttempts attempts. $($_.Exception.Message)", workflow);
+    AssertContains("Start-Sleep -Seconds ([Math]::Min(30, 5 * $attempt))", workflow);
+    AssertContains("function Verify-ReleaseAssetDigest([object] $asset, [string] $assetPath, [string] $assetName) {", workflow);
+    AssertContains("$expectedDigest = [string] $asset.digest", workflow);
+    AssertContains("if ($expectedDigest -notmatch '^sha256:[0-9a-f]{64}$') {", workflow);
+    AssertContains("Hosted release API asset '$assetName' digest was '$expectedDigest' instead of sha256:<64 lowercase hex chars>.", workflow);
+    AssertContains("$expectedHash = $expectedDigest.Substring('sha256:'.Length)", workflow);
+    AssertContains("Hosted release API digest mismatch for $assetName. Expected $expectedHash but found $actualHash.", workflow);
+    AssertContains("function Get-HostedReleaseAsset([object] $releaseMetadata, [string] $assetName, [string] $expectedDownloadUrl) {", workflow);
+    AssertContains("$matches = @($releaseMetadata.assets | Where-Object { $_.name -eq $assetName })", workflow);
+    AssertContains("Hosted release API does not list expected asset $assetName.", workflow);
+    AssertContains("Hosted release API lists $assetName more than once.", workflow);
+    AssertContains("if ([string] $asset.state -ne 'uploaded') {", workflow);
+    AssertContains("Hosted release API asset '$assetName' state was '$($asset.state)' instead of uploaded.", workflow);
+    AssertContains("if ([int64] $asset.size -le 0) {", workflow);
+    AssertContains("Hosted release API asset '$assetName' size was '$($asset.size)' instead of a nonzero byte count.", workflow);
+    AssertContains("if ([string] $asset.browser_download_url -ne $expectedDownloadUrl) {", workflow);
+    AssertContains("Hosted release API asset '$assetName' browser_download_url was '$($asset.browser_download_url)' instead of '$expectedDownloadUrl'.", workflow);
+    AssertContains("if ([string] $asset.digest -notmatch '^sha256:[0-9a-f]{64}$') {", workflow);
+    AssertContains("Hosted release API asset '$assetName' digest was '$($asset.digest)' instead of sha256:<64 lowercase hex chars>.", workflow);
+    AssertContains("$expectedPrerelease = $env:RELEASE_TAG -like 'v0.*' -or $env:RELEASE_TAG -like '*-*'", workflow);
+    AssertContains("$expectedChannel = if ($expectedPrerelease) { 'Preview' } else { 'Stable' }", workflow);
+    AssertContains("$releaseDownloadMetadata = gh api \"repos/${{ github.repository }}/releases/tags/$env:RELEASE_TAG\" | ConvertFrom-Json", workflow);
+    AssertContains("Hosted release API tag '$($releaseDownloadMetadata.tag_name)' did not match '$env:RELEASE_TAG' before asset download.", workflow);
+    AssertContains("$expectedReleaseUrl = \"https://github.com/${{ github.repository }}/releases/tag/$env:RELEASE_TAG\"", workflow);
+    AssertContains("Hosted release API html_url '$($releaseDownloadMetadata.html_url)' did not match '$expectedReleaseUrl' before asset download.", workflow);
+    AssertContains("Hosted release API title '$($releaseDownloadMetadata.name)' did not match 'TypeSharp $env:RELEASE_TAG' before asset download.", workflow);
+    AssertContains("Hosted release API reports '$env:RELEASE_TAG' as a draft before asset download.", workflow);
+    AssertContains("Hosted release API prerelease flag '$($releaseDownloadMetadata.prerelease)' did not match expected '$expectedPrerelease' for '$env:RELEASE_TAG' before asset download.", workflow);
+    AssertContains("Hosted release API does not expose a published_at timestamp for '$env:RELEASE_TAG' before asset download.", workflow);
+    AssertContains("$expectedApiAssetNames = @($checksumAsset, $cliAsset, $runtimeAsset, $vsixAsset) | Sort-Object", workflow);
+    AssertContains("$apiAssetNames = @($releaseDownloadMetadata.assets | ForEach-Object { $_.name } | Sort-Object)", workflow);
+    AssertContains("Hosted release API asset set mismatch before download. Expected '$($expectedApiAssetNames -join ', ')' but found '$($apiAssetNames -join ', ')'.", workflow);
+    AssertContains("$cliApiAsset = Get-HostedReleaseAsset $releaseDownloadMetadata $cliAsset \"$releaseBase/$cliAsset\"", workflow);
+    AssertContains("$runtimeApiAsset = Get-HostedReleaseAsset $releaseDownloadMetadata $runtimeAsset \"$releaseBase/$runtimeAsset\"", workflow);
+    AssertContains("$vsixApiAsset = Get-HostedReleaseAsset $releaseDownloadMetadata $vsixAsset \"$releaseBase/$vsixAsset\"", workflow);
+    AssertContains("$checksumApiAsset = Get-HostedReleaseAsset $releaseDownloadMetadata $checksumAsset \"$releaseBase/$checksumAsset\"", workflow);
+    AssertContains("Invoke-ReleaseAssetDownload $cliApiAsset.browser_download_url $cliZip $cliAsset ([int64] $cliApiAsset.size)", workflow);
+    AssertContains("Invoke-ReleaseAssetDownload $runtimeApiAsset.browser_download_url $runtimeZip $runtimeAsset ([int64] $runtimeApiAsset.size)", workflow);
+    AssertContains("Invoke-ReleaseAssetDownload $vsixApiAsset.browser_download_url $vsixPath $vsixAsset ([int64] $vsixApiAsset.size)", workflow);
+    AssertContains("Invoke-ReleaseAssetDownload $checksumApiAsset.browser_download_url $checksumPath $checksumAsset ([int64] $checksumApiAsset.size)", workflow);
+    AssertContains("Verify-ReleaseAssetDigest $cliApiAsset $cliZip $cliAsset", workflow);
+    AssertContains("Verify-ReleaseAssetDigest $runtimeApiAsset $runtimeZip $runtimeAsset", workflow);
+    AssertContains("Verify-ReleaseAssetDigest $vsixApiAsset $vsixPath $vsixAsset", workflow);
+    AssertContains("Verify-ReleaseAssetDigest $checksumApiAsset $checksumPath $checksumAsset", workflow);
+    AssertContains("$checksumAssetNames = Get-Content -LiteralPath $checksumPath", workflow);
+    AssertContains("Malformed SHA256SUMS.txt entry: $_", workflow);
+    AssertContains("Malformed SHA256SUMS.txt hash for '$($parts[1])'.", workflow);
+    AssertContains("$duplicateChecksumAssetName = $checksumAssetNames", workflow);
+    AssertContains("Where-Object { $_.Count -gt 1 }", workflow);
+    AssertContains("SHA256SUMS.txt lists '$($duplicateChecksumAssetName.Name)' more than once.", workflow);
+    AssertContains("$expectedChecksumAssetNames = @($cliAsset, $runtimeAsset, $vsixAsset) | Sort-Object", workflow);
+    AssertContains("Compare-Object -ReferenceObject $expectedChecksumAssetNames -DifferenceObject $checksumAssetNames", workflow);
+    AssertContains("Checksum manifest asset set mismatch. Expected '$($expectedChecksumAssetNames -join ', ')' but found '$($checksumAssetNames -join ', ')'.", workflow);
+    AssertContains("$matches = @(Get-Content -LiteralPath $checksumPath", workflow);
+    AssertContains("Where-Object { $_.Name -eq $assetName })", workflow);
+    AssertContains("if ($matches.Count -eq 0) {", workflow);
+    AssertContains("SHA256SUMS.txt does not list $assetName.", workflow);
+    AssertContains("if ($matches.Count -gt 1) {", workflow);
+    AssertContains("SHA256SUMS.txt lists $assetName more than once.", workflow);
+    AssertContains("$expectedHash = $matches[0].Hash.ToLowerInvariant()", workflow);
+    AssertContains("$actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $assetPath).Hash.ToLowerInvariant()", workflow);
+    AssertContains("if ($actualHash -ne $expectedHash) {", workflow);
+    AssertContains("Checksum mismatch for $assetName. Expected $expectedHash but found $actualHash.", workflow);
     AssertContains("Verify-ReleaseAssetHash $cliAsset $cliZip $checksumPath", workflow);
     AssertContains("Verify-ReleaseAssetHash $runtimeAsset $runtimeZip $checksumPath", workflow);
-    AssertContains("gh release view $env:RELEASE_TAG --json body,tagName,isPrerelease", workflow);
-    AssertContains("typesharp.cmd') version --json", workflow);
-    AssertContains("new console HostedReleaseSmoke --target net48 --output HostedReleaseSmoke", workflow);
-    AssertContains("check HostedReleaseSmoke\\TypeSharp.toml", workflow);
-    AssertContains("build HostedReleaseSmoke\\TypeSharp.toml", workflow);
+    AssertContains("Verify-ReleaseAssetHash $vsixAsset $vsixPath $checksumPath", workflow);
+    AssertContains("$vsixRoot = Join-Path $downloadRoot \"typesharp-vscode\"", workflow);
+    AssertContains("$vsixZipPath = Join-Path $downloadRoot \"$vsixAsset.zip\"", workflow);
+    AssertContains("Copy-Item -LiteralPath $vsixPath -Destination $vsixZipPath -Force", workflow);
+    AssertContains("Expand-Archive $vsixZipPath -DestinationPath $vsixRoot -Force", workflow);
+    AssertContains("'extension\\package.json'", workflow);
+    AssertContains("'extension\\extension.js'", workflow);
+    AssertContains("'extension\\language-configuration.json'", workflow);
+    AssertContains("'extension\\README.md'", workflow);
+    AssertContains("'extension\\MARKETPLACE.md'", workflow);
+    AssertContains("'extension\\syntaxes\\typesharp.tmLanguage.json'", workflow);
+    AssertContains("'extension\\server\\TypeSharp.LanguageServer.dll'", workflow);
+    AssertContains("Hosted VSIX archive does not contain $expectedVsixEntry.", workflow);
+    AssertContains("$vsixPackage = Get-Content -Raw -LiteralPath (Join-Path $vsixRoot 'extension\\package.json') | ConvertFrom-Json", workflow);
+    AssertContains("Hosted VSIX package name '$($vsixPackage.name)' did not match typesharp-vscode.", workflow);
+    AssertContains("Hosted VSIX display name '$($vsixPackage.displayName)' did not match TypeSharp.", workflow);
+    AssertContains("Hosted VSIX description '$($vsixPackage.description)' did not match the expected release description.", workflow);
+    AssertContains("Hosted VSIX package version '$($vsixPackage.version)' did not match 0.1.0.", workflow);
+    AssertContains("Hosted VSIX publisher '$($vsixPackage.publisher)' did not match typesharp.", workflow);
+    AssertContains("Hosted VSIX main '$($vsixPackage.main)' did not match ./extension.js.", workflow);
+    AssertContains("Hosted VSIX package does not list the Programming Languages category.", workflow);
+    AssertContains("Hosted VSIX package does not activate on the TypeSharp language.", workflow);
+    AssertContains("Hosted VSIX package does not contribute the TypeSharp .tysh language.", workflow);
+    AssertContains("Hosted VSIX package does not contribute the expected TypeSharp grammar.", workflow);
+    AssertContains("Hosted CLI archive does not contain typesharp.dll.", workflow);
+    AssertContains("Hosted CLI archive does not contain TypeSharp.Compiler.dll.", workflow);
+    AssertContains("Hosted CLI archive does not contain TypeSharp.LanguageServer.dll.", workflow);
+    AssertContains("$hostedWrapper = Get-Content -Raw -LiteralPath $hostedWrapperPath", workflow);
+    AssertContains("Hosted CLI wrapper does not disable command echo.", workflow);
+    AssertContains("Hosted CLI wrapper does not isolate environment changes.", workflow);
+    AssertContains("Hosted CLI wrapper does not set TYPESHARP_HOME to the extracted directory.", workflow);
+    AssertContains("Hosted CLI wrapper does not launch typesharp.dll through dotnet.", workflow);
+    AssertContains("gh release view $env:RELEASE_TAG --json assets,body,tagName,name,isDraft,isPrerelease,publishedAt,url", workflow);
+    AssertContains("if ($release.tagName -ne $env:RELEASE_TAG) {", workflow);
+    AssertContains("Release page tag '$($release.tagName)' did not match '$env:RELEASE_TAG'.", workflow);
+    AssertContains("$expectedReleaseUrl = \"https://github.com/${{ github.repository }}/releases/tag/$env:RELEASE_TAG\"", workflow);
+    AssertContains("if ($release.url -ne $expectedReleaseUrl) {", workflow);
+    AssertContains("Release page URL '$($release.url)' did not match '$expectedReleaseUrl'.", workflow);
+    AssertContains("$releaseAssetNames = @($release.assets | ForEach-Object { $_.name } | Sort-Object)", workflow);
+    AssertContains("if ($release.name -ne \"TypeSharp $env:RELEASE_TAG\") {", workflow);
+    AssertContains("Release page title '$($release.name)' did not match 'TypeSharp $env:RELEASE_TAG'.", workflow);
+    AssertContains("if ($release.isDraft) {", workflow);
+    AssertContains("Release page '$env:RELEASE_TAG' is still a draft and is not publicly installable.", workflow);
+    AssertContains("if ([string]::IsNullOrWhiteSpace([string] $release.publishedAt)) {", workflow);
+    AssertContains("Release page '$env:RELEASE_TAG' does not have a publishedAt timestamp.", workflow);
+    AssertContains("$expectedReleaseBodyTitlePattern = '(?m)^# TypeSharp ' + [regex]::Escape($env:RELEASE_TAG) + '\\r?$'", workflow);
+    AssertContains("if ($release.body -notmatch $expectedReleaseBodyTitlePattern) {", workflow);
+    AssertContains("Release page body does not include the expected release-note title line for $env:RELEASE_TAG.", workflow);
+    AssertContains("$releaseBodyTopLevelHeadings = @($release.body -split '\\r?\\n' | Where-Object { $_.StartsWith('# ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("if ($releaseBodyTopLevelHeadings.Count -ne 1 -or $releaseBodyTopLevelHeadings[0] -ne \"# TypeSharp $env:RELEASE_TAG\") {", workflow);
+    AssertContains("Release page body must contain exactly one top-level release-note title: # TypeSharp $env:RELEASE_TAG", workflow);
+    AssertContains("$releaseDateLine = $release.body -split \"`n\" | Where-Object { $_.StartsWith('Date:') } | Select-Object -First 1", workflow);
+    AssertContains("if ($null -eq $releaseDateLine) {", workflow);
+    AssertContains("Release page does not include the release date.", workflow);
+    AssertContains("$releaseDate = $releaseDateLine.Substring('Date:'.Length).Trim()", workflow);
+    AssertContains("if ($releaseDate -notmatch '^\\d{4}-\\d{2}-\\d{2}$') {", workflow);
+    AssertContains("$releaseDate -notmatch '^\\d{4}-\\d{2}-\\d{2}$'", workflow);
+    AssertContains("Release page date '$releaseDate' must use yyyy-MM-dd.", workflow);
+    AssertContains("$expectedAssetNames = @($checksumAsset, $cliAsset, $runtimeAsset, $vsixAsset) | Sort-Object", workflow);
+    AssertContains("$assetSetDifference = Compare-Object -ReferenceObject $expectedAssetNames -DifferenceObject $releaseAssetNames", workflow);
+    AssertContains("if ($null -ne $assetSetDifference) {", workflow);
+    AssertContains("Release asset set mismatch. Expected '$($expectedAssetNames -join ', ')' but found '$($releaseAssetNames -join ', ')'.", workflow);
+    AssertContains("$expectedPrerelease = $env:RELEASE_TAG -like 'v0.*' -or $env:RELEASE_TAG -like '*-*'", workflow);
+    AssertContains("$expectedChannel = if ($expectedPrerelease) { 'Preview' } else { 'Stable' }", workflow);
+    AssertContains("if ($release.isPrerelease -ne $expectedPrerelease) {", workflow);
+    AssertContains("Release prerelease flag '$($release.isPrerelease)' did not match expected '$expectedPrerelease'", workflow);
+    AssertContains("$latestRelease = $null", workflow);
+    AssertContains("gh api \"repos/${{ github.repository }}/releases/latest\" | ConvertFrom-Json", workflow);
+    AssertContains("if ($expectedPrerelease -and $null -ne $latestRelease -and $latestRelease.tag_name -eq $env:RELEASE_TAG) {", workflow);
+    AssertContains("Preview release '$env:RELEASE_TAG' was marked as the repository latest release.", workflow);
+    AssertContains("if (-not $expectedPrerelease -and ($null -eq $latestRelease -or $latestRelease.tag_name -ne $env:RELEASE_TAG)) {", workflow);
+    AssertContains("$actualLatestTag = if ($null -eq $latestRelease) { '<none>' } else { [string] $latestRelease.tag_name }", workflow);
+    AssertContains("Stable release '$env:RELEASE_TAG' was not marked as the repository latest release. Latest was '$actualLatestTag'.", workflow);
+    AssertContains("Assert-Contains $release.body \"Channel: $expectedChannel\" 'Release page does not include the expected channel.'", workflow);
+    AssertContains("Assert-Contains $release.body \"Build metadata: $env:RELEASE_TAG\" 'Release page does not include build metadata.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Source revision:' 'Release page does not include source revision.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Runtime ABI: 0' 'Release page does not include runtime ABI.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Runtime ABI status: preview' 'Release page does not include runtime ABI status.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Default target framework: net48' 'Release page does not include default target framework.'", workflow);
+    AssertContains("$releaseBodyLines = @($release.body -split '\\r?\\n')", workflow);
+    AssertContains("$expectedReleaseBodySections = @(", workflow);
+    AssertContains("'## Summary',", workflow);
+    AssertContains("'## Compatibility Matrix',", workflow);
+    AssertContains("'## Breaking Changes',", workflow);
+    AssertContains("'## Migration Notes',", workflow);
+    AssertContains("'## Stable Features',", workflow);
+    AssertContains("'## Preview Features',", workflow);
+    AssertContains("'## Diagnostics And Tooling',", workflow);
+    AssertContains("'## Security',", workflow);
+    AssertContains("'## Checksums And Signing',", workflow);
+    AssertContains("'## Artifacts',", workflow);
+    AssertContains("'## Verification',", workflow);
+    AssertContains("'## Rollback'", workflow);
+    AssertContains("$releaseBodySectionCursor = -1", workflow);
+    AssertContains("$releaseBodySections = @($release.body -split '\\r?\\n' | Where-Object { $_.StartsWith('## ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("$releaseBodyUnexpectedSections = @($releaseBodySections | Where-Object { $expectedReleaseBodySections -notcontains $_ })", workflow);
+    AssertContains("if ($releaseBodyUnexpectedSections.Count -ne 0) {", workflow);
+    AssertContains("Release page contained unexpected release-note sections: $($releaseBodyUnexpectedSections -join ', ')", workflow);
+    AssertContains("if ($releaseBodySections.Count -ne $expectedReleaseBodySections.Count) {", workflow);
+    AssertContains("Release page release-note section set count mismatch. Expected $($expectedReleaseBodySections.Count) but found $($releaseBodySections.Count).", workflow);
+    AssertContains("foreach ($expectedReleaseBodySection in $expectedReleaseBodySections) {", workflow);
+    AssertContains("$releaseBodySectionMatches = @($release.body -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseBodySection })", workflow);
+    AssertContains("if ($releaseBodySectionMatches.Count -ne 1) {", workflow);
+    AssertContains("Release page mandatory release-note section must appear exactly once: $expectedReleaseBodySection", workflow);
+    AssertContains("$releaseBodySectionIndex = $release.body.IndexOf($expectedReleaseBodySection, [StringComparison]::Ordinal)", workflow);
+    AssertContains("if ($releaseBodySectionIndex -lt 0) {", workflow);
+    AssertContains("Release page does not include the mandatory release-note section: $expectedReleaseBodySection", workflow);
+    AssertContains("if ($releaseBodySectionIndex -le $releaseBodySectionCursor) {", workflow);
+    AssertContains("Release page mandatory release-note section order mismatch: $expectedReleaseBodySection", workflow);
+    AssertContains("$releaseBodySectionCursor = $releaseBodySectionIndex", workflow);
+    AssertContains("Assert-Contains $release.body 'Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.' 'Release page does not include the expected Summary artifact set.'", workflow);
+    AssertContains("Assert-Contains $release.body '| CLI line | Language | Runtime ABI | Generated target | Runtime asset |' 'Release page does not include the compatibility matrix header.'", workflow);
+    AssertContains("Assert-Contains $release.body '| --- | --- | --- | --- | --- |' 'Release page does not include the compatibility matrix separator.'", workflow);
+    AssertContains("Assert-Contains $release.body \"| 0.1.0-preview | preview | 0 preview | net48 | $runtimeAsset |\" 'Release page does not include the expected compatibility matrix row.'", workflow);
+    AssertContains("$expectedReleaseBodyMatrixRows = @(", workflow);
+    AssertContains("foreach ($expectedReleaseBodyMatrixFragment in $expectedReleaseBodyMatrixRows) {", workflow);
+    AssertContains("$releaseBodyMatrixFragmentMatches = @($release.body -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseBodyMatrixFragment })", workflow);
+    AssertContains("if ($releaseBodyMatrixFragmentMatches.Count -ne 1) {", workflow);
+    AssertContains("Release page compatibility matrix fragment must appear exactly once: $expectedReleaseBodyMatrixFragment", workflow);
+    AssertContains("$releaseBodyMatrixSectionStart = [Array]::IndexOf($releaseBodyLines, '## Compatibility Matrix')", workflow);
+    AssertContains("$releaseBodyMatrixSectionEnd = [Array]::IndexOf($releaseBodyLines, '## Breaking Changes')", workflow);
+    AssertContains("Release page compatibility matrix section boundaries were not canonical.", workflow);
+    AssertContains("$releaseBodyMatrixRows = @($releaseBodyLines[($releaseBodyMatrixSectionStart + 1)..($releaseBodyMatrixSectionEnd - 1)] | Where-Object { $_.StartsWith('| ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("$releaseBodyUnexpectedMatrixRows = @($releaseBodyMatrixRows | Where-Object { $expectedReleaseBodyMatrixRows -notcontains $_ })", workflow);
+    AssertContains("Release page contained unexpected compatibility matrix rows: $($releaseBodyUnexpectedMatrixRows -join ', ')", workflow);
+    AssertContains("if ($releaseBodyMatrixRows.Count -ne $expectedReleaseBodyMatrixRows.Count) {", workflow);
+    AssertContains("Release page compatibility matrix row count mismatch. Expected $($expectedReleaseBodyMatrixRows.Count) but found $($releaseBodyMatrixRows.Count).", workflow);
+    AssertContains("for ($releaseBodyMatrixRowIndex = 0; $releaseBodyMatrixRowIndex -lt $expectedReleaseBodyMatrixRows.Count; $releaseBodyMatrixRowIndex++) {", workflow);
+    AssertContains("if ($releaseBodyMatrixRows[$releaseBodyMatrixRowIndex] -ne $expectedReleaseBodyMatrixRows[$releaseBodyMatrixRowIndex]) {", workflow);
+    AssertContains("Release page compatibility matrix row order mismatch at index $releaseBodyMatrixRowIndex.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Breaking Changes\\r?\\n\\r?\\nNone\\.\\r?$') {", workflow);
+    AssertContains("Release page Breaking Changes section did not explicitly say None.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Migration Notes\\r?\\n\\r?\\nInstall a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS\\.txt\\.\\r?$') {", workflow);
+    AssertContains("Release page Migration Notes guidance is missing.", workflow);
+    AssertContains("Assert-Contains $release.body 'Generated projects target net48 with C# 7.3-compatible output.' 'Release page does not include the stable target policy.'", workflow);
+    AssertContains("Assert-Contains $release.body 'The CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview.' 'Release page does not include the preview boundary.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Use typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics.' 'Release page does not include diagnostics/tooling guidance.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.' 'Release page does not include the no-restore security policy.'", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Summary\\r?\\n\\r?\\nPreview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension\\.\\r?$') {", workflow);
+    AssertContains("Release page Summary section body mismatch.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Stable Features\\r?\\n\\r?\\nGenerated projects target net48 with C# 7\\.3-compatible output\\.\\r?$') {", workflow);
+    AssertContains("Release page Stable Features section body mismatch.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Preview Features\\r?\\n\\r?\\nThe CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview\\.\\r?$') {", workflow);
+    AssertContains("Release page Preview Features section body mismatch.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Diagnostics And Tooling\\r?\\n\\r?\\nUse typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics\\.\\r?$') {", workflow);
+    AssertContains("Release page Diagnostics And Tooling section body mismatch.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Security\\r?\\n\\r?\\nGenerated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build\\.\\r?$') {", workflow);
+    AssertContains("Release page Security section body mismatch.", workflow);
+    AssertContains("Assert-Contains $release.body 'Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.' 'Release page does not include the preview signature policy.'", workflow);
+    AssertContains("Assert-Contains $release.body 'Use SHA256SUMS.txt to verify downloaded release assets.' 'Release page does not include verification guidance.'", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Checksums And Signing\\r?\\n\\r?\\nSignature policy: preview releases publish SHA256SUMS\\.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet\\.\\r?$') {", workflow);
+    AssertContains("Release page Checksums And Signing section policy is missing.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Verification\\r?\\n\\r?\\nUse SHA256SUMS\\.txt to verify downloaded release assets\\.\\r?$') {", workflow);
+    AssertContains("Release page Verification guidance is missing.", workflow);
+    AssertContains("if ($release.body -notmatch '(?m)^## Rollback\\r?\\n\\r?\\nInstall a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS\\.txt\\.\\r?$') {", workflow);
+    AssertContains("Release page Rollback guidance is missing.", workflow);
+    AssertContains("foreach ($expectedReleaseBodyPolicyLine in @(", workflow);
+    AssertContains("$releaseBodyPolicyLineMatches = @($release.body -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseBodyPolicyLine })", workflow);
+    AssertContains("if ($releaseBodyPolicyLineMatches.Count -ne 1) {", workflow);
+    AssertContains("Release page policy line must appear exactly once: $expectedReleaseBodyPolicyLine", workflow);
+    AssertContains("$expectedReleaseBodyRollbackGuidance = 'Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.'", workflow);
+    AssertContains("$releaseBodyRollbackGuidanceMatches = @($release.body -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseBodyRollbackGuidance })", workflow);
+    AssertContains("if ($releaseBodyRollbackGuidanceMatches.Count -ne 2) {", workflow);
+    AssertContains("Release page rollback guidance must appear exactly twice: $expectedReleaseBodyRollbackGuidance", workflow);
+    AssertContains("Assert-Contains $release.body $cliAsset 'Release page does not list the CLI asset.'", workflow);
+    AssertContains("Assert-Contains $release.body $runtimeAsset 'Release page does not list the runtime asset.'", workflow);
+    AssertContains("Assert-Contains $release.body $vsixAsset 'Release page does not list the VSIX asset.'", workflow);
+    AssertContains("Assert-Contains $release.body $checksumAsset 'Release page does not list the checksum manifest.'", workflow);
+    AssertContains("$expectedReleaseBodyArtifactDescriptions = @(", workflow);
+    AssertContains("- $($cliAsset): framework-dependent modern .NET CLI host with Windows typesharp.cmd wrapper.", workflow);
+    AssertContains("- $($runtimeAsset): TypeSharp.Core and TypeSharp.Runtime net48 libraries.", workflow);
+    AssertContains("- $($vsixAsset): VS Code extension with bundled language server.", workflow);
+    AssertContains("- $($checksumAsset): SHA-256 manifest for release assets.", workflow);
+    AssertContains("$releaseBodyArtifactSectionStart = [Array]::IndexOf($releaseBodyLines, '## Artifacts')", workflow);
+    AssertContains("$releaseBodyArtifactSectionEnd = [Array]::IndexOf($releaseBodyLines, '## Verification')", workflow);
+    AssertContains("if ($releaseBodyArtifactSectionStart -lt 0 -or $releaseBodyArtifactSectionEnd -le $releaseBodyArtifactSectionStart) {", workflow);
+    AssertContains("Release page artifact section boundaries were not canonical.", workflow);
+    AssertContains("$releaseBodyArtifactDescriptionRows = @($releaseBodyLines[($releaseBodyArtifactSectionStart + 1)..($releaseBodyArtifactSectionEnd - 1)] | Where-Object { $_.StartsWith('- ', [StringComparison]::Ordinal) })", workflow);
+    AssertContains("$releaseBodyUnexpectedArtifactDescriptions = @($releaseBodyArtifactDescriptionRows | Where-Object { $expectedReleaseBodyArtifactDescriptions -notcontains $_ })", workflow);
+    AssertContains("if ($releaseBodyUnexpectedArtifactDescriptions.Count -ne 0) {", workflow);
+    AssertContains("Release page contained unexpected artifact descriptions: $($releaseBodyUnexpectedArtifactDescriptions -join ', ')", workflow);
+    AssertContains("if ($releaseBodyArtifactDescriptionRows.Count -ne $expectedReleaseBodyArtifactDescriptions.Count) {", workflow);
+    AssertContains("Release page artifact description row count mismatch. Expected $($expectedReleaseBodyArtifactDescriptions.Count) but found $($releaseBodyArtifactDescriptionRows.Count).", workflow);
+    AssertContains("for ($releaseBodyArtifactDescriptionIndex = 0; $releaseBodyArtifactDescriptionIndex -lt $expectedReleaseBodyArtifactDescriptions.Count; $releaseBodyArtifactDescriptionIndex++) {", workflow);
+    AssertContains("if ($releaseBodyArtifactDescriptionRows[$releaseBodyArtifactDescriptionIndex] -ne $expectedReleaseBodyArtifactDescriptions[$releaseBodyArtifactDescriptionIndex]) {", workflow);
+    AssertContains("Release page artifact description order mismatch at index $releaseBodyArtifactDescriptionIndex.", workflow);
+    AssertContains("foreach ($expectedReleaseBodyArtifactDescription in $expectedReleaseBodyArtifactDescriptions) {", workflow);
+    AssertContains("$releaseBodyArtifactDescriptionMatches = @($release.body -split '\\r?\\n' | Where-Object { $_ -eq $expectedReleaseBodyArtifactDescription })", workflow);
+    AssertContains("if ($releaseBodyArtifactDescriptionMatches.Count -ne 1) {", workflow);
+    AssertContains("Release page artifact description must appear exactly once: $expectedReleaseBodyArtifactDescription", workflow);
+    AssertContains("Assert-Contains $release.body $expectedReleaseBodyArtifactDescription \"Release page artifact description missing: $expectedReleaseBodyArtifactDescription\"", workflow);
+    AssertContains("$expectedReleaseBodySectionBodies = [ordered]@{", workflow);
+    AssertContains("'## Summary' = @('Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.')", workflow);
+    AssertContains("'## Compatibility Matrix' = $expectedReleaseBodyMatrixRows", workflow);
+    AssertContains("'## Artifacts' = $expectedReleaseBodyArtifactDescriptions", workflow);
+    AssertContains("for ($releaseBodySectionBodyIndex = 0; $releaseBodySectionBodyIndex -lt $expectedReleaseBodySections.Count; $releaseBodySectionBodyIndex++) {", workflow);
+    AssertContains("$releaseBodySectionBodyLines = @($releaseBodyLines[($releaseBodySectionBodyStart + 1)..($releaseBodySectionBodyEnd - 1)] | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })", workflow);
+    AssertContains("Release page section body line count mismatch for $releaseBodySectionBodyName. Expected $($expectedReleaseBodySectionBodyLines.Count) but found $($releaseBodySectionBodyLines.Count).", workflow);
+    AssertContains("Release page section body mismatch for $releaseBodySectionBodyName at line $releaseBodySectionBodyLineIndex.", workflow);
+    AssertContains("$sourceRevisionLine = $release.body -split \"`n\" | Where-Object { $_.StartsWith('Source revision:') } | Select-Object -First 1", workflow);
+    AssertContains("$sourceRevision = $sourceRevisionLine.Substring('Source revision:'.Length).Trim()", workflow);
+    AssertContains("if ($sourceRevision -notmatch '^[0-9a-f]{12}$') {", workflow);
+    AssertContains("$sourceRevision -notmatch '^[0-9a-f]{12}$'", workflow);
+    AssertContains("Release page source revision '$sourceRevision' must be a 12-character lowercase hex commit prefix.", workflow);
+    AssertContains("$expectedSourceRevision = git rev-parse --short=12 HEAD", workflow);
+    AssertContains("if ($sourceRevision -ne $expectedSourceRevision) {", workflow);
+    AssertContains("Release page source revision '$sourceRevision' did not match checkout commit '$expectedSourceRevision'.", workflow);
+    AssertContains("$expectedReleaseBodyMetadataLines = @(", workflow);
+    AssertContains("\"Date: $releaseDate\",", workflow);
+    AssertContains("\"Channel: $expectedChannel\",", workflow);
+    AssertContains("\"Build metadata: $env:RELEASE_TAG\",", workflow);
+    AssertContains("\"Source revision: $sourceRevision\",", workflow);
+    AssertContains("$releaseBodyLines = @($release.body -split '\\r?\\n')", workflow);
+    AssertContains("foreach ($expectedReleaseBodyMetadataPrefix in @(", workflow);
+    AssertContains("$releaseBodyMetadataPrefixMatches = @($releaseBodyLines | Where-Object { $_.StartsWith($expectedReleaseBodyMetadataPrefix, [StringComparison]::Ordinal) })", workflow);
+    AssertContains("Release page metadata prefix '$expectedReleaseBodyMetadataPrefix' must appear exactly once.", workflow);
+    AssertContains("$releaseBodyMetadataCursor = -1", workflow);
+    AssertContains("foreach ($expectedReleaseBodyMetadataLine in $expectedReleaseBodyMetadataLines) {", workflow);
+    AssertContains("$releaseBodyMetadataIndex = $release.body.IndexOf($expectedReleaseBodyMetadataLine, [StringComparison]::Ordinal)", workflow);
+    AssertContains("Release page metadata line missing: $expectedReleaseBodyMetadataLine", workflow);
+    AssertContains("if ($releaseBodyMetadataIndex -le $releaseBodyMetadataCursor) {", workflow);
+    AssertContains("Release page metadata order mismatch: $expectedReleaseBodyMetadataLine", workflow);
+    AssertContains("$releaseBodyMetadataCursor = $releaseBodyMetadataIndex", workflow);
+    AssertContains("$releaseBodyFirstSectionIndex = $release.body.IndexOf('## Summary', [StringComparison]::Ordinal)", workflow);
+    AssertContains("if ($releaseBodyFirstSectionIndex -ge 0 -and $releaseBodyFirstSectionIndex -le $releaseBodyMetadataCursor) {", workflow);
+    AssertContains("Release page metadata block must appear before mandatory sections.", workflow);
+    AssertContains("$expectedReleaseBodyHeaderPrefix = @(", workflow);
+    AssertContains("\"# TypeSharp $env:RELEASE_TAG\",\n            '',\n            \"Date: $releaseDate\",", workflow);
+    AssertContains("'Default target framework: net48',\n            ''", workflow);
+    AssertContains("$normalizedReleaseBody = $release.body.Replace(\"`r`n\", \"`n\")", workflow);
+    AssertContains("if (-not $normalizedReleaseBody.StartsWith($expectedReleaseBodyHeaderPrefix, [StringComparison]::Ordinal)) {", workflow);
+    AssertContains("Release page body must start with the canonical metadata header.", workflow);
+    AssertContains("$expectedReleaseBodyHeaderAndFirstSectionPrefix = $expectedReleaseBodyHeaderPrefix + \"`n## Summary\"", workflow);
+    AssertContains("if (-not $normalizedReleaseBody.StartsWith($expectedReleaseBodyHeaderAndFirstSectionPrefix, [StringComparison]::Ordinal)) {", workflow);
+    AssertContains("Release page Summary section must immediately follow the canonical metadata header.", workflow);
+    AssertContains("Assert-NotContains", workflow);
+    AssertContains("Assert-Contains $cliReadme \"# TypeSharp CLI $env:RELEASE_TAG\" 'Hosted CLI README does not identify the release tag.'", workflow);
+    AssertContains("Assert-Contains $cliReadme \"Build metadata: $env:RELEASE_TAG\" 'Hosted CLI README does not include build metadata.'", workflow);
+    AssertContains("Assert-Contains $cliReadme \"Source revision: $sourceRevision\" 'Hosted CLI README source revision does not match the release page.'", workflow);
+    AssertContains("Assert-Contains $cliReadme 'Run `typesharp.cmd version` from this directory' 'Hosted CLI README does not document the local wrapper command.'", workflow);
+    AssertContains("Assert-Contains $cliReadme 'add the extracted directory to `PATH` and run `typesharp version`' 'Hosted CLI README does not document the PATH command route.'", workflow);
+    AssertContains("Assert-NotContains $cliReadme 'dotnet cli\\TypeSharp.Cli' 'Hosted CLI README must not document repo-local CLI DLL commands.'", workflow);
+    AssertContains("Assert-NotContains $cliReadme 'source-built' 'Hosted CLI README must not document the source-built fallback.'", workflow);
+    AssertContains("Assert-NotContains $cliReadme 'dotnet tool install' 'Hosted CLI README must not document a hidden global dotnet tool install.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme \"# TypeSharp Runtime $env:RELEASE_TAG\" 'Hosted runtime README does not identify the release tag.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme \"Build metadata: $env:RELEASE_TAG\" 'Hosted runtime README does not include build metadata.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme \"Source revision: $sourceRevision\" 'Hosted runtime README source revision does not match the release page.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme 'Runtime ABI: 0' 'Hosted runtime README does not include runtime ABI.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme 'Runtime ABI status: preview' 'Hosted runtime README does not include runtime ABI status.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme 'Target framework: net48' 'Hosted runtime README does not include target framework.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme 'lib/net48/TypeSharp.Core.dll' 'Hosted runtime README does not list TypeSharp.Core.dll.'", workflow);
+    AssertContains("Assert-Contains $runtimeReadme 'lib/net48/TypeSharp.Runtime.dll' 'Hosted runtime README does not list TypeSharp.Runtime.dll.'", workflow);
+    AssertContains("Assert-NotContains $runtimeReadme 'dotnet cli\\TypeSharp.Cli' 'Hosted runtime README must not document repo-local CLI DLL commands.'", workflow);
+    AssertContains("Assert-NotContains $runtimeReadme 'source-built' 'Hosted runtime README must not document the source-built fallback.'", workflow);
+    AssertContains("Assert-NotContains $runtimeReadme 'dotnet tool install' 'Hosted runtime README must not document a hidden global dotnet tool install.'", workflow);
+    AssertContains("if ($version.cli -ne '0.1.0-preview') {", workflow);
+    AssertContains("Hosted CLI version '$($version.cli)' did not match 0.1.0-preview.", workflow);
+    AssertContains("if ($version.compiler -ne '0.1.0-preview') {", workflow);
+    AssertContains("Hosted compiler version '$($version.compiler)' did not match 0.1.0-preview.", workflow);
+    AssertContains("if ($version.language -ne 'preview') {", workflow);
+    AssertContains("Hosted language version '$($version.language)' did not match preview.", workflow);
+    AssertContains("if ($version.buildMetadata -ne $env:RELEASE_TAG) {", workflow);
+    AssertContains("Hosted CLI build metadata '$($version.buildMetadata)' did not match '$env:RELEASE_TAG'.", workflow);
+    AssertContains("if ($version.sourceRevision -ne $sourceRevision) {", workflow);
+    AssertContains("Hosted CLI source revision '$($version.sourceRevision)' did not match release page '$sourceRevision'.", workflow);
+    AssertContains("if ($version.releaseChannel -ne $expectedChannel) {", workflow);
+    AssertContains("Hosted CLI release channel '$($version.releaseChannel)' did not match expected '$expectedChannel'.", workflow);
+    AssertContains("if ($version.targetDefault -ne 'net48') {", workflow);
+    AssertContains("Hosted CLI target default '$($version.targetDefault)' did not match net48.", workflow);
+    AssertContains("if ($version.cliTargetFramework -ne 'net10.0') {", workflow);
+    AssertContains("Hosted CLI target framework '$($version.cliTargetFramework)' did not match net10.0.", workflow);
+    AssertContains("if ($version.runtimeTargetFramework -ne 'net48') {", workflow);
+    AssertContains("Hosted CLI runtime target framework '$($version.runtimeTargetFramework)' did not match net48.", workflow);
+    AssertContains("if ($version.artifactKind -ne 'framework-dependent-dotnet') {", workflow);
+    AssertContains("Hosted CLI artifact kind '$($version.artifactKind)' did not match framework-dependent-dotnet.", workflow);
+    AssertContains("if ($version.runtimeAbi -ne 0) {", workflow);
+    AssertContains("Hosted CLI runtime ABI '$($version.runtimeAbi)' did not match 0.", workflow);
+    AssertContains("if ($version.runtimeAbiStatus -ne 'preview') {", workflow);
+    AssertContains("Hosted CLI runtime ABI status '$($version.runtimeAbiStatus)' did not match preview.", workflow);
+    AssertContains("$env:PATH = \"$installRoot;$env:PATH\"", workflow);
+    AssertContains("$resolvedTypeSharpCommand = (Get-Command typesharp -CommandType Application).Source", workflow);
+    AssertContains("$expectedTypeSharpCommand = Join-Path $installRoot 'typesharp.cmd'", workflow);
+    AssertContains("if ($resolvedTypeSharpCommand -ne $expectedTypeSharpCommand) {", workflow);
+    AssertContains("Hosted PATH smoke resolved typesharp to '$resolvedTypeSharpCommand' instead of '$expectedTypeSharpCommand'.", workflow);
+    AssertContains("$env:PATH = $installRoot", workflow);
+    AssertContains("$missingHostOutput = & $expectedTypeSharpCommand version 2>&1", workflow);
+    AssertContains("$missingHostExitCode = $LASTEXITCODE", workflow);
+    AssertContains("if ($missingHostExitCode -eq 0) {", workflow);
+    AssertContains("Hosted CLI host-prerequisite smoke unexpectedly succeeded without dotnet on PATH.", workflow);
+    AssertContains("Assert-Contains ($missingHostOutput -join \"`n\") 'dotnet' 'Hosted CLI host-prerequisite smoke did not report the missing dotnet host.'", workflow);
+    AssertContains("typesharp version --json", workflow);
+    AssertContains("Hosted CLI version text failed.", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'TypeSharp CLI ' 'Hosted CLI version text did not include the CLI version.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Compiler ' 'Hosted CLI version text did not include the compiler version.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Language ' 'Hosted CLI version text did not include the language version.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined \"Release channel $expectedChannel\" 'Hosted CLI version text did not include the expected release channel.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Runtime ABI 0' 'Hosted CLI version text did not include the runtime ABI.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Runtime ABI status preview' 'Hosted CLI version text did not include the runtime ABI status.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Target default net48' 'Hosted CLI version text did not include the default target framework.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'CLI target net10.0' 'Hosted CLI version text did not include the CLI target framework.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Runtime target net48' 'Hosted CLI version text did not include the runtime target framework.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined 'Artifact kind framework-dependent-dotnet' 'Hosted CLI version text did not include the artifact kind.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined \"Build metadata $env:RELEASE_TAG\" 'Hosted CLI version text did not include the release build metadata.'", workflow);
+    AssertContains("Assert-Contains $versionTextJoined \"Source revision $sourceRevision\" 'Hosted CLI version text did not include the release source revision.'", workflow);
+    AssertContains("typesharp new console HostedReleaseSmoke --target net48 --output HostedReleaseSmoke", workflow);
+    AssertContains("$hostedStarterManifest = Get-Content -Raw -LiteralPath 'HostedReleaseSmoke\\TypeSharp.toml'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'targetFramework = \"net48\"' 'Hosted CLI starter manifest did not preserve the net48 target.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'outputType = \"exe\"' 'Hosted CLI starter manifest did not preserve executable output.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'rootNamespace = \"HostedReleaseSmoke\"' 'Hosted CLI starter manifest did not preserve the root namespace.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'sourceRoots = [\"src\"]' 'Hosted CLI starter manifest did not preserve the source root.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'generatedOutputRoot = \"generated\"' 'Hosted CLI starter manifest did not preserve the generated output root.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'main = \"HostedReleaseSmoke.main\"' 'Hosted CLI starter manifest did not preserve the executable entry point.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'version = \"preview\"' 'Hosted CLI starter manifest did not preserve the language version.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'strict = true' 'Hosted CLI starter manifest did not preserve strict mode.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'nullable = \"strict\"' 'Hosted CLI starter manifest did not preserve nullable strict mode.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'previewFeatures = []' 'Hosted CLI starter manifest did not preserve the empty preview feature gate.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest '\"System\"' 'Hosted CLI starter manifest did not preserve the System framework assembly reference.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest '\"System.Core\"' 'Hosted CLI starter manifest did not preserve the System.Core framework assembly reference.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'paths = []' 'Hosted CLI starter manifest did not preserve empty local DLL references.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'packages = []' 'Hosted CLI starter manifest did not preserve the unsupported package-reference boundary.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'diagnosticFormat = \"text\"' 'Hosted CLI starter manifest did not preserve the default diagnostic format.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterManifest 'treatWarningsAsErrors = false' 'Hosted CLI starter manifest did not preserve warning policy.'", workflow);
+    AssertContains("$hostedStarterReadme = Get-Content -Raw -LiteralPath 'HostedReleaseSmoke\\README.md'", workflow);
+    AssertContains("Assert-Contains $hostedStarterReadme 'release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`' 'Hosted CLI starter README did not point at the release-installed command path.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterReadme 'typesharp check TypeSharp.toml' 'Hosted CLI starter README did not include the local check command.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterReadme 'typesharp build TypeSharp.toml' 'Hosted CLI starter README did not include the local build command.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterReadme 'typesharp run TypeSharp.toml' 'Hosted CLI starter README did not include the local run command.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterReadme 'https://naramdash.github.io/TypeSharp/troubleshooting/' 'Hosted CLI starter README did not link to public Troubleshooting.'", workflow);
+    AssertContains("Assert-NotContains $hostedStarterReadme 'dotnet cli\\TypeSharp.Cli' 'Hosted CLI starter README must not document repo-local CLI DLL commands.'", workflow);
+    AssertContains("Assert-NotContains $hostedStarterReadme 'source-built' 'Hosted CLI starter README must not document the source-built fallback.'", workflow);
+    AssertContains("Assert-NotContains $hostedStarterReadme 'dotnet tool install' 'Hosted CLI starter README must not document a hidden global dotnet tool install.'", workflow);
+    AssertContains("$hostedStarterSource = Get-Content -Raw -LiteralPath 'HostedReleaseSmoke\\src\\Main.tysh'", workflow);
+    AssertContains("Assert-Contains $hostedStarterSource 'namespace HostedReleaseSmoke' 'Hosted CLI starter source did not preserve the project namespace.'", workflow);
+    AssertContains("Assert-Contains $hostedStarterSource 'export fun main(): string = \"Hello, TypeSharp\"' 'Hosted CLI starter source did not preserve the console main entry point.'", workflow);
+    AssertContains("$hostedStarterGitIgnore = Get-Content -Raw -LiteralPath 'HostedReleaseSmoke\\.gitignore'", workflow);
+    AssertContains("Assert-Contains $hostedStarterGitIgnore 'generated/' 'Hosted CLI starter .gitignore did not ignore generated output.'", workflow);
+    AssertContains("typesharp format HostedReleaseSmoke\\TypeSharp.toml --check", workflow);
+    AssertContains("Hosted CLI format --check smoke failed.", workflow);
+    AssertContains("Hosted CLI format --check smoke did not report formatted sources.", workflow);
+    AssertContains("typesharp check HostedReleaseSmoke\\TypeSharp.toml", workflow);
+    AssertContains("typesharp build HostedReleaseSmoke\\TypeSharp.toml", workflow);
+    AssertContains("$hostedConsoleGeneratedProjectPath = Join-Path $workspaceRoot 'HostedReleaseSmoke\\generated\\HostedReleaseSmoke.Generated.csproj'", workflow);
+    AssertContains("Hosted CLI console starter build did not produce '$hostedConsoleGeneratedProjectPath'.", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<TargetFramework>net48</TargetFramework>' 'Hosted CLI console starter generated project did not target net48.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<OutputType>Exe</OutputType>' 'Hosted CLI console starter generated project did not preserve executable output.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<LangVersion>7.3</LangVersion>' 'Hosted CLI console starter generated project did not preserve C# 7.3 output.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<ImplicitUsings>false</ImplicitUsings>' 'Hosted CLI console starter generated project did not disable implicit usings.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<Nullable>disable</Nullable>' 'Hosted CLI console starter generated project did not preserve nullable disable output.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<AssemblyName>HostedReleaseSmoke</AssemblyName>' 'Hosted CLI console starter generated project did not preserve the assembly name.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<RootNamespace>HostedReleaseSmoke</RootNamespace>' 'Hosted CLI console starter generated project did not preserve the root namespace.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<Reference Include=\"System\" />' 'Hosted CLI console starter generated project did not preserve the System framework reference.'", workflow);
+    AssertContains("Assert-Contains $hostedConsoleGeneratedProject '<Reference Include=\"System.Core\" />' 'Hosted CLI console starter generated project did not preserve the System.Core framework reference.'", workflow);
+    AssertContains("$hostedConsoleNuGetConfig = Get-Content -Raw -LiteralPath (Join-Path $workspaceRoot 'HostedReleaseSmoke\\generated\\NuGet.config')", workflow);
+    AssertContains("Hosted CLI console starter generated NuGet.config did not clear package sources.", workflow);
+    AssertContains("typesharp run HostedReleaseSmoke\\TypeSharp.toml", workflow);
+    AssertContains("Hosted CLI run smoke failed.", workflow);
+    AssertContains("Hello, TypeSharp", workflow);
     AssertContains("HostedReleaseSmoke\\generated\\bin\\Debug\\net48\\HostedReleaseSmoke.exe", workflow);
+    AssertContains("dotnet build Legacy.Tools.csproj --nologo --verbosity quiet --ignore-failed-sources", workflow);
+    AssertContains("typesharp new library HostedLocalDllSmoke --target net48 --output HostedLocalDllSmoke", workflow);
+    AssertContains("$hostedLibraryStarterManifest = Get-Content -Raw -LiteralPath 'HostedLocalDllSmoke\\TypeSharp.toml'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'targetFramework = \"net48\"' 'Hosted CLI library starter manifest did not preserve the net48 target.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'outputType = \"library\"' 'Hosted CLI library starter manifest did not preserve library output.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'rootNamespace = \"HostedLocalDllSmoke\"' 'Hosted CLI library starter manifest did not preserve the root namespace.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'sourceRoots = [\"src\"]' 'Hosted CLI library starter manifest did not preserve the source root.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'generatedOutputRoot = \"generated\"' 'Hosted CLI library starter manifest did not preserve the generated output root.'", workflow);
+    AssertContains("Assert-NotContains $hostedLibraryStarterManifest 'main = \"' 'Hosted CLI library starter manifest must not declare an executable entry point.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'version = \"preview\"' 'Hosted CLI library starter manifest did not preserve the language version.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'strict = true' 'Hosted CLI library starter manifest did not preserve strict mode.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'nullable = \"strict\"' 'Hosted CLI library starter manifest did not preserve nullable strict mode.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'previewFeatures = []' 'Hosted CLI library starter manifest did not preserve the empty preview feature gate.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest '\"System\"' 'Hosted CLI library starter manifest did not preserve the System framework assembly reference.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest '\"System.Core\"' 'Hosted CLI library starter manifest did not preserve the System.Core framework assembly reference.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'paths = []' 'Hosted CLI library starter manifest did not preserve empty local DLL references.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'packages = []' 'Hosted CLI library starter manifest did not preserve the unsupported package-reference boundary.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'diagnosticFormat = \"text\"' 'Hosted CLI library starter manifest did not preserve the default diagnostic format.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterManifest 'treatWarningsAsErrors = false' 'Hosted CLI library starter manifest did not preserve warning policy.'", workflow);
+    AssertContains("$hostedLibraryStarterReadme = Get-Content -Raw -LiteralPath 'HostedLocalDllSmoke\\README.md'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterReadme 'release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`' 'Hosted CLI library starter README did not point at the release-installed command path.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterReadme 'typesharp check TypeSharp.toml' 'Hosted CLI library starter README did not include the local check command.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterReadme 'typesharp build TypeSharp.toml' 'Hosted CLI library starter README did not include the local build command.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterReadme 'https://naramdash.github.io/TypeSharp/runtime-artifacts/' 'Hosted CLI library starter README did not link to public Runtime Artifacts.'", workflow);
+    AssertContains("Assert-NotContains $hostedLibraryStarterReadme 'typesharp run TypeSharp.toml' 'Hosted CLI library starter README must not document a run command for library output.'", workflow);
+    AssertContains("Assert-NotContains $hostedLibraryStarterReadme 'dotnet cli\\TypeSharp.Cli' 'Hosted CLI library starter README must not document repo-local CLI DLL commands.'", workflow);
+    AssertContains("Assert-NotContains $hostedLibraryStarterReadme 'source-built' 'Hosted CLI library starter README must not document the source-built fallback.'", workflow);
+    AssertContains("Assert-NotContains $hostedLibraryStarterReadme 'dotnet tool install' 'Hosted CLI library starter README must not document a hidden global dotnet tool install.'", workflow);
+    AssertContains("$hostedLibraryStarterSource = Get-Content -Raw -LiteralPath 'HostedLocalDllSmoke\\src\\Library.tysh'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterSource 'namespace HostedLocalDllSmoke' 'Hosted CLI library starter source did not preserve the project namespace.'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterSource 'export fun greeting(name: string): string = name' 'Hosted CLI library starter source did not preserve the starter exported function.'", workflow);
+    AssertContains("$hostedLibraryStarterGitIgnore = Get-Content -Raw -LiteralPath 'HostedLocalDllSmoke\\.gitignore'", workflow);
+    AssertContains("Assert-Contains $hostedLibraryStarterGitIgnore 'generated/' 'Hosted CLI library starter .gitignore did not ignore generated output.'", workflow);
+    AssertContains("$libraryStarterFormatOutput = typesharp format HostedLocalDllSmoke\\TypeSharp.toml --check", workflow);
+    AssertContains("Hosted CLI library starter format --check smoke failed before dependency-specific edits.", workflow);
+    AssertContains("Assert-Contains ($libraryStarterFormatOutput -join \"`n\") 'All TypeSharp files are formatted.' 'Hosted CLI library starter format check did not report formatted output.'", workflow);
+    AssertContains("Hosted CLI library starter check smoke failed before dependency-specific edits.", workflow);
+    AssertContains("Hosted CLI library starter build smoke failed before dependency-specific edits.", workflow);
+    AssertContains("$libraryStarterAssemblyPath = Join-Path $workspaceRoot 'HostedLocalDllSmoke\\generated\\bin\\Debug\\net48\\HostedLocalDllSmoke.dll'", workflow);
+    AssertContains("$libraryStarterGeneratedProjectPath = Join-Path $workspaceRoot 'HostedLocalDllSmoke\\generated\\HostedLocalDllSmoke.Generated.csproj'", workflow);
+    AssertContains("Hosted CLI library starter build did not produce '$libraryStarterGeneratedProjectPath'.", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<TargetFramework>net48</TargetFramework>' 'Hosted CLI library starter generated project did not target net48.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<OutputType>Library</OutputType>' 'Hosted CLI library starter generated project did not preserve library output.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<LangVersion>7.3</LangVersion>' 'Hosted CLI library starter generated project did not preserve C# 7.3 output.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<ImplicitUsings>false</ImplicitUsings>' 'Hosted CLI library starter generated project did not disable implicit usings.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<Nullable>disable</Nullable>' 'Hosted CLI library starter generated project did not preserve nullable disable output.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<AssemblyName>HostedLocalDllSmoke</AssemblyName>' 'Hosted CLI library starter generated project did not preserve the assembly name.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<RootNamespace>HostedLocalDllSmoke</RootNamespace>' 'Hosted CLI library starter generated project did not preserve the root namespace.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<Reference Include=\"System\" />' 'Hosted CLI library starter generated project did not preserve the System framework reference.'", workflow);
+    AssertContains("Assert-Contains $libraryStarterGeneratedProject '<Reference Include=\"System.Core\" />' 'Hosted CLI library starter generated project did not preserve the System.Core framework reference.'", workflow);
+    AssertContains("$libraryStarterNuGetConfig = Get-Content -Raw -LiteralPath (Join-Path $workspaceRoot 'HostedLocalDllSmoke\\generated\\NuGet.config')", workflow);
+    AssertContains("Hosted CLI library starter generated NuGet.config did not clear package sources.", workflow);
+    AssertContains("paths = [\"../lib/Legacy.Tools.dll\"]", workflow);
+    AssertContains("import { LegacyApi } from \"Legacy.Tools\"", workflow);
+    AssertContains("typesharp check HostedLocalDllSmoke\\TypeSharp.toml", workflow);
+    AssertContains("typesharp build HostedLocalDllSmoke\\TypeSharp.toml", workflow);
+    AssertContains("<Reference Include=\"Legacy.Tools\">", workflow);
+    AssertContains("../lib/Legacy.Tools.dll", workflow);
+    AssertContains("HostedLocalDllConsumer.csproj", workflow);
+    AssertContains("dotnet build HostedLocalDllConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", workflow);
+    AssertContains("HostedLocalDllSmoke\\generated\\bin\\Debug\\net48\\HostedLocalDllSmoke.dll", workflow);
+    AssertContains("typesharp new library HostedBadDeps --target net48 --output HostedBadDeps", workflow);
+    AssertContains("paths = [\"../lib/Missing.Tools.dll\"]", workflow);
+    AssertContains("packages = [\"Newtonsoft.Json\"]", workflow);
+    AssertContains("error TS2401", workflow);
+    AssertContains("Referenced assembly path '../lib/Missing.Tools.dll' does not exist.", workflow);
+    AssertContains("error TS2405", workflow);
+    AssertContains("NuGet package reference 'Newtonsoft.Json' is not supported by the current compiler.", workflow);
+    AssertContains("HostedBadDeps\\generated\\HostedBadDeps.Generated.csproj", workflow);
+    AssertContains("HostedBadDeps\\generated\\bin\\Debug\\net48\\HostedBadDeps.dll", workflow);
+    AssertContains("typesharp check HostedBadDeps\\TypeSharp.toml --diagnostic-format json", workflow);
+    AssertContains("Hosted negative dependency JSON check smoke returned exit code $badCheckJsonExitCode instead of 1.", workflow);
+    AssertContains("Hosted negative dependency JSON check smoke did not include TS2401.", workflow);
+    AssertContains("Hosted negative dependency JSON check smoke did not include TS2405.", workflow);
+    AssertContains("Hosted negative dependency JSON check smoke included a non-error severity.", workflow);
+    AssertContains("typesharp new library HostedGeneratedBuildFail --target net48 --output HostedGeneratedBuildFail", workflow);
+    AssertContains("TypeSharpForcedHostedGeneratedBuildFailure", workflow);
+    AssertContains("typesharp check HostedGeneratedBuildFail\\TypeSharp.toml", workflow);
+    AssertContains("typesharp build HostedGeneratedBuildFail\\TypeSharp.toml", workflow);
+    AssertContains("error TS3501", workflow);
+    AssertContains("Generated C# project build failed for 'HostedGeneratedBuildFail.Generated.csproj'", workflow);
+    AssertContains("HostedGeneratedBuildFail\\generated\\src\\Library.g.cs", workflow);
+    AssertContains("HostedGeneratedBuildFail\\generated\\HostedGeneratedBuildFail.Generated.csproj", workflow);
+    AssertContains("HostedGeneratedBuildFail\\generated\\bin\\Debug\\net48\\HostedGeneratedBuildFail.dll", workflow);
+    AssertContains("typesharp build HostedGeneratedBuildFail\\TypeSharp.toml --diagnostic-format json", workflow);
+    AssertContains("Hosted generated C# build-failure JSON smoke returned exit code $generatedBuildFailureJsonExitCode instead of 1.", workflow);
+    AssertContains("Hosted generated C# build-failure JSON smoke did not include TS3501.", workflow);
+    AssertContains("Hosted generated C# build-failure JSON smoke reported severity '$($generatedBuildFailureJsonDiagnostic.severity)' instead of error.", workflow);
+    AssertContains("Hosted generated C# build-failure JSON smoke did not report the generated project name.", workflow);
+    AssertContains("$diagnosticExplains = @(", workflow);
+    AssertContains("@{ Code = 'TS2401'; Title = 'Missing referenced assembly or namespace'; Category = 'Interop' }", workflow);
+    AssertContains("@{ Code = 'TS2405'; Title = 'Unsupported package reference'; Category = 'Interop' }", workflow);
+    AssertContains("@{ Code = 'TS3501'; Title = 'Generated C# project build failed'; Category = 'Backend' }", workflow);
+    AssertContains("typesharp explain $diagnosticExplain.Code", workflow);
+    AssertContains("Hosted CLI explain output did not include a suggested action for $($diagnosticExplain.Code).", workflow);
+    AssertContains("typesharp explain $diagnosticExplain.Code --json", workflow);
+    AssertContains("$explainJson.diagnostic.code -ne $diagnosticExplain.Code", workflow);
+    AssertContains("$explainJson.diagnostic.title -ne $diagnosticExplain.Title", workflow);
+    AssertContains("$explainJson.diagnostic.severity -ne 'error'", workflow);
+    AssertContains("$explainJson.diagnostic.category -ne $diagnosticExplain.Category", workflow);
+    AssertContains("Hosted CLI explain JSON payload did not match descriptor metadata for $($diagnosticExplain.Code).", workflow);
+    AssertContains("Hosted CLI explain JSON payload did not include an explanation for $($diagnosticExplain.Code).", workflow);
+    AssertContains("Hosted CLI explain JSON payload did not include a suggested action for $($diagnosticExplain.Code).", workflow);
+    AssertContains("typesharp new library HostedShared --target net48 --output HostedShared", workflow);
+    AssertContains("typesharp new library HostedProjectReference --target net48 --output HostedProjectReference", workflow);
+    AssertContains("paths = [\"../HostedShared/TypeSharp.toml\"]", workflow);
+    AssertContains("import { sharedMessage } from \"HostedShared/Library\"", workflow);
+    AssertContains("typesharp check HostedProjectReference\\TypeSharp.toml", workflow);
+    AssertContains("typesharp build HostedProjectReference\\TypeSharp.toml", workflow);
+    AssertContains("<Reference Include=\"HostedShared\">", workflow);
+    AssertContains("HostedShared/generated/bin/Debug/net48/HostedShared.dll", workflow);
+    AssertContains("HostedShared\\generated\\bin\\Debug\\net48\\HostedShared.dll", workflow);
+    AssertContains("HostedProjectReference\\generated\\bin\\Debug\\net48\\HostedProjectReference.dll", workflow);
+    AssertContains("typesharp new library HostedRuntimeSmoke --target net48 --output HostedRuntimeSmoke", workflow);
+    AssertContains("../typesharp-runtime/lib/net48/TypeSharp.Core.dll", workflow);
+    AssertContains("../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll", workflow);
+    AssertContains("import { Option, Result } from \"TypeSharp.Core\"", workflow);
+    AssertContains("typesharp check HostedRuntimeSmoke\\TypeSharp.toml", workflow);
+    AssertContains("typesharp build HostedRuntimeSmoke\\TypeSharp.toml", workflow);
+    AssertContains("HostedRuntimeSmoke\\generated\\HostedRuntimeSmoke.Generated.csproj", workflow);
+    AssertContains("Hosted runtime library generated project did not reference TypeSharp.Core.", workflow);
+    AssertContains("<HintPath>../../typesharp-runtime/lib/net48/TypeSharp.Core.dll</HintPath>", workflow);
+    AssertContains("Hosted runtime library generated project did not reference TypeSharp.Runtime.", workflow);
+    AssertContains("<HintPath>../../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll</HintPath>", workflow);
+    AssertContains("typesharp run HostedRuntimeSmoke\\TypeSharp.toml", workflow);
+    AssertContains("Hosted CLI library run rejection returned exit code $libraryRunExitCode instead of 5.", workflow);
+    AssertContains("Hosted CLI library run rejection did not report the executable outputType requirement.", workflow);
+    AssertContains("typesharp run requires project outputType = \"exe\".", workflow);
+    AssertContains("HostedRuntimeSmoke\\generated\\bin\\Debug\\net48\\HostedRuntimeSmoke.dll", workflow);
+    AssertContains("HostedRuntimeConsumer.csproj", workflow);
+    AssertContains("<TargetFramework>net48</TargetFramework>", workflow);
+    AssertContains("<HintPath>..\\typesharp-runtime\\lib\\net48\\TypeSharp.Core.dll</HintPath>", workflow);
+    AssertContains("<clear />", workflow);
+    AssertContains("TypeSharpRuntimeInfo.RuntimeAbiVersion", workflow);
+    AssertContains("dotnet build HostedRuntimeConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", workflow);
+    AssertContains("Hosted runtime C# net48 consumer build did not produce the consumer assembly.", workflow);
+    AssertContains("Hosted runtime C# net48 consumer output did not include the generated TypeSharp assembly.", workflow);
+    AssertContains("Hosted runtime C# net48 consumer output did not include TypeSharp.Core.dll.", workflow);
+    AssertContains("Hosted runtime C# net48 consumer output did not include TypeSharp.Runtime.dll.", workflow);
+    AssertContains("Hosted runtime C# net48 consumer output TypeSharp.Core.dll did not match the downloaded runtime archive.", workflow);
+    AssertContains("Hosted runtime C# net48 consumer output TypeSharp.Runtime.dll did not match the downloaded runtime archive.", workflow);
     AssertFalse(workflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Release workflow should not introduce Python.");
+    AssertPowerShellRunBlocksParse(workflowPath, workflow, minimumBlockCount: 8, workflowLabel: "Release");
 
     var projectPolicyPage = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "docs", "src", "content", "docs", "project-policy.md"));
     AssertContains("Release automation", projectPolicyPage);
+    AssertContains("The shared catalog currently asserts 586 package-free cases.", projectPolicyPage);
+    AssertContains("The MTP package-shard gate uses `--minimum-expected-tests 590` because each of the four shard assemblies also contributes one `CatalogIsExposedForPackageRunners` bridge smoke", projectPolicyPage);
+    AssertContains("586 shared catalog cases plus four shard-local bridge smokes", projectPolicyPage);
     AssertContains(".github/workflows/release-artifacts.yml", projectPolicyPage);
+    AssertContains("validates release tags against `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-preview.N`", projectPolicyPage);
+    AssertContains("arbitrary prerelease labels are rejected", projectPolicyPage);
+    AssertContains("verifies the checkout `HEAD` is the target commit for the release tag before building artifacts", projectPolicyPage);
     AssertContains("typesharp-cli-dotnet-<tag>.zip", projectPolicyPage);
     AssertContains("typesharp.cmd", projectPolicyPage);
     AssertContains("typesharp-runtime-net48-<tag>.zip", projectPolicyPage);
     AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
     AssertContains("SHA256SUMS.txt", projectPolicyPage);
+    AssertContains("before upload, it verifies the docs site contract, builds the Astro docs site, verifies the base-aware release-tag rendered public install route with `RELEASE_TAG`, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, dispatches the GitHub Pages docs workflow for the release tag", projectPolicyPage);
+    AssertContains("requires that tag-ref docs workflow to pass the current tag into the rendered Install verifier and then verify the deployed public Pages route, canonical/Open Graph URLs, sitemap URLs, stale-host rejection, and exact legacy 404 marker rejection after deployment", projectPolicyPage);
+    AssertContains("used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", projectPolicyPage);
+    AssertContains("verifies the hosted GitHub Pages home route links to Install and preserves release notes, exact asset-name guidance, CLI/runtime/VSIX asset names, checksum manifest, canonical URL, Open Graph URL, and sitemap URL identity there", projectPolicyPage);
+    AssertContains("verifies hosted Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics routes are not legacy 404 pages, link back to Install, and preserve release notes, exact asset-name guidance, CLI/runtime assets, checksum manifest, canonical/Open Graph URL identity", projectPolicyPage);
+    AssertContains("verifies hosted CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting routes are not legacy 404 pages, link back to Install, and preserve release notes, exact asset-name guidance, runtime/checksum, extracted runtime path, generated-output, VSIX markers where applicable, canonical/Open Graph URL identity", projectPolicyPage);
+    AssertContains("Hosted public-docs route checks reject exact legacy 404 markers `Document not found (404)`, `This page could not be found`, and `Page not found` across the home, Install, Start Here, Tutorials, broader public-docs, CLI, and support routes before release asset publication.", projectPolicyPage);
+    AssertContains("After every non-PR Pages deployment, `docs.yml` fetches the deployed `https://naramdash.github.io/TypeSharp` site, all 34 sidebar public-docs routes, `sitemap-index.xml`, and `sitemap-0.xml`", projectPolicyPage);
+    AssertContains("with cache-busting query strings and `Cache-Control: no-cache`/`Pragma: no-cache` headers", projectPolicyPage);
+    AssertContains("the deployment fails if any checked route loses public canonical/Open Graph URL identity, the sitemap loses any public `/TypeSharp` URL for the same 34 checked routes, canonical/Open Graph/sitemap output reintroduces stale `https://typesharp.github.io/TypeSharp` URLs, or exact legacy 404 markers `Document not found (404)`, `This page could not be found`, or `Page not found` appear.", projectPolicyPage);
+    AssertContains("Policy pages may mention the stale legacy URL as a forbidden example, but must not emit it as public URL metadata or sitemap output.", projectPolicyPage);
+    AssertContains("The rendered public-docs verifier reads `docs/dist/learning-paths/index.html`, `docs/dist/language-tour/index.html`, `docs/dist/fundamentals/index.html`, `docs/dist/guides/index.html`, `docs/dist/cookbook/index.html`, `docs/dist/api/index.html`, `docs/dist/examples/index.html`, `docs/dist/diagnostics/index.html`, and `docs/dist/advanced/index.html` before Pages upload", projectPolicyPage);
+    AssertContains("requiring those broader public-docs routes to link back to Install, preserve GitHub Release notes, exact asset-name guidance, CLI/runtime asset names, and `SHA256SUMS.txt`, and reject repo-local CLI commands or hidden global .NET tool-install guidance.", projectPolicyPage);
+    AssertContains("The rendered public-docs verifier also reads `docs/dist/cli/index.html`, `docs/dist/project-configuration/index.html`, `docs/dist/runtime-artifacts/index.html`, `docs/dist/vscode-lsp/index.html`, `docs/dist/migration/index.html`, and `docs/dist/troubleshooting/index.html` before Pages upload", projectPolicyPage);
+    AssertContains("requiring those support routes to link back to Install, preserve GitHub Release notes, exact asset-name guidance, runtime/checksum markers, extracted runtime DLL paths, generated-output paths, VSIX markers where applicable, and reject repo-local CLI commands or hidden global .NET tool-install guidance.", projectPolicyPage);
+    AssertContains("verifies the local release asset set is exactly the CLI archive, runtime archive, VSIX, and checksum manifest", projectPolicyPage);
+    AssertContains("verifies the local checksum manifest still matches each local upload asset hash", projectPolicyPage);
+    AssertContains("rejects repo-local CLI DLL commands, source-built fallback wording, and hidden global .NET tool-install guidance from the local CLI and runtime READMEs", projectPolicyPage);
+    AssertContains("expands the local CLI/runtime/VSIX archives outside the repository checkout to verify their required shape", projectPolicyPage);
+    AssertContains("verifies local CLI wrapper content, PATH resolution, bare installed-command `version --json` target/framework/runtime metadata and human-readable `version` metadata, wrapper `version --json` metadata, human-readable wrapper `version` metadata, and host-prerequisite behavior", projectPolicyPage);
+    AssertContains("verifies the local VSIX package identity, display metadata, publisher, extension entrypoint, activation event, category, TypeSharp language contribution metadata, README/Marketplace docs, language configuration, TextMate grammar, and bundled language server files before publication", projectPolicyPage);
+    AssertContains("verifies generated release notes exist, are nonempty, are not whitespace-only, start with the canonical metadata header containing exactly one tag-specific `# TypeSharp <tag>` H1 title line and no other H1 headings, `yyyy-MM-dd` date, matching channel, build metadata, source revision provenance, Runtime ABI/status, and default target framework, include each metadata prefix exactly once, place `## Summary` immediately after that header, then include exactly the mandatory section set once in canonical order with no unexpected `##` sections, the expected Compatibility Matrix header, separator, and tag-specific release row in that order with no unexpected matrix rows, tag-specific upload artifact names, artifact descriptions exactly once with no unexpected artifact rows, and the exact nonblank body lines for every mandatory release-note section", projectPolicyPage);
+    AssertContains("matching, matching without the Start Here repo-local fallback, docs-home VSIX asset rejection, docs-home hidden global .NET tool-install rejection, VS Code And LSP exact-asset-name guidance rejection, CLI Install-link rejection, broader-doc Install-link rejection, broader-doc release-note/checksum/runtime-marker rejection, broader-doc repo-local CLI rejection, broader-doc hidden global .NET tool-install rejection, support-route Install-link rejection, support-route release-note/checksum/runtime-marker rejection, fallback-before-Install rejection when the fallback remains, Install GitHub Release route-shape rejection, Install release-note/exact-asset guidance rejection, Start Here exact-asset-name guidance rejection, Tutorials project-before-release-route rejection, support-route repo-local CLI rejection, Start Here/Install/Tutorials/support-route hidden global .NET tool-install rejection, Install canonical URL rejection, Install Open Graph URL rejection, Install `/TypeSharp` base-path link rejection, stale legacy `https://typesharp.github.io/TypeSharp` page URL rejection, sitemap index URL rejection, sitemap public-route URL rejection, stale legacy `https://typesharp.github.io/TypeSharp` sitemap URL rejection, mismatched download-version, mismatched build-metadata, and malformed `RELEASE_TAG` values", projectPolicyPage);
+    AssertContains("canonical/Open Graph/base-path/sitemap URL regressions, stale legacy host regressions", projectPolicyPage);
+    AssertContains("the verifier can accept future removal of the contributor fallback", projectPolicyPage);
+    AssertContains("checksum manifest covers the CLI archive, runtime archive, and VSIX asset, and excludes `RELEASE_NOTES.md` and `SHA256SUMS.txt` itself", projectPolicyPage);
+    AssertContains("The workflow verifies the generated manifest before upload and the hosted smoke verifies the downloaded manifest", projectPolicyPage);
+    AssertContains("both manifest checks require the entry set to be exactly the CLI archive, runtime archive, and VSIX, reject duplicate entries, and require lowercase 64-character SHA-256 hashes", projectPolicyPage);
+    AssertContains("hosted smoke also verifies each downloaded file hash by exact asset-name lookup", projectPolicyPage);
+    AssertContains("current preview signature policy is explicit: `SHA256SUMS.txt` is the artifact integrity gate; detached signatures and Authenticode signing are not published yet", projectPolicyPage);
+    AssertContains("future signing change must be named in the release notes and docs before users are told to rely on it", projectPolicyPage);
     AssertContains("TypeSharpBuildMetadata=<tag>", projectPolicyPage);
     AssertContains("TypeSharpSourceRevision=<short commit>", projectPolicyPage);
+    AssertContains("12-character lowercase hex commit prefix from `git rev-parse --short=12 HEAD`", projectPolicyPage);
+    AssertContains("hosted smoke verifies the release page uses that same checkout commit prefix", projectPolicyPage);
     AssertContains("Current release compatibility matrix", projectPolicyPage);
-    AssertContains("After publication, the workflow downloads the just-published GitHub Release CLI and runtime assets", projectPolicyPage);
-    AssertContains("checks `typesharp version --json` against the release page metadata", projectPolicyPage);
+    AssertContains("| `0.1.0-preview` | `preview` | `0` preview | `net48` | `typesharp-runtime-net48-<tag>.zip` |", projectPolicyPage);
+    AssertContains("After publication, the workflow resolves the hosted release download/extraction root and clean smoke workspace outside the repository checkout", projectPolicyPage);
+    AssertContains("verifies the hosted GitHub Release API tag, exact tag-page URL, title, non-draft state, prerelease flag, published timestamp, and asset set before download", projectPolicyPage);
+    AssertContains("requires each expected asset to be in the `uploaded` state with nonzero size, the expected `browser_download_url`, and a `sha256:<64 lowercase hex chars>` API digest", projectPolicyPage);
+    AssertContains("downloads the just-published GitHub Release CLI and runtime assets from those API-provided release asset URLs", projectPolicyPage);
+    AssertContains("retries hosted asset downloads until each downloaded file's byte count matches the GitHub Release API size", projectPolicyPage);
+    AssertContains("verifies every downloaded file against the hosted GitHub Release API digest", projectPolicyPage);
+    AssertContains("verifies CLI/runtime/VSIX assets against `SHA256SUMS.txt`", projectPolicyPage);
+    AssertContains("downloads and verifies the published VSIX checksum entry", projectPolicyPage);
+    AssertContains("expands the downloaded VSIX and verifies package identity, display metadata, activation event, category, TypeSharp language contribution metadata, extension entrypoint, language configuration, README/Marketplace docs, TextMate grammar, and bundled language server files", projectPolicyPage);
+    AssertContains("verifies the release page API tag name is exactly `<tag>`", projectPolicyPage);
+    AssertContains("verifies the release page URL is the exact tag page under the current repository", projectPolicyPage);
+    AssertContains("verifies the release page title is `TypeSharp <tag>`", projectPolicyPage);
+    AssertContains("verifies the release page is not a draft", projectPolicyPage);
+    AssertContains("verifies the release page has a `publishedAt` timestamp", projectPolicyPage);
+    AssertContains("resolves the hosted release download/extraction root and clean smoke workspace outside the repository checkout", projectPolicyPage);
+    AssertContains("verifies the release-note body starts with the canonical metadata header", projectPolicyPage);
+    AssertContains("verifies each release-note metadata prefix appears exactly once", projectPolicyPage);
+    AssertContains("verifies `## Summary` immediately follows that header", projectPolicyPage);
+    AssertContains("verifies the release-note H1 title line is exactly `# TypeSharp <tag>` and that no other H1 headings appear", projectPolicyPage);
+    AssertContains("verifies the release-note date uses `yyyy-MM-dd`", projectPolicyPage);
+    AssertContains("verifies the release page lists the CLI, runtime, VSIX, and checksum assets", projectPolicyPage);
+    AssertContains("verifies the hosted GitHub Release asset set is exactly the CLI archive, runtime archive, VSIX, and checksum manifest", projectPolicyPage);
+    AssertContains("verifies the GitHub Release prerelease flag and release-note channel match the tag policy", projectPolicyPage);
+    AssertContains("verifies preview releases are not the repository Latest release and stable releases are", projectPolicyPage);
+    AssertContains("checks the release-note metadata block order before mandatory sections, runtime ABI status, default target framework, exactly the mandatory release-note section set once in canonical order with no unexpected `##` sections, exact Compatibility Matrix row set and order with no unexpected matrix rows, exactly the expected artifact descriptions with no unexpected artifact rows, and the exact nonblank body lines for every mandatory release-note section against `typesharp version --json` and the release body", projectPolicyPage);
+    AssertContains("extracts `typesharp.dll`, `typesharp.cmd`, `TypeSharp.Compiler.dll`, `TypeSharp.LanguageServer.dll`, CLI README metadata, runtime README tag/build/source/ABI/target metadata, and the runtime DLL layout", projectPolicyPage);
+    AssertContains("rejects repo-local CLI DLL commands, source-built fallback wording, and hidden global .NET tool-install guidance from the downloaded CLI and runtime READMEs", projectPolicyPage);
+    AssertContains("verifies the downloaded wrapper disables command echo, isolates environment changes, sets `TYPESHARP_HOME` to the extracted directory, and launches `typesharp.dll` through `dotnet`", projectPolicyPage);
+    AssertContains("retries hosted asset downloads", projectPolicyPage);
+    AssertContains("prepends the extracted CLI directory to `PATH`", projectPolicyPage);
+    AssertContains("verifies bare `typesharp` resolves to the downloaded wrapper", projectPolicyPage);
+    AssertContains("verifies the wrapper reports a missing `dotnet` host when the host is removed from `PATH`", projectPolicyPage);
+    AssertContains("runs clean console `new`/`format --check`/`check`/`build`/`run` commands from outside the repository", projectPolicyPage);
+    AssertContains("The hosted first-project smoke verifies the downloaded CLI's generated console starter manifest keeps the complete 1.0 starter defaults", projectPolicyPage);
+    AssertContains("`outputType = \"exe\"`, root namespace, `sourceRoots = [\"src\"]`, `generatedOutputRoot = \"generated\"`, executable `main`, preview language strictness, empty `previewFeatures`, framework assembly references, empty local/package reference arrays, and tooling defaults", projectPolicyPage);
+    AssertContains("verifies the generated console C# project preserves `net48`, C# 7.3, executable output, assembly/root namespace, framework references, and offline `NuGet.config`", projectPolicyPage);
+    AssertContains("The hosted library-starter smoke verifies the downloaded CLI's generated library starter before dependency-specific manifest edits, requiring the same complete manifest defaults with `outputType = \"library\"` and no executable `main`", projectPolicyPage);
+    AssertContains("verifies the generated library C# project preserves `net48`, C# 7.3, library output, assembly/root namespace, framework references, and offline `NuGet.config` before dependency-specific edits", projectPolicyPage);
+    AssertContains("verifies `typesharp run` rejects library projects with the executable `outputType` requirement", projectPolicyPage);
+    AssertContains("builds a local C# `net48` DLL dependency and a generated TypeSharp library plus C# consumer that reference it", projectPolicyPage);
+    AssertContains("verifies hosted missing-DLL and unsupported-package diagnostics stop before generated output", projectPolicyPage);
+    AssertContains("checks installed JSON diagnostics for hosted `TS2401` and `TS2405` dependency failures", projectPolicyPage);
+    AssertContains("verifies hosted generated C# build failures report text and JSON `TS3501` diagnostics after generated source/project emission", projectPolicyPage);
+    AssertContains("checks installed `typesharp explain` text and JSON descriptor output for `TS2401`, `TS2405`, and `TS3501`", projectPolicyPage);
+    AssertContains("builds a direct TypeSharp project-reference pair that proves referenced projects build before dependents", projectPolicyPage);
+    AssertContains("builds a runtime-backed TypeSharp library plus a separate C# `net48` consumer whose output directory contains the generated assembly and byte-identical Core/Runtime DLLs from the downloaded runtime archive", projectPolicyPage);
+    AssertContains("checks `typesharp version --json` CLI/compiler/language identity, target/framework/runtime metadata, and the human-readable `typesharp version` text against the release page metadata", projectPolicyPage);
+    AssertContains("## Artifacts", projectPolicyPage);
+    AssertContains("## Rollback", projectPolicyPage);
+    AssertContains("The release-note template permits exactly one top-level `# TypeSharp <version>` title, the mandatory `##` section set below, and the expected artifact-description rows for the CLI archive, runtime archive, VSIX, and checksum manifest in that order.", projectPolicyPage);
+    AssertContains("The `Summary`, `Compatibility Matrix`, `Breaking Changes`, `Migration Notes`, `Stable Features`, `Preview Features`, `Diagnostics And Tooling`, `Security`, `Checksums And Signing`, `Artifacts`, `Verification`, and `Rollback` sections are mandatory and must stay in that order with no extra `##` sections.", projectPolicyPage);
+    AssertContains("| CLI line | Language | Runtime ABI | Generated target | Runtime asset |", projectPolicyPage);
+    AssertContains("| --- | --- | --- | --- | --- |", projectPolicyPage);
+    AssertContains("| <cli-line> | <language-channel> | <runtime-abi> <status> | <target-framework> | <runtime-asset> |", projectPolicyPage);
+    AssertContains("The `Compatibility Matrix` section must include exactly the `CLI line`, `Language`, `Runtime ABI`, `Generated target`, and `Runtime asset` header row, the standard Markdown separator row, and the current release row in that order with no extra table rows.", projectPolicyPage);
+    AssertContains("Use the exact body line `None.` when there is nothing to report.", projectPolicyPage);
     AssertContains("Rollback uses a previous GitHub Release asset", projectPolicyPage);
     AssertContains("1.0 Dependency Acquisition Scope", projectPolicyPage);
     AssertContains("NuGet package restore is post-1.0", projectPolicyPage);
     AssertContains("neither command may silently restore packages", projectPolicyPage);
     AssertContains("contents: write", projectPolicyPage);
+    AssertContains("deletes unexpected existing release assets, re-uploads expected assets, rewrites the release title and notes, publishes it with `--draft=false`, and resets the GitHub Release prerelease flag from the tag policy before the hosted smoke runs", projectPolicyPage);
+    AssertContains("New Release creation uses `--verify-tag` so publication aborts unless the tag already exists in the remote repository, passes `--latest=false` for preview releases, and passes `--latest` for stable releases.", projectPolicyPage);
+    AssertContains("patches GitHub's `make_latest` setting from the same tag policy", projectPolicyPage);
+    AssertContains("preview releases are not the repository Latest release while stable releases are", projectPolicyPage);
 
     var regressionWorkflowPath = Path.Combine(Directory.GetCurrentDirectory(), ".github", "workflows", "regression.yml");
     var regressionWorkflow = File.ReadAllText(regressionWorkflowPath);
@@ -15422,10 +19217,108 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("--test-modules", regressionWorkflow);
     AssertContains("TypeSharp.Compiler.Tests.MSTest.Shard*.dll", regressionWorkflow);
     AssertContains("--max-parallel-test-modules 4", regressionWorkflow);
+    AssertContains("586 shared catalog cases plus one bridge smoke per shard assembly.", regressionWorkflow);
     AssertContains("--minimum-expected-tests", regressionWorkflow);
     AssertContains("--minimum-expected-tests 590", regressionWorkflow);
     AssertFalse(regressionWorkflow.Contains("python", StringComparison.OrdinalIgnoreCase), "Regression workflow should not introduce Python.");
 }
+
+static void AssertPowerShellRunBlocksParse(string workflowPath, string workflow, int minimumBlockCount, string workflowLabel)
+{
+    var blocks = ExtractYamlLiteralRunBlocks(workflow);
+    AssertTrue(blocks.Length >= minimumBlockCount, $"{workflowLabel} workflow should contain PowerShell run blocks. Found {blocks.Length}.");
+
+    WithWorkspace(root =>
+    {
+        var checkerPath = Path.Combine(root, "ParsePowerShell.ps1");
+        File.WriteAllText(
+            checkerPath,
+            """
+            param([string] $Path)
+            $tokens = $null
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref] $tokens, [ref] $errors)
+            if ($errors.Count -gt 0) {
+              foreach ($parseError in $errors) {
+                Write-Error "$($parseError.Extent.StartLineNumber):$($parseError.Extent.StartColumnNumber) $($parseError.Message)"
+              }
+              exit 1
+            }
+            """);
+
+        for (var index = 0; index < blocks.Length; index++)
+        {
+            var scriptPath = Path.Combine(root, $"{workflowLabel.ToLowerInvariant()}-workflow-run-{index + 1}.ps1");
+            File.WriteAllText(scriptPath, NormalizeGitHubExpressionsForPowerShellParse(blocks[index]));
+
+            var parse = RunProcess(
+                "pwsh",
+                $"-NoLogo -NoProfile -NonInteractive -File {QuoteProcessArgument(checkerPath)} {QuoteProcessArgument(scriptPath)}",
+                root);
+            AssertTrue(
+                parse.ExitCode == 0,
+                $"PowerShell run block {index + 1} in {workflowPath} should parse.\nSTDOUT:\n{parse.StandardOutput}\nSTDERR:\n{parse.StandardError}\nSCRIPT:\n{blocks[index]}");
+        }
+    });
+}
+
+static string[] ExtractYamlLiteralRunBlocks(string yaml)
+{
+    var lines = yaml.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+    var blocks = new List<string>();
+
+    for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+    {
+        if (!string.Equals(lines[lineIndex].Trim(), "run: |", StringComparison.Ordinal))
+        {
+            continue;
+        }
+
+        var runIndent = CountLeadingSpaces(lines[lineIndex]);
+        var contentIndent = -1;
+        var block = new StringBuilder();
+        for (var blockLineIndex = lineIndex + 1; blockLineIndex < lines.Length; blockLineIndex++)
+        {
+            var line = lines[blockLineIndex];
+            if (line.Trim().Length == 0)
+            {
+                block.AppendLine();
+                continue;
+            }
+
+            var indent = CountLeadingSpaces(line);
+            if (indent <= runIndent)
+            {
+                break;
+            }
+
+            if (contentIndent < 0)
+            {
+                contentIndent = indent;
+            }
+
+            block.AppendLine(line.Length >= contentIndent ? line.Substring(contentIndent) : string.Empty);
+        }
+
+        blocks.Add(block.ToString());
+    }
+
+    return blocks.ToArray();
+}
+
+static int CountLeadingSpaces(string value)
+{
+    var count = 0;
+    while (count < value.Length && value[count] == ' ')
+    {
+        count++;
+    }
+
+    return count;
+}
+
+static string NormalizeGitHubExpressionsForPowerShellParse(string script) =>
+    Regex.Replace(script, @"\$\{\{.*?\}\}", "github_expression", RegexOptions.Singleline);
 
 static void RepositoryMonorepoLayoutIsStable()
 {
@@ -15462,9 +19355,11 @@ static void RepositoryMonorepoLayoutIsStable()
     AssertContains("| [lang](lang) | compiler, language server, runtime, and core library projects |", rootReadme);
     AssertContains("| [test](test) | smoke tests, parser/type-checker/backend fixtures, runnable example verification |", rootReadme);
     AssertContains("| [docs](docs) | canonical Astro Starlight GitHub Pages documentation site |", rootReadme);
-    AssertContains("| [agent](agent) | temporary agentic work surface", rootReadme);
+    AssertContains("| [agent](agent) | short repository-local notes, ADR guidance, and the language 1.0 gap tracker |", rootReadme);
     AssertContains("| [examples](examples) | single-file examples and runnable adoption projects |", rootReadme);
     AssertContains("| [vscode](vscode) | VS Code extension workspace", rootReadme);
+    AssertContains("preview contributor source-built fallback", rootReadme);
+    AssertContains("## Preview Contributor Source-Built Fallback", rootReadme);
 
     var projectLedger = File.ReadAllText(Path.Combine(repositoryRoot, "docs", "src", "content", "docs", "project-ledger.md"));
     AssertContains("## Repository Layout", projectLedger);
@@ -30859,6 +34754,152 @@ static void AssertContains(string expectedSubstring, string actual)
     }
 }
 
+static IReadOnlyList<string> ExtractAstroSidebarPublicRoutes(string astroConfig)
+{
+    var routes = Regex
+        .Matches(astroConfig, "slug: '([^']+)'")
+        .Select(match => match.Groups[1].Value == "index" ? "/" : $"/{match.Groups[1].Value}/")
+        .ToArray();
+
+    AssertTrue(routes.Length > 0, "Astro sidebar should expose public docs routes.");
+    AssertEqual(routes.Length, routes.Distinct(StringComparer.Ordinal).Count());
+    return routes;
+}
+
+static void AssertRenderedVerifierCoversSidebarPublicRoutes(IReadOnlyList<string> sidebarPublicRoutes, string renderedVerifier)
+{
+    foreach (var route in sidebarPublicRoutes)
+    {
+        var renderedPath = route == "/" ? "dist/index.html" : $"dist/{route.Trim('/')}/index.html";
+        AssertTrue(
+            renderedVerifier.Contains($"fs.readFileSync('{renderedPath}', 'utf8')", StringComparison.Ordinal),
+            $"Rendered verifier must read the sidebar public docs route '{route}'.");
+        AssertTrue(
+            renderedVerifier.Contains($"'{route}'", StringComparison.Ordinal),
+            $"Rendered verifier publicPageRoutes must include the sidebar public docs route '{route}'.");
+    }
+}
+
+static void AssertWorkflowRouteTableCoversSidebarPublicRoutes(IReadOnlyList<string> sidebarPublicRoutes, string workflow, string workflowLabel)
+{
+    foreach (var route in sidebarPublicRoutes)
+    {
+        AssertTrue(
+            workflow.Contains($"Path = '{route}'", StringComparison.Ordinal),
+            $"{workflowLabel} route table must include the sidebar public docs route '{route}'.");
+    }
+}
+
+static void AssertJsonDiagnostic(string json, string code, string severity, string messageSubstring)
+{
+    using var document = JsonDocument.Parse(json);
+    var diagnostics = document.RootElement.GetProperty("diagnostics").EnumerateArray();
+    foreach (var diagnostic in diagnostics)
+    {
+        if (diagnostic.GetProperty("code").GetString() != code)
+        {
+            continue;
+        }
+
+        AssertEqual(severity, diagnostic.GetProperty("severity").GetString());
+        AssertContains(messageSubstring, diagnostic.GetProperty("message").GetString() ?? string.Empty);
+        return;
+    }
+
+    throw new InvalidOperationException($"Expected JSON diagnostics to contain '{code}', got '{json}'.");
+}
+
+static void AssertDiagnosticDescriptorJson(string json, string code, string title, string severity, string category)
+{
+    using var document = JsonDocument.Parse(json);
+    var diagnostic = document.RootElement.GetProperty("diagnostic");
+    AssertEqual(code, diagnostic.GetProperty("code").GetString());
+    AssertEqual(title, diagnostic.GetProperty("title").GetString());
+    AssertEqual(severity, diagnostic.GetProperty("severity").GetString());
+    AssertEqual(category, diagnostic.GetProperty("category").GetString());
+    AssertFalse(string.IsNullOrWhiteSpace(diagnostic.GetProperty("explanation").GetString()), "Diagnostic descriptor JSON should include an explanation.");
+    AssertFalse(string.IsNullOrWhiteSpace(diagnostic.GetProperty("suggestedAction").GetString()), "Diagnostic descriptor JSON should include a suggested action.");
+}
+
+static void AssertContainsBefore(string actual, string earlierSubstring, string laterSubstring)
+{
+    var earlierIndex = actual.IndexOf(earlierSubstring, StringComparison.Ordinal);
+    var laterIndex = actual.IndexOf(laterSubstring, StringComparison.Ordinal);
+    AssertTrue(earlierIndex >= 0, $"Expected output to contain '{earlierSubstring}'.");
+    AssertTrue(laterIndex >= 0, $"Expected output to contain '{laterSubstring}'.");
+    AssertTrue(
+        earlierIndex < laterIndex,
+        $"Expected '{earlierSubstring}' to appear before '{laterSubstring}'.");
+}
+
+static void AssertReleaseInstallRouteUsesWorkflowAssetNames(
+    string releaseWorkflow,
+    IReadOnlyDictionary<string, string> publicInstallPages,
+    IReadOnlyDictionary<string, string> runtimeOnlyPages,
+    IReadOnlyDictionary<string, string> vsixPages,
+    string installPage)
+{
+    var workflowAssets = Regex.Matches(
+            releaseWorkflow,
+            @"typesharp-(?:cli-dotnet|runtime-net48)-\$tag\.zip")
+        .Cast<Match>()
+        .Select(match => match.Value)
+        .Distinct(StringComparer.Ordinal)
+        .OrderBy(value => value, StringComparer.Ordinal)
+        .ToArray();
+
+    AssertSequence(
+        new[] { "typesharp-cli-dotnet-$tag.zip", "typesharp-runtime-net48-$tag.zip" },
+        workflowAssets);
+
+    var workflowVsixAssets = Regex.Matches(
+            releaseWorkflow,
+            @"typesharp-vscode-\$tag\.vsix")
+        .Cast<Match>()
+        .Select(match => match.Value)
+        .Distinct(StringComparer.Ordinal)
+        .OrderBy(value => value, StringComparer.Ordinal)
+        .ToArray();
+
+    AssertSequence(
+        new[] { "typesharp-vscode-$tag.vsix" },
+        workflowVsixAssets);
+
+    var cliPublicAsset = workflowAssets[0].Replace("$tag", "<tag>");
+    var runtimePublicAsset = workflowAssets[1].Replace("$tag", "<tag>");
+    var vsixPublicAsset = workflowVsixAssets[0].Replace("$tag", "<tag>");
+    var cliInstallAsset = workflowAssets[0].Replace("$tag", "$version");
+    var runtimeInstallAsset = workflowAssets[1].Replace("$tag", "$version");
+    var vsixInstallAsset = workflowVsixAssets[0].Replace("$tag", "$version");
+
+    foreach (var page in publicInstallPages)
+    {
+        AssertContains(cliPublicAsset, page.Value);
+        AssertContains(runtimePublicAsset, page.Value);
+        AssertContains("SHA256SUMS.txt", page.Value);
+    }
+
+    foreach (var page in runtimeOnlyPages)
+    {
+        AssertContains(runtimePublicAsset, page.Value);
+        AssertContains("SHA256SUMS.txt", page.Value);
+    }
+
+    foreach (var page in vsixPages)
+    {
+        AssertContains(vsixPublicAsset, page.Value);
+        AssertContains("SHA256SUMS.txt", page.Value);
+    }
+
+    AssertContains($"Invoke-WebRequest \"$release/{cliInstallAsset}\"", installPage);
+    AssertContains($"Invoke-WebRequest \"$release/{runtimeInstallAsset}\"", installPage);
+    AssertContains($"Assert-ReleaseAssetHash \"{cliInstallAsset}\"", installPage);
+    AssertContains($"Assert-ReleaseAssetHash \"{runtimeInstallAsset}\"", installPage);
+
+    AssertContains($"Invoke-WebRequest \"$release/{vsixInstallAsset}\"", vsixPages["VS Code And LSP"]);
+    AssertContains($"Assert-ReleaseAssetHash \"{vsixInstallAsset}\"", vsixPages["VS Code And LSP"]);
+}
+
 static bool IsDocsOwnedSourcePath(string siteRoot, string path)
 {
     var relativePath = Path.GetRelativePath(siteRoot, path);
@@ -32458,7 +36499,10 @@ static string BuildRepositoryAssembly(string projectRelativePath, string assembl
 static string PublishStagedCliArtifact(string root)
 {
     var repositoryRoot = Directory.GetCurrentDirectory();
-    var publishRoot = Path.Combine(root, "artifact", "typesharp-cli-dotnet");
+    var stagingRoot = Path.Combine(root, "artifact", "staging");
+    var releaseRoot = Path.Combine(root, "artifact", "release");
+    var installRoot = Path.Combine(root, "artifact", "install", "typesharp-cli-dotnet");
+    var publishRoot = Path.Combine(stagingRoot, "typesharp-cli-dotnet");
     var publish = RunProcess(
         "dotnet",
         $"publish {QuoteProcessArgument(Path.Combine(repositoryRoot, "cli", "TypeSharp.Cli", "TypeSharp.Cli.csproj"))} -c Debug --no-restore -p:UseAppHost=false -p:TypeSharpBuildMetadata=staged-test -p:TypeSharpSourceRevision=staged-test -o {QuoteProcessArgument(publishRoot)}",
@@ -32482,7 +36526,39 @@ static string PublishStagedCliArtifact(string root)
         dotnet "%TYPESHARP_HOME%typesharp.dll" %*
         """);
     AssertTrue(File.Exists(cliCommand), "Staged CLI artifact should contain the Windows typesharp command wrapper.");
-    return cliCommand;
+    var readmePath = Path.Combine(publishRoot, "README.md");
+    File.WriteAllText(
+        readmePath,
+        """
+        # TypeSharp CLI staged-test
+
+        This archive contains the framework-dependent modern .NET TypeSharp CLI host.
+
+        Build metadata: staged-test
+        Source revision: staged-test
+
+        Run `typesharp.cmd version` from this directory, or add the extracted directory to `PATH` and run `typesharp version`.
+        """,
+        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    AssertTrue(File.Exists(readmePath), "Staged CLI artifact should contain the release README.");
+
+    Directory.CreateDirectory(releaseRoot);
+    var cliAssetName = "typesharp-cli-dotnet-staged-test.zip";
+    var cliZipPath = Path.Combine(releaseRoot, cliAssetName);
+    ZipFile.CreateFromDirectory(publishRoot, cliZipPath);
+    AssertTrue(File.Exists(cliZipPath), "Staged release should contain the CLI zip asset.");
+
+    var checksumPath = Path.Combine(releaseRoot, "SHA256SUMS.txt");
+    AddAndVerifyStagedChecksumEntry(checksumPath, cliAssetName, cliZipPath);
+
+    ZipFile.ExtractToDirectory(cliZipPath, installRoot);
+    var installedCliCommand = Path.Combine(installRoot, "typesharp.cmd");
+    AssertTrue(File.Exists(Path.Combine(installRoot, "typesharp.dll")), "Staged CLI zip should extract typesharp.dll.");
+    AssertTrue(File.Exists(Path.Combine(installRoot, "TypeSharp.Compiler.dll")), "Staged CLI zip should extract the compiler dependency.");
+    AssertTrue(File.Exists(Path.Combine(installRoot, "TypeSharp.LanguageServer.dll")), "Staged CLI zip should extract the language server dependency.");
+    AssertTrue(File.Exists(installedCliCommand), "Staged CLI zip should extract the Windows typesharp command wrapper.");
+    AssertTrue(File.Exists(Path.Combine(installRoot, "README.md")), "Staged CLI zip should extract the release README.");
+    return installedCliCommand;
 }
 
 static string PublishStagedRuntimeArtifact(string root)
@@ -32494,14 +36570,512 @@ static string PublishStagedRuntimeArtifact(string root)
         "lang/TypeSharp.Runtime/TypeSharp.Runtime.csproj",
         "lang/TypeSharp.Runtime/bin/Debug/net48/TypeSharp.Runtime.dll");
 
-    var runtimeLibRoot = Path.Combine(root, "artifact", "typesharp-runtime-net48", "lib", "net48");
+    var stagingRoot = Path.Combine(root, "artifact", "staging", "typesharp-runtime-net48");
+    var releaseRoot = Path.Combine(root, "artifact", "release");
+    var installRoot = Path.Combine(root, "artifact", "install", "typesharp-runtime-net48");
+    var runtimeLibRoot = Path.Combine(stagingRoot, "lib", "net48");
     Directory.CreateDirectory(runtimeLibRoot);
     File.Copy(coreAssemblyPath, Path.Combine(runtimeLibRoot, "TypeSharp.Core.dll"), overwrite: true);
     File.Copy(runtimeAssemblyPath, Path.Combine(runtimeLibRoot, "TypeSharp.Runtime.dll"), overwrite: true);
+    File.WriteAllText(
+        Path.Combine(stagingRoot, "README.md"),
+        """
+        # TypeSharp Runtime staged-test
+
+        This archive contains the .NET Framework 4.8 TypeSharp runtime assemblies.
+
+        Build metadata: staged-test
+        Source revision: staged-test
+        Runtime ABI: 0
+        Runtime ABI status: preview
+        Target framework: net48
+
+        Runtime layout:
+        - lib/net48/TypeSharp.Core.dll
+        - lib/net48/TypeSharp.Runtime.dll
+        """,
+        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
     AssertTrue(File.Exists(Path.Combine(runtimeLibRoot, "TypeSharp.Core.dll")), "Staged runtime artifact should contain TypeSharp.Core.dll.");
     AssertTrue(File.Exists(Path.Combine(runtimeLibRoot, "TypeSharp.Runtime.dll")), "Staged runtime artifact should contain TypeSharp.Runtime.dll.");
-    return runtimeLibRoot;
+
+    Directory.CreateDirectory(releaseRoot);
+    var runtimeAssetName = "typesharp-runtime-net48-staged-test.zip";
+    var runtimeZipPath = Path.Combine(releaseRoot, runtimeAssetName);
+    ZipFile.CreateFromDirectory(stagingRoot, runtimeZipPath);
+    AssertTrue(File.Exists(runtimeZipPath), "Staged release should contain the runtime zip asset.");
+
+    var checksumPath = Path.Combine(releaseRoot, "SHA256SUMS.txt");
+    AddAndVerifyStagedChecksumEntry(checksumPath, runtimeAssetName, runtimeZipPath);
+    AssertStagedChecksumManifestEntries(
+        checksumPath,
+        "typesharp-cli-dotnet-staged-test.zip",
+        runtimeAssetName);
+
+    ZipFile.ExtractToDirectory(runtimeZipPath, installRoot);
+    var installedRuntimeLibRoot = Path.Combine(installRoot, "lib", "net48");
+    AssertTrue(File.Exists(Path.Combine(installedRuntimeLibRoot, "TypeSharp.Core.dll")), "Staged runtime zip should extract TypeSharp.Core.dll.");
+    AssertTrue(File.Exists(Path.Combine(installedRuntimeLibRoot, "TypeSharp.Runtime.dll")), "Staged runtime zip should extract TypeSharp.Runtime.dll.");
+    var runtimeReadme = File.ReadAllText(Path.Combine(installRoot, "README.md")).Replace("\r\n", "\n", StringComparison.Ordinal);
+    AssertContains("# TypeSharp Runtime staged-test", runtimeReadme);
+    AssertContains("Build metadata: staged-test", runtimeReadme);
+    AssertContains("Source revision: staged-test", runtimeReadme);
+    AssertContains("Runtime ABI: 0", runtimeReadme);
+    AssertContains("Runtime ABI status: preview", runtimeReadme);
+    AssertContains("Target framework: net48", runtimeReadme);
+    AssertContains("lib/net48/TypeSharp.Core.dll", runtimeReadme);
+    AssertContains("lib/net48/TypeSharp.Runtime.dll", runtimeReadme);
+    AssertFalse(runtimeReadme.Contains("dotnet cli\\TypeSharp.Cli", StringComparison.Ordinal), "Staged runtime artifact README should not use repo-local CLI DLL commands.");
+    AssertFalse(runtimeReadme.Contains("source-built", StringComparison.OrdinalIgnoreCase), "Staged runtime artifact README should not send users to the source-built fallback.");
+    AssertFalse(runtimeReadme.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase), "Staged runtime artifact README should not document a hidden global dotnet tool install.");
+    return installedRuntimeLibRoot;
+}
+
+static void PublishStagedVsixArtifact(string root)
+{
+    var repositoryRoot = Directory.GetCurrentDirectory();
+    var extensionSourceRoot = Path.Combine(repositoryRoot, "vscode", "typesharp");
+    var stagingRoot = Path.Combine(root, "artifact", "staging", "typesharp-vscode");
+    var extensionRoot = Path.Combine(stagingRoot, "extension");
+    var releaseRoot = Path.Combine(root, "artifact", "release");
+    var installRoot = Path.Combine(root, "artifact", "install", "typesharp-vscode");
+
+    Directory.CreateDirectory(extensionRoot);
+    foreach (var fileName in new[] { "package.json", "extension.js", "language-configuration.json", "README.md", "MARKETPLACE.md" })
+    {
+        File.Copy(Path.Combine(extensionSourceRoot, fileName), Path.Combine(extensionRoot, fileName), overwrite: true);
+    }
+
+    CopyDirectory(Path.Combine(extensionSourceRoot, "syntaxes"), Path.Combine(extensionRoot, "syntaxes"));
+
+    var serverRoot = Path.Combine(extensionRoot, "server");
+    var publish = RunProcess(
+        "dotnet",
+        $"publish {QuoteProcessArgument(Path.Combine(repositoryRoot, "lang", "TypeSharp.LanguageServer", "TypeSharp.LanguageServer.csproj"))} -c Debug --no-restore -o {QuoteProcessArgument(serverRoot)} --nologo",
+        repositoryRoot);
+    AssertTrue(
+        publish.ExitCode == 0,
+        $"Staged VSIX language server publish should succeed.\nSTDOUT:\n{publish.StandardOutput}\nSTDERR:\n{publish.StandardError}");
+
+    Directory.CreateDirectory(releaseRoot);
+    var vsixAssetName = "typesharp-vscode-staged-test.vsix";
+    var vsixPath = Path.Combine(releaseRoot, vsixAssetName);
+    ZipFile.CreateFromDirectory(stagingRoot, vsixPath);
+    AssertTrue(File.Exists(vsixPath), "Staged release should contain the VSIX asset.");
+
+    var releaseNotesPath = WriteAndVerifyStagedReleaseNotes(releaseRoot, vsixAssetName);
+    var checksumPath = Path.Combine(releaseRoot, "SHA256SUMS.txt");
+    AddAndVerifyStagedChecksumEntry(checksumPath, vsixAssetName, vsixPath);
+    AssertStagedChecksumManifestEntries(
+        checksumPath,
+        "typesharp-cli-dotnet-staged-test.zip",
+        "typesharp-runtime-net48-staged-test.zip",
+        vsixAssetName);
+    AssertFalse(
+        File.ReadAllText(checksumPath).Contains(Path.GetFileName(releaseNotesPath), StringComparison.Ordinal),
+        "Staged checksum manifest should not include generated release notes.");
+
+    ZipFile.ExtractToDirectory(vsixPath, installRoot);
+    foreach (var expectedEntry in new[]
+    {
+        "extension/package.json",
+        "extension/extension.js",
+        "extension/language-configuration.json",
+        "extension/README.md",
+        "extension/MARKETPLACE.md",
+        "extension/syntaxes/typesharp.tmLanguage.json",
+        "extension/server/TypeSharp.LanguageServer.dll"
+    })
+    {
+        AssertTrue(
+            File.Exists(Path.Combine(installRoot, expectedEntry.Replace('/', Path.DirectorySeparatorChar))),
+            $"Staged VSIX should extract {expectedEntry}.");
+    }
+
+    using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(installRoot, "extension", "package.json")));
+    var packageRoot = packageJson.RootElement;
+    AssertEqual("typesharp-vscode", packageRoot.GetProperty("name").GetString());
+    AssertEqual("TypeSharp", packageRoot.GetProperty("displayName").GetString());
+    AssertEqual("Language support for TypeSharp .tysh source files.", packageRoot.GetProperty("description").GetString());
+    AssertEqual("0.1.0", packageRoot.GetProperty("version").GetString());
+    AssertEqual("typesharp", packageRoot.GetProperty("publisher").GetString());
+    AssertEqual("./extension.js", packageRoot.GetProperty("main").GetString());
+    AssertTrue(
+        packageRoot.GetProperty("categories").EnumerateArray().Any(category => category.GetString() == "Programming Languages"),
+        "Staged VSIX package should list the Programming Languages category.");
+    AssertTrue(
+        packageRoot.GetProperty("activationEvents").EnumerateArray().Any(activationEvent => activationEvent.GetString() == "onLanguage:typesharp"),
+        "Staged VSIX package should activate on the TypeSharp language.");
+    AssertTrue(
+        packageRoot.GetProperty("contributes").GetProperty("languages").EnumerateArray()
+            .Any(language =>
+                language.GetProperty("id").GetString() == "typesharp"
+                && language.GetProperty("extensions").EnumerateArray().Any(extension => extension.GetString() == ".tysh")),
+        "Staged VSIX package should contribute the TypeSharp .tysh language.");
+    AssertTrue(
+        packageRoot.GetProperty("contributes").GetProperty("grammars").EnumerateArray()
+            .Any(grammar =>
+                grammar.GetProperty("language").GetString() == "typesharp"
+                && grammar.GetProperty("scopeName").GetString() == "source.typesharp"
+                && grammar.GetProperty("path").GetString() == "./syntaxes/typesharp.tmLanguage.json"),
+        "Staged VSIX package should contribute the TypeSharp TextMate grammar.");
+}
+
+static string WriteAndVerifyStagedReleaseNotes(string releaseRoot, string vsixAssetName)
+{
+    var releaseNotesPath = Path.Combine(releaseRoot, "RELEASE_NOTES.md");
+    File.WriteAllText(
+        releaseNotesPath,
+        $$"""
+        # TypeSharp staged-test
+
+        Date: staged-test
+        Channel: Preview
+        Build metadata: staged-test
+        Source revision: staged-test
+        Runtime ABI: 0
+        Runtime ABI status: preview
+        Default target framework: net48
+
+        ## Summary
+
+        Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.
+
+        ## Compatibility Matrix
+
+        | CLI line | Language | Runtime ABI | Generated target | Runtime asset |
+        | --- | --- | --- | --- | --- |
+        | 0.1.0-preview | preview | 0 preview | net48 | typesharp-runtime-net48-staged-test.zip |
+
+        ## Breaking Changes
+
+        None.
+
+        ## Migration Notes
+
+        Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.
+
+        ## Stable Features
+
+        Generated projects target net48 with C# 7.3-compatible output.
+
+        ## Preview Features
+
+        The CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview.
+
+        ## Diagnostics And Tooling
+
+        Use typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics.
+
+        ## Security
+
+        Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.
+
+        ## Checksums And Signing
+
+        Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.
+
+        ## Artifacts
+
+        - typesharp-cli-dotnet-staged-test.zip: framework-dependent modern .NET CLI host with Windows typesharp.cmd wrapper.
+        - typesharp-runtime-net48-staged-test.zip: TypeSharp.Core and TypeSharp.Runtime net48 libraries.
+        - {{vsixAssetName}}: VS Code extension with bundled language server.
+        - SHA256SUMS.txt: SHA-256 manifest for release assets.
+
+        ## Verification
+
+        Use SHA256SUMS.txt to verify downloaded release assets.
+
+        ## Rollback
+
+        Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.
+        """,
+        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+    var releaseNotes = File.ReadAllText(releaseNotesPath).Replace("\r\n", "\n", StringComparison.Ordinal);
+    var releaseNoteLines = releaseNotes.Split('\n');
+    var expectedStagedReleaseNoteHeaderPrefix = string.Join(
+        "\n",
+        new[]
+        {
+            "# TypeSharp staged-test",
+            "",
+            "Date: staged-test",
+            "Channel: Preview",
+            "Build metadata: staged-test",
+            "Source revision: staged-test",
+            "Runtime ABI: 0",
+            "Runtime ABI status: preview",
+            "Default target framework: net48",
+            ""
+        });
+    AssertTrue(
+        releaseNotes.StartsWith(expectedStagedReleaseNoteHeaderPrefix, StringComparison.Ordinal),
+        "Staged release notes should start with the canonical metadata header.");
+    AssertTrue(
+        releaseNotes.StartsWith(expectedStagedReleaseNoteHeaderPrefix + "\n## Summary", StringComparison.Ordinal),
+        "Staged release notes Summary section should immediately follow the canonical metadata header.");
+    AssertEqual(
+        1,
+        releaseNoteLines.Count(line => line.StartsWith("# ", StringComparison.Ordinal)));
+    AssertEqual(
+        "# TypeSharp staged-test",
+        releaseNoteLines.Single(line => line.StartsWith("# ", StringComparison.Ordinal)));
+    foreach (var metadataPrefix in new[]
+    {
+        "# TypeSharp ",
+        "Date:",
+        "Channel:",
+        "Build metadata:",
+        "Source revision:",
+        "Runtime ABI:",
+        "Runtime ABI status:",
+        "Default target framework:"
+    })
+    {
+        AssertEqual(
+            1,
+            releaseNoteLines.Count(line => line.StartsWith(metadataPrefix, StringComparison.Ordinal)));
+    }
+
+    foreach (var heading in new[]
+    {
+        "## Summary",
+        "## Compatibility Matrix",
+        "## Breaking Changes",
+        "## Migration Notes",
+        "## Stable Features",
+        "## Preview Features",
+        "## Diagnostics And Tooling",
+        "## Security",
+        "## Checksums And Signing",
+        "## Artifacts",
+        "## Verification",
+        "## Rollback"
+    })
+    {
+        AssertContains(heading, releaseNotes);
+        AssertEqual(
+            1,
+            releaseNoteLines.Count(line => string.Equals(line, heading, StringComparison.Ordinal)));
+    }
+    AssertEqual(
+        12,
+        releaseNoteLines.Count(line => line.StartsWith("## ", StringComparison.Ordinal)));
+
+    var releaseNoteSectionCursor = -1;
+    foreach (var heading in new[]
+    {
+        "## Summary",
+        "## Compatibility Matrix",
+        "## Breaking Changes",
+        "## Migration Notes",
+        "## Stable Features",
+        "## Preview Features",
+        "## Diagnostics And Tooling",
+        "## Security",
+        "## Checksums And Signing",
+        "## Artifacts",
+        "## Verification",
+        "## Rollback"
+    })
+    {
+        var headingIndex = releaseNotes.IndexOf(heading, StringComparison.Ordinal);
+        AssertTrue(headingIndex > releaseNoteSectionCursor, $"Release notes section order should place {heading} after the previous mandatory section.");
+        releaseNoteSectionCursor = headingIndex;
+    }
+
+    AssertContains("Runtime ABI: 0", releaseNotes);
+    AssertContains("Runtime ABI status: preview", releaseNotes);
+    AssertContains("Default target framework: net48", releaseNotes);
+    AssertContains("Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.", releaseNotes);
+    AssertContains("## Summary\n\nPreview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.", releaseNotes);
+    AssertContains("## Breaking Changes\n\nNone.", releaseNotes);
+    AssertContains("## Migration Notes\n\nInstall a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.", releaseNotes);
+    AssertContains("Generated projects target net48 with C# 7.3-compatible output.", releaseNotes);
+    AssertContains("## Stable Features\n\nGenerated projects target net48 with C# 7.3-compatible output.", releaseNotes);
+    AssertContains("The CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview.", releaseNotes);
+    AssertContains("## Preview Features\n\nThe CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview.", releaseNotes);
+    AssertContains("Use typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics.", releaseNotes);
+    AssertContains("## Diagnostics And Tooling\n\nUse typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics.", releaseNotes);
+    AssertContains("Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.", releaseNotes);
+    AssertContains("## Security\n\nGenerated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.", releaseNotes);
+    AssertContains("| CLI line | Language | Runtime ABI | Generated target | Runtime asset |", releaseNotes);
+    AssertContains("| --- | --- | --- | --- | --- |", releaseNotes);
+    AssertContains("| 0.1.0-preview | preview | 0 preview | net48 | typesharp-runtime-net48-staged-test.zip |", releaseNotes);
+    var compatibilityMatrixRows = new[]
+    {
+        "| CLI line | Language | Runtime ABI | Generated target | Runtime asset |",
+        "| --- | --- | --- | --- | --- |",
+        "| 0.1.0-preview | preview | 0 preview | net48 | typesharp-runtime-net48-staged-test.zip |"
+    };
+    foreach (var matrixFragment in compatibilityMatrixRows)
+    {
+        AssertEqual(
+            1,
+            releaseNoteLines.Count(line => string.Equals(line, matrixFragment, StringComparison.Ordinal)));
+    }
+    var compatibilityMatrixSectionStart = Array.IndexOf(releaseNoteLines, "## Compatibility Matrix");
+    var compatibilityMatrixSectionEnd = Array.IndexOf(releaseNoteLines, "## Breaking Changes");
+    AssertTrue(
+        compatibilityMatrixSectionStart >= 0 && compatibilityMatrixSectionEnd > compatibilityMatrixSectionStart,
+        "Staged release notes should keep canonical compatibility matrix section boundaries.");
+    var compatibilityMatrixSectionRows = releaseNoteLines
+        .Skip(compatibilityMatrixSectionStart + 1)
+        .Take(compatibilityMatrixSectionEnd - compatibilityMatrixSectionStart - 1)
+        .Where(line => line.StartsWith("| ", StringComparison.Ordinal))
+        .ToArray();
+    AssertSequence(compatibilityMatrixRows, compatibilityMatrixSectionRows);
+
+    AssertContains("typesharp-cli-dotnet-staged-test.zip", releaseNotes);
+    AssertContains("typesharp-runtime-net48-staged-test.zip", releaseNotes);
+    AssertContains(vsixAssetName, releaseNotes);
+    AssertContains("SHA256SUMS.txt", releaseNotes);
+    AssertContains("typesharp-cli-dotnet-staged-test.zip: framework-dependent modern .NET CLI host with Windows typesharp.cmd wrapper.", releaseNotes);
+    AssertContains("typesharp-runtime-net48-staged-test.zip: TypeSharp.Core and TypeSharp.Runtime net48 libraries.", releaseNotes);
+    AssertContains(vsixAssetName + ": VS Code extension with bundled language server.", releaseNotes);
+    AssertContains("SHA256SUMS.txt: SHA-256 manifest for release assets.", releaseNotes);
+    var artifactDescriptions = new[]
+    {
+        "- typesharp-cli-dotnet-staged-test.zip: framework-dependent modern .NET CLI host with Windows typesharp.cmd wrapper.",
+        "- typesharp-runtime-net48-staged-test.zip: TypeSharp.Core and TypeSharp.Runtime net48 libraries.",
+        "- " + vsixAssetName + ": VS Code extension with bundled language server.",
+        "- SHA256SUMS.txt: SHA-256 manifest for release assets."
+    };
+    foreach (var artifactDescription in artifactDescriptions)
+    {
+        AssertEqual(
+            1,
+            releaseNoteLines.Count(line => string.Equals(line, artifactDescription, StringComparison.Ordinal)));
+    }
+    AssertEqual(
+        4,
+        releaseNoteLines.Count(line => line.StartsWith("- ", StringComparison.Ordinal)));
+    AssertSequence(
+        artifactDescriptions,
+        releaseNoteLines.Where(line => line.StartsWith("- ", StringComparison.Ordinal)).ToArray());
+
+    AssertContains("Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.", releaseNotes);
+    AssertContains("Use SHA256SUMS.txt to verify downloaded release assets.", releaseNotes);
+    AssertContains("## Checksums And Signing\n\nSignature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.", releaseNotes);
+    AssertContains("## Verification\n\nUse SHA256SUMS.txt to verify downloaded release assets.", releaseNotes);
+    AssertContains("Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.", releaseNotes);
+    AssertContains("## Rollback\n\nInstall a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.", releaseNotes);
+    foreach (var policyLine in new[]
+    {
+        "Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension.",
+        "Generated projects target net48 with C# 7.3-compatible output.",
+        "The CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview.",
+        "Use typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics.",
+        "Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build.",
+        "Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet.",
+        "Use SHA256SUMS.txt to verify downloaded release assets."
+    })
+    {
+        AssertEqual(
+            1,
+            releaseNoteLines.Count(line => string.Equals(line, policyLine, StringComparison.Ordinal)));
+    }
+
+    AssertEqual(
+        2,
+        releaseNoteLines.Count(line => string.Equals(line, "Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt.", StringComparison.Ordinal)));
+
+    var expectedSectionNames = new[]
+    {
+        "## Summary",
+        "## Compatibility Matrix",
+        "## Breaking Changes",
+        "## Migration Notes",
+        "## Stable Features",
+        "## Preview Features",
+        "## Diagnostics And Tooling",
+        "## Security",
+        "## Checksums And Signing",
+        "## Artifacts",
+        "## Verification",
+        "## Rollback"
+    };
+    var expectedSectionBodies = new System.Collections.Generic.Dictionary<string, string[]>(StringComparer.Ordinal)
+    {
+        ["## Summary"] = new[] { "Preview release artifact set for the TypeSharp CLI, net48 runtime libraries, and VS Code extension." },
+        ["## Compatibility Matrix"] = compatibilityMatrixRows,
+        ["## Breaking Changes"] = new[] { "None." },
+        ["## Migration Notes"] = new[] { "Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt." },
+        ["## Stable Features"] = new[] { "Generated projects target net48 with C# 7.3-compatible output." },
+        ["## Preview Features"] = new[] { "The CLI, language surface, VS Code extension, and Runtime ABI 0 remain preview." },
+        ["## Diagnostics And Tooling"] = new[] { "Use typesharp version, typesharp check, typesharp build, and typesharp explain to inspect installed artifact metadata and diagnostics." },
+        ["## Security"] = new[] { "Generated projects remain package-free by default and TypeSharp does not restore NuGet packages during check or build." },
+        ["## Checksums And Signing"] = new[] { "Signature policy: preview releases publish SHA256SUMS.txt as the artifact integrity gate; detached signatures and Authenticode signing are not published yet." },
+        ["## Artifacts"] = artifactDescriptions,
+        ["## Verification"] = new[] { "Use SHA256SUMS.txt to verify downloaded release assets." },
+        ["## Rollback"] = new[] { "Install a previous GitHub Release asset with a matching runtime ABI after verifying SHA256SUMS.txt." }
+    };
+    for (var sectionIndex = 0; sectionIndex < expectedSectionNames.Length; sectionIndex++)
+    {
+        var sectionName = expectedSectionNames[sectionIndex];
+        var sectionStart = Array.IndexOf(releaseNoteLines, sectionName);
+        var sectionEnd = sectionIndex < expectedSectionNames.Length - 1
+            ? Array.IndexOf(releaseNoteLines, expectedSectionNames[sectionIndex + 1])
+            : releaseNoteLines.Length;
+        AssertTrue(
+            sectionStart >= 0 && sectionEnd > sectionStart,
+            $"Staged release notes should keep canonical section body boundaries for {sectionName}.");
+        var actualSectionBody = releaseNoteLines
+            .Skip(sectionStart + 1)
+            .Take(sectionEnd - sectionStart - 1)
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToArray();
+        AssertSequence(expectedSectionBodies[sectionName], actualSectionBody);
+    }
+    return releaseNotesPath;
+}
+
+static void AddAndVerifyStagedChecksumEntry(string checksumPath, string assetName, string assetPath)
+{
+    var hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assetPath))).ToLowerInvariant();
+    AssertTrue(Regex.IsMatch(hash, "^[0-9a-f]{64}$"), $"Staged checksum for {assetName} should be lowercase SHA-256.");
+
+    var existingLines = File.Exists(checksumPath) ? File.ReadAllLines(checksumPath) : [];
+    AssertFalse(
+        existingLines.Any(line =>
+        {
+            var parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length == 2 && string.Equals(parts[1], assetName, StringComparison.Ordinal);
+        }),
+        $"Staged checksum manifest should not list {assetName} more than once.");
+
+    File.AppendAllText(
+        checksumPath,
+        $"{hash}  {assetName}\n",
+        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+    var matches = File.ReadAllLines(checksumPath)
+        .Select(line => line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+        .Where(parts => parts.Length == 2 && string.Equals(parts[1], assetName, StringComparison.Ordinal))
+        .ToArray();
+    AssertEqual(1, matches.Length);
+    AssertEqual(hash, matches[0][0]);
+    AssertEqual(hash, Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assetPath))).ToLowerInvariant());
+}
+
+static void AssertStagedChecksumManifestEntries(string checksumPath, params string[] expectedAssetNames)
+{
+    var entries = File.ReadAllLines(checksumPath)
+        .Select(line => line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+        .ToArray();
+    AssertTrue(entries.Length > 0, "Staged checksum manifest should contain entries.");
+
+    foreach (var entry in entries)
+    {
+        AssertEqual(2, entry.Length);
+        AssertTrue(Regex.IsMatch(entry[0], "^[0-9a-f]{64}$"), $"Staged checksum manifest hash for {entry[1]} should be lowercase SHA-256.");
+    }
+
+    var actualAssetNames = entries.Select(entry => entry[1]).OrderBy(value => value, StringComparer.Ordinal).ToArray();
+    var expectedSorted = expectedAssetNames.OrderBy(value => value, StringComparer.Ordinal).ToArray();
+    AssertSequence(expectedSorted, actualAssetNames);
+    AssertEqual(actualAssetNames.Length, actualAssetNames.Distinct(StringComparer.Ordinal).Count());
 }
 
 static void BuildApplicationModelHostProject(
@@ -32634,6 +37208,37 @@ static ProcessResult RunProcess(string fileName, string arguments, string workin
     return new ProcessResult(process.ExitCode, standardOutput, standardError);
 }
 
+static ProcessResult RunProcessWithEnvironment(string fileName, string arguments, string workingDirectory, IReadOnlyDictionary<string, string> environmentVariables)
+{
+    using var process = new Process();
+    process.StartInfo = new ProcessStartInfo
+    {
+        FileName = fileName,
+        Arguments = arguments,
+        WorkingDirectory = workingDirectory,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+
+    foreach (var environmentVariable in environmentVariables)
+    {
+        process.StartInfo.Environment[environmentVariable.Key] = environmentVariable.Value;
+    }
+
+    process.Start();
+    var standardOutput = process.StandardOutput.ReadToEnd();
+    var standardError = process.StandardError.ReadToEnd();
+    if (!process.WaitForExit(milliseconds: 120_000))
+    {
+        process.Kill(entireProcessTree: true);
+        throw new InvalidOperationException($"Process '{fileName} {arguments}' timed out.");
+    }
+
+    return new ProcessResult(process.ExitCode, standardOutput, standardError);
+}
+
 static ProcessResult RunPublishedCli(string cliCommand, string arguments, string workingDirectory)
 {
     if (cliCommand.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase))
@@ -32642,6 +37247,21 @@ static ProcessResult RunPublishedCli(string cliCommand, string arguments, string
     }
 
     return RunProcess("dotnet", $"{QuoteProcessArgument(cliCommand)} {arguments}", workingDirectory);
+}
+
+static ProcessResult RunPublishedCliWithPath(string cliCommand, string arguments, string workingDirectory, string path)
+{
+    var environmentVariables = new Dictionary<string, string>
+    {
+        ["PATH"] = path
+    };
+
+    if (cliCommand.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase))
+    {
+        return RunProcessWithEnvironment("cmd.exe", $"/d /s /c \"{QuoteProcessArgument(cliCommand)} {arguments}\"", workingDirectory, environmentVariables);
+    }
+
+    return RunProcessWithEnvironment("dotnet", $"{QuoteProcessArgument(cliCommand)} {arguments}", workingDirectory, environmentVariables);
 }
 
 static string QuoteProcessArgument(string value) =>

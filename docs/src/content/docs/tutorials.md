@@ -5,7 +5,7 @@ description: Sequential TypeSharp learning paths tied to runnable examples and s
 
 These tutorials point at runnable examples that are checked by the repository smoke suite. Copy the commands from each example README when you want the exact verified flow.
 
-Start by installing the CLI with the release zip and checksum flow on [Install](../install/). When a tag does not have a published release asset yet, use the source-built fallback on [Start Here](../start-here/) and replace `typesharp` with the built CLI DLL command.
+Start by opening the tag-specific GitHub Release notes, confirming the exact asset names, and installing `typesharp-cli-dotnet-<tag>.zip` with the `SHA256SUMS.txt` checksum flow on [Install](../install/). Use the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest when a tutorial references TypeSharp Core/Runtime DLLs. When a tag does not have a published release asset yet, use the preview contributor source-built fallback on [Start Here](../start-here/) and replace `typesharp` with the built CLI DLL command.
 
 ## 1. Hello Project
 

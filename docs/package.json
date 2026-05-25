@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "verify:rendered-install-route": "node scripts/verify-rendered-install-route.cjs",
     "preview": "astro preview"
   },
   "dependencies": {

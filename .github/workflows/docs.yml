@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*.*.*'
     paths:
       - 'docs/**'
       - 'agent/**'
@@ -46,6 +48,12 @@ jobs:
         run: npm run build
         working-directory: docs
 
+      - name: Verify rendered install route
+        run: npm run verify:rendered-install-route
+        working-directory: docs
+        env:
+          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v6
@@ -67,3 +75,130 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Verify deployed GitHub Pages route
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $docsBaseUri = '${{ steps.deployment.outputs.page_url }}'.TrimEnd('/')
+          if ($docsBaseUri -ne 'https://naramdash.github.io/TypeSharp') {
+            throw "Deployed GitHub Pages URL was '$docsBaseUri' instead of https://naramdash.github.io/TypeSharp."
+          }
+
+          function Get-DeployedDocsPage([string] $relativePath) {
+            $uri = "$docsBaseUri$relativePath"
+            $lastError = $null
+            for ($attempt = 1; $attempt -le 30; $attempt++) {
+              $cacheBust = [System.Uri]::EscapeDataString("$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT-$attempt")
+              $requestUri = "$uri?typesharp-cache-bust=$cacheBust"
+              try {
+                $response = Invoke-WebRequest -Uri $requestUri -UseBasicParsing -TimeoutSec 30 -Headers @{
+                  'Cache-Control' = 'no-cache'
+                  'Pragma' = 'no-cache'
+                }
+                if ($response.StatusCode -eq 200 -and -not [string]::IsNullOrWhiteSpace([string] $response.Content)) {
+                  return [string] $response.Content
+                }
+
+                $lastError = "Deployed docs request '$requestUri' returned status '$($response.StatusCode)' or empty content."
+              }
+              catch {
+                $lastError = $_.Exception.Message
+              }
+
+              if ($attempt -lt 30) {
+                Start-Sleep -Seconds 10
+              }
+            }
+
+            throw "Deployed docs route '$uri' was not available after 30 attempts. Last error: $lastError"
+          }
+
+          function Assert-DeployedDocsContains([string] $content, [string] $expected, [string] $message) {
+            if (-not $content.Contains($expected)) {
+              throw $message
+            }
+          }
+
+          function Assert-DeployedDocsNotContains([string] $content, [string] $unexpected, [string] $message) {
+            if ($content.Contains($unexpected)) {
+              throw $message
+            }
+          }
+
+          $deployedDocsRoutes = @(
+            @{ Label = 'home'; Path = '/' },
+            @{ Label = 'Install'; Path = '/install/' },
+            @{ Label = 'Start Here'; Path = '/start-here/' },
+            @{ Label = 'Tutorials'; Path = '/tutorials/' },
+            @{ Label = 'Learning Paths'; Path = '/learning-paths/' },
+            @{ Label = 'Language Tour'; Path = '/language-tour/' },
+            @{ Label = 'Fundamentals'; Path = '/fundamentals/' },
+            @{ Label = 'Guides'; Path = '/guides/' },
+            @{ Label = '.NET Interop'; Path = '/dotnet-interop/' },
+            @{ Label = 'Cookbook'; Path = '/cookbook/' },
+            @{ Label = 'API And CLI Reference'; Path = '/api/' },
+            @{ Label = 'Examples'; Path = '/examples/' },
+            @{ Label = 'Diagnostics'; Path = '/diagnostics/' },
+            @{ Label = 'Advanced Topics'; Path = '/advanced/' },
+            @{ Label = 'Modules And Imports'; Path = '/modules/' },
+            @{ Label = 'Type System'; Path = '/type-system/' },
+            @{ Label = 'C# And CLR Type Model'; Path = '/csharp-type-model/' },
+            @{ Label = 'C# Members And Overloads'; Path = '/csharp-members-overloads/' },
+            @{ Label = 'Feature Status'; Path = '/feature-status/' },
+            @{ Label = 'Grammar'; Path = '/grammar/' },
+            @{ Label = 'Language Reference'; Path = '/reference/' },
+            @{ Label = 'Lowering'; Path = '/lowering/' },
+            @{ Label = 'CLI'; Path = '/cli/' },
+            @{ Label = 'Project Configuration'; Path = '/project-configuration/' },
+            @{ Label = 'Runtime Artifacts'; Path = '/runtime-artifacts/' },
+            @{ Label = 'VS Code And LSP'; Path = '/vscode-lsp/' },
+            @{ Label = 'Migration'; Path = '/migration/' },
+            @{ Label = 'Troubleshooting'; Path = '/troubleshooting/' },
+            @{ Label = 'Core Goal'; Path = '/goal/' },
+            @{ Label = 'Project Requirements'; Path = '/requirements/' },
+            @{ Label = 'Project Policy'; Path = '/project-policy/'; AllowStaleHostText = $true },
+            @{ Label = 'Project Ledger'; Path = '/project-ledger/' },
+            @{ Label = 'Writing Guide'; Path = '/writing-guide/' },
+            @{ Label = 'Document Ownership'; Path = '/document-ownership/' }
+          )
+
+          if ($deployedDocsRoutes.Count -ne 34) {
+            throw "Deployed docs route table must contain 34 sidebar public-docs routes, found $($deployedDocsRoutes.Count)."
+          }
+
+          $deployedDocsUniqueRoutePathCount = @($deployedDocsRoutes | ForEach-Object { $_.Path } | Select-Object -Unique).Count
+          if ($deployedDocsUniqueRoutePathCount -ne $deployedDocsRoutes.Count) {
+            throw 'Deployed docs route table contains duplicate public-docs paths.'
+          }
+
+          foreach ($deployedDocsRoute in $deployedDocsRoutes) {
+            $content = Get-DeployedDocsPage $deployedDocsRoute.Path
+            $canonicalUrl = "https://naramdash.github.io/TypeSharp$($deployedDocsRoute.Path)"
+            Assert-DeployedDocsContains $content "rel=`"canonical`" href=`"$canonicalUrl`"" "Deployed docs $($deployedDocsRoute.Label) route does not use the public GitHub Pages canonical URL."
+            Assert-DeployedDocsContains $content "property=`"og:url`" content=`"$canonicalUrl`"" "Deployed docs $($deployedDocsRoute.Label) route does not use the public GitHub Pages Open Graph URL."
+            if (-not $deployedDocsRoute.ContainsKey('AllowStaleHostText')) {
+              Assert-DeployedDocsNotContains $content 'https://typesharp.github.io/TypeSharp' "Deployed docs $($deployedDocsRoute.Label) route still uses the stale legacy GitHub Pages URL."
+            }
+
+            foreach ($legacy404Marker in @(
+              'Document not found (404)',
+              'This page could not be found',
+              'Page not found'
+            )) {
+              Assert-DeployedDocsNotContains $content $legacy404Marker "Deployed docs $($deployedDocsRoute.Label) route resolved to legacy 404 marker '$legacy404Marker'."
+            }
+          }
+
+          $sitemapIndex = Get-DeployedDocsPage '/sitemap-index.xml'
+          $sitemap = Get-DeployedDocsPage '/sitemap-0.xml'
+          Assert-DeployedDocsContains $sitemapIndex 'https://naramdash.github.io/TypeSharp/sitemap-0.xml' 'Deployed docs sitemap index does not use the public GitHub Pages /TypeSharp URL.'
+          foreach ($deployedDocsRoute in $deployedDocsRoutes) {
+            $sitemapUrl = "https://naramdash.github.io/TypeSharp$($deployedDocsRoute.Path)"
+            Assert-DeployedDocsContains $sitemap $sitemapUrl "Deployed docs sitemap does not include the public GitHub Pages URL for $($deployedDocsRoute.Label)."
+          }
+
+          Assert-DeployedDocsNotContains $sitemapIndex 'https://typesharp.github.io/TypeSharp' 'Deployed docs sitemap index still uses the stale legacy GitHub Pages URL.'
+          Assert-DeployedDocsNotContains $sitemap 'https://typesharp.github.io/TypeSharp' 'Deployed docs sitemap still uses the stale legacy GitHub Pages URL.'

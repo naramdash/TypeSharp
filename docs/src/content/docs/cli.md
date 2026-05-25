@@ -37,6 +37,8 @@ typesharp test [project]
 
 `typesharp restore` is a future explicit package-graph command. It is listed here so package restore stays separated from `check` until TypeSharp has a lock/audit/source-mapping policy.
 
+End-user command examples assume the release install route: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and download the matching `typesharp-runtime-net48-<tag>.zip` when TypeSharp Core/Runtime DLLs are needed. Verify the runtime archive with the same manifest. Use [Install](../install/) for the full download, checksum, rollback, and first-project flow.
+
 ## Command Contracts
 
 ### `typesharp version`
@@ -72,6 +74,8 @@ Generated starter files:
 - `src/Main.tysh` or `src/Library.tysh`
 - `.gitignore`
 - `README.md`
+
+The generated `README.md` assumes the release-installed `typesharp` command from [Install](../install/) is on `PATH`, lists the local `check`/`build`/`run` commands for the project type, and links to Troubleshooting or Runtime Artifacts instead of repo-local CLI DLL commands.
 
 ### `typesharp check`
 
@@ -197,7 +201,7 @@ targetFramework = "net48"
 outputType = "exe"
 rootNamespace = "HelloApp"
 sourceRoots = ["src"]
-generatedOutputRoot = "obj/generated"
+generatedOutputRoot = "generated"
 main = "HelloApp.main"
 
 [language]
@@ -237,7 +241,7 @@ Manifest rules:
 - missing named/type import, re-export, or namespace alias targets report `TS0114`.
 - `bin/`, `obj/`, `.git`, and the generated output root are excluded from default discovery.
 - default target framework is `net48`.
-- default generated output root is `obj/generated`.
+- default generated output root is `obj/generated` when omitted; generated starter projects set `generatedOutputRoot = "generated"` so first-project artifacts are easy to inspect.
 - `main` is required only for executable projects.
 - `references.assemblies` names framework/GAC/reference assemblies.
 - `references.paths` names explicit local DLL references.

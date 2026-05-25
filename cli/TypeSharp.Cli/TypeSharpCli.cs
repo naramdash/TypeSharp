@@ -967,7 +967,7 @@ public static class TypeSharpCli
         """.Replace("\r\n", "\n", StringComparison.Ordinal);
 
     private static string NewSource(string rootNamespace, bool isConsole) =>
-        isConsole
+        (isConsole
             ? $"""
               namespace {rootNamespace}
 
@@ -977,7 +977,7 @@ public static class TypeSharpCli
               namespace {rootNamespace}
 
               export fun greeting(name: string): string = name
-              """.Replace("\r\n", "\n", StringComparison.Ordinal);
+              """.Replace("\r\n", "\n", StringComparison.Ordinal)) + "\n";
 
     private static string NewReadme(string projectName, bool isConsole) =>
         isConsole
@@ -985,6 +985,7 @@ public static class TypeSharpCli
               # {projectName}
 
               This TypeSharp console project targets `net48` and generates a runnable .NET Framework executable.
+              These commands assume the release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`.
 
               ```powershell
               typesharp check TypeSharp.toml
@@ -993,11 +994,13 @@ public static class TypeSharpCli
               ```
 
               Generated C# source and build outputs are written under `generated/`.
+              Use https://naramdash.github.io/TypeSharp/troubleshooting/ for host, dependency, build, or executable launch failures.
               """.Replace("\r\n", "\n", StringComparison.Ordinal)
             : $"""
               # {projectName}
 
               This TypeSharp library project targets `net48` and generates a .NET Framework class library.
+              These commands assume the release-installed `typesharp` command from https://naramdash.github.io/TypeSharp/install/ is on `PATH`.
 
               ```powershell
               typesharp check TypeSharp.toml
@@ -1005,6 +1008,7 @@ public static class TypeSharpCli
               ```
 
               Generated C# source and build outputs are written under `generated/`.
+              Use https://naramdash.github.io/TypeSharp/runtime-artifacts/ before referencing TypeSharp Core/Runtime DLLs from C# consumers.
               """.Replace("\r\n", "\n", StringComparison.Ordinal);
 
     private static string ToRootNamespace(string projectName)

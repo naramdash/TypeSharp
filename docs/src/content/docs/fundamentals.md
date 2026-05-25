@@ -3,6 +3,8 @@ title: Fundamentals
 description: Core TypeSharp concepts for new users.
 ---
 
+Start from [Install](../install/) before running local commands: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when Core/Runtime DLLs are needed.
+
 ## Values And Functions
 
 Use `let` for immutable values and `fun` for functions.
@@ -89,6 +91,6 @@ Diagnostics use stable codes. Examples:
 - `TS2401`: missing referenced assembly
 - `TS2404`: unknown C# nullability
 
-Use [Diagnostics](../diagnostics/) and `typesharp explain TS2202` for explanations.
+Use [Diagnostics](../diagnostics/) and the release-installed `typesharp explain TS2202` command for explanations.
 
 Use [Type System](../type-system/) for a deeper view of inference, null safety, `unknown`, `dynamic`, structural shapes, unions, generics, async, and public ABI boundaries.

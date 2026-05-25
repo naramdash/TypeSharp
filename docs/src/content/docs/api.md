@@ -5,6 +5,8 @@ description: TypeSharp CLI, manifest, runtime, generated assembly, and tooling r
 
 ## CLI Commands
 
+Command examples assume the release install route from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and run `typesharp version`. Download the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest when generated projects or C# consumers need TypeSharp Core/Runtime DLLs.
+
 Implemented commands:
 
 ```text
@@ -33,6 +35,7 @@ rootNamespace = "Samples"
 generatedOutputRoot = "generated"
 
 [references]
+assemblies = ["System", "System.Core"]
 paths = ["lib/Legacy.Tools.dll"]
 packages = []
 
@@ -44,6 +47,8 @@ The 1.0 dependency acquisition scope is framework assemblies, explicit local `ne
 
 `projectReferences.paths` names direct TypeSharp manifests. `typesharp check` validates the direct project graph and exported source members; `typesharp build` builds referenced projects first and consumes their generated assemblies through explicit local references.
 
+Reference TypeSharp Core/Runtime DLLs explicitly from the verified runtime archive when public APIs expose `Option<T>`, `Result<T,E>`, `Unit`, nominal union helpers, or generated runtime helper calls.
+
 Canonical pages: [CLI](../cli/) and [Project Configuration](../project-configuration/).
 
 Human guide: [Project Configuration](../project-configuration/)
@@ -54,6 +59,8 @@ The generated code can depend on:
 
 - `TypeSharp.Core`: `Option<T>`, `Result<T, E>`, and user-facing core helpers.
 - `TypeSharp.Runtime`: helpers for generated unions, pattern matching, equality, hash composition, and async.
+
+For the 1.0 preview route, obtain both assemblies from the verified `typesharp-runtime-net48-<tag>.zip` archive rather than from repository build folders.
 
 ## Standard Library Surface
 

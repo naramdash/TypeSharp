@@ -5,6 +5,8 @@ description: How a TypeSharp project becomes generated C# source, a net48 projec
 
 TypeSharp projects produce ordinary `.NET Framework 4.8` artifacts through a conservative source backend. The compiler and CLI can run on a modern .NET host, but the generated project, generated assembly, `TypeSharp.Core`, and `TypeSharp.Runtime` stay on the `net48` side of the boundary.
 
+Use [Install](../install/) first to download the release CLI, verify `SHA256SUMS.txt`, and extract the matching runtime archive used by the examples below.
+
 ## Artifact Boundary
 
 The key split is between the tool host and the runtime artifact.
@@ -133,8 +135,8 @@ assemblies = [
 ]
 paths = [
   "lib/Legacy.Billing.dll",
-  "lib/TypeSharp.Core.dll",
-  "lib/TypeSharp.Runtime.dll"
+  "../typesharp-runtime/lib/net48/TypeSharp.Core.dll",
+  "../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll"
 ]
 packages = []
 
@@ -145,7 +147,7 @@ paths = ["../Shared/TypeSharp.toml"]
 Reference rules:
 
 - `references.assemblies` becomes framework `<Reference Include="..."/>` items.
-- `references.paths` becomes local `<Reference>` items with generated-project-relative `<HintPath>` values.
+- `references.paths` becomes local `<Reference>` items with generated-project-relative `<HintPath>` values. Runtime/Core paths should point at the verified extracted runtime archive, not repository build folders.
 - `projectReferences.paths` names direct TypeSharp manifests. `typesharp build` builds those projects first and then writes local `<Reference>` items with hint paths to the referenced generated assemblies.
 - `references.packages` is reserved and currently reports `TS2405`; TypeSharp does not restore NuGet packages during build. Future support must preserve deterministic lock files, package source mapping, vulnerability auditing, license inventory, checksum/signature policy, and offline-friendly no-package builds.
 - The generated project writes an offline `NuGet.config` with package sources cleared so normal builds do not accidentally resolve hidden packages.
@@ -173,7 +175,7 @@ This keeps TypeSharp's build graph aligned with ordinary .NET artifact consumpti
 | `TypeSharp.Core.dll` | User-facing `Option<T>`, `Result<T, E>`, `Unit`, and small core public helpers. | TypeSharp source imports `TypeSharp.Core` or exposes core types to C# consumers. |
 | `TypeSharp.Runtime.dll` | Generated-code helper surface for nominal union cases, pattern matching, equality/hash composition, and async helpers. | Generated C# needs `TypeSharp.Runtime` helpers, for example nominal unions or union matches. |
 
-Current preview builds require these assemblies to be available as local `net48` DLL references when a project uses them. The release runtime archive is `typesharp-runtime-net48-<tag>.zip` and expands to `lib/net48/TypeSharp.Core.dll` plus `lib/net48/TypeSharp.Runtime.dll`. A generated assembly that exposes `Option<T>` or `Result<T,E>` to C# consumers also requires the consuming C# project to reference `TypeSharp.Core.dll`. A generated assembly that exposes nominal union cases or calls runtime pattern helpers requires the host or consumer project to deploy `TypeSharp.Runtime.dll` beside the generated assembly.
+Current preview builds require these assemblies to be available as local `net48` DLL references when a project uses them. Open the tag-specific GitHub Release notes, confirm the exact asset names, then download and verify the release runtime archive with `SHA256SUMS.txt`. The archive is `typesharp-runtime-net48-<tag>.zip` and expands to `lib/net48/TypeSharp.Core.dll` plus `lib/net48/TypeSharp.Runtime.dll`. A generated assembly that exposes `Option<T>` or `Result<T,E>` to C# consumers also requires the consuming C# project to reference `TypeSharp.Core.dll`. A generated assembly that exposes nominal union cases or calls runtime pattern helpers requires the host or consumer project to deploy `TypeSharp.Runtime.dll` beside the generated assembly.
 
 The 1.0 runtime resolution policy is explicit installed runtime archive references: extract the matching runtime zip and reference `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` through `references.paths`. The CLI does not implicitly discover repository build folders, auto-copy runtime assemblies, or add hidden template references for 1.0; CLI auto-copy and implicit template references remain post-1.0 ergonomics unless they are promoted with separate release evidence.
 
@@ -220,8 +222,8 @@ A host consumes the output like an ordinary .NET Framework class library.
 flowchart TD
   Build["typesharp build"]
   GeneratedDll["generated/bin/Debug/net48/BillingRules.dll"]
-  CoreDll["lib/TypeSharp.Core.dll"]
-  RuntimeDll["lib/TypeSharp.Runtime.dll"]
+  CoreDll["typesharp-runtime/lib/net48/TypeSharp.Core.dll"]
+  RuntimeDll["typesharp-runtime/lib/net48/TypeSharp.Runtime.dll"]
   LegacyDll["lib/Legacy.Billing.dll"]
 
   subgraph Host["net48 host application"]
@@ -242,25 +244,33 @@ flowchart TD
 The deployable set is:
 
 1. the generated TypeSharp assembly,
-2. `TypeSharp.Core.dll` when public APIs or source imports use core types,
-3. `TypeSharp.Runtime.dll` when generated code uses runtime helpers,
+2. `typesharp-runtime/lib/net48/TypeSharp.Core.dll` from the verified matching runtime archive when public APIs or source imports use core types,
+3. `typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` from the verified matching runtime archive when generated code uses runtime helpers,
 4. referenced local DLLs from `references.paths`,
 5. the normal .NET Framework assemblies available to the target host.
 
+The C# host may reference those paths directly during build or copy the DLLs beside the generated assembly for deployment, but they must come from the same verified runtime archive tag and Runtime ABI as the CLI release.
+
 TypeSharp does not require a custom loader, startup hook, ASP.NET Core migration, or nonstandard AppDomain lifecycle hook for the current artifact shape.
 
-## Release Runtime Layout Smoke
+## Release Runtime Layout Smokes
 
-The release-style smoke stages the CLI wrapper and runtime archive layout, then works from a clean directory outside the repository:
+The release-style smokes use the CLI wrapper and runtime archive layout from clean directories outside the repository. The staged smoke proves the layout before publication; the hosted release workflow resolves the hosted download/extraction root and clean smoke workspace outside the repository checkout, then repeats the same installed-command, host-prerequisite failure, local-DLL dependency, dependency-diagnostic, generated-build-failure, project-reference build-order, runtime-backed library, and C# consumer output shape against the downloaded GitHub Release assets after publication.
 
-1. Extract `typesharp-cli-dotnet-<tag>.zip` and run `typesharp.cmd`.
-2. Extract `typesharp-runtime-net48-<tag>.zip` under a workspace-local runtime folder.
-3. Create a library with `typesharp new library`.
-4. Reference `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` through `references.paths`.
-5. Build TypeSharp source that exposes `Option<T>`, `Result<T,E>`, a nominal union, union match lowering, and generated `net48` output.
-6. Compile a separate C# `net48` consumer that references the generated assembly plus the extracted Core/Runtime DLLs and calls `TypeSharp.Runtime` union and async helper APIs.
+1. Open the tag-specific GitHub Release notes, confirm the exact asset names, extract verified `typesharp-cli-dotnet-<tag>.zip`, put the extracted directory on `PATH`, and verify bare `typesharp` resolves to the downloaded `typesharp.cmd`.
+2. Verify the downloaded wrapper reports a missing `dotnet` host when the host is removed from `PATH`, without implying generated `net48` projects need that same host target.
+3. Extract verified `typesharp-runtime-net48-<tag>.zip` under a workspace-local runtime folder.
+4. Create, check, build, and run a clean console project through the installed `typesharp` command.
+5. Build a local C# `net48` DLL, reference it with `references.paths = ["../lib/Legacy.Tools.dll"]`, build a generated TypeSharp library against it, and compile a separate C# `net48` consumer that references both assemblies.
+6. Verify missing local DLL and unsupported package references report `TS2401`/`TS2405` and do not emit generated source, generated projects, or generated assemblies.
+7. Verify generated C# project build failures report `TS3501` after generated source/project emission and before a generated assembly is produced.
+8. Create a shared library and a dependent library with `[projectReferences] paths = ["../HostedShared/TypeSharp.toml"]`, then build the dependent project through installed `typesharp` and verify the referenced generated assembly exists before the dependent assembly.
+9. Create a library with `typesharp new library`.
+10. Reference `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll` through `references.paths`.
+11. Build TypeSharp source that exposes `Option<T>`, `Result<T,E>`, a nominal union, union match lowering, and generated `net48` output.
+12. Compile a separate C# `net48` consumer that references the generated assembly plus the extracted Core/Runtime DLLs and calls `TypeSharp.Runtime` union and async helper APIs.
 
-This proves the supported preview shape is explicit local DLL references from the installed runtime archive, not discovery from repository build folders.
+This proves the supported preview shape is explicit local DLL references from the installed runtime archive, not discovery from repository build folders. The hosted smoke also verifies the hosted download/extraction root and clean smoke workspace stay outside the repository checkout, the release page metadata, `SHA256SUMS.txt`, the exact CLI/runtime/VSIX/checksum asset set, the exact CLI/runtime/VSIX checksum manifest entry set, duplicate-free lowercase SHA-256 manifest rows, the VSIX checksum entry, archive shape, package identity, and TypeSharp language/grammar contribution metadata, the CLI archive `typesharp.dll`/`typesharp.cmd`/`TypeSharp.Compiler.dll`/`TypeSharp.LanguageServer.dll` files, CLI README release metadata, runtime README tag/build/source/ABI/target metadata and DLL list, the downloaded wrapper content for command echo suppression, local environment scope, extracted-directory `TYPESHARP_HOME`, and `dotnet "%TYPESHARP_HOME%typesharp.dll" %*` launch behavior, the prerelease/channel policy, runtime ABI status, default target framework, mandatory release-note sections, compatibility matrix header and expected release row, preview signature policy, installed `typesharp version` text plus JSON CLI/compiler/language identity and target/framework/runtime metadata, and downloaded wrapper host-prerequisite failure before exercising `typesharp new`, `typesharp format --check`, `typesharp check`, `typesharp build`, and `typesharp run` through the installed command path, compiling a local C# DLL dependency path, verifying text and JSON dependency diagnostics, verifying text and JSON generated C# build-failure diagnostics, checking installed `typesharp explain` output for those recovery codes, compiling a direct TypeSharp project-reference pair, verifying library-project `typesharp run` rejection, the runtime-backed TypeSharp library, and a separate C# `net48` consumer output directory containing the generated assembly plus byte-identical Core/Runtime DLLs from the downloaded runtime archive.
 
 ## Invariants
 

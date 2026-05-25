@@ -5,15 +5,18 @@ description: TypeSharp study paths for beginners, C# maintainers, TypeScript use
 
 Use this page when you are trying to decide what to read next. Each path moves from concrete commands to language features, then to reference material.
 
+Before choosing a path, install the release CLI from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when a path needs TypeSharp Core/Runtime DLLs, and install `typesharp-vscode-<tag>.vsix` from [VS Code And LSP](../vscode-lsp/) if you want editor integration.
+
 ## Programming Beginner
 
 Goal: build and understand a small TypeSharp project without learning compiler internals first.
 
-1. Read [Start Here](../start-here/) to understand what TypeSharp is for.
-2. Read [Language Tour](../language-tour/) through values, functions, records, and diagnostics.
-3. Run the [Hello Project](../tutorials/#1-hello-project) tutorial.
-4. Use [Fundamentals](../fundamentals/) when a tutorial uses a new language term.
-5. Use [Troubleshooting](../troubleshooting/) when `check`, `build`, or `run` fails.
+1. Install the release CLI and verify `typesharp version` on [Install](../install/).
+2. Read [Start Here](../start-here/) to understand what TypeSharp is for.
+3. Read [Language Tour](../language-tour/) through values, functions, records, and diagnostics.
+4. Run the [Hello Project](../tutorials/#1-hello-project) tutorial.
+5. Use [Fundamentals](../fundamentals/) when a tutorial uses a new language term.
+6. Use [Troubleshooting](../troubleshooting/) when `check`, `build`, or `run` fails.
 
 Focus on these concepts first:
 
@@ -94,7 +97,7 @@ Good first questions:
 
 | Need | Start with |
 | --- | --- |
-| Create a project | [Tutorials](../tutorials/) |
+| Create a project | [Install](../install/) and [Tutorials](../tutorials/) |
 | Understand the language quickly | [Language Tour](../language-tour/) |
 | Understand current feature support | [Fundamentals](../fundamentals/) and [Reference](../reference/) |
 | Configure a project | [Project Configuration](../project-configuration/) |

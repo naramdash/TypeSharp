@@ -25,11 +25,11 @@ The compiler and tools can run on a modern .NET SDK. The generated user-facing a
 
 ## Install
 
-Preview release artifacts are published from tagged release builds to GitHub Releases. The CLI asset is `typesharp-cli-dotnet-<tag>.zip`, includes a Windows `typesharp.cmd` wrapper, and is verified with `SHA256SUMS.txt`. The runtime asset is `typesharp-runtime-net48-<tag>.zip` and contains `TypeSharp.Core.dll` plus `TypeSharp.Runtime.dll`.
+Preview release artifacts are published from tagged release builds to GitHub Releases. The CLI asset is `typesharp-cli-dotnet-<tag>.zip`, includes a Windows `typesharp.cmd` wrapper, and is verified with `SHA256SUMS.txt`. The runtime asset is `typesharp-runtime-net48-<tag>.zip` and contains `TypeSharp.Core.dll` plus `TypeSharp.Runtime.dll`. The VS Code extension asset is `typesharp-vscode-<tag>.vsix` and is covered by the same checksum manifest. The tag-specific GitHub Release notes are the source of truth for the release channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.
 
-Use the docs [Install](https://typesharp.github.io/TypeSharp/install/) page for the release download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the source-built fallback below.
+Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page for the release download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the preview contributor source-built fallback below.
 
-## Try It From Source
+## Preview Contributor Source-Built Fallback
 
 Prerequisites:
 
@@ -73,7 +73,7 @@ TypeSharp lowers implemented features to C# source that can be compiled into a `
 
 Human-facing docs:
 
-- GitHub Pages documentation: https://typesharp.github.io/TypeSharp/
+- GitHub Pages documentation: https://naramdash.github.io/TypeSharp/
 - Docs source: [docs](docs)
 - CLI contract: [docs/src/content/docs/cli.md](docs/src/content/docs/cli.md)
 - VS Code and LSP contract: [docs/src/content/docs/vscode-lsp.md](docs/src/content/docs/vscode-lsp.md)

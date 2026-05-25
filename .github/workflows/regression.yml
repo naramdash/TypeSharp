@@ -164,6 +164,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
 
+          # 586 shared catalog cases plus one bridge smoke per shard assembly.
           dotnet test `
             --test-modules "test\TypeSharp.Compiler.Tests.MSTest.Shard*\bin\Debug\net10.0\TypeSharp.Compiler.Tests.MSTest.Shard*.dll" `
             --root-directory . `

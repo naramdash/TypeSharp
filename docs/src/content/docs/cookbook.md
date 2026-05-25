@@ -3,6 +3,8 @@ title: Cookbook
 description: Short TypeSharp recipes for common project workflows.
 ---
 
+Start from [Install](../install/) before running these recipes: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest when a recipe needs TypeSharp Core/Runtime DLLs.
+
 ## Call A Local C# DLL
 
 1. Build the C# library to `lib/Legacy.Tools.dll`.
@@ -11,7 +13,9 @@ description: Short TypeSharp recipes for common project workflows.
 
 ```toml
 [references]
+assemblies = ["System", "System.Core"]
 paths = ["lib/Legacy.Tools.dll"]
+packages = []
 ```
 
 ```tysh
@@ -91,6 +95,8 @@ export fun main(args: string[]): string =
 ```
 
 ```powershell
+typesharp check TypeSharp.toml
+typesharp build TypeSharp.toml
 typesharp run TypeSharp.toml -- alpha beta
 ```
 
@@ -98,4 +104,4 @@ Status: `main(args: string[])` argument forwarding is smoke-tested.
 
 ## Consume Generated DLLs From A Host Project
 
-Build the TypeSharp library, then reference the generated assembly plus TypeSharp Core/Runtime dependencies from your `net48` host project. See [Examples](../examples/) for ASP.NET/WCF-style and worker-style host smoke projects.
+Build the TypeSharp library, then reference the generated assembly plus TypeSharp Core/Runtime dependencies from the same-tag `typesharp-runtime-net48-<tag>.zip` archive in your `net48` host project. Verify the runtime archive with `SHA256SUMS.txt` before copying or referencing `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll`. See [Examples](../examples/) for ASP.NET/WCF-style and worker-style host smoke projects.

@@ -5,6 +5,8 @@ description: Implementation-aware TypeSharp documentation for lowering, public A
 
 This page is for readers who need to reason about TypeSharp's compiler and platform contracts. It summarizes the advanced topics and links them to the user-facing behavior documented elsewhere.
 
+Command examples and workflow references assume the release install route from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when an advanced workflow needs TypeSharp Core/Runtime DLLs.
+
 ## Compiler Pipeline
 
 The stable workflow is:
@@ -19,7 +21,7 @@ The stable workflow is:
 8. Emit generated C# source.
 9. Build a generated `net48` C# project.
 
-`typesharp check` stops before emission. `typesharp build` runs the same diagnostics path before generated output is written.
+The release-installed `typesharp check` command stops before emission. The release-installed `typesharp build` command runs the same diagnostics path before generated output is written.
 
 Use [Project Policy](../project-policy/) for the full architecture, backend, dependency, target framework, regression, parser fixture, feature review, and release policy ledger.
 

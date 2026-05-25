@@ -3,6 +3,8 @@ title: Guides
 description: Practical TypeSharp guides for projects, CLI use, interop, and modeling.
 ---
 
+Start from [Install](../install/) before using these guides: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. When a guide needs TypeSharp Core/Runtime DLLs, use the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest.
+
 ## Project Structure
 
 A TypeSharp project is described by `TypeSharp.toml`. The manifest points at source files, output type, target framework, root namespace, generated output root, and local C# references.
@@ -22,7 +24,7 @@ Use [Project Configuration](../project-configuration/) for the full manifest, so
 
 ## CLI Workflow
 
-Use `check` before `build` when iterating:
+Use the release-installed `typesharp` command and run `check` before `build` when iterating:
 
 ```powershell
 typesharp check TypeSharp.toml
@@ -45,7 +47,12 @@ Local C# DLL references are declared in the manifest:
 
 ```toml
 [references]
+assemblies = ["System", "System.Core"]
 paths = ["lib/Legacy.Tools.dll"]
+packages = []
+
+[projectReferences]
+paths = ["../Shared/TypeSharp.toml"]
 ```
 
 TypeSharp imports C# types with namespace-based imports:
@@ -55,6 +62,8 @@ import { LegacyFormatter } from "Legacy.Tools"
 ```
 
 Implemented interop coverage includes constructors, static/instance calls, property and field reads, indexers, delegates, events, attributes, generic types, and selected overload validation.
+
+NuGet package restore is post-1.0. Keep dependencies explicit through framework assemblies, local `net48` DLL paths, direct TypeSharp project references, and matching Core/Runtime DLLs from the release runtime archive.
 
 Use [Modules And Imports](../modules/) for source module identity, relative module resolution, export forwarding status, and generated C# module containers.
 

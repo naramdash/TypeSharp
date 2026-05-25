@@ -11,8 +11,8 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 
 ## Start Here
 
-- [Start Here](start-here/) helps new users choose the right path.
 - [Install](install/) shows the release zip, checksum, wrapper command, and first project flow.
+- [Start Here](start-here/) helps new users choose the right path.
 - [Learning Paths](learning-paths/) gives beginner, C# maintainer, TypeScript, F#, and advanced routes.
 - [Language Tour](language-tour/) explains the language before the formal reference.
 - [Tutorials](tutorials/) lists runnable, sequential learning paths.
@@ -39,11 +39,13 @@ Preview releases use GitHub Release assets:
 
 - `typesharp-cli-dotnet-<tag>.zip` for the framework-dependent CLI host and `typesharp.cmd` wrapper,
 - `typesharp-runtime-net48-<tag>.zip` for `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll`,
-- `SHA256SUMS.txt` for release asset verification.
+- `typesharp-vscode-<tag>.vsix` for the VS Code extension and bundled language server,
+- `SHA256SUMS.txt` for release asset verification,
+- Tag-specific GitHub Release notes for channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.
 
-Start with [Install](install/) for the download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the source-built fallback below.
+Start with [Install](install/) for the download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. If a versioned release asset for the tag you need is not published yet, use the preview contributor source-built fallback below.
 
-## Fastest Safe Check From Source
+## Preview Contributor Source-Built Fallback
 
 From the repository root:
 

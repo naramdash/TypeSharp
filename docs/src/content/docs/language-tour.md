@@ -5,6 +5,8 @@ description: A guided tour of TypeSharp language features before the formal refe
 
 TypeSharp is a statically checked language that emits `.NET Framework 4.8` artifacts through generated C# source. It is designed for teams that need long-lived .NET Framework compatibility while adding modern language features and a stricter compile-time workflow.
 
+Start from [Install](../install/) before running tour commands: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when a tour project needs TypeSharp Core/Runtime DLLs.
+
 ## Files And Projects
 
 TypeSharp source files use the `.tysh` extension. A project is described by `TypeSharp.toml`, and the CLI discovers source files from the configured source root or the default `src` folder.
@@ -18,7 +20,7 @@ rootNamespace = "Company.Billing"
 generatedOutputRoot = "generated"
 ```
 
-Use `typesharp check` while editing and `typesharp build` when you want generated C# and a generated `net48` assembly.
+Use the release-installed `typesharp` command: run `typesharp check` while editing and `typesharp build` when you want generated C# and a generated `net48` assembly.
 
 ## Namespaces And Imports
 

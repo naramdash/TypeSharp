@@ -5,6 +5,8 @@ description: TypeSharp VS Code extension and language server workflow.
 
 The VS Code extension lives in `vscode/typesharp`, and the language server host lives in `lang/TypeSharp.LanguageServer`.
 
+Use [Install](../install/) first for the release CLI, checksum manifest, and release notes that define the matching VSIX asset.
+
 Current editor features:
 
 - `.tysh` language registration and TextMate syntax highlighting,
@@ -32,17 +34,37 @@ The syntax highlighting extension is the package under `vscode/typesharp`. It co
 - `language-configuration.json` for comments, brackets, pairs, and word matching,
 - `syntaxes/typesharp.tmLanguage.json` for TextMate highlighting based on the stable grammar surface.
 
-Local VSIX install:
+Release VSIX install:
+
+```powershell
+$version = "v0.1.0-preview.1"
+$repo = "naramdash/TypeSharp"
+$release = "https://github.com/$repo/releases/download/$version"
+$downloadRoot = Join-Path $env:TEMP "typesharp-$version"
+
+New-Item -ItemType Directory -Force $downloadRoot | Out-Null
+Invoke-WebRequest "$release/typesharp-vscode-$version.vsix" -OutFile "$downloadRoot/typesharp-vscode-$version.vsix"
+Invoke-WebRequest "$release/SHA256SUMS.txt" -OutFile "$downloadRoot/SHA256SUMS.txt"
+
+# Use the Assert-ReleaseAssetHash helper from Install.
+Assert-ReleaseAssetHash "typesharp-vscode-$version.vsix"
+
+code --install-extension "$downloadRoot/typesharp-vscode-$version.vsix"
+```
+
+Open the tag-specific GitHub Release notes and confirm the exact asset names before download, including the VSIX asset. The release VSIX name is `typesharp-vscode-<tag>.vsix`, and it is covered by the same `SHA256SUMS.txt` manifest as the CLI and runtime archives. Use the same tag as the CLI release so the bundled language server and Runtime ABI expectation match the installed compiler.
+
+Local development package:
 
 ```text
 cd vscode/typesharp
 npm run prepare:server
 npm run check
 npm run package:vsix
-code --install-extension .\typesharp-vscode-0.1.0.vsix
+code --install-extension .\typesharp-vscode-<local-version>.vsix
 ```
 
-VS Code can also install the generated VSIX through Extensions: Install from VSIX.
+VS Code can also install the release VSIX through Extensions: Install from VSIX.
 
 Smoke-tested commands:
 
