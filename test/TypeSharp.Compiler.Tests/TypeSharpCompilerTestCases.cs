@@ -270,7 +270,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Rechecked the latest `docs.yml` run `26385836869` for the same `main` push: build, upload, and Pages deployment completed, but the post-deploy verifier failed when PowerShell parsed `\"$uri?typesharp-cache-bust=...\"` as an invalid hostname.", languageProgress);
     AssertContains("Fixed the docs and release hosted-route cache-busting interpolation to `\"$($uri)?typesharp-cache-bust=...\"`, so cache-busted public Pages probes preserve the full configured URL before adding query parameters.", languageProgress);
     AssertContains("Added explicit GitHub Pages and release workflow contract guards that reject the broken unparenthesized `\"$uri?typesharp-cache-bust=...\"` interpolation shape while preserving the fixed `\"$($uri)?typesharp-cache-bust=...\"` form.", languageProgress);
-    AssertContains("`gh` recheck on 2026-05-25 found `release-artifacts.yml` run `26386680510` failed before any jobs were created from the pushed workflow-file context bug, `Docs` run `26385836869` failed after deployment on the pushed `$uri?` cache-busting interpolation bug, and `Regression` run `26385836851` already ran on `windows-latest` but failed because the GitHub Pages workflow contract still expected the old rendered verifier tuple shape. The later `079e005b7dfa716a7b326b557278c8a81cd631a7` push proved Docs run `26387486369` succeeds, while `release-artifacts.yml` run `26387485907` still failed before job creation from validation-time release-tag expression usage and Regression run `26387486368` failed because a rendered-verifier mutation test used LF-only replacements against a CRLF checkout. The `4ebc6377dd762b487459419340c8c26fb2569dc3` and `0ae76e9ff12c0320e61bd51049b3bc09741ff673` pushes proved release-artifacts no longer creates branch-push validation failures and Docs succeeds, while Regression exposed remaining CRLF tracker and workflow contract assertion issues.", languageTasks);
+    AssertContains("`gh` recheck on 2026-05-25 found `release-artifacts.yml` run `26386680510` failed before any jobs were created from the pushed workflow-file context bug, `Docs` run `26385836869` failed after deployment on the pushed `$uri?` cache-busting interpolation bug, and `Regression` run `26385836851` already ran on `windows-latest` but failed because the GitHub Pages workflow contract still expected the old rendered verifier tuple shape. The later `079e005b7dfa716a7b326b557278c8a81cd631a7` push proved Docs run `26387486369` succeeds, while `release-artifacts.yml` run `26387485907` still failed before job creation from validation-time release-tag expression usage and Regression run `26387486368` failed because a rendered-verifier mutation test used LF-only replacements against a CRLF checkout. The `4ebc6377dd762b487459419340c8c26fb2569dc3`, `0ae76e9ff12c0320e61bd51049b3bc09741ff673`, and `bf547cc4c34c3cd7dc3241e3cb95705e6710c572` pushes proved release-artifacts no longer creates branch-push validation failures and Docs succeeds, while Regression exposed remaining CRLF tracker, workflow contract, and docs contract assertion issues.", languageTasks);
     AssertContains("Added a local rendered public-docs exact legacy 404 marker gate so `npm run verify:rendered-install-route` rejects the configured marker set across all 34 rendered sidebar public-docs pages before upload, matching the release hosted-route gate.", languageProgress);
     AssertContains("Re-probed the configured public Pages deployment across all 34 sidebar public-docs routes plus `sitemap-index.xml` and `sitemap-0.xml`: all 36 checks returned HTTP 200 and all 36 bodies contained the configured `https://naramdash.github.io/TypeSharp` host; only Project Policy still contained the stale legacy host as a forbidden example and exact legacy marker literals from previously deployed policy prose.", languageProgress);
     AssertContains("Removed exact legacy 404 marker literals from the public Project Policy page while keeping the stale legacy host only as the allowed forbidden-example text, so the deployed content verifier can reject the configured marker set without matching its own policy wording.", languageProgress);
@@ -34739,9 +34739,17 @@ static void AssertContains(string expectedSubstring, string actual)
 {
     if (!actual.Contains(expectedSubstring, StringComparison.Ordinal))
     {
-        throw new InvalidOperationException($"Expected output to contain '{expectedSubstring}', got '{actual}'.");
+        var normalizedExpected = NormalizeTestLineEndings(expectedSubstring);
+        var normalizedActual = NormalizeTestLineEndings(actual);
+        if (!normalizedActual.Contains(normalizedExpected, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected output to contain '{expectedSubstring}', got '{actual}'.");
+        }
     }
 }
+
+static string NormalizeTestLineEndings(string value) =>
+    value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
 
 static IReadOnlyList<string> ExtractAstroSidebarPublicRoutes(string astroConfig)
 {
@@ -34814,6 +34822,13 @@ static void AssertContainsBefore(string actual, string earlierSubstring, string 
 {
     var earlierIndex = actual.IndexOf(earlierSubstring, StringComparison.Ordinal);
     var laterIndex = actual.IndexOf(laterSubstring, StringComparison.Ordinal);
+    if (earlierIndex < 0 || laterIndex < 0)
+    {
+        var normalizedActual = NormalizeTestLineEndings(actual);
+        earlierIndex = normalizedActual.IndexOf(NormalizeTestLineEndings(earlierSubstring), StringComparison.Ordinal);
+        laterIndex = normalizedActual.IndexOf(NormalizeTestLineEndings(laterSubstring), StringComparison.Ordinal);
+    }
+
     AssertTrue(earlierIndex >= 0, $"Expected output to contain '{earlierSubstring}'.");
     AssertTrue(laterIndex >= 0, $"Expected output to contain '{laterSubstring}'.");
     AssertTrue(
