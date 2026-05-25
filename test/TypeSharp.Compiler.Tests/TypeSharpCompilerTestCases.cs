@@ -447,12 +447,13 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The record/union declaration attribute ABI promotion push `9182cb79714e4078476485645c4965c47141545f` proved Docs run `26416581171` and Regression run `26416581122` both completed successfully", languageProgress);
+    AssertContains("The enum declaration/member attribute ABI evidence push `397b13b7ca83859a04fbff5e74ee7a75be395865` proved Docs run `26417137701` and Regression run `26417137680` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored record/union declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16328,8 +16329,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
     AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
-    AssertContains("Named immutable CLR class with declaration attributes, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
-    AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, record updates, and record expression construction", csharpTypeModelPage);
+    AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
+    AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
@@ -16344,8 +16345,8 @@ static void DocsSiteContractIsStable()
     AssertContains("CLR enum with declaration/member attributes, optional integral underlying type, and selected constant/member forms", csharpTypeModelPage);
     AssertContains("Enum declaration API, declaration/member attribute metadata, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Named abstract CLR base type with declaration attributes, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
-    AssertContains("Nominal union API, declaration attribute, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
+    AssertContains("Named abstract CLR base type with declaration attributes, `partial` when declared, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
+    AssertContains("Nominal union API, declaration attribute, partial modifier preservation, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
     AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
@@ -32031,6 +32032,75 @@ static void CliBuildCompilesPartialDeclarationApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "PartialApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with partial declarations.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "PartialConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>PartialConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="PartialApi">
+                  <HintPath>../generated/bin/Debug/net48/PartialApi.dll</HintPath>
+                </Reference>
+                <Reference Include="TypeSharp.Runtime">
+                  <HintPath>../lib/TypeSharp.Runtime.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            using TypeSharp.Runtime;
+
+            namespace PartialConsumer
+            {
+                public sealed class GreeterImpl : Samples.Partials.IGreeter
+                {
+                    public string Echo(string value)
+                    {
+                        return value;
+                    }
+                }
+
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var record = new Samples.Partials.Customer("Ada");
+                        var greeter = new Samples.Partials.Greeter();
+                        Samples.Partials.IGreeter interfaceGreeter = new GreeterImpl();
+                        return Samples.Partials.Hooks.label()
+                            + ":"
+                            + record.Name
+                            + ":"
+                            + TypeSharpUnion.GetCaseName(Samples.Partials.Status.Pending)
+                            + ":"
+                            + greeter.Echo("class")
+                            + ":"
+                            + interfaceGreeter.Echo("interface");
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build PartialConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated partial declaration APIs.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

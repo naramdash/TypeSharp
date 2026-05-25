@@ -6,6 +6,10 @@ export partial module Hooks {
 
 public partial record Customer(Name: string)
 
+public partial union Status {
+  Pending
+}
+
 public partial class Greeter {
   public fun Echo(value: string): string = value
 }
