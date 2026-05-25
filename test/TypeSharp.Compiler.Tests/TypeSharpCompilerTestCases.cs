@@ -447,11 +447,12 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The delegate declaration attribute ABI promotion push `48676faaf2bafdd140213b4cdc43687fcec3021b` proved Docs run `26415680018` and Regression run `26415680050` both completed successfully", languageProgress);
+    AssertContains("The record/union declaration attribute ABI promotion push `9182cb79714e4078476485645c4965c47141545f` proved Docs run `26416581171` and Regression run `26416581122` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored record/union declaration attribute ABI slice locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16340,6 +16341,8 @@ static void DocsSiteContractIsStable()
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class/interface event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("CLR enum with declaration/member attributes, optional integral underlying type, and selected constant/member forms", csharpTypeModelPage);
+    AssertContains("Enum declaration API, declaration/member attribute metadata, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Named abstract CLR base type with declaration attributes, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
     AssertContains("Nominal union API, declaration attribute, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
@@ -24835,13 +24838,23 @@ static void CliBuildCompilesEnumDeclarationApi()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System;
+
             namespace EnumConsumer
             {
                 public static class Consumer
                 {
                     public static bool Read()
                     {
-                        return Samples.Enums.Module.favorite() == Samples.Enums.Color.Purple &&
+                        var enumAttribute = (FlagsAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.Enums.Color),
+                            typeof(FlagsAttribute));
+                        var greenAttribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.Enums.Color).GetField("Green"),
+                            typeof(ObsoleteAttribute));
+                        return enumAttribute != null &&
+                            greenAttribute.Message == "Use Blue instead." &&
+                            Samples.Enums.Module.favorite() == Samples.Enums.Color.Purple &&
                             Samples.Enums.Module.bluePart(Samples.Enums.Color.Purple) == Samples.Enums.Color.Blue &&
                             Samples.Enums.Module.toggled(Samples.Enums.Color.Purple) == Samples.Enums.Color.Red &&
                             Samples.Enums.Module.inverted(Samples.Enums.Color.Blue) == ~Samples.Enums.Color.Blue &&
