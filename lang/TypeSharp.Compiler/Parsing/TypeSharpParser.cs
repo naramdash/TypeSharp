@@ -743,6 +743,7 @@ public sealed class TypeSharpParser
         return Current.Kind switch
         {
             _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children, allowSignatureOnly: true, allowParameterInitializers: false),
+            SyntaxKind.EventKeyword => ParseEventDeclaration(children),
             _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
         };
     }

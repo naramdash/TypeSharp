@@ -218,7 +218,7 @@ export fun subscribe(): string {
 }
 ```
 
-The receiver must expose a public event and the handler must match the event delegate. TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata, and TypeSharp-authored class `public event` declarations now lower to generated CLR event metadata in the implemented 1.0 slice. Interface events, custom add/remove accessors, static events, and generated event invocation helpers remain deferred.
+The receiver must expose a public event and the handler must match the event delegate. TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata, and TypeSharp-authored class/interface `public event` declarations now lower to generated CLR event metadata in the implemented 1.0 slice. Custom add/remove accessors, static events, and generated event invocation helpers remain deferred.
 
 ## Extension Members
 

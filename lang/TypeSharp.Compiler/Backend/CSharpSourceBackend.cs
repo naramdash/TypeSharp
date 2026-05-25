@@ -1100,18 +1100,25 @@ public static class CSharpSourceBackend
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
 
-            var functions = node.Children
-                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
+            var members = node.Children
+                .Where(child => child.Kind is SyntaxKind.EventDeclaration or SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
-            for (var index = 0; index < functions.Length; index++)
+            for (var index = 0; index < members.Length; index++)
             {
                 if (index > 0)
                 {
                     _builder.AppendLine();
                 }
 
-                EmitInterfaceFunction(functions[index]);
+                if (members[index].Kind == SyntaxKind.EventDeclaration)
+                {
+                    EmitInterfaceEventDeclaration(members[index]);
+                }
+                else
+                {
+                    EmitInterfaceFunction(members[index]);
+                }
             }
 
             _builder.AppendLine("    }");
@@ -1147,6 +1154,14 @@ public static class CSharpSourceBackend
             var name = GetEventDeclarationName(node);
 
             _builder.AppendLine($"        {visibility} event {type} {name};");
+        }
+
+        private void EmitInterfaceEventDeclaration(SyntaxNode node)
+        {
+            var type = GetEventType(node);
+            var name = GetEventDeclarationName(node);
+
+            _builder.AppendLine($"        event {type} {name};");
         }
 
         private void EmitExtensionDeclaration(SyntaxNode node, int index)

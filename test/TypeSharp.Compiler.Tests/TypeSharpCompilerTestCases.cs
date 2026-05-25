@@ -440,7 +440,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("First hosted release/download smoke is green on `v0.1.0-preview.4`", languageProgress);
     AssertContains("Release Artifacts run `26394303889` all succeed", languageProgress);
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
-    AssertContains("The latest pushed named-delegate ABI proof Docs run `26398494198` and Regression run `26398494197` completed successfully", languageProgress);
+    AssertContains("The latest pushed class-event ABI proof Docs run `26399518612` and Regression run `26399518630` completed successfully", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16260,7 +16260,8 @@ static void DocsSiteContractIsStable()
     AssertContains("1.0 Class Interface And Member Boundary", typeSystemPage);
     AssertContains("The 1.0 TypeSharp-authored class and interface surface is intentionally small", typeSystemPage);
     AssertContains("Accepted class declarations lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, `partial`, an implicit public parameterless constructor, public instance `fun` methods with supported parameter and return types, and typed `event` members backed by named delegate types", typeSystemPage);
-    AssertContains("TypeSharp-authored class constructors, class fields, class properties, TypeSharp-authored interface events, explicit inheritance or interface implementation clauses, static/abstract/virtual/override members, interface default implementations, property setters, indexers, operators, attributes on individual class/interface members beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0", typeSystemPage);
+    AssertContains("Accepted interface declarations lower to named CLR interfaces with optional type parameters, supported generic constraints, `partial`, method signatures, and typed `event` members backed by named delegate types", typeSystemPage);
+    AssertContains("TypeSharp-authored class constructors, class fields, class properties, custom add/remove events, static events, generated event invocation helpers, explicit inheritance or interface implementation clauses, static/abstract/virtual/override members, interface default implementations, property setters, indexers, operators, attributes on individual class/interface members beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0", typeSystemPage);
     AssertContains("1.0 Pattern Matching Boundary", typeSystemPage);
     AssertContains("Supported arm patterns are union case names with an optional single identifier payload capture", typeSystemPage);
     AssertContains("non-boolean guard predicates report `TS2218`", typeSystemPage);
@@ -16315,11 +16316,11 @@ static void DocsSiteContractIsStable()
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, generic type, generic constraint, partial declaration, event member, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
-    AssertContains("Interface API, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Interface API, interface event, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class event metadata", csharpTypeModelPage);
+    AssertContains("Class/interface event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
@@ -16350,7 +16351,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Ref, Out, And In", csharpMembersPage);
     AssertContains("Delegates And Lambdas", csharpMembersPage);
     AssertContains("Extension Members", csharpMembersPage);
-    AssertContains("TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata, and TypeSharp-authored class `public event` declarations now lower to generated CLR event metadata in the implemented 1.0 slice", csharpMembersPage);
+    AssertContains("TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata, and TypeSharp-authored class/interface `public event` declarations now lower to generated CLR event metadata in the implemented 1.0 slice", csharpMembersPage);
     AssertContains("TypeSharp-authored operator declarations are post-1.0", csharpMembersPage);
     AssertContains("records, classes, interfaces, unions, and extension declarations cannot introduce overload or conversion operators", csharpMembersPage);
     AssertContains("The 1.0 TypeSharp-authored extension member policy is intentionally narrow", csharpMembersPage);
@@ -16364,7 +16365,7 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp-authored operator declarations are explicitly post-1.0", featureStatusPage);
     AssertContains("True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog", featureStatusPage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor, public instance `fun` methods, and typed `event` members backed by named delegate types", featureStatusPage);
-    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, `partial`, and method signatures", featureStatusPage);
+    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, `partial`, method signatures, and typed `event` members backed by named delegate types", featureStatusPage);
     AssertContains("The 1.0 overload and conversion contract is metadata-backed and intentionally narrower than full C#", featureStatusPage);
     AssertContains("Full C# overload conversion parity, user-defined conversion operators, TypeSharp-authored operator overload ranking", featureStatusPage);
     AssertContains("The 1.0 warning/error boundary is explicit", featureStatusPage);
@@ -16404,6 +16405,7 @@ static void DocsSiteContractIsStable()
     AssertContains("alias cycles, alias depth, local union width, `keyof`/indexed key count, and structural intersection member count", diagnosticsPage);
     AssertContains("| `TS2210` | Type Checking | Error | Unsupported TypeSharp class or interface member |", diagnosticsPage);
     AssertContains("`TS2210` reports TypeSharp-authored class/interface member forms outside the 1.0 subset", diagnosticsPage);
+    AssertContains("class/interface events without an explicit delegate type", diagnosticsPage);
     AssertContains("unsupported TypeSharp-authored class/interface member forms like `TS2210`", diagnosticsPage);
     AssertContains("| `TS2211` | Type Checking | Error | Unsupported match pattern |", diagnosticsPage);
     AssertContains("`TS2211` reports executable match patterns outside the 1.0 pattern boundary", diagnosticsPage);
@@ -16476,7 +16478,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Enum-valued shifts, flag algebra beyond same-enum value operators, flag-aware match reasoning, imported numeric enum flag reasoning, arbitrary computed enum values, numeric pattern algebra, numeric enum patterns, and broad attribute target validation are post-1.0", referencePage);
     AssertContains("The 1.0 class/interface member surface is deliberately bounded", referencePage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, `partial`, an implicit public parameterless constructor, public instance `fun` methods, and typed `event` members backed by named delegate types", referencePage);
-    AssertContains("Constructors, fields, properties, interface events, inheritance/implementation clauses, static/abstract/virtual/override members, interface default implementations, setters, indexers, operators, nested types, partial methods, and broader member-body analysis are post-1.0", referencePage);
+    AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, `partial`, method signatures, and typed `event` members backed by named delegate types", referencePage);
+    AssertContains("Constructors, fields, properties, custom add/remove events, static events, generated event invocation helpers, inheritance/implementation clauses, static/abstract/virtual/override members, interface default implementations, setters, indexers, operators, nested types, partial methods, and broader member-body analysis are post-1.0", referencePage);
     AssertContains("The 1.0 collection and object construction surface is bounded", referencePage);
     AssertContains("collection expressions require a known array or `System.Collections.Generic.List<T>` target", referencePage);
     AssertContains("Dictionary/set literals, object initializer syntax, arbitrary class object construction, contextual collection inference without a known array/List target, collection-builder protocols, and initializer mutation are post-1.0", referencePage);
@@ -24389,10 +24392,14 @@ static void CliBuildCompilesInterfaceDeclarationApi()
             rootNamespace = "Samples.Interfaces"
             generatedOutputRoot = "generated"
             """);
-        WriteFile(root, "src/Main.tysh", """
+            WriteFile(root, "src/Main.tysh", """
             namespace Samples.Interfaces
 
+            public delegate ChangedHandler(value: string): unit
+
             public interface IGreeter {
+              public event Changed: ChangedHandler
+
               fun Echo(value: string): string
             }
             """);
@@ -24407,6 +24414,7 @@ static void CliBuildCompilesInterfaceDeclarationApi()
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("public interface IGreeter", generatedSource);
+        AssertContains("event ChangedHandler Changed;", generatedSource);
         AssertContains("string Echo(string value);", generatedSource);
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "InterfaceApi.dll");
@@ -24443,9 +24451,20 @@ static void CliBuildCompilesInterfaceDeclarationApi()
             {
                 public sealed class Greeter : Samples.Interfaces.IGreeter
                 {
+                    public event Samples.Interfaces.ChangedHandler Changed;
+
                     public string Echo(string value)
                     {
                         return value;
+                    }
+                }
+
+                public static class Consumer
+                {
+                    public static string Call(Samples.Interfaces.IGreeter greeter)
+                    {
+                        greeter.Changed += value => { };
+                        return greeter.Echo("value");
                     }
                 }
             }
@@ -24486,6 +24505,10 @@ static void CliBuildStopsBeforeEmissionOnUnsupportedTypeSharpClassAndInterfaceMe
               public event Changed
             }
 
+            public interface IWithBadEvent {
+              public event Changed
+            }
+
             public interface IBad {
               let Name: string
             }
@@ -24501,6 +24524,7 @@ static void CliBuildStopsBeforeEmissionOnUnsupportedTypeSharpClassAndInterfaceMe
         AssertContains("TypeSharp-authored class constructors are not part of the 1.0 class member subset", diagnosticText);
         AssertContains("Class field and property declarations are not part of the 1.0 class/interface member subset", diagnosticText);
         AssertContains("TypeSharp-authored class events must declare an explicit delegate type", diagnosticText);
+        AssertContains("TypeSharp-authored interface events must declare an explicit delegate type", diagnosticText);
         AssertContains("Interface member syntax is not supported in the 1.0 class/interface member subset", diagnosticText);
         AssertFalse(File.Exists(Path.Combine(root, "generated", "src", "Main.g.cs")), "Build should not emit generated C# when unsupported class/interface member diagnostics contain errors.");
         AssertFalse(File.Exists(Path.Combine(root, "generated", "UnsupportedClassMembers.Generated.csproj")), "Build should not emit generated project when unsupported class/interface member diagnostics contain errors.");

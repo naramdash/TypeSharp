@@ -504,15 +504,7 @@ public static class TypeSharpTypeChecker
                         break;
 
                     case SyntaxKind.EventDeclaration:
-                        if (isClass)
-                        {
-                            CheckClassEventMember(child, scope);
-                        }
-                        else
-                        {
-                            ReportUnsupportedTypeSharpMember(child, "TypeSharp-authored interface event members are not part of the 1.0 interface member subset; use imported C# events or callback parameters.");
-                        }
-
+                        CheckClassInterfaceEventMember(child, scope, declarationKind);
                         break;
 
                     case SyntaxKind.SkippedToken:
@@ -522,11 +514,11 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private void CheckClassEventMember(SyntaxNode node, TypeScope scope)
+        private void CheckClassInterfaceEventMember(SyntaxNode node, TypeScope scope, string declarationKind)
         {
             if (!TryGetDirectTypeAnnotation(node, out var annotation))
             {
-                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class events must declare an explicit delegate type.");
+                ReportUnsupportedTypeSharpMember(node, $"TypeSharp-authored {declarationKind.ToLowerInvariant()} events must declare an explicit delegate type.");
                 return;
             }
 
