@@ -182,6 +182,10 @@ public static class CSharpSourceBackend
             var interfaces = root.Children
                 .Where(child => child.Kind == SyntaxKind.InterfaceDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
+
+            var delegates = root.Children
+                .Where(child => child.Kind == SyntaxKind.DelegateDeclaration && !IsAmbientDeclaration(child))
+                .ToArray();
             var extensionDeclarations = root.Children
                 .Where(child => child.Kind == SyntaxKind.ExtensionDeclaration && !IsAmbientDeclaration(child))
                 .Concat(modules.SelectMany(module => module.Children.Where(child => child.Kind == SyntaxKind.ExtensionDeclaration && !IsAmbientDeclaration(child))))
@@ -455,6 +459,12 @@ public static class CSharpSourceBackend
             {
                 _builder.AppendLine();
                 EmitInterfaceDeclaration(interfaceDeclaration);
+            }
+
+            foreach (var delegateDeclaration in delegates)
+            {
+                _builder.AppendLine();
+                EmitDelegateDeclaration(delegateDeclaration);
             }
 
             for (var index = 0; index < extensionDeclarations.Length; index++)
@@ -1098,6 +1108,29 @@ public static class CSharpSourceBackend
             }
 
             _builder.AppendLine("    }");
+        }
+
+        private void EmitDelegateDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var name = GetDelegateDeclarationName(node);
+            var typeParameters = GetTypeParameterList(node);
+            var returnType = GetDelegateReturnType(node);
+            var parameters = GetParameters(node);
+
+            var whereClauses = GetWhereClauses(node).ToArray();
+            if (whereClauses.Length == 0)
+            {
+                _builder.AppendLine($"    {visibility} delegate {returnType} {name}{typeParameters}({FormatParameters(parameters)});");
+                return;
+            }
+
+            _builder.AppendLine($"    {visibility} delegate {returnType} {name}{typeParameters}({FormatParameters(parameters)})");
+            for (var index = 0; index < whereClauses.Length; index++)
+            {
+                var suffix = index == whereClauses.Length - 1 ? ";" : string.Empty;
+                _builder.AppendLine($"        {whereClauses[index]}{suffix}");
+            }
         }
 
         private void EmitExtensionDeclaration(SyntaxNode node, int index)
@@ -4048,6 +4081,13 @@ public static class CSharpSourceBackend
             return MapType(typeNode);
         }
 
+        private string GetDelegateReturnType(SyntaxNode delegateDeclaration)
+        {
+            var annotation = delegateDeclaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
+            return typeNode is null ? "void" : MapType(typeNode);
+        }
+
         private string MapType(SyntaxNode? node)
         {
             if (node is null)
@@ -6479,6 +6519,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.EnumDeclaration => GetEnumDeclarationName(node),
                 SyntaxKind.ClassDeclaration => GetClassDeclarationName(node),
                 SyntaxKind.InterfaceDeclaration => GetInterfaceDeclarationName(node),
+                SyntaxKind.DelegateDeclaration => GetDelegateDeclarationName(node),
                 _ => string.Empty
             };
 
@@ -6496,6 +6537,7 @@ public static class CSharpSourceBackend
                 SyntaxKind.EnumDeclaration => GetEnumDeclarationName(node),
                 SyntaxKind.ClassDeclaration => GetClassDeclarationName(node),
                 SyntaxKind.InterfaceDeclaration => GetInterfaceDeclarationName(node),
+                SyntaxKind.DelegateDeclaration => GetDelegateDeclarationName(node),
                 _ => string.Empty
             };
 
@@ -6663,6 +6705,26 @@ public static class CSharpSourceBackend
                 }
 
                 if (seenEnumKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Generated";
+                }
+            }
+
+            return "Generated";
+        }
+
+        private static string GetDelegateDeclarationName(SyntaxNode node)
+        {
+            var seenDelegateKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.DelegateKeyword)
+                {
+                    seenDelegateKeyword = true;
+                    continue;
+                }
+
+                if (seenDelegateKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
                 {
                     return child.Text ?? "Generated";
                 }

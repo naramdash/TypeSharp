@@ -105,7 +105,7 @@ Canonical pages:
 
 ## Lowering Reference
 
-Implemented TypeSharp features lower to deterministic C# 7.3-compatible source before the generated `net48` project is built. The lowering contract covers generated module containers, records, nominal unions, pattern matching, structural proof erasure, async `Task`, collection expressions, indexers, intrinsics, extension methods and getter-only extension properties, and public ABI rejection for compile-time-only types.
+Implemented TypeSharp features lower to deterministic C# 7.3-compatible source before the generated `net48` project is built. The lowering contract covers generated module containers, records, named delegates, nominal unions, pattern matching, structural proof erasure, async `Task`, collection expressions, indexers, intrinsics, extension methods and getter-only extension properties, and public ABI rejection for compile-time-only types.
 
 Canonical page: [Lowering](../lowering/)
 

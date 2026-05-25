@@ -1,0 +1,5 @@
+namespace Samples.Delegates
+
+public delegate Transformer(value: string): string
+
+public delegate Project<T>(value: T): string where T: class

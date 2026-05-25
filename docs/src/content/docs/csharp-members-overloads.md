@@ -218,7 +218,7 @@ export fun subscribe(): string {
 }
 ```
 
-The receiver must expose a public event and the handler must match the event delegate. TypeSharp-authored `public delegate` and `public event` declarations are parser-visible but deferred from the 1.0 public ABI until the compiler has lowering, class-member diagnostics, and C# consumer evidence for generated event metadata.
+The receiver must expose a public event and the handler must match the event delegate. TypeSharp-authored `public delegate` declarations now lower to named CLR delegate metadata in the implemented 1.0 slice, while TypeSharp-authored `public event` declarations remain parser-visible but deferred until the compiler has class-member diagnostics and C# consumer evidence for generated event metadata.
 
 ## Extension Members
 

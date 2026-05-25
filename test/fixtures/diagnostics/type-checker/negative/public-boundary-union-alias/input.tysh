@@ -14,3 +14,5 @@ export fun leakReturn(): LocalAmount =
   } else {
     42
   }
+
+public delegate Transform(input: LocalAmount): LocalAmount

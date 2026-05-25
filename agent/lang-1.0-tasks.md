@@ -18,7 +18,7 @@ TypeSharp is past a toy compiler and has a broad MVP language slice:
 
 - Generated output targets package-free `net48` artifacts through C# 7.3-compatible source lowering.
 - The package-free compiler test catalog is currently asserted at 586 cases, and the MSTest/MTP package shard gate expects 590 discovered tests: 586 shared catalog cases plus one bridge smoke in each of the four shard assemblies.
-- Implemented MVP language foundations include modules, source imports/re-exports in the supported subset, local inference, null safety, records, classes, interfaces, delegate-compatible function values, imported C# delegates/events, enums, nominal unions, local type-level unions, structural shape checks, `satisfies`, pattern matching over the supported domains, async `Task`, collection expressions, pipeline/composition, `yield`, `lock`, `nameof`, `checked`/`unchecked`, TypeSharp generic calls, params/default/named arguments, extension methods, getter-only extension properties, and a large metadata-backed C# interop surface.
+- Implemented MVP language foundations include modules, source imports/re-exports in the supported subset, local inference, null safety, records, classes, interfaces, TypeSharp-authored named delegate declarations, delegate-compatible function values, imported C# delegates/events, enums, nominal unions, local type-level unions, structural shape checks, `satisfies`, pattern matching over the supported domains, async `Task`, collection expressions, pipeline/composition, `yield`, `lock`, `nameof`, `checked`/`unchecked`, TypeSharp generic calls, params/default/named arguments, extension methods, getter-only extension properties, and a large metadata-backed C# interop surface.
 - `docs/src/content/docs/csharp-type-model.md` now contains a public declaration ABI matrix for `fun`, `record`, `class`, `interface`, `delegate`, `event`, `enum`, `union`, `type` aliases, extension methods, and getter-only extension properties.
 - The CLI path supports `new`, `check`, `build`, `run`, `format`, `version`, and `explain`; the docs define a GitHub Release download/checksum/install route, the release artifact includes a `typesharp.cmd` wrapper, and `v0.1.0-preview.4` passed the hosted release download/checksum/version/build smoke from the public release page.
 - Current dependency support is conservative: framework assemblies, local DLL paths, and direct TypeSharp project references are supported; staged release-wrapper tests verify missing local DLLs report `TS2401`, `references.packages` remains reserved and reports `TS2405` in text and JSON form, and build stops before generated output on those dependency diagnostics.
@@ -321,8 +321,8 @@ These items should be closed, intentionally rejected from 1.0, or converted into
 - [x] Produce a public ABI language matrix for all TypeSharp-authored declaration forms.
   - `docs/src/content/docs/csharp-type-model.md` covers `fun`, `record`, `class`, `interface`, `delegate`, `event`, `enum`, `union`, `type`, extension methods, and getter-only extension properties.
   - The matrix records whether each form is a public ABI slice, deferred from 1.0, source-only, compile-time-only, or not promoted.
-  - Existing generated `net48` C# consumer evidence is linked for promoted forms such as functions, records, classes, interfaces, enums, nominal unions, extension methods, and getter-only extension properties.
-  - TypeSharp-authored `delegate` and `event` public ABI forms are explicitly deferred from 1.0 until lowering, class-member diagnostics, and C# consumer evidence exist.
+  - Existing generated `net48` C# consumer evidence is linked for promoted forms such as functions, records, classes, interfaces, delegates, enums, nominal unions, extension methods, and getter-only extension properties.
+  - TypeSharp-authored `delegate` public ABI lowering is promoted for named CLR delegates with typed parameters, optional `params`, supported generic constraints, and C# consumer evidence; TypeSharp-authored `event` public ABI forms remain deferred from 1.0 until class-member diagnostics and C# consumer evidence exist.
 
 - [x] Harden TypeSharp-authored class/interface/member semantics.
   - 1.0 TypeSharp-authored classes lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, `partial`, an implicit public parameterless constructor, and public instance `fun` methods.
@@ -438,7 +438,7 @@ These are valuable but should not silently block language 1.0 unless the project
 - Type providers.
 - Units of measure.
 - Effect annotation system.
-- TypeSharp-authored `public delegate` and `public event` public ABI lowering.
+- TypeSharp-authored `public event` public ABI lowering.
 - Decorator-like metaprogramming.
 - Macro system.
 - Full dependent types or theorem proving.

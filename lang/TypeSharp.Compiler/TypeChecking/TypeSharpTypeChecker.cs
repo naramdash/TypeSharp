@@ -433,7 +433,6 @@ public static class TypeSharpTypeChecker
                 case SyntaxKind.RecordDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
-                case SyntaxKind.DelegateDeclaration:
                     CheckGenericConstraints(node);
                     foreach (var function in node.Children.Where(child => child.Kind == SyntaxKind.FunctionDeclaration))
                     {
@@ -444,6 +443,10 @@ public static class TypeSharpTypeChecker
                     {
                         CheckClassInterfaceMemberBoundary(node);
                     }
+                    break;
+
+                case SyntaxKind.DelegateDeclaration:
+                    CheckDelegateDeclaration(node, scope);
                     break;
 
                 case SyntaxKind.EnumDeclaration:
@@ -508,6 +511,40 @@ public static class TypeSharpTypeChecker
                         ReportUnsupportedTypeSharpMember(child, $"{declarationKind} member syntax is not supported in the 1.0 class/interface member subset.");
                         break;
                 }
+            }
+        }
+
+        private void CheckDelegateDeclaration(SyntaxNode node, TypeScope scope)
+        {
+            CheckGenericConstraints(node);
+            CheckParamsParameterDeclarations(node, scope);
+            CheckDelegateDefaultParameterDeclarations(node);
+
+            if (!IsPublicBoundaryDeclaration(node))
+            {
+                return;
+            }
+
+            foreach (var parameter in GetParameterNodes(node))
+            {
+                if (TryGetDirectTypeAnnotation(parameter, out var annotation))
+                {
+                    ReportPublicBoundaryLeaks(annotation, scope);
+                }
+            }
+
+            foreach (var annotation in node.Children.Where(child => child.Kind == SyntaxKind.TypeAnnotation))
+            {
+                ReportPublicBoundaryLeaks(annotation, scope);
+            }
+        }
+
+        private void CheckDelegateDefaultParameterDeclarations(SyntaxNode node)
+        {
+            foreach (var parameter in GetParameterNodes(node).Where(IsDefaultedParameter))
+            {
+                var name = GetParameterName(parameter) ?? "parameter";
+                ReportUnsupportedTypeSharpFunctionApplication(parameter, $"Defaulted parameter '{name}' is not supported on delegate declarations.");
             }
         }
 
@@ -7847,6 +7884,7 @@ public static class TypeSharpTypeChecker
                 SyntaxKind.EnumDeclaration => TryGetDeclarationName(node, out var enumName) ? enumName : string.Empty,
                 SyntaxKind.ClassDeclaration => TryGetDeclarationName(node, out var className) ? className : string.Empty,
                 SyntaxKind.InterfaceDeclaration => TryGetDeclarationName(node, out var interfaceName) ? interfaceName : string.Empty,
+                SyntaxKind.DelegateDeclaration => TryGetDeclarationName(node, out var delegateName) ? delegateName : string.Empty,
                 _ => string.Empty
             };
 

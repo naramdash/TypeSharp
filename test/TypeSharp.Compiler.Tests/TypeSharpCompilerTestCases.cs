@@ -440,7 +440,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("First hosted release/download smoke is green on `v0.1.0-preview.4`", languageProgress);
     AssertContains("Release Artifacts run `26394303889` all succeed", languageProgress);
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
-    AssertContains("the pushed Docs run `26396589064` and Regression run `26396589100` then completed successfully", languageProgress);
+    AssertContains("The latest pushed tracker-evidence Docs run `26396589064` and Regression run `26396589100` completed successfully", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16316,7 +16316,8 @@ static void DocsSiteContractIsStable()
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, generic type, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("Interface API, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
-    AssertContains("| `delegate` | Deferred from 1.0", csharpTypeModelPage);
+    AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `event` | Deferred from 1.0", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
@@ -16348,7 +16349,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Ref, Out, And In", csharpMembersPage);
     AssertContains("Delegates And Lambdas", csharpMembersPage);
     AssertContains("Extension Members", csharpMembersPage);
-    AssertContains("TypeSharp-authored `public delegate` and `public event` declarations are parser-visible but deferred from the 1.0 public ABI", csharpMembersPage);
+    AssertContains("TypeSharp-authored `public delegate` declarations now lower to named CLR delegate metadata in the implemented 1.0 slice", csharpMembersPage);
+    AssertContains("TypeSharp-authored `public event` declarations remain parser-visible but deferred", csharpMembersPage);
     AssertContains("TypeSharp-authored operator declarations are post-1.0", csharpMembersPage);
     AssertContains("records, classes, interfaces, unions, and extension declarations cannot introduce overload or conversion operators", csharpMembersPage);
     AssertContains("The 1.0 TypeSharp-authored extension member policy is intentionally narrow", csharpMembersPage);
@@ -34427,6 +34429,8 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.GeneratedInterop
 
+            public delegate Transform(value: string): string
+
             export fun greeting(): string = "Hello from TypeSharp"
             """);
         using var output = new StringWriter();
@@ -34440,6 +34444,8 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "InteropSource.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "TypeSharp build should produce a generated assembly for the C# consumer.");
+        var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("public delegate string Transform(string value);", generatedSource);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -34474,7 +34480,8 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
                 {
                     public static string CallTypeSharp()
                     {
-                        return Samples.GeneratedInterop.Module.greeting();
+                        var transform = new Samples.GeneratedInterop.Transform(value => value + " from C#");
+                        return transform(Samples.GeneratedInterop.Module.greeting());
                     }
                 }
             }
