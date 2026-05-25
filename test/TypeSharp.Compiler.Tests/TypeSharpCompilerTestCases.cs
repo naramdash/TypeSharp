@@ -135,7 +135,7 @@ static void TestRunnerShardSelectionIsStable()
     var languageProgress = File.ReadAllText(Path.Combine(repositoryRoot, "agent", "lang-1.0-progress.md")).Replace("\r\n", "\n");
     AssertContains("| Current slice | First hosted release/download smoke is green on `v0.1.0-preview.4`, and the first-project plus webpage-to-build adoption route is closed; remaining pre-1.0 work is broader MVP-limited language parity, not the release/install path. |", languageProgress);
     AssertContains("| Verification target | Test catalog tracker-count guard, workflow contract, diagnostic fixture README drift checks, docs contract, compiler test build, docs build, diff hygiene, workflow/docs-script forbidden-tooling scan, deployed public-docs probe, and hosted-release probe. |", languageProgress);
-    AssertContains("The `be320542569bf50cb295acc012fb81d699a007ee` push proved Docs run `26394300733`, Regression run `26394300735`, release-dispatched Docs run `26394397996`, and Release Artifacts run `26394303889` all succeed.", languageProgress);
+    AssertContains("The later `40f7be4990920b0d3d6c423142d8324f42eb47dd` tracker-evidence push proved Docs run `26396589064` and Regression run `26396589100` both succeed after the hosted-release tracker reconciliation.", languageProgress);
     AssertContains("Regression run `26387486368` ran on `windows-latest` and failed because a rendered-verifier mutation test used LF-only string replacements against a CRLF checkout, and `release-artifacts.yml` run `26387485907` still failed before jobs were created", languageProgress);
     var legacyForbiddenToolingScanName = string.Concat("Python", " scan");
     AssertFalse(languageProgress.Contains(legacyForbiddenToolingScanName, StringComparison.Ordinal), "Progress ledger should use workflow/docs-script forbidden-tooling scan wording.");
@@ -440,7 +440,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("First hosted release/download smoke is green on `v0.1.0-preview.4`", languageProgress);
     AssertContains("Release Artifacts run `26394303889` all succeed", languageProgress);
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
-    AssertContains("The pushed `be320542569bf50cb295acc012fb81d699a007ee` Docs, Regression, release-dispatched Docs, and Release Artifacts runs all completed successfully.", languageProgress);
+    AssertContains("the pushed Docs run `26396589064` and Regression run `26396589100` then completed successfully", languageProgress);
+    AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
     AssertContains("Reopen only if release-style adoption coverage changes.", languageProgress);
