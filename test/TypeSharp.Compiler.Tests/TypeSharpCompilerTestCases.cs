@@ -447,13 +447,14 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generic ABI constraint depth push `e890a701736cfe64fe07bbd69399edda3bf464f3` proved Docs run `26421946642` and Regression run `26421946643` both completed successfully", languageProgress);
+    AssertContains("The generic ABI Actions reconciliation push `ced06b86d794eb65d5f45b2221c73d5d2ce28f1d` proved Docs run `26422347210` and Regression run `26422347227` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored record/union declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored named delegate declaration attribute and params ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
+    AssertContains("Deepened generated enum public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16352,7 +16353,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Class/interface event backend snapshots, generated public ABI snapshots, generated metadata checks, and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("CLR enum with declaration/member attributes, optional integral underlying type, and selected constant/member forms", csharpTypeModelPage);
-    AssertContains("Enum declaration API, declaration/member attribute metadata, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
+    AssertContains("Enum declaration API, declaration/member attribute metadata, generated public ABI snapshots for underlying type and member values, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Named abstract CLR base type with declaration attributes, `partial` when declared, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
     AssertContains("Nominal union API, declaration attribute, partial modifier preservation, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
@@ -24820,6 +24821,26 @@ static void CliBuildCompilesEnumDeclarationApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "EnumDeclarationApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with enum declaration API.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "EnumDeclarationApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/EnumDeclarationApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated enum declaration assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Enums.Color", abiSnapshotText);
+        AssertContains("  enum underlying byte", abiSnapshotText);
+        AssertContains("  enum member Blue = 4", abiSnapshotText);
+        AssertContains("  enum member Crimson = 1", abiSnapshotText);
+        AssertContains("  enum member Green = 2", abiSnapshotText);
+        AssertContains("  enum member Purple = 5", abiSnapshotText);
+        AssertContains("  enum member Red = 1", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

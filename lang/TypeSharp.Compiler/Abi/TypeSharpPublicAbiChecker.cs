@@ -22,6 +22,22 @@ public static class TypeSharpPublicAbiChecker
                 lines.Add($"  generic {FormatGenericParameter(parameter)}");
             }
 
+            if (type.IsEnum)
+            {
+                if (!string.IsNullOrWhiteSpace(type.EnumUnderlyingTypeName))
+                {
+                    lines.Add($"  enum underlying {type.EnumUnderlyingTypeName}");
+                }
+
+                foreach (var member in type.EnumMembers.OrderBy(member => member, StringComparer.Ordinal))
+                {
+                    var value = type.EnumMemberValues.TryGetValue(member, out var literalValue) && !string.IsNullOrWhiteSpace(literalValue)
+                        ? $" = {literalValue}"
+                        : string.Empty;
+                    lines.Add($"  enum member {member}{value}");
+                }
+            }
+
             foreach (var constructor in type.Constructors
                 .OrderBy(constructor => FormatParameters(constructor.Parameters), StringComparer.Ordinal))
             {
@@ -33,7 +49,9 @@ public static class TypeSharpPublicAbiChecker
                 lines.Add($"  property {FormatPropertyModifiers(property)}{property.Type} {property.Name}");
             }
 
-            foreach (var field in type.Fields.OrderBy(field => field.Name, StringComparer.Ordinal))
+            foreach (var field in type.Fields
+                .Where(_ => !type.IsEnum)
+                .OrderBy(field => field.Name, StringComparer.Ordinal))
             {
                 lines.Add($"  field {FormatFieldModifiers(field)}{field.Type} {field.Name}");
             }
