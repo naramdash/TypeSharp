@@ -504,9 +504,13 @@ public static class TypeSharpTypeChecker
                         {
                             CheckClassValueMember(child, scope);
                         }
+                        else if (child.Children.Any(grandchild => grandchild.Kind == SyntaxKind.AccessorBlock))
+                        {
+                            CheckInterfacePropertyMember(child, scope);
+                        }
                         else
                         {
-                            ReportUnsupportedTypeSharpMember(child, $"{declarationKind} field and property declarations are not part of the 1.0 class/interface member subset; expose data through records or methods.");
+                            ReportUnsupportedTypeSharpMember(child, $"{declarationKind} field declarations are not part of the 1.0 class/interface member subset; expose data through records or methods.");
                         }
 
                         break;
@@ -663,6 +667,62 @@ public static class TypeSharpTypeChecker
 
             ReportPublicBoundaryLeaks(annotation, scope);
             CheckValueDeclaration(node, new TypeScope(scope));
+        }
+
+        private void CheckInterfacePropertyMember(SyntaxNode node, TypeScope scope)
+        {
+            var isValid = true;
+
+            if (HasStaticModifier(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored interface properties must be instance properties in this slice.");
+                isValid = false;
+            }
+
+            if (IsMutableValueDeclaration(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored interface properties support only getter-only accessors in this slice.");
+                isValid = false;
+            }
+
+            if (!TryGetDirectTypeAnnotation(node, out var annotation))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored interface properties must declare an explicit CLR-visible type.");
+                isValid = false;
+            }
+
+            if (HasInitializer(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored interface properties cannot declare initializers in this slice.");
+                isValid = false;
+            }
+
+            foreach (var accessorBlock in node.Children.Where(child => child.Kind == SyntaxKind.AccessorBlock))
+            {
+                var accessors = accessorBlock.Children.Where(child => child.Kind == SyntaxKind.AccessorDeclaration).ToArray();
+                foreach (var accessor in accessors)
+                {
+                    if (accessor.Children.Any(child => child.Kind is not SyntaxKind.GetKeyword))
+                    {
+                        ReportUnsupportedTypeSharpMember(accessor, "TypeSharp-authored interface property accessors cannot declare setters, modifiers, or custom bodies in this slice.");
+                        isValid = false;
+                    }
+                }
+
+                var getterCount = accessors.Count(accessor => accessor.Children.Any(child => child.IsToken && child.Kind == SyntaxKind.GetKeyword));
+                if (accessors.Length != 1 || getterCount != 1)
+                {
+                    ReportUnsupportedTypeSharpMember(accessorBlock, "TypeSharp-authored interface properties must declare exactly one getter accessor in this slice.");
+                    isValid = false;
+                }
+            }
+
+            if (!isValid)
+            {
+                return;
+            }
+
+            ReportPublicBoundaryLeaks(annotation, scope);
         }
 
         private void CheckClassInterfaceEventMember(SyntaxNode node, TypeScope scope, string declarationKind)

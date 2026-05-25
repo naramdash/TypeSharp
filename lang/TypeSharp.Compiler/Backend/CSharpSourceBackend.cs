@@ -1090,7 +1090,7 @@ public static class CSharpSourceBackend
                 }
                 else if (members[index].Kind == SyntaxKind.ValueDeclaration)
                 {
-                    if (IsClassPropertyDeclaration(members[index]))
+                    if (IsPropertyDeclaration(members[index]))
                     {
                         EmitClassPropertyDeclaration(members[index]);
                     }
@@ -1128,7 +1128,9 @@ public static class CSharpSourceBackend
             _builder.AppendLine("    {");
 
             var members = node.Children
-                .Where(child => child.Kind is SyntaxKind.EventDeclaration or SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
+                .Where(child => child.Kind is SyntaxKind.EventDeclaration
+                    || child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child)
+                    || CanLowerInterfacePropertyDeclaration(child))
                 .ToArray();
 
             for (var index = 0; index < members.Length; index++)
@@ -1141,6 +1143,10 @@ public static class CSharpSourceBackend
                 if (members[index].Kind == SyntaxKind.EventDeclaration)
                 {
                     EmitInterfaceEventDeclaration(members[index]);
+                }
+                else if (members[index].Kind == SyntaxKind.ValueDeclaration)
+                {
+                    EmitInterfacePropertyDeclaration(members[index]);
                 }
                 else
                 {
@@ -1280,6 +1286,14 @@ public static class CSharpSourceBackend
             var accessorText = IsMutableValueDeclaration(node) ? "{ get; set; }" : "{ get; }";
 
             _builder.AppendLine($"        {visibility}{staticModifier} {type} {name} {accessorText} = {value};");
+        }
+
+        private void EmitInterfacePropertyDeclaration(SyntaxNode node)
+        {
+            var name = GetLocalDeclarationName(node);
+            var type = GetValueDeclarationType(node, initializer: null);
+
+            _builder.AppendLine($"        {type} {name} {{ get; }}");
         }
 
         private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
@@ -6414,16 +6428,24 @@ public static class CSharpSourceBackend
 
         private static bool CanLowerClassValueDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&
-            !IsClassPropertyDeclaration(node) &&
+            !IsPropertyDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
             node.Children.All(child => child.Kind != SyntaxKind.AccessorBlock);
 
         private static bool CanLowerClassPropertyDeclaration(SyntaxNode node) =>
-            IsClassPropertyDeclaration(node) &&
+            IsPropertyDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
             HasSupportedClassPropertyAccessors(node);
+
+        private static bool CanLowerInterfacePropertyDeclaration(SyntaxNode node) =>
+            IsPropertyDeclaration(node) &&
+            !HasStaticModifier(node) &&
+            !IsMutableValueDeclaration(node) &&
+            TryGetDirectTypeAnnotation(node, out _) &&
+            GetInitializerExpression(node) is null &&
+            HasSupportedInterfacePropertyAccessors(node);
 
         private static bool HasSupportedClassPropertyAccessors(SyntaxNode node)
         {
@@ -6445,7 +6467,20 @@ public static class CSharpSourceBackend
                 : accessors.Length == 1 && getterCount == 1 && setterCount == 0;
         }
 
-        private static bool IsClassPropertyDeclaration(SyntaxNode node) =>
+        private static bool HasSupportedInterfacePropertyAccessors(SyntaxNode node)
+        {
+            var accessors = node.Children
+                .Where(child => child.Kind == SyntaxKind.AccessorBlock)
+                .SelectMany(child => child.Children)
+                .Where(child => child.Kind == SyntaxKind.AccessorDeclaration)
+                .ToArray();
+
+            return accessors.Length == 1 &&
+                accessors[0].Children.Count(child => child.Kind == SyntaxKind.GetKeyword) == 1 &&
+                accessors[0].Children.All(child => child.Kind == SyntaxKind.GetKeyword);
+        }
+
+        private static bool IsPropertyDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&
             node.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock);
 

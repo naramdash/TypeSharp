@@ -1,0 +1,7 @@
+namespace Samples.InterfaceProperties
+
+public interface IBuildInfo {
+  public let Name: string { get }
+
+  let Version: int { get }
+}

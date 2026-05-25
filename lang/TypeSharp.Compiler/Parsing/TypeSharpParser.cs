@@ -744,6 +744,7 @@ public sealed class TypeSharpParser
         {
             _ when IsFunctionDeclarationStart(Current) => ParseFunctionDeclaration(children, allowSignatureOnly: true, allowParameterInitializers: false),
             SyntaxKind.EventKeyword => ParseEventDeclaration(children),
+            SyntaxKind.LetKeyword => ParseValueDeclaration(children),
             _ => Node(SyntaxKind.SkippedToken, [..children, ParseSkippedToken()])
         };
     }
