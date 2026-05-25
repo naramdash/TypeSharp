@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'v*.*.*'
     paths:
       - 'docs/**'
       - 'agent/**'
@@ -16,6 +14,11 @@ on:
       - 'agent/**'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Optional release tag to render into Install examples, for example v0.1.0-preview.1'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -52,7 +55,7 @@ jobs:
         run: npm run verify:rendered-install-route
         working-directory: docs
         env:
-          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          RELEASE_TAG: ${{ inputs.release_tag || '' }}
 
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'

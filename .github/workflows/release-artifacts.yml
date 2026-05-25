@@ -143,8 +143,14 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
 
           $headCommit = git rev-parse HEAD
+          git fetch --force origin main:refs/remotes/origin/main
+          $mainCommit = git rev-parse refs/remotes/origin/main
+          if ($mainCommit -ne $headCommit) {
+            throw "Release tag '$env:RELEASE_TAG' commit '$headCommit' must match origin/main '$mainCommit' before dispatching public docs from main."
+          }
+
           $dispatchStartedAt = [DateTimeOffset]::UtcNow.AddSeconds(-10)
-          $dispatchOutput = gh workflow run docs.yml --ref $env:RELEASE_TAG 2>&1
+          $dispatchOutput = gh workflow run docs.yml --ref main -f release_tag=$env:RELEASE_TAG 2>&1
           $dispatchText = ($dispatchOutput -join "`n")
           $docsWorkflowRunId = $null
           if ($dispatchText -match '/actions/runs/(\d+)') {
@@ -155,7 +161,7 @@ jobs:
             for ($attempt = 1; $attempt -le 12; $attempt++) {
               $runs = gh run list --workflow docs.yml --commit $headCommit --event workflow_dispatch --json databaseId,headSha,headBranch,status,conclusion,url,createdAt --limit 10 | ConvertFrom-Json
               $matchingRun = @($runs | Where-Object {
-                $_.headSha -eq $headCommit -and [string] $_.headBranch -eq $env:RELEASE_TAG -and [DateTimeOffset]::Parse([string] $_.createdAt) -ge $dispatchStartedAt
+                $_.headSha -eq $headCommit -and [string] $_.headBranch -eq 'main' -and [DateTimeOffset]::Parse([string] $_.createdAt) -ge $dispatchStartedAt
               } | Select-Object -First 1)
               if ($matchingRun.Count -gt 0) {
                 $docsWorkflowRunId = [string] $matchingRun[0].databaseId
@@ -181,8 +187,8 @@ jobs:
           if ([string] $docsWorkflowRun.headSha -ne $headCommit) {
             throw "Dispatched docs.yml run '$docsWorkflowRunId' used head SHA '$($docsWorkflowRun.headSha)' instead of release tag commit '$headCommit'."
           }
-          if ([string] $docsWorkflowRun.headBranch -ne $env:RELEASE_TAG) {
-            throw "Dispatched docs.yml run '$docsWorkflowRunId' used ref '$($docsWorkflowRun.headBranch)' instead of release tag '$env:RELEASE_TAG'."
+          if ([string] $docsWorkflowRun.headBranch -ne 'main') {
+            throw "Dispatched docs.yml run '$docsWorkflowRunId' used ref '$($docsWorkflowRun.headBranch)' instead of main for Pages deployment."
           }
           if ([string] $docsWorkflowRun.status -ne 'completed') {
             throw "Dispatched docs.yml run '$docsWorkflowRunId' status was '$($docsWorkflowRun.status)' instead of completed."

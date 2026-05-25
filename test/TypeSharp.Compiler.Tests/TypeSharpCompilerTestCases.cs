@@ -340,8 +340,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("The hosted release smoke expands the downloaded VSIX asset and verifies `extension/package.json`, `extension/extension.js`, `extension/language-configuration.json`, `extension/README.md`, `extension/MARKETPLACE.md`, `extension/syntaxes/typesharp.tmLanguage.json`, and `extension/server/TypeSharp.LanguageServer.dll`.", languageTasks);
     AssertContains("The hosted release smoke parses the VSIX `extension/package.json` and verifies the package identity, display name, description, version, publisher, category, activation event, entrypoint, TypeSharp `.tysh` language contribution, and `source.typesharp` grammar contribution.", languageTasks);
     AssertContains("The hosted release smoke downloads the published VSIX asset, verifies its checksum entry, and checks that the release page lists the CLI, runtime, VSIX, and checksum assets.", languageTasks);
-    AssertContains("The docs workflow now also runs on `v*.*.*` tag pushes with tag-aware rendered Install verification", languageTasks);
-    AssertContains("dispatches the docs workflow for the release tag, waits for that dispatched docs workflow run to succeed, verifies the completed docs run was created after the current dispatch started, used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", languageTasks);
+    AssertContains("verifies the release tag commit matches `origin/main`, dispatches the docs workflow from `main` with the release tag as `release_tag`", languageTasks);
+    AssertContains("dispatches the docs workflow from `main` with the release tag as `release_tag`, waits for that dispatched docs workflow run to succeed, verifies the completed docs run was created after the current dispatch started, used the release tag commit on the `main` ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", languageTasks);
     AssertContains("verifies the hosted home route links to Install plus release notes/exact asset-name guidance and CLI/runtime/VSIX/checksum markers while rejecting hidden global .NET tool-install guidance there", languageTasks);
     AssertContains("verifies hosted Install route release notes/exact asset-name guidance, release markers, official GitHub Release repository/download/tag URL shape, plus the current release-tag download version and build metadata", languageTasks);
     AssertContains("reusing a stale prior docs workflow-dispatch run, serving a stale Install page for a different release tag, serving a stale/wrong Install download URL shape", languageTasks);
@@ -352,8 +352,9 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("The release workflow now adds a post-publication hosted GitHub Release smoke with bounded download retry, CLI/runtime/VSIX checksum verification, hosted VSIX archive-shape and package metadata verification", languageProgress);
     AssertContains("Added hosted VSIX archive-shape verification for package metadata, extension entrypoint, language configuration, TextMate grammar, and bundled language server files after downloading and checksum-verifying the published VSIX.", languageProgress);
     AssertContains("Added hosted VSIX package metadata verification for package name, publisher, extension entrypoint, TypeSharp `.tysh` language contribution, and `source.typesharp` grammar contribution.", languageProgress);
-    AssertContains("The docs workflow now runs on release tag pushes, and the docs workflow and release workflow share `npm run verify:rendered-install-route`; tag publication runs the docs site contract, Astro docs build, base-aware rendered public-route verifier, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, dispatches the GitHub Pages docs workflow for the same release tag, waits for that dispatched docs workflow run to succeed, verifies the completed docs run was created after the current dispatch started, used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", languageProgress);
-    AssertContains("Tightened the pre-publication public docs gate so `release-artifacts.yml` captures the dispatched `docs.yml` run id, falls back to finding the release-tag workflow-dispatch run by checkout commit and release tag ref, waits with `gh run watch --exit-status`, verifies the completed run's SHA, ref, status, conclusion, workflow name, and event", languageProgress);
+    AssertContains("`docs.yml` now accepts an explicit `workflow_dispatch` `release_tag` input as `RELEASE_TAG` before uploading Pages artifacts", languageProgress);
+    AssertContains("tag publication runs the docs site contract, Astro docs build, base-aware rendered public-route verifier, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, verifies the release tag commit matches `origin/main`, dispatches the GitHub Pages docs workflow from `main` with `release_tag` set to the same release tag, waits for that dispatched docs workflow run to succeed, verifies the completed docs run was created after the current dispatch started, used the release tag commit on the `main` ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", languageProgress);
+    AssertContains("Tightened the pre-publication public docs gate so `release-artifacts.yml` captures the dispatched `docs.yml` run id, falls back to finding the `main` workflow-dispatch run by checkout commit after passing the release tag through the `release_tag` input, waits with `gh run watch --exit-status`, verifies the completed run's SHA, main ref, status, conclusion, workflow name, and event", languageProgress);
     AssertContains("the base-aware tag-aware `npm run verify:rendered-install-route` with `RELEASE_TAG` set to the release tag", languageTasks);
     AssertContains("base-aware release-tag rendered public install-route verification with `RELEASE_TAG` set on the local pre-dispatch verifier", languageTasks);
     AssertContains("Wired `RELEASE_TAG` into the release workflow's local pre-dispatch rendered docs verifier, so `npm run verify:rendered-install-route` checks the current tag's Install download version and build metadata before dispatching Pages and before probing the hosted routes.", languageProgress);
@@ -15892,7 +15893,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Target default net48", installPage);
     AssertContains("CLI target net10.0", installPage);
     AssertContains("Runtime target net48", installPage);
-    AssertContains("Build metadata v0.1.0-preview.1", installPage);
+    AssertContains("Build metadata v0.1.0-preview.2", installPage);
     AssertContains("same 12-character lowercase commit prefix recorded on the GitHub Release page", installPage);
     AssertContains("Source revision <12-character-commit-prefix>", installPage);
     AssertContains("""
@@ -16677,8 +16678,8 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("name: Docs", workflow);
     AssertContains("branches:", workflow);
     AssertContains("- main", workflow);
-    AssertContains("tags:", workflow);
-    AssertContains("- 'v*.*.*'", workflow);
+    AssertContains("workflow_dispatch:", workflow);
+    AssertContains("release_tag:", workflow);
     AssertContains("pages: write", workflow);
     AssertContains("id-token: write", workflow);
     AssertContains("uses: actions/checkout@v6", workflow);
@@ -16692,7 +16693,7 @@ static void GitHubPagesWorkflowContractIsStable()
     AssertContains("working-directory: docs", workflow);
     AssertContains("Verify rendered install route", workflow);
     AssertContains("run: npm run verify:rendered-install-route", workflow);
-    AssertContains("RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}", workflow);
+    AssertContains("RELEASE_TAG: ${{ inputs.release_tag || '' }}", workflow);
     AssertContains("\"verify:rendered-install-route\": \"node scripts/verify-rendered-install-route.cjs\"", docsPackageJson);
     AssertContains("fs.readFileSync('dist/index.html', 'utf8')", renderedRouteScript);
     AssertContains("fs.readFileSync('dist/install/index.html', 'utf8')", renderedRouteScript);
@@ -17823,11 +17824,14 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("GitHub Pages URL was '$($pages.html_url)' instead of https://naramdash.github.io/TypeSharp/.", workflow);
     AssertContains("Dispatch public docs for release", workflow);
     AssertContains("$headCommit = git rev-parse HEAD", workflow);
+    AssertContains("git fetch --force origin main:refs/remotes/origin/main", workflow);
+    AssertContains("$mainCommit = git rev-parse refs/remotes/origin/main", workflow);
+    AssertContains("Release tag '$env:RELEASE_TAG' commit '$headCommit' must match origin/main '$mainCommit' before dispatching public docs from main.", workflow);
     AssertContains("$dispatchStartedAt = [DateTimeOffset]::UtcNow.AddSeconds(-10)", workflow);
-    AssertContains("$dispatchOutput = gh workflow run docs.yml --ref $env:RELEASE_TAG 2>&1", workflow);
+    AssertContains("$dispatchOutput = gh workflow run docs.yml --ref main -f release_tag=$env:RELEASE_TAG 2>&1", workflow);
     AssertContains("if ($dispatchText -match '/actions/runs/(\\d+)')", workflow);
     AssertContains("gh run list --workflow docs.yml --commit $headCommit --event workflow_dispatch --json databaseId,headSha,headBranch,status,conclusion,url,createdAt --limit 10", workflow);
-    AssertContains("[string] $_.headBranch -eq $env:RELEASE_TAG", workflow);
+    AssertContains("[string] $_.headBranch -eq 'main'", workflow);
     AssertContains("[DateTimeOffset]::Parse([string] $_.createdAt) -ge $dispatchStartedAt", workflow);
     AssertContains("Could not find the dispatched docs.yml workflow run for release tag '$env:RELEASE_TAG'.", workflow);
     AssertContains("gh run watch $docsWorkflowRunId --exit-status --interval 10", workflow);
@@ -17836,8 +17840,8 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("if ($docsWorkflowRunCreatedAt -lt $dispatchStartedAt)", workflow);
     AssertContains("before dispatch started at '$dispatchStartedAt'", workflow);
     AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' used head SHA", workflow);
-    AssertContains("if ([string] $docsWorkflowRun.headBranch -ne $env:RELEASE_TAG)", workflow);
-    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' used ref", workflow);
+    AssertContains("if ([string] $docsWorkflowRun.headBranch -ne 'main')", workflow);
+    AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' used ref '$($docsWorkflowRun.headBranch)' instead of main for Pages deployment.", workflow);
     AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' status was", workflow);
     AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' conclusion was", workflow);
     AssertContains("Dispatched docs.yml run '$docsWorkflowRunId' workflow name was", workflow);
@@ -19078,9 +19082,9 @@ static void ReleaseAndRegressionWorkflowContractsAreStable()
     AssertContains("typesharp-runtime-net48-<tag>.zip", projectPolicyPage);
     AssertContains("typesharp-vscode-<tag>.vsix", projectPolicyPage);
     AssertContains("SHA256SUMS.txt", projectPolicyPage);
-    AssertContains("before upload, it verifies the docs site contract, builds the Astro docs site, verifies the base-aware release-tag rendered public install route with `RELEASE_TAG`, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, dispatches the GitHub Pages docs workflow for the release tag", projectPolicyPage);
-    AssertContains("requires that tag-ref docs workflow to pass the current tag into the rendered Install verifier and deploy successfully", projectPolicyPage);
-    AssertContains("used the release tag commit, release tag ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", projectPolicyPage);
+    AssertContains("before upload, it verifies the docs site contract, builds the Astro docs site, verifies the base-aware release-tag rendered public install route with `RELEASE_TAG`, verifies GitHub Pages is configured for workflow deployment at `https://naramdash.github.io/TypeSharp/`, verifies the release tag commit matches `origin/main`, dispatches the GitHub Pages docs workflow from `main` with `release_tag=<tag>`", projectPolicyPage);
+    AssertContains("verifies the release tag commit matches `origin/main`, dispatches the GitHub Pages docs workflow from `main` with `release_tag=<tag>`", projectPolicyPage);
+    AssertContains("used the release tag commit on the `main` ref, `workflow_dispatch` event, `Docs` workflow name, and success conclusion", projectPolicyPage);
     AssertContains("verifies the hosted GitHub Pages home route links to Install and preserves release notes, exact asset-name guidance, CLI/runtime/VSIX asset names, checksum manifest, canonical URL, Open Graph URL, and sitemap URL identity there", projectPolicyPage);
     AssertContains("verifies hosted Learning Paths, Language Tour, Fundamentals, Guides, Cookbook, API And CLI Reference, Examples, Diagnostics, and Advanced Topics routes are not legacy 404 pages, link back to Install, and preserve release notes, exact asset-name guidance, CLI/runtime assets, checksum manifest, canonical/Open Graph URL identity", projectPolicyPage);
     AssertContains("verifies hosted CLI, Project Configuration, Runtime Artifacts, VS Code And LSP, Migration, and Troubleshooting routes are not legacy 404 pages, link back to Install, and preserve release notes, exact asset-name guidance, runtime/checksum, extracted runtime path, generated-output, VSIX markers where applicable, canonical/Open Graph URL identity", projectPolicyPage);
@@ -36498,7 +36502,7 @@ static string BuildRepositoryAssembly(string projectRelativePath, string assembl
     var repositoryRoot = Directory.GetCurrentDirectory();
     var build = RunProcess(
         "dotnet",
-        $"build {projectRelativePath} --nologo --verbosity quiet --ignore-failed-sources",
+        $"build {projectRelativePath} -c Debug --nologo --verbosity quiet --ignore-failed-sources",
         repositoryRoot);
 
     AssertTrue(
