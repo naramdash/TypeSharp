@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The delegate params ABI evidence push `3b42d933e10d513ddbfa6e94435a2de33aaffe34` proved Docs run `26419231937` and Regression run `26419231935` both completed successfully", languageProgress);
+    AssertContains("The event metadata ABI evidence push `27b55b37123f7e332bf5ed7c1a384ef6729eb99d` proved Docs run `26419767649` and Regression run `26419767602` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -458,6 +458,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored event metadata ABI evidence locally", languageProgress);
+    AssertContains("Promoted the generated public ABI snapshot depth locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16339,14 +16340,14 @@ static void DocsSiteContractIsStable()
     AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
-    AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
+    AssertContains("Interface API, interface declaration attribute, interface member attribute, interface getter-only and get/set properties, interface event, generic constraint, partial declaration, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named CLR delegate with optional generic parameters, supported C# 7.3-compatible generic constraints, declaration attributes, typed parameters, optional `params`, and an explicit or `void` return", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("including declaration attribute and `params` metadata", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
-    AssertContains("Class/interface event backend snapshots, generated metadata checks, and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
+    AssertContains("Class/interface event backend snapshots, generated public ABI snapshots, generated metadata checks, and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("CLR enum with declaration/member attributes, optional integral underlying type, and selected constant/member forms", csharpTypeModelPage);
     AssertContains("Enum declaration API, declaration/member attribute metadata, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
@@ -33509,8 +33510,8 @@ static void CliBuildCompilesTypeSharpParamsParameterLowering()
 
         AssertFalse(metadata.HasErrors, "Generated params parameter assembly metadata should be readable.");
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
-        AssertContains("  method string join(string separator, params string[] values)", abiSnapshotText);
-        AssertContains("  method int sum(params int[] values)", abiSnapshotText);
+        AssertContains("  method static string join(string separator, params string[] values)", abiSnapshotText);
+        AssertContains("  method static int sum(params int[] values)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -33623,10 +33624,10 @@ static void CliBuildCompilesTypeSharpOptionalDefaultParameterLowering()
 
         AssertFalse(metadata.HasErrors, "Generated optional/default parameter assembly metadata should be readable.");
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
-        AssertContains("  method string greet(string prefix, string name = optional, string punctuation = optional)", abiSnapshotText);
-        AssertContains("  method int count(int value = optional)", abiSnapshotText);
-        AssertContains("  method bool enabled(bool value = optional)", abiSnapshotText);
-        AssertContains("  method string maybe(string value = optional)", abiSnapshotText);
+        AssertContains("  method static string greet(string prefix, string name = optional, string punctuation = optional)", abiSnapshotText);
+        AssertContains("  method static int count(int value = optional)", abiSnapshotText);
+        AssertContains("  method static bool enabled(bool value = optional)", abiSnapshotText);
+        AssertContains("  method static string maybe(string value = optional)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -34763,12 +34764,13 @@ static void GeneratedNet48AssemblyPublicAbiSnapshotIsStable()
         [
             "assembly PublicAbiSnapshot",
             "type Samples.PublicAbi.Customer",
-            "  property int Age",
-            "  property string Name",
+            "  constructor Customer(string Name, int Age)",
+            "  property get int Age",
+            "  property get string Name",
             "  method bool Equals(object obj)",
             "  method int GetHashCode()",
             "type Samples.PublicAbi.Module",
-            "  method string describe(Samples.PublicAbi.Customer customer)"
+            "  method static string describe(Samples.PublicAbi.Customer customer)"
         ], snapshot.Lines);
     });
 }
@@ -34876,6 +34878,23 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
         AssertContains("type Samples.GeneratedInterop.Joiner", abiSnapshotText);
         AssertContains("  method string Invoke(string separator, params string[] values)", abiSnapshotText);
+        AssertContains("type Samples.GeneratedInterop.Notifier", abiSnapshotText);
+        AssertContains("  constructor Notifier(string seed)", abiSnapshotText);
+        AssertContains("  field readonly string Name", abiSnapshotText);
+        AssertContains("  field static readonly string Kind", abiSnapshotText);
+        AssertContains("  field int Count", abiSnapshotText);
+        AssertContains("  field static string MutableKind", abiSnapshotText);
+        AssertContains("  property get string DisplayName", abiSnapshotText);
+        AssertContains("  property get set string DisplayCode", abiSnapshotText);
+        AssertContains("  property static get string Build", abiSnapshotText);
+        AssertContains("  property static get set string Channel", abiSnapshotText);
+        AssertContains("  event add remove Samples.GeneratedInterop.ChangedHandler Changed", abiSnapshotText);
+        AssertContains("  event static add remove Samples.GeneratedInterop.ChangedHandler GlobalChanged", abiSnapshotText);
+        AssertContains("  method string Echo(string value)", abiSnapshotText);
+        AssertContains("  method static string StaticEcho(string value)", abiSnapshotText);
+        AssertContains("type Samples.GeneratedInterop.IListener", abiSnapshotText);
+        AssertContains("  event add remove Samples.GeneratedInterop.ChangedHandler Changed", abiSnapshotText);
+        AssertContains("  method string Echo(string value)", abiSnapshotText);
         var generatedMetadata = metadata.Assemblies.Single();
         var notifierType = Require(
             generatedMetadata.Types.SingleOrDefault(type => string.Equals(type.FullName, "Samples.GeneratedInterop.Notifier", StringComparison.Ordinal)),

@@ -15,9 +15,15 @@ public static class TypeSharpPublicAbiChecker
         {
             lines.Add($"type {type.FullName}");
 
+            foreach (var constructor in type.Constructors
+                .OrderBy(constructor => FormatParameters(constructor.Parameters), StringComparer.Ordinal))
+            {
+                lines.Add($"  constructor {type.Name}({FormatParameters(constructor.Parameters)})");
+            }
+
             foreach (var property in type.Properties.OrderBy(property => property.Name, StringComparer.Ordinal))
             {
-                lines.Add($"  property {property.Type} {property.Name}");
+                lines.Add($"  property {FormatPropertyModifiers(property)}{property.Type} {property.Name}");
             }
 
             foreach (var field in type.Fields.OrderBy(field => field.Name, StringComparer.Ordinal))
@@ -25,15 +31,41 @@ public static class TypeSharpPublicAbiChecker
                 lines.Add($"  field {FormatFieldModifiers(field)}{field.Type} {field.Name}");
             }
 
+            foreach (var eventSymbol in type.Events.OrderBy(eventSymbol => eventSymbol.Name, StringComparer.Ordinal))
+            {
+                lines.Add($"  event {FormatEventModifiers(eventSymbol)}{eventSymbol.Type} {eventSymbol.Name}");
+            }
+
             foreach (var method in type.Methods
                 .OrderBy(method => method.Name, StringComparer.Ordinal)
                 .ThenBy(method => FormatParameters(method.Parameters), StringComparer.Ordinal))
             {
-                lines.Add($"  method {method.ReturnType} {method.Name}({FormatParameters(method.Parameters)})");
+                lines.Add($"  method {FormatMethodModifiers(method)}{method.ReturnType} {method.Name}({FormatParameters(method.Parameters)})");
             }
         }
 
         return new PublicAbiSnapshot(lines);
+    }
+
+    private static string FormatPropertyModifiers(MetadataPropertySymbol property)
+    {
+        var modifiers = new List<string>();
+        if (property.IsStatic)
+        {
+            modifiers.Add("static");
+        }
+
+        if (property.HasPublicGetter)
+        {
+            modifiers.Add("get");
+        }
+
+        if (property.HasPublicSetter)
+        {
+            modifiers.Add("set");
+        }
+
+        return modifiers.Count == 0 ? string.Empty : $"{string.Join(" ", modifiers)} ";
     }
 
     private static string FormatFieldModifiers(MetadataFieldSymbol field)
@@ -47,6 +79,48 @@ public static class TypeSharpPublicAbiChecker
         if (field.IsLiteral)
         {
             modifiers.Add("literal");
+        }
+
+        if (field.IsReadOnly)
+        {
+            modifiers.Add("readonly");
+        }
+
+        return modifiers.Count == 0 ? string.Empty : $"{string.Join(" ", modifiers)} ";
+    }
+
+    private static string FormatEventModifiers(MetadataEventSymbol eventSymbol)
+    {
+        var modifiers = new List<string>();
+        if (eventSymbol.IsStatic)
+        {
+            modifiers.Add("static");
+        }
+
+        if (eventSymbol.HasPublicAdder)
+        {
+            modifiers.Add("add");
+        }
+
+        if (eventSymbol.HasPublicRemover)
+        {
+            modifiers.Add("remove");
+        }
+
+        return modifiers.Count == 0 ? string.Empty : $"{string.Join(" ", modifiers)} ";
+    }
+
+    private static string FormatMethodModifiers(MetadataMethodSymbol method)
+    {
+        var modifiers = new List<string>();
+        if (method.IsStatic)
+        {
+            modifiers.Add("static");
+        }
+
+        if (method.IsExtension)
+        {
+            modifiers.Add("extension");
         }
 
         return modifiers.Count == 0 ? string.Empty : $"{string.Join(" ", modifiers)} ";
