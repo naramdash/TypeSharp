@@ -7,3 +7,5 @@ public delegate Transformer(value: string): string
 
 [ObsoleteAttribute("Use NewProject.")]
 public delegate Project<T>(value: T): string where T: class
+
+public delegate Joiner(separator: string, params values: string[]): string

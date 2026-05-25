@@ -447,14 +447,16 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The partial declaration ABI evidence push `192c967589ed6cf1169fb620c14984bef6ede71b` proved Docs run `26418081936` and Regression run `26418081974` both completed successfully", languageProgress);
+    AssertContains("The function parameter ABI evidence push `a9827410be2d0a11e23cc382584de76b27bd4cb9` proved Docs run `26418667022` and Regression run `26418667025` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored record/union declaration attribute ABI slice locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored named delegate declaration attribute and params ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16341,7 +16343,7 @@ static void DocsSiteContractIsStable()
     AssertContains("| `delegate` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named CLR delegate with optional generic parameters, supported C# 7.3-compatible generic constraints, declaration attributes, typed parameters, optional `params`, and an explicit or `void` return", csharpTypeModelPage);
     AssertContains("Delegate declaration backend snapshots and generated `net48` C# consumer smokes cover the current subset", csharpTypeModelPage);
-    AssertContains("including declaration attribute metadata", csharpTypeModelPage);
+    AssertContains("including declaration attribute and `params` metadata", csharpTypeModelPage);
     AssertContains("| `event` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class/interface event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
@@ -34790,6 +34792,8 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
             [ObsoleteAttribute("Use NewTransform.")]
             public delegate Transform(value: string): string
 
+            public delegate Joiner(separator: string, params values: string[]): string
+
             public delegate ChangedHandler(value: string): unit
 
             public class Notifier(seed: string) {
@@ -34834,6 +34838,7 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("[ObsoleteAttribute(\"Use NewTransform.\")]", generatedSource);
         AssertContains("public delegate string Transform(string value);", generatedSource);
+        AssertContains("public delegate string Joiner(string separator, params string[] values);", generatedSource);
         AssertContains("public delegate void ChangedHandler(string value);", generatedSource);
         AssertContains("public Notifier(string seed)", generatedSource);
         AssertContains("public readonly string Name = \"instance\";", generatedSource);
@@ -34847,6 +34852,21 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
         AssertContains("public static string StaticEcho(string value)", generatedSource);
         AssertContains("public static event ChangedHandler GlobalChanged;", generatedSource);
         AssertContains("public event ChangedHandler Changed;", generatedSource);
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "InteropSource",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/InteropSource.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated interop assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.GeneratedInterop.Joiner", abiSnapshotText);
+        AssertContains("  method string Invoke(string separator, params string[] values)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -34887,6 +34907,7 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
                             typeof(Samples.GeneratedInterop.Transform),
                             typeof(ObsoleteAttribute));
                         var transform = new Samples.GeneratedInterop.Transform(value => value + " from C#");
+                        var joiner = new Samples.GeneratedInterop.Joiner((separator, values) => string.Join(separator, values));
                         var notifier = new Samples.GeneratedInterop.Notifier("seed");
                         Samples.GeneratedInterop.Notifier.GlobalChanged += value => { };
                         notifier.Changed += value => { };
@@ -34894,7 +34915,7 @@ static void CSharpNet48ProjectConsumesGeneratedTypeSharpAssembly()
                         notifier.Count = notifier.Count + 1;
                         Samples.GeneratedInterop.Notifier.Channel = Samples.GeneratedInterop.Notifier.Channel + ":updated";
                         Samples.GeneratedInterop.Notifier.MutableKind = Samples.GeneratedInterop.Notifier.MutableKind + ":updated";
-                        return delegateAttribute.Message + ":" + transform(notifier.Echo(notifier.Name + notifier.DisplayName + notifier.DisplayCode + notifier.Count.ToString() + Samples.GeneratedInterop.Notifier.Kind + Samples.GeneratedInterop.Notifier.Build + Samples.GeneratedInterop.Notifier.Channel + Samples.GeneratedInterop.Notifier.MutableKind + Samples.GeneratedInterop.Notifier.StaticEcho(Samples.GeneratedInterop.Module.greeting())));
+                        return delegateAttribute.Message + ":" + joiner("|", "a", "b") + ":" + transform(notifier.Echo(notifier.Name + notifier.DisplayName + notifier.DisplayCode + notifier.Count.ToString() + Samples.GeneratedInterop.Notifier.Kind + Samples.GeneratedInterop.Notifier.Build + Samples.GeneratedInterop.Notifier.Channel + Samples.GeneratedInterop.Notifier.MutableKind + Samples.GeneratedInterop.Notifier.StaticEcho(Samples.GeneratedInterop.Module.greeting())));
                     }
                 }
             }

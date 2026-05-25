@@ -14,4 +14,6 @@ namespace Samples.Delegates
     [ObsoleteAttribute("Use NewProject.")]
     public delegate string Project<T>(T value)
         where T : class;
+
+    public delegate string Joiner(string separator, params string[] values);
 }
