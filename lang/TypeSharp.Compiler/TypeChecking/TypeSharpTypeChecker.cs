@@ -441,7 +441,7 @@ public static class TypeSharpTypeChecker
 
                     if (node.Kind is SyntaxKind.ClassDeclaration or SyntaxKind.InterfaceDeclaration)
                     {
-                        CheckClassInterfaceMemberBoundary(node);
+                        CheckClassInterfaceMemberBoundary(node, scope);
                     }
                     break;
 
@@ -482,7 +482,7 @@ public static class TypeSharpTypeChecker
             }
         }
 
-        private void CheckClassInterfaceMemberBoundary(SyntaxNode node)
+        private void CheckClassInterfaceMemberBoundary(SyntaxNode node, TypeScope scope)
         {
             var isClass = node.Kind == SyntaxKind.ClassDeclaration;
             var declarationKind = isClass ? "Class" : "Interface";
@@ -504,7 +504,15 @@ public static class TypeSharpTypeChecker
                         break;
 
                     case SyntaxKind.EventDeclaration:
-                        ReportUnsupportedTypeSharpMember(child, "TypeSharp-authored event members are not part of the 1.0 public ABI; use imported C# events or callback parameters.");
+                        if (isClass)
+                        {
+                            CheckClassEventMember(child, scope);
+                        }
+                        else
+                        {
+                            ReportUnsupportedTypeSharpMember(child, "TypeSharp-authored interface event members are not part of the 1.0 interface member subset; use imported C# events or callback parameters.");
+                        }
+
                         break;
 
                     case SyntaxKind.SkippedToken:
@@ -512,6 +520,17 @@ public static class TypeSharpTypeChecker
                         break;
                 }
             }
+        }
+
+        private void CheckClassEventMember(SyntaxNode node, TypeScope scope)
+        {
+            if (!TryGetDirectTypeAnnotation(node, out var annotation))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class events must declare an explicit delegate type.");
+                return;
+            }
+
+            ReportPublicBoundaryLeaks(annotation, scope);
         }
 
         private void CheckDelegateDeclaration(SyntaxNode node, TypeScope scope)

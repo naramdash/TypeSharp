@@ -1065,18 +1065,25 @@ public static class CSharpSourceBackend
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
 
-            var functions = node.Children
-                .Where(child => child.Kind == SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
+            var members = node.Children
+                .Where(child => child.Kind is SyntaxKind.EventDeclaration or SyntaxKind.FunctionDeclaration && !IsAmbientDeclaration(child))
                 .ToArray();
 
-            for (var index = 0; index < functions.Length; index++)
+            for (var index = 0; index < members.Length; index++)
             {
                 if (index > 0)
                 {
                     _builder.AppendLine();
                 }
 
-                EmitFunction(functions[index], isStatic: false);
+                if (members[index].Kind == SyntaxKind.EventDeclaration)
+                {
+                    EmitEventDeclaration(members[index]);
+                }
+                else
+                {
+                    EmitFunction(members[index], isStatic: false);
+                }
             }
 
             _builder.AppendLine("    }");
@@ -1131,6 +1138,15 @@ public static class CSharpSourceBackend
                 var suffix = index == whereClauses.Length - 1 ? ";" : string.Empty;
                 _builder.AppendLine($"        {whereClauses[index]}{suffix}");
             }
+        }
+
+        private void EmitEventDeclaration(SyntaxNode node)
+        {
+            var visibility = GetVisibility(node);
+            var type = GetEventType(node);
+            var name = GetEventDeclarationName(node);
+
+            _builder.AppendLine($"        {visibility} event {type} {name};");
         }
 
         private void EmitExtensionDeclaration(SyntaxNode node, int index)
@@ -4088,6 +4104,13 @@ public static class CSharpSourceBackend
             return typeNode is null ? "void" : MapType(typeNode);
         }
 
+        private string GetEventType(SyntaxNode eventDeclaration)
+        {
+            var annotation = eventDeclaration.Children.FirstOrDefault(child => child.Kind == SyntaxKind.TypeAnnotation);
+            var typeNode = annotation?.Children.FirstOrDefault(child => !child.IsToken);
+            return typeNode is null ? "System.EventHandler" : MapType(typeNode);
+        }
+
         private string MapType(SyntaxNode? node)
         {
             if (node is null)
@@ -6731,6 +6754,26 @@ public static class CSharpSourceBackend
             }
 
             return "Generated";
+        }
+
+        private static string GetEventDeclarationName(SyntaxNode node)
+        {
+            var seenEventKeyword = false;
+            foreach (var child in node.Children)
+            {
+                if (child.IsToken && child.Kind == SyntaxKind.EventKeyword)
+                {
+                    seenEventKeyword = true;
+                    continue;
+                }
+
+                if (seenEventKeyword && child.IsToken && child.Kind == SyntaxKind.IdentifierToken)
+                {
+                    return child.Text ?? "Changed";
+                }
+            }
+
+            return "Changed";
         }
 
         private static IReadOnlyList<string> GetEnumMembers(SyntaxNode node) =>

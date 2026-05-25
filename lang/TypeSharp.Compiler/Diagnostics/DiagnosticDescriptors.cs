@@ -242,8 +242,8 @@ public static class DiagnosticDescriptors
         DiagnosticSeverity.Error,
         DiagnosticCategory.TypeChecking,
         "Unsupported TypeSharp class or interface member.",
-        "The 1.0 TypeSharp-authored class/interface member subset is intentionally limited to lowerable public instance methods and interface method signatures.",
-        "Use a supported method shape, move data to a record, use imported C# constructors/events, or wait for the specific class/interface member form to be promoted.");
+        "The 1.0 TypeSharp-authored class/interface member subset is intentionally limited to lowerable public instance methods, typed class events, and interface method signatures.",
+        "Use a supported method or class event shape, move data to a record, use imported C# constructors/events, or wait for the specific class/interface member form to be promoted.");
 
     public static readonly DiagnosticDescriptor UnsupportedMatchPattern = new(
         "TS2211",

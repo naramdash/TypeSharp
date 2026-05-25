@@ -1,0 +1,9 @@
+namespace Samples.Events
+
+public delegate ChangedHandler(value: string): unit
+
+public class Notifier {
+  public event Changed: ChangedHandler
+
+  public fun Echo(value: string): string = value
+}

@@ -322,13 +322,13 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - `docs/src/content/docs/csharp-type-model.md` covers `fun`, `record`, `class`, `interface`, `delegate`, `event`, `enum`, `union`, `type`, extension methods, and getter-only extension properties.
   - The matrix records whether each form is a public ABI slice, deferred from 1.0, source-only, compile-time-only, or not promoted.
   - Existing generated `net48` C# consumer evidence is linked for promoted forms such as functions, records, classes, interfaces, delegates, enums, nominal unions, extension methods, and getter-only extension properties.
-  - TypeSharp-authored `delegate` public ABI lowering is promoted for named CLR delegates with typed parameters, optional `params`, supported generic constraints, and C# consumer evidence; TypeSharp-authored `event` public ABI forms remain deferred from 1.0 until class-member diagnostics and C# consumer evidence exist.
+  - TypeSharp-authored `delegate` public ABI lowering is promoted for named CLR delegates with typed parameters, optional `params`, supported generic constraints, and C# consumer evidence; TypeSharp-authored class `event` public ABI lowering is promoted for typed events backed by named delegates, while interface events and richer event forms remain deferred from 1.0.
 
 - [x] Harden TypeSharp-authored class/interface/member semantics.
   - 1.0 TypeSharp-authored classes lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, `partial`, an implicit public parameterless constructor, and public instance `fun` methods.
   - 1.0 TypeSharp-authored interfaces lower to named CLR interfaces with optional type parameters, supported generic constraints, `partial`, and method signatures.
   - C# `net48` consumer smokes cover generated classes, generated interfaces, generic classes, generic constraints, and partial declarations.
-  - TypeSharp-authored class constructors, class fields, class properties, TypeSharp-authored class/interface events, explicit inheritance or interface implementation clauses, static/abstract/virtual/override members, interface default implementations, property setters, indexers, operators, class/interface member attributes beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0.
+  - TypeSharp-authored class constructors, class fields, class properties, TypeSharp-authored interface events, explicit inheritance or interface implementation clauses, static/abstract/virtual/override members, interface default implementations, property setters, indexers, operators, class/interface member attributes beyond the emitted declaration subset, partial methods, nested type declarations, and broader member-body analysis are post-1.0.
   - Unsupported class/interface member forms now report deterministic `TS2210` diagnostics before backend emission, and build-stop coverage verifies generated C# source/project/assembly output is not produced for those forms.
 
 - [x] Close public ABI leakage checks for compile-time-only types.
@@ -438,7 +438,7 @@ These are valuable but should not silently block language 1.0 unless the project
 - Type providers.
 - Units of measure.
 - Effect annotation system.
-- TypeSharp-authored `public event` public ABI lowering.
+- TypeSharp-authored interface/custom/static `public event` public ABI lowering.
 - Decorator-like metaprogramming.
 - Macro system.
 - Full dependent types or theorem proving.
