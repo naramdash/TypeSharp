@@ -447,10 +447,11 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The class/interface member attribute ABI promotion push `21bdd28e5e8735602b1ac644393583567a70568a` proved Docs run `26414741204` and Regression run `26414741205` both completed successfully", languageProgress);
+    AssertContains("The delegate declaration attribute ABI promotion push `48676faaf2bafdd140213b4cdc43687fcec3021b` proved Docs run `26415680018` and Regression run `26415680050` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
+    AssertContains("Promoted the TypeSharp-authored record/union declaration attribute ABI slice locally", languageProgress);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16267,6 +16268,7 @@ static void DocsSiteContractIsStable()
     AssertContains("C# And CLR Type Model", typeSystemPage);
     AssertContains("`unknown`, or an unresolved computed form, public use reports the public-boundary diagnostic", typeSystemPage);
     AssertContains("structural shape, or `unknown` type appears in a public boundary", typeSystemPage);
+    AssertContains("TypeSharp-authored records and nominal unions preserve declaration attributes on the generated CLR-visible type", typeSystemPage);
     AssertContains("1.0 Class Interface And Member Boundary", typeSystemPage);
     AssertContains("The 1.0 TypeSharp-authored class and interface surface is intentionally small", typeSystemPage);
     AssertContains("Accepted class declarations lower to named CLR classes with optional type parameters, supported C# 7.3-compatible generic constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list whose parameters have CLR-visible types, public instance/static `fun` methods with supported parameter and return types, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance `event` members backed by named delegate types, typed static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", typeSystemPage);
@@ -16325,6 +16327,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
     AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("Named immutable CLR class with declaration attributes, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
+    AssertContains("Backend snapshots and C# consumer smokes cover immutable records, declaration attributes, record updates, and record expression construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, class declaration attribute, class member attribute, generic type, generic constraint, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
@@ -16337,6 +16341,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Class/interface event backend snapshots and generated `net48` C# consumer smokes cover subscription to generated class instance/static and interface event metadata", csharpTypeModelPage);
     AssertContains("| `enum` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("Named abstract CLR base type with declaration attributes, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
+    AssertContains("Nominal union API, declaration attribute, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
     AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
@@ -16379,6 +16385,9 @@ static void DocsSiteContractIsStable()
     var featureStatusPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "feature-status.md"));
     AssertContains("TypeSharp-authored operator declarations are explicitly post-1.0", featureStatusPage);
     AssertContains("True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog", featureStatusPage);
+    AssertContains("TypeSharp records and nominal unions are the stable public data/domain model, including declaration attributes on generated CLR-visible types", featureStatusPage);
+    AssertContains("| Records | MVP | Immutable public data shapes lower to C#-friendly nominal classes with declaration attributes, constructor parameters, get-only properties, equality, and hash code", featureStatusPage);
+    AssertContains("| Nominal closed unions | MVP | `union` declarations are the runtime/domain union model and lower to a C#-compatible class hierarchy with declaration attributes", featureStatusPage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance/static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", featureStatusPage);
     AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", featureStatusPage);
     AssertContains("| Delegates | Implemented | TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata with optional generic parameters/constraints, declaration attributes, typed parameters, optional `params`, and explicit or `void` returns", featureStatusPage);
@@ -16496,6 +16505,7 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp-owned enums support optional integral underlying types, explicit integer values, aliases, initializer-local composite-or values, same-enum value `|`/`&`/`^`/`~`, and match exhaustiveness", referencePage);
     AssertContains("Enum-valued shifts, flag algebra beyond same-enum value operators, flag-aware match reasoning, imported numeric enum flag reasoning, arbitrary computed enum values, numeric pattern algebra, numeric enum patterns, and broad attribute target validation are post-1.0", referencePage);
     AssertContains("The 1.0 class/interface member surface is deliberately bounded", referencePage);
+    AssertContains("TypeSharp-authored records and nominal unions preserve declaration attributes on their generated CLR-visible types", referencePage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance/static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", referencePage);
     AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", referencePage);
     AssertContains("TypeSharp-authored named delegates lower to named CLR delegates with declaration attributes, typed parameters, optional `params`, supported generic constraints, and explicit or `void` returns", referencePage);
@@ -16516,7 +16526,10 @@ static void DocsSiteContractIsStable()
     var loweringPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "lowering.md"));
     AssertContains("Func<object, TResult>", loweringPage);
     AssertContains("inferred function-valued top-level `let` exports", loweringPage);
-    AssertContains("TypeSharp-authored class, interface, and named delegate declaration attributes lower to C# attributes on the generated type declaration, and supported member attributes lower to C# attributes on emitted class/interface methods, values, properties, and events", loweringPage);
+    AssertContains("| Records | Immutable sealed C# classes with declaration attributes, constructor, get-only properties, equality, and hash code", loweringPage);
+    AssertContains("| Nominal unions | Abstract base type with declaration attributes plus sealed case types and runtime pattern helper metadata", loweringPage);
+    AssertContains("Records lower to immutable C# classes with declaration attributes, constructor parameters, get-only properties, value equality, and hash code", loweringPage);
+    AssertContains("TypeSharp-authored record, union, class, interface, and named delegate declaration attributes lower to C# attributes on the generated type declaration, and supported member attributes lower to C# attributes on emitted class/interface methods, values, properties, and events", loweringPage);
     AssertContains("TypeSharp-authored class constructor parameter lists with explicit CLR-visible parameter types lower to ordinary C# constructors with empty bodies", loweringPage);
     AssertContains("TypeSharp-authored class methods lower as instance or static methods according to the class member modifier", loweringPage);
     AssertContains("Immutable class `let` and `static let` values with explicit types and initializers lower to C# `readonly` and `static readonly` fields", loweringPage);
@@ -32221,6 +32234,9 @@ static void CliBuildCompilesImmutableRecordApi()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.Records
 
+            import { ObsoleteAttribute } from "System"
+
+            [ObsoleteAttribute("Use Customer2.")]
             public record Customer(Name: string, Age: int)
             """);
         using var output = new StringWriter();
@@ -32233,6 +32249,7 @@ static void CliBuildCompilesImmutableRecordApi()
         AssertEqual(string.Empty, error.ToString());
 
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
+        AssertContains("[ObsoleteAttribute(\"Use Customer2.\")]", generatedSource);
         AssertContains("public sealed class Customer", generatedSource);
         AssertContains("public Customer(string Name, int Age)", generatedSource);
         AssertContains("public string Name { get; }", generatedSource);
@@ -32269,16 +32286,21 @@ static void CliBuildCompilesImmutableRecordApi()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System;
+
             namespace RecordsApiConsumer
             {
                 public static class Consumer
                 {
                     public static string Read()
                     {
+                        var recordAttribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.Records.Customer),
+                            typeof(ObsoleteAttribute));
                         var left = new Samples.Records.Customer("Ada", 42);
                         var right = new Samples.Records.Customer("Ada", 42);
                         return left.Equals(right) && left.GetHashCode() == right.GetHashCode()
-                            ? left.Name
+                            ? recordAttribute.Message + ":" + left.Name
                             : string.Empty;
                     }
                 }
@@ -32670,6 +32692,9 @@ static void CliBuildCompilesNominalUnionApi()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.Unions
 
+            import { ObsoleteAttribute } from "System"
+
+            [ObsoleteAttribute("Use PaymentStatus2.")]
             public union PaymentStatus {
               Pending
               Paid(at: string)
@@ -32692,6 +32717,7 @@ static void CliBuildCompilesNominalUnionApi()
         AssertContains("using TypeSharp.Runtime;", generatedSource);
         AssertContains("return PaymentStatus.Pending;", generatedSource);
         AssertContains("return PaymentStatus.Paid(at);", generatedSource);
+        AssertContains("[ObsoleteAttribute(\"Use PaymentStatus2.\")]", generatedSource);
         AssertContains("public abstract class PaymentStatus", generatedSource);
         AssertContains("public sealed class PendingCase : PaymentStatus, ITypeSharpUnionCase", generatedSource);
         AssertContains("public sealed class PaidCase : PaymentStatus, ITypeSharpUnionCase", generatedSource);
@@ -32729,6 +32755,7 @@ static void CliBuildCompilesNominalUnionApi()
             </configuration>
             """);
         WriteFile(consumerRoot, "Consumer.cs", """
+            using System;
             using TypeSharp.Runtime;
 
             namespace UnionApiConsumer
@@ -32737,10 +32764,15 @@ static void CliBuildCompilesNominalUnionApi()
                 {
                     public static string Read()
                     {
+                        var unionAttribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(
+                            typeof(Samples.Unions.PaymentStatus),
+                            typeof(ObsoleteAttribute));
                         var pending = Samples.Unions.Module.pending();
                         var paid = Samples.Unions.Module.paid("now");
                         var paidCase = (Samples.Unions.PaymentStatus.PaidCase)paid;
-                        return TypeSharpUnion.GetCaseName(pending)
+                        return unionAttribute.Message
+                            + ":"
+                            + TypeSharpUnion.GetCaseName(pending)
                             + ":"
                             + TypeSharpUnion.GetTag(paid).ToString()
                             + ":"

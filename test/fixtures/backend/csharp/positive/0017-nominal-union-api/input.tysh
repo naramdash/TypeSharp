@@ -1,5 +1,8 @@
 namespace Samples.Unions
 
+import { ObsoleteAttribute } from "System"
+
+[ObsoleteAttribute("Use PaymentStatus2.")]
 public union PaymentStatus {
   Pending
   Paid(at: string)

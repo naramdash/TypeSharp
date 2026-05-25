@@ -67,7 +67,7 @@ fun keep(customer: Customer): Customer =
 
 The `satisfies` expression checks the proof and then keeps the original expression type. Generated C# emits only the left-hand expression. A value type that cannot assign to the target type after nullability and structural proof checks reports `TS2227`; nullability violations remain `TS2202`, and structural proof failures remain `TS2220`.
 
-Structural shapes are compile-time tools. They must not leak directly through public .NET boundaries. Public APIs should expose records, classes, interfaces, wrappers, or nominal unions.
+Structural shapes are compile-time tools. They must not leak directly through public .NET boundaries. Public APIs should expose records, classes, interfaces, wrappers, or nominal unions. TypeSharp-authored records and nominal unions preserve declaration attributes on the generated CLR-visible type.
 
 ## Extension Properties
 

@@ -760,6 +760,7 @@ public static class CSharpSourceBackend
             var typeParameters = GetTypeParameterList(node);
             var parameters = GetParameters(node);
 
+            EmitAttributeLists(node, "    ");
             _builder.AppendLine($"    {visibility} sealed{partialModifier} class {name}{typeParameters}");
             EmitWhereClauses(node, "    ");
             _builder.AppendLine("    {");
@@ -883,6 +884,7 @@ public static class CSharpSourceBackend
             var cases = GetUnionCases(node);
             var baseType = $"{name}{typeParameters}";
 
+            EmitAttributeLists(node, "    ");
             _builder.AppendLine($"    {visibility} abstract{partialModifier} class {baseType}");
             _builder.AppendLine("    {");
             _builder.AppendLine($"        private {name}()");

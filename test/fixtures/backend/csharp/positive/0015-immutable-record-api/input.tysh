@@ -1,3 +1,6 @@
 namespace Samples.Records
 
+import { ObsoleteAttribute } from "System"
+
+[ObsoleteAttribute("Use Customer2.")]
 public record Customer(Name: string, Age: int)
