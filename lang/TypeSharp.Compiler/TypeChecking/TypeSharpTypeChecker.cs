@@ -500,7 +500,15 @@ public static class TypeSharpTypeChecker
                 switch (child.Kind)
                 {
                     case SyntaxKind.ValueDeclaration:
-                        ReportUnsupportedTypeSharpMember(child, $"{declarationKind} field and property declarations are not part of the 1.0 class/interface member subset; expose data through records or methods.");
+                        if (isClass && HasStaticModifier(child))
+                        {
+                            CheckClassStaticValueMember(child, scope);
+                        }
+                        else
+                        {
+                            ReportUnsupportedTypeSharpMember(child, $"{declarationKind} field and property declarations are not part of the 1.0 class/interface member subset; expose data through records or methods.");
+                        }
+
                         break;
 
                     case SyntaxKind.EventDeclaration:
@@ -512,6 +520,42 @@ public static class TypeSharpTypeChecker
                         break;
                 }
             }
+        }
+
+        private void CheckClassStaticValueMember(SyntaxNode node, TypeScope scope)
+        {
+            var isValid = true;
+            if (IsMutableValueDeclaration(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class static values must use immutable `let`; mutable class static fields are not part of the 1.0 class member subset.");
+                isValid = false;
+            }
+
+            if (!TryGetDirectTypeAnnotation(node, out var annotation))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class static values must declare an explicit CLR-visible type.");
+                isValid = false;
+            }
+
+            if (!HasInitializer(node))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class static values must declare an initializer.");
+                isValid = false;
+            }
+
+            if (node.Children.Any(child => child.Kind == SyntaxKind.AccessorBlock))
+            {
+                ReportUnsupportedTypeSharpMember(node, "TypeSharp-authored class properties with accessor blocks are not part of the 1.0 class member subset.");
+                isValid = false;
+            }
+
+            if (!isValid)
+            {
+                return;
+            }
+
+            ReportPublicBoundaryLeaks(annotation, scope);
+            CheckValueDeclaration(node, new TypeScope(scope));
         }
 
         private void CheckClassInterfaceEventMember(SyntaxNode node, TypeScope scope, string declarationKind)
@@ -9389,6 +9433,9 @@ public static class TypeSharpTypeChecker
         private static bool IsMutableValueDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&
             node.Children.Any(child => child.Kind == SyntaxKind.MutKeyword);
+
+        private static bool HasStaticModifier(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.StaticModifier);
 
         private static bool HasInitializer(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.Initializer);

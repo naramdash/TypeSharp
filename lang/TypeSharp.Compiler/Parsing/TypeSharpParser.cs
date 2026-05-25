@@ -752,7 +752,7 @@ public sealed class TypeSharpParser
     {
         var children = ParseDeclarationPrefix();
         if (Current.Kind == SyntaxKind.StaticKeyword
-            && (Peek(1).Kind == SyntaxKind.EventKeyword || IsFunctionDeclarationStart(Peek(1))))
+            && (Peek(1).Kind is SyntaxKind.EventKeyword or SyntaxKind.LetKeyword || IsFunctionDeclarationStart(Peek(1))))
         {
             var token = TokenNode(NextToken());
             children.Add(new SyntaxNode(SyntaxKind.StaticModifier, token.Span, children: [token]));

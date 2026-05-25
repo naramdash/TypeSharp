@@ -1,0 +1,7 @@
+namespace Samples.StaticValues
+
+public class BuildInfo {
+  public static let Name: string = "TypeSharp"
+
+  public static fun Echo(value: string): string = value
+}
