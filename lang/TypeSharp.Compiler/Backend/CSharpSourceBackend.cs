@@ -1242,9 +1242,9 @@ public static class CSharpSourceBackend
             var initializer = GetInitializerExpression(node);
             var type = GetValueDeclarationType(node, initializer);
             var value = EmitExpression(initializer, type);
-            var storage = HasStaticModifier(node) ? "static readonly" : "readonly";
+            var storage = GetClassValueStorageModifier(node);
 
-            _builder.AppendLine($"        {visibility} {storage} {type} {name} = {value};");
+            _builder.AppendLine($"        {visibility} {storage}{type} {name} = {value};");
         }
 
         private void EmitLiteralExportAlias(CSharpSourceLiteralExportAlias exportAlias)
@@ -6379,7 +6379,6 @@ public static class CSharpSourceBackend
 
         private static bool CanLowerClassValueDeclaration(SyntaxNode node) =>
             node.Kind == SyntaxKind.ValueDeclaration &&
-            !IsMutableValueDeclaration(node) &&
             TryGetDirectTypeAnnotation(node, out _) &&
             GetInitializerExpression(node) is not null &&
             node.Children.All(child => child.Kind != SyntaxKind.AccessorBlock);
@@ -6612,6 +6611,17 @@ public static class CSharpSourceBackend
 
         private static bool HasStaticModifier(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.StaticModifier);
+
+        private static string GetClassValueStorageModifier(SyntaxNode node)
+        {
+            var isMutable = IsMutableValueDeclaration(node);
+            if (HasStaticModifier(node))
+            {
+                return isMutable ? "static " : "static readonly ";
+            }
+
+            return isMutable ? string.Empty : "readonly ";
+        }
 
         private static string GetStaticModifier(SyntaxNode node) =>
             HasStaticModifier(node) ? " static" : string.Empty;

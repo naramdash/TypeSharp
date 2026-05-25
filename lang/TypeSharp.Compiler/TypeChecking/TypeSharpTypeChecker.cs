@@ -527,15 +527,6 @@ public static class TypeSharpTypeChecker
             var isValid = true;
             var isStatic = HasStaticModifier(node);
             var valueKind = isStatic ? "class static values" : "class instance values";
-            if (IsMutableValueDeclaration(node))
-            {
-                var message = isStatic
-                    ? "TypeSharp-authored class static values must use immutable `let`; mutable class static fields are not part of the 1.0 class member subset."
-                    : "TypeSharp-authored class instance values must use immutable `let`; mutable instance class fields are not part of the 1.0 class member subset.";
-                ReportUnsupportedTypeSharpMember(node, message);
-                isValid = false;
-            }
-
             if (!TryGetDirectTypeAnnotation(node, out var annotation))
             {
                 ReportUnsupportedTypeSharpMember(node, $"TypeSharp-authored {valueKind} must declare an explicit CLR-visible type.");

@@ -1,0 +1,9 @@
+namespace Samples.MutableValues
+
+public class BuildInfo {
+  public let mut Counter: int = 0
+
+  public static let mut State: string = "ready"
+
+  public fun Echo(value: string): string = value
+}
