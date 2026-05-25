@@ -1,0 +1,7 @@
+namespace Samples.StaticMethods
+
+public class Calculator {
+  public static fun Identity(value: int): int = value
+
+  public fun Echo(value: string): string = value
+}

@@ -1082,7 +1082,7 @@ public static class CSharpSourceBackend
                 }
                 else
                 {
-                    EmitFunction(members[index], isStatic: false);
+                    EmitFunction(members[index], isStatic: HasStaticModifier(members[index]));
                 }
             }
 
@@ -6586,8 +6586,11 @@ public static class CSharpSourceBackend
         private static string GetPartialModifier(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.PartialModifier) ? " partial" : string.Empty;
 
+        private static bool HasStaticModifier(SyntaxNode node) =>
+            node.Children.Any(child => child.Kind == SyntaxKind.StaticModifier);
+
         private static string GetStaticModifier(SyntaxNode node) =>
-            node.Children.Any(child => child.Kind == SyntaxKind.StaticModifier) ? " static" : string.Empty;
+            HasStaticModifier(node) ? " static" : string.Empty;
 
         private static bool IsAsyncFunction(SyntaxNode node) =>
             node.Children.Any(child => child.Kind == SyntaxKind.AsyncModifier);
