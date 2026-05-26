@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The keyof and indexed access public ABI erasure push `2b1eb86784a0611ab8a85c3f862d7081dc6da07a` proved Regression run `26433791160` and Docs run `26433791161` both completed successfully", languageProgress);
+    AssertContains("The type-level union narrowing public ABI erasure push `4377280e4a53333c1540e77faa964223e30cef46` proved Regression run `26434344900` and Docs run `26434344860` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -475,6 +475,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened satisfies expression public ABI erasure evidence locally", languageProgress);
     AssertContains("Deepened keyof and indexed access public ABI erasure evidence locally", languageProgress);
     AssertContains("Deepened type-level union narrowing public ABI erasure evidence locally", languageProgress);
+    AssertContains("Deepened public literal constant ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16515,6 +16516,8 @@ static void DocsSiteContractIsStable()
     AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Static method on generated module/container; `params` and optional/default metadata for the supported suffix rules", csharpTypeModelPage);
     AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default literal value, generic constraint, and generic optional/default literal value subsets", csharpTypeModelPage);
+    AssertContains("| `literal` | Public ABI slice", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and generated `net48` C# consumer smokes cover public literal constants as static literal CLR fields", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots for constructor/property/equality members and record-expression module method signatures, and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression/spread construction", csharpTypeModelPage);
@@ -16611,6 +16614,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover exported module methods that contain block-level locks", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `nameof` module methods that preserve ordinary name references and lower unbound generic type targets to string constants", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover checked/unchecked expression module methods", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover public literal constants as static literal CLR fields", featureStatusPage);
     AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target", featureStatusPage);
@@ -35416,6 +35420,26 @@ static void CliBuildCompilesLiteralConstants()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "LiteralConstants.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with literal constants.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "LiteralConstants",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/LiteralConstants.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated literal constants assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.LiteralConstants.Module", abiSnapshotText);
+        AssertContains("  field static literal string ApiVersion", abiSnapshotText);
+        AssertContains("  field static literal int MaxRetryCount", abiSnapshotText);
+        AssertContains("  method static bool enabled()", abiSnapshotText);
+        AssertContains("  method static int retries()", abiSnapshotText);
+        AssertContains("  method static string version()", abiSnapshotText);
+        AssertFalse(abiSnapshotText.Contains("FeatureEnabled", StringComparison.Ordinal), "Internal literal constants should not leak into generated public ABI snapshots.");
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
