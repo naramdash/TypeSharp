@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The function-valued `System.Action` export ABI push `e84acdd37275c0a30150573cfd3ad724e2a401d1` proved Docs run `26429762324` and Regression run `26429762325` both completed successfully", languageProgress);
+    AssertContains("The collection expression public ABI push `2d544592cc21103f349327b19f0aae3059b5eea4` proved Docs run `26430275482` and Regression run `26430275480` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -467,6 +467,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened named type alias source ABI evidence locally", languageProgress);
     AssertContains("Deepened function-valued `System.Action` export public ABI evidence locally", languageProgress);
     AssertContains("Deepened collection expression public ABI evidence locally", languageProgress);
+    AssertContains("Deepened record expression public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16509,7 +16510,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default literal value, generic constraint, and generic optional/default literal value subsets", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
-    AssertContains("Backend snapshots, generated public ABI snapshots for constructor/property/equality members, and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
+    AssertContains("Backend snapshots, generated public ABI snapshots for constructor/property/equality members and record-expression module method signatures, and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression/spread construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, class declaration/member attribute metadata snapshots, generic type, generic constraint metadata snapshots, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
@@ -32848,6 +32849,26 @@ static void CliBuildCompilesRecordExpressionConstruction()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "RecordExpressionApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with record expression construction.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "RecordExpressionApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/RecordExpressionApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated record expression assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.RecordExpressions.Customer", abiSnapshotText);
+        AssertContains("  constructor Customer(string Name, int Age)", abiSnapshotText);
+        AssertContains("  property get int Age", abiSnapshotText);
+        AssertContains("  property get string Name", abiSnapshotText);
+        AssertContains("type Samples.RecordExpressions.Module", abiSnapshotText);
+        AssertContains("  method static Samples.RecordExpressions.Customer Create()", abiSnapshotText);
+        AssertContains("  method static Samples.RecordExpressions.Customer Older(Samples.RecordExpressions.Customer customer)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

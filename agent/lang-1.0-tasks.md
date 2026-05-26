@@ -414,6 +414,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - 1.0 object construction includes expected nominal TypeSharp record expressions and nominal record spread, lowering to constructor calls in record parameter order.
   - Imported C# constructor calls, including selected generic constructors and named/optional/params constructor arguments, remain supported through the metadata-backed constructor path with deterministic overload diagnostics before emission.
   - Generated public ABI snapshots and a C# `net48` consumer smoke cover collection expression array/List return types and spread-parameter shapes.
+  - Generated public ABI snapshots and a C# `net48` consumer smoke cover nominal record expression and spread APIs returning and accepting the generated record type.
   - Dictionary literals, set literals, collection-expression constructor or factory arguments beyond the documented array/List and imported overload slices, object initializer syntax, arbitrary class object construction, inferred anonymous object construction, contextual collection inference without a known array/List target, general collection-builder protocols, and record/class/object initializer mutation are post-1.0.
 
 - [x] Confirm runtime helper ABI for language features.
