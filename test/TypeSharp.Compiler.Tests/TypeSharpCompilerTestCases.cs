@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The pipeline and composition public ABI push `f808450a6c83254fd285cd1d60b5f8debd8e8833` proved Docs run `26431360045` and Regression run `26431360042` both completed successfully", languageProgress);
+    AssertContains("The async Task and yield iterator public ABI push `46bedcdb5f82afc555e9fc7ff5bdf630508df5e9` proved Docs run `26431831801` and Regression run `26431831784` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -470,6 +470,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened record expression public ABI evidence locally", languageProgress);
     AssertContains("Deepened pipeline and composition public ABI evidence locally", languageProgress);
     AssertContains("Deepened async Task and yield iterator public ABI evidence locally", languageProgress);
+    AssertContains("Deepened nameof and checked/unchecked public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16603,6 +16604,8 @@ static void DocsSiteContractIsStable()
     AssertContains("Unsupported null-conditional read shapes report `TS2223`", featureStatusPage);
     AssertContains("Invalid iterator return or yielded element shapes report `TS2224`", featureStatusPage);
     AssertContains("invalid known lock gates report `TS2225`", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `nameof` module methods that preserve ordinary name references and lower unbound generic type targets to string constants", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover checked/unchecked expression module methods", featureStatusPage);
     AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
     AssertContains("Function return expression mismatches report `TS2228`", featureStatusPage);
@@ -35059,9 +35062,74 @@ static void CliBuildCompilesNameofIntrinsic()
         AssertContains("return \"Pair\";", generatedSource);
         AssertFalse(generatedSource.Contains("nameof(Box<>)", StringComparison.Ordinal), "Generated C# should not emit C# 14 unbound generic nameof syntax.");
         AssertFalse(generatedSource.Contains("nameof(Pair<,>)", StringComparison.Ordinal), "Generated C# should not emit C# 14 unbound generic nameof syntax.");
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "NameofIntrinsic.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Generated project build should compile nameof intrinsic lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "NameofIntrinsic",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/NameofIntrinsic.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated nameof assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.NameofIntrinsic.Module", abiSnapshotText);
+        AssertContains("  method static string propertyName()", abiSnapshotText);
+        AssertContains("  method static string parameterName(string value)", abiSnapshotText);
+        AssertContains("  method static string boxTypeName()", abiSnapshotText);
+        AssertContains("  method static string pairTypeName()", abiSnapshotText);
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "NameofConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>NameofConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="NameofIntrinsic">
+                  <HintPath>../generated/bin/Debug/net48/NameofIntrinsic.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace NameofConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        return Samples.NameofIntrinsic.Module.propertyName()
+                            + Samples.NameofIntrinsic.Module.parameterName("value")
+                            + Samples.NameofIntrinsic.Module.boxTypeName()
+                            + Samples.NameofIntrinsic.Module.pairTypeName();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build NameofConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "NameofIntrinsic.dll")),
-            "Generated project build should compile nameof intrinsic lowering.");
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated nameof API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -35097,9 +35165,70 @@ static void CliBuildCompilesCheckedUncheckedExpressions()
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("return checked(value + 1);", generatedSource);
         AssertContains("return unchecked(value + 1);", generatedSource);
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CheckedUncheckedExpressions.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Generated project build should compile checked/unchecked expression lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "CheckedUncheckedExpressions",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/CheckedUncheckedExpressions.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated checked/unchecked assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.CheckedUncheckedExpressions.Module", abiSnapshotText);
+        AssertContains("  method static int checkedAdd(int value)", abiSnapshotText);
+        AssertContains("  method static int uncheckedAdd(int value)", abiSnapshotText);
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "CheckedUncheckedConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>CheckedUncheckedConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="CheckedUncheckedExpressions">
+                  <HintPath>../generated/bin/Debug/net48/CheckedUncheckedExpressions.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace CheckedUncheckedConsumer
+            {
+                public static class Consumer
+                {
+                    public static int Read()
+                    {
+                        return Samples.CheckedUncheckedExpressions.Module.checkedAdd(1)
+                            + Samples.CheckedUncheckedExpressions.Module.uncheckedAdd(1);
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build CheckedUncheckedConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "CheckedUncheckedExpressions.dll")),
-            "Generated project build should compile checked/unchecked expression lowering.");
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated checked/unchecked API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 

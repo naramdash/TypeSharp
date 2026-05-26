@@ -387,6 +387,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - 1.0 TypeSharp operator-like expressions use only the documented built-in numeric, enum, boolean, assignment, pipeline, composition, and selected imported C# static binary metadata rules.
   - True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog.
   - Unsupported TypeSharp-authored nominal operands continue to report deterministic operand diagnostics before backend emission.
+  - Generated public ABI snapshots and C# `net48` consumer smokes cover `nameof` public module method shapes and checked/unchecked expression public module method shapes.
 
 - [x] Finalize extension member policy for 1.0.
   - Current TypeSharp-authored extension methods and getter-only extension properties are implemented in a bounded form.
