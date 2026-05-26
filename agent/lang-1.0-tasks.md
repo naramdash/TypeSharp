@@ -402,6 +402,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Higher-order function values beyond the documented delegate-compatible subset, automatic currying, general partial application, imported pipeline/composition target inference, pipeline overload ranking, computation-expression-style workflows, active-pattern-style extractors, units of measure, type providers, and F#-complete semantics are post-1.0.
   - Generated public ABI snapshots and C# `net48` consumer smokes cover exported pipeline method signatures and explicit `System.Func` composition value fields.
   - Generated public ABI snapshots and C# `net48` consumer smokes cover async `Task<T>` and iterator `IEnumerable<T>` public return shapes.
+  - Generated public ABI snapshots and C# `net48` consumer smokes cover exported module methods that contain block-level lock statements.
   - Public/exported function-shaped values and direct composition values require explicit function type annotations where stable CLR metadata is needed; function-valued export public ABI snapshots and a C# `net48` consumer smoke cover the supported explicit `System.Func` and `System.Action` field/property export forms, while unsupported shapes report deterministic `TS2215` diagnostics before generated C# emission.
 
 - [x] Validate enum and bitwise algebra scope.
