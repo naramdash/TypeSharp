@@ -413,6 +413,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Accepted collection shapes include empty literals, homogeneous element literals, known array/List spreads, imported C# overload arguments selected as array/List targets, imported `params` array contexts, and lambda return bodies whose delegate return type is a known array or `List<T>`.
   - 1.0 object construction includes expected nominal TypeSharp record expressions and nominal record spread, lowering to constructor calls in record parameter order.
   - Imported C# constructor calls, including selected generic constructors and named/optional/params constructor arguments, remain supported through the metadata-backed constructor path with deterministic overload diagnostics before emission.
+  - Generated public ABI snapshots and a C# `net48` consumer smoke cover collection expression array/List return types and spread-parameter shapes.
   - Dictionary literals, set literals, collection-expression constructor or factory arguments beyond the documented array/List and imported overload slices, object initializer syntax, arbitrary class object construction, inferred anonymous object construction, contextual collection inference without a known array/List target, general collection-builder protocols, and record/class/object initializer mutation are post-1.0.
 
 - [x] Confirm runtime helper ABI for language features.

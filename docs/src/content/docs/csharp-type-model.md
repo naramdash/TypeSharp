@@ -176,7 +176,7 @@ If TypeSharp cannot prove a C# constraint, it reports a diagnostic before genera
 
 ## Arrays, Collections, And Tuples
 
-CLR arrays map directly. BCL collections such as `List<T>` and `Dictionary<TKey,TValue>` are imported from .NET namespaces.
+CLR arrays map directly. BCL collections such as `List<T>` and `Dictionary<TKey,TValue>` are imported from .NET namespaces. Generated public ABI snapshots and C# `net48` consumer smokes cover array and `List<T>` collection expression APIs, including spread-parameter shapes.
 
 ```tysh
 import { List } from "System.Collections.Generic"

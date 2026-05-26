@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The named type alias source ABI push `dbe40b62d59596d21d20153b93dc5105e9109b59` proved Docs run `26428908495` and Regression run `26428908509` both completed successfully", languageProgress);
+    AssertContains("The function-valued `System.Action` export ABI push `e84acdd37275c0a30150573cfd3ad724e2a401d1` proved Docs run `26429762324` and Regression run `26429762325` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -466,6 +466,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened function-valued export public ABI evidence locally", languageProgress);
     AssertContains("Deepened named type alias source ABI evidence locally", languageProgress);
     AssertContains("Deepened function-valued `System.Action` export public ABI evidence locally", languageProgress);
+    AssertContains("Deepened collection expression public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16499,6 +16500,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Built-In Type Mapping", csharpTypeModelPage);
     AssertContains("Compile-Time-Only Types", csharpTypeModelPage);
     AssertContains("Generics And Constraints", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover array and `List<T>` collection expression APIs, including spread-parameter shapes", csharpTypeModelPage);
     AssertContains("Function Types And Delegates", csharpTypeModelPage);
     AssertContains("Public Type Decision Matrix", csharpTypeModelPage);
     AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
@@ -33609,6 +33611,28 @@ static void CliBuildCompilesCollectionExpressionLowering()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CollectionExpressions.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with collection expression lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "CollectionExpressions",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/CollectionExpressions.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated collection expression assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Collections.Module", abiSnapshotText);
+        AssertContains("  method static string[] names()", abiSnapshotText);
+        AssertContains("  method static string[] emptyNames()", abiSnapshotText);
+        AssertContains("  method static int[] numbers()", abiSnapshotText);
+        AssertContains("  method static System.Collections.Generic.List`1<string> nameList()", abiSnapshotText);
+        AssertContains("  method static System.Collections.Generic.List`1<string> emptyNameList()", abiSnapshotText);
+        AssertContains("  method static System.Collections.Generic.List`1<int> numberList()", abiSnapshotText);
+        AssertContains("  method static int[] spreadNumbers(int[] extra)", abiSnapshotText);
+        AssertContains("  method static System.Collections.Generic.List`1<int> spreadNumberList(int[] extra, System.Collections.Generic.List`1<int> more)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
