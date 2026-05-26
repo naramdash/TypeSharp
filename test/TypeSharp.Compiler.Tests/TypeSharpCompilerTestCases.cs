@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The record expression public ABI push `dcb03ef8d128e4bc98c4c8c9f8a0ab3f1a09e0cf` proved Docs run `26430853285` and Regression run `26430853286` both completed successfully", languageProgress);
+    AssertContains("The pipeline and composition public ABI push `f808450a6c83254fd285cd1d60b5f8debd8e8833` proved Docs run `26431360045` and Regression run `26431360042` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -469,6 +469,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened collection expression public ABI evidence locally", languageProgress);
     AssertContains("Deepened record expression public ABI evidence locally", languageProgress);
     AssertContains("Deepened pipeline and composition public ABI evidence locally", languageProgress);
+    AssertContains("Deepened async Task and yield iterator public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16536,6 +16537,7 @@ static void DocsSiteContractIsStable()
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover getter-only helper lowering and diagnostics for assignment/collisions", csharpTypeModelPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` and `System.Action` field/property export forms, including explicit function-typed composition values", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover async `Task<T>` and iterator `IEnumerable<T>` public return shapes", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
     AssertContains("System.Nullable<T>", csharpTypeModelPage);
     AssertContains("The 1.0 warning-versus-error policy is fixed", csharpTypeModelPage);
@@ -33526,6 +33528,21 @@ static void CliBuildCompilesAsyncTaskInterop()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "AsyncTaskInterop.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with async Task interop.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "AsyncTaskInterop",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/AsyncTaskInterop.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated async Task assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.AsyncInterop.Module", abiSnapshotText);
+        AssertContains("  method static System.Threading.Tasks.Task`1<string> greeting()", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "AsyncTaskConsumer.csproj", """
@@ -34633,6 +34650,21 @@ static void CliBuildCompilesYieldIteratorLowering()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "YieldIterator.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with yield iterator lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "YieldIterator",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/YieldIterator.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated yield iterator assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Yield.Module", abiSnapshotText);
+        AssertContains("  method static System.Collections.Generic.IEnumerable`1<string> names()", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

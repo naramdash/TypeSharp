@@ -217,6 +217,8 @@ export async fun refreshAsync(id: InvoiceId): Task<InvoiceId> {
 
 Generated code must remain compatible with .NET Framework 4.8. Do not document APIs that require newer runtime-only async features unless they are explicitly preview-gated and backed by compatibility evidence.
 
+Generated public ABI snapshots and C# `net48` consumer smokes cover async `Task<T>` and iterator `IEnumerable<T>` public return shapes.
+
 ## Public Type Decision Matrix
 
 | Need | Prefer | Avoid |
