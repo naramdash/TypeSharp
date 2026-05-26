@@ -358,6 +358,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - 1.0 supports the current local-only subset: type-level union aliases, structural intersection aliases over named shapes, limited `keyof` over known records/shapes, and limited indexed access over known records/shapes and literal key unions.
   - Type alias chains deeper than 16, recursive type alias cycles, local union aliases wider than 64 distinct members, `keyof`/indexed access aliases with more than 64 selected keys, and structural intersection aliases with more than 64 resulting members now report `TS2212` before emission.
   - General mapped, conditional, template-literal, and utility type computation remains post-1.0 until the full evaluator has parser/checker coverage, budget diagnostics, public-boundary diagnostics, and generated `net48` evidence where emitted signatures can change.
+  - Generated public ABI snapshots and C# `net48` consumer smokes cover `keyof` and indexed-access aliases erasing to CLR-visible string, integer, and bool public method shapes without exposing computed alias names.
   - Public ABI leakage for type-level unions, structural shapes, intersections, `keyof`, indexed access, and unresolved computed forms remains covered by `TS2204`.
 
 - [x] Review C# overload and conversion ranking for the 1.0 interop contract.

@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The lock statement public ABI push `7659ef35907e75cd1ea99629873783273123b865` proved Docs run `26432842602` and Regression run `26432842610` both completed successfully", languageProgress);
+    AssertContains("The satisfies expression public ABI erasure push `22c2440d4d4eba941b2c9ea728b9295e9d03196a` proved Docs run `26433307118` and Regression run `26433307096` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -473,6 +473,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened nameof and checked/unchecked public ABI evidence locally", languageProgress);
     AssertContains("Deepened lock statement public ABI evidence locally", languageProgress);
     AssertContains("Deepened satisfies expression public ABI erasure evidence locally", languageProgress);
+    AssertContains("Deepened keyof and indexed access public ABI erasure evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16612,6 +16613,7 @@ static void DocsSiteContractIsStable()
     AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `keyof` and indexed-access aliases erasing to CLR-visible string, integer, and bool public method shapes without exposing computed alias names", featureStatusPage);
     AssertContains("Function return expression mismatches report `TS2228`", featureStatusPage);
     AssertContains("explicit value initializer mismatches report `TS2229`", featureStatusPage);
     AssertContains("simple assignment value mismatches report `TS2230`", featureStatusPage);
@@ -32971,6 +32973,22 @@ static void CliBuildCompilesKeyofTypeOperator()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "KeyofApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with keyof type operator lowering.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "KeyofApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/KeyofApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated keyof assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Keyof.Module", abiSnapshotText);
+        AssertContains("  method static bool Check()", abiSnapshotText);
+        AssertFalse(abiSnapshotText.Contains("CustomerKey", StringComparison.Ordinal), "keyof alias name should not leak into generated public ABI.");
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "KeyofConsumer.csproj", """
@@ -33064,6 +33082,23 @@ static void CliBuildCompilesIndexedAccessTypeOperator()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "IndexedAccessApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with indexed access type lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "IndexedAccessApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/IndexedAccessApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated indexed-access assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.IndexedAccess.Module", abiSnapshotText);
+        AssertContains("  method static bool Check()", abiSnapshotText);
+        AssertFalse(abiSnapshotText.Contains("CustomerName", StringComparison.Ordinal), "Indexed-access alias name should not leak into generated public ABI.");
+        AssertFalse(abiSnapshotText.Contains("CustomerAge", StringComparison.Ordinal), "Indexed-access alias name should not leak into generated public ABI.");
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
