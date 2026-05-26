@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The extension member ABI snapshot push `6801ead92efe1e4b90822805f0742f0152351cf3` proved Docs run `26425009174` and Regression run `26425009172` both completed successfully", languageProgress);
+    AssertContains("The nominal union nested-case ABI snapshot push `d95f20fe995ca3edb47e39d3e7e561751d47edd6` proved Docs run `26425574759` and Regression run `26425574753` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -458,6 +458,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened generated attribute public ABI snapshot evidence locally: the metadata reader now preserves public ABI custom attribute type names for generated types, methods, properties, fields, and events while excluding compiler infrastructure attributes, and public ABI snapshots now assert generated class/interface declaration and member attributes, record/union/delegate declaration attributes, and enum type/member attributes", languageProgress);
     AssertContains("Deepened generated extension member public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened nominal union nested-case public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened generated record member public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16343,7 +16344,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default, generic constraint, and generic optional/default parameter subsets", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
-    AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
+    AssertContains("Backend snapshots, generated public ABI snapshots for constructor/property/equality members, and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
     AssertContains("| `class` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("| `interface` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Class API, class declaration/member attribute metadata snapshots, generic type, generic constraint metadata snapshots, partial declaration, constructor parameter-list, instance/static method members, instance/static value members, instance/static getter-only and get/set property members, instance/static event members, unsupported member diagnostic, generated public ABI snapshots, and C# consumer smokes cover the 1.0 subset", csharpTypeModelPage);
@@ -32498,6 +32499,11 @@ static void CliBuildCompilesImmutableRecordApi()
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
         AssertContains("type Samples.Records.Customer", abiSnapshotText);
         AssertContains("  attribute System.ObsoleteAttribute", abiSnapshotText);
+        AssertContains("  constructor Customer(string Name, int Age)", abiSnapshotText);
+        AssertContains("  property get int Age", abiSnapshotText);
+        AssertContains("  property get string Name", abiSnapshotText);
+        AssertContains("  method bool Equals(object obj)", abiSnapshotText);
+        AssertContains("  method int GetHashCode()", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
