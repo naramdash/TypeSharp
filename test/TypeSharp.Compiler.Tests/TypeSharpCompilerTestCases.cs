@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The staged CLI publish serialization push `0355456357be19e92140ee41229bfb74721a3f66` proved Docs run `26424134321` and Regression run `26424134320` both completed successfully", languageProgress);
+    AssertContains("The record/union/delegate attribute ABI snapshot push `02d5b492e80e80c0827e6703017c670a8d610418` proved Docs run `26424594160` and Regression run `26424594173` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -456,6 +456,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the TypeSharp-authored enum declaration/member attribute ABI evidence locally", languageProgress);
     AssertContains("Deepened generated enum public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated attribute public ABI snapshot evidence locally: the metadata reader now preserves public ABI custom attribute type names for generated types, methods, properties, fields, and events while excluding compiler infrastructure attributes, and public ABI snapshots now assert generated class/interface declaration and member attributes, record/union/delegate declaration attributes, and enum type/member attributes", languageProgress);
+    AssertContains("Deepened generated extension member public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16359,7 +16360,10 @@ static void DocsSiteContractIsStable()
     AssertContains("Named abstract CLR base type with declaration attributes, `partial` when declared, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
     AssertContains("Nominal union API, declaration attribute metadata snapshots, partial modifier preservation, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
     AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
+    AssertContains("| Explicit-receiver extension method | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover explicit non-null receiver methods", csharpTypeModelPage);
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
+    AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover getter-only helper lowering and diagnostics for assignment/collisions", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
     AssertContains("System.Nullable<T>", csharpTypeModelPage);
     AssertContains("The 1.0 warning-versus-error policy is fixed", csharpTypeModelPage);
@@ -34520,6 +34524,21 @@ static void CliBuildCompilesExtensionMethodLowering()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ExtensionMethod.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with extension method lowering.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "ExtensionMethod",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/ExtensionMethod.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated extension method assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Extensions.StringExtensions", abiSnapshotText);
+        AssertContains("  method static extension bool HasPrefix(string text, string prefix)", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "ExtensionConsumer.csproj", """
@@ -34609,6 +34628,21 @@ static void CliBuildCompilesExtensionPropertyLowering()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ExtensionProperty.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with extension property lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "ExtensionProperty",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/ExtensionProperty.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated extension property assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Extensions.StringExtensions", abiSnapshotText);
+        AssertContains("  method static extension int GetWordCount(string text)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
