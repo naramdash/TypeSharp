@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generated optional/default parameter ABI snapshot push `2649d736e0973b731eee5113e6ff2816fb2f9311` proved Docs run `26426923588` and Regression run `26426923570` both completed successfully", languageProgress);
+    AssertContains("The generated generic optional/default parameter ABI snapshot push `94ef3f84dd92bc3ff2b3932fb9f8ff4842aa70d2` proved Docs run `26427393712` and Regression run `26427393711` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -462,6 +462,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened generated delegate Invoke public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated generic optional/default parameter public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened imported C# optional/default parameter metadata evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -4108,6 +4109,8 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(["value", "suffix"], format.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string", "string"], format.Parameters.Select(parameter => parameter.Type).ToArray());
         AssertSequence([false, true], format.Parameters.Select(parameter => parameter.IsOptional).ToArray());
+        AssertEqual<string?>(null, format.Parameters[0].DefaultValue);
+        AssertEqual("\"!\"", format.Parameters[1].DefaultValue);
 
         var legacyFormatter = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyFormatter"), "LegacyFormatter metadata should be present.");
         AssertSequence(["Item", "MutablePrefix", "Prefix"], legacyFormatter.Properties.Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
@@ -4133,6 +4136,8 @@ static void MetadataReaderIndexesLocalPublicSymbols()
         AssertSequence(["prefix", "value"], flexibleConstructor.Parameters.Select(parameter => parameter.Name).ToArray());
         AssertSequence(["string", "string"], flexibleConstructor.Parameters.Select(parameter => parameter.Type).ToArray());
         AssertSequence([false, true], flexibleConstructor.Parameters.Select(parameter => parameter.IsOptional).ToArray());
+        AssertEqual<string?>(null, flexibleConstructor.Parameters[0].DefaultValue);
+        AssertEqual("\"default\"", flexibleConstructor.Parameters[1].DefaultValue);
         AssertSequence([false, false], flexibleConstructor.Parameters.Select(parameter => parameter.IsParams).ToArray());
 
         var legacyParamsConstructor = Require(assembly.Types.SingleOrDefault(type => type.FullName == "Legacy.Tools.LegacyParamsConstructor"), "LegacyParamsConstructor metadata should be present.");
