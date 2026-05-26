@@ -20,11 +20,13 @@ Required:
 - Generated artifacts target `.NET Framework 4.8` by default.
 - Generated assemblies must be referenceable from `net48` projects.
 - TypeSharp runtime/core libraries must load on `.NET Framework 4.8`.
+- The default supported user environment is Windows with .NET Framework 4.8 installed and the targeting/build tools needed to build `net48` projects.
 - Lowering must not depend on APIs that exist only on .NET 5 or later.
 - Generated assemblies and runtime dependencies must behave like ordinary `net48` libraries inside ASP.NET Web Forms, ASP.NET MVC/Web API, WCF service/client, Windows Service, scheduled job, queue, and worker-style hosts.
 - ASP.NET/WCF/worker compatibility must not require migration to ASP.NET Core or modern .NET worker templates.
 - External dependencies require documented `net48` compatibility, license, and deployment impact.
-- Compiler, CLI, and language-server hosts may run on a modern .NET LTS runtime as long as generated outputs and runtime libraries pass `net48` compatibility checks.
+- Compiler, CLI, and language-server hosts may run on a modern .NET runtime as long as generated outputs and runtime libraries pass `net48` compatibility checks.
+- The preferred CLI distribution channel is the `TypeSharp.Tool` NuGet .NET tool. MSI/EXE installers are not required for the primary developer workflow.
 
 Recommended:
 

@@ -5,7 +5,7 @@ description: TypeSharp.toml, source roots, generated output, references, and bui
 
 TypeSharp projects are described by `TypeSharp.toml`. The manifest is the stable contract between the CLI, compiler, generated C# backend, examples, and host projects.
 
-Start from [Install](../install/) for the release CLI, checksum, and matching runtime archive route before editing project references.
+Start from [Install](../install/) for the `TypeSharp.Tool` NuGet tool route and `typesharp runtime-path` before editing project references that need TypeSharp Core/Runtime DLLs.
 
 TypeScript's TSConfig is useful input for project ergonomics, but TypeSharp does not copy JavaScript runtime options. `module`, `moduleResolution`, `target`, `jsx`, `allowJs`, `checkJs`, package `exports`, `paths`, and project references only become TypeSharp features when they have a deterministic `TypeSharp.toml` meaning and a generated `net48` artifact shape.
 
@@ -64,22 +64,22 @@ If local antivirus blocks a generated `.exe`, run `typesharp check` and `typesha
 
 ## References
 
-Framework assemblies are listed under `references.assemblies`. Local C# DLL references and TypeSharp Core/Runtime DLLs from the release runtime archive are listed under `references.paths`.
+Framework assemblies are listed under `references.assemblies`. Local C# DLL references and TypeSharp Core/Runtime DLLs from `typesharp runtime-path` are listed under `references.paths`.
 
 ```toml
 [references]
 assemblies = ["System", "System.Core"]
 paths = [
   "lib/Legacy.Tools.dll",
-  "../typesharp-runtime/lib/net48/TypeSharp.Core.dll",
-  "../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll"
+  "TypeSharp.Tool-runtime-root/TypeSharp.Core.dll",
+  "TypeSharp.Tool-runtime-root/TypeSharp.Runtime.dll"
 ]
 packages = []
 ```
 
-Open the tag-specific GitHub Release notes, confirm the exact asset names, then download `typesharp-runtime-net48-<tag>.zip` from the same release as the CLI and verify it with `SHA256SUMS.txt` before referencing `TypeSharp.Core.dll` or `TypeSharp.Runtime.dll`. Keep those paths explicit for 1.0; the CLI does not auto-discover repository build folders or add hidden runtime references.
+Use `typesharp runtime-path` or `typesharp runtime-path --json` when you need the installed runtime DLL location. The installed `TypeSharp.Tool` package is the runtime DLL distribution; generated outputs still stay `net48`.
 
-The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`; package restore cannot become stable until the [Project Policy](../project-policy/) defines and implements lock files, package source mapping, audit severity, license inventory, checksum/signature, transitive dependency, and offline-cache behavior.
+The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the installed `TypeSharp.Tool` package. The current compiler validates local DLL metadata directly. NuGet package restore through `references.packages` is reserved and currently reports `TS2405`; package restore cannot become stable until the [Project Policy](../project-policy/) defines and implements lock files, package source mapping, audit severity, license inventory, transitive dependency, and offline-cache behavior.
 
 ## Source Aliases
 

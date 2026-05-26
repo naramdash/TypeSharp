@@ -5,6 +5,31 @@ description: Stable TypeSharp syntax documents and language coverage tracking.
 
 This page is the docs canonical grammar ledger. The former repository files under `docs/grammar/` have been removed; grammar updates belong here and in the related canonical reference pages.
 
+For a developer-friendly learning path through the same syntax, use [TypeSharp Syntax Guide](../syntax-guide/). This page stays more ledger-like so it can track parser-visible, bounded, stable, backlog, and rejected syntax precisely.
+
+## Coverage Answer
+
+The docs do not yet explain every TypeSharp grammar form in a beginner-friendly way. They do contain the canonical grammar ledger, reference index, feature status, type-system rules, module rules, lowering rules, and interop rules, but some syntax is still easier to find by reading implementation-ledger prose than by scanning a normal language reference.
+
+This page now uses two layers:
+
+- **Syntax Quick Map** gives a general developer a compact inventory of the current syntax surface.
+- **Detailed Rule Summaries** keeps the precise implementation and `net48` lowering boundaries.
+
+When a feature is parser-visible but not stable or not fully lowered, the docs must say so explicitly. Stable syntax should link to examples, fixtures, smoke tests, or a canonical rule page before it is treated as user-facing language behavior.
+
+## Grammar Coverage Plan
+
+Use this plan when improving grammar docs:
+
+1. Keep [Language Tour](../language-tour/) small and example-led.
+2. Keep this page as the complete syntax ledger.
+3. Keep [Grammar And Language Reference](../reference/) as the scannable index into this page, [Modules And Imports](../modules/), [Type System](../type-system/), [Lowering](../lowering/), and [.NET Interop](../dotnet-interop/).
+4. For every syntax form, document whether it is stable, bounded, parser-visible only, backlog, experimental, or rejected.
+5. For every public API syntax form, state whether it can lower to C# 7.3-compatible `net48` metadata.
+6. For every TypeScript/F#/C# inspired form, document the TypeSharp rule instead of implying source-language compatibility.
+7. Add or update parser fixtures, checker fixtures, backend snapshots, C# consumer smokes, or docs contract tests when a syntax form graduates from planned to stable.
+
 ## Grammar Goals
 
 TypeSharp grammar has to serve language design, compiler implementation, formatter/LSP tooling, and `.NET Framework 4.8` lowering at the same time.
@@ -51,6 +76,141 @@ Stable grammar is not just a design note. It should have syntax examples and par
 | Expressions | Literals, identifiers, parenthesized/grouping expressions, unary logical-not and numeric sign expressions, same-enum value `|`, `&`, `^`, and unary `~` expressions, calls, member/indexer access, blocks, `if`, `match`, lambdas, collection expressions, spread for known arrays/List targets, pipeline, composition, `satisfies`, `nameof`, `checked`, `unchecked`, async/await, nominal record expressions, block-level `yield`, and block-level `lock`. |
 | Patterns | Wildcard, literal, type, union-case, tuple, record/list pattern direction, `not`, pattern `&`, pattern `\|`, and match guards in the stable design surface. |
 | Interop | C# namespace imports, framework/local DLL references through manifest, attributes, named/optional/params/byref argument shapes, capability markers, and public ABI diagnostics. |
+
+## Syntax Quick Map
+
+This section is the general developer inventory. It answers "what syntax exists?" before the detailed rules explain the exact limits.
+
+### File And Module Syntax
+
+| Form | Example | Current Rule |
+| --- | --- | --- |
+| Source file | `Main.tysh` | Files are modules by default. |
+| File namespace | `namespace Company.Billing` | Controls generated C# namespace identity. |
+| Module declaration | `module Billing.Rules` | Parser-visible module syntax; generated identity must stay deterministic. |
+| Named import | `import { Customer } from "./Models"` | Relative source imports and .NET namespace imports are supported in the implemented subset. |
+| Type-only import | `import type { Customer } from "./Models"` | Binds type-space names only. |
+| Namespace import | `import * as Models from "./Models"` | Creates a module or namespace alias. |
+| Import alias | `import { StringBuilder as Builder } from "System.Text"` | Lowers to a C# alias for metadata imports. |
+| Static import | `import static System.Math` | Adds static member candidates. |
+| Open namespace | `open System.Text` | Lowers to generated C# `using` directives for the supported root-level shape. |
+| Local export | `export { helper as publicHelper }` | Exports same-file declarations through explicit names. |
+| Re-export | `export { helper } from "./Helper"` | Relative source re-exports are supported for lowerable function/value/type/module surfaces. |
+| Star re-export | `export * from "./Helper"` | Forwards the currently lowerable source surface. |
+| Ambient declaration | `ambient fun hostValue(): string` | Parsed and checked as external host API shape, omitted from generated C# output. |
+
+### Declaration Syntax
+
+| Form | Example | Current Rule |
+| --- | --- | --- |
+| Immutable value | `let name = "Ada"` | Local immutable binding. |
+| Mutable value | `let mut count = 0` | Required for assignment to local identifiers. |
+| Literal constant | `literal Version = "1.0"` | Compile-time constant spelling; no `const` alias. |
+| Function | `fun label(id: int): string = id.ToString()` | Expression or block body. Exported/public APIs should use explicit types. |
+| Async function | `async fun load(): Task<string> { ... }` | Lowers to .NET `Task` or `Task<T>`. |
+| `params` parameter | `fun join(params parts: string[]): string` | Final-array parameter shape for the implemented direct-call and pipeline subset. |
+| Default parameter | `fun page(size: int = 20): int` | Trailing literal defaults only, with documented generic and `params` limits. |
+| Record | `public record Customer(Name: string)` | Nominal immutable public data shape. |
+| Class | `public class Service { ... }` | MVP public class/member subset only. |
+| Interface | `public interface IRule { fun validate(value: string): bool }` | MVP public interface/member subset only. |
+| Delegate | `public delegate Transform(value: string): string` | Named CLR delegate shape. |
+| Event | `public event Changed: ChangedHandler` | Supported on class/interface MVP member surfaces with named delegate types. |
+| Enum | `public enum Permission : byte { Read = 1 }` | Bounded enum declarations, values, aliases, bitwise enum expressions, and match exhaustiveness. |
+| Nominal union | `public union Result { Ok(string) Error(string) }` | Closed public domain alternatives that lower to CLR-visible metadata. |
+| Type alias | `type Id = string` | Source-level alias; public ABI rules depend on the target type. |
+| Structural type alias | `type Named = { Name: string }` | Compile-time-only unless wrapped in a nominal public type. |
+| Partial type | `public partial record Customer(Name: string)` | Implemented for generated C# type declarations: modules, records, unions, classes, and interfaces. |
+| Extension method | `public extension string { public fun HasPrefix(text: string, prefix: string): bool = text.StartsWith(prefix) }` | Explicit receiver methods lower to C# extension methods for the supported shape. |
+| Extension property | `public extension string text { public let WordCount: int = text.Length }` | Getter-only helper-method lowering for the bounded shape. |
+| Attribute | `[Obsolete("message")] public record Old()` | Supported on documented declaration/member surfaces; broad target validation is still bounded. |
+| Capability marker | `dynamic fun call(value: dynamic): dynamic` | `dynamic`, `reflect`, `interop`, and `unsafe` boundaries must be explicit. |
+
+### Type Syntax
+
+| Form | Example | Current Rule |
+| --- | --- | --- |
+| Primitive type | `int`, `string`, `bool`, `decimal` | Maps to CLR-friendly types. |
+| Nullable type | `string?`, `int?` | Reference-like nullability contract or `Nullable<T>` for value types. |
+| Array | `string[]` | CLR array shape. |
+| Generic type | `List<string>` | Supported for named CLR-visible generic shapes and bounded inference. |
+| Function type | `string -> int` | Public use must lower to `Func`/`Action` or a named delegate. |
+| Tuple type | `(string, int)` | Parser-visible type shape; public ABI support remains bounded by lowering policy. |
+| Structural shape | `{ Name: string }` | Local compile-time proof shape. |
+| Intersection | `Named & Aged` | Local structural composition only. |
+| Type-level union | `string | int` | Local narrowing type; not a direct public CLR signature. |
+| Literal type | `"draft"`, `42`, `true` | Used for local narrowing and finite unions. |
+| `unknown` | `unknown` | Safe boundary; access requires narrowing or proof. |
+| `dynamic` | `dynamic` | Explicit compatibility escape behind capability rules. |
+| `keyof` | `keyof Customer` | Limited local key derivation for known records and shapes. |
+| Indexed access | `Customer["Name"]` | Limited local member type lookup. |
+
+### Expression Syntax
+
+| Form | Example | Current Rule |
+| --- | --- | --- |
+| Literal | `"Ada"`, `1`, `true`, `null` | Literal checking and lowering for supported primitive values. |
+| Call | `format(value)` | Direct TypeSharp calls and imported C# calls have separate validation paths. |
+| Named argument | `format(value: "Ada")` | Supported for TypeSharp-owned direct calls in the bounded subset and imported C# metadata calls. |
+| Member access | `customer.Name` | Nominal metadata/member lookup first, structural proof and extension properties later. |
+| Indexer access | `items[0]` | Arrays and imported C# indexers in the supported subset. |
+| Null-conditional access | `legacy?.Name`, `legacy?[0]` | Parser-visible; stable semantic support is intentionally bounded to imported C# targets. |
+| Block | `{ let x = 1; x }` | Final expression can produce the block value. |
+| If expression | `if ok { value } else { fallback }` | Value-producing when branch values are compatible. |
+| Match expression | `match state { Draft => "Draft" }` | Exhaustiveness for known bounded domains. |
+| Lambda | `text => text.Length` | Target delegate or annotated function type should make public metadata clear. |
+| Collection | `[1, 2, 3]` | Stable for known array and `List<T>` targets. |
+| Collection spread | `[...left, ...right]` | Known arrays and `List<T>` targets only. |
+| Record expression | `{ Name: "Ada" }` | Requires an expected nominal record type. |
+| Record spread/update | `{ ...customer, Age: 42 }`, `customer with { Age: 42 }` | Nominal record spread/update in the implemented subset. |
+| Pipeline | `value |> normalize` | First-argument pipeline for known TypeSharp-declared targets. |
+| Composition | `parse >> format` | Bounded unary function composition. |
+| `satisfies` | `customer satisfies Named` | Compile-time proof that erases to the left expression. |
+| `nameof` | `nameof(Customer.Name)` | C#-style name reference; unbound generic type names lower to constants. |
+| `checked`/`unchecked` | `checked(value + 1)` | C# overflow-context lowering. |
+| `await` | `await load()` | Async function body expression shape. |
+| `yield` | `yield "Ada"` | Block-level iterator yield with explicit CLR enumerable return. |
+| `lock` | `lock gate { ... }` | Block-level monitor lock over a known non-null reference gate. |
+| Assignment | `count = count + 1` | Local identifiers require `let mut`; imported C# assignment is metadata-backed. |
+| Compound assignment | `count += 1`, `count *= 2`, `count >>>= 1` | Supported only for documented local/imported target and operand subsets. |
+| Bitwise/logical unsigned operators | `a | b`, `a << 1`, `a >>> 1` | Bounded enum, primitive integral, and bool rules; no C# 11+ syntax emitted. |
+
+### Pattern Syntax
+
+| Form | Example | Current Rule |
+| --- | --- | --- |
+| Wildcard | `_ => value` | Covers remaining known space when allowed. |
+| Literal pattern | `"draft" => value` | Stable for local literal unions and supported literal domains. |
+| Bool pattern | `true => value` | Exhaustiveness over `bool`. |
+| Union case pattern | `Found(customer) => customer.Name` | Nominal union case matching with bounded payload capture. |
+| Enum member pattern | `Permission.Read => value` | TypeSharp-owned and named imported C# enum members. |
+| Type pattern | `value: string => value` | Local type-level union narrowing. |
+| Guard | `Found(c) when c.Age > 0 => c.Name` | Guard checked in narrowed scope; does not prove exhaustiveness by itself. |
+| Record/list/tuple pattern direction | `{ Name }`, `[head, ...tail]`, `(a, b)` | Parser/design surface; executable support remains narrower than the grammar direction. |
+| Pattern algebra | `not p`, `p & q`, `p | q` | Design surface; richer executable algebra remains backlog. |
+
+### Interop Syntax
+
+| Form | Example | Current Rule |
+| --- | --- | --- |
+| Manifest assembly reference | `assemblies = ["System"]` | Lives in `TypeSharp.toml`, not source syntax. |
+| Manifest DLL path | `paths = ["lib/Legacy.dll"]` | Explicit `net48` compatible local DLL reference. |
+| C# namespace import | `import { Regex } from "System.Text.RegularExpressions"` | Metadata namespace lookup through string-literal specifier. |
+| Byref argument | `ref value`, `out value`, `in value` | Supported through metadata-backed C# interop checks. |
+| Attribute target | `[method: SomeAttribute]` | .NET-style attribute target names are recognized in attribute syntax. |
+| Public ABI boundary | `export fun f(value: Customer): Result` | Must lower to C#-understandable CLR metadata. |
+
+## Known Grammar Documentation Gaps
+
+These are documentation gaps, not necessarily implementation gaps:
+
+| Gap | Required Follow-Up |
+| --- | --- |
+| Some planned parser-visible forms are listed beside stable forms. | Keep "parser/design surface" wording next to forms that are not fully checked/lowered. |
+| Class and interface member examples are sparse. | Add more examples when the member-body analysis and public ABI docs settle. |
+| Pattern grammar is broader than executable pattern support. | Keep stable match examples focused on union, enum, bool, and local type-level union cases. |
+| Advanced type operators are directional only. | Do not document mapped, conditional, template-literal, or utility types as stable until evaluator-budget implementation lands. |
+| Null-conditional assignment support is interop-heavy. | Keep examples tied to imported C# metadata targets instead of TypeSharp-owned members. |
+| Generated C# shape is sometimes explained away from syntax pages. | Link back to [Lowering](../lowering/) whenever a syntax form's meaning depends on generated `net48` output. |
 
 ## Lexical Reference
 

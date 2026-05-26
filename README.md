@@ -25,9 +25,16 @@ The compiler and tools can run on a modern .NET SDK. The generated user-facing a
 
 ## Install
 
-Preview release artifacts are published from tagged release builds to GitHub Releases. The CLI asset is `typesharp-cli-dotnet-<tag>.zip`, includes a Windows `typesharp.cmd` wrapper, and is verified with `SHA256SUMS.txt`. The runtime asset is `typesharp-runtime-net48-<tag>.zip` and contains `TypeSharp.Core.dll` plus `TypeSharp.Runtime.dll`. The VS Code extension asset is `typesharp-vscode-<tag>.vsix` and is covered by the same checksum manifest. The tag-specific GitHub Release notes are the source of truth for the release channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.
+The normal TypeSharp CLI install path is a NuGet .NET global tool:
 
-Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page for the release download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. The source-built commands below are for contributors changing TypeSharp itself, not the normal install path.
+```powershell
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+typesharp version
+```
+
+The CLI tool runs on modern .NET. Generated user artifacts, generated projects, `TypeSharp.Core`, and `TypeSharp.Runtime` remain `net48`. The expected user environment is Windows with .NET Framework 4.8, the .NET Framework targeting/build tools needed for `net48`, and a modern .NET SDK capable of installing and running the TypeSharp tool.
+
+The NuGet package is the CLI distribution and the runtime DLL distribution. Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page for the `dotnet tool`, project creation, dependency, build, and runtime-library flow. The source-built commands below are for contributors changing TypeSharp itself, not the normal install path.
 
 ## Contributor Source-Built Development Path
 
@@ -35,7 +42,7 @@ Use this path only when you are editing this repository or validating a local co
 
 Prerequisites:
 
-- Windows with .NET Framework 4.8 targeting support
+- Windows with .NET Framework 4.8 and the targeting/build tools needed for `net48`
 - a modern .NET SDK for building the compiler and CLI
 - Git
 

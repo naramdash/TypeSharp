@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Common TypeSharp setup, build, diagnostics, and generated executable issues.
 ---
 
-Start from [Install](../install/) when setup problems involve the release CLI, checksum manifest, runtime archive, or wrapper/PATH configuration.
+Start from [Install](../install/) when setup problems involve `TypeSharp.Tool`, NuGet tool sources, `typesharp runtime-path`, generated `net48` output, or PATH configuration.
 
 ## The CLI Cannot Find A Manifest
 
@@ -15,15 +15,23 @@ typesharp check .\path\to\TypeSharp.toml
 
 Related diagnostic: `TS0100`.
 
-## The Downloaded CLI Does Not Start
+## The Tool Does Not Start
 
-The release CLI archive is a framework-dependent modern .NET host. Generated projects still target `.NET Framework 4.8`; the CLI host target and generated artifact target are separate.
+`TypeSharp.Tool` is a NuGet .NET global tool whose host target is separate from generated artifacts. Generated projects still target `.NET Framework 4.8`.
 
-Check that `dotnet` is available, then run the wrapper directly from the extracted release folder:
+Check that `dotnet` and the global tool path are available, then install or update the tool:
 
 ```powershell
 dotnet --info
-& "$installRoot/typesharp.cmd" version
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+typesharp version
+```
+
+If the tool is already installed, update it to the release version from [Install](../install/):
+
+```powershell
+dotnet tool update --global TypeSharp.Tool --version 0.1.0-preview.5
+typesharp version --json
 ```
 
 If the host runtime is missing, install the .NET runtime or SDK line named by the release notes and `typesharp version` metadata. Do not change generated project targets away from `net48` to fix a CLI host prerequisite.
@@ -91,19 +99,19 @@ TypeSharp only grants source-level visibility through direct project references;
 
 ## TypeSharp Core Or Runtime DLLs Are Missing
 
-Generated projects that expose `Option<T>`, `Result<T,E>`, `Unit`, nominal unions, pattern helpers, or async runtime helpers need the matching release runtime archive when they are built, deployed, or referenced from C#.
+Generated projects that expose `Option<T>`, `Result<T,E>`, `Unit`, nominal unions, pattern helpers, or async runtime helpers need the matching TypeSharp Core/Runtime DLLs when they are built, deployed, or referenced from C#.
 
-Open the tag-specific GitHub Release notes, confirm the exact asset names, download the same-tag `typesharp-runtime-net48-<tag>.zip`, verify it with `SHA256SUMS.txt`, and reference the extracted DLLs through `references.paths`:
+Use `typesharp runtime-path` to locate the DLLs bundled with the installed `TypeSharp.Tool` package, then reference those paths through `references.paths`:
 
 ```toml
 [references]
 paths = [
-  "../typesharp-runtime/lib/net48/TypeSharp.Core.dll",
-  "../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll"
+  "TypeSharp.Tool-runtime-root/TypeSharp.Core.dll",
+  "TypeSharp.Tool-runtime-root/TypeSharp.Runtime.dll"
 ]
 ```
 
-If a C# `net48` consumer references a generated TypeSharp library, reference the generated DLL plus the same `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` from the runtime archive. Keep the runtime archive tag and Runtime ABI aligned with the CLI release notes.
+If a C# `net48` consumer references a generated TypeSharp library, reference the generated DLL plus the same `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` from the installed tool package. Keep the runtime ABI aligned with the CLI version.
 
 ## A NuGet Package Reference Fails
 

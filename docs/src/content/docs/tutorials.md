@@ -5,7 +5,7 @@ description: Sequential TypeSharp learning paths tied to runnable examples and s
 
 These tutorials point at runnable examples that are checked by the repository smoke suite. Copy the commands from each example README when you want the exact verified flow.
 
-Start by opening the tag-specific GitHub Release notes, confirming the exact asset names, and installing `typesharp-cli-dotnet-<tag>.zip` with the `SHA256SUMS.txt` checksum flow on [Install](../install/). Use the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest when a tutorial references TypeSharp Core/Runtime DLLs. Tutorial commands assume the release-installed `typesharp` command from Install is on `PATH`.
+Start from [Install](../install/): install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep the generated target on `net48`. When a tutorial references TypeSharp Core/Runtime DLLs, use `typesharp runtime-path`. Tutorial commands assume `typesharp` is on `PATH`.
 
 ## 1. Hello Project
 
@@ -83,3 +83,12 @@ Use:
 - [`examples/runnable/host-worker`](https://github.com/naramdash/TypeSharp/tree/main/examples/runnable/host-worker)
 
 Status: host reference shape is smoke-tested. Project template generation and packaging automation remain backlog.
+
+## Background Translation Guides
+
+Use these short guides before the runnable tutorials when you already know another language:
+
+- [TypeSharp Syntax Guide](../syntax-guide/) teaches TypeSharp grammar in the order developers usually learn it.
+- [From TypeScript](../from-typescript/) explains how modules, structural shapes, unions, `unknown`, and TSConfig expectations change when the target is generated `net48` CLR metadata.
+- [From C#](../from-csharp/) explains the generated artifact flow, public ABI shape, C# local DLL references, and runtime DLL deployment.
+- [From F#](../from-fsharp/) explains how records, nominal unions, `Option<T>`, `Result<T,E>`, match, pipelines, composition, and async map to TypeSharp.

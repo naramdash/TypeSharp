@@ -5,7 +5,7 @@ description: Diagnostic codes, metadata, JSON shape, and explanation surface.
 
 This is the canonical docs ledger for TypeSharp diagnostic code ranges, descriptor metadata, explanation output, JSON/text shape, and golden diagnostic fixture policy.
 
-Command examples assume the release install route from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when reproducing diagnostics that involve TypeSharp Core/Runtime DLL references.
+Command examples assume the tool install route from [Install](../install/): install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep generated artifacts on `net48`. When diagnostics involve TypeSharp Core/Runtime DLL references, use `typesharp runtime-path` to locate the matching DLLs bundled with the installed tool.
 
 Diagnostics are shared by:
 

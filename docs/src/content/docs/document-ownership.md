@@ -34,6 +34,15 @@ Former operational bridge files below are no longer present. The target owner is
 | `docs/migration-guide.md` | [Migration](../migration/) |
 | `docs/architecture.md`, `docs/dependencies.md`, `docs/framework-targeting.md`, `docs/release.md`, `docs/regression-testing.md`, `docs/feature-review.md`, `docs/parser-fixtures.md`, `docs/references.md` | [Project Policy](../project-policy/), [Project Configuration](../project-configuration/), [Advanced Topics](../advanced/) |
 
+Audience translation guides live directly in this docs collection:
+
+| Audience | Canonical Owner |
+| --- | --- |
+| General developer grammar learning | [TypeSharp Syntax Guide](../syntax-guide/) |
+| TypeScript developers | [From TypeScript](../from-typescript/) |
+| C# and .NET Framework developers | [From C#](../from-csharp/) |
+| F# and functional programming developers | [From F#](../from-fsharp/) |
+
 Raw benchmark artifacts live under `docs/research/`. Source and runnable samples live under root `examples/`.
 
 ## Repository-Local Notes

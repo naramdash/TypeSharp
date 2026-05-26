@@ -53,6 +53,8 @@ Use this page for integrated web navigation. The detailed ownership matrix lives
 - [CLI](../cli/): command surface, project workflow, formatting convention, diagnostics output, exit codes, and source discovery.
 - [VS Code And LSP](../vscode-lsp/): extension, language server, formatting, diagnostics, hover, definition, and completion workflow.
 - [Diagnostics](../diagnostics/): diagnostic code ranges, descriptor metadata, JSON/text shape, and explanation surface.
+- [TypeSharp Syntax Guide](../syntax-guide/): developer-friendly grammar learning guide that complements the canonical grammar ledger.
+- [From TypeScript](../from-typescript/), [From C#](../from-csharp/), and [From F#](../from-fsharp/): background-specific translation guides for developers adopting TypeSharp from existing language ecosystems.
 - [Migration](../migration/): incremental .NET Framework/C# adoption guide.
 - [Examples](../examples/), [Tutorials](../tutorials/), [Cookbook](../cookbook/), and [Writing Guide](../writing-guide/): runnable examples, learning paths, recipes, and authoring rules for future docs changes.
 

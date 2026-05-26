@@ -101,21 +101,18 @@ function assertNoRepoLocalCliCommand(value, label) {
   }
 }
 
-function assertNoHiddenGlobalDotnetToolInstall(value, label) {
-  if (value.includes('dotnet tool install')) {
-    throw new Error(`Rendered ${label} page must not include hidden global .NET tool-install guidance.`);
-  }
+function assertDotnetToolInstall(value, label) {
+  assertContains(value, 'dotnet tool install --global TypeSharp.Tool', `Rendered ${label} page must document the TypeSharp.Tool global tool install.`);
 }
 
-function assertRenderedReleaseNotesRoute(value, label) {
-  assertContains(value, 'GitHub Release notes', `Rendered ${label} page must point to GitHub Release notes.`);
-  assertContains(value, 'exact asset names', `Rendered ${label} page must tell users to confirm exact asset names.`);
+function assertRenderedToolRoute(value, label) {
+  assertContains(value, 'TypeSharp.Tool', `Rendered ${label} page must name the CLI tool package.`);
+  assertDotnetToolInstall(value, label);
 }
 
 function assertRenderedRuntimeRoute(value, label) {
-  assertRenderedReleaseNotesRoute(value, label);
-  assertContains(value, 'typesharp-runtime-net48-', `Rendered ${label} page must name the runtime release asset.`);
-  assertContains(value, 'SHA256SUMS.txt', `Rendered ${label} page must name the checksum manifest.`);
+  assertContains(value, 'typesharp runtime-path', `Rendered ${label} page must document the packaged runtime-path command.`);
+  assertContains(value, 'TypeSharp.Tool', `Rendered ${label} page must name the installed tool package that carries runtime DLLs.`);
 }
 
 function assertRenderedPublicCanonical(value, path, label, allowStaleHostText = false) {
@@ -290,20 +287,10 @@ assertContainsAny(index, homeInstallHrefCandidates, 'Rendered docs home must lin
 assertContainsAny(index, homeStartHereHrefCandidates, 'Rendered docs home must link to Start Here.');
 assertAnyBefore(index, homeInstallHrefCandidates, homeStartHereHrefCandidates, 'Rendered docs home must expose Install before Start Here.');
 assertAnyBefore(index, homeInstallSentenceCandidates, '<h2 id="contributor-source-built-development-path">', 'Rendered docs home must keep the release install route before the contributor development path.');
-assertRenderedReleaseNotesRoute(index, 'docs home');
-assertContains(index, 'typesharp-cli-dotnet-', 'Rendered docs home must name the CLI release asset.');
-assertContains(index, 'typesharp-runtime-net48-', 'Rendered docs home must name the runtime release asset.');
-assertContains(index, 'typesharp-vscode-', 'Rendered docs home must name the VSIX release asset.');
-assertContains(index, 'SHA256SUMS.txt', 'Rendered docs home must name the checksum manifest.');
-assertNoHiddenGlobalDotnetToolInstall(index, 'docs home');
-assertContains(install, 'naramdash/TypeSharp', 'Rendered Install page must name the official GitHub repository.');
-assertContains(install, 'https://github.com/$repo/releases/download/$version', 'Rendered Install page must show the GitHub Release download URL shape.');
-assertContains(install, 'https://github.com/$repo/releases/tag/$version', 'Rendered Install page must show the GitHub Release tag URL shape.');
-assertRenderedReleaseNotesRoute(install, 'Install');
-assertContains(install, 'typesharp-cli-dotnet-', 'Rendered Install page must name the CLI release asset.');
-assertContains(install, 'typesharp-runtime-net48-', 'Rendered Install page must name the runtime release asset.');
-assertContains(install, 'SHA256SUMS.txt', 'Rendered Install page must name the checksum manifest.');
-assertNoHiddenGlobalDotnetToolInstall(install, 'Install');
+assertRenderedToolRoute(index, 'docs home');
+assertContains(index, 'typesharp runtime-path', 'Rendered docs home must name the runtime-path command.');
+assertRenderedToolRoute(install, 'Install');
+assertRenderedRuntimeRoute(install, 'Install');
 if (releaseTag) {
   if (!/^v\d+\.\d+\.\d+(-preview\.\d+)?$/.test(releaseTag)) {
     throw new Error(`RELEASE_TAG must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-preview.N: ${releaseTag}`);
@@ -311,62 +298,48 @@ if (releaseTag) {
 
   assertContains(
     install,
-    `&#x22;${releaseTag}&#x22;`,
-    'Rendered Install page must set the release download version to RELEASE_TAG.'
-  );
-  assertContains(
-    install,
     `Build metadata ${releaseTag}`,
     'Rendered Install page version sample must show RELEASE_TAG as build metadata.'
   );
 }
 assertContainsAny(startHere, pageInstallHrefCandidates, 'Rendered Start Here page must link to Install.');
-assertRenderedReleaseNotesRoute(startHere, 'Start Here');
-assertContains(startHere, 'typesharp-cli-dotnet-', 'Rendered Start Here page must name the CLI release asset.');
-assertContains(startHere, 'typesharp-runtime-net48-', 'Rendered Start Here page must name the runtime release asset.');
-assertContains(startHere, 'SHA256SUMS.txt', 'Rendered Start Here page must name the checksum manifest.');
-assertNoHiddenGlobalDotnetToolInstall(startHere, 'Start Here');
+assertRenderedToolRoute(startHere, 'Start Here');
+assertContains(startHere, 'typesharp runtime-path', 'Rendered Start Here page must name the runtime-path command.');
 assertBefore(startHere, '<h2 id="install-first">', '<h2 id="contributor-source-built-development-path">', 'Rendered Start Here page must keep Install First before the contributor development path.');
 if (startHere.includes('dotnet cli\\TypeSharp.Cli')) {
   assertAnyBefore(startHere, pageInstallHrefCandidates, 'dotnet cli\\TypeSharp.Cli\\bin\\Debug\\net10.0\\typesharp.dll', 'Rendered Start Here page must keep Install before repo-local fallback commands.');
 }
 assertContainsAny(tutorials, pageInstallHrefCandidates, 'Rendered Tutorials page must link to Install.');
-assertRenderedReleaseNotesRoute(tutorials, 'Tutorials');
-assertContains(tutorials, 'typesharp-cli-dotnet-', 'Rendered Tutorials page must name the CLI release asset.');
-assertContains(tutorials, 'typesharp-runtime-net48-', 'Rendered Tutorials page must name the runtime release asset.');
-assertContains(tutorials, 'SHA256SUMS.txt', 'Rendered Tutorials page must name the checksum manifest.');
-assertNoHiddenGlobalDotnetToolInstall(tutorials, 'Tutorials');
-assertBefore(tutorials, 'typesharp-cli-dotnet-', 'typesharp new console', 'Rendered Tutorials page must keep the release install route before first project commands.');
+assertRenderedToolRoute(tutorials, 'Tutorials');
+assertContains(tutorials, 'typesharp runtime-path', 'Rendered Tutorials page must name the runtime-path command.');
+assertBefore(tutorials, 'TypeSharp.Tool', 'typesharp new console', 'Rendered Tutorials page must keep the tool install route before first project commands.');
 for (const [label, page] of broaderReleaseRoutes) {
   assertContainsAny(page, pageInstallHrefCandidates, `Rendered ${label} page must link to Install.`);
   assertRenderedRuntimeRoute(page, label);
-  assertContains(page, 'typesharp-cli-dotnet-', `Rendered ${label} page must name the CLI release asset.`);
+  assertContains(page, 'TypeSharp.Tool', `Rendered ${label} page must name the CLI tool package.`);
 }
 assertRenderedRuntimeRoute(cli, 'CLI');
-assertContains(cli, 'typesharp-cli-dotnet-', 'Rendered CLI page must name the CLI release asset.');
+assertContains(cli, 'TypeSharp.Tool', 'Rendered CLI page must name the CLI tool package.');
 assertContainsAny(cli, pageInstallHrefCandidates, 'Rendered CLI page must link to Install.');
 assertRenderedRuntimeRoute(projectConfiguration, 'Project Configuration');
 assertContainsAny(projectConfiguration, pageInstallHrefCandidates, 'Rendered Project Configuration page must link to Install.');
-assertContains(projectConfiguration, '../typesharp-runtime/lib/net48/TypeSharp.Core.dll', 'Rendered Project Configuration page must show runtime Core DLL paths from the extracted runtime archive.');
-assertContains(projectConfiguration, '../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll', 'Rendered Project Configuration page must show runtime helper DLL paths from the extracted runtime archive.');
+assertContains(projectConfiguration, 'TypeSharp.Tool-runtime-root/TypeSharp.Core.dll', 'Rendered Project Configuration page must show runtime Core DLL paths from the installed tool package.');
+assertContains(projectConfiguration, 'TypeSharp.Tool-runtime-root/TypeSharp.Runtime.dll', 'Rendered Project Configuration page must show runtime helper DLL paths from the installed tool package.');
 assertRenderedRuntimeRoute(runtimeArtifacts, 'Runtime Artifacts');
 assertContainsAny(runtimeArtifacts, pageInstallHrefCandidates, 'Rendered Runtime Artifacts page must link to Install.');
-assertContains(runtimeArtifacts, 'typesharp-cli-dotnet-', 'Rendered Runtime Artifacts page must name the CLI release asset.');
+assertContains(runtimeArtifacts, 'TypeSharp.Tool', 'Rendered Runtime Artifacts page must name the CLI tool package.');
 assertContains(runtimeArtifacts, 'generated/bin/', 'Rendered Runtime Artifacts page must show generated net48 output paths.');
-assertContains(runtimeArtifacts, '../typesharp-runtime/lib/net48/TypeSharp.Core.dll', 'Rendered Runtime Artifacts page must show runtime Core DLL paths from the extracted runtime archive.');
-assertContains(runtimeArtifacts, '../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll', 'Rendered Runtime Artifacts page must show runtime helper DLL paths from the extracted runtime archive.');
-assertRenderedReleaseNotesRoute(vscodeLsp, 'VS Code And LSP');
+assertContains(runtimeArtifacts, 'TypeSharp.Tool-runtime-root/TypeSharp.Core.dll', 'Rendered Runtime Artifacts page must show runtime Core DLL paths from the installed tool package.');
+assertContains(runtimeArtifacts, 'TypeSharp.Tool-runtime-root/TypeSharp.Runtime.dll', 'Rendered Runtime Artifacts page must show runtime helper DLL paths from the installed tool package.');
 assertContainsAny(vscodeLsp, pageInstallHrefCandidates, 'Rendered VS Code And LSP page must link to Install.');
-assertContains(vscodeLsp, 'typesharp-vscode-', 'Rendered VS Code And LSP page must name the VSIX release asset.');
-assertContains(vscodeLsp, 'SHA256SUMS.txt', 'Rendered VS Code And LSP page must name the checksum manifest.');
+assertContains(vscodeLsp, 'code --install-extension', 'Rendered VS Code And LSP page must document VSIX installation.');
 assertRenderedRuntimeRoute(migration, 'Migration');
 assertContainsAny(migration, pageInstallHrefCandidates, 'Rendered Migration page must link to Install.');
 assertRenderedRuntimeRoute(troubleshooting, 'Troubleshooting');
 assertContainsAny(troubleshooting, pageInstallHrefCandidates, 'Rendered Troubleshooting page must link to Install.');
 assertContains(troubleshooting, 'generated/bin/', 'Rendered Troubleshooting page must show generated net48 output paths.');
-assertContains(troubleshooting, '../typesharp-runtime/lib/net48/TypeSharp.Core.dll', 'Rendered Troubleshooting page must show runtime Core DLL paths from the extracted runtime archive.');
-assertContains(troubleshooting, '../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll', 'Rendered Troubleshooting page must show runtime helper DLL paths from the extracted runtime archive.');
+assertContains(troubleshooting, 'TypeSharp.Tool-runtime-root/TypeSharp.Core.dll', 'Rendered Troubleshooting page must show runtime Core DLL paths from the installed tool package.');
+assertContains(troubleshooting, 'TypeSharp.Tool-runtime-root/TypeSharp.Runtime.dll', 'Rendered Troubleshooting page must show runtime helper DLL paths from the installed tool package.');
 for (const [label, page] of commandPolicyRoutes) {
   assertNoRepoLocalCliCommand(page, label);
-  assertNoHiddenGlobalDotnetToolInstall(page, label);
 }

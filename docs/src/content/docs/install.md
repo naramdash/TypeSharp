@@ -1,87 +1,32 @@
 ---
 title: Install
-description: Download, verify, install, and run the TypeSharp CLI release artifact.
+description: Install and run the TypeSharp CLI as a NuGet .NET tool.
 ---
 
-TypeSharp preview releases use GitHub Release assets from this repository. The CLI archive is a framework-dependent modern .NET host; generated projects and TypeSharp runtime libraries remain `net48`.
+TypeSharp's CLI distribution is the `TypeSharp.Tool` NuGet .NET global tool. The tool runs on modern .NET; generated projects, generated assemblies, `TypeSharp.Core`, and `TypeSharp.Runtime` remain `net48`.
+
+The supported user environment is Windows with .NET Framework 4.8 installed, the targeting/build tools needed for `net48` projects, and a modern .NET SDK that can install and run .NET tools.
 
 Contributor source builds are not part of the normal install path. Use [Start Here](../start-here/) only when you are changing TypeSharp itself.
 
-## Download The CLI
+## Install The Tool
 
-Choose a release tag and download the CLI zip plus checksum manifest.
-
-```powershell
-$version = "v0.1.0-preview.4"
-$repo = "naramdash/TypeSharp"
-$release = "https://github.com/$repo/releases/download/$version"
-$releasePage = "https://github.com/$repo/releases/tag/$version"
-$installRoot = Join-Path $env:LOCALAPPDATA "TypeSharp\$version"
-$downloadRoot = Join-Path $env:TEMP "typesharp-$version"
-
-New-Item -ItemType Directory -Force $installRoot, $downloadRoot | Out-Null
-
-Invoke-WebRequest "$release/typesharp-cli-dotnet-$version.zip" -OutFile "$downloadRoot/typesharp-cli-dotnet-$version.zip"
-Invoke-WebRequest "$release/SHA256SUMS.txt" -OutFile "$downloadRoot/SHA256SUMS.txt"
-```
-
-Open `$releasePage` to read the GitHub Release notes, runtime ABI, build metadata, source revision, rollback guidance, and exact asset names to verify for the same tag.
-
-## Verify The Download
-
-Check the SHA-256 hash before extracting.
+Install the versioned CLI package:
 
 ```powershell
-function Assert-ReleaseAssetHash([string] $assetName) {
-  $assetPath = Join-Path $downloadRoot $assetName
-  $entries = Get-Content -LiteralPath "$downloadRoot/SHA256SUMS.txt" | ForEach-Object {
-    $parts = $_ -split '\s+', 2
-    if ($parts.Count -ne 2 -or $parts[0] -notmatch '^[0-9a-f]{64}$') {
-      throw "Malformed SHA256SUMS.txt entry: $_"
-    }
-
-    [pscustomobject]@{
-      Hash = $parts[0].ToLowerInvariant()
-      Name = $parts[1].Trim()
-    }
-  }
-
-  $matches = @($entries | Where-Object { $_.Name -eq $assetName })
-  if ($matches.Count -eq 0) {
-    throw "SHA256SUMS.txt does not list $assetName."
-  }
-
-  if ($matches.Count -gt 1) {
-    throw "SHA256SUMS.txt lists $assetName more than once."
-  }
-
-  $expected = $matches[0].Hash
-  $actual = (Get-FileHash -Algorithm SHA256 $assetPath).Hash.ToLowerInvariant()
-
-  if ($actual -ne $expected) {
-    throw "TypeSharp checksum mismatch for $assetName."
-  }
-}
-
-Assert-ReleaseAssetHash "typesharp-cli-dotnet-$version.zip"
-```
-
-Preview releases publish `SHA256SUMS.txt` as the artifact integrity gate. Detached signatures and Authenticode signing are not published yet; when signing is added, the release notes will name the signing mechanism and signer identity. Until then, install only assets whose names match the release notes and whose hashes match `SHA256SUMS.txt`.
-
-## Install The Command
-
-Extract the archive. The CLI zip contains `typesharp.dll` and a Windows `typesharp.cmd` wrapper that runs it through `dotnet`.
-
-```powershell
-Expand-Archive "$downloadRoot/typesharp-cli-dotnet-$version.zip" -DestinationPath $installRoot -Force
-
-& "$installRoot/typesharp.cmd" version
-
-$env:PATH = "$installRoot;$env:PATH"
+$version = "0.1.0-preview.5"
+dotnet tool install --global TypeSharp.Tool --version $version
 typesharp version
 ```
 
-Expected metadata includes the CLI version, compiler version, language channel, release channel, runtime ABI, default generated target, CLI host target, runtime target, artifact kind, build metadata, and source revision. The source revision is the same 12-character lowercase commit prefix recorded on the GitHub Release page:
+If the package is already installed:
+
+```powershell
+dotnet tool update --global TypeSharp.Tool --version $version
+typesharp version
+```
+
+Expected metadata includes the CLI version, compiler version, language channel, release channel, runtime ABI, default generated target, CLI host target, runtime target, artifact kind, build metadata, and source revision:
 
 ```text
 TypeSharp CLI 0.1.0-preview
@@ -93,8 +38,8 @@ Runtime ABI status preview
 Target default net48
 CLI target net10.0
 Runtime target net48
-Artifact kind framework-dependent-dotnet
-Build metadata v0.1.0-preview.4
+Artifact kind dotnet-tool
+Build metadata v0.1.0-preview.5
 Source revision <12-character-commit-prefix>
 ```
 
@@ -123,7 +68,7 @@ typesharp build .\Billing.Rules\TypeSharp.toml
 
 ## Add Supported Dependencies
 
-The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. Framework assemblies use `references.assemblies`, local `net48` DLLs use `references.paths`, and direct TypeSharp project references use `[projectReferences]`.
+Generated artifacts continue to target `.NET Framework 4.8`. Framework assemblies use `references.assemblies`, local `net48` DLLs use `references.paths`, and direct TypeSharp project references use `[projectReferences]`.
 
 ```toml
 [references]
@@ -142,68 +87,59 @@ paths = [
 ]
 ```
 
-`references.packages` is reserved and post-1.0. TypeSharp reports `TS2405` instead of restoring NuGet packages; `check` and `build` do not silently restore packages or execute package build targets.
+The project direction is user convenience first, as long as the generated result remains a deterministic `net48` artifact. The CLI may resolve or copy matching TypeSharp Core/Runtime DLLs from the installed tool layout. Package restore for arbitrary user dependencies should stay explicit and auditable before it becomes a stable build behavior.
+
+`references.packages` remains the manifest location reserved for future package references.
 
 ## Runtime Libraries
 
-When generated code or C# consumers need TypeSharp runtime/core assemblies, download and verify the matching runtime archive:
+When generated code or C# consumers need TypeSharp runtime/core assemblies, use the version bundled with the installed `TypeSharp.Tool` package.
 
 ```powershell
-Invoke-WebRequest "$release/typesharp-runtime-net48-$version.zip" -OutFile "$downloadRoot/typesharp-runtime-net48-$version.zip"
-Assert-ReleaseAssetHash "typesharp-runtime-net48-$version.zip"
-
-$runtimeRoot = Join-Path $env:LOCALAPPDATA "TypeSharp\runtime-$version"
-Expand-Archive "$downloadRoot/typesharp-runtime-net48-$version.zip" -DestinationPath $runtimeRoot -Force
+typesharp runtime-path
+typesharp runtime-path --json
 ```
 
-The runtime archive contains:
+The installed tool package contains:
 
 ```text
-lib/net48/TypeSharp.Core.dll
-lib/net48/TypeSharp.Runtime.dll
+runtime/net48/TypeSharp.Core.dll
+runtime/net48/TypeSharp.Runtime.dll
 ```
 
-Reference the extracted DLLs from `TypeSharp.toml` with local paths, for example `../typesharp-runtime/lib/net48/TypeSharp.Core.dll` and `../typesharp-runtime/lib/net48/TypeSharp.Runtime.dll`, or paths relative to the `$runtimeRoot` location you chose. Deploy the generated assembly beside the required TypeSharp Core/Runtime DLLs. See [Runtime Artifacts](../runtime-artifacts/) for the deployable set and release-style smoke coverage.
+Reference those DLLs from `TypeSharp.toml` only when your project explicitly uses TypeSharp Core/Runtime APIs, or copy them beside a generated assembly consumed by C#. See [Runtime Artifacts](../runtime-artifacts/) for the deployable set.
 
-The 1.0 runtime resolution policy is explicit installed runtime archive references. The CLI does not implicitly discover repository build folders, auto-copy runtime assemblies, or add hidden template references for 1.0; keep the runtime zip version aligned with the CLI release and reference the extracted DLLs explicitly.
+## VS Code Extension
+
+The VS Code extension can still be published separately while CLI and runtime delivery move through NuGet:
+
+```text
+typesharp-vscode-<version>.vsix
+```
+
+Use [VS Code And LSP](../vscode-lsp/) for the editor setup path.
 
 ## Uninstall
 
-Remove the extracted version directory and any persistent `PATH` entry you added.
-
 ```powershell
-Remove-Item -Recurse -Force "$installRoot"
+dotnet tool uninstall --global TypeSharp.Tool
 ```
 
 ## Roll Back To A Previous Release
 
-Choose the previous tag from the GitHub Releases page, set `$version` to that tag, download `typesharp-cli-dotnet-$version.zip`, `typesharp-runtime-net48-$version.zip`, and `SHA256SUMS.txt`, then run `Assert-ReleaseAssetHash` for both archives before extracting them.
+Install or update to the previous package version:
 
 ```powershell
-$version = "v0.1.0-preview.0"
-$release = "https://github.com/$repo/releases/download/$version"
-$releasePage = "https://github.com/$repo/releases/tag/$version"
-$installRoot = Join-Path $env:LOCALAPPDATA "TypeSharp\$version"
-$downloadRoot = Join-Path $env:TEMP "typesharp-$version"
-
-New-Item -ItemType Directory -Force $installRoot, $downloadRoot | Out-Null
-
-Invoke-WebRequest "$release/typesharp-cli-dotnet-$version.zip" -OutFile "$downloadRoot/typesharp-cli-dotnet-$version.zip"
-Invoke-WebRequest "$release/typesharp-runtime-net48-$version.zip" -OutFile "$downloadRoot/typesharp-runtime-net48-$version.zip"
-Invoke-WebRequest "$release/SHA256SUMS.txt" -OutFile "$downloadRoot/SHA256SUMS.txt"
-
-Assert-ReleaseAssetHash "typesharp-cli-dotnet-$version.zip"
-Assert-ReleaseAssetHash "typesharp-runtime-net48-$version.zip"
-
-Expand-Archive "$downloadRoot/typesharp-cli-dotnet-$version.zip" -DestinationPath $installRoot -Force
-& "$installRoot/typesharp.cmd" version
+$version = "0.1.0-preview.4"
+dotnet tool update --global TypeSharp.Tool --version $version
+typesharp version
 ```
 
-Keep generated projects and C# consumers on the same runtime archive tag and Runtime ABI as the CLI release notes. If you persist a `PATH` entry, point it at the rolled-back `$installRoot` and remove the newer extracted CLI folder when it is no longer needed.
+Keep generated projects and C# consumers on the same runtime ABI as the CLI version. Because the runtime DLLs are bundled in `TypeSharp.Tool`, rolling the tool package back also rolls the matching runtime DLLs back.
 
 ## Troubleshooting
 
-- If `typesharp` is not found, run `& "$installRoot/typesharp.cmd" version` or add the extracted directory to `PATH`.
-- If checksum verification fails, delete the zip and download it again from the release page.
+- If `typesharp` is not found, verify the .NET global tools directory is on `PATH`, then reopen the shell.
+- If `dotnet tool install` cannot find `TypeSharp.Tool`, check NuGet package sources and the requested version.
+- If generated `net48` builds fail because targeting packs are missing, install or repair the .NET Framework 4.8 developer targeting/build tools.
 - If `typesharp run` cannot launch a generated executable, run `typesharp check` and `typesharp build` first; local security tools can block short-lived `.NET Framework` executables.
-- If `references.packages` fails with `TS2405`, build or copy a compatible local DLL and reference it through `references.paths`.

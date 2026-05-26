@@ -5,7 +5,7 @@ description: TypeSharp VS Code extension and language server workflow.
 
 The VS Code extension lives in `vscode/typesharp`, and the language server host lives in `lang/TypeSharp.LanguageServer`.
 
-Use [Install](../install/) first for the release CLI, checksum manifest, and release notes that define the matching VSIX asset.
+Use [Install](../install/) first for the release CLI. The CLI and matching TypeSharp Core/Runtime DLLs are installed through the `TypeSharp.Tool` NuGet package; editor packaging is separate.
 
 Current editor features:
 
@@ -34,25 +34,13 @@ The syntax highlighting extension is the package under `vscode/typesharp`. It co
 - `language-configuration.json` for comments, brackets, pairs, and word matching,
 - `syntaxes/typesharp.tmLanguage.json` for TextMate highlighting based on the stable grammar surface.
 
-Release VSIX install:
+Local or release VSIX install:
 
 ```powershell
-$version = "v0.1.0-preview.4"
-$repo = "naramdash/TypeSharp"
-$release = "https://github.com/$repo/releases/download/$version"
-$downloadRoot = Join-Path $env:TEMP "typesharp-$version"
-
-New-Item -ItemType Directory -Force $downloadRoot | Out-Null
-Invoke-WebRequest "$release/typesharp-vscode-$version.vsix" -OutFile "$downloadRoot/typesharp-vscode-$version.vsix"
-Invoke-WebRequest "$release/SHA256SUMS.txt" -OutFile "$downloadRoot/SHA256SUMS.txt"
-
-# Use the Assert-ReleaseAssetHash helper from Install.
-Assert-ReleaseAssetHash "typesharp-vscode-$version.vsix"
-
-code --install-extension "$downloadRoot/typesharp-vscode-$version.vsix"
+code --install-extension ".\typesharp-vscode-<version>.vsix"
 ```
 
-Open the tag-specific GitHub Release notes and confirm the exact asset names before download, including the VSIX asset. The release VSIX name is `typesharp-vscode-<tag>.vsix`, and it is covered by the same `SHA256SUMS.txt` manifest as the CLI and runtime archives. Use the same tag as the CLI release so the bundled language server and Runtime ABI expectation match the installed compiler.
+Use the same extension version as the installed CLI line so the bundled language server and Runtime ABI expectation match the installed compiler.
 
 Local development package:
 
@@ -101,6 +89,6 @@ Publishing requires user-owned Microsoft/Azure DevOps credentials and a Visual S
 - package with `npm run package:vsix`,
 - publish with `npx --yes @vscode/vsce publish` or upload the generated VSIX manually.
 
-Marketplace publication is an adoption gate, not a normal build step. It requires a release-owner credential path, versioned VSIX artifact, release notes, checksum coverage, and a rollback path through manual VSIX installation.
+Marketplace publication is an adoption gate, not a normal build step. It requires a release-owner credential path, versioned VSIX artifact, release notes, package-integrity policy, and a rollback path through manual VSIX installation.
 
 Official reference: [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).

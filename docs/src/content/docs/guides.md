@@ -3,7 +3,7 @@ title: Guides
 description: Practical TypeSharp guides for projects, CLI use, interop, and modeling.
 ---
 
-Start from [Install](../install/) before using these guides: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. When a guide needs TypeSharp Core/Runtime DLLs, use the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest.
+Start from [Install](../install/) before using these guides: install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep generated artifacts on `net48`. When a guide needs TypeSharp Core/Runtime DLLs, use `typesharp runtime-path` to locate the matching DLLs bundled with the installed tool.
 
 ## Project Structure
 
@@ -63,7 +63,7 @@ import { LegacyFormatter } from "Legacy.Tools"
 
 Implemented interop coverage includes constructors, static/instance calls, property and field reads, indexers, delegates, events, attributes, generic types, and selected overload validation.
 
-NuGet package restore is post-1.0. Keep dependencies explicit through framework assemblies, local `net48` DLL paths, direct TypeSharp project references, and matching Core/Runtime DLLs from the release runtime archive.
+NuGet package restore for arbitrary generated-project dependencies is post-1.0. Keep dependencies explicit through framework assemblies, local `net48` DLL paths, direct TypeSharp project references, and matching Core/Runtime DLLs from the installed `TypeSharp.Tool` package.
 
 Use [Modules And Imports](../modules/) for source module identity, relative module resolution, export forwarding status, and generated C# module containers.
 

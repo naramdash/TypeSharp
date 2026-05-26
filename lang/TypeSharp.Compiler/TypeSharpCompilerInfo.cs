@@ -11,7 +11,7 @@ public static class TypeSharpCompilerInfo
     public const string DefaultTargetFramework = "net48";
     public const string CliTargetFramework = "net10.0";
     public const string RuntimeTargetFramework = "net48";
-    public const string ArtifactKind = "framework-dependent-dotnet";
+    public const string ArtifactKind = "dotnet-tool";
     public const string ReleaseChannel = "Preview";
     public const string RuntimeAbiStatus = "preview";
 

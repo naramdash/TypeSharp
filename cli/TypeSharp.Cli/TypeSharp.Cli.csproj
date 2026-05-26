@@ -4,9 +4,25 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>typesharp</AssemblyName>
     <RootNamespace>TypeSharp.Cli</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>typesharp</ToolCommandName>
+    <PackageId>TypeSharp.Tool</PackageId>
+    <Version>0.1.0-preview.5</Version>
+    <Title>TypeSharp CLI</Title>
+    <Description>TypeSharp compiler, CLI, and language server host. The tool runs on modern .NET and builds generated net48 artifacts.</Description>
+    <PackageTags>typesharp;compiler;net48;dotnet-tool</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\lang\TypeSharp.Compiler\TypeSharp.Compiler.csproj" />
     <ProjectReference Include="..\..\lang\TypeSharp.LanguageServer\TypeSharp.LanguageServer.csproj" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\lang\TypeSharp.Core\bin\$(Configuration)\net48\TypeSharp.Core.dll" Pack="true" PackagePath="tools\net10.0\any\runtime\net48\" />
+    <None Include="..\..\lang\TypeSharp.Runtime\bin\$(Configuration)\net48\TypeSharp.Runtime.dll" Pack="true" PackagePath="tools\net10.0\any\runtime\net48\" />
   </ItemGroup>
+  <Target Name="BuildPackagedRuntimeLibraries" BeforeTargets="GenerateNuspec">
+    <MSBuild Projects="..\..\lang\TypeSharp.Core\TypeSharp.Core.csproj;..\..\lang\TypeSharp.Runtime\TypeSharp.Runtime.csproj"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
 </Project>

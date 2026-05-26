@@ -5,6 +5,10 @@ description: Scannable links to the current TypeSharp grammar and language refer
 
 This page is the docs canonical language-reference index. It links the human-facing reference pages and the implemented feature evidence.
 
+Use [TypeSharp Syntax Guide](../syntax-guide/) to learn the grammar by example. Use [Grammar](../grammar/) as the complete syntax ledger. Its [Syntax Quick Map](../grammar/#syntax-quick-map) is the best starting point when you need to check whether TypeSharp has syntax for a module, declaration, type, expression, pattern, or interop boundary. Its [Known Grammar Documentation Gaps](../grammar/#known-grammar-documentation-gaps) section separates documentation gaps from implementation gaps.
+
+Short answer: the docs cover the canonical grammar direction, but not every form is stable or equally explained for beginners. This reference index points to the canonical page for each area and keeps planned, parser-visible, and stable behavior separate.
+
 ## Lexical Basics
 
 Source files use `.tysh`. The lexical grammar covers identifiers, keywords, literals, comments, and operators.

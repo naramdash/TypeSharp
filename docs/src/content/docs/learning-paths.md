@@ -5,18 +5,19 @@ description: TypeSharp study paths for beginners, C# maintainers, TypeScript use
 
 Use this page when you are trying to decide what to read next. Each path moves from concrete commands to language features, then to reference material.
 
-Before choosing a path, install the release CLI from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when a path needs TypeSharp Core/Runtime DLLs, and install `typesharp-vscode-<tag>.vsix` from [VS Code And LSP](../vscode-lsp/) if you want editor integration.
+Before choosing a path, install the CLI from [Install](../install/): run `dotnet tool install --global TypeSharp.Tool`, then run `typesharp version`. When a path needs TypeSharp Core/Runtime DLLs, use `typesharp runtime-path`; use [VS Code And LSP](../vscode-lsp/) if you want editor integration.
 
 ## Programming Beginner
 
 Goal: build and understand a small TypeSharp project without learning compiler internals first.
 
-1. Install the release CLI and verify `typesharp version` on [Install](../install/).
+1. Install `TypeSharp.Tool` and verify `typesharp version` on [Install](../install/).
 2. Read [Start Here](../start-here/) to understand what TypeSharp is for.
 3. Read [Language Tour](../language-tour/) through values, functions, records, and diagnostics.
-4. Run the [Hello Project](../tutorials/#1-hello-project) tutorial.
-5. Use [Fundamentals](../fundamentals/) when a tutorial uses a new language term.
-6. Use [Troubleshooting](../troubleshooting/) when `check`, `build`, or `run` fails.
+4. Use [TypeSharp Syntax Guide](../syntax-guide/) when you need a fuller grammar explanation.
+5. Run the [Hello Project](../tutorials/#1-hello-project) tutorial.
+6. Use [Fundamentals](../fundamentals/) when a tutorial uses a new language term.
+7. Use [Troubleshooting](../troubleshooting/) when `check`, `build`, or `run` fails.
 
 Focus on these concepts first:
 
@@ -30,11 +31,13 @@ Focus on these concepts first:
 
 Goal: add TypeSharp code to an existing `net48` environment without changing the host application model.
 
-1. Read [.NET Interop](../dotnet-interop/) for generated assembly shape, runtime dependencies, and host compatibility.
-2. Run [Library Public API](../tutorials/#2-library-public-api).
-3. Run [C# Interop](../tutorials/#3-c-interop).
-4. Use [Guides](../guides/) for manifest and CLI workflow details.
-5. Use [Project Configuration](../project-configuration/) and [API And CLI Reference](../api/) for command, manifest, and generated output details.
+1. Read [From C#](../from-csharp/) for the C# mental model, generated artifact flow, and adoption traps.
+2. Read [.NET Interop](../dotnet-interop/) for generated assembly shape, runtime dependencies, and host compatibility.
+3. Read [TypeSharp Syntax Guide](../syntax-guide/) for the declaration, type, expression, and public API syntax you will see in examples.
+4. Run [Library Public API](../tutorials/#2-library-public-api).
+5. Run [C# Interop](../tutorials/#3-c-interop).
+6. Use [Guides](../guides/) for manifest and CLI workflow details.
+7. Use [Project Configuration](../project-configuration/) and [API And CLI Reference](../api/) for command, manifest, and generated output details.
 
 Important boundaries:
 
@@ -47,12 +50,14 @@ Important boundaries:
 
 Goal: understand where TypeSharp is intentionally similar to TypeScript and where .NET metadata changes the rules.
 
-1. Read [Language Tour](../language-tour/) for type inference, structural shapes, type-level unions, narrowing, and public boundary rules.
-2. Read [Type System](../type-system/) for `unknown`, `dynamic`, structural shapes, type-level unions, and public CLR boundaries.
-3. Read [Modules And Imports](../modules/) for TypeScript-style source files and relative module paths.
-4. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, `TS2204`, and the narrower assignability diagnostics `TS2228`, `TS2229`, and `TS2230`.
-5. Read [Grammar And Language Reference](../reference/) when you need formal syntax boundaries.
-6. Use [Cookbook](../cookbook/) for common interop workflows.
+1. Read [From TypeScript](../from-typescript/) for the quickest comparison of TypeScript expectations and TypeSharp rules.
+2. Read [TypeSharp Syntax Guide](../syntax-guide/) for syntax by example.
+3. Read [Language Tour](../language-tour/) for type inference, structural shapes, type-level unions, narrowing, and public boundary rules.
+4. Read [Type System](../type-system/) for `unknown`, `dynamic`, structural shapes, type-level unions, and public CLR boundaries.
+5. Read [Modules And Imports](../modules/) for TypeScript-style source files and relative module paths.
+6. Read [Diagnostics](../diagnostics/) for `TS2201`, `TS2202`, `TS2204`, and the narrower assignability diagnostics `TS2228`, `TS2229`, and `TS2230`.
+7. Read [Grammar And Language Reference](../reference/) when you need formal syntax boundaries.
+8. Use [Cookbook](../cookbook/) for common interop workflows.
 
 Translate expectations carefully:
 
@@ -64,11 +69,13 @@ Translate expectations carefully:
 
 Goal: use immutable data, options/results, unions, pattern matching, pipelines, and async while staying compatible with .NET Framework hosts.
 
-1. Read [Language Tour](../language-tour/) from `Option`, `Result`, and unions onward.
-2. Read [Fundamentals](../fundamentals/) for expression-oriented features and current inference scope.
-3. Read [Type System](../type-system/) for nominal unions, pattern matching boundaries, generics, and async.
-4. Read [Grammar And Language Reference](../reference/) for patterns, type syntax, and declarations.
-5. Use [Advanced Topics](../advanced/) to understand lowering and stability boundaries.
+1. Read [From F#](../from-fsharp/) for the mapping from F# records, DUs, options/results, match, pipelines, and async to TypeSharp.
+2. Read [TypeSharp Syntax Guide](../syntax-guide/) for records, unions, match, pipelines, function values, and async syntax.
+3. Read [Language Tour](../language-tour/) from `Option`, `Result`, and unions onward.
+4. Read [Fundamentals](../fundamentals/) for expression-oriented features and current inference scope.
+5. Read [Type System](../type-system/) for nominal unions, pattern matching boundaries, generics, and async.
+6. Read [Grammar And Language Reference](../reference/) for patterns, type syntax, and declarations.
+7. Use [Advanced Topics](../advanced/) to understand lowering and stability boundaries.
 
 Keep in mind:
 
@@ -99,10 +106,14 @@ Good first questions:
 | --- | --- |
 | Create a project | [Install](../install/) and [Tutorials](../tutorials/) |
 | Understand the language quickly | [Language Tour](../language-tour/) |
+| Learn grammar by example | [TypeSharp Syntax Guide](../syntax-guide/) |
 | Understand current feature support | [Fundamentals](../fundamentals/) and [Reference](../reference/) |
 | Configure a project | [Project Configuration](../project-configuration/) |
 | Understand modules and imports | [Modules And Imports](../modules/) |
 | Understand types and public boundaries | [Type System](../type-system/) |
+| Translate from TypeScript | [From TypeScript](../from-typescript/) |
+| Translate from C# | [From C#](../from-csharp/) |
+| Translate from F# | [From F#](../from-fsharp/) |
 | Call a C# DLL | [.NET Interop](../dotnet-interop/) and [Cookbook](../cookbook/) |
 | Consume TypeSharp from C# | [.NET Interop](../dotnet-interop/) |
 | Fix diagnostics | [Diagnostics](../diagnostics/) and [Troubleshooting](../troubleshooting/) |

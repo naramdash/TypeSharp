@@ -11,9 +11,11 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 
 ## Start Here
 
-- [Install](install/) shows the release zip, checksum, wrapper command, and first project flow.
+- [Install](install/) shows the NuGet .NET global tool install, first project flow, and runtime dependency options.
 - [Start Here](start-here/) helps new users choose the right path.
 - [Learning Paths](learning-paths/) gives beginner, C# maintainer, TypeScript, F#, and advanced routes.
+- [From TypeScript](from-typescript/), [From C#](from-csharp/), and [From F#](from-fsharp/) translate familiar concepts into TypeSharp rules.
+- [TypeSharp Syntax Guide](syntax-guide/) teaches the grammar in a developer-friendly order.
 - [Language Tour](language-tour/) explains the language before the formal reference.
 - [Tutorials](tutorials/) lists runnable, sequential learning paths.
 - [Guides](guides/) explains everyday project, CLI, interop, and modeling workflows.
@@ -35,15 +37,16 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 
 ## Install
 
-Preview releases use GitHub Release assets:
+Preview CLI releases are distributed as the `TypeSharp.Tool` NuGet .NET global tool:
 
-- `typesharp-cli-dotnet-<tag>.zip` for the framework-dependent CLI host and `typesharp.cmd` wrapper,
-- `typesharp-runtime-net48-<tag>.zip` for `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll`,
-- `typesharp-vscode-<tag>.vsix` for the VS Code extension and bundled language server,
-- `SHA256SUMS.txt` for release asset verification,
-- Tag-specific GitHub Release notes for channel, build metadata, source revision, compatibility matrix, integrity policy, rollback guidance, and exact asset names to verify.
+```powershell
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+typesharp version
+```
 
-Start with [Install](install/) for the download, checksum, `typesharp version`, project creation, dependency, build, and runtime-library flow. The source-built commands below are for contributors changing TypeSharp itself, not the normal install path.
+The tool host runs on modern .NET. Generated TypeSharp projects, generated assemblies, `TypeSharp.Core`, and `TypeSharp.Runtime` remain `net48`. The `TypeSharp.Tool` NuGet package is the CLI distribution and the matching Core/Runtime DLL distribution; use `typesharp runtime-path` when explicit DLL paths are needed.
+
+Start with [Install](install/) for the `dotnet tool`, `typesharp version`, project creation, dependency, build, and runtime-library flow. The source-built commands below are for contributors changing TypeSharp itself, not the normal install path.
 
 ## Contributor Source-Built Development Path
 

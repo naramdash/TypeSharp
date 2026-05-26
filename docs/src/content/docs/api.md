@@ -5,7 +5,7 @@ description: TypeSharp CLI, manifest, runtime, generated assembly, and tooling r
 
 ## CLI Commands
 
-Command examples assume the release install route from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and run `typesharp version`. Download the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest when generated projects or C# consumers need TypeSharp Core/Runtime DLLs.
+Command examples assume the tool install route from [Install](../install/): install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep generated artifacts on `net48`. When generated projects or C# consumers need TypeSharp Core/Runtime DLLs, use `typesharp runtime-path` to locate the matching DLLs bundled with the installed tool.
 
 Implemented commands:
 
@@ -43,11 +43,11 @@ packages = []
 paths = ["../Shared/TypeSharp.toml"]
 ```
 
-The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. `references.packages` is reserved for post-1.0 NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `references.paths`.
+The 1.0 dependency acquisition scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs bundled in the installed `TypeSharp.Tool` package. `references.packages` is reserved for post-1.0 NuGet restore support. The current compiler reports `TS2405` instead of restoring packages; reference a local `net48` DLL through `references.paths`.
 
 `projectReferences.paths` names direct TypeSharp manifests. `typesharp check` validates the direct project graph and exported source members; `typesharp build` builds referenced projects first and consumes their generated assemblies through explicit local references.
 
-Reference TypeSharp Core/Runtime DLLs explicitly from the verified runtime archive when public APIs expose `Option<T>`, `Result<T,E>`, `Unit`, nominal union helpers, or generated runtime helper calls.
+Reference TypeSharp Core/Runtime DLLs explicitly from `typesharp runtime-path` when public APIs expose `Option<T>`, `Result<T,E>`, `Unit`, nominal union helpers, or generated runtime helper calls.
 
 Canonical pages: [CLI](../cli/) and [Project Configuration](../project-configuration/).
 
@@ -60,7 +60,7 @@ The generated code can depend on:
 - `TypeSharp.Core`: `Option<T>`, `Result<T, E>`, and user-facing core helpers.
 - `TypeSharp.Runtime`: helpers for generated unions, pattern matching, equality, hash composition, and async.
 
-For the 1.0 preview route, obtain both assemblies from the verified `typesharp-runtime-net48-<tag>.zip` archive rather than from repository build folders.
+For the 1.0 preview route, obtain both assemblies from the installed `TypeSharp.Tool` package with `typesharp runtime-path` rather than from repository build folders.
 
 ## Standard Library Surface
 

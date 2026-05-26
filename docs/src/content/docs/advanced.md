@@ -5,7 +5,7 @@ description: Implementation-aware TypeSharp documentation for lowering, public A
 
 This page is for readers who need to reason about TypeSharp's compiler and platform contracts. It summarizes the advanced topics and links them to the user-facing behavior documented elsewhere.
 
-Command examples and workflow references assume the release install route from [Install](../install/): open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when an advanced workflow needs TypeSharp Core/Runtime DLLs.
+Command examples and workflow references assume the tool install route from [Install](../install/): install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep generated artifacts on `net48`. When an advanced workflow needs TypeSharp Core/Runtime DLLs, use `typesharp runtime-path` to locate the matching DLLs bundled with the installed tool.
 
 ## Compiler Pipeline
 

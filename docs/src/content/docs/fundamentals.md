@@ -3,7 +3,7 @@ title: Fundamentals
 description: Core TypeSharp concepts for new users.
 ---
 
-Start from [Install](../install/) before running local commands: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` and verify it with the same manifest when Core/Runtime DLLs are needed.
+Start from [Install](../install/) before running local commands: install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep generated artifacts on `net48`. When Core/Runtime DLLs are needed, use `typesharp runtime-path` to locate the matching DLLs bundled with the installed tool.
 
 ## Values And Functions
 

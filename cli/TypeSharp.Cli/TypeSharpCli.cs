@@ -39,6 +39,7 @@ public static class TypeSharpCli
             "run" => RunRun(args, output, error),
             "format" => RunFormat(args, output, error),
             "explain" => RunExplain(args, output, error),
+            "runtime-path" => RunRuntimePath(args, output, error),
             "lsp" => RunLsp(args, error, input, protocolOutput, workspaceRoot),
             "--help" or "-h" or "help" => RunHelp(output),
             _ => RunUnknownCommand(args[0], error)
@@ -112,7 +113,51 @@ public static class TypeSharpCli
         output.WriteLine("  run [project] [-- args...]");
         output.WriteLine("  format [project-or-file] [--check]");
         output.WriteLine("  explain <diagnostic-code> [--json]");
+        output.WriteLine("  runtime-path [--json]");
         output.WriteLine("  lsp");
+        return 0;
+    }
+
+    private static int RunRuntimePath(string[] args, TextWriter output, TextWriter error)
+    {
+        var json = false;
+        for (var index = 1; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (arg == "--json")
+            {
+                json = true;
+                continue;
+            }
+
+            if (arg == "--no-color")
+            {
+                continue;
+            }
+
+            error.WriteLine("Usage: typesharp runtime-path [--json] [--no-color]");
+            return 2;
+        }
+
+        var runtimeRoot = Path.Combine(AppContext.BaseDirectory, "runtime", "net48");
+        var corePath = Path.Combine(runtimeRoot, "TypeSharp.Core.dll");
+        var runtimePath = Path.Combine(runtimeRoot, "TypeSharp.Runtime.dll");
+
+        if (json)
+        {
+            output.WriteLine("{");
+            output.WriteLine($"  \"targetFramework\": {JsonSerializer.Serialize(TypeSharpCompilerInfo.RuntimeTargetFramework)},");
+            output.WriteLine($"  \"root\": {JsonSerializer.Serialize(runtimeRoot)},");
+            output.WriteLine($"  \"core\": {JsonSerializer.Serialize(corePath)},");
+            output.WriteLine($"  \"runtime\": {JsonSerializer.Serialize(runtimePath)}");
+            output.WriteLine("}");
+            return 0;
+        }
+
+        output.WriteLine($"Runtime target {TypeSharpCompilerInfo.RuntimeTargetFramework}");
+        output.WriteLine($"Runtime root {runtimeRoot}");
+        output.WriteLine($"TypeSharp.Core {corePath}");
+        output.WriteLine($"TypeSharp.Runtime {runtimePath}");
         return 0;
     }
 

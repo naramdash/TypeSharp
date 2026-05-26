@@ -5,7 +5,7 @@ description: Runnable TypeSharp project catalog and feature examples.
 
 This is the canonical docs example catalog and coverage guide. Example source artifacts live under the repository root `examples/` folder; their durable narrative and coverage index belongs here.
 
-Start from [Install](../install/) before running runnable examples: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify it with `SHA256SUMS.txt`, extract the CLI, put `typesharp.cmd` on `PATH`, and run `typesharp version`. Use the matching `typesharp-runtime-net48-<tag>.zip` from the same release and verify it with the same manifest when an example references TypeSharp Core/Runtime DLLs.
+Start from [Install](../install/) before running runnable examples: install `TypeSharp.Tool` with `dotnet tool install --global TypeSharp.Tool`, run `typesharp version`, and keep generated artifacts on `net48`. When an example references TypeSharp Core/Runtime DLLs, use `typesharp runtime-path` to locate the matching DLLs bundled with the installed tool.
 
 Repository artifact index: [`examples/README.md`](https://github.com/naramdash/TypeSharp/blob/main/examples/README.md)
 
@@ -34,7 +34,7 @@ Additional CLI starter example:
 
 - [`examples/cli-console`](https://github.com/naramdash/TypeSharp/tree/main/examples/cli-console): `TypeSharp.toml`, `src/Main.tysh`, and `typesharp check/build/run` workflow.
 
-Runnable examples assume the release-installed `typesharp` command. If an example needs TypeSharp Core/Runtime assemblies, reference `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` from the verified runtime archive rather than repository build folders.
+Runnable examples assume the release-installed `typesharp` command. If an example needs TypeSharp Core/Runtime assemblies, reference `TypeSharp.Core.dll` and `TypeSharp.Runtime.dll` from `typesharp runtime-path` rather than repository build folders.
 
 ## Feature Examples
 

@@ -286,7 +286,7 @@ Current preview evidence:
 - Core helper tests cover `Option<T>`, `Result<T,E>`, and `Unit` state behavior.
 - Runtime helper tests cover union metadata, pattern helper matching, equality/hash composition, and async `Task` helper behavior.
 - The release-staged runtime artifact smoke builds generated `net48` output and a separate C# `net48` consumer against the same extracted Core/Runtime archive layout.
-- The post-publication hosted GitHub Release smoke verifies the hosted download/extraction root and clean smoke workspace are outside the repository checkout, verifies downloaded CLI/runtime/VSIX assets against `SHA256SUMS.txt` plus release metadata, verifies the installed bare `typesharp` command path and missing-host behavior, runs console `new`/`format --check`/`check`/`build`/`run`, covers local C# `net48` DLL references, dependency diagnostics for missing DLLs and unsupported packages, generated C# build-failure diagnostics, direct TypeSharp project-reference build ordering, and the runtime-backed TypeSharp library plus C# `net48` consumer output with byte-identical Core/Runtime DLLs from the downloaded release assets.
+- The release smoke packs `TypeSharp.Tool`, installs it from a local NuGet source before publication, verifies the installed bare `typesharp` command path, runs console `new`/`format --check`/`check`/`build`/`run`, covers local C# `net48` DLL references, dependency diagnostics for missing DLLs and unsupported packages, generated C# build-failure diagnostics, direct TypeSharp project-reference build ordering, and the runtime-backed TypeSharp library plus C# `net48` consumer output with Core/Runtime DLLs from `typesharp runtime-path`.
 
 ## Host Project Compatibility
 

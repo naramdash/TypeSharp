@@ -3,9 +3,9 @@ title: Migration
 description: Adopting TypeSharp from existing .NET Framework and C# projects.
 ---
 
-This is the canonical docs migration guide for adopting TypeSharp from existing `.NET Framework 4.8` and C# projects.
+This is the canonical docs migration guide for adopting TypeSharp from existing `.NET Framework 4.8` and C# projects. For a shorter C# developer orientation, start with [From C#](../from-csharp/).
 
-Start from [Install](../install/) so the CLI, checksum manifest, and matching `typesharp-runtime-net48-<tag>.zip` are established before moving C# project boundaries.
+Start from [Install](../install/) so the `TypeSharp.Tool` CLI and matching bundled runtime DLL path are established before moving C# project boundaries.
 
 The migration stance is incremental. TypeSharp does not automatically convert an existing C# project. Instead, write new TypeSharp `net48` libraries, reference existing C# assemblies from TypeSharp, and reference generated TypeSharp assemblies from existing C#/.NET Framework applications.
 
@@ -36,7 +36,7 @@ TypeSharp is not yet a good fit when you need:
 5. Use structural shapes, type-level unions, null safety, and pattern matching inside local TypeSharp code.
 6. Run `typesharp check` and fix diagnostics first.
 7. Run `typesharp build` to produce a generated `net48` DLL.
-8. Reference the generated DLL plus required `TypeSharp.Core`/`TypeSharp.Runtime` DLLs from the matching `typesharp-runtime-net48-<tag>.zip` archive in the C# project.
+8. Reference the generated DLL plus required `TypeSharp.Core`/`TypeSharp.Runtime` DLLs from `typesharp runtime-path` in the C# project.
 9. Add the C# consumer build to CI before moving the boundary deeper into the application.
 
 ## Minimal Project
@@ -171,15 +171,15 @@ Reference generated output like a normal `net48` class library:
     <HintPath>..\Billing.Rules\generated\bin\Debug\net48\Billing.Rules.dll</HintPath>
   </Reference>
   <Reference Include="TypeSharp.Core">
-    <HintPath>..\typesharp-runtime\lib\net48\TypeSharp.Core.dll</HintPath>
+    <HintPath>..\typesharp-tool-runtime\net48\TypeSharp.Core.dll</HintPath>
   </Reference>
   <Reference Include="TypeSharp.Runtime">
-    <HintPath>..\typesharp-runtime\lib\net48\TypeSharp.Runtime.dll</HintPath>
+    <HintPath>..\typesharp-tool-runtime\net48\TypeSharp.Runtime.dll</HintPath>
   </Reference>
 </ItemGroup>
 ```
 
-Open the tag-specific GitHub Release notes, confirm the exact asset names, then download the same-tag `typesharp-runtime-net48-<tag>.zip` archive from the release page and verify it against `SHA256SUMS.txt` before referencing the DLLs. Include `TypeSharp.Core.dll` when public APIs expose `Option<T>`, `Result<T,E>`, or `Unit`. Include `TypeSharp.Runtime.dll` when generated code uses runtime helpers such as nominal union metadata or pattern matching. Do not depend on generated internal helper names unless documented as public ABI.
+Use `typesharp runtime-path` to locate the installed DLLs before referencing them. Include `TypeSharp.Core.dll` when public APIs expose `Option<T>`, `Result<T,E>`, or `Unit`. Include `TypeSharp.Runtime.dll` when generated code uses runtime helpers such as nominal union metadata or pattern matching. Do not depend on generated internal helper names unless documented as public ABI.
 
 ## Nullability And Error Migration
 
@@ -228,8 +228,8 @@ Not currently provided:
 - generated ASP.NET/WCF/worker templates,
 - direct IL backend,
 - binary-compatible public ABI snapshot tooling,
-- artifact signing beyond the current `SHA256SUMS.txt` release manifest,
-- package-manager or marketplace distribution.
+- package signing and trusted-signer policy beyond NuGet's normal package transport,
+- marketplace distribution outside NuGet for the CLI.
 
 ## Adoption Checklist
 
@@ -240,7 +240,7 @@ Not currently provided:
 - Run `typesharp check`.
 - Fix public boundary, nullability, overload, and byref diagnostics.
 - Run `typesharp build`.
-- Confirm the exact runtime archive name in the tag-specific GitHub Release notes, then download and verify the matching `typesharp-runtime-net48-<tag>.zip` archive.
+- Use `typesharp runtime-path` to locate matching TypeSharp Core/Runtime DLLs.
 - Reference generated DLL plus required TypeSharp Core/Runtime DLLs from a C# `net48` consumer.
 - Add C# consumer build to CI.
 - Keep structural/type-level flexibility local until an explicit C#-friendly wrapper is designed.

@@ -37,7 +37,16 @@ typesharp test [project]
 
 `typesharp restore` is a future explicit package-graph command. It is listed here so package restore stays separated from `check` until TypeSharp has a lock/audit/source-mapping policy.
 
-End-user command examples assume the release install route: open the tag-specific GitHub Release notes, confirm the exact asset names, download `typesharp-cli-dotnet-<tag>.zip`, verify `SHA256SUMS.txt`, extract `typesharp.cmd` onto `PATH`, and download the matching `typesharp-runtime-net48-<tag>.zip` when TypeSharp Core/Runtime DLLs are needed. Verify the runtime archive with the same manifest. Use [Install](../install/) for the full download, checksum, rollback, and first-project flow.
+End-user command examples assume the NuGet .NET global tool route:
+
+```powershell
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+typesharp version
+```
+
+The tool runs on modern .NET, but `typesharp build` still emits and builds generated `net48` projects. Use [Install](../install/) for the full tool install, rollback, and first-project flow.
+
+Use `typesharp runtime-path` when Core/Runtime DLLs need to be referenced explicitly. VS Code assets can still be published separately from the NuGet tool package.
 
 ## Command Contracts
 
@@ -57,7 +66,7 @@ Runtime ABI status preview
 Target default net48
 CLI target net10.0
 Runtime target net48
-Artifact kind framework-dependent-dotnet
+Artifact kind dotnet-tool
 Build metadata local
 Source revision unknown
 ```
@@ -109,7 +118,7 @@ Project build/run commands also accept `--target net48`. The override is validat
 
 When a manifest contains `[projectReferences]`, `build` builds direct referenced projects before the dependent project and writes explicit local references to the referenced generated assemblies into the dependent generated C# project.
 
-The 1.0 dependency scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and matching TypeSharp Core/Runtime DLLs from the release runtime archive. `typesharp build` does not restore NuGet packages. Manifests with `references.packages` report `TS2405`; a future restore path must be explicit about lock files, package source mapping, auditing, license inventory, checksums/signatures, and whether any MSBuild package targets are allowed to execute.
+The dependency scope is framework assemblies, explicit local `net48` DLLs, direct TypeSharp project references, and TypeSharp Core/Runtime DLLs that match the installed CLI version. User convenience should win where the behavior is deterministic: the CLI may resolve or copy matching TypeSharp runtime DLLs from its installed tool layout, and future package restore must be explicit about lock files, package source mapping, auditing, license inventory, checksums/signatures, and whether any MSBuild package targets are allowed to execute. Generated user artifacts must remain `net48`.
 
 `typesharp build --verbosity quiet|minimal|normal|diagnostic` controls success logging: quiet suppresses artifact logs, minimal reports only the final assembly, normal reports generated source/project/assembly paths, and diagnostic adds option summary lines.
 
