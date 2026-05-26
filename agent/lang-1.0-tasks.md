@@ -335,6 +335,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
 - [x] Close public ABI leakage checks for compile-time-only types.
   - Exported/public function parameters and returns, exported/public values, local export-list functions, local export-list type aliases, direct type aliases, aliases to structural shapes, intersections, type-level unions, `keyof`, indexed access, inline anonymous structural shapes, and `unknown` public signatures are covered by public-boundary diagnostics before emission.
   - Public-boundary build-stop coverage verifies `TS2204` prevents generated C# source, generated project, and generated `net48` assembly emission.
+  - Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target.
   - Marker-free `dynamic` remains covered by explicit capability diagnostics (`TS2206`/`TS2207`), and unknown member/indexer access remains covered by `TS2209`.
   - Unknown nullable C# metadata remains a strict-mode interop warning (`TS2404`) so users can wrap, annotate, or isolate that boundary before exposing a nominal public API.
   - Structural and TypeScript-style flexibility stays local unless a future nominal CLR-visible adapter policy is designed and versioned.

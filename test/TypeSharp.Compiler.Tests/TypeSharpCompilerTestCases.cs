@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The nameof and checked/unchecked public ABI push `f32c340f1fc7fc1663691c2386ab58c5ceb1b232` proved Docs run `26432358361` and Regression run `26432358355` both completed successfully", languageProgress);
+    AssertContains("The lock statement public ABI push `7659ef35907e75cd1ea99629873783273123b865` proved Docs run `26432842602` and Regression run `26432842610` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -472,6 +472,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened async Task and yield iterator public ABI evidence locally", languageProgress);
     AssertContains("Deepened nameof and checked/unchecked public ABI evidence locally", languageProgress);
     AssertContains("Deepened lock statement public ABI evidence locally", languageProgress);
+    AssertContains("Deepened satisfies expression public ABI erasure evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16610,6 +16611,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover checked/unchecked expression module methods", featureStatusPage);
     AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target", featureStatusPage);
     AssertContains("Function return expression mismatches report `TS2228`", featureStatusPage);
     AssertContains("explicit value initializer mismatches report `TS2229`", featureStatusPage);
     AssertContains("simple assignment value mismatches report `TS2230`", featureStatusPage);
@@ -34611,9 +34613,77 @@ static void CliBuildCompilesSatisfiesExpression()
         var generatedSource = File.ReadAllText(Path.Combine(root, "generated", "src", "Main.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("return customer;", generatedSource);
         AssertContains("return customer.Age + 1;", generatedSource);
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "SatisfiesExpression.dll");
         AssertTrue(
-            File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "SatisfiesExpression.dll")),
+            File.Exists(generatedAssemblyPath),
             "Generated project build should compile satisfies expression lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "SatisfiesExpression",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/SatisfiesExpression.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated satisfies expression assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Satisfies.Customer", abiSnapshotText);
+        AssertContains("  constructor Customer(string Name, int Age)", abiSnapshotText);
+        AssertContains("type Samples.Satisfies.Module", abiSnapshotText);
+        AssertContains("  method static Samples.Satisfies.Customer keepCustomer(Samples.Satisfies.Customer customer)", abiSnapshotText);
+        AssertContains("  method static int nextAge(Samples.Satisfies.Customer customer)", abiSnapshotText);
+        AssertFalse(abiSnapshotText.Contains("Named", StringComparison.Ordinal), "Structural satisfies target should not leak into generated public ABI.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "SatisfiesConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>SatisfiesConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="SatisfiesExpression">
+                  <HintPath>../generated/bin/Debug/net48/SatisfiesExpression.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace SatisfiesConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var customer = new Samples.Satisfies.Customer("Ada", 42);
+                        var kept = Samples.Satisfies.Module.keepCustomer(customer);
+                        var next = Samples.Satisfies.Module.nextAge(customer);
+                        return kept.Name + ":" + next.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build SatisfiesConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated satisfies-erased API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
