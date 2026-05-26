@@ -78,13 +78,6 @@
         "resolved": "4.2.3",
         "contentHash": "dxOZt8/LWuiox7rugInJoIa5Mmu3pBmXdfaoZOx/mxx8+sUFFpjBXPlWXQXGeWzpkVPNC3x1Jf7rt2h2Zjyvvg=="
       },
-      "typesharp": {
-        "type": "Project",
-        "dependencies": {
-          "TypeSharp.Compiler": "[1.0.0, )",
-          "TypeSharp.LanguageServer": "[1.0.0, )"
-        }
-      },
       "typesharp.compiler": {
         "type": "Project"
       },
@@ -92,6 +85,13 @@
         "type": "Project",
         "dependencies": {
           "TypeSharp.Compiler": "[1.0.0, )"
+        }
+      },
+      "TypeSharp.Tool": {
+        "type": "Project",
+        "dependencies": {
+          "TypeSharp.Compiler": "[1.0.0, )",
+          "TypeSharp.LanguageServer": "[1.0.0, )"
         }
       }
     }
