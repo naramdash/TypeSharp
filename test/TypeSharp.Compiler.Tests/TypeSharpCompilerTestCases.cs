@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The bitwise and shift public ABI snapshot push `2c34e30e3c4fcc59ca7acc6e8f3e738b912778ff` proved Regression run `26435660003` and Docs run `26435660004` both completed successfully", languageProgress);
+    AssertContains("The logical unsigned shift public ABI snapshot push `78d91981af729d470ee75c3bc0e9182d337dce29` proved Regression run `26436387692` and Docs run `26436387714` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -478,6 +478,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened public literal constant ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened bitwise and shift expression public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened logical unsigned shift public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Reconciled the logical unsigned shift public ABI tracker evidence on push `78d91981af729d470ee75c3bc0e9182d337dce29`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
