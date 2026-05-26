@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The logical unsigned shift public ABI snapshot push `78d91981af729d470ee75c3bc0e9182d337dce29` proved Regression run `26436387692` and Docs run `26436387714` both completed successfully", languageProgress);
+    AssertContains("The logical shift CI evidence reconciliation push `ca65df40aefcabad2569ef085b4b12f1482b1b14` proved Regression run `26436963536` and Docs run `26436963515` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -479,6 +479,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened bitwise and shift expression public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened logical unsigned shift public ABI snapshot evidence locally", languageProgress);
     AssertContains("Reconciled the logical unsigned shift public ABI tracker evidence on push `78d91981af729d470ee75c3bc0e9182d337dce29`", languageProgress);
+    AssertContains("Reconciled the logical shift CI evidence on push `ca65df40aefcabad2569ef085b4b12f1482b1b14`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -486,6 +487,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the generated public ABI snapshot depth locally", languageProgress);
     AssertContains("Promoted the generated generic constraint public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened the generated generic constraint public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Documented the generated generic constraint public ABI evidence in Feature Status", languageProgress);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover generated classes, generated class instance/static methods, generated class instance/static value reads/writes, generated class instance/static getter-only property reads, generated class instance/static get/set property reads/writes, generated class instance/static events, generated interfaces, generated interface getter-only property reads, generated interface get/set property reads/writes, generated interface events, generic classes, class/interface/delegate generic constraints, generic interface methods, and partial module/record/union/class/interface declarations.", languageTasks);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16595,6 +16598,9 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance/static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", featureStatusPage);
     AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", featureStatusPage);
     AssertContains("| Delegates | Implemented | TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata with optional generic parameters/constraints, declaration attributes, typed parameters, optional `params`, and explicit or `void` returns", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover class generic constraint metadata, including class, interface, and `new()` constraint shapes", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover interface type constraints and generic interface method constraints", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover delegate generic constraint metadata alongside declaration attributes, `Invoke` signatures, and `params` metadata", featureStatusPage);
     AssertContains("The 1.0 overload and conversion contract is metadata-backed and intentionally narrower than full C#", featureStatusPage);
     AssertContains("Full C# overload conversion parity, user-defined conversion operators, TypeSharp-authored operator overload ranking", featureStatusPage);
     AssertContains("The 1.0 warning/error boundary is explicit", featureStatusPage);
