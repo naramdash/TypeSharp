@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generated generic optional/default parameter ABI snapshot push `94ef3f84dd92bc3ff2b3932fb9f8ff4842aa70d2` proved Docs run `26427393712` and Regression run `26427393711` both completed successfully", languageProgress);
+    AssertContains("The imported optional/default parameter metadata push `155130c50bdaabfa9f8b67767575a2b9f9c5f6be` proved Docs run `26427908354` and Regression run `26427908353` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -463,6 +463,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened generated optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated generic optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened imported C# optional/default parameter metadata evidence locally", languageProgress);
+    AssertContains("Deepened function-valued export public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -13209,7 +13210,73 @@ static void CliBuildLowersFunctionValueExports()
         AssertContains("internal static readonly System.Func<string, string> internalTransform = text => text;", generatedHelper);
         AssertContains("public static System.Func<string, string> PublicTransform", generatedHelper);
         AssertContains("get { return internalTransform; }", generatedHelper);
-        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "FunctionValueExportBuild.dll")), "Generated project with function-valued let exports should compile to a net48 DLL.");
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "FunctionValueExportBuild.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Generated project with function-valued let exports should compile to a net48 DLL.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "FunctionValueExportBuild",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/FunctionValueExportBuild.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated function-valued export assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.FunctionValueExportBuild.ModuleHelper", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<string, string> Transform", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<string, string[]> Wrap", abiSnapshotText);
+        AssertContains("  property static get System.Func`2<string, string> PublicTransform", abiSnapshotText);
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "FunctionValueExportConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>FunctionValueExportConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="FunctionValueExportBuild">
+                  <HintPath>../generated/bin/Debug/net48/FunctionValueExportBuild.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            namespace FunctionValueExportConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var transformed = Samples.FunctionValueExportBuild.ModuleHelper.Transform("Ada");
+                        var aliased = Samples.FunctionValueExportBuild.ModuleHelper.PublicTransform(" Lovelace");
+                        var wrapped = Samples.FunctionValueExportBuild.ModuleHelper.Wrap("Ada");
+                        return transformed + aliased + ":" + wrapped.Length.ToString();
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build FunctionValueExportConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated function-valued export API.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -16374,6 +16441,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover explicit non-null receiver methods", csharpTypeModelPage);
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover getter-only helper lowering and diagnostics for assignment/collisions", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` field/property export forms", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
     AssertContains("System.Nullable<T>", csharpTypeModelPage);
     AssertContains("The 1.0 warning-versus-error policy is fixed", csharpTypeModelPage);

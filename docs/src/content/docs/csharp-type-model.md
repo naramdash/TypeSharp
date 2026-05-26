@@ -199,7 +199,7 @@ public record InvoiceId(value: string)
 export let onInvoiceChanged: object -> InvoiceId -> unit = sender => id => ()
 ```
 
-Function-valued `export let` declarations lower only when explicitly annotated and currently use `System.Func` or `System.Action` shapes. Use `public delegate` when the public ABI should expose a stable named callback type; imported C# delegates are still supported through metadata-backed interop.
+Function-valued `export let` declarations lower only when explicitly annotated and currently use `System.Func` or `System.Action` shapes. Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` field/property export forms. Use `public delegate` when the public ABI should expose a stable named callback type; imported C# delegates are still supported through metadata-backed interop.
 
 ## Async Tasks
 
