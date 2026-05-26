@@ -212,7 +212,9 @@ public static class TypeSharpPublicAbiChecker
             _ => string.Empty
         };
         var paramsPrefix = parameter.IsParams ? "params " : string.Empty;
-        var optionalSuffix = parameter.IsOptional ? " = optional" : string.Empty;
+        var optionalSuffix = parameter.DefaultValue is not null
+            ? $" = {parameter.DefaultValue}"
+            : parameter.IsOptional ? " = optional" : string.Empty;
         return $"{paramsPrefix}{modifier}{parameter.Type} {parameter.Name}{optionalSuffix}";
     }
 }

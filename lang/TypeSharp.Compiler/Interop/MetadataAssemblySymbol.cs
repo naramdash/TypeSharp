@@ -114,7 +114,10 @@ public sealed record MetadataParameterSymbol(
     string Type,
     MetadataByRefKind ByRefKind,
     bool IsParams,
-    bool IsOptional);
+    bool IsOptional)
+{
+    public string? DefaultValue { get; init; }
+}
 
 public enum MetadataByRefKind
 {

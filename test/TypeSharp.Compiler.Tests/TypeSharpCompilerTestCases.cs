@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generated record member ABI snapshot push `3d5aaf77cabd84e41aa35719716eb44d13617538` proved Docs run `26425956591` and Regression run `26425956575` both completed successfully", languageProgress);
+    AssertContains("The generated delegate Invoke ABI snapshot push `93a8ac15cec345e790478e840507132ea0f932e2` proved Docs run `26426409217` and Regression run `26426409203` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -460,6 +460,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened nominal union nested-case public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated record member public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated delegate Invoke public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened generated optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16342,7 +16343,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Public Declaration ABI Matrix", csharpTypeModelPage);
     AssertContains("| `fun` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Static method on generated module/container; `params` and optional/default metadata for the supported suffix rules", csharpTypeModelPage);
-    AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default, generic constraint, and generic optional/default parameter subsets", csharpTypeModelPage);
+    AssertContains("Generic function plus generated public ABI snapshots and generated `net48` C# consumer smokes cover the current explicit, `params`, optional/default literal value, generic constraint, and generic optional/default parameter subsets", csharpTypeModelPage);
     AssertContains("| `record` | Public ABI slice", csharpTypeModelPage);
     AssertContains("Named immutable CLR class with declaration attributes, `partial` when declared, constructor/properties plus generated equality/hash members", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots for constructor/property/equality members, and C# consumer smokes cover immutable records, declaration attribute metadata, partial modifier preservation, record updates, and record expression construction", csharpTypeModelPage);
@@ -33801,10 +33802,10 @@ static void CliBuildCompilesTypeSharpOptionalDefaultParameterLowering()
 
         AssertFalse(metadata.HasErrors, "Generated optional/default parameter assembly metadata should be readable.");
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
-        AssertContains("  method static string greet(string prefix, string name = optional, string punctuation = optional)", abiSnapshotText);
-        AssertContains("  method static int count(int value = optional)", abiSnapshotText);
-        AssertContains("  method static bool enabled(bool value = optional)", abiSnapshotText);
-        AssertContains("  method static string maybe(string value = optional)", abiSnapshotText);
+        AssertContains("  method static string greet(string prefix, string name = \"world\", string punctuation = \"!\")", abiSnapshotText);
+        AssertContains("  method static int count(int value = 1)", abiSnapshotText);
+        AssertContains("  method static bool enabled(bool value = true)", abiSnapshotText);
+        AssertContains("  method static string maybe(string value = null)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

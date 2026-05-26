@@ -274,7 +274,10 @@ public static class TypeSharpMetadataReader
                 type.Name,
                 GetByRefKind(type, parameter.Attributes),
                 HasCustomAttribute(reader, parameter.GetCustomAttributes(), "System.ParamArrayAttribute"),
-                IsOptionalWithDefault(parameter)));
+                IsOptionalWithDefault(parameter))
+            {
+                DefaultValue = TryReadDefaultValue(reader, parameter, out var defaultValue) ? defaultValue : null
+            });
         }
 
         var genericParameters = ReadGenericParameters(reader, method.GetGenericParameters());
@@ -750,6 +753,57 @@ public static class TypeSharpMetadataReader
     private static bool IsOptionalWithDefault(Parameter parameter) =>
         parameter.Attributes.HasFlag(System.Reflection.ParameterAttributes.Optional) &&
         !parameter.GetDefaultValue().IsNil;
+
+    private static bool TryReadDefaultValue(MetadataReader reader, Parameter parameter, out string value)
+    {
+        var handle = parameter.GetDefaultValue();
+        if (handle.IsNil)
+        {
+            value = string.Empty;
+            return false;
+        }
+
+        var constant = reader.GetConstant(handle);
+        var blob = reader.GetBlobReader(constant.Value);
+        value = constant.TypeCode switch
+        {
+            ConstantTypeCode.Boolean => blob.ReadBoolean() ? "true" : "false",
+            ConstantTypeCode.Char => $"'{EscapeChar(blob.ReadChar())}'",
+            ConstantTypeCode.SByte => blob.ReadSByte().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Byte => blob.ReadByte().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Int16 => blob.ReadInt16().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.UInt16 => blob.ReadUInt16().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Int32 => blob.ReadInt32().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.UInt32 => blob.ReadUInt32().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Int64 => blob.ReadInt64().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.UInt64 => blob.ReadUInt64().ToString(CultureInfo.InvariantCulture),
+            ConstantTypeCode.Single => blob.ReadSingle().ToString("R", CultureInfo.InvariantCulture),
+            ConstantTypeCode.Double => blob.ReadDouble().ToString("R", CultureInfo.InvariantCulture),
+            ConstantTypeCode.String => $"\"{EscapeString(blob.ReadUTF16(blob.Length))}\"",
+            ConstantTypeCode.NullReference => "null",
+            _ => "optional"
+        };
+        return true;
+    }
+
+    private static string EscapeString(string value) =>
+        value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+
+    private static string EscapeChar(char value) =>
+        value switch
+        {
+            '\\' => "\\\\",
+            '\'' => "\\'",
+            '\r' => "\\r",
+            '\n' => "\\n",
+            '\t' => "\\t",
+            _ => value.ToString()
+        };
 
     private static bool CanReadLocalReference(ResolvedReference reference, List<Diagnostic> diagnostics)
     {
