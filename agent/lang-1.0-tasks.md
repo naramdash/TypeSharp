@@ -399,6 +399,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
   - Pipeline and unary composition have bounded checking and lowering.
   - 1.0 functional ergonomics are immutable values, expression-oriented direct `fun` declarations, explicit function types lowering to CLR delegates, nominal unions, `Option<T>`/`Result<T,E>` Core types, pattern matching inside the documented 1.0 match boundary, direct first-argument pipeline calls, unary named-function composition, lambdas in supported delegate contexts, iterator `yield`, and `Task`-based async.
   - Higher-order function values beyond the documented delegate-compatible subset, automatic currying, general partial application, imported pipeline/composition target inference, pipeline overload ranking, computation-expression-style workflows, active-pattern-style extractors, units of measure, type providers, and F#-complete semantics are post-1.0.
+  - Generated public ABI snapshots and C# `net48` consumer smokes cover exported pipeline method signatures and explicit `System.Func` composition value fields.
   - Public/exported function-shaped values and direct composition values require explicit function type annotations where stable CLR metadata is needed; function-valued export public ABI snapshots and a C# `net48` consumer smoke cover the supported explicit `System.Func` and `System.Action` field/property export forms, while unsupported shapes report deterministic `TS2215` diagnostics before generated C# emission.
 
 - [x] Validate enum and bitwise algebra scope.

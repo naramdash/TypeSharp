@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The collection expression public ABI push `2d544592cc21103f349327b19f0aae3059b5eea4` proved Docs run `26430275482` and Regression run `26430275480` both completed successfully", languageProgress);
+    AssertContains("The record expression public ABI push `dcb03ef8d128e4bc98c4c8c9f8a0ab3f1a09e0cf` proved Docs run `26430853285` and Regression run `26430853286` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -468,6 +468,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened function-valued `System.Action` export public ABI evidence locally", languageProgress);
     AssertContains("Deepened collection expression public ABI evidence locally", languageProgress);
     AssertContains("Deepened record expression public ABI evidence locally", languageProgress);
+    AssertContains("Deepened pipeline and composition public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16534,7 +16535,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover explicit non-null receiver methods", csharpTypeModelPage);
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover getter-only helper lowering and diagnostics for assignment/collisions", csharpTypeModelPage);
-    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` and `System.Action` field/property export forms", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` and `System.Action` field/property export forms, including explicit function-typed composition values", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
     AssertContains("System.Nullable<T>", csharpTypeModelPage);
     AssertContains("The 1.0 warning-versus-error policy is fixed", csharpTypeModelPage);
@@ -33788,6 +33789,25 @@ static void CliBuildCompilesPipelineLowering()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "PipelineLowering.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with pipeline lowering.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "PipelineLowering",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/PipelineLowering.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated pipeline assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Pipeline.Module", abiSnapshotText);
+        AssertContains("  method static int increment(int value)", abiSnapshotText);
+        AssertContains("  method static int add(int value, int amount)", abiSnapshotText);
+        AssertContains("  method static string format(int value)", abiSnapshotText);
+        AssertContains("  method static string compute()", abiSnapshotText);
+        AssertContains("  method static string genericCompute()", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "PipelineConsumer.csproj", """
@@ -34461,6 +34481,25 @@ static void CliBuildCompilesCompositionLowering()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "CompositionLowering.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with composition lowering.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "CompositionLowering",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/CompositionLowering.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated composition assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.Composition.Module", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<int, string> formatAfterIncrement", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<int, string> formatBeforeIncrement", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<int, string> formatAfterIdentity", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<int, int> identityAfterIncrement", abiSnapshotText);
+        AssertContains("  field static readonly System.Func`2<int[], int> countAfterArrayIdentity", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
