@@ -351,6 +351,7 @@ These items should be closed, intentionally rejected from 1.0, or converted into
 - [x] Define the 1.0 pattern matching boundary.
   - 1.0-supported executable patterns are nominal union case names with an optional single identifier payload capture, TypeSharp-owned enum member names, named imported C# enum member names, `true`/`false`, literal members of literal-only local type-level unions, typed member patterns for non-literal local type-level unions, `_` discard arms, and `when` guard type checks.
   - Exhaustiveness diagnostics cover nominal unions, TypeSharp-owned enums, named imported C# enums, `bool`, non-literal local type-level unions, and literal-only local type-level unions; guarded arms do not prove coverage without an unguarded arm or `_`.
+  - Generated public ABI snapshots and C# `net48` consumer smokes cover local type-level union narrowing wrappers erasing to concrete string and integer public method shapes without exposing union alias names.
   - Numeric patterns over ordinary numeric inputs, numeric enum patterns, flag-style enum reasoning, flag algebra in patterns, record/structural patterns, nested payload destructuring, standalone identifier binding patterns, extractor-style patterns, and broader guard analysis are post-1.0.
   - Unsupported executable pattern forms now report `TS2211` before backend emission, and docs/contract tests preserve the boundary.
 

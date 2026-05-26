@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The satisfies expression public ABI erasure push `22c2440d4d4eba941b2c9ea728b9295e9d03196a` proved Docs run `26433307118` and Regression run `26433307096` both completed successfully", languageProgress);
+    AssertContains("The keyof and indexed access public ABI erasure push `2b1eb86784a0611ab8a85c3f862d7081dc6da07a` proved Regression run `26433791160` and Docs run `26433791161` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -474,6 +474,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened lock statement public ABI evidence locally", languageProgress);
     AssertContains("Deepened satisfies expression public ABI erasure evidence locally", languageProgress);
     AssertContains("Deepened keyof and indexed access public ABI erasure evidence locally", languageProgress);
+    AssertContains("Deepened type-level union narrowing public ABI erasure evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16614,6 +16615,7 @@ static void DocsSiteContractIsStable()
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `keyof` and indexed-access aliases erasing to CLR-visible string, integer, and bool public method shapes without exposing computed alias names", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover local type-level union narrowing wrappers erasing to concrete string and integer public method shapes without exposing union alias names", featureStatusPage);
     AssertContains("Function return expression mismatches report `TS2228`", featureStatusPage);
     AssertContains("explicit value initializer mismatches report `TS2229`", featureStatusPage);
     AssertContains("simple assignment value mismatches report `TS2230`", featureStatusPage);
@@ -33476,6 +33478,25 @@ static void CliBuildCompilesTypeLevelUnionNarrowing()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "TypeLevelUnionNarrowing.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with type-level union narrowing.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "TypeLevelUnionNarrowing",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/TypeLevelUnionNarrowing.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated type-level union narrowing assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.TypeLevelUnion.Module", abiSnapshotText);
+        AssertContains("  method static string normalizeText(string text)", abiSnapshotText);
+        AssertContains("  method static string normalizeNumber(int number)", abiSnapshotText);
+        AssertContains("  method static string describeModeOn()", abiSnapshotText);
+        AssertFalse(abiSnapshotText.Contains("type Samples.TypeLevelUnion.PrimitiveId", StringComparison.Ordinal), "Type-level union alias should not leak into generated public ABI as a CLR type.");
+        AssertFalse(abiSnapshotText.Contains("type Samples.TypeLevelUnion.Mode", StringComparison.Ordinal), "Literal union alias should not leak into generated public ABI as a CLR type.");
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
