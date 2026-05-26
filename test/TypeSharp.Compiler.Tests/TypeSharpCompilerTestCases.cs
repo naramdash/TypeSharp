@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generated generic constraint public ABI documentation push `61d87cc83bdd4a2e8e2ba37457481711bb3080ba` proved Regression run `26437752150` and Docs run `26437752148` both completed successfully", languageProgress);
+    AssertContains("The generated record public ABI documentation push `59949f1581e7bb0e56e6773d4e555c00394ea8c6` proved Regression run `26438430164` and Docs run `26438430161` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -460,6 +460,8 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened nominal union nested-case public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated record member public ABI snapshot evidence locally", languageProgress);
     AssertContains("Documented generated record public ABI evidence in Feature Status", languageProgress);
+    AssertContains("Reconciled the generated record public ABI documentation evidence on push `59949f1581e7bb0e56e6773d4e555c00394ea8c6`", languageProgress);
+    AssertContains("Documented generated nominal union public ABI evidence in Feature Status", languageProgress);
     AssertContains("Deepened generated delegate Invoke public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated generic optional/default parameter public ABI snapshot evidence locally", languageProgress);
@@ -492,6 +494,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Reconciled the generated generic constraint public ABI documentation evidence on push `61d87cc83bdd4a2e8e2ba37457481711bb3080ba`", languageProgress);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover generated classes, generated class instance/static methods, generated class instance/static value reads/writes, generated class instance/static getter-only property reads, generated class instance/static get/set property reads/writes, generated class instance/static events, generated interfaces, generated interface getter-only property reads, generated interface get/set property reads/writes, generated interface events, generic classes, class/interface/delegate generic constraints, generic interface methods, and partial module/record/union/class/interface declarations.", languageTasks);
     AssertContains("Existing generated public ABI snapshots and generated `net48` C# consumer evidence are linked for promoted forms such as functions with explicit, `params`, optional/default, and generic optional/default parameters, records with declaration attributes, constructor/property/equality members, record expression/spread module method shapes", languageTasks);
+    AssertContains("nominal unions with declaration attributes, nested case type constructors/properties, singleton cases, and class-hierarchy C# consumer evidence", languageTasks);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16596,8 +16599,10 @@ static void DocsSiteContractIsStable()
     AssertContains("TypeSharp-authored operator declarations are explicitly post-1.0", featureStatusPage);
     AssertContains("True C# 14 instance compound-assignment operators, checked user-defined operators, TypeSharp-authored operator syntax, operator overload ranking, and public CLR metadata emission remain backlog", featureStatusPage);
     AssertContains("TypeSharp records and nominal unions are the stable public data/domain model, including declaration attributes on generated CLR-visible types", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover immutable record member shapes and nominal union class-hierarchy shapes", featureStatusPage);
     AssertContains("| Records | MVP | Immutable public data shapes lower to C#-friendly nominal classes with declaration attributes, constructor parameters, get-only properties, equality, and hash code", featureStatusPage);
     AssertContains("| Nominal closed unions | MVP | `union` declarations are the runtime/domain union model and lower to a C#-compatible class hierarchy with declaration attributes", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover nominal union declaration attributes, nested case type constructors and payload properties, singleton case fields, match lowering, and the current class-hierarchy representation.", featureStatusPage);
     AssertContains("TypeSharp-authored classes lower to named CLR classes with optional generic parameters/constraints, declaration attributes, `partial`, an implicit public parameterless constructor when no parameter list is declared, an explicit constructor parameter list with CLR-visible parameter types, public instance/static `fun` methods, typed instance/static `let` and `let mut` values, typed instance/static getter-only properties with explicit initializers, typed instance/static mutable get/set auto-properties with explicit initializers, typed instance/static `event` members backed by named delegate types, and supported member attributes on emitted methods, values, properties, and events", featureStatusPage);
     AssertContains("TypeSharp-authored interfaces lower to named CLR interfaces with optional generic parameters/constraints, declaration attributes, `partial`, method signatures, typed instance getter-only properties, typed instance mutable get/set properties, typed instance `event` members backed by named delegate types, and supported member attributes on emitted methods, properties, and events", featureStatusPage);
     AssertContains("| Delegates | Implemented | TypeSharp-authored `public delegate` declarations lower to named CLR delegate metadata with optional generic parameters/constraints, declaration attributes, typed parameters, optional `params`, and explicit or `void` returns", featureStatusPage);
