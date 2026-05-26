@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The record/union/delegate attribute ABI snapshot push `02d5b492e80e80c0827e6703017c670a8d610418` proved Docs run `26424594160` and Regression run `26424594173` both completed successfully", languageProgress);
+    AssertContains("The extension member ABI snapshot push `6801ead92efe1e4b90822805f0742f0152351cf3` proved Docs run `26425009174` and Regression run `26425009172` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -457,6 +457,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened generated enum public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated attribute public ABI snapshot evidence locally: the metadata reader now preserves public ABI custom attribute type names for generated types, methods, properties, fields, and events while excluding compiler infrastructure attributes, and public ABI snapshots now assert generated class/interface declaration and member attributes, record/union/delegate declaration attributes, and enum type/member attributes", languageProgress);
     AssertContains("Deepened generated extension member public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened nominal union nested-case public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16358,7 +16359,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Enum declaration API, declaration/member attribute metadata, generated public ABI snapshots for underlying type and member values, match exhaustiveness, same-enum bitwise operations, generated `net48` build, and C# consumer smokes cover the current subset", csharpTypeModelPage);
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Named abstract CLR base type with declaration attributes, `partial` when declared, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
-    AssertContains("Nominal union API, declaration attribute metadata snapshots, partial modifier preservation, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
+    AssertContains("Nominal union API, declaration attribute metadata snapshots, nested case type public ABI snapshots, partial modifier preservation, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
     AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
     AssertContains("| Explicit-receiver extension method | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover explicit non-null receiver methods", csharpTypeModelPage);
@@ -32978,6 +32979,11 @@ static void CliBuildCompilesNominalUnionApi()
         var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
         AssertContains("type Samples.Unions.PaymentStatus", abiSnapshotText);
         AssertContains("  attribute System.ObsoleteAttribute", abiSnapshotText);
+        AssertContains("type Samples.Unions.PaymentStatus.PaidCase", abiSnapshotText);
+        AssertContains("  constructor PaidCase(string at)", abiSnapshotText);
+        AssertContains("  property get string at", abiSnapshotText);
+        AssertContains("type Samples.Unions.PaymentStatus.PendingCase", abiSnapshotText);
+        AssertContains("  field static readonly PendingCase Instance", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);

@@ -85,17 +85,18 @@ public static class TypeSharpMetadataReader
             foreach (var handle in reader.TypeDefinitions)
             {
                 var type = reader.GetTypeDefinition(handle);
-                if (!IsPublicTopLevelType(type.Attributes))
+                if (!IsPublicVisibleType(reader, type))
                 {
                     continue;
                 }
 
+                var identity = GetPublicVisibleTypeIdentity(reader, type);
                 var baseTypeName = GetMetadataTypeName(reader, type.BaseType);
                 var fields = ReadPublicFields(reader, type);
                 var isEnum = string.Equals(baseTypeName, "System.Enum", StringComparison.Ordinal);
                 types.Add(new MetadataTypeSymbol(
-                    reader.GetString(type.Namespace),
-                    reader.GetString(type.Name),
+                    identity.Namespace,
+                    identity.Name,
                     ReadPublicMethods(reader, type, assemblyHasNullableMetadata),
                     ReadPublicProperties(reader, type),
                     fields,
@@ -473,8 +474,68 @@ public static class TypeSharpMetadataReader
         return reader.GetMethodDefinition(handle).Attributes.HasFlag(System.Reflection.MethodAttributes.Static);
     }
 
-    private static bool IsPublicTopLevelType(System.Reflection.TypeAttributes attributes) =>
-        attributes.HasFlag(System.Reflection.TypeAttributes.Public);
+    private static bool IsPublicVisibleType(MetadataReader reader, TypeDefinition type)
+    {
+        if (type.Attributes.HasFlag(System.Reflection.TypeAttributes.Public))
+        {
+            return true;
+        }
+
+        if (!type.Attributes.HasFlag(System.Reflection.TypeAttributes.NestedPublic))
+        {
+            return false;
+        }
+
+        var declaringTypeHandle = type.GetDeclaringType();
+        while (!declaringTypeHandle.IsNil)
+        {
+            var declaringType = reader.GetTypeDefinition(declaringTypeHandle);
+            if (declaringType.Attributes.HasFlag(System.Reflection.TypeAttributes.Public))
+            {
+                return true;
+            }
+
+            if (!declaringType.Attributes.HasFlag(System.Reflection.TypeAttributes.NestedPublic))
+            {
+                return false;
+            }
+
+            declaringTypeHandle = declaringType.GetDeclaringType();
+        }
+
+        return false;
+    }
+
+    private static (string Namespace, string Name) GetPublicVisibleTypeIdentity(MetadataReader reader, TypeDefinition type)
+    {
+        var names = new Stack<string>();
+        var current = type;
+        while (true)
+        {
+            names.Push(reader.GetString(current.Name));
+            var declaringTypeHandle = current.GetDeclaringType();
+            if (declaringTypeHandle.IsNil)
+            {
+                return CreateNestedTypeIdentity(reader.GetString(current.Namespace), names.ToArray());
+            }
+
+            current = reader.GetTypeDefinition(declaringTypeHandle);
+        }
+    }
+
+    private static (string Namespace, string Name) CreateNestedTypeIdentity(string rootNamespace, IReadOnlyList<string> names)
+    {
+        if (names.Count == 1)
+        {
+            return (rootNamespace, names[0]);
+        }
+
+        var declaringTypeName = string.Join(".", names.Take(names.Count - 1));
+        var namespacePrefix = rootNamespace.Length == 0
+            ? declaringTypeName
+            : $"{rootNamespace}.{declaringTypeName}";
+        return (namespacePrefix, names[^1]);
+    }
 
     private static bool IsSupportedMultiplicativeOperatorMethodName(string methodName) =>
         methodName is "op_Multiply" or "op_Division" or "op_Modulus";
