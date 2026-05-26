@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The imported optional/default parameter metadata push `155130c50bdaabfa9f8b67767575a2b9f9c5f6be` proved Docs run `26427908354` and Regression run `26427908353` both completed successfully", languageProgress);
+    AssertContains("The function-valued export public ABI push `ed7515b25a2b4e69c0484fb1287375d28d905d37` proved Docs run `26428424520` and Regression run `26428424495` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -464,6 +464,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened generated generic optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened imported C# optional/default parameter metadata evidence locally", languageProgress);
     AssertContains("Deepened function-valued export public ABI evidence locally", languageProgress);
+    AssertContains("Deepened named type alias source ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -13388,7 +13389,74 @@ static void CliBuildLowersLocalTypeExportAliases()
 
         var generatedHelper = File.ReadAllText(Path.Combine(root, "generated", "src", "Helper.g.cs")).Replace("\r\n", "\n", StringComparison.Ordinal);
         AssertContains("public sealed class VisibleModel", generatedHelper);
-        AssertTrue(File.Exists(Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalTypeExportAliasBuild.dll")), "Generated project with local type export aliases should compile to a net48 DLL.");
+        var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "LocalTypeExportAliasBuild.dll");
+        AssertTrue(File.Exists(generatedAssemblyPath), "Generated project with local type export aliases should compile to a net48 DLL.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "LocalTypeExportAliasBuild",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/LocalTypeExportAliasBuild.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated local type export alias assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.LocalTypeExportAliasBuild.VisibleModel", abiSnapshotText);
+        AssertContains("  method static Samples.LocalTypeExportAliasBuild.VisibleModel pass(Samples.LocalTypeExportAliasBuild.VisibleModel model)", abiSnapshotText);
+        AssertFalse(
+            abiSnapshotText.Contains("type Samples.LocalTypeExportAliasBuild.Model\n", StringComparison.Ordinal),
+            "Named type aliases should not create an independent CLR-visible Model type.");
+
+        var consumerRoot = Path.Combine(root, "Consumer");
+        Directory.CreateDirectory(consumerRoot);
+        WriteFile(consumerRoot, "TypeAliasConsumer.csproj", """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net48</TargetFramework>
+                <LangVersion>7.3</LangVersion>
+                <ImplicitUsings>false</ImplicitUsings>
+                <Nullable>disable</Nullable>
+                <AssemblyName>TypeAliasConsumer</AssemblyName>
+              </PropertyGroup>
+              <ItemGroup>
+                <Reference Include="LocalTypeExportAliasBuild">
+                  <HintPath>../generated/bin/Debug/net48/LocalTypeExportAliasBuild.dll</HintPath>
+                </Reference>
+              </ItemGroup>
+            </Project>
+            """);
+        WriteFile(consumerRoot, "NuGet.config", """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            """);
+        WriteFile(consumerRoot, "Consumer.cs", """
+            using Model = Samples.LocalTypeExportAliasBuild.VisibleModel;
+
+            namespace TypeAliasConsumer
+            {
+                public static class Consumer
+                {
+                    public static string Read()
+                    {
+                        var model = new Model("Ada");
+                        return Samples.LocalTypeExportAliasBuild.ModuleMain.pass(model).Name;
+                    }
+                }
+            }
+            """);
+
+        var build = RunProcess("dotnet", "build TypeAliasConsumer.csproj --nologo --verbosity quiet --ignore-failed-sources", consumerRoot);
+
+        AssertTrue(
+            build.ExitCode == 0,
+            $"C# net48 consumer project should compile against generated named type alias API through the underlying CLR-visible type.\nSTDOUT:\n{build.StandardOutput}\nSTDERR:\n{build.StandardError}");
     });
 }
 
@@ -16436,6 +16504,8 @@ static void DocsSiteContractIsStable()
     AssertContains("| `union` | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Named abstract CLR base type with declaration attributes, `partial` when declared, nested sealed case types, and runtime helper metadata", csharpTypeModelPage);
     AssertContains("Nominal union API, declaration attribute metadata snapshots, nested case type public ABI snapshots, partial modifier preservation, union match lowering, runtime helper, and C# consumer smokes cover the current class-hierarchy representation", csharpTypeModelPage);
+    AssertContains("| `type` alias to named CLR-visible type | Source ABI convenience, not a new CLR type", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover local type export aliases erasing to the referenced named CLR type instead of creating an independent alias type", csharpTypeModelPage);
     AssertContains("| `type` alias, public parameter, public return, or public value using union, structural shape, intersection, `keyof`, indexed access, `unknown`, or anonymous shape | Compile-time-only", csharpTypeModelPage);
     AssertContains("| Explicit-receiver extension method | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover explicit non-null receiver methods", csharpTypeModelPage);
