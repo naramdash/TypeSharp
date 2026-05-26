@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The generated nominal union public ABI documentation push `8fd7b6e5fa1b7f3fd68a674f3767175fd3bba37c` proved Regression run `26439221796` and Docs run `26439221798` both completed successfully", languageProgress);
+    AssertContains("The generated nominal union CI evidence reconciliation push `25d40cc1f29da43df3a43a1a6dd42589317ade67` proved Regression run `26439912781` and Docs run `26439912798` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -463,6 +463,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Reconciled the generated record public ABI documentation evidence on push `59949f1581e7bb0e56e6773d4e555c00394ea8c6`", languageProgress);
     AssertContains("Documented generated nominal union public ABI evidence in Feature Status", languageProgress);
     AssertContains("Reconciled the generated nominal union public ABI documentation evidence on push `8fd7b6e5fa1b7f3fd68a674f3767175fd3bba37c`", languageProgress);
+    AssertContains("Reconciled the generated nominal union CI evidence on push `25d40cc1f29da43df3a43a1a6dd42589317ade67`", languageProgress);
     AssertContains("Deepened generated delegate Invoke public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated generic optional/default parameter public ABI snapshot evidence locally", languageProgress);
