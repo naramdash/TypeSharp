@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The logical shift CI evidence reconciliation push `ca65df40aefcabad2569ef085b4b12f1482b1b14` proved Regression run `26436963536` and Docs run `26436963515` both completed successfully", languageProgress);
+    AssertContains("The generated generic constraint public ABI documentation push `61d87cc83bdd4a2e8e2ba37457481711bb3080ba` proved Regression run `26437752150` and Docs run `26437752148` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -459,6 +459,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened generated extension member public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened nominal union nested-case public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated record member public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Documented generated record public ABI evidence in Feature Status", languageProgress);
     AssertContains("Deepened generated delegate Invoke public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated optional/default parameter public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened generated generic optional/default parameter public ABI snapshot evidence locally", languageProgress);
@@ -488,7 +489,9 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Promoted the generated generic constraint public ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened the generated generic constraint public ABI snapshot evidence locally", languageProgress);
     AssertContains("Documented the generated generic constraint public ABI evidence in Feature Status", languageProgress);
+    AssertContains("Reconciled the generated generic constraint public ABI documentation evidence on push `61d87cc83bdd4a2e8e2ba37457481711bb3080ba`", languageProgress);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover generated classes, generated class instance/static methods, generated class instance/static value reads/writes, generated class instance/static getter-only property reads, generated class instance/static get/set property reads/writes, generated class instance/static events, generated interfaces, generated interface getter-only property reads, generated interface get/set property reads/writes, generated interface events, generic classes, class/interface/delegate generic constraints, generic interface methods, and partial module/record/union/class/interface declarations.", languageTasks);
+    AssertContains("Existing generated public ABI snapshots and generated `net48` C# consumer evidence are linked for promoted forms such as functions with explicit, `params`, optional/default, and generic optional/default parameters, records with declaration attributes, constructor/property/equality members, record expression/spread module method shapes", languageTasks);
     AssertContains("Rechecked the hosted-release tracker reconciliation after push `40f7be4990920b0d3d6c423142d8324f42eb47dd`", languageProgress);
     AssertContains("Replaced remaining public missing-release fallback wording with a contributor-only source-built development path after `v0.1.0-preview.4` publication", languageProgress);
     AssertContains("Reopen only if the public install route, release asset layout, or hosted release smoke changes.", languageProgress);
@@ -16637,6 +16640,7 @@ static void DocsSiteContractIsStable()
     AssertContains("simple assignment value mismatches report `TS2230`", featureStatusPage);
     AssertContains("invalid names/order/duplicates/missing required/type mismatches report `TS2215`", featureStatusPage);
     AssertContains("Public/exported unannotated direct composition values report `TS2215`", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover record declaration attributes, constructors, get-only properties, equality/hash members, and record expression/spread module method shapes.", featureStatusPage);
 
     var diagnosticsPage = File.ReadAllText(Path.Combine(siteRoot, "src", "content", "docs", "diagnostics.md"));
     AssertContains("Command examples assume the release install route from [Install](../install/)", diagnosticsPage);
