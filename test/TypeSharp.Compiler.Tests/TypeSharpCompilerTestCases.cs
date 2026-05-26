@@ -17153,9 +17153,11 @@ static void RepositoryMonorepoLayoutIsStable()
 
     var releaseWorkflow = File.ReadAllText(Path.Combine(repositoryRoot, ".github", "workflows", "release-artifacts.yml"));
     AssertContains(@"dotnet restore test\TypeSharp.Compiler.Tests\TypeSharp.Compiler.Tests.csproj", releaseWorkflow);
-    AssertContains(@"dotnet publish cli\TypeSharp.Cli\TypeSharp.Cli.csproj", releaseWorkflow);
-    AssertContains(@"dotnet build lang\TypeSharp.Core\TypeSharp.Core.csproj", releaseWorkflow);
-    AssertContains(@"dotnet build lang\TypeSharp.Runtime\TypeSharp.Runtime.csproj", releaseWorkflow);
+    AssertContains(@"dotnet pack cli\TypeSharp.Cli\TypeSharp.Cli.csproj", releaseWorkflow);
+    AssertContains("dotnet tool install TypeSharp.Tool", releaseWorkflow);
+    AssertContains(@"""runtime project targets net48""", releaseWorkflow);
+    AssertContains(@"""core project targets net48""", releaseWorkflow);
+    AssertContains("runtime-path --json", releaseWorkflow);
 
     var extension = File.ReadAllText(Path.Combine(repositoryRoot, "vscode", "typesharp", "extension.js"));
     AssertContains(@"path.join(repositoryRoot, ""lang"", ""TypeSharp.LanguageServer""", extension);
