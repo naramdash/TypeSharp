@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The public literal constant ABI snapshot push `a9cfc2829520e9ed3d89f83d145e8a4431b8d8c0` proved Regression run `26434993176` and Docs run `26434993246` both completed successfully", languageProgress);
+    AssertContains("The bitwise and shift public ABI snapshot push `2c34e30e3c4fcc59ca7acc6e8f3e738b912778ff` proved Regression run `26435660003` and Docs run `26435660004` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -477,6 +477,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened type-level union narrowing public ABI erasure evidence locally", languageProgress);
     AssertContains("Deepened public literal constant ABI snapshot evidence locally", languageProgress);
     AssertContains("Deepened bitwise and shift expression public ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened logical unsigned shift public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16616,9 +16617,9 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `nameof` module methods that preserve ordinary name references and lower unbound generic type targets to string constants", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover checked/unchecked expression module methods", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover public literal constants as static literal CLR fields", featureStatusPage);
-    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover exported primitive integral bitwise and regular shift module method shapes", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover exported primitive integral bitwise plus regular and logical unsigned shift module method shapes", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover exported boolean bitwise module method shapes", featureStatusPage);
-    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover local enum, integral, and bool bitwise compound assignment wrapper method shapes", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover local enum, integral, and bool bitwise compound assignment plus logical unsigned shift assignment wrapper method shapes for local and imported member/indexer targets", featureStatusPage);
     AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target", featureStatusPage);
@@ -25444,6 +25445,25 @@ static void CliBuildCompilesLogicalUnsignedShiftExpressionApi()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "LogicalUnsignedShiftApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with logical unsigned shift APIs.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "LogicalUnsignedShiftApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/LogicalUnsignedShiftApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated logical unsigned shift assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.LogicalUnsignedShift.Module", abiSnapshotText);
+        AssertContains("  method static int combined(int value)", abiSnapshotText);
+        AssertContains("  method static int signed(int value, byte count)", abiSnapshotText);
+        AssertContains("  method static long signedLong(long value, short count)", abiSnapshotText);
+        AssertContains("  method static int small(sbyte value, int count)", abiSnapshotText);
+        AssertContains("  method static uint unsigned(uint value, int count)", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "LogicalUnsignedShiftConsumer.csproj", """
@@ -25565,6 +25585,25 @@ static void CliBuildCompilesLogicalUnsignedShiftAssignmentExpressionApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "LogicalUnsignedShiftAssignmentApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with logical unsigned shift assignment APIs.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "LogicalUnsignedShiftAssignmentApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/LogicalUnsignedShiftAssignmentApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated logical unsigned shift assignment assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.LogicalUnsignedShiftAssignment.Module", abiSnapshotText);
+        AssertContains("  method static int combined(int value)", abiSnapshotText);
+        AssertContains("  method static int signed(int value, byte count)", abiSnapshotText);
+        AssertContains("  method static long signedLong(long value, short count)", abiSnapshotText);
+        AssertContains("  method static byte small(byte value, int count)", abiSnapshotText);
+        AssertContains("  method static uint unsigned(uint value, int count)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -25692,6 +25731,31 @@ static void CliBuildCompilesImportedLogicalUnsignedShiftAssignmentMemberTargets(
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedLogicalUnsignedShiftAssignmentApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported logical unsigned shift assignment APIs.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "ImportedLogicalUnsignedShiftAssignmentApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/ImportedLogicalUnsignedShiftAssignmentApi.dll"),
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "Legacy.Tools",
+                Path.Combine(root, "lib", "Legacy.Tools.dll"),
+                Path.Combine(root, "lib", "Legacy.Tools.dll"),
+                "lib/Legacy.Tools.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated imported logical unsigned shift assignment assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single(assembly => assembly.Identity == "ImportedLogicalUnsignedShiftAssignmentApi")).Lines);
+        AssertContains("type Samples.ImportedLogicalUnsignedShiftAssignment.Module", abiSnapshotText);
+        AssertContains("  method static long instanceField(long value, short count)", abiSnapshotText);
+        AssertContains("  method static int instanceProperty(int count)", abiSnapshotText);
+        AssertContains("  method static int nonTrivialReceiver(int count)", abiSnapshotText);
+        AssertContains("  method static byte staticSmall(byte value, int count)", abiSnapshotText);
+        AssertContains("  method static uint staticUnsigned(uint value, int count)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -25866,6 +25930,28 @@ static void CliBuildCompilesImportedLogicalUnsignedShiftAssignmentIndexerTargets
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "ImportedLogicalUnsignedShiftAssignmentIndexerApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with imported indexer logical unsigned shift assignment APIs.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "ImportedLogicalUnsignedShiftAssignmentIndexerApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/ImportedLogicalUnsignedShiftAssignmentIndexerApi.dll"),
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "Legacy.Tools",
+                Path.Combine(root, "lib", "Legacy.Tools.dll"),
+                Path.Combine(root, "lib", "Legacy.Tools.dll"),
+                "lib/Legacy.Tools.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated imported indexer logical unsigned shift assignment assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single(assembly => assembly.Identity == "ImportedLogicalUnsignedShiftAssignmentIndexerApi")).Lines);
+        AssertContains("type Samples.ImportedLogicalUnsignedShiftAssignmentIndexers.Module", abiSnapshotText);
+        AssertContains("  method static int nonTrivial(int value, int count)", abiSnapshotText);
+        AssertContains("  method static int simple(int value, int count)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
