@@ -1393,6 +1393,10 @@ public static class CSharpSourceBackend
                 {
                     EmitBlock(expression, returnType);
                 }
+                else if (IsVoidType(returnType))
+                {
+                    _builder.AppendLine($"            {EmitExpression(expression)};");
+                }
                 else
                 {
                     _builder.AppendLine($"            return {EmitExpression(expression, returnType)};");
@@ -1705,7 +1709,16 @@ public static class CSharpSourceBackend
                     ? statement.Children.FirstOrDefault(child => !child.IsToken)
                     : statement;
 
-                if (isLast && returnsLastExpression && !hasYield)
+                if (isLast && returnsLastExpression && !hasYield && IsVoidType(expectedType))
+                {
+                    if (TryEmitCheckedAssignmentStatement(expression, indent))
+                    {
+                        continue;
+                    }
+
+                    _builder.AppendLine($"{indent}{EmitExpression(expression)};");
+                }
+                else if (isLast && returnsLastExpression && !hasYield)
                 {
                     _builder.AppendLine($"{indent}return {EmitExpression(expression, expectedType)};");
                 }
@@ -1773,6 +1786,10 @@ public static class CSharpSourceBackend
                 if (expression?.Kind == SyntaxKind.BlockExpression)
                 {
                     EmitBlock(expression, returnType);
+                }
+                else if (IsVoidType(returnType))
+                {
+                    _builder.AppendLine($"            {EmitExpression(expression)};");
                 }
                 else
                 {
@@ -5046,6 +5063,9 @@ public static class CSharpSourceBackend
                 string.Equals(StripGenericArity(left), StripGenericArity(right), StringComparison.Ordinal) ||
                 string.Equals(GetUnqualifiedTypeName(StripGenericArity(left)), GetUnqualifiedTypeName(StripGenericArity(right)), StringComparison.Ordinal);
         }
+
+        private static bool IsVoidType(string? type) =>
+            string.Equals(type, "void", StringComparison.Ordinal);
 
         private static string GetUnqualifiedTypeName(string name)
         {

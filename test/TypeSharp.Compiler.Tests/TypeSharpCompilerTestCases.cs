@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The function-valued export public ABI push `ed7515b25a2b4e69c0484fb1287375d28d905d37` proved Docs run `26428424520` and Regression run `26428424495` both completed successfully", languageProgress);
+    AssertContains("The named type alias source ABI push `dbe40b62d59596d21d20153b93dc5105e9109b59` proved Docs run `26428908495` and Regression run `26428908509` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -465,6 +465,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened imported C# optional/default parameter metadata evidence locally", languageProgress);
     AssertContains("Deepened function-valued export public ABI evidence locally", languageProgress);
     AssertContains("Deepened named type alias source ABI evidence locally", languageProgress);
+    AssertContains("Deepened function-valued `System.Action` export public ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -13176,28 +13177,35 @@ static void CliBuildLowersFunctionValueExports()
         WriteFile(root, "src/Main.tysh", """
             namespace Samples.FunctionValueExportBuild
 
-            import { Transform, PublicTransform, Wrap } from "./Helper"
+            import { Transform, PublicTransform, Wrap, Notify, PublicNotify } from "./Helper"
 
             export fun name(): string =
               Transform("Ada") + PublicTransform(" Lovelace")
 
             export fun wrapped(): string[] = Wrap("Ada")
+            export fun notified(): unit = Notify("Ada")
+            export fun publicNotified(): unit = PublicNotify("Lovelace")
             """);
         WriteFile(root, "src/Helper.tysh", """
             namespace Samples.FunctionValueExportBuild
 
             export let Transform: string -> string = text => text
             export let Wrap: string -> string[] = text => [text]
+            export let Notify: string -> unit = text => { text.ToString() }
 
             let internalTransform: string -> string = text => text
+            let internalNotify: string -> unit = text => { text.ToString() }
             export { internalTransform as PublicTransform }
+            export { internalNotify as PublicNotify }
             """);
         using var output = new StringWriter();
         using var error = new StringWriter();
 
         var exitCode = TypeSharpCli.Run(["build", manifestPath, "--diagnostic-format", "json"], output, error);
 
-        AssertEqual(0, exitCode);
+        AssertTrue(
+            exitCode == 0,
+            $"Function-valued export build should succeed.\nSTDOUT:\n{output}\nSTDERR:\n{error}");
         AssertContains("Generated assembly: bin/Debug/net48/FunctionValueExportBuild.dll", output.ToString());
         AssertEqual(string.Empty, error.ToString());
 
@@ -13206,11 +13214,19 @@ static void CliBuildLowersFunctionValueExports()
         AssertContains("using static Samples.FunctionValueExportBuild.ModuleHelper;", generatedMain);
         AssertContains("return Transform(\"Ada\") + PublicTransform(\" Lovelace\");", generatedMain);
         AssertContains("return Wrap(\"Ada\");", generatedMain);
+        AssertContains("Notify(\"Ada\");", generatedMain);
+        AssertContains("PublicNotify(\"Lovelace\");", generatedMain);
+        AssertFalse(generatedMain.Contains("return Notify(\"Ada\");", StringComparison.Ordinal), "Unit-returning function-valued calls should lower as statements, not returned values.");
+        AssertFalse(generatedMain.Contains("return PublicNotify(\"Lovelace\");", StringComparison.Ordinal), "Aliased unit-returning function-valued calls should lower as statements, not returned values.");
         AssertContains("public static readonly System.Func<string, string> Transform = text => text;", generatedHelper);
         AssertContains("public static readonly System.Func<string, string[]> Wrap = text => new string[] { text };", generatedHelper);
+        AssertContains("public static readonly System.Action<string> Notify = text => { text.ToString();", generatedHelper);
         AssertContains("internal static readonly System.Func<string, string> internalTransform = text => text;", generatedHelper);
+        AssertContains("internal static readonly System.Action<string> internalNotify = text => { text.ToString();", generatedHelper);
         AssertContains("public static System.Func<string, string> PublicTransform", generatedHelper);
+        AssertContains("public static System.Action<string> PublicNotify", generatedHelper);
         AssertContains("get { return internalTransform; }", generatedHelper);
+        AssertContains("get { return internalNotify; }", generatedHelper);
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "FunctionValueExportBuild.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Generated project with function-valued let exports should compile to a net48 DLL.");
 
@@ -13229,7 +13245,9 @@ static void CliBuildLowersFunctionValueExports()
         AssertContains("type Samples.FunctionValueExportBuild.ModuleHelper", abiSnapshotText);
         AssertContains("  field static readonly System.Func`2<string, string> Transform", abiSnapshotText);
         AssertContains("  field static readonly System.Func`2<string, string[]> Wrap", abiSnapshotText);
+        AssertContains("  field static readonly System.Action`1<string> Notify", abiSnapshotText);
         AssertContains("  property static get System.Func`2<string, string> PublicTransform", abiSnapshotText);
+        AssertContains("  property static get System.Action`1<string> PublicNotify", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -13267,6 +13285,8 @@ static void CliBuildLowersFunctionValueExports()
                         var transformed = Samples.FunctionValueExportBuild.ModuleHelper.Transform("Ada");
                         var aliased = Samples.FunctionValueExportBuild.ModuleHelper.PublicTransform(" Lovelace");
                         var wrapped = Samples.FunctionValueExportBuild.ModuleHelper.Wrap("Ada");
+                        Samples.FunctionValueExportBuild.ModuleHelper.Notify("Ada");
+                        Samples.FunctionValueExportBuild.ModuleHelper.PublicNotify("Lovelace");
                         return transformed + aliased + ":" + wrapped.Length.ToString();
                     }
                 }
@@ -16511,7 +16531,7 @@ static void DocsSiteContractIsStable()
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover explicit non-null receiver methods", csharpTypeModelPage);
     AssertContains("| Getter-only extension property | Public ABI slice, MVP limited", csharpTypeModelPage);
     AssertContains("Backend snapshots, generated public ABI snapshots, and C# consumer smokes cover getter-only helper lowering and diagnostics for assignment/collisions", csharpTypeModelPage);
-    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` field/property export forms", csharpTypeModelPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover the supported `System.Func` and `System.Action` field/property export forms", csharpTypeModelPage);
     AssertContains("TypeSharp.Core.Unit", csharpTypeModelPage);
     AssertContains("System.Nullable<T>", csharpTypeModelPage);
     AssertContains("The 1.0 warning-versus-error policy is fixed", csharpTypeModelPage);
