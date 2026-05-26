@@ -447,7 +447,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("`v0.1.0-preview.4` is published at `https://github.com/naramdash/TypeSharp/releases/tag/v0.1.0-preview.4`", languageProgress);
     AssertContains("Reconciled the class getter-only property ABI tracker evidence on push `0daa2abe067bf0cf438bf4ab3d87dec6b777c4c5`", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class mutable get/set property ABI slice locally", languageProgress);
-    AssertContains("The type-level union narrowing public ABI erasure push `4377280e4a53333c1540e77faa964223e30cef46` proved Regression run `26434344900` and Docs run `26434344860` both completed successfully", languageProgress);
+    AssertContains("The public literal constant ABI snapshot push `a9cfc2829520e9ed3d89f83d145e8a4431b8d8c0` proved Regression run `26434993176` and Docs run `26434993246` both completed successfully", languageProgress);
     AssertContains("Promoted the TypeSharp-authored interface mutable get/set property ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface declaration attribute ABI slice locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored class/interface member attribute ABI slice locally", languageProgress);
@@ -476,6 +476,7 @@ static void TestRunnerShardSelectionIsStable()
     AssertContains("Deepened keyof and indexed access public ABI erasure evidence locally", languageProgress);
     AssertContains("Deepened type-level union narrowing public ABI erasure evidence locally", languageProgress);
     AssertContains("Deepened public literal constant ABI snapshot evidence locally", languageProgress);
+    AssertContains("Deepened bitwise and shift expression public ABI snapshot evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored partial declaration ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored function parameter ABI evidence locally", languageProgress);
     AssertContains("Promoted the TypeSharp-authored delegate params ABI evidence locally", languageProgress);
@@ -16615,6 +16616,9 @@ static void DocsSiteContractIsStable()
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `nameof` module methods that preserve ordinary name references and lower unbound generic type targets to string constants", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover checked/unchecked expression module methods", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover public literal constants as static literal CLR fields", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover exported primitive integral bitwise and regular shift module method shapes", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover exported boolean bitwise module method shapes", featureStatusPage);
+    AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover local enum, integral, and bool bitwise compound assignment wrapper method shapes", featureStatusPage);
     AssertContains("nominal-union case-name patterns that do not name a declared case report `TS2226`", featureStatusPage);
     AssertContains("ordinary satisfies assignability failures report `TS2227`", featureStatusPage);
     AssertContains("Generated public ABI snapshots and C# `net48` consumer smokes cover `satisfies` expressions erasing to their original nominal or primitive public method shapes without exposing the structural proof target", featureStatusPage);
@@ -25192,6 +25196,25 @@ static void CliBuildCompilesIntegralBitwiseExpressionApi()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "IntegralBitwiseApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with integral bitwise APIs.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "IntegralBitwiseApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/IntegralBitwiseApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated integral bitwise assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.IntegralBitwise.Module", abiSnapshotText);
+        AssertContains("  method static int invert(int value)", abiSnapshotText);
+        AssertContains("  method static int literalFlags()", abiSnapshotText);
+        AssertContains("  method static int literalInvert()", abiSnapshotText);
+        AssertContains("  method static int mask(int value)", abiSnapshotText);
+        AssertContains("  method static int toggle(int value)", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "IntegralBitwiseConsumer.csproj", """
@@ -25296,6 +25319,26 @@ static void CliBuildCompilesIntegralShiftExpressionApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "IntegralShiftApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with integral shift APIs.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "IntegralShiftApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/IntegralShiftApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated integral shift assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.IntegralShift.Module", abiSnapshotText);
+        AssertContains("  method static int combined(int value)", abiSnapshotText);
+        AssertContains("  method static int literalLeft()", abiSnapshotText);
+        AssertContains("  method static int literalRight()", abiSnapshotText);
+        AssertContains("  method static int shiftByte(byte value, ushort count)", abiSnapshotText);
+        AssertContains("  method static long shiftLong(long value, short count)", abiSnapshotText);
+        AssertContains("  method static uint shiftUnsigned(uint value, int count)", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
@@ -31852,6 +31895,24 @@ static void CliBuildCompilesBooleanBitwiseExpressionApi()
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "BooleanBitwiseApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with boolean bitwise APIs.");
 
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "BooleanBitwiseApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/BooleanBitwiseApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated boolean bitwise assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.BooleanBitwise.Module", abiSnapshotText);
+        AssertContains("  method static bool both(bool left, bool right)", abiSnapshotText);
+        AssertContains("  method static bool combined(bool left, bool right)", abiSnapshotText);
+        AssertContains("  method static bool either(bool left, bool right)", abiSnapshotText);
+        AssertContains("  method static bool toggled(bool left, bool right)", abiSnapshotText);
+
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
         WriteFile(consumerRoot, "BooleanBitwiseConsumer.csproj", """
@@ -31970,6 +32031,23 @@ static void CliBuildCompilesBitwiseCompoundAssignmentApi()
 
         var generatedAssemblyPath = Path.Combine(root, "generated", "bin", "Debug", "net48", "BitwiseCompoundAssignmentApi.dll");
         AssertTrue(File.Exists(generatedAssemblyPath), "Build should produce generated net48 assembly with bitwise compound assignment APIs.");
+
+        var metadata = TypeSharpMetadataReader.Read(
+        [
+            new ResolvedReference(
+                ResolvedReferenceKind.LocalAssembly,
+                "BitwiseCompoundAssignmentApi",
+                generatedAssemblyPath,
+                generatedAssemblyPath,
+                "generated/bin/Debug/net48/BitwiseCompoundAssignmentApi.dll")
+        ]);
+
+        AssertFalse(metadata.HasErrors, "Generated bitwise compound assignment assembly metadata should be readable.");
+        var abiSnapshotText = string.Join("\n", TypeSharpPublicAbiChecker.CreateSnapshot(metadata.Assemblies.Single()).Lines);
+        AssertContains("type Samples.BitwiseCompoundAssignment.Module", abiSnapshotText);
+        AssertContains("  method static int updateBits()", abiSnapshotText);
+        AssertContains("  method static bool updateBool()", abiSnapshotText);
+        AssertContains("  method static Samples.BitwiseCompoundAssignment.Permission updateFlags()", abiSnapshotText);
 
         var consumerRoot = Path.Combine(root, "Consumer");
         Directory.CreateDirectory(consumerRoot);
