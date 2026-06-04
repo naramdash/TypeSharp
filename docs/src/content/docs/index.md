@@ -11,7 +11,7 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 
 ## Start Here
 
-- [Install](install/) shows the NuGet .NET global tool install, first project flow, and runtime dependency options.
+- [Install](install/) shows user requirements, the NuGet .NET global tool install, first project flow, and runtime dependency options.
 - [Start Here](start-here/) helps new users choose the right path.
 - [Learning Paths](learning-paths/) gives beginner, C# maintainer, TypeScript, F#, and advanced routes.
 - [From TypeScript](from-typescript/), [From C#](from-csharp/), and [From F#](from-fsharp/) translate familiar concepts into TypeSharp rules.

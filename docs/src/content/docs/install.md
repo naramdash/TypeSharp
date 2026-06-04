@@ -9,6 +9,25 @@ The supported user environment is Windows with .NET Framework 4.8 installed, the
 
 Contributor source builds are not part of the normal install path. Use [Start Here](../start-here/) only when you are changing TypeSharp itself.
 
+## Requirements
+
+Before installing TypeSharp as a user, make sure the machine has:
+
+- Windows with `.NET Framework 4.8` installed.
+- `.NET Framework 4.8` developer targeting/build tools so generated `net48` projects can compile.
+- A modern .NET SDK that can install and run .NET global tools.
+- Access to a NuGet source that contains `TypeSharp.Tool`.
+
+Check the SDK from PowerShell:
+
+```powershell
+dotnet --info
+```
+
+TypeSharp intentionally separates tool hosting from generated artifacts. The CLI package may run on a modern .NET runtime, but the code it generates and the TypeSharp Core/Runtime DLLs stay on `net48`.
+
+If `typesharp` is not found after installation, reopen the shell and verify the .NET global tools directory is on `PATH`.
+
 ## Install The Tool
 
 Install the versioned CLI package:
@@ -48,6 +67,24 @@ Scripts can use:
 ```powershell
 typesharp version --json
 ```
+
+## What Gets Installed
+
+Installing `TypeSharp.Tool` gives you:
+
+- the `typesharp` command,
+- the compiler and CLI host,
+- the language server entry point used by editor tooling,
+- matching `net48` runtime/core DLLs for projects that need explicit runtime references.
+
+The installed package carries the runtime DLLs under:
+
+```text
+runtime/net48/TypeSharp.Core.dll
+runtime/net48/TypeSharp.Runtime.dll
+```
+
+Use `typesharp runtime-path` to locate those files instead of referencing repository build folders.
 
 ## Create And Build A Project
 
