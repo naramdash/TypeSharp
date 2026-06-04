@@ -136,6 +136,8 @@ $resolvedArtifactsDir = Join-Path $repoRoot $ArtifactsDir
 New-Item -ItemType Directory -Force -Path $resolvedArtifactsDir | Out-Null
 
 if (-not $SkipBuild) {
+  dotnet restore lang\TypeSharp.Core\TypeSharp.Core.csproj
+  dotnet restore lang\TypeSharp.Runtime\TypeSharp.Runtime.csproj
   dotnet restore cli\TypeSharp.Cli\TypeSharp.Cli.csproj
   dotnet build cli\TypeSharp.Cli\TypeSharp.Cli.csproj -c $Configuration --no-restore
 }
