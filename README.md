@@ -28,13 +28,82 @@ The compiler and tools can run on a modern .NET SDK. The generated user-facing a
 The normal TypeSharp CLI install path is a NuGet .NET global tool:
 
 ```powershell
-dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.6
 typesharp version
 ```
 
 The CLI tool runs on modern .NET. Generated user artifacts, generated projects, `TypeSharp.Core`, and `TypeSharp.Runtime` remain `net48`. The expected user environment is Windows with .NET Framework 4.8, the .NET Framework targeting/build tools needed for `net48`, and a modern .NET SDK capable of installing and running the TypeSharp tool.
 
 The NuGet package is the CLI distribution and the runtime DLL distribution. Use the docs [Install](https://naramdash.github.io/TypeSharp/install/) page for the `dotnet tool`, project creation, dependency, build, and runtime-library flow. The source-built commands below are for contributors changing TypeSharp itself, not the normal install path.
+
+## Build Real Artifacts From A Fresh Clone
+
+Use this path when you have just cloned the repository and need to produce local artifacts from source instead of installing the published tool package.
+
+Prerequisites:
+
+- Windows with .NET Framework 4.8 installed
+- .NET Framework 4.8 targeting/build tools for `net48`
+- a modern .NET SDK that can build the CLI host target in [cli/TypeSharp.Cli](cli/TypeSharp.Cli)
+- Git
+
+From a fresh clone:
+
+```powershell
+git clone https://github.com/naramdash/TypeSharp.git
+cd TypeSharp
+
+dotnet restore cli\TypeSharp.Cli\TypeSharp.Cli.csproj
+dotnet build lang\TypeSharp.Core\TypeSharp.Core.csproj -c Release
+dotnet build lang\TypeSharp.Runtime\TypeSharp.Runtime.csproj -c Release
+dotnet build cli\TypeSharp.Cli\TypeSharp.Cli.csproj -c Release
+dotnet pack cli\TypeSharp.Cli\TypeSharp.Cli.csproj -c Release -o artifacts\packages
+```
+
+This produces the repository-built artifacts:
+
+| Artifact | Path |
+| --- | --- |
+| CLI host | `cli\TypeSharp.Cli\bin\Release\net10.0\typesharp.dll` |
+| Core runtime DLL | `lang\TypeSharp.Core\bin\Release\net48\TypeSharp.Core.dll` |
+| Runtime DLL | `lang\TypeSharp.Runtime\bin\Release\net48\TypeSharp.Runtime.dll` |
+| Local NuGet tool package | `artifacts\packages\TypeSharp.Tool.0.1.0-preview.6.nupkg` |
+
+To run the source-built CLI without installing it globally:
+
+```powershell
+$tysh = "dotnet cli\TypeSharp.Cli\bin\Release\net10.0\typesharp.dll"
+
+& $tysh version
+& $tysh new console HelloTypeSharp --target net48 --output .\scratch\HelloTypeSharp
+& $tysh check .\scratch\HelloTypeSharp\TypeSharp.toml
+& $tysh build .\scratch\HelloTypeSharp\TypeSharp.toml --configuration Release
+& $tysh run .\scratch\HelloTypeSharp\TypeSharp.toml --configuration Release
+```
+
+To test the locally packed tool package through the normal `typesharp` command:
+
+```powershell
+$packageSource = (Resolve-Path .\artifacts\packages).Path
+$localNuGetConfig = ".\artifacts\packages\NuGet.local.config"
+@"
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="local-typesharp" value="$packageSource" />
+  </packageSources>
+</configuration>
+"@ | Set-Content -Path $localNuGetConfig -Encoding utf8
+
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.6 --configfile $localNuGetConfig
+typesharp version
+typesharp runtime-path
+```
+
+The local config avoids conflicts with repository or user-level NuGet package source mapping. If `TypeSharp.Tool` is already installed globally, uninstall or update it first so the shell runs the local package version you intend to test.
+
+The generated sample project writes inspectable generated C# under its configured generated output root and builds the final user-facing `net48` executable under that generated project's `bin\<Configuration>\net48` output. Generated binaries and package outputs are build artifacts; do not commit them.
 
 ## Contributor Source-Built Development Path
 

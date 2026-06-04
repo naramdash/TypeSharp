@@ -7,7 +7,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>typesharp</ToolCommandName>
     <PackageId>TypeSharp.Tool</PackageId>
-    <Version>0.1.0-preview.5</Version>
+    <Version>0.1.0-preview.6</Version>
     <Title>TypeSharp CLI</Title>
     <Description>TypeSharp compiler, CLI, and language server host. The tool runs on modern .NET and builds generated net48 artifacts.</Description>
     <PackageTags>typesharp;compiler;net48;dotnet-tool</PackageTags>

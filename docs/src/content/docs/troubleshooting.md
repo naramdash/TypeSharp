@@ -23,14 +23,14 @@ Check that `dotnet` and the global tool path are available, then install or upda
 
 ```powershell
 dotnet --info
-dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.6
 typesharp version
 ```
 
 If the tool is already installed, update it to the release version from [Install](../install/):
 
 ```powershell
-dotnet tool update --global TypeSharp.Tool --version 0.1.0-preview.5
+dotnet tool update --global TypeSharp.Tool --version 0.1.0-preview.6
 typesharp version --json
 ```
 

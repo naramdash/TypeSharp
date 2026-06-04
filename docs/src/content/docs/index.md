@@ -40,7 +40,7 @@ This site is the canonical publishing surface for TypeSharp language, tooling, a
 Preview CLI releases are distributed as the `TypeSharp.Tool` NuGet .NET global tool:
 
 ```powershell
-dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.6
 typesharp version
 ```
 

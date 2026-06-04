@@ -19,7 +19,7 @@ TypeSharp CLI/runtime 배포 기조는 `TypeSharp.Tool` NuGet global tool입니�
 3. API key 정책 결정
    - 첫 배포는 수동으로 수행합니다.
    - 자동화를 켤 때는 NuGet.org에서 `TypeSharp.Tool` publish 권한만 가진 scoped API key를 만듭니다.
-   - key는 GitHub Actions secret `NUGET_API_KEY`에 넣는 방향이지만, 이 repository에는 아직 자동 push 단계를 두지 않습니다.
+   - main branch push 자동화를 위해 GitHub Actions secret `NUGET_API_KEY`에 key를 넣습니다.
 
 4. 첫 패키지 검증
    - release workflow 또는 로컬에서 생성된 `TypeSharp.Tool.<version>.nupkg`를 사용합니다.
@@ -34,7 +34,7 @@ tools/net10.0/any/runtime/net48/TypeSharp.Runtime.dll
 5. 로컬 tool install smoke
 
 ```powershell
-$version = "0.1.0-preview.5"
+$version = "0.1.0-preview.6"
 $source = Resolve-Path ".\artifacts\release"
 $toolPath = ".\artifacts\tool-smoke"
 
@@ -54,7 +54,7 @@ Repository root `NuGet.config` uses package source mapping. If `--add-source` is
 첫 배포는 release owner가 로컬에서 명시적으로 실행합니다.
 
 ```powershell
-$version = "0.1.0-preview.5"
+$version = "0.1.0-preview.6"
 $package = ".\artifacts\release\TypeSharp.Tool.$version.nupkg"
 
 dotnet nuget push $package `
@@ -87,4 +87,4 @@ typesharp runtime-path --json
 - release workflow에서 local install smoke가 안정적으로 통과합니다.
 - 문서의 설치 명령이 실제 NuGet.org 패키지 버전과 일치합니다.
 
-이 조건이 충족되면 `.github/workflows/release-artifacts.yml` 끝에 `dotnet nuget push` 단계를 추가할 수 있습니다.
+현재 main branch push용 자동 publish는 `.github/workflows/nuget-publish-main.yml`에서 수행합니다. Repository secret `NUGET_API_KEY`에 `TypeSharp.Tool` push 권한을 가진 NuGet.org API key를 넣어야 하며, 같은 version이 이미 NuGet.org에 있으면 `--skip-duplicate`로 넘어갑니다. 새 패키지를 실제로 배포하려면 `cli/TypeSharp.Cli/TypeSharp.Cli.csproj`의 `<Version>` 또는 workflow/script 입력 version을 먼저 올립니다.

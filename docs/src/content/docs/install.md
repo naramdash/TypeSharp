@@ -14,7 +14,7 @@ Contributor source builds are not part of the normal install path. Use [Start He
 Install the versioned CLI package:
 
 ```powershell
-$version = "0.1.0-preview.5"
+$version = "0.1.0-preview.6"
 dotnet tool install --global TypeSharp.Tool --version $version
 typesharp version
 ```
@@ -39,7 +39,7 @@ Target default net48
 CLI target net10.0
 Runtime target net48
 Artifact kind dotnet-tool
-Build metadata v0.1.0-preview.5
+Build metadata v0.1.0-preview.6
 Source revision <12-character-commit-prefix>
 ```
 

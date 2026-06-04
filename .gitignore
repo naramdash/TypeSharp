@@ -8,6 +8,7 @@ obj/
 test/tmp/
 TestResults/
 artifacts/
+.nuget-publish.env
 node_modules/
 docs/.astro/
 docs/dist/

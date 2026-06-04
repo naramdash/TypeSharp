@@ -40,7 +40,7 @@ typesharp test [project]
 End-user command examples assume the NuGet .NET global tool route:
 
 ```powershell
-dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.5
+dotnet tool install --global TypeSharp.Tool --version 0.1.0-preview.6
 typesharp version
 ```
 
